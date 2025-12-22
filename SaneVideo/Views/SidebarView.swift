@@ -73,7 +73,7 @@ private struct SidebarRailItem: View {
             VStack(spacing: 4) {
                 Image(systemName: isSelected ? "\(icon).fill" : icon)
                     .font(.system(size: 18))
-                    .foregroundStyle(isSelected ? AnyShapeStyle(Theme.Colors.accentGradient) : AnyShapeStyle(Color.secondary))
+                    .foregroundStyle(isSelected ? Color.accentColor : Color.secondary)
 
                 Text(label)
                     .font(.system(size: 9, weight: .medium))

@@ -42,14 +42,13 @@ struct PlayerControlBar: View {
                 .accessibilityIdentifier("player.step_backward")
 
                 // Play/Pause Button (main control)
-                Button(action: { playbackState.togglePlayPause() }, label: {
+                Button(action: { playbackState.togglePlayPause() }) {
                     Image(systemName: playbackState.isPlaying ? "pause.fill" : "play.fill")
-                        .font(.system(size: 22))
+                        .font(.system(size: 20))
                         .foregroundColor(.white)
-                        .frame(width: 44, height: 44)
-                        .background(Color.white.opacity(0.15))
-                        .clipShape(Circle())
-                })
+                        .frame(width: 36, height: 36)
+                        .background(Color.white.opacity(0.1), in: Circle())
+                }
                 .buttonStyle(.plain)
                 .keyboardShortcut(.space, modifiers: [])
                 .help(String(localized: "player.help.play_pause", defaultValue: "Play/Pause (Space) • J/K/L for shuttle control"))
@@ -80,18 +79,8 @@ struct PlayerControlBar: View {
             .font(.system(size: 11, design: .monospaced))
         }
         .padding(.horizontal, 16)
-        .padding(.vertical, 8) // Tighter vertical padding
-        .background(
-            ZStack {
-                Color.black.opacity(0.6)
-                VisualEffectView(material: .hudWindow, blendingMode: .withinWindow)
-            }
-        )
-        .cornerRadius(20) // Pill shape
-        .overlay(
-            RoundedRectangle(cornerRadius: 20)
-                .stroke(Color.white.opacity(0.1), lineWidth: 1)
-        )
+        .padding(.vertical, 8)
+        .background(.ultraThinMaterial, in: Capsule())
         .padding(.bottom, 20)
         .padding(.horizontal, 24)
         .frame(maxWidth: .infinity) // Responsive width

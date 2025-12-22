@@ -70,12 +70,12 @@ struct LibraryView: View {
 
             if appState.projectState.isProcessing {
                 ProgressView()
-                    .scaleEffect(0.6)
+                    .controlSize(.small)
             }
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 8)
-        .background(Color(white: 0.12))
+        .background(.ultraThinMaterial)
     }
 
     @ViewBuilder
@@ -229,11 +229,7 @@ struct ImportButtonGroup: View {
 
     private var importVideoButton: some View {
         Button(action: { appState.importVideo() }, label: {
-            HStack(spacing: 6) {
-                Image(systemName: "film.badge.plus")
-                Text("Video")
-                    .font(.system(size: 12, weight: .medium))
-            }
+            Label("Video", systemImage: "film.badge.plus")
         })
         .buttonStyle(.bordered)
         .help("Import Video (Cmd+I)")
@@ -241,11 +237,7 @@ struct ImportButtonGroup: View {
 
     private var importAudioButton: some View {
         Button(action: { showingAudioImporter = true }, label: {
-            HStack(spacing: 6) {
-                Image(systemName: "waveform.badge.plus")
-                Text("Audio")
-                    .font(.system(size: 12, weight: .medium))
-            }
+            Label("Audio", systemImage: "waveform.badge.plus")
         })
         .buttonStyle(.bordered)
         .help("Import Audio File")

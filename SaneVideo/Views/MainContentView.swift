@@ -242,19 +242,13 @@ struct MainContentView: View {
         .toolbar {
             ToolbarItem(placement: .navigation) {
                 Button(action: { 
-                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                        appState.appMode = (appState.appMode == .recording ? .editing : .recording)
-                    }
+                    appState.appMode = (appState.appMode == .recording ? .editing : .recording)
                 }, label: {
-                    HStack(spacing: 6) {
-                        Image(systemName: appState.appMode == .recording ? "scissors" : "record.circle")
-                            .foregroundStyle(appState.appMode == .recording ? AnyShapeStyle(Theme.Colors.accentGradient) : AnyShapeStyle(Color.red))
-                        
-                        Text(appState.appMode == .recording ? "Editor" : "Record")
-                    }
+                    Label(
+                        appState.appMode == .recording ? "Editor" : "Record",
+                        systemImage: appState.appMode == .recording ? "scissors" : "record.circle"
+                    )
                 })
-                .buttonStyle(.bordered)
-                .keyboardShortcut("M", modifiers: [.command])
                 .help("Toggle Record/Edit Mode (Cmd+M)")
             }
             
@@ -281,13 +275,10 @@ struct MainContentView: View {
                     Button(action: {
                         NotificationCenter.default.post(name: NSNotification.Name("ShowRenameProjectDialog"), object: nil)
                     }, label: {
-                        HStack(spacing: 4) {
-                            Image(systemName: "sparkles")
-                                .foregroundStyle(Theme.Colors.accentGradient)
-                            
-                            Text(appState.projectState.currentProject?.name ?? "Untitled Project")
-                                .fontWeight(.medium)
-                        }
+                        Label(
+                            appState.projectState.currentProject?.name ?? "Untitled Project",
+                            systemImage: "pencil.line"
+                        )
                     })
                     .buttonStyle(.bordered)
                     .help("Rename Project")
@@ -296,15 +287,14 @@ struct MainContentView: View {
 
             ToolbarItem(placement: .primaryAction) {
                 if appState.appMode == .editing {
-                    HStack(spacing: 12) {
+                    HStack(spacing: 8) {
                         // MAGIC QUICK BUTTON (Global)
                         Button(action: { 
                             NotificationCenter.default.post(name: NSNotification.Name("TriggerMagicFix"), object: nil)
                         }, label: {
-                            Label("Magic Fix", systemImage: "wand.and.stars")
-                                .foregroundStyle(Theme.Colors.accentGradient)
+                            Label("Magic Fix", systemImage: "sparkles")
                         })
-                        .help("Auto-Fix Project: Silence, Fillers, and Highlights (Cmd+Shift+M)")
+                        .help("Auto-Fix Project (Cmd+Shift+M)")
                         .keyboardShortcut("m", modifiers: [.command, .shift])
 
                         Divider()

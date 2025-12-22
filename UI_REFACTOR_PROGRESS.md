@@ -1,7 +1,7 @@
 # UI Refactoring Progress
 
 **Started**: 2025-12-22
-**Status**: In Progress
+**Status**: COMPLETE
 
 ## Completed Tasks
 
@@ -17,49 +17,25 @@
 - [x] Extracted `CaptionStylePreview.swift` - Caption style thumbnail
 - [x] Refactored main `CaptionsSection.swift` to use new components
 
-### 3. Verification
+### 3. Update Sheets to Use New Components
+- [x] `GIFExportSheet.swift` - Uses SheetHeader, SheetFooter, IntOptionButtonGroup, EstimateBox
+- [x] `TranscriptExportSheet.swift` - Uses SheetHeader, SheetFooter
+- [x] `VoiceoverSettingsSheet.swift` - Uses SheetHeader, SheetFooter, LabeledSliderControl
+- [x] `ThumbnailPickerSheet.swift` - Uses SheetHeader
+
+### 4. Extract SidebarView Nested Components (407 → 89 lines)
+- [x] Extracted `LibraryView.swift` - Library panel for clips
+- [x] Extracted `LibraryClipRow.swift` - Individual clip row display
+- [x] Refactored `SidebarView.swift` (kept SidebarRailItem private)
+
+### 5. Fix VideoSection Rotation Logic
+- [x] Added `counterClockwise` computed property to `VideoClip.Rotation`
+- [x] Added `setClipRotation(_:to:)` method to `ProjectState+ClipEditing.swift`
+- [x] Removed DispatchQueue hack from `TransformControlsView` - now uses direct rotation
+
+### 6. Final Verification
 - [x] `xcodegen generate` - Project regenerated
 - [x] `./Scripts/SaneMaster.rb verify` - 167 tests pass
-
----
-
-## In Progress
-
-### 4. Update Sheets to Use New Components
-- [ ] `GIFExportSheet.swift` - Use SheetHeader, SheetFooter, IntOptionButtonGroup
-- [ ] `TranscriptExportSheet.swift` - Use SheetHeader, SheetFooter
-- [ ] `VoiceoverSettingsSheet.swift` - Use SheetHeader, SheetFooter, LabeledSliderControl
-- [ ] `ThumbnailPickerSheet.swift` - Use SheetHeader, SheetFooter
-
-### 5. Extract SidebarView Nested Components
-- [ ] Extract `SidebarRailItem.swift`
-- [ ] Extract `LibraryView.swift`
-- [ ] Extract `LibraryClipRow.swift`
-- [ ] Refactor `SidebarView.swift`
-
-### 6. Fix VideoSection Rotation Logic
-- [ ] Add `rotateToAngle(_:)` method to ProjectState
-- [ ] Remove triple-click DispatchQueue hack from VideoSection
-
----
-
-## Pending
-
-### 7. Additional Cleanup (Optional)
-- [ ] Update `VideoSection.swift` to use `DoubleOptionButtonGroup` for speed presets
-- [ ] Update `AudioSection.swift` to use `LabeledSliderControl` for volume
-- [ ] Update `BackgroundEffectsView.swift` to use new components
-- [ ] Standardize all section headers to use `SubsectionHeader`
-
----
-
-## How to Resume
-
-1. Read this file for current status
-2. Run `./Scripts/SaneMaster.rb verify` to confirm build is clean
-3. Continue with next unchecked item
-4. After changes: `xcodegen generate && ./Scripts/SaneMaster.rb verify`
-5. Update this file as you complete tasks
 
 ---
 
@@ -75,5 +51,31 @@ SaneVideo/Views/Components/
 ├── CaptionsSection.swift           (REFACTORED - 305→239 lines)
 ├── CaptionStylePreview.swift       (NEW - extracted)
 ├── ClipInfoSection.swift           (NEW - extracted)
-└── CursorEnhancementsView.swift    (NEW - extracted)
+├── CursorEnhancementsView.swift    (NEW - extracted)
+├── LibraryView.swift               (NEW - extracted from SidebarView)
+├── LibraryClipRow.swift            (NEW - extracted from SidebarView)
+└── VideoSection.swift              (REFACTORED - removed DispatchQueue hack)
+
+SaneVideo/Views/
+├── SidebarView.swift               (REFACTORED - 407→89 lines)
+
+SaneVideo/Views/Sheets/
+├── GIFExportSheet.swift            (UPDATED - uses new components)
+├── TranscriptExportSheet.swift     (UPDATED - uses new components)
+├── VoiceoverSettingsSheet.swift    (UPDATED - uses new components)
+├── ThumbnailPickerSheet.swift      (UPDATED - uses SheetHeader)
+
+SaneVideo/Core/Models/
+├── VideoClip.swift                 (UPDATED - added counterClockwise property)
+
+SaneVideo/State/
+├── ProjectState+ClipEditing.swift  (UPDATED - added setClipRotation method)
 ```
+
+---
+
+## Optional Future Cleanup
+- [ ] Update `VideoSection.swift` to use `DoubleOptionButtonGroup` for speed presets
+- [ ] Update `AudioSection.swift` to use `LabeledSliderControl` for volume
+- [ ] Update `BackgroundEffectsView.swift` to use new components
+- [ ] Standardize all section headers to use `SubsectionHeader`

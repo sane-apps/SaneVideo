@@ -1,17 +1,17 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<testsuites tests='167' failures='0' skipped='0' time='5.64158'>
-  <testsuite name='SaneVideoTests' time='5.64158' tests='167' failures='0' skipped='0'>
-    <testsuite name='AIServiceTests' time='0.018' tests='1' failures='0' skipped='0'>
-      <testcase name='testRefineCaptionsPromptGeneration()' classname='AIServiceTests' time='0.018'/>
+<testsuites tests='167' failures='0' skipped='0' time='4.69775'>
+  <testsuite name='SaneVideoTests' time='4.69775' tests='167' failures='0' skipped='0'>
+    <testsuite name='AIServiceTests' time='0.019' tests='1' failures='0' skipped='0'>
+      <testcase name='testRefineCaptionsPromptGeneration()' classname='AIServiceTests' time='0.019'/>
     </testsuite>
-    <testsuite name='CameraConcurrencyRegressionTests' time='0.22741' tests='8' failures='0' skipped='0'>
+    <testsuite name='CameraConcurrencyRegressionTests' time='0.22575' tests='8' failures='0' skipped='0'>
       <testcase name='testCameraFramePublisherThreadSafety()' classname='CameraConcurrencyRegressionTests' time='0.1'/>
-      <testcase name='testCombineSubscriptionOnBackgroundQueue()' classname='CameraConcurrencyRegressionTests' time='0.021'/>
+      <testcase name='testCombineSubscriptionOnBackgroundQueue()' classname='CameraConcurrencyRegressionTests' time='0.02'/>
       <testcase name='testConcurrencyContracts()' classname='CameraConcurrencyRegressionTests' time='0.00037'/>
-      <testcase name='testDiskSpaceMonitorMainActorIsolation()' classname='CameraConcurrencyRegressionTests' time='0.0026'/>
-      <testcase name='testMainActorStateReceivesOnMainQueue()' classname='CameraConcurrencyRegressionTests' time='0.002'/>
-      <testcase name='testMirroringConfigurationOrder()' classname='CameraConcurrencyRegressionTests' time='0.00034'/>
-      <testcase name='testSampleBufferSubjectIsNonisolated()' classname='CameraConcurrencyRegressionTests' time='0.0011'/>
+      <testcase name='testDiskSpaceMonitorMainActorIsolation()' classname='CameraConcurrencyRegressionTests' time='0.0019'/>
+      <testcase name='testMainActorStateReceivesOnMainQueue()' classname='CameraConcurrencyRegressionTests' time='0.0015'/>
+      <testcase name='testMirroringConfigurationOrder()' classname='CameraConcurrencyRegressionTests' time='0.00038'/>
+      <testcase name='testSampleBufferSubjectIsNonisolated()' classname='CameraConcurrencyRegressionTests' time='0.0016'/>
       <testcase name='testStrongReferencePreventsDeallocationDuringAsync()' classname='CameraConcurrencyRegressionTests' time='0.1'/>
     </testsuite>
     <testsuite name='App Integration Tests' time='0.0' tests='10' failures='0' skipped='0'>
@@ -26,27 +26,27 @@
       <testcase name='PiPControlsView type availability' classname='AppIntegrationTests' time='0.0'/>
       <testcase name='Theme data constants' classname='AppIntegrationTests' time='0.0'/>
     </testsuite>
-    <testsuite name='CaptionPreviewTests' time='0.01461' tests='5' failures='0' skipped='0'>
+    <testsuite name='CaptionPreviewTests' time='0.0147' tests='5' failures='0' skipped='0'>
       <testcase name='testCaptionStyleEquality()' classname='CaptionPreviewTests' time='0.00038'/>
       <testcase name='testCaptionStyleHashable()' classname='CaptionPreviewTests' time='0.00039'/>
-      <testcase name='testCaptionStyleIsCodable()' classname='CaptionPreviewTests' time='0.00054'/>
-      <testcase name='testCaptionStylePropertiesForPreview()' classname='CaptionPreviewTests' time='0.0003'/>
+      <testcase name='testCaptionStyleIsCodable()' classname='CaptionPreviewTests' time='0.00058'/>
+      <testcase name='testCaptionStylePropertiesForPreview()' classname='CaptionPreviewTests' time='0.00035'/>
       <testcase name='testCaptionStylesHaveValidProperties()' classname='CaptionPreviewTests' time='0.013'/>
     </testsuite>
-    <testsuite name='Camera Startup Tests' time='1.0' tests='4' failures='0' skipped='0'>
-      <testcase name='Camera orientation and session observers from background queue' classname='CameraStartupTests' time='1.0'/>
+    <testsuite name='Camera Startup Tests' time='0.0' tests='4' failures='0' skipped='0'>
+      <testcase name='Camera orientation and session observers from background queue' classname='CameraStartupTests' time='0.0'/>
       <testcase name='Camera frame publisher thread safety' classname='CameraStartupTests' time='0.0'/>
       <testcase name='Recording engine subscription setup thread safety' classname='CameraStartupTests' time='0.0'/>
       <testcase name='MainActor isolation enforcement' classname='CameraStartupTests' time='0.0'/>
     </testsuite>
-    <testsuite name='CursorTrackingServiceTests' time='0.12794' tests='9' failures='0' skipped='0'>
-      <testcase name='testCursorSampleArraySerialization()' classname='CursorTrackingServiceTests' time='0.00054'/>
-      <testcase name='testCursorSampleCodable()' classname='CursorTrackingServiceTests' time='0.00035'/>
-      <testcase name='testCursorSampleEquality()' classname='CursorTrackingServiceTests' time='0.00046'/>
-      <testcase name='testCursorSampleInitialization()' classname='CursorTrackingServiceTests' time='0.0015'/>
-      <testcase name='testCursorSampleNormalizedCoordinates()' classname='CursorTrackingServiceTests' time='0.00039'/>
-      <testcase name='testStartTrackingMultipleTimes()' classname='CursorTrackingServiceTests' time='0.0054'/>
-      <testcase name='testStartTracking()' classname='CursorTrackingServiceTests' time='0.0023'/>
+    <testsuite name='CursorTrackingServiceTests' time='0.12840000000000001' tests='9' failures='0' skipped='0'>
+      <testcase name='testCursorSampleArraySerialization()' classname='CursorTrackingServiceTests' time='0.00053'/>
+      <testcase name='testCursorSampleCodable()' classname='CursorTrackingServiceTests' time='0.00039'/>
+      <testcase name='testCursorSampleEquality()' classname='CursorTrackingServiceTests' time='0.00036'/>
+      <testcase name='testCursorSampleInitialization()' classname='CursorTrackingServiceTests' time='0.0021'/>
+      <testcase name='testCursorSampleNormalizedCoordinates()' classname='CursorTrackingServiceTests' time='0.00032'/>
+      <testcase name='testStartTrackingMultipleTimes()' classname='CursorTrackingServiceTests' time='0.0053'/>
+      <testcase name='testStartTracking()' classname='CursorTrackingServiceTests' time='0.0024'/>
       <testcase name='testStopTrackingAndSave()' classname='CursorTrackingServiceTests' time='0.1'/>
       <testcase name='testStopTrackingWhenNotStarted()' classname='CursorTrackingServiceTests' time='0.017'/>
     </testsuite>
@@ -58,15 +58,15 @@
       <testcase name='Caption style font override logic' classname='CaptionTests' time='0.0'/>
       <testcase name='Caption style reset behavior on preset change' classname='CaptionTests' time='0.0'/>
     </testsuite>
-    <testsuite name='ErrorHandlingTests' time='0.02568' tests='8' failures='0' skipped='0'>
-      <testcase name='testConcurrentProjectSave()' classname='ErrorHandlingTests' time='0.0088'/>
-      <testcase name='testCorruptedProjectFile()' classname='ErrorHandlingTests' time='0.0034'/>
-      <testcase name='testDeletedVideoFileAfterSave()' classname='ErrorHandlingTests' time='0.0044'/>
-      <testcase name='testDiskSpaceCheck()' classname='ErrorHandlingTests' time='0.00079'/>
-      <testcase name='testEmptyProjectFile()' classname='ErrorHandlingTests' time='0.0024'/>
-      <testcase name='testMissingVideoFile()' classname='ErrorHandlingTests' time='0.0048'/>
-      <testcase name='testTrimBeyondClipDuration()' classname='ErrorHandlingTests' time='0.00058'/>
-      <testcase name='testTrimEndBeforeTrimStart()' classname='ErrorHandlingTests' time='0.00051'/>
+    <testsuite name='ErrorHandlingTests' time='0.02638' tests='8' failures='0' skipped='0'>
+      <testcase name='testConcurrentProjectSave()' classname='ErrorHandlingTests' time='0.0082'/>
+      <testcase name='testCorruptedProjectFile()' classname='ErrorHandlingTests' time='0.0026'/>
+      <testcase name='testDeletedVideoFileAfterSave()' classname='ErrorHandlingTests' time='0.0055'/>
+      <testcase name='testDiskSpaceCheck()' classname='ErrorHandlingTests' time='0.00082'/>
+      <testcase name='testEmptyProjectFile()' classname='ErrorHandlingTests' time='0.0028'/>
+      <testcase name='testMissingVideoFile()' classname='ErrorHandlingTests' time='0.0053'/>
+      <testcase name='testTrimBeyondClipDuration()' classname='ErrorHandlingTests' time='0.00056'/>
+      <testcase name='testTrimEndBeforeTrimStart()' classname='ErrorHandlingTests' time='0.0006'/>
     </testsuite>
     <testsuite name='Composition Building Tests' time='0.0' tests='6' failures='0' skipped='0'>
       <testcase name='Build composition with empty timeline' classname='CompositionBuilderTests' time='0.0'/>
@@ -76,10 +76,10 @@
       <testcase name='Track Z-Index ordering' classname='CompositionBuilderTests' time='0.0'/>
       <testcase name='Audio tracks are skipped for video composition' classname='CompositionBuilderTests' time='0.0'/>
     </testsuite>
-    <testsuite name='ExportPresetIntegrationTests' time='0.001' tests='3' failures='0' skipped='0'>
-      <testcase name='testCustomPresetDoesNotModifySettings()' classname='ExportPresetIntegrationTests' time='0.00037'/>
-      <testcase name='testExportPresetApplication()' classname='ExportPresetIntegrationTests' time='0.00033'/>
-      <testcase name='testPresetSettingsAreIndependent()' classname='ExportPresetIntegrationTests' time='0.0003'/>
+    <testsuite name='ExportPresetIntegrationTests' time='0.00107' tests='3' failures='0' skipped='0'>
+      <testcase name='testCustomPresetDoesNotModifySettings()' classname='ExportPresetIntegrationTests' time='0.00036'/>
+      <testcase name='testExportPresetApplication()' classname='ExportPresetIntegrationTests' time='0.00037'/>
+      <testcase name='testPresetSettingsAreIndependent()' classname='ExportPresetIntegrationTests' time='0.00034'/>
     </testsuite>
     <testsuite name='Playback State Tests' time='0.0' tests='7' failures='0' skipped='0'>
       <testcase name='Initial state values' classname='PlaybackStateTests' time='0.0'/>
@@ -90,24 +90,24 @@
       <testcase name='Forward behavior at end' classname='PlaybackStateTests' time='0.0'/>
       <testcase name='Unload resets all states' classname='PlaybackStateTests' time='0.0'/>
     </testsuite>
-    <testsuite name='ExportPresetTests' time='0.00142' tests='4' failures='0' skipped='0'>
-      <testcase name='testAllPresetsExist()' classname='ExportPresetTests' time='0.00031'/>
-      <testcase name='testPresetDescriptions()' classname='ExportPresetTests' time='0.0004'/>
-      <testcase name='testPresetIcons()' classname='ExportPresetTests' time='0.00035'/>
-      <testcase name='testPresetSettingsApplication()' classname='ExportPresetTests' time='0.00036'/>
+    <testsuite name='ExportPresetTests' time='0.0028899999999999998' tests='4' failures='0' skipped='0'>
+      <testcase name='testAllPresetsExist()' classname='ExportPresetTests' time='0.00045'/>
+      <testcase name='testPresetDescriptions()' classname='ExportPresetTests' time='0.00042'/>
+      <testcase name='testPresetIcons()' classname='ExportPresetTests' time='0.0017'/>
+      <testcase name='testPresetSettingsApplication()' classname='ExportPresetTests' time='0.00032'/>
     </testsuite>
     <testsuite name='Project Store Tests' time='0.0' tests='2' failures='0' skipped='0'>
       <testcase name='Save and load project persistence' classname='ProjectStoreTests' time='0.0'/>
       <testcase name='Recent projects retrieval' classname='ProjectStoreTests' time='0.0'/>
     </testsuite>
-    <testsuite name='GestureConflictTests' time='0.0143' tests='7' failures='0' skipped='0'>
-      <testcase name='testConcurrentGesturePrevention()' classname='GestureConflictTests' time='0.0039'/>
-      <testcase name='testTrimHandleCoordinateSpace()' classname='GestureConflictTests' time='0.0017'/>
-      <testcase name='testTrimHandleDragPreventsClipSelection()' classname='GestureConflictTests' time='0.0015'/>
+    <testsuite name='GestureConflictTests' time='0.0169' tests='7' failures='0' skipped='0'>
+      <testcase name='testConcurrentGesturePrevention()' classname='GestureConflictTests' time='0.005'/>
+      <testcase name='testTrimHandleCoordinateSpace()' classname='GestureConflictTests' time='0.0015'/>
+      <testcase name='testTrimHandleDragPreventsClipSelection()' classname='GestureConflictTests' time='0.0018'/>
       <testcase name='testTrimHandleDragStateReset()' classname='GestureConflictTests' time='0.0031'/>
-      <testcase name='testTrimHandleHasHighPriority()' classname='GestureConflictTests' time='0.0015'/>
-      <testcase name='testTrimHandleMinimumDistance()' classname='GestureConflictTests' time='0.0013'/>
-      <testcase name='testTrimHandleOffsetReset()' classname='GestureConflictTests' time='0.0013'/>
+      <testcase name='testTrimHandleHasHighPriority()' classname='GestureConflictTests' time='0.0017'/>
+      <testcase name='testTrimHandleMinimumDistance()' classname='GestureConflictTests' time='0.0018'/>
+      <testcase name='testTrimHandleOffsetReset()' classname='GestureConflictTests' time='0.002'/>
     </testsuite>
     <testsuite name='Recording State Tests' time='0.0' tests='6' failures='0' skipped='0'>
       <testcase name='Initial state values' classname='RecordingStateTests' time='0.0'/>
@@ -117,120 +117,120 @@
       <testcase name='Stop behavior when idle' classname='RecordingStateTests' time='0.0'/>
       <testcase name='Microphone toggle behavior' classname='RecordingStateTests' time='0.0'/>
     </testsuite>
-    <testsuite name='MagicFixTests' time='0.00204' tests='6' failures='0' skipped='0'>
+    <testsuite name='MagicFixTests' time='0.00209' tests='6' failures='0' skipped='0'>
       <testcase name='testCalculateKeepRanges_FullRemoval()' classname='MagicFixTests' time='0.00039'/>
-      <testcase name='testCalculateKeepRanges_MultipleRemovals_WithOverlap()' classname='MagicFixTests' time='0.00033'/>
-      <testcase name='testCalculateKeepRanges_NoRemovals()' classname='MagicFixTests' time='0.00039'/>
-      <testcase name='testCalculateKeepRanges_OutOfBounds()' classname='MagicFixTests' time='0.00029'/>
-      <testcase name='testCalculateKeepRanges_SingleRemoval_Middle()' classname='MagicFixTests' time='0.00032'/>
-      <testcase name='testMagicFixOptionsDefault()' classname='MagicFixTests' time='0.00032'/>
+      <testcase name='testCalculateKeepRanges_MultipleRemovals_WithOverlap()' classname='MagicFixTests' time='0.00038'/>
+      <testcase name='testCalculateKeepRanges_NoRemovals()' classname='MagicFixTests' time='0.00038'/>
+      <testcase name='testCalculateKeepRanges_OutOfBounds()' classname='MagicFixTests' time='0.00031'/>
+      <testcase name='testCalculateKeepRanges_SingleRemoval_Middle()' classname='MagicFixTests' time='0.00033'/>
+      <testcase name='testMagicFixOptionsDefault()' classname='MagicFixTests' time='0.0003'/>
     </testsuite>
     <testsuite name='Video Clip Tests' time='0.0' tests='3' failures='0' skipped='0'>
       <testcase name='Removed ranges integration and effective duration' classname='VideoClipTests' time='0.0'/>
       <testcase name='Filler word detection and range extraction' classname='VideoClipTests' time='0.0'/>
       <testcase name='Caption and word serialization' classname='VideoClipTests' time='0.0'/>
     </testsuite>
-    <testsuite name='ProjectEditingTests' time='0.010499999999999999' tests='4' failures='0' skipped='0'>
-      <testcase name='testAddClip_AppendsSequentially()' classname='ProjectEditingTests' time='0.0058'/>
-      <testcase name='testSplitClip()' classname='ProjectEditingTests' time='0.0015'/>
-      <testcase name='testStartNewProject_ClearsTimeline()' classname='ProjectEditingTests' time='0.0015'/>
-      <testcase name='testTrimClip_RipplesTimeline()' classname='ProjectEditingTests' time='0.0017'/>
+    <testsuite name='ProjectEditingTests' time='0.0098' tests='4' failures='0' skipped='0'>
+      <testcase name='testAddClip_AppendsSequentially()' classname='ProjectEditingTests' time='0.002'/>
+      <testcase name='testSplitClip()' classname='ProjectEditingTests' time='0.0048'/>
+      <testcase name='testStartNewProject_ClearsTimeline()' classname='ProjectEditingTests' time='0.0014'/>
+      <testcase name='testTrimClip_RipplesTimeline()' classname='ProjectEditingTests' time='0.0016'/>
     </testsuite>
-    <testsuite name='ProjectTemplateTests' time='0.00215' tests='6' failures='0' skipped='0'>
-      <testcase name='testAllTemplatesExist()' classname='ProjectTemplateTests' time='0.00039'/>
-      <testcase name='testCustomTemplateSettings()' classname='ProjectTemplateTests' time='0.00031'/>
-      <testcase name='testInstagramTemplateSettings()' classname='ProjectTemplateTests' time='0.00036'/>
-      <testcase name='testTemplateIdentifiable()' classname='ProjectTemplateTests' time='0.00042'/>
-      <testcase name='testTikTokTemplateSettings()' classname='ProjectTemplateTests' time='0.00033'/>
-      <testcase name='testYouTubeTemplateSettings()' classname='ProjectTemplateTests' time='0.00034'/>
+    <testsuite name='ProjectTemplateTests' time='0.002' tests='6' failures='0' skipped='0'>
+      <testcase name='testAllTemplatesExist()' classname='ProjectTemplateTests' time='0.0004'/>
+      <testcase name='testCustomTemplateSettings()' classname='ProjectTemplateTests' time='0.00029'/>
+      <testcase name='testInstagramTemplateSettings()' classname='ProjectTemplateTests' time='0.00031'/>
+      <testcase name='testTemplateIdentifiable()' classname='ProjectTemplateTests' time='0.00031'/>
+      <testcase name='testTikTokTemplateSettings()' classname='ProjectTemplateTests' time='0.00028'/>
+      <testcase name='testYouTubeTemplateSettings()' classname='ProjectTemplateTests' time='0.00041'/>
     </testsuite>
-    <testsuite name='RegressionTests' time='0.0137' tests='8' failures='0' skipped='0'>
-      <testcase name='testCaptionTimeMappingWithRemovals()' classname='RegressionTests' time='0.00077'/>
-      <testcase name='testClipSplittingMath()' classname='RegressionTests' time='0.0003'/>
-      <testcase name='testMagneticTimelineRecalculate()' classname='RegressionTests' time='0.00037'/>
-      <testcase name='testPiPWindowProperties()' classname='RegressionTests' time='0.0072'/>
-      <testcase name='testProjectPersistenceSanity()' classname='RegressionTests' time='0.00064'/>
-      <testcase name='testRecordingEngineQueue()' classname='RegressionTests' time='0.0027'/>
-      <testcase name='testSmoothCutInsertion()' classname='RegressionTests' time='0.00042'/>
-      <testcase name='testSourceSwitchTimestampGap()' classname='RegressionTests' time='0.0013'/>
+    <testsuite name='RegressionTests' time='0.015269999999999999' tests='8' failures='0' skipped='0'>
+      <testcase name='testCaptionTimeMappingWithRemovals()' classname='RegressionTests' time='0.00037'/>
+      <testcase name='testClipSplittingMath()' classname='RegressionTests' time='0.001'/>
+      <testcase name='testMagneticTimelineRecalculate()' classname='RegressionTests' time='0.00033'/>
+      <testcase name='testPiPWindowProperties()' classname='RegressionTests' time='0.0087'/>
+      <testcase name='testProjectPersistenceSanity()' classname='RegressionTests' time='0.00073'/>
+      <testcase name='testRecordingEngineQueue()' classname='RegressionTests' time='0.0021'/>
+      <testcase name='testSmoothCutInsertion()' classname='RegressionTests' time='0.00034'/>
+      <testcase name='testSourceSwitchTimestampGap()' classname='RegressionTests' time='0.0017'/>
     </testsuite>
-    <testsuite name='RenderingPipelineTests' time='0.0078000000000000005' tests='16' failures='0' skipped='0'>
-      <testcase name='testKeyframeAccess()' classname='RenderingPipelineTests' time='0.00046'/>
-      <testcase name='testKeyframeCodable()' classname='RenderingPipelineTests' time='0.00084'/>
-      <testcase name='testKeyframeInterpolation()' classname='RenderingPipelineTests' time='0.00038'/>
-      <testcase name='testKeyframeInterpolationLinear()' classname='RenderingPipelineTests' time='0.00033'/>
-      <testcase name='testTransitionApplyNone()' classname='RenderingPipelineTests' time='0.00034'/>
-      <testcase name='testTransitionDefaultDurations()' classname='RenderingPipelineTests' time='0.00032'/>
-      <testcase name='testTransitionDissolve()' classname='RenderingPipelineTests' time='0.00047'/>
-      <testcase name='testTransitionMetadataCreation()' classname='RenderingPipelineTests' time='0.00045'/>
+    <testsuite name='RenderingPipelineTests' time='0.00816' tests='16' failures='0' skipped='0'>
+      <testcase name='testKeyframeAccess()' classname='RenderingPipelineTests' time='0.00045'/>
+      <testcase name='testKeyframeCodable()' classname='RenderingPipelineTests' time='0.00072'/>
+      <testcase name='testKeyframeInterpolation()' classname='RenderingPipelineTests' time='0.00031'/>
+      <testcase name='testKeyframeInterpolationLinear()' classname='RenderingPipelineTests' time='0.00036'/>
+      <testcase name='testTransitionApplyNone()' classname='RenderingPipelineTests' time='0.00037'/>
+      <testcase name='testTransitionDefaultDurations()' classname='RenderingPipelineTests' time='0.00029'/>
+      <testcase name='testTransitionDissolve()' classname='RenderingPipelineTests' time='0.00048'/>
+      <testcase name='testTransitionMetadataCreation()' classname='RenderingPipelineTests' time='0.00039'/>
       <testcase name='testTransitionTypeDisplayNames()' classname='RenderingPipelineTests' time='0.0003'/>
-      <testcase name='testVideoClipEffectsProperty()' classname='RenderingPipelineTests' time='0.00038'/>
-      <testcase name='testVideoClipKeyframeProperty()' classname='RenderingPipelineTests' time='0.0009'/>
+      <testcase name='testVideoClipEffectsProperty()' classname='RenderingPipelineTests' time='0.00037'/>
+      <testcase name='testVideoClipKeyframeProperty()' classname='RenderingPipelineTests' time='0.00097'/>
       <testcase name='testVideoClipTransitionProperty()' classname='RenderingPipelineTests' time='0.00044'/>
-      <testcase name='testVideoEffectApply()' classname='RenderingPipelineTests' time='0.001'/>
+      <testcase name='testVideoEffectApply()' classname='RenderingPipelineTests' time='0.0016'/>
       <testcase name='testVideoEffectCreation()' classname='RenderingPipelineTests' time='0.00032'/>
-      <testcase name='testVideoEffectFilterCreation()' classname='RenderingPipelineTests' time='0.00046'/>
-      <testcase name='testVideoTransitionCreation()' classname='RenderingPipelineTests' time='0.00041'/>
+      <testcase name='testVideoEffectFilterCreation()' classname='RenderingPipelineTests' time='0.00045'/>
+      <testcase name='testVideoTransitionCreation()' classname='RenderingPipelineTests' time='0.00034'/>
     </testsuite>
-    <testsuite name='SaneAudioServiceTests' time='0.0030399999999999997' tests='3' failures='0' skipped='0'>
-      <testcase name='testEdgeCaseOneHour()' classname='SaneAudioServiceTests' time='0.0024'/>
-      <testcase name='testEdgeCaseZero()' classname='SaneAudioServiceTests' time='0.00035'/>
-      <testcase name='testTimeFormattingLogic()' classname='SaneAudioServiceTests' time='0.00029'/>
+    <testsuite name='SaneAudioServiceTests' time='0.0011200000000000001' tests='3' failures='0' skipped='0'>
+      <testcase name='testEdgeCaseOneHour()' classname='SaneAudioServiceTests' time='0.00036'/>
+      <testcase name='testEdgeCaseZero()' classname='SaneAudioServiceTests' time='0.00044'/>
+      <testcase name='testTimeFormattingLogic()' classname='SaneAudioServiceTests' time='0.00032'/>
     </testsuite>
-    <testsuite name='SaneVideoAccessibilityTests' time='0.00856' tests='9' failures='0' skipped='0'>
-      <testcase name='testCameraButtonLabels()' classname='SaneVideoAccessibilityTests' time='0.00033'/>
-      <testcase name='testCrashReporterExists()' classname='SaneVideoAccessibilityTests' time='0.0059'/>
+    <testsuite name='SaneVideoAccessibilityTests' time='0.00599' tests='9' failures='0' skipped='0'>
+      <testcase name='testCameraButtonLabels()' classname='SaneVideoAccessibilityTests' time='0.00035'/>
+      <testcase name='testCrashReporterExists()' classname='SaneVideoAccessibilityTests' time='0.0034'/>
       <testcase name='testLocalizationKeysExist()' classname='SaneVideoAccessibilityTests' time='0.00034'/>
-      <testcase name='testMicrophoneButtonLabels()' classname='SaneVideoAccessibilityTests' time='0.00039'/>
-      <testcase name='testOnboardingPageCreation()' classname='SaneVideoAccessibilityTests' time='0.00033'/>
-      <testcase name='testRecordingButtonLabels()' classname='SaneVideoAccessibilityTests' time='0.00032'/>
-      <testcase name='testRecordingLocalizationKeys()' classname='SaneVideoAccessibilityTests' time='0.00032'/>
+      <testcase name='testMicrophoneButtonLabels()' classname='SaneVideoAccessibilityTests' time='0.00037'/>
+      <testcase name='testOnboardingPageCreation()' classname='SaneVideoAccessibilityTests' time='0.00034'/>
+      <testcase name='testRecordingButtonLabels()' classname='SaneVideoAccessibilityTests' time='0.00028'/>
+      <testcase name='testRecordingLocalizationKeys()' classname='SaneVideoAccessibilityTests' time='0.0003'/>
       <testcase name='testTimelineControlLabels()' classname='SaneVideoAccessibilityTests' time='0.00031'/>
-      <testcase name='testVideoClipHasID()' classname='SaneVideoAccessibilityTests' time='0.00032'/>
+      <testcase name='testVideoClipHasID()' classname='SaneVideoAccessibilityTests' time='0.0003'/>
     </testsuite>
-    <testsuite name='SmartThumbnailServiceTests' time='0.0064' tests='1' failures='0' skipped='0'>
-      <testcase name='testSmartThumbnailGenerationReturnsURL()' classname='SmartThumbnailServiceTests' time='0.0064'/>
+    <testsuite name='SmartThumbnailServiceTests' time='0.007' tests='1' failures='0' skipped='0'>
+      <testcase name='testSmartThumbnailGenerationReturnsURL()' classname='SmartThumbnailServiceTests' time='0.007'/>
     </testsuite>
     <testsuite name='SoundAnalysisServiceTests' time='3.0' tests='1' failures='0' skipped='0'>
       <testcase name='testGatingMetadataGeneration()' classname='SoundAnalysisServiceTests' time='3.0'/>
     </testsuite>
-    <testsuite name='StateMachineVerificationTests' time='0.8160000000000001' tests='3' failures='0' skipped='0'>
-      <testcase name='testScreenShareRecordingFlow()' classname='StateMachineVerificationTests' time='0.67'/>
-      <testcase name='testScreenShareStopOnlyFlow()' classname='StateMachineVerificationTests' time='0.11'/>
-      <testcase name='testZombieWindowFixLogic()' classname='StateMachineVerificationTests' time='0.036'/>
+    <testsuite name='StateMachineVerificationTests' time='0.858' tests='3' failures='0' skipped='0'>
+      <testcase name='testScreenShareRecordingFlow()' classname='StateMachineVerificationTests' time='0.69'/>
+      <testcase name='testScreenShareStopOnlyFlow()' classname='StateMachineVerificationTests' time='0.12'/>
+      <testcase name='testZombieWindowFixLogic()' classname='StateMachineVerificationTests' time='0.048'/>
     </testsuite>
-    <testsuite name='StressTests' time='0.31583' tests='4' failures='0' skipped='0'>
+    <testsuite name='StressTests' time='0.31829999999999997' tests='4' failures='0' skipped='0'>
       <testcase name='testMemoryAllocationSpam()' classname='StressTests' time='0.0012'/>
-      <testcase name='testRapidStateCycling()' classname='StressTests' time='0.00063'/>
-      <testcase name='testTimelineComplexity()' classname='StressTests' time='0.024'/>
+      <testcase name='testRapidStateCycling()' classname='StressTests' time='0.0021'/>
+      <testcase name='testTimelineComplexity()' classname='StressTests' time='0.025'/>
       <testcase name='testUndoRedoStorm()' classname='StressTests' time='0.29'/>
     </testsuite>
-    <testsuite name='TemplateIntegrationTests' time='0.0135' tests='6' failures='0' skipped='0'>
-      <testcase name='testStartProjectWithCustomTemplate()' classname='TemplateIntegrationTests' time='0.0046'/>
-      <testcase name='testStartProjectWithInstagramTemplate()' classname='TemplateIntegrationTests' time='0.002'/>
+    <testsuite name='TemplateIntegrationTests' time='0.019200000000000002' tests='6' failures='0' skipped='0'>
+      <testcase name='testStartProjectWithCustomTemplate()' classname='TemplateIntegrationTests' time='0.01'/>
+      <testcase name='testStartProjectWithInstagramTemplate()' classname='TemplateIntegrationTests' time='0.0018'/>
       <testcase name='testStartProjectWithoutTemplate()' classname='TemplateIntegrationTests' time='0.0015'/>
-      <testcase name='testStartProjectWithTikTokTemplate()' classname='TemplateIntegrationTests' time='0.0013'/>
-      <testcase name='testStartProjectWithYouTubeTemplate()' classname='TemplateIntegrationTests' time='0.0013'/>
+      <testcase name='testStartProjectWithTikTokTemplate()' classname='TemplateIntegrationTests' time='0.0015'/>
+      <testcase name='testStartProjectWithYouTubeTemplate()' classname='TemplateIntegrationTests' time='0.0016'/>
       <testcase name='testTemplateProjectIsSaved()' classname='TemplateIntegrationTests' time='0.0028'/>
     </testsuite>
-    <testsuite name='ThermalManagerTests' time='0.0006900000000000001' tests='2' failures='0' skipped='0'>
-      <testcase name='testIsThermalPressureHigh()' classname='ThermalManagerTests' time='0.00037'/>
-      <testcase name='testPerformanceLevelMapping()' classname='ThermalManagerTests' time='0.00032'/>
+    <testsuite name='ThermalManagerTests' time='0.0007700000000000001' tests='2' failures='0' skipped='0'>
+      <testcase name='testIsThermalPressureHigh()' classname='ThermalManagerTests' time='0.00035'/>
+      <testcase name='testPerformanceLevelMapping()' classname='ThermalManagerTests' time='0.00042'/>
     </testsuite>
-    <testsuite name='TimelineTests' time='0.00101' tests='3' failures='0' skipped='0'>
-      <testcase name='testAddClip()' classname='TimelineTests' time='0.00033'/>
-      <testcase name='testMoveClip()' classname='TimelineTests' time='0.00035'/>
-      <testcase name='testSplitClipLogic()' classname='TimelineTests' time='0.00033'/>
+    <testsuite name='TimelineTests' time='0.0010600000000000002' tests='3' failures='0' skipped='0'>
+      <testcase name='testAddClip()' classname='TimelineTests' time='0.00034'/>
+      <testcase name='testMoveClip()' classname='TimelineTests' time='0.0004'/>
+      <testcase name='testSplitClipLogic()' classname='TimelineTests' time='0.00032'/>
     </testsuite>
-    <testsuite name='TrimHandleTests' time='0.0071' tests='4' failures='0' skipped='0'>
-      <testcase name='testTrimHandleClamping()' classname='TrimHandleTests' time='0.0015'/>
-      <testcase name='testTrimHandleLeftTrim()' classname='TrimHandleTests' time='0.0021'/>
-      <testcase name='testTrimHandleMinimumDuration()' classname='TrimHandleTests' time='0.0022'/>
-      <testcase name='testTrimHandleRightTrim()' classname='TrimHandleTests' time='0.0013'/>
+    <testsuite name='TrimHandleTests' time='0.0098' tests='4' failures='0' skipped='0'>
+      <testcase name='testTrimHandleClamping()' classname='TrimHandleTests' time='0.0044'/>
+      <testcase name='testTrimHandleLeftTrim()' classname='TrimHandleTests' time='0.002'/>
+      <testcase name='testTrimHandleMinimumDuration()' classname='TrimHandleTests' time='0.0017'/>
+      <testcase name='testTrimHandleRightTrim()' classname='TrimHandleTests' time='0.0017'/>
     </testsuite>
-    <testsuite name='VoiceIsolationServiceTests' time='0.0029' tests='2' failures='0' skipped='0'>
-      <testcase name='testInitialization()' classname='VoiceIsolationServiceTests' time='0.0016'/>
-      <testcase name='testIntensityParameter()' classname='VoiceIsolationServiceTests' time='0.0013'/>
+    <testsuite name='VoiceIsolationServiceTests' time='0.0041' tests='2' failures='0' skipped='0'>
+      <testcase name='testInitialization()' classname='VoiceIsolationServiceTests' time='0.0027'/>
+      <testcase name='testIntensityParameter()' classname='VoiceIsolationServiceTests' time='0.0014'/>
     </testsuite>
     <properties>
       <property name='Configuration' value='Test Scheme Action'/>

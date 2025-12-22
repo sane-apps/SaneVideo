@@ -98,6 +98,16 @@ struct VoiceoverSettingsSheet: View {
 
     private var settingsSection: some View {
         @Bindable var voiceoverService = voiceoverService
+        // Create Double bindings from Float properties
+        let speechRateBinding = Binding<Double>(
+            get: { Double(voiceoverService.speechRate) },
+            set: { voiceoverService.speechRate = Float($0) }
+        )
+        let pitchBinding = Binding<Double>(
+            get: { Double(voiceoverService.pitchMultiplier) },
+            set: { voiceoverService.pitchMultiplier = Float($0) }
+        )
+
         return VStack(alignment: .leading, spacing: 16) {
             Label(
                 String(localized: "voiceover.settings.header", defaultValue: "Settings"),
@@ -107,7 +117,7 @@ struct VoiceoverSettingsSheet: View {
 
             LabeledSliderControl(
                 label: String(localized: "voiceover.settings.speed.title", defaultValue: "Speed"),
-                value: $voiceoverService.speechRate,
+                value: speechRateBinding,
                 range: 0.25...1.0,
                 step: 0.05,
                 valueFormatter: { _ in speedLabel },
@@ -118,7 +128,7 @@ struct VoiceoverSettingsSheet: View {
 
             LabeledSliderControl(
                 label: String(localized: "voiceover.settings.pitch.title", defaultValue: "Pitch"),
-                value: $voiceoverService.pitchMultiplier,
+                value: pitchBinding,
                 range: 0.5...2.0,
                 step: 0.1,
                 valueFormatter: { _ in pitchLabel },

@@ -142,6 +142,7 @@ extension ProjectState {
 
     // MARK: - Rotation
 
+    /// Rotate clip clockwise by 90 degrees
     func rotateClip(_ clip: VideoClip) {
         guard !isProcessing else { return }
         guard var project = currentProject else { return }
@@ -173,6 +174,42 @@ extension ProjectState {
 
             AppLogger.project.info("Rotated clip \(clip.id) to \(newRotationName)")
             ServiceContainer.shared.toastManager.show("Rotated \(newRotationName)")
+        }
+    }
+
+    /// Set clip rotation to a specific angle
+    func setClipRotation(_ clip: VideoClip, to rotation: VideoClip.Rotation) {
+        guard !isProcessing else { return }
+        guard var project = currentProject else { return }
+
+        // Skip if already at target rotation
+        guard clip.rotation != rotation else { return }
+
+        var timeline = project.timeline
+        var clipFound = false
+
+        for (trackIndex, track) in timeline.tracks.enumerated() {
+            if let index = track.clips.firstIndex(where: { $0.id == clip.id }) {
+                registerUndo("Set Rotation")
+
+                var mutableTrack = track
+                var mutableClip = track.clips[index]
+                mutableClip.rotation = rotation
+
+                mutableTrack.clips[index] = mutableClip
+                timeline.tracks[trackIndex] = mutableTrack
+                clipFound = true
+                break
+            }
+        }
+
+        if clipFound {
+            project.timeline = timeline
+            currentProject = project
+            saveProject(project)
+
+            AppLogger.project.info("Set clip \(clip.id) rotation to \(rotation.displayName)")
+            ServiceContainer.shared.toastManager.show("Rotated \(rotation.displayName)")
         }
     }
 }

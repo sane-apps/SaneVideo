@@ -16,12 +16,12 @@
 1. **USE SaneMaster.rb FIRST**: Use `./Scripts/SaneMaster.rb` for verification, setup, and diagnostics.
 2. **FILE CREATION = XCODEGEN**: If you create a new file, run `xcodegen generate` immediately.
 3. **MAX FILE SIZE = 500 LINES**: Absolute limit per Swift file. Enforced by automation.
-4. **SAFETY FIRST**Every bug fix **MUST** have a regression test.
+4. **SAFETY FIRST**: Every bug fix **MUST** have a regression test.
 5. **NO HALLUCINATIONS**: Verify APIs via web search.
 6. **FIX THE TOOL (Critical Protocol)**
    - **Trigger**: Persistent errors or repetitive manual work.
    - **Action**: STOP. Fix or upgrade the underlying tool (`SaneMaster.rb`).
-   - **Constraint**: Never guess more than twice.
+   - **Constraint**: If you don't get something right twice in a row, check the web for help.
 7. **WEB SEARCH IS MANDATORY**: Search authoritative docs when stuck.
 8. **MISSING TOOL = UPGRADE SANEMASTER**: Do not create separate scripts. Upgrade the central `SaneMaster.rb`.
 
@@ -58,15 +58,79 @@ open SaneVideo.xcodeproj
 ### Core Philosophy
 
 1. **Strict Modularity**: Small, focused files (<500 lines).
-2. **Concurrency by Design**: Use `actor` for shared state. avoid manual locks.
+2. **Concurrency by Design**: Use `actor` for shared state. Avoid manual locks.
 3. **Protocol-Driven**: Define protocols (`CameraServiceProtocol`) before implementation.
 4. **Avoid Singletons**: Inject dependencies. Minimize `AppState.shared`.
 
 ### System Layers
 
-1. **UI Layer (SwiftUI)**: Views bind to state. minimal logic.
+```text
+User Action → AppState → Service → Model Update → UI Refresh
+```
+
+1. **UI Layer (SwiftUI)**: Views bind to state. Minimal logic.
 2. **Service Layer**: Heavy lifting (AVFoundation, Vision). Actors.
 3. **Core Layer**: Models, Extensions, Utilities.
+
+### Directory Structure
+
+```text
+SaneVideo/
+├── Core/                  # Foundation types
+│   ├── Models/           # Domain models (VideoProject, Timeline, VideoClip)
+│   ├── Protocols/        # Service protocols for DI
+│   ├── Utilities/        # Shared utilities (TimecodeFormatter)
+│   ├── DI/               # Dependency injection container
+│   ├── Engine/           # Core engines
+│   ├── Extensions/       # Swift extensions
+│   ├── Performance/      # Performance monitoring
+│   ├── Rendering/        # Rendering utilities
+│   ├── AppError.swift    # Unified error handling
+│   └── AppLogger.swift   # Centralized logging
+├── Services/             # Business logic (20+ services)
+│   ├── AI/              # AI providers (OpenAI, Gemini, Apple Intelligence)
+│   ├── Audio/           # Audio processing, waveforms, voice isolation
+│   ├── Camera/          # Camera capture (CameraManager)
+│   ├── Captions/        # Caption generation
+│   ├── Export/          # Export engine (ExportEngine)
+│   ├── Project/         # Persistence (ProjectStore)
+│   ├── Recording/       # Recording engine (RecordingEngine)
+│   ├── SmartFeatures/   # Magic Fix, smart tools
+│   ├── Thumbnails/      # Smart thumbnail generation
+│   ├── Timeline/        # Timeline operations
+│   └── Vision/          # Vision ML (face tracking, segmentation, saliency)
+├── State/               # App state management
+│   ├── AppState.swift   # Main app state coordinator
+│   ├── ProjectState.swift + extensions  # Project-specific state
+│   ├── RecordingState.swift
+│   ├── PlaybackState.swift
+│   └── CameraState.swift
+├── Views/               # SwiftUI views
+│   ├── Components/      # Reusable UI components
+│   ├── Sheets/          # Modal sheets
+│   ├── MainContentView.swift
+│   ├── TimelineView.swift
+│   └── ...
+└── Windows/             # Custom windows (FloatingControls, PiP)
+```
+
+### Concurrency Model
+
+- **@MainActor**: AppState, all ObservableObjects, UI updates
+- **Background queues**: AVFoundation operations, file I/O
+- **Swift Concurrency**: Prefer async/await over completion handlers
+
+### Logging Categories
+
+```swift
+AppLogger.camera      // AVCapture operations
+AppLogger.recording   // Recording lifecycle
+AppLogger.export      // Export operations
+AppLogger.timeline    // Timeline edits
+AppLogger.project     // Persistence
+AppLogger.ui          // UI events
+AppLogger.general     // Everything else
+```
 
 ---
 
@@ -144,15 +208,6 @@ We balance speed and robustness using two tiers of tests. **Use the right tool f
 
 ### Tier 1: Unit Tests (Fast, <1s)
 
-### 8.3. Tier 3: Performance & Robustness
-
-- **Objective**: Prevent regressions in export speed and memory usage.
-- **Location**: `SaneVideoUITests/SaneEditorFeatureTests.swift` -> `testExportPerformance`
-- **Metrics**: Uses `XCTClockMetric` and `XCTMemoryMetric`.
-- **Large Assets**: All Timeline UIs MUST use `LazyHStack` or equivalent JIT loading to support 10h+ videos without OOM.
-- **Command**: `xcodebuild test ... -only-testing:SaneVideoUITests/SaneEditorFeatureTests/testExportPerformance`
-- **Best Practice**: Run before releases. Inspect memory deltas to catch leaks.
-
 - **Target**: `SaneVideoTests`
 - **Scope**: Isolated logic, regex parsing, state machines, math algorithms.
 - **Data**: Mocked services, small buffers. **NO** file I/O or app launching.
@@ -164,6 +219,15 @@ We balance speed and robustness using two tiers of tests. **Use the right tool f
 - **Scope**: End-to-end user flows, AVFoundation pipeline, CoreML execution.
 - **Data**: Real assets (`Tests/Assets/test_video.mp4` or `test_silence.mp4`).
 - **Goal**: Verify system stability and functional output.
+
+### Tier 3: Performance & Robustness
+
+- **Objective**: Prevent regressions in export speed and memory usage.
+- **Location**: `SaneVideoUITests/SaneEditorFeatureTests.swift` -> `testExportPerformance`
+- **Metrics**: Uses `XCTClockMetric` and `XCTMemoryMetric`.
+- **Large Assets**: All Timeline UIs MUST use `LazyHStack` or equivalent JIT loading to support 10h+ videos without OOM.
+- **Command**: `xcodebuild test ... -only-testing:SaneVideoUITests/SaneEditorFeatureTests/testExportPerformance`
+- **Best Practice**: Run before releases. Inspect memory deltas to catch leaks.
 
 ### Best Practices
 

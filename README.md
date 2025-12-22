@@ -70,8 +70,8 @@ SaneVideo is a modern,native macOS application built with SwiftUI and AVFoundati
 
 ## 🎯 Requirements
 
-- macOS 14.0 (Sonoma) or later
-- Apple Silicon (M1/M2/M3) primary target
+- macOS 26.2 (Tahoe) or later
+- Apple Silicon (M1/M2/M3/M4) only
 - 8GB RAM minimum (16GB recommended for 4K editing)
 
 ---
@@ -134,27 +134,9 @@ SaneVideo is a modern,native macOS application built with SwiftUI and AVFoundati
 
 ## 🏗️ Architecture
 
-```
-SaneVideo/
-├── SaneVideoApp.swift          # App entry point + AppDelegate
-├── AppState.swift              # Centralized state management
-├── Models.swift                # Data models (Project, Timeline, Clip, Filters)
-├── MainContentView.swift       # Main UI (Sidebar, Player, Timeline)
-├── RecordingEngine.swift       # AVFoundation + ScreenCaptureKit
-├── VideoFilterEngine.swift     # Metal + Core Image filters
-├── ExportEngine.swift          # AVAssetExportSession wrapper
-├── Assets.xcassets/            # App icons and assets
-└── SaneVideo.entitlements      # App Sandbox permissions
-```
+See [DEVELOPMENT.md](DEVELOPMENT.md) for full architecture details.
 
-### Key Technologies
-
-- **SwiftUI**: Declarative UI with native macOS components
-- **AVFoundation**: Video playback and composition
-- **ScreenCaptureKit**: High-performance screen recording
-- **Metal**: GPU-accelerated real-time filters
-- **Core Image**: Professional-grade image processing
-- **Combine**: Reactive state management
+**Key Technologies**: SwiftUI, AVFoundation, ScreenCaptureKit, Metal, Core Image, Vision, Core ML
 
 ---
 

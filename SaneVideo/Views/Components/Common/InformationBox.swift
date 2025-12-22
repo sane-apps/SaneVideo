@@ -1,0 +1,77 @@
+//
+//  InformationBox.swift
+//  SaneVideo
+//
+//  Reusable information/result display box with colored background
+//
+
+import SwiftUI
+
+/// A styled box for displaying analysis results, status messages, etc.
+struct InformationBox: View {
+    let text: String
+    var color: Color = .secondary
+    var icon: String?
+
+    var body: some View {
+        HStack(spacing: 6) {
+            if let icon = icon {
+                Image(systemName: icon)
+                    .font(.caption2)
+                    .foregroundColor(color)
+            }
+            Text(text)
+                .font(.caption2)
+                .foregroundColor(.secondary)
+        }
+        .padding(6)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(color.opacity(0.1))
+        .cornerRadius(4)
+    }
+}
+
+/// A styled box for displaying estimated values (e.g., file size)
+struct EstimateBox: View {
+    let label: String
+    let value: String
+    var icon: String = "doc.fill"
+    var color: Color = .orange
+
+    var body: some View {
+        HStack {
+            Label(label, systemImage: icon)
+                .font(.caption)
+            Spacer()
+            Text(value)
+                .font(.caption.weight(.medium))
+                .foregroundStyle(color)
+        }
+        .padding(10)
+        .background(color.opacity(0.1))
+        .cornerRadius(8)
+    }
+}
+
+/// A list of detected items (e.g., OCR results)
+struct DetectedItemsList: View {
+    let items: [String]
+    var maxItems: Int = 3
+    var color: Color = .blue
+
+    var body: some View {
+        if !items.isEmpty {
+            VStack(alignment: .leading, spacing: 2) {
+                ForEach(items.prefix(maxItems), id: \.self) { item in
+                    Text("• \(item)")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                }
+            }
+            .padding(6)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(color.opacity(0.1))
+            .cornerRadius(4)
+        }
+    }
+}

@@ -239,13 +239,6 @@ struct RecordingModeView: View {
                 .padding(.bottom, 40)
             }
 
-            // 3. Top: Mode Switcher (Always Visible)
-            VStack {
-                ModeSwitcherView()
-                    .padding(.top, 20)
-                Spacer()
-            }
-
             // Countdown Overlay
             if appState.recordingState.countdownValue > 0 {
                 ZStack {

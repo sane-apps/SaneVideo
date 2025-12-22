@@ -187,9 +187,27 @@ struct InspectorHeader: View {
 
 struct EmptySelectionView: View {
     var body: some View {
-        Text(String(localized: "inspector.empty_selection", defaultValue: "No selection"))
-            .foregroundColor(.secondary)
-            .padding(.top, 40)
+        VStack(spacing: 20) {
+            Spacer().frame(height: 60)
+            
+            Image(systemName: "selection.pin.in.out")
+                .font(.system(size: 40))
+                .foregroundColor(.secondary.opacity(0.3))
+            
+            VStack(spacing: 8) {
+                Text("Nothing Selected")
+                    .font(.system(size: 14, weight: .bold))
+                
+                Text("Select a clip in the timeline\nto view and edit properties.")
+                    .font(.system(size: 12))
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+                    .lineSpacing(4)
+            }
+            .padding(.horizontal, 20)
+            
+            Spacer()
+        }
     }
 }
 

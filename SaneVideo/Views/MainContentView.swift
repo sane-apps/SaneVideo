@@ -20,6 +20,7 @@ struct MainContentView: View {
     @State private var showGIFSheet = false
     @State private var showTranscriptSheet = false
     @State private var showLogs = false
+    @State private var isDraggingFile = false
     // Note: selectedClipIds moved to AppState for global access
 
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
@@ -115,7 +116,7 @@ struct MainContentView: View {
                 )
             }
             // Refactored Modifiers
-            .withFileDropHandling()
+            .withFileDropHandling(isTargeted: $isDraggingFile)
             .withGlobalSheets()
             .withToastOverlay()
             // Consolidated Sheets for UI Test Reliability
@@ -192,6 +193,28 @@ struct MainContentView: View {
                 }
             }
             .tooltipOverlay()
+            .overlay {
+                if isDraggingFile {
+                    ZStack {
+                        Color.black.opacity(0.4)
+                            .blur(radius: 20)
+                        
+                        VStack(spacing: 20) {
+                            Image(systemName: "plus.square.dashed")
+                                .font(.system(size: 80, weight: .light))
+                                .foregroundStyle(Theme.Colors.accentGradient)
+                            
+                            Text("Drop to Import Media")
+                                .font(.system(size: 24, weight: .bold))
+                                .foregroundColor(.white)
+                        }
+                    }
+                    .ignoresSafeArea()
+                    .transition(.opacity.combined(with: .scale(scale: 1.1)))
+                    .zIndex(1000)
+                }
+            }
+            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isDraggingFile)
     }
 
     var mainContent: some View {
@@ -214,74 +237,88 @@ struct MainContentView: View {
                 ))
             }
         }
+        .navigationTitle("")
         .animation(.spring(response: 0.4, dampingFraction: 0.8), value: appState.appMode)
         .toolbar {
             ToolbarItem(placement: .navigation) {
-                HStack(spacing: 8) {
-                    Button(action: { 
-                        withAnimation {
-                            appState.appMode = (appState.appMode == .recording ? .editing : .recording)
-                        }
-                    }, label: {
-                        Label(appState.appMode == .recording ? "Editor" : "Record", 
-                              systemImage: appState.appMode == .recording ? "scissors" : "record.circle")
-                    })
-                    .keyboardShortcut("M", modifiers: [.command])
-                    .help("Toggle Record/Edit Mode (Cmd+M)")
-                }
+                Button(action: { 
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                        appState.appMode = (appState.appMode == .recording ? .editing : .recording)
+                    }
+                }, label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: appState.appMode == .recording ? "scissors" : "record.circle")
+                            .foregroundStyle(appState.appMode == .recording ? AnyShapeStyle(Theme.Colors.accentGradient) : AnyShapeStyle(Color.red))
+                        
+                        Text(appState.appMode == .recording ? "Editor" : "Record")
+                    }
+                })
+                .buttonStyle(.bordered)
+                .keyboardShortcut("M", modifiers: [.command])
+                .help("Toggle Record/Edit Mode (Cmd+M)")
             }
             
             ToolbarItem(placement: .automatic) {
-                HStack(spacing: 12) {
-                    Button(action: { undoManager?.undo() }, label: {
-                        Image(systemName: "arrow.uturn.backward")
-                    })
-                    .disabled(!(undoManager?.canUndo ?? false))
-                    .keyboardShortcut("z", modifiers: [.command])
+                if appState.appMode == .editing {
+                    ControlGroup {
+                        Button(action: { undoManager?.undo() }, label: {
+                            Label("Undo", systemImage: "arrow.uturn.backward")
+                        })
+                        .disabled(!(undoManager?.canUndo ?? false))
+                        .keyboardShortcut("z", modifiers: [.command])
 
-                    Button(action: { undoManager?.redo() }, label: {
-                        Image(systemName: "arrow.uturn.forward")
-                    })
-                    .disabled(!(undoManager?.canRedo ?? false))
-                    .keyboardShortcut("z", modifiers: [.command, .shift])
+                        Button(action: { undoManager?.redo() }, label: {
+                            Label("Redo", systemImage: "arrow.uturn.forward")
+                        })
+                        .disabled(!(undoManager?.canRedo ?? false))
+                        .keyboardShortcut("z", modifiers: [.command, .shift])
+                    }
                 }
             }
             
             ToolbarItem(placement: .principal) {
                 if appState.appMode == .editing {
-                    HStack(spacing: 4) {
-                        Image(systemName: "sparkles")
-                            .symbolEffect(.pulse, options: .repeating)
-                            .foregroundStyle(Theme.Colors.accentGradient)
-                        Text(appState.projectState.currentProject?.name ?? "Untitled Project")
-                            .font(.headline)
-                    }
+                    Button(action: {
+                        NotificationCenter.default.post(name: NSNotification.Name("ShowRenameProjectDialog"), object: nil)
+                    }, label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "sparkles")
+                                .foregroundStyle(Theme.Colors.accentGradient)
+                            
+                            Text(appState.projectState.currentProject?.name ?? "Untitled Project")
+                                .fontWeight(.medium)
+                        }
+                    })
+                    .buttonStyle(.bordered)
+                    .help("Rename Project")
                 }
             }
 
             ToolbarItem(placement: .primaryAction) {
-                HStack(spacing: 12) {
-                    // MAGIC QUICK BUTTON
-                    Button(action: { 
-                        // Trigger Magic Fix for selected clip or global project
-                        NotificationCenter.default.post(name: NSNotification.Name("TriggerMagicFix"), object: nil)
-                    }, label: {
-                        Label("Magic Fix", systemImage: "wand.and.stars")
-                            .foregroundStyle(Theme.Colors.accentGradient)
-                    })
-                    .help("Apply Magic Fix to Selected Clip (Cmd+Shift+M)")
-                    .keyboardShortcut("m", modifiers: [.command, .shift])
+                if appState.appMode == .editing {
+                    HStack(spacing: 12) {
+                        // MAGIC QUICK BUTTON (Global)
+                        Button(action: { 
+                            NotificationCenter.default.post(name: NSNotification.Name("TriggerMagicFix"), object: nil)
+                        }, label: {
+                            Label("Magic Fix", systemImage: "wand.and.stars")
+                                .foregroundStyle(Theme.Colors.accentGradient)
+                        })
+                        .help("Auto-Fix Project: Silence, Fillers, and Highlights (Cmd+Shift+M)")
+                        .keyboardShortcut("m", modifiers: [.command, .shift])
 
-                    Divider()
-                        .frame(height: 16)
+                        Divider()
+                            .frame(height: 16)
 
-                    // SHARE/EXPORT
-                    Button(action: { appState.showExportSheet = true }, label: {
-                        Label("Share", systemImage: "square.and.arrow.up")
-                    })
-                    .buttonStyle(.borderedProminent)
-                    .tint(.blue)
-                    .help("Export and Share Video")
+                        // SHARE/EXPORT
+                        Button(action: { appState.showExportSheet = true }, label: {
+                            Label("Share", systemImage: "square.and.arrow.up")
+                        })
+                        .buttonStyle(.borderedProminent)
+                        .tint(.blue)
+                        .help("Export Gallery (Cmd+E)")
+                        .keyboardShortcut("e", modifiers: [.command])
+                    }
                 }
             }
         }

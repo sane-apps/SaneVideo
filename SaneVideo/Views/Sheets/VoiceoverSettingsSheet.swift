@@ -270,17 +270,11 @@ private struct VoiceButton: View {
                         .foregroundStyle(.blue)
                 }
             }
-            .padding(10)
-            .background(
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(isSelected ? Color.blue.opacity(0.15) : Color.white.opacity(0.05))
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 8)
-                    .stroke(isSelected ? Color.blue : Color.white.opacity(0.1), lineWidth: 1)
-            )
+            .frame(maxWidth: .infinity)
+            .padding(8)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.bordered)
+        .tint(isSelected ? .blue : .secondary)
         .accessibilityIdentifier("voiceover.voice.\(voice.identifier).button")
     }
 

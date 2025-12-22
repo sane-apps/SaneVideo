@@ -118,19 +118,13 @@ struct TranscriptExportSheet: View {
             )
             .font(.subheadline.weight(.semibold))
 
-            LazyVGrid(columns: [
-                GridItem(.flexible()),
-                GridItem(.flexible())
-            ], spacing: 10) {
+            Picker("", selection: $selectedFormat) {
                 ForEach(TranscriptFormat.allCases) { format in
-                    FormatButton(
-                        format: format,
-                        isSelected: selectedFormat == format,
-                        onSelect: { selectedFormat = format }
-                    )
-                    .accessibilityIdentifier("transcript.format.\(format.rawValue)")
+                    Label(format.displayName, systemImage: format.icon).tag(format)
                 }
             }
+            .pickerStyle(.menu)
+            .labelsHidden()
         }
     }
 

@@ -40,12 +40,17 @@ enum AppError: LocalizedError, Identifiable {
     // Screen capture errors
     case screenCaptureUnavailable  // User cancelled picker or system error
 
+    // Vision errors
+    case visionError(String)
+
     // Unknown
     case captionGenerationFailed(String)
     case unknown(Error)
 
     var errorDescription: String? {
         switch self {
+        case let .visionError(reason):
+            "Vision analysis failed: \(reason)"
         // Camera
         case .cameraUnavailable:
             "Camera is not available"
@@ -143,6 +148,8 @@ enum AppError: LocalizedError, Identifiable {
             "Screen capture unavailable. The system picker may have been cancelled. Click 'Share Screen' to try again."
         case let .captionGenerationFailed(reason):
             "Caption generation failed: \(reason). Try: 1) Check microphone permissions, 2) Ensure audio track exists, 3) Try again."
+        case let .visionError(reason):
+             "Vision analysis failed: \(reason). Try: 1) Ensure the video contains clear visuals, 2) Try a different clip."
         case let .recordingEngineError(message):
             "Recording error: \(message). Try: 1) Check permissions, 2) Restart the app, 3) Check disk space."
         case .exportCancelled:

@@ -445,7 +445,7 @@ extension ProjectState {
         // applyMagicRemove is usually called within performMagicFix which handles isProcessing
         do {
             _ = ServiceContainer.shared.personSegmentationService
-            let generativeService = ServiceContainer.shared.generativeVisionService
+            // let generativeService = ServiceContainer.shared.generativeVisionService
             
             AppLogger.vision.info("🪄 ProjectState: Applying Magic Remove to clip \(clip.id)")
             
@@ -466,7 +466,7 @@ extension ProjectState {
 
     func applyCinematicStyle(to clip: VideoClip) async {
         do {
-            let generativeService = ServiceContainer.shared.generativeVisionService
+            // let generativeService = ServiceContainer.shared.generativeVisionService
             AppLogger.vision.info("🪄 ProjectState: Applying Cinematic Style (Generative)")
             
             // Logic: Prompt-based restyling via Stable Diffusion style transfer.
@@ -480,6 +480,44 @@ extension ProjectState {
             }
         } catch {
             AppLogger.vision.error("Style transfer failed: \(error)")
+        }
+    }
+    
+    // MARK: - Smart Thumbnails
+    
+    func regenerateSmartThumbnail(for clip: VideoClip) async {
+        guard !isProcessing, currentProject != nil else { return }
+        isProcessing = true
+        await MainActor.run { ServiceContainer.shared.toastManager.show("🖼️ Finding best thumbnail...") }
+        defer { Task { @MainActor in self.isProcessing = false } }
+        
+        do {
+            let service = ServiceContainer.shared.smartThumbnailService
+            let newThumbnailURL = try await service.generateSmartThumbnail(for: clip.url)
+            
+            await MainActor.run {
+                guard var project = currentProject else { return }
+                // Find and update clip
+                for (tIdx, track) in project.timeline.tracks.enumerated() {
+                    if let cIdx = track.clips.firstIndex(where: { $0.id == clip.id }) {
+                        var updatedClip = track.clips[cIdx]
+                        updatedClip.thumbnailURL = newThumbnailURL
+                        
+                        registerUndo("Update Thumbnail")
+                        project.timeline.tracks[tIdx].clips[cIdx] = updatedClip
+                        currentProject = project
+                        saveProject(project)
+                        
+                        ServiceContainer.shared.toastManager.show("🖼️ Thumbnail updated!")
+                        return
+                    }
+                }
+            }
+        } catch {
+            await MainActor.run {
+                ServiceContainer.shared.toastManager.show("Thumbnail generation failed", type: .error)
+                AppLogger.vision.error("Smart Thumbnail failed: \(error)")
+            }
         }
     }
 

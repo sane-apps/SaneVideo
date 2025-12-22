@@ -449,6 +449,31 @@ class UITestMaster
       content = File.read(app_log)
       
       puts "  --- App Log Heuristics ---"
+      # Error Detection
+      puts "  🔴 CMIO CONNECTION INVALID (Tahoe Race)" if content.include?("CMIOExtensionProviderHostContext.m") && content.include?("Connection invalid")
+      puts "  🔴 CMIO IDENTITY ERROR (Code -7)" if content.include?("kCSIdentityInvalidPosixNameErr") && content.include?("Code -7")
+      
+      # Noise Detection
+      hydration_calls = content.scan(/hydrateProject called!/).size
+      if hydration_calls > 5
+        puts "  🔴 EXCESSIVE HYDRATION: #{hydration_calls} calls detected! (Expected < 5 at boot)"
+      elsif hydration_calls > 0
+        puts "  🟡 Project hydration occurred (#{hydration_calls} calls)."
+      end
+
+      # Security & Performance
+      puts "  🔴 SECURITY SCOPE LEAK: Uneven lock/unlock count" if content.scan(/🔐 Started security scope/).size != content.scan(/🔓 Stopped security scope/).size
+      
+      # General Catch-all for Proactive Debugging
+      content.each_line do |line|
+        if line.match?(/error:|fault:|panic:|fatal/i)
+          puts "  ❌ CRITICAL LOG: #{line.strip}"
+        elsif line.match?(/warning:|⚠️/i) && !line.include?("com.apple") # Filter system noise
+          puts "  🟡 LOG WARNING: #{line.strip}"
+        end
+      end
+
+      # General Verification
       puts "  🔴 WINDOW FOCUS BLOCKED" if content.include?("makeKeyWindow] called on") && content.include?("returned NO")
       puts "  🟡 DOUBLE BOOTSTRAP DETECTED" if content.scan(/Calling bootstrapEditorForTesting/).size > 1
       puts "  🔴 MASKING DETECTED: SwiftUI tree is 'Disabled'." if content.include?("SaneVideo, {{Disabled}}")

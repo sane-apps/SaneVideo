@@ -122,7 +122,7 @@ actor SmartThumbnailService {
         // - Score bonus for face size (closer is usually better for thumbnails)
         
         // Check results
-        if let faceObservations = faceRequest.results as? [VNFaceObservation], !faceObservations.isEmpty {
+        if let faceObservations = faceRequest.results, !faceObservations.isEmpty {
             // Find max quality
             // Note: VNDetectFaceCaptureQualityRequest results are VNFaceObservation with a specific property?
             // Actually, `VNDetectFaceCaptureQualityRequest` produces `VNFaceObservation`s populated with `faceCaptureQuality`.

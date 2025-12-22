@@ -148,6 +148,7 @@ class ProjectState {
                         UserDefaults.standard.string(forKey: "UI_TESTING") != nil ||
                         ProcessInfo.processInfo.environment["UI_TESTING"] != nil ||
                         ProcessInfo.processInfo.environment["OPEN_EDITOR"] != nil ||
+                        ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil ||
                         ProcessInfo.processInfo.arguments.contains("-ui_testing") ||
                         ProcessInfo.processInfo.arguments.contains("-open_editor")
         
@@ -291,9 +292,9 @@ class ProjectState {
         for (trackIndex, track) in timeline.tracks.enumerated() {
             var mutableTrack = track
             var cumulativeTime = CMTime.zero
-            for i in 0 ..< mutableTrack.clips.count {
-                mutableTrack.clips[i].startTime = cumulativeTime
-                cumulativeTime = CMTimeAdd(cumulativeTime, mutableTrack.clips[i].effectiveDuration)
+            for clipIndex in 0 ..< mutableTrack.clips.count {
+                mutableTrack.clips[clipIndex].startTime = cumulativeTime
+                cumulativeTime = CMTimeAdd(cumulativeTime, mutableTrack.clips[clipIndex].effectiveDuration)
             }
             timeline.tracks[trackIndex] = mutableTrack
         }

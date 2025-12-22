@@ -24,6 +24,7 @@ struct VideoClip: Identifiable, Equatable, Hashable, Codable, Sendable {
     var volume: Float = 1.0
     var isMuted: Bool = false
     var speed: Double = 1.0
+    var thumbnailURL: URL? // Smart Thumbnail
 
     // Visual
     var rotation: Rotation = .none
@@ -97,7 +98,7 @@ struct VideoClip: Identifiable, Equatable, Hashable, Codable, Sendable {
     }
 
     // Internal init for full property setting
-    init(id: UUID, url: URL, duration: CMTime, trimStart: CMTime, trimEnd: CMTime, startTime: CMTime, volume: Float, speed: Double, isMuted: Bool, captions: [Caption] = [], transition: VideoTransition? = nil, overlays: [VideoOverlay] = [], bookmarkData: Data? = nil, showCursorHighlight: Bool = false, cursorDataURL: URL? = nil) {
+    init(id: UUID, url: URL, duration: CMTime, trimStart: CMTime, trimEnd: CMTime, startTime: CMTime, volume: Float, speed: Double, isMuted: Bool, captions: [Caption] = [], transition: VideoTransition? = nil, overlays: [VideoOverlay] = [], bookmarkData: Data? = nil, showCursorHighlight: Bool = false, cursorDataURL: URL? = nil, thumbnailURL: URL? = nil) {
         self.id = id
         self.url = url
         self.duration = duration
@@ -113,6 +114,7 @@ struct VideoClip: Identifiable, Equatable, Hashable, Codable, Sendable {
         self.bookmarkData = bookmarkData
         self.showCursorHighlight = showCursorHighlight
         self.cursorDataURL = cursorDataURL
+        self.thumbnailURL = thumbnailURL
         self.useSmoothCutForRemovals = false
     }
 
@@ -191,6 +193,7 @@ struct VideoClip: Identifiable, Equatable, Hashable, Codable, Sendable {
             lhs.effects == rhs.effects &&
             lhs.isVoiceIsolationEnabled == rhs.isVoiceIsolationEnabled &&
             lhs.isGatingEnabled == rhs.isGatingEnabled &&
+            lhs.thumbnailURL == rhs.thumbnailURL &&
             lhs.useSmoothCutForRemovals == rhs.useSmoothCutForRemovals
     }
 
@@ -208,6 +211,7 @@ struct VideoClip: Identifiable, Equatable, Hashable, Codable, Sendable {
         hasher.combine(effects)
         hasher.combine(isVoiceIsolationEnabled)
         hasher.combine(isGatingEnabled)
+        hasher.combine(thumbnailURL)
         hasher.combine(useSmoothCutForRemovals)
     }
 
@@ -224,6 +228,7 @@ struct VideoClip: Identifiable, Equatable, Hashable, Codable, Sendable {
         case privacyRegions
         case isVoiceIsolationEnabled
         case isGatingEnabled
+        case thumbnailURL
     }
 
     init(from decoder: Decoder) throws {
@@ -261,6 +266,7 @@ struct VideoClip: Identifiable, Equatable, Hashable, Codable, Sendable {
         privacyRegions = try container.decodeIfPresent([PrivacyRegion].self, forKey: .privacyRegions) ?? []
         isVoiceIsolationEnabled = try container.decodeIfPresent(Bool.self, forKey: .isVoiceIsolationEnabled) ?? false
         isGatingEnabled = try container.decodeIfPresent(Bool.self, forKey: .isGatingEnabled) ?? false
+        thumbnailURL = try container.decodeIfPresent(URL.self, forKey: .thumbnailURL)
     }
 
     func encode(to encoder: Encoder) throws {
@@ -288,5 +294,6 @@ struct VideoClip: Identifiable, Equatable, Hashable, Codable, Sendable {
         try container.encode(privacyRegions, forKey: .privacyRegions)
         try container.encode(isVoiceIsolationEnabled, forKey: .isVoiceIsolationEnabled)
         try container.encode(isGatingEnabled, forKey: .isGatingEnabled)
+        try container.encodeIfPresent(thumbnailURL, forKey: .thumbnailURL)
     }
 }

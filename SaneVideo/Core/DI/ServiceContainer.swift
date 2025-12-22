@@ -66,6 +66,7 @@ final class ServiceContainer {
     let saliencyService: SaliencyService
     let textRecognitionService: TextRecognitionService
     let generativeVisionService: GenerativeVisionService
+    let smartThumbnailService: SmartThumbnailService
     
     // MARK: - Project/Timeline Services
     
@@ -146,6 +147,7 @@ final class ServiceContainer {
         self.saliencyService = SaliencyService()
         self.textRecognitionService = TextRecognitionService()
         self.generativeVisionService = GenerativeVisionService(ciContext: renderingService.ciContext)
+        self.smartThumbnailService = SmartThumbnailService()
         
         // Utility Services  
         self.logManager = LogManager()

@@ -34,29 +34,17 @@ struct MainContentView: View {
         @Bindable var appState = appState
         @Bindable var errorPresenter = errorPresenter
         return mainContent
-            .background(Color(NSColor.windowBackgroundColor))
+            .background(.regularMaterial)
             .overlay(alignment: .top) {
-                if ThermalManager.shared.isThermalPressureHigh {
-                    VStack {
-                        HStack {
-                            Image(systemName: "thermometer.sun.fill")
-                                .foregroundColor(.orange)
-                            Text(ThermalManager.shared.performanceLevel == .emergency ? 
-                                 String(localized: "thermal.emergency", defaultValue: "System Overheating: Performance reduced") :
-                                 String(localized: "thermal.throttled", defaultValue: "System Hot: Optimizing performance"))
-                                .font(.caption)
-                                .fontWeight(.medium)
-                            Spacer()
-                        }
-                        .padding(8)
-                        .background(Color.black.opacity(0.8))
-                        .cornerRadius(8)
-                        .padding()
-                        Spacer()
-                    }
-                    .transition(.move(edge: .top).combined(with: .opacity))
-                    .accessibilityIdentifier("thermal.status.overlay")
+                MagicOverlayView()
+            }
+            // Global Keyboard Shortcuts
+            .background {
+                Button("") {
+                    showLogs.toggle()
                 }
+                .keyboardShortcut("l", modifiers: [.command])
+                .opacity(0)
             }
             .onAppear {
                 // Connect SwiftUI's UndoManager to ProjectState
@@ -241,6 +229,43 @@ struct MainContentView: View {
         .animation(.spring(response: 0.4, dampingFraction: 0.8), value: appState.appMode)
         .toolbar {
             ToolbarItem(placement: .navigation) {
+                HStack(spacing: 12) {
+                    // 1. Branding
+                    HStack(spacing: 0) {
+                        Text("SANE")
+                            .font(.system(size: 15, weight: .bold))
+                            .tracking(1.5)
+                        Text("VIDEO")
+                            .font(.system(size: 15, weight: .thin))
+                            .tracking(1.5)
+                    }
+                    .foregroundStyle(.primary)
+                    
+                    // 2. Project Name (Moved from Center)
+                    if appState.appMode == .editing {
+                        Divider().frame(height: 16)
+                        
+                        Button(action: {
+                            NotificationCenter.default.post(name: NSNotification.Name("ShowRenameProjectDialog"), object: nil)
+                        }, label: {
+                            HStack(spacing: 4) {
+                                Text(appState.projectState.currentProject?.name ?? "Untitled Project")
+                                    .font(.system(size: 13, weight: .medium))
+                                    .foregroundStyle(.secondary)
+                                Image(systemName: "pencil")
+                                    .font(.system(size: 10))
+                                    .foregroundStyle(.tertiary)
+                            }
+                        })
+                        .buttonStyle(.plain)
+                        .help("Rename Project")
+                    }
+                }
+                .padding(.leading, 8)
+            }
+
+            ToolbarItem(placement: .principal) {
+                // Center is now dedicated to the main Mode Switcher
                 Button(action: { 
                     appState.appMode = (appState.appMode == .recording ? .editing : .recording)
                 }, label: {
@@ -248,8 +273,14 @@ struct MainContentView: View {
                         appState.appMode == .recording ? "Editor" : "Record",
                         systemImage: appState.appMode == .recording ? "scissors" : "record.circle"
                     )
+                    .font(.system(size: 14, weight: .bold))
+                    .imageScale(.large)
                 })
+                .buttonStyle(.borderedProminent)
+                .tint(Theme.Colors.accent) // Force App Theme Color
+                .controlSize(.regular)
                 .help("Toggle Record/Edit Mode (Cmd+M)")
+                .padding(.vertical, 4)
             }
             
             ToolbarItem(placement: .automatic) {
@@ -269,21 +300,6 @@ struct MainContentView: View {
                     }
                 }
             }
-            
-            ToolbarItem(placement: .principal) {
-                if appState.appMode == .editing {
-                    Button(action: {
-                        NotificationCenter.default.post(name: NSNotification.Name("ShowRenameProjectDialog"), object: nil)
-                    }, label: {
-                        Label(
-                            appState.projectState.currentProject?.name ?? "Untitled Project",
-                            systemImage: "pencil.line"
-                        )
-                    })
-                    .buttonStyle(.bordered)
-                    .help("Rename Project")
-                }
-            }
 
             ToolbarItem(placement: .primaryAction) {
                 if appState.appMode == .editing {
@@ -294,6 +310,8 @@ struct MainContentView: View {
                         }, label: {
                             Label("Magic Fix", systemImage: "sparkles")
                         })
+                        .buttonStyle(.borderedProminent)
+                        .tint(Theme.Colors.accent) // Force App Theme Color
                         .help("Auto-Fix Project (Cmd+Shift+M)")
                         .keyboardShortcut("m", modifiers: [.command, .shift])
 
@@ -305,7 +323,7 @@ struct MainContentView: View {
                             Label("Share", systemImage: "square.and.arrow.up")
                         })
                         .buttonStyle(.borderedProminent)
-                        .tint(.blue)
+                        .tint(Theme.Colors.accent) // Force App Theme Color
                         .help("Export Gallery (Cmd+E)")
                         .keyboardShortcut("e", modifiers: [.command])
                     }
@@ -458,8 +476,40 @@ extension MainContentView {
     }
 }
 
-#Preview {
-    MainContentView()
-        .environment(ServiceContainer.shared.appState)
-        .frame(minWidth: 1080, minHeight: 720)
+
+
+// MARK: - Overlay Helpers
+extension MainContentView {
+    @ViewBuilder
+    func MagicOverlayView() -> some View {
+        // Thermal Warning
+        if ThermalManager.shared.isThermalPressureHigh {
+            VStack {
+                HStack {
+                    Image(systemName: "thermometer.sun.fill")
+                        .foregroundColor(.orange)
+                    Text(ThermalManager.shared.performanceLevel == .emergency ?
+                         String(localized: "thermal.emergency", defaultValue: "System Overheating: Performance reduced") :
+                         String(localized: "thermal.throttled", defaultValue: "System Hot: Optimizing performance"))
+                        .font(.caption)
+                        .fontWeight(.medium)
+                    Spacer()
+                }
+                .padding(8)
+                .background(Color.black.opacity(0.8))
+                .cornerRadius(8)
+                .padding()
+                Spacer()
+            }
+            .transition(.move(edge: .top).combined(with: .opacity))
+            .accessibilityIdentifier("thermal.status.overlay")
+        }
+
+        // Magic Progress Island
+        MagicProgressOverlay(
+            isProcessing: appState.projectState.isProcessing,
+            status: appState.projectState.processingStatus,
+            progress: appState.projectState.processingProgress
+        )
+    }
 }

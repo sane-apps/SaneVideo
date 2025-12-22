@@ -17,7 +17,7 @@ struct RecordingControlsView: View {
             RecordButton(isRecording: $recordingState.isRecording) {
                 appState.toggleRecording()
             }
-            .frame(width: 60)
+            // Removed fixed width 60
 
             Divider()
                 .frame(height: 40)
@@ -31,7 +31,6 @@ struct RecordingControlsView: View {
             ) {
                 appState.togglePause()
             }
-            .frame(width: 60)
             .disabled(!appState.isRecording)
             .accessibilityIdentifier("PauseRecordingButton")
 
@@ -47,7 +46,6 @@ struct RecordingControlsView: View {
             ) {
                 appState.toggleScreenShare()
             }
-            .frame(width: 60)
             .accessibilityIdentifier("ScreenShareToggle")
 
             // Camera Toggle
@@ -59,7 +57,6 @@ struct RecordingControlsView: View {
             ) {
                 appState.toggleCamera()
             }
-            .frame(width: 60)
             .accessibilityIdentifier("CameraToggle")
 
             // Mic Toggle
@@ -71,7 +68,6 @@ struct RecordingControlsView: View {
             ) {
                 appState.toggleMic()
             }
-            .frame(width: 60)
             .accessibilityIdentifier("MicToggle")
 
             Divider()
@@ -79,7 +75,7 @@ struct RecordingControlsView: View {
 
             // Timer + Live Indicator
             RecBadgeTimer(isRecording: appState.isRecording, timeString: timeString(from: appState.recordingDuration))
-                .frame(width: 90)
+                .padding(.horizontal, 8)
         }
         .padding(.horizontal, 24)
         .padding(.vertical, 16)

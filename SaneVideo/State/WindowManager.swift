@@ -177,12 +177,13 @@ class WindowManager {
             }
 
             // Heuristic: If it has a title and is not special, it's likely our main window
-            if window.title.contains("SaneVideo") || window.title == "SaneVideo" || !window.title.isEmpty {
-                AppLogger.window.info("Restoring window: '\(window.title)'")
+            // Also accept empty titles (since we set navigationTitle("") in Rec mode)
+            // Or identifying if it's the MainWindow class (if applicable) or just the first robust window
+            if window.title.contains("SaneVideo") || window.title == "SaneVideo" || window.title.isEmpty {
+                AppLogger.window.info("Restoring window: '\(window.title)' (ID: \(window.windowNumber))")
                 window.makeKeyAndOrderFront(nil)
                 foundMain = true
-                // If we found a named SaneVideo window, we can stop
-                if window.title.contains("SaneVideo") { break }
+                break 
             }
         }
 

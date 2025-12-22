@@ -353,11 +353,11 @@ private struct FormatButton: View {
             .padding(10)
             .background(
                 RoundedRectangle(cornerRadius: 8)
-                    .fill(isSelected ? Color.blue.opacity(0.15) : Color.white.opacity(0.05))
+                    .fill(isSelected ? Color.accentColor.opacity(0.15) : Color.white.opacity(0.05))
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 8)
-                    .stroke(isSelected ? Color.blue : Color.white.opacity(0.1), lineWidth: 1)
+                    .stroke(isSelected ? Color.accentColor : Color.white.opacity(0.1), lineWidth: 1)
             )
         }
         .buttonStyle(.plain)

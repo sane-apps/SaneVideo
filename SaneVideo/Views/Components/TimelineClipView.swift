@@ -134,7 +134,7 @@ struct TimelineClipView: View {
         VStack(spacing: 0) {
             // VIDEO TRACK (Top ~55%)
             ZStack(alignment: .leading) {
-                Rectangle().fill(Color.blue.opacity(0.3))
+                Rectangle().fill(Color.accentColor.opacity(0.3))
                 thumbnailStrip
                 clipLabel
             }

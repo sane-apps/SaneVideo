@@ -121,7 +121,7 @@ struct EditorLayoutView: View {
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ToggleInspector"))) { _ in
             withAnimation { isInspectorCollapsed.toggle() }
         }
-        .background(Color(nsColor: .windowBackgroundColor))
+        .background(.thickMaterial)
         .liquidGlass(radius: 0) // Full screen edge lighting logic if needed, or 0 for seamless base
 
         // MARK: - Keyboard Shortcuts (J/K/L/Space)
@@ -303,6 +303,7 @@ struct EditorLayoutView: View {
                 }
             )
             .buttonStyle(.borderedProminent)
+            .tint(.accentColor)
             .controlSize(.large)
         }
     }

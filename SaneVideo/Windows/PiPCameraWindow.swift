@@ -52,7 +52,7 @@ class PiPCameraWindow: NSPanel {
     }
 
     private func setupWindow() {
-        level = .statusBar // CRITICAL FIX: Upgrade from .floating to ensure "Always on Top" even over fullscreen apps
+        level = .floating // Reverted to .floating to ensure visibility in ScreenCaptureKit
         hidesOnDeactivate = false // CRITICAL: Keeps window visible when switching apps
         isOpaque = false
         backgroundColor = .clear

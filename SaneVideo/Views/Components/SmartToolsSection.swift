@@ -229,6 +229,7 @@ struct SmartToolsSection: View {
             }
             .buttonStyle(.plain)
             .disabled(appState.projectState.isProcessing)
+            .keyboardShortcut("m", modifiers: [.command, .shift])
             .accessibilityIdentifier("MagicFixButton")
             
             Text(String(localized: "smart_tools.footer.description", defaultValue: "One-click AI cleanup for your entire clip."))

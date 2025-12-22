@@ -61,6 +61,20 @@ struct SaneVideoApp: App {
                 .keyboardShortcut("i", modifiers: [.command])
                 .accessibilityIdentifier("menu.file.import_video")
             }
+            
+            CommandGroup(after: .sidebar) {
+                 Button(String(localized: "menu.view.toggle_sidebar", defaultValue: "Toggle Sidebar")) {
+                     NotificationCenter.default.post(name: NSNotification.Name("ToggleSidebar"), object: nil)
+                 }
+                 .keyboardShortcut("s", modifiers: [.command, .option])
+                 .accessibilityIdentifier("menu.view.toggle_sidebar")
+                 
+                 Button(String(localized: "menu.view.toggle_inspector", defaultValue: "Toggle Inspector")) {
+                     NotificationCenter.default.post(name: NSNotification.Name("ToggleInspector"), object: nil)
+                 }
+                 .keyboardShortcut("i", modifiers: [.command, .option])
+                 .accessibilityIdentifier("menu.view.toggle_inspector")
+            }
 
             CommandGroup(replacing: .saveItem) {
                 Button(String(localized: "menu.file.save_project", defaultValue: "Save Project")) {

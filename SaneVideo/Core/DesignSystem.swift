@@ -18,28 +18,19 @@ enum Theme {
         static let background = Color(nsColor: .windowBackgroundColor)
         static let secondaryBackground = Color(nsColor: .controlBackgroundColor)
 
-        // BRAND COLORS (Purple/Indigo Family)
-        static let accent = Color(hex: 0x7C3AED) // Vibrant Purple (primary brand)
-
-        static let accentGradient = LinearGradient(
-            colors: [Color(hex: 0x7C3AED), Color(hex: 0x2563EB)],
-            startPoint: .topLeading,
-            endPoint: .bottomTrailing
-        )
-
-        // SECONDARY (Blue Family - for actions)
-        // SECONDARY (Blue Family - for actions)
-        static let action = Color(hex: 0x3B82F6) // Blue (secondary actions)
+        // BRAND COLORS (System Integrated)
+        static let accent = Color.accentColor
         
-        static let secondaryGradient = LinearGradient(
-            colors: [Color(hex: 0x3B82F6), Color(hex: 0x2563EB)],
-            startPoint: .topLeading,
-            endPoint: .bottomTrailing
-        )
+        static let accentGradient = Color.accentColor // Effectively 1:1 with system for snappiness
+
+        // SECONDARY (System Integrated)
+        static let action = Color.accentColor
         
-        // SEMANTIC COLORS (Consistent across app)
-        static let warning = Color(hex: 0xF59E0B) // Amber
-        static let destructive = Color(hex: 0xEF4444) // Red
+        static let secondaryGradient = Color.accentColor
+        
+        // SEMANTIC COLORS (System Integrated)
+        static let warning = Color.orange
+        static let destructive = Color.red
 
         // Semantic Text (Adapts to Light/Dark mode)
         static let textPrimary = Color.primary
@@ -136,12 +127,7 @@ struct IconButtonStyle: ButtonStyle {
                 Circle()
                     .fill(isActive ? activeColor : Color.white.opacity(0.1))
             )
-            .overlay(
-                Circle()
-                    .stroke(Color.white.opacity(0.2), lineWidth: 1)
-            )
-            .scaleEffect(configuration.isPressed ? 0.92 : 1.0)
-            .animation(.spring(response: 0.2, dampingFraction: 0.6), value: configuration.isPressed)
-            .shadow(color: isActive ? activeColor.opacity(0.4) : .clear, radius: 6, y: 2)
+            .scaleEffect(configuration.isPressed ? 0.96 : 1.0)
+            .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
     }
 }

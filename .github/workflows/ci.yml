@@ -1,0 +1,80 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: macos-15
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      
+    - name: Select Xcode
+      run: sudo xcode-select -s /Applications/Xcode.app
+      
+    - name: Show Xcode version
+      run: xcodebuild -version
+      
+    - name: Build
+      run: |
+        xcodebuild build \
+          -project SaneVideo.xcodeproj \
+          -scheme SaneVideo \
+          -destination 'platform=macOS,arch=arm64' \
+          -configuration Debug \
+          CODE_SIGN_IDENTITY="-" \
+          CODE_SIGNING_REQUIRED=NO
+          
+    - name: Run Tests
+      run: |
+        xcodebuild test \
+          -project SaneVideo.xcodeproj \
+          -scheme SaneVideo \
+          -destination 'platform=macOS,arch=arm64' \
+          -configuration Debug \
+          CODE_SIGN_IDENTITY="-" \
+          CODE_SIGNING_REQUIRED=NO \
+          -resultBundlePath TestResults
+          
+    - name: Upload Test Results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-results
+        path: TestResults
+
+    - name: Run Health Check
+      run: ./Scripts/run_health_check.sh
+
+  lint:
+    runs-on: macos-15
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      
+    - name: Install SwiftLint
+      run: brew install swiftlint
+      
+    - name: Run SwiftLint
+      run: swiftlint lint --strict --reporter github-actions-logging
+
+  danger:
+    runs-on: macos-15
+    if: github.event_name == 'pull_request'
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        
+    - name: Danger
+      run: swift run danger-swift pr
+      env:
+        DANGER_GITHUB_API_TOKEN: ${{ secrets.DANGER_GITHUB_API_TOKEN }}

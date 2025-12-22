@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>$(PRODUCT_NAME)</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>1.0</string>
+	<key>CFBundleVersion</key>
+	<string>1</string>
+	<key>LSMinimumSystemVersion</key>
+	<string>$(MACOSX_DEPLOYMENT_TARGET)</string>
+	<key>NSCameraUsageDescription</key>
+	<string>SaneVideo creates beautiful video content by accessing your camera. Your privacy is our priority—recordings stay on your Mac.</string>
+	<key>NSCameraReactionEffectsEnabled</key>
+	<false/>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>SaneVideo captures crystal-clear audio to make your videos truly shine. Audio is processed locally and never leaves your device.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>SaneVideo generates intelligent captions to make your content accessible to everyone. All processing happens on-device for maximum privacy.</string>
+	<key>NSScreenCaptureDescription</key>
+	<string>SaneVideo lets you record your screen effortlessly to create tutorials, demos, and professional content right from your Mac.</string>
+</dict>
+</plist>

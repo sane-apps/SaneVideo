@@ -1,0 +1,39 @@
+{
+  "configurations" : [
+    {
+      "id" : "F687A890-53D2-4806-B833-D990263AF76C",
+      "name" : "Standard",
+      "options" : {
+        "addressSanitizer" : {
+          "enabled" : true
+        },
+        "mainThreadChecker" : {
+          "enabled" : true
+        },
+        "threadSanitizer" : {
+          "enabled" : true
+        }
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "targetForVariableExpansion" : "SaneVideo"
+  },
+  "testTargets" : [
+    {
+      "target" : {
+        "containerPath" : "container:SaneVideo.xcodeproj",
+        "identifier" : "SaneVideoTests",
+        "name" : "SaneVideoTests"
+      }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:SaneVideo.xcodeproj",
+        "identifier" : "SaneVideoUITests",
+        "name" : "SaneVideoUITests"
+      }
+    }
+  ],
+  "version" : 1
+}

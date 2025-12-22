@@ -1,0 +1,142 @@
+{
+  "meta": {
+    "project": "SaneVideo",
+    "date": "2025-12-05",
+    "prepared_by": "Software Development Manager"
+  },
+  "product_overview": "SaneVideo is a professional-grade native macOS application tailored for content creators, educators, and professionals. It enables high-quality screen recording with camera overlays, advanced video editing, caption generation using AI, and seamless exporting with integrated features such as YouTube upload and PDF reporting.",
+  "core_goals": [
+    "Enable high-quality full-screen and window-specific video capture with camera overlays and audio inputs.",
+    "Provide a professional, intuitive timeline editor with frame-accurate scrubbing, clip manipulation, and caption editing.",
+    "Incorporate AI-driven automatic caption transcription and user-friendly caption styling capabilities.",
+    "Support efficient video exporting with real-time tracking, thumbnail generation, PDF reporting, and social media integration.",
+    "Ensure robust project management with state persistence, auto-save, and easy access to recent projects.",
+    "Deliver a smooth, accessible user experience with onboarding, keyboard shortcuts, and system-wide hotkey support."
+  ],
+  "key_features": [
+    "Full-screen and window capture using ScreenCaptureKit with picture-in-picture camera overlay support.",
+    "Global hotkey (Alt+Cmd+R) and menu bar integration for quick recording control with a 3-second countdown.",
+    "Professional timeline editor featuring drag-and-drop clip arrangement, splitting, trimming, ripple delete, and audio waveform visualization.",
+    "Caption overlay with styling and Whisper AI-powered auto-transcription and editing tools.",
+    "HEVC 4K export with smart bitrate encoding, export progress tracking, thumbnail generation, PDF project reports, and YouTube direct upload.",
+    "Persistent project state management with user preferences, auto-save, and recent project access.",
+    "Accessibility support including VoiceOver, comprehensive keyboard shortcuts, and an onboarding workflow for first-time users."
+  ],
+  "user_flow_summary": [
+    "Recording Flow: Launch app, select recording mode (fullscreen/window), configure camera and microphone, start recording via UI or global hotkey, 3-second countdown, record, stop, saved recording appears in timeline.",
+    "Editing Flow: Open project, arrange clips on timeline with drag-and-drop, trim and split clips, add and edit captions manually or via AI auto-generation, preview edits, and finalize.",
+    "Export Flow: Choose export settings (resolution, format), select destination, initiate export, monitor real-time progress, complete export with success notification and PDF report option."
+  ],
+  "validation_criteria": [
+    "Screen and window recording functions operate flawlessly with stable frame rates and camera overlay.",
+    "Timeline editing supports all clip operations with no lag and accurate frame-by-frame scrubbing.",
+    "Caption generation uses Whisper AI with high accuracy and enables easy manual adjustment and styling.",
+    "Exported videos meet requested HEVC 4K specifications with file integrity and correct metadata.",
+    "Project persistence works reliably with state saved and restored on app restart or crash recovery.",
+    "User interface is responsive and accessible, with full keyboard shortcut coverage and VoiceOver support.",
+    "Global hotkey triggers recording start/stop consistently across system states.",
+    "Crash reports are correctly logged using MetricKit and no data loss occurs during unexpected failures."
+  ],
+  "code_summary": {
+    "projectName": "SaneVideo",
+    "projectType": "macOS Native App",
+    "techStack": {
+      "language": "Swift",
+      "platform": "macOS 26.1+ (Sequoia 15.1+)",
+      "architecture": "Apple Silicon (arm64)",
+      "uiFramework": "SwiftUI",
+      "coreFrameworks": [
+        "AVFoundation",
+        "ScreenCaptureKit",
+        "AppKit",
+        "CoreMedia",
+        "Combine",
+        "OSLog",
+        "Metal",
+        "Core Image",
+        "MetricKit"
+      ],
+      "buildSystem": "Xcode 15.0+",
+      "testFramework": "XCTest"
+    },
+    "features": {
+      "recording": [
+        "Full-screen capture with ScreenCaptureKit",
+        "Window selection for targeted recording",
+        "Camera overlay with picture-in-picture support",
+        "Global hotkey support (Alt+Cmd+R)",
+        "Menu bar integration with recording status",
+        "3-second countdown before recording",
+        "Audio capture with microphone toggling"
+      ],
+      "editing": [
+        "Professional timeline editor with drag-and-drop",
+        "Scrubbing with frame-by-frame navigation",
+        "Keyboard shortcuts (J-K-L playback, Space play/pause)",
+        "Split clips (Cmd+B), trim, and ripple delete",
+        "Visual playhead with grid overlay",
+        "Waveform visualization for audio",
+        "Caption overlay with custom styling"
+      ],
+      "export": [
+        "HEVC 4K export with smart bitrate encoding",
+        "Real-time export progress tracking",
+        "PDF report generation",
+        "YouTube integration",
+        "Desktop quick-access export",
+        "Thumbnail generation"
+      ],
+      "advanced": [
+        "Auto-silence detection for editing",
+        "Audio visualization/waveform display",
+        "Caption auto-generation (Whisper AI)",
+        "Project state persistence",
+        "User preference management",
+        "Global hotkey manager",
+        "Crash reporting (MetricKit)"
+      ]
+    },
+    "projectStructure": {
+      "entryPoint": "SaneVideoApp.swift",
+      "modules": [
+        "Core (DI, Models, Protocols, Extensions, Utilities)",
+        "State (AppState, RecordingState, ProjectState, CameraState, PlaybackState)",
+        "Services (Camera, Recording, Audio, Captions, Export, Project, Permissions, Logging, Timeline, Thumbnails, AI)",
+        "Views (MainContentView, ExportView, RecordingModeView, SettingsView, OnboardingView, SidebarView, TimelineView, Components)",
+        "Windows (FloatingControlsWindow, PiPCameraWindow)",
+        "Resources (Assets, Whisper Model)"
+      ]
+    },
+    "existingTests": {
+      "testDirectory": "SaneVideoTests",
+      "testFiles": [
+        "RecordingStateTests.swift",
+        "SaneEditingTests.swift",
+        "DeepDiveTests.swift",
+        "SaneVideoUITests.swift",
+        "ErrorHandlingTests.swift",
+        "PlaybackStateTests.swift",
+        "TimelineTests.swift",
+        "ProjectStoreTests.swift",
+        "NewElementsTests.swift",
+        "UXPolishingTests.swift"
+      ],
+      "testCount": "50+ unit and integration tests"
+    },
+    "architecturePatterns": [
+      "Reactive State Management with Combine",
+      "Dependency Injection (ServiceContainer)",
+      "MVVM pattern",
+      "Protocol-Driven Design",
+      "Main Actor Isolation for thread safety"
+    ],
+    "statistics": {
+      "totalSwiftFiles": 85,
+      "coreModules": 6,
+      "serviceTypes": 8,
+      "testFiles": 11,
+      "viewComponents": 15,
+      "dataModels": 10
+    }
+  }
+}

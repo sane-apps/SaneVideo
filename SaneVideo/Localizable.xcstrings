@@ -1,0 +1,1198 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "" : {
+
+    },
+    ".%@" : {
+
+    },
+    "/" : {
+
+    },
+    "%lld" : {
+
+    },
+    "%lld captions" : {
+
+    },
+    "%lld captions • ~%@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld captions • ~%2$@"
+          }
+        }
+      }
+    },
+    "%lld clips" : {
+
+    },
+    "%lld dB" : {
+
+    },
+    "%lld FPS" : {
+
+    },
+    "%lldpx" : {
+
+    },
+    "• %@" : {
+
+    },
+    "1:1 (Instagram)" : {
+
+    },
+    "4K (2160p)" : {
+
+    },
+    "4K UHD" : {
+
+    },
+    "9:16 (TikTok/Reels)" : {
+
+    },
+    "16:9 (YouTube)" : {
+
+    },
+    "21:9 (Cinematic)" : {
+
+    },
+    "90° CCW" : {
+
+    },
+    "90° CW" : {
+
+    },
+    "720p" : {
+
+    },
+    "1080p" : {
+
+    },
+    "1080p HD" : {
+
+    },
+    "action.generateCaptions" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Generate Captions"
+          }
+        }
+      }
+    },
+    "action.removeFillers" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remove Filler Words"
+          }
+        }
+      }
+    },
+    "action.removeSilence" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remove Silence"
+          }
+        }
+      }
+    },
+    "Add Track" : {
+
+    },
+    "Add Transition" : {
+
+    },
+    "AI ANALYSIS" : {
+
+    },
+    "All API keys are stored securely in your Mac's Keychain. They never leave your device and are encrypted at rest." : {
+
+    },
+    "Alternative AI provider for title/description generation. Get your key from [Google AI Studio](https://aistudio.google.com/app/apikey)." : {
+
+    },
+    "Analyzing video for best frames..." : {
+
+    },
+    "Analyzing..." : {
+
+    },
+    "API Key" : {
+
+    },
+    "app.name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "SaneVideo"
+          }
+        }
+      }
+    },
+    "Appearance" : {
+
+    },
+    "Application Logs" : {
+
+    },
+    "Apply %@" : {
+
+    },
+    "Apply Smart Crop" : {
+
+    },
+    "Apply Super Magic Fix" : {
+
+    },
+    "Are you sure you want to delete this project?" : {
+
+    },
+    "Audio" : {
+
+    },
+    "AUDIO" : {
+
+    },
+    "Audio Track" : {
+
+    },
+    "Auto-Generate" : {
+
+    },
+    "Auto-Grade (AI)" : {
+
+    },
+    "Back" : {
+
+    },
+    "Background" : {
+
+    },
+    "Background Color" : {
+
+    },
+    "Batch Export Only" : {
+
+    },
+    "Bitrate: %lld Mbps" : {
+
+    },
+    "Blur Intensity" : {
+
+    },
+    "Blur Sensitive Text" : {
+
+    },
+    "Cache Cleared" : {
+
+    },
+    "Camera" : {
+
+    },
+    "Camera & Microphone Selection" : {
+
+    },
+    "Camera is Off" : {
+
+    },
+    "Camera Loading..." : {
+
+    },
+    "camera.off" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Camera is Off"
+          }
+        }
+      }
+    },
+    "camera.on" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Turn On Camera"
+          }
+        }
+      }
+    },
+    "camera.switch" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Switch to Camera"
+          }
+        }
+      }
+    },
+    "Cancel" : {
+
+    },
+    "Caption" : {
+
+    },
+    "Captions Area" : {
+
+    },
+    "Center Face" : {
+
+    },
+    "Choose a Template" : {
+
+    },
+    "Choose Image" : {
+
+    },
+    "Clear" : {
+
+    },
+    "Clear All" : {
+
+    },
+    "Clear All API Keys" : {
+
+    },
+    "Clear All API Keys?" : {
+
+    },
+    "Clear Cache" : {
+
+    },
+    "Clear cached previews and temporary recordings to free up space." : {
+
+    },
+    "Click to rename project" : {
+
+    },
+    "Client ID" : {
+
+    },
+    "Client Secret" : {
+
+    },
+    "Close" : {
+
+    },
+    "Codec" : {
+
+    },
+    "Configured" : {
+
+    },
+    "Copy All" : {
+
+    },
+    "Copy to Clipboard" : {
+
+    },
+    "Create an eye-catching thumbnail" : {
+
+    },
+    "Create animated GIF from video" : {
+
+    },
+    "Current:" : {
+
+    },
+    "Custom Frame" : {
+
+    },
+    "Debug" : {
+
+    },
+    "Default Export Configuration" : {
+
+    },
+    "Delete" : {
+
+    },
+    "Delete '%@'" : {
+
+    },
+    "Delete Clip" : {
+
+    },
+    "Delete File from Disk?" : {
+
+    },
+    "Delete File?" : {
+
+    },
+    "Delete Forever" : {
+
+    },
+    "Delete from Disk" : {
+
+    },
+    "Delete from Disk..." : {
+
+    },
+    "Description" : {
+
+    },
+    "Do you want to remove '%@' from the project, or permanently delete the file from your disk?" : {
+
+    },
+    "Done" : {
+
+    },
+    "Drag & Drop Video Here" : {
+
+    },
+    "Duration" : {
+
+    },
+    "Duration: %@" : {
+
+    },
+    "Edit" : {
+
+    },
+    "Edited %@" : {
+
+    },
+    "Enables the camera for recording" : {
+
+    },
+    "End: %@" : {
+
+    },
+    "Enhance cursor visibility for screen recordings" : {
+
+    },
+    "Enter a new name for '%@'" : {
+
+    },
+    "Enter a new name for this project." : {
+
+    },
+    "Enter API Key" : {
+
+    },
+    "Enter Client ID" : {
+
+    },
+    "Enter Client Secret" : {
+
+    },
+    "Enter title text..." : {
+
+    },
+    "Error" : {
+
+    },
+    "Est. Size" : {
+
+    },
+    "Estimated Size" : {
+
+    },
+    "Export" : {
+
+    },
+    "Export & Upload" : {
+
+    },
+    "Export %@" : {
+
+    },
+    "Export as GIF" : {
+
+    },
+    "Export as GIF..." : {
+
+    },
+    "Export Error" : {
+
+    },
+    "Export File" : {
+
+    },
+    "Export GIF" : {
+
+    },
+    "Export Study Guide (PDF)" : {
+
+    },
+    "Export Thumbnail" : {
+
+    },
+    "Export to File" : {
+
+    },
+    "Export Transcript" : {
+
+    },
+    "Export Transcript (PDF)..." : {
+
+    },
+    "Export Video..." : {
+
+    },
+    "export.failed" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Export Failed"
+          }
+        }
+      }
+    },
+    "export.progress" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exporting..."
+          }
+        }
+      }
+    },
+    "export.success" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Export Complete"
+          }
+        }
+      }
+    },
+    "export.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Export Video"
+          }
+        }
+      }
+    },
+    "Exporting..." : {
+
+    },
+    "Faster" : {
+
+    },
+    "Find Gestures" : {
+
+    },
+    "Find Highlights" : {
+
+    },
+    "Fine Tune" : {
+
+    },
+    "Finishing up..." : {
+
+    },
+    "Format" : {
+
+    },
+    "Frame Rate" : {
+
+    },
+    "Full video" : {
+
+    },
+    "General" : {
+
+    },
+    "Generate AI Thumbnail" : {
+
+    },
+    "Generate Captions" : {
+
+    },
+    "Generate title & description from transcript" : {
+
+    },
+    "Generate Voiceover" : {
+
+    },
+    "Generating..." : {
+
+    },
+    "Get Started" : {
+
+    },
+    "Google Gemini" : {
+
+    },
+    "Grant Permissions" : {
+
+    },
+    "H.264" : {
+
+    },
+    "H.264 (Compat)" : {
+
+    },
+    "Hello" : {
+
+    },
+    "HEVC (H.265)" : {
+
+    },
+    "HEVC (Small)" : {
+
+    },
+    "Hide" : {
+
+    },
+    "Hide Panel" : {
+
+    },
+    "Higher" : {
+
+    },
+    "Higher = smoother" : {
+
+    },
+    "Import" : {
+
+    },
+    "Import Audio File" : {
+
+    },
+    "Import Video" : {
+
+    },
+    "Import video or record to get started" : {
+
+    },
+    "Import Video..." : {
+
+    },
+    "Include timestamps" : {
+
+    },
+    "Initializing Screen Share..." : {
+
+    },
+    "Inspector" : {
+
+    },
+    "Jump to first caption" : {
+
+    },
+    "Lock Track" : {
+
+    },
+    "Logs:" : {
+
+    },
+    "Lower" : {
+
+    },
+    "Lower = smaller file" : {
+
+    },
+    "Magnetic Timeline (M)" : {
+
+    },
+    "Media" : {
+
+    },
+    "mic.mute" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mute Microphone"
+          }
+        }
+      }
+    },
+    "mic.unmute" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unmute Microphone"
+          }
+        }
+      }
+    },
+    "Microphone" : {
+
+    },
+    "Minimal Fix" : {
+
+    },
+    "More Options" : {
+
+    },
+    "Mute Microphone" : {
+
+    },
+    "Mute Track" : {
+
+    },
+    "New Project" : {
+
+    },
+    "New Recording" : {
+
+    },
+    "Next" : {
+
+    },
+    "Next frame (→)" : {
+
+    },
+    "No cameras found" : {
+
+    },
+    "No clips yet" : {
+
+    },
+    "No microphones found" : {
+
+    },
+    "No Project Loaded" : {
+
+    },
+    "No selection" : {
+
+    },
+    "Not Set" : {
+
+    },
+    "OK" : {
+
+    },
+    "On" : {
+
+    },
+    "One-click AI cleanup for your entire clip." : {
+
+    },
+    "Open" : {
+
+    },
+    "Open Project..." : {
+
+    },
+    "OpenAI" : {
+
+    },
+    "Options" : {
+
+    },
+    "or click to browse" : {
+
+    },
+    "Overlay Track" : {
+
+    },
+    "Pause" : {
+
+    },
+    "Pause recording" : {
+
+    },
+    "Pitch" : {
+
+    },
+    "Play Sample" : {
+
+    },
+    "Play/Pause (Space) • J/K/L for shuttle control" : {
+
+    },
+    "Preset" : {
+
+    },
+    "Presets" : {
+
+    },
+    "PRESETS" : {
+
+    },
+    "Preview" : {
+
+    },
+    "Previous frame (←)" : {
+
+    },
+    "Pro Clean-up" : {
+
+    },
+    "Project Clips" : {
+
+    },
+    "Project Name" : {
+
+    },
+    "Projects" : {
+
+    },
+    "ProRes (Edit)" : {
+
+    },
+    "Quality" : {
+
+    },
+    "Quality Presets" : {
+
+    },
+    "REC" : {
+
+    },
+    "Recent" : {
+
+    },
+    "Record" : {
+
+    },
+    "Record your screen" : {
+
+    },
+    "recording.pause" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pause Recording"
+          }
+        }
+      }
+    },
+    "recording.resume" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resume Recording"
+          }
+        }
+      }
+    },
+    "recording.start" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Start Recording"
+          }
+        }
+      }
+    },
+    "recording.stop" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stop Recording"
+          }
+        }
+      }
+    },
+    "Redo" : {
+
+    },
+    "Remove %@" : {
+
+    },
+    "Remove Filler Words" : {
+
+    },
+    "Remove Fillers" : {
+
+    },
+    "Remove from Project" : {
+
+    },
+    "Remove from Project only" : {
+
+    },
+    "Remove Silence" : {
+
+    },
+    "Remove Silence (Sane Cut)" : {
+
+    },
+    "Rename" : {
+
+    },
+    "Rename Project" : {
+
+    },
+    "Rename Project..." : {
+
+    },
+    "Rename..." : {
+
+    },
+    "Requesting..." : {
+
+    },
+    "Required for uploading videos directly to YouTube. Get credentials from [Google Cloud Console](https://console.cloud.google.com/apis/credentials)." : {
+
+    },
+    "Requires captions - generate them first" : {
+
+    },
+    "Reset" : {
+
+    },
+    "Reset to Original" : {
+
+    },
+    "Resolution" : {
+
+    },
+    "Resume" : {
+
+    },
+    "Resume recording" : {
+
+    },
+    "Rotate 90°" : {
+
+    },
+    "Run automated stress tests to identify performance bottlenecks and breaking points." : {
+
+    },
+    "Run Stress Tests" : {
+
+    },
+    "Running..." : {
+
+    },
+    "Save as JPEG..." : {
+
+    },
+    "Save as PNG..." : {
+
+    },
+    "Save Gemini Key" : {
+
+    },
+    "Save OpenAI Key" : {
+
+    },
+    "Save Project" : {
+
+    },
+    "Save YouTube Credentials" : {
+
+    },
+    "Saved successfully" : {
+
+    },
+    "screen.switch" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Switch to Screen Recording"
+          }
+        }
+      }
+    },
+    "Security" : {
+
+    },
+    "Select Frame" : {
+
+    },
+    "Select Tool (A)" : {
+
+    },
+    "Sensitivity" : {
+
+    },
+    "Settings" : {
+
+    },
+    "Share..." : {
+
+    },
+    "Show Highlight" : {
+
+    },
+    "Show in Finder" : {
+
+    },
+    "Show Panel" : {
+
+    },
+    "sidebar.edit" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edit"
+          }
+        }
+      }
+    },
+    "sidebar.export" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Export"
+          }
+        }
+      }
+    },
+    "sidebar.record" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Record"
+          }
+        }
+      }
+    },
+    "sidebar.settings" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Settings"
+          }
+        }
+      }
+    },
+    "sk-..." : {
+
+    },
+    "Slower" : {
+
+    },
+    "Smart Crop" : {
+
+    },
+    "Social Media Ready" : {
+
+    },
+    "Speed" : {
+
+    },
+    "Split Clip" : {
+
+    },
+    "Start recording" : {
+
+    },
+    "Start Recording" : {
+
+    },
+    "Start: %@" : {
+
+    },
+    "Stop" : {
+
+    },
+    "Stop recording" : {
+
+    },
+    "Stop Recording" : {
+
+    },
+    "Stop Sharing & Return to App" : {
+
+    },
+    "Storage & Performance" : {
+
+    },
+    "Stress Testing & Limits" : {
+
+    },
+    "Style Presets" : {
+
+    },
+    "Switch back to camera mode" : {
+
+    },
+    "Switch to camera" : {
+
+    },
+    "Switch to editing mode" : {
+
+    },
+    "Switch to screen recording" : {
+
+    },
+    "Temporary Files" : {
+
+    },
+    "Text Overlay" : {
+
+    },
+    "Text will appear at bottom of thumbnail" : {
+
+    },
+    "Theme" : {
+
+    },
+    "These settings will be used as the default for new exports." : {
+
+    },
+    "This action cannot be undone." : {
+
+    },
+    "This will move '%@' to the Trash." : {
+
+    },
+    "This will move the source file to the Trash. This action cannot be undone." : {
+
+    },
+    "This will remove all stored API credentials. You'll need to re-enter them to use YouTube upload and AI features." : {
+
+    },
+    "Thumbnail Studio" : {
+
+    },
+    "timeline.delete" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete Clip"
+          }
+        }
+      }
+    },
+    "timeline.split" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Split Clip"
+          }
+        }
+      }
+    },
+    "Title" : {
+
+    },
+    "Toggle Snapping (N)" : {
+
+    },
+    "Transition: %@" : {
+
+    },
+    "Turn on camera" : {
+
+    },
+    "Turn On Camera" : {
+
+    },
+    "Turn on the camera to start recording" : {
+
+    },
+    "Undo" : {
+
+    },
+    "Unlock Track" : {
+
+    },
+    "Unmute Microphone" : {
+
+    },
+    "Unmute Track" : {
+
+    },
+    "Uploading to YouTube..." : {
+
+    },
+    "Uploading..." : {
+
+    },
+    "Use AI Pick" : {
+
+    },
+    "Use Control Center for Video Effects" : {
+
+    },
+    "Use Magic Fix to generate captions" : {
+
+    },
+    "Use Thumbnail" : {
+
+    },
+    "Used for AI-powered video title and description suggestions. Get your key from [OpenAI Platform](https://platform.openai.com/api-keys)." : {
+
+    },
+    "Video" : {
+
+    },
+    "VIDEO & FRAMING" : {
+
+    },
+    "Video Effects in Control Center" : {
+
+    },
+    "Video Track" : {
+
+    },
+    "View Recent Clip" : {
+
+    },
+    "Virtual Background" : {
+
+    },
+    "Vision" : {
+
+    },
+    "Voice" : {
+
+    },
+    "Width" : {
+
+    },
+    "YouTube" : {
+
+    },
+    "YouTube Details" : {
+
+    },
+    "YouTube Upload" : {
+
+    }
+  },
+  "version" : "1.0"
+}

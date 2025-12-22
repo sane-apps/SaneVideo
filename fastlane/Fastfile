@@ -1,0 +1,81 @@
+default_platform(:mac)
+
+platform :mac do
+  desc "Verify build and run tests"
+  lane :verify do
+    scan(
+      scheme: "SaneVideo",
+      destination: "platform=macOS,arch=arm64",
+      xcargs: "CODE_SIGNING_ALLOWED=NO",
+      skip_testing: "SaneVideoUITests", # Skip environment-sensitive UITests by default
+      result_bundle: true,
+      output_directory: "fastlane/test_output",
+      clean: true
+    )
+  end
+
+  desc "Run full test suite including UI tests (requires graphical session)"
+  lane :verify_full do
+    scan(
+      scheme: "SaneVideo",
+      destination: "platform=macOS,arch=arm64",
+      xcargs: "CODE_SIGNING_ALLOWED=NO",
+      result_bundle: true,
+      output_directory: "fastlane/test_output",
+      clean: true
+    )
+  end
+
+  desc "Run project health check (modularity audit)"
+  lane :doctor do
+    # This will be called by SaneMaster but can also be run directly
+    sh("./Scripts/SaneMaster.rb doctor")
+  end
+
+  desc "Run SwiftLint audit"
+  lane :lint do
+    swiftlint(
+      mode: :lint,
+      executable: "swiftlint",
+      ignore_exit_status: true
+    )
+  end
+
+  desc "Generate Ruby quality report"
+  lane :quality do
+    sh("cd .. && bundle exec rubocop Scripts/ --format html --out fastlane/reports/rubocop.html || true")
+    UI.success("Quality report generated at fastlane/reports/rubocop.html")
+  end
+
+  desc "Generate release notes from git commits"
+  lane :changelog do
+    notes = changelog_from_git_commits(
+      between: [ENV["PREVIOUS_TAG"] || "v1.0.0", "HEAD"],
+      pretty: "- %s (%an)"
+    )
+    File.write("../RELEASE_NOTES.md", "# Release Notes - #{Time.now.strftime('%Y-%m-%d')}\n\n#{notes}")
+    UI.success("Release notes generated at RELEASE_NOTES.md")
+  end
+
+  desc "Automate macOS app screenshots"
+  lane :screenshots do
+    UI.message("📸 Launching SaneVideo for screenshots...")
+    sh("open ./build/Products/Debug/SaneVideo.app") # Assumes built
+    sleep(5) # Wait for launch
+    
+    # Use AppleScript to find the window and screencapture to grab it
+    sh("screencapture -x -l $(osascript -e 'tell app \"SaneVideo\" to id of window 1') fastlane/screenshots/main_window.png")
+    UI.success("Screenshot saved to fastlane/screenshots/main_window.png")
+    
+    sh("killall SaneVideo")
+  end
+
+  desc "Perform a full production release preparation"
+  lane :release do
+    verify
+    quality
+    changelog
+    sh("bundle exec ./Scripts/SaneMaster.rb check_binary")
+    UI.success("Release preparation complete! Ready for distribution.")
+  end
+end

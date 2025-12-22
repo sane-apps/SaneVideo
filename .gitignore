@@ -1,0 +1,54 @@
+# Build logs
+build_log*.txt
+build_output*.txt
+*.log
+
+# Secrets
+SaneVideo/Core/Utilities/Secrets.swift
+
+# Xcode
+*.xcuserstate
+xcuserdata/
+DerivedData/
+.derivedData/
+.swiftpm/
+build_debug/
+build_release/
+Packages/**/.build/
+Packages/**/.swiftpm/
+*.xcresult/
+*.xccheckout/
+*.xcworkspace/contents.xcworkspacedata
+*.xcuserstate
+*.xcuserstatedata
+
+# macOS
+.DS_Store
+
+# Build artifacts
+build/
+.build/
+*.backup*
+vendor/
+.bundle/
+
+# Gemini/Agentic
+.gemini/
+.claude/
+.cursor/
+.vscode/
+.mcp.json
+
+# Large media/test artifacts
+*.mp4
+*.m4a
+*.png
+*.jpg
+*.jpeg
+*.xcresult/
+TranscriptionTest*/
+TestReports/
+Media/
+TestOutput.xcresult/
+*.o
+SaneVideo/Resources/Models/ggml-base.en.bin

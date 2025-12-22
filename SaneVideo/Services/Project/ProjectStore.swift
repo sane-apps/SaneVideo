@@ -21,6 +21,7 @@ final class ProjectStore: ProjectStoreProtocol {
                             UserDefaults.standard.bool(forKey: "open_editor") ||
                             ProcessInfo.processInfo.environment["UI_TESTING"] != nil ||
                             ProcessInfo.processInfo.environment["OPEN_EDITOR"] != nil ||
+                            ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil ||
                             ProcessInfo.processInfo.arguments.contains("-ui_testing") ||
                             ProcessInfo.processInfo.arguments.contains("-open_editor")
 
@@ -102,12 +103,9 @@ final class ProjectStore: ProjectStoreProtocol {
                             try JSONDecoder().decode(VideoProject.self, from: data)
                         }
 
-                        // Hydrate project
-                        let hydratedProject = await MainActor.run {
-                            ServiceContainer.shared.projectFileManager.hydrateProject(rawProject)
-                        }
-
-                        projects.append(hydratedProject)
+                        // We no longer hydrate ALL projects at boot to keep logs clean
+                        // and startup fast. Hydration will happen when a project is opened.
+                        projects.append(rawProject)
                     } catch {
                         AppLogger.project.error("Failed to load project at \(fileURL.path): \(error)")
                     }

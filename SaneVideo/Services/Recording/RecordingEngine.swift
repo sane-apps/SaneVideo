@@ -134,9 +134,9 @@ class RecordingEngine: NSObject, @unchecked Sendable {
         let center = NotificationCenter.default
         
         // Capture Session Interruptions (Camera/Mic hardware issues)
-        center.addObserver(self, selector: #selector(handleSessionWasInterrupted), name: .AVCaptureSessionWasInterrupted, object: nil)
-        center.addObserver(self, selector: #selector(handleSessionInterruptionEnded), name: .AVCaptureSessionInterruptionEnded, object: nil)
-        center.addObserver(self, selector: #selector(handleSessionRuntimeError), name: .AVCaptureSessionRuntimeError, object: nil)
+        center.addObserver(self, selector: #selector(handleSessionWasInterrupted), name: AVCaptureSession.wasInterruptedNotification, object: nil)
+        center.addObserver(self, selector: #selector(handleSessionInterruptionEnded), name: AVCaptureSession.interruptionEndedNotification, object: nil)
+        center.addObserver(self, selector: #selector(handleSessionRuntimeError), name: AVCaptureSession.runtimeErrorNotification, object: nil)
         
         // Audio Engine Changes (Device unplugged/switched)
         center.addObserver(self, selector: #selector(handleAudioConfigurationChange), name: .AVAudioEngineConfigurationChange, object: nil)

@@ -218,8 +218,6 @@ final class ProjectFileManager: Sendable {
 
     /// Resolves bookmarks for all clips in a project, updating URLs if needed
     func hydrateProject(_ project: VideoProject) -> VideoProject {
-        NSLog("🕵️‍♀️ ProjectFileManager: hydrateProject called!")
-        for symbol in Thread.callStackSymbols.prefix(10) { NSLog("\(symbol)") }
         var updatedProject = project
         var updatedTracks: [Track] = []
 

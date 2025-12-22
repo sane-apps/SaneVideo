@@ -293,12 +293,15 @@ struct EditorLayoutView: View {
                     .frame(maxWidth: 300)
             }
 
-            Button(action: { appState.importVideo() }) {
-                Label("Import Your First Video", systemImage: "plus.circle.fill")
-                    .font(.headline)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-            }
+            Button(
+                action: { appState.importVideo() },
+                label: {
+                    Label("Import Your First Video", systemImage: "plus.circle.fill")
+                        .font(.headline)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                }
+            )
             .buttonStyle(.borderedProminent)
             .controlSize(.large)
         }

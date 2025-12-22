@@ -366,21 +366,16 @@ extension ProjectState {
     }
 
     private func triggerAudioEnhancement(for clipId: UUID) async {
-        guard var project = currentProject else { return }
+        guard let project = currentProject else { return }
         
         // Find the clip again in the latest state
-        var timeline = project.timeline
+        let timeline = project.timeline
         var clipToUpdate: VideoClip?
         var trackIdx: Int = -1
-        var clipIdx: Int = -1
-        
-        for (tIdx, track) in timeline.tracks.enumerated() {
-            if let cIdx = track.clips.firstIndex(where: { $0.id == clipId }) {
-                clipToUpdate = track.clips[cIdx]
-                trackIdx = tIdx
-                clipIdx = cIdx
-                break
-            }
+        for (tIdx, track) in timeline.tracks.enumerated() where track.clips.contains(where: { $0.id == clipId }) {
+            clipToUpdate = track.clips.first { $0.id == clipId }
+            trackIdx = tIdx
+            break
         }
         
         guard let clip = clipToUpdate, clip.enhancedAudioURL == nil else { return }

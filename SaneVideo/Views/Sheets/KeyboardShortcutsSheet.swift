@@ -38,7 +38,9 @@ struct KeyboardShortcutsSheet: View {
                         ("Open Project", "⌘O"),
                         ("Save Project", "⌘S"),
                         ("Import Media", "⌘I"),
-                        ("Share Project", "⇧⌘S")
+                        ("Share Project", "⇧⌘S"),
+                        ("Undo", "⌘Z"),
+                        ("Redo", "⇧⌘Z")
                     ])
 
                     ShortcutSection(title: "Playback", shortcuts: [
@@ -58,6 +60,17 @@ struct KeyboardShortcutsSheet: View {
                         ("Delete Clip", "⌫"),
                         ("Toggle Snapping", "N"),
                         ("Toggle Magnetic", "M")
+                    ])
+
+                    ShortcutSection(title: "AI Tools", shortcuts: [
+                        ("Super Magic Fix", "⇧⌘M"),
+                        ("Refine Captions", "⇧⌘T"),
+                        ("Smart Thumbnail", "⌘T")
+                    ])
+
+                    ShortcutSection(title: "View", shortcuts: [
+                        ("Toggle Sidebar", "⌥⌘S"),
+                        ("Toggle Inspector", "⌥⌘I")
                     ])
 
                     ShortcutSection(title: "Export", shortcuts: [

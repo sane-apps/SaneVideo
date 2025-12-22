@@ -44,7 +44,7 @@ struct TimelineControls: View {
                 ToolButton(icon: "cursorarrow", isSelected: true, id: "SelectClipButton") {
                     // Selection is default
                 }
-                .help(String(localized: "timeline.tool.select", defaultValue: "Select Tool (A)"))
+                .help(KeyboardShortcutHelper.helpWithShortcut(String(localized: "timeline.tool.select", defaultValue: "Select Tool"), key: "a", modifiers: []))
 
                 ToolButton(icon: "scissors", isSelected: false, id: "SplitClipButton") {
                     onSplit()
@@ -76,7 +76,7 @@ struct TimelineControls: View {
                         .opacity(snapEnabled ? 1.0 : 0.7)
                 })
                 .buttonStyle(.plain)
-                .help(String(localized: "timeline.help.snap", defaultValue: "Toggle Snapping (N)"))
+                .help(KeyboardShortcutHelper.helpWithShortcut(String(localized: "timeline.help.snap", defaultValue: "Toggle Snapping"), key: "n", modifiers: []))
                 .accessibilityIdentifier("timeline.toggle_snap")
 
                 // Magnetic
@@ -86,7 +86,7 @@ struct TimelineControls: View {
                         .font(.system(size: 13))
                 })
                 .buttonStyle(.plain)
-                .help(String(localized: "timeline.help.magnetic", defaultValue: "Magnetic Timeline (M)"))
+                .help(KeyboardShortcutHelper.helpWithShortcut(String(localized: "timeline.help.magnetic", defaultValue: "Magnetic Timeline"), key: "m", modifiers: []))
                 .accessibilityIdentifier("timeline.toggle_magnetic")
 
                 // Zoom

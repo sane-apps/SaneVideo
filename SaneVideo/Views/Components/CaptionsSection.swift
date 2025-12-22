@@ -85,6 +85,8 @@ struct CaptionsSection: View {
                 ) {
                     Task { await refineCaptions() }
                 }
+                .keyboardShortcut("t", modifiers: [.command, .shift])
+                .help(KeyboardShortcutHelper.helpWithShortcut(String(localized: "captions.action.refine", defaultValue: "Refine Captions"), key: "t", modifiers: [.command, .shift]))
 
                 Divider().padding(.vertical, 4)
 

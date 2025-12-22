@@ -146,6 +146,33 @@ struct SmartToolsSection: View {
 
             Divider()
 
+            // MARK: - Generative Visuals
+            VStack(alignment: .leading, spacing: 12) {
+                Label(String(localized: "smart_tools.generative.header", defaultValue: "GENERATIVE VISUALS"), systemImage: "sparkles")
+                    .font(.system(size: 9, weight: .bold))
+                    .foregroundColor(.secondary)
+                
+                VStack(spacing: 12) {
+                    InspectorToggle(
+                        title: String(localized: "smart_tools.generative.magic_remove.title", defaultValue: "Magic Remove"),
+                        subtitle: String(localized: "smart_tools.generative.magic_remove.subtitle", defaultValue: "AI object/people removal"),
+                        isOn: $options.magicRemovePeople,
+                        icon: "person.badge.minus",
+                        identifier: "smart_tools.generative.magic_remove"
+                    )
+                    
+                    InspectorToggle(
+                        title: String(localized: "smart_tools.generative.cinematic_styles.title", defaultValue: "Cinematic Styles"),
+                        subtitle: String(localized: "smart_tools.generative.cinematic_styles.subtitle", defaultValue: "Prompt-based restyling"),
+                        isOn: $options.generativeStyle,
+                        icon: "camera.filters",
+                        identifier: "smart_tools.generative.cinematic_styles"
+                    )
+                }
+            }
+
+            Divider()
+
             // MARK: - Content Analysis
             VStack(alignment: .leading, spacing: 12) {
                 Label(String(localized: "smart_tools.analysis.header", defaultValue: "AI ANALYSIS"), systemImage: "brain")

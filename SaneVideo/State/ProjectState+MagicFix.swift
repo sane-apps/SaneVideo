@@ -172,7 +172,7 @@ extension ProjectState {
         }
     }
 
-    private func getClip(by id: UUID) -> VideoClip? {
+    func getClip(by id: UUID) -> VideoClip? {
         guard let project = currentProject else { return nil }
         for track in project.timeline.tracks {
             if let clip = track.clips.first(where: { $0.id == id }) {

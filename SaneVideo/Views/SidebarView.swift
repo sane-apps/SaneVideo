@@ -16,31 +16,77 @@ struct SidebarView: View {
     @State private var selectedTab = 0
 
     var body: some View {
-        VStack(spacing: 0) {
-            // Tab Switcher - Tahoe Style
-            Picker("", selection: $selectedTab) {
-                Text(String(localized: "sidebar.tab.media", defaultValue: "Media")).tag(0)
-                Text(String(localized: "sidebar.tab.transcript", defaultValue: "Transcript")).tag(1)
+        HStack(spacing: 0) {
+            // RAIL: Vertical Navigation Rail (Pro Style)
+            VStack(spacing: 20) {
+                SidebarRailItem(icon: "film", label: "Media", tag: 0, selection: $selectedTab)
+                SidebarRailItem(icon: "text.quote", label: "Edit", tag: 1, selection: $selectedTab)
+                SidebarRailItem(icon: "wand.and.rays", label: "Magic", tag: 2, selection: $selectedTab)
+                
+                Spacer()
+                
+                // Bottom actions
+                SidebarRailItem(icon: "gearshape", label: "Settings", tag: 99, selection: $selectedTab)
             }
-            .pickerStyle(.segmented)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 8)
+            .frame(width: 50)
+            .padding(.vertical, 16)
             .background(.ultraThinMaterial)
 
             Divider()
 
-            if selectedTab == 0 {
-                // Library/Media browser
-                LibraryView(selectedClip: $selectedClip)
-                    .transition(.move(edge: .leading).combined(with: .opacity))
-            } else {
-                // Text-Based Editing View
-                TranscriptionEditorView(selectedClip: $selectedClip)
-                    .transition(.move(edge: .trailing).combined(with: .opacity))
+            // CONTENT: Contextual Sidebar Content
+            VStack(spacing: 0) {
+                Group {
+                    if selectedTab == 0 {
+                        LibraryView(selectedClip: $selectedClip)
+                    } else if selectedTab == 1 {
+                        TranscriptionEditorView(selectedClip: $selectedClip)
+                    } else if selectedTab == 2 {
+                        GlobalMagicView() // NEW: Global project magic
+                    } else {
+                        SettingsView()
+                    }
+                }
+                .transition(.asymmetric(
+                    insertion: .opacity.combined(with: .move(edge: .trailing)),
+                    removal: .opacity
+                ))
             }
+            .frame(maxWidth: .infinity)
         }
-        .frame(minWidth: 180, idealWidth: 240, maxWidth: 350)
-        .liquidGlass() // Applying the Tahoe aesthetic
+        .frame(minWidth: 240, idealWidth: 300, maxWidth: 450)
+        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: selectedTab)
+    }
+}
+
+// MARK: - Sidebar Rail Item
+
+private struct SidebarRailItem: View {
+    let icon: String
+    let label: String
+    let tag: Int
+    @Binding var selection: Int
+    
+    var isSelected: Bool { selection == tag }
+    
+    var body: some View {
+        Button {
+            selection = tag
+        } label: {
+            VStack(spacing: 4) {
+                Image(systemName: isSelected ? "\(icon).fill" : icon)
+                    .font(.system(size: 18))
+                    .foregroundStyle(isSelected ? AnyShapeStyle(Theme.Colors.accentGradient) : AnyShapeStyle(Color.secondary))
+                
+                Text(label)
+                    .font(.system(size: 9, weight: .medium))
+                    .foregroundColor(isSelected ? .primary : .secondary)
+            }
+            .frame(maxWidth: .infinity)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .help(label)
     }
 }
 

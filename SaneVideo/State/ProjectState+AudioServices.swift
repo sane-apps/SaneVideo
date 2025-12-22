@@ -157,4 +157,56 @@ extension ProjectState {
             await MainActor.run { ServiceContainer.shared.toastManager.show("Audio enhancement failed") }
         }
     }
+
+    /// Cleans audio for the entire project (Batch)
+    func cleanProjectAudio() async {
+        guard let project = currentProject else { return }
+        
+        isProcessing = true
+        processingProgress = 0.0
+        processingStatus = "🧹 Starting Global Audio Cleanup..."
+        ServiceContainer.shared.toastManager.show("🧹 Starting Global Audio Cleanup...")
+        
+        defer {
+            isProcessing = false
+            processingStatus = nil
+            processingProgress = 0.0
+        }
+        
+        let allClips = project.timeline.tracks.flatMap { $0.clips }
+        let total = Double(allClips.count)
+        
+        for (index, clip) in allClips.enumerated() {
+            processingStatus = "🧹 Cleaning audio (\(index + 1)/\(allClips.count)): \(clip.url.lastPathComponent)"
+            processingProgress = Double(index) / total
+            
+            // 1. Remove Silence
+            await removeSilenceInternal(for: clip)
+            
+            // 2. Remove Fillers (requires captions)
+            if clip.captions.isEmpty {
+                _ = try? await generateCaptions(for: clip)
+            }
+            
+            if let updatedClip = getClip(by: clip.id) {
+                await removeFillerWordsInternal(from: updatedClip)
+            }
+        }
+        
+        ServiceContainer.shared.toastManager.show("✅ Project Audio Cleaned!")
+    }
+
+    private func removeSilenceInternal(for clip: VideoClip) async {
+        let silenceDetector = ServiceContainer.shared.silenceDetector
+        do {
+            let silentRanges = try await silenceDetector.detectSilence(in: clip) { _, _ in }
+            if !silentRanges.isEmpty {
+                await MainActor.run {
+                    self.applySilenceRemoval(to: clip, silentRanges: silentRanges)
+                }
+            }
+        } catch {
+            AppLogger.audio.error("Batch Audio: Silence removal failed for \(clip.id): \(error)")
+        }
+    }
 }

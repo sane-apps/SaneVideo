@@ -2,6 +2,7 @@
 //  ProjectState+MagicFix.swift
 //  SaneVideo
 //
+//
 
 import AVFoundation
 import Foundation
@@ -27,34 +28,46 @@ extension ProjectState {
             } 
         }
 
-        // 1. Generate Captions if needed (for Fillers/Enhance)
-        if (options.generateCaptions || options.removeFillers || options.autoEnhance) && clip.captions.isEmpty {
+        // 1. Audio Enhancement (Primary Priority)
+        // Enhance audio FIRST so that transcription and silence detection use clean audio
+        if options.enhanceAudio {
+            processingStatus = "🎙️ Enhancing audio first..."
+            await enhanceAudioFirst(for: clip)
+            processingProgress = 0.2
+        }
+        
+        // Refresh clip state after potential audio enhancement
+        guard let enhancedClipId = Optional(clip.id), let preAnalysisClip = getClip(by: enhancedClipId) else { return }
+
+        // 2. Generate Captions if needed (Using enhanced audio if available)
+        if (options.generateCaptions || options.removeFillers || options.autoEnhance) && preAnalysisClip.captions.isEmpty {
              processingStatus = "🎤 Transcribing audio..."
              do { 
-                 _ = try await generateCaptions(for: clip) 
+                 _ = try await generateCaptions(for: preAnalysisClip) 
              } catch {
                  AppLogger.project.warning("Magic Fix: Caption generation failed, some features like Filler Removal may be skipped.")
              }
         }
-        processingProgress = 0.3
+        processingProgress = 0.4
         
-        // Reload clip to get fresh state (captions)
-        guard let currentClipId = Optional(clip.id), let updatedClip = getClip(by: currentClipId) else { return }
+        // Refresh clip again for analysis
+        guard let readyForCutsClip = getClip(by: preAnalysisClip.id) else { return }
 
         do {
-            // 2. Analyis and Cuts
+            // 3. Analyis and Cuts (Silence & Fillers)
+            // Now runs on clean audio + accurate captions
             processingStatus = "✂️ Analyzing for cuts (Silence & Fillers)..."
-            try await processCutsAndSmoothing(for: updatedClip, options: options)
+            try await processCutsAndSmoothing(for: readyForCutsClip, options: options)
             processingProgress = 0.6
 
-            // Refresh clip for subsequent steps
-            guard let refreshedClip = getClip(by: updatedClip.id) else { return }
+            // Refresh clip for final steps
+            guard let visualClip = getClip(by: readyForCutsClip.id) else { return }
 
-            // 3. Visual & Audio Enhancements
-            try await applyVisualAndAudioEnhancements(to: refreshedClip, options: options)
+            // 4. Visual Enhancements
+            try await applyVisualEffects(to: visualClip, options: options)
             
-            // 4. AI & Generative Features
-            try await applyAIGenerativeFeatures(to: refreshedClip, options: options)
+            // 5. AI & Generative Features
+            try await applyAIGenerativeFeatures(to: visualClip, options: options)
 
             processingProgress = 1.0
             processingStatus = "✅ Magic Fix Completed"
@@ -109,36 +122,15 @@ extension ProjectState {
         }
     }
 
-    private func applyVisualAndAudioEnhancements(to clip: VideoClip, options: MagicFixOptions) async throws {
-        // Smart Crop
-        if options.smartCrop {
-            processingStatus = "📐 Auto-reframing to 9:16..."
-            await applySmartCrop(to: clip, targetAspectRatio: 9.0/16.0)
-            processingProgress = 0.7
-        }
-        
-        // Auto Framing
-        if options.autoFraming {
-            processingStatus = "🎯 Tracking subjects..."
-            await applyAutoFraming(to: clip)
-            processingProgress = 0.75
-        }
-        
-        // Color Grade
-        if options.analyzeMood {
-            processingStatus = "🎨 Grading colors..."
-            await applySmartColorGrade(to: clip)
-            processingProgress = 0.8
-        }
-        
-        // Auto Enhance
-        if options.autoEnhance {
-            processingStatus = "🪄 Enhancing visuals..."
-            self.applyEffect(to: clip, effect: VideoEffect(type: .autoEnhance))
-            processingProgress = 0.85
-        }
+    private func enhanceAudioFirst(for clip: VideoClip) async {
+        // Wrapper for internal enhance call, ensuring UI updates
+        processingStatus = "🎙️ Enhancing audio..."
+        await enhanceAudio(for: clip)
+    }
 
-        // Text Scan
+    private func applyVisualEffects(to clip: VideoClip, options: MagicFixOptions) async throws {
+        // 1. Text Scan (Analysis - Independent)
+        // Run first as it's purely analytical and non-destructive
         if options.scanForText {
             processingStatus = "🔍 Scanning for text..."
             do {
@@ -146,15 +138,36 @@ extension ProjectState {
             } catch {
                 AppLogger.vision.error("Magic Fix: OCR scan failed: \(error)")
             }
-            processingProgress = 0.9
+            processingProgress = 0.7
         }
 
-        // Studio Sound
-        if options.enhanceAudio {
-            processingStatus = "🎙️ Enhancing audio..."
-            await enhanceAudio(for: clip)
-            processingProgress = 0.95
+        // 2. Geometry (Mutually Exclusive)
+        // Smart Crop supersedes Auto Framing because it enforces a specific aspect ratio (9:16)
+        // AND includes its own saliency-based tracking.
+        if options.smartCrop {
+            processingStatus = "📐 Auto-reframing to 9:16..."
+            await applySmartCrop(to: clip, targetAspectRatio: 9.0/16.0)
+        } else if options.autoFraming {
+            processingStatus = "🎯 Tracking subjects..."
+            await applyAutoFraming(to: clip)
         }
+        processingProgress = 0.8
+
+        // 3. Color (Correction -> Grading)
+        
+        // Auto Enhance (Correction/White Balance)
+        // Validated Order: Correct the image FIRST to remove casts, then apply stylistic grading.
+        if options.autoEnhance {
+            processingStatus = "🪄 Enhancing visuals..."
+            self.applyEffect(to: clip, effect: VideoEffect(type: .autoEnhance))
+        }
+
+        // Color Grade (Styling/Mood)
+        if options.analyzeMood {
+            processingStatus = "🎨 Grading colors..."
+            await applySmartColorGrade(to: clip)
+        }
+        processingProgress = 0.9
     }
 
     private func applyAIGenerativeFeatures(to clip: VideoClip, options: MagicFixOptions) async throws {

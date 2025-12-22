@@ -30,7 +30,14 @@ actor SilenceDetector {
         await MainActor.run {
             AppLogger.project.debug("Silence detection: threshold=\(config.dbThreshold)dB, minDuration=\(config.minDuration)s, duration=\(String(format: "%.1f", totalDuration))s")
         }
-        let asset = AVURLAsset(url: clip.url)
+        
+        // CRITICAL FIX: Use enhanced audio if available for better detection accuracy
+        let audioURL = clip.enhancedAudioURL ?? clip.url
+        await MainActor.run {
+             AppLogger.project.debug("Silence detection using source: \(audioURL.lastPathComponent)")
+        }
+        
+        let asset = AVURLAsset(url: audioURL)
 
         // Load audio track
         let tracks = try await asset.loadTracks(withMediaType: .audio)

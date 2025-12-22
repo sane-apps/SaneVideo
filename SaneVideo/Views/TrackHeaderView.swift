@@ -24,10 +24,12 @@ struct TrackHeaderView: View {
                     .font(.caption)
                     .foregroundColor(track.isMuted ? .secondary : trackColor)
 
-                Text(track.name)
-                    .font(.caption.bold())
-                    .lineLimit(1)
-                    .foregroundColor(track.isMuted ? .secondary : .primary)
+                if !track.name.isEmpty && track.name != "Video 1" {
+                    Text(track.name)
+                        .font(.caption.bold())
+                        .lineLimit(1)
+                        .foregroundColor(track.isMuted ? .secondary : .primary)
+                }
             }
 
             // Controls

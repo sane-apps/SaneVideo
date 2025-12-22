@@ -34,9 +34,21 @@ class SaneMaster
     command = args.shift
     case command
     when "diagnose" 
-      path = args.first
-      path = args[1] if path == "--path"
-      diagnose(path)
+      path = nil
+      dump = false
+      
+      # Simple arg parsing
+      args.each_with_index do |arg, i|
+        if arg == "--path"
+          path = args[i+1]
+        elsif arg == "--dump"
+          dump = true
+        elsif !arg.start_with?("-") && path.nil?
+          path = arg
+        end
+      end
+      
+      diagnose(path, dump: dump)
     when "doctor"   then doctor
     when "verify"   then verify(args)
     when "clean"    then clean(args)
@@ -271,8 +283,8 @@ class SaneMaster
 
   # --- CORE Commands ---
 
-  def diagnose(xcresult_path = nil)
-    master = UITestMaster.new(xcresult_path)
+  def diagnose(xcresult_path = nil, dump: false)
+    master = UITestMaster.new(xcresult_path, dump: dump)
     if master.export_diagnostics
       master.run_heuristics
     else
@@ -315,7 +327,19 @@ class SaneMaster
   def verify(args = [])
     puts "🚀 --- [ SANEMASTER VERIFY ] ---"
     
+    # Start the Permission Monitor in the background
+    puts "🛡️  Launching Permission Monitor (God Mode)..."
+    monitor_pid = spawn("/usr/bin/osascript Scripts/grant_permissions.applescript SaneVideo", [:out, :err] => "/dev/null")
+    Process.detach(monitor_pid)
+
     success = system("bundle exec fastlane verify")
+    
+    # Cleanup monitor (though it self-terminates after 60s)
+    begin
+        Process.kill("TERM", monitor_pid)
+    rescue
+        # Ignore if already dead
+    end
     
     if success
       puts "\n✅ VERIFICATION PASSED."
@@ -386,12 +410,11 @@ end
 # --- Diagnostic Engine ---
 
 class UITestMaster
-  def initialize(xcresult_path = nil)
+  def initialize(xcresult_path = nil, dump: false)
     @xcresult_path = xcresult_path || find_latest_xcresult
     @diagnostics_dir = nil
+    @dump_logs = dump
   end
-
-
 
   def export_diagnostics
     return false unless @xcresult_path
@@ -447,6 +470,12 @@ class UITestMaster
     if app_log
       puts "  📄 App Log: #{File.basename(app_log)}"
       content = File.read(app_log)
+
+      if @dump_logs
+        puts "\n  📜 --- FULL APP LOG START ---"
+        puts content
+        puts "  📜 --- FULL APP LOG END ---\n"
+      end
       
       puts "  --- App Log Heuristics ---"
       # Error Detection
@@ -464,9 +493,24 @@ class UITestMaster
       # Security & Performance
       puts "  🔴 SECURITY SCOPE LEAK: Uneven lock/unlock count" if content.scan(/🔐 Started security scope/).size != content.scan(/🔓 Stopped security scope/).size
       
+      # 🎨 VFX & Metal Graphics Errors
+      vfx_errors = content.scan(/patching invalid duplicated core entity handle|couldn't remap entity|script wasn't bound to runtime|Render pass format not ready/).size
+      puts "  🔴 VFX/GRAPHICS ENGINE FAILURE: #{vfx_errors} errors detected (Metal/VFXNode mismatch)." if vfx_errors > 0
+
+      # 🖼️ Asset & Symbol Errors
+      missing_symbols = content.scan(/No symbol named '(.*)' found in system symbol set/).flatten
+      missing_symbols.uniq.each do |sym|
+        puts "  🔴 MISSING SYSTEM SYMBOL: '#{sym}' (Check target OS version / bundle ID)."
+      end
+
+      # 🏗️ Layout & UI Recursion
+      if content.include?("_NSDetectedLayoutRecursion") || content.include?("layoutSubtreeIfNeeded")
+        puts "  🔴 LAYOUT RECURSION DETECTED: UI is fighting itself (Infinite layout loop)."
+      end
+
       # General Catch-all for Proactive Debugging
       content.each_line do |line|
-        if line.match?(/error:|fault:|panic:|fatal/i)
+        if line.match?(/error:|fault:|panic:|fatal/i) && !line.include?("MLE5Engine") # MLE5 is often just info
           puts "  ❌ CRITICAL LOG: #{line.strip}"
         elsif line.match?(/warning:|⚠️/i) && !line.include?("com.apple") # Filter system noise
           puts "  🟡 LOG WARNING: #{line.strip}"

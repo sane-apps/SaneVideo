@@ -25,12 +25,17 @@ enum MagicFixService {
         
         // 1. Silence Detection
         if options.removeSilence {
-            let silenceRanges = try await detectSilence(
-                in: clip,
-                options: options,
-                progressHandler: { p, _ in progressHandler(Int(Double(p)/100.0 * 30.0), 100) }
-            )
-            rangesToRemove.append(contentsOf: silenceRanges)
+            do {
+                let silenceRanges = try await detectSilence(
+                    in: clip,
+                    options: options,
+                    progressHandler: { p, _ in progressHandler(Int(Double(p)/100.0 * 30.0), 100) }
+                )
+                rangesToRemove.append(contentsOf: silenceRanges)
+            } catch {
+                AppLogger.project.error("⚠️ Magic Fix: Silence detection failed (skipping): \(error.localizedDescription)")
+                // Continue execution - do not fail the whole process
+            }
         }
         
         // 2. Filler Detection & AI Analysis

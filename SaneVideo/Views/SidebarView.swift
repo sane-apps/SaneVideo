@@ -77,9 +77,17 @@ private struct SidebarRailItem: View {
 
                 Text(label)
                     .font(.system(size: 9, weight: .medium))
-                    .foregroundColor(isSelected ? .primary : .secondary)
+                    .foregroundColor(isSelected ? Color.accentColor : .secondary)
             }
             .frame(maxWidth: .infinity)
+            .padding(.vertical, 8)
+            .background {
+                if isSelected {
+                    Capsule()
+                        .fill(Color.accentColor.opacity(0.1))
+                        .padding(.horizontal, 4)
+                }
+            }
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)

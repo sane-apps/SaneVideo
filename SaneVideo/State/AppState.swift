@@ -355,9 +355,15 @@ class AppState {
             // 1. FIRST: Restore main window while PiP is still valid
             windowManager.restoreMainWindow()
             
-            // 2. THEN: Toggle state and hide PiP (safe now that main window is key)
+            // 2. THEN: Toggle state and hide PiP
             windowManager.isScreenSharing = false
-            windowManager.updatePiPState(isCameraActive: cameraState.isActive, isRecording: recordingState.isRecording)
+            windowManager.updatePiPState(isCameraActive: false, isRecording: recordingState.isRecording) // Force camera off in PiP when stopping screen share
+            
+            // 3. CRITICAL: Stop recording if it's running (User expectation: Stop Share = Stop Recording)
+            if recordingState.isRecording {
+                AppLogger.recording.info("🛑 AppState: Screen Share stopped. Stopping active recording.")
+                toggleRecording()
+            }
         } else {
             // Screen Share turning ON:
             // Normal order is fine

@@ -61,6 +61,7 @@ public struct SaneTimelineView: View {
                         pixelsPerSecond: pixelsPerSecond
                     )
                 }
+                .accessibilityIdentifier("TimelineScroll")
                 .frame(minHeight: 150, maxHeight: .infinity)
             }
         }
@@ -154,6 +155,27 @@ public struct SaneTimelineView: View {
                 .opacity(0)
                 .allowsHitTesting(false)
                 .accessibilityIdentifier("timeline.shortcut.fit")
+
+                // Split Clip: ⌘B
+                Button("") {
+                    splitSelectedClip()
+                }
+                .keyboardShortcut("b", modifiers: [.command])
+                .opacity(0)
+                .allowsHitTesting(false)
+                .accessibilityIdentifier("timeline.shortcut.split")
+
+                // Delete Clip: Delete / Backspace
+                Button("") {
+                    if let clip = selectedClip {
+                        clipToDelete = clip
+                        showDeleteConfirmation = true
+                    }
+                }
+                .keyboardShortcut(.delete, modifiers: [])
+                .opacity(0)
+                .allowsHitTesting(false)
+                .accessibilityIdentifier("timeline.shortcut.delete")
             }
         }
     }

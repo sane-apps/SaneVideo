@@ -163,16 +163,8 @@ class ScreenRecorder: NSObject, SCContentSharingPickerObserver, SCStreamDelegate
             // Pixel format - BGRA for best M1 performance
             config.pixelFormat = kCVPixelFormatType_32BGRA
             
-            // Color space - Display P3 for HDR support on Tahoe
+            // Color space - Display P3 for HDR-like support on Tahoe
             config.colorSpaceName = CGColorSpace.displayP3
-            
-            // HDR Capture (macOS 15.4 / 26 Tahoe +)
-            // Note: Temporarily disabled due to SDK mismatch in build environment
-            /*
-            if #available(macOS 15.4, *) {
-                config.captureHDR = true
-            }
-            */
             
             // Queue depth - optimized for low latency
             config.queueDepth = 5
@@ -197,8 +189,42 @@ class ScreenRecorder: NSObject, SCContentSharingPickerObserver, SCStreamDelegate
             config.sampleRate = 48000
             
             // Create stream with user's selected content filter
-            // Use self as delegate to handle stream errors and interruptions
-            let newStream = SCStream(filter: filter, configuration: config, delegate: self)
+            var finalFilter = filter
+            
+            // CRITICAL FIX: Ensure PiP and Floating Controls are VISIBLE in the recording
+            // 1. Get all shareable content to find our windows and displays
+            let shareableContent = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: true)
+            
+            // 2. Identify our process
+            if let myApp = shareableContent.applications.first(where: { $0.bundleIdentifier == Bundle.main.bundleIdentifier }) {
+                AppLogger.recording.info("📺 Identified SaneVideo process for filter modification")
+                
+                // 3. Find our special windows (PiP, Controls)
+                let pipWindows = shareableContent.windows.filter { window in
+                    window.owningApplication?.bundleIdentifier == myApp.bundleIdentifier &&
+                    (window.title?.contains("PiP") == true || window.title?.contains("Controls") == true || window.windowLayer > 0)
+                }
+                
+                if !pipWindows.isEmpty {
+                    AppLogger.recording.info("📺 Found \(pipWindows.count) internal windows to include in recording")
+                    
+                    // 4. Reconstruct filter if it's a display filter
+                    // We check if the filter already includes a display
+                    if #available(macOS 15.2, *), let display = filter.includedDisplays.first {
+                        finalFilter = SCContentFilter(display: display, excludingApplications: [myApp], exceptingWindows: pipWindows)
+                        AppLogger.recording.info("✅ Reconstructed SCContentFilter for display '\(display.displayID)' including PiP windows")
+                    } else if let display = shareableContent.displays.first {
+                        // Fallback for older macOS or if includedDisplays is empty
+                        finalFilter = SCContentFilter(display: display, excludingApplications: [myApp], exceptingWindows: pipWindows)
+                        AppLogger.recording.info("✅ Reconstructed SCContentFilter using first shareable display")
+                    }
+                } else {
+                    AppLogger.recording.warning("⚠️ Could not find specific PiP windows in shareable content")
+                }
+            }
+
+            // Create stream with final filter
+            let newStream = SCStream(filter: finalFilter, configuration: config, delegate: self)
             
             // Add video stream output
             try newStream.addStreamOutput(
@@ -222,8 +248,13 @@ class ScreenRecorder: NSObject, SCContentSharingPickerObserver, SCStreamDelegate
                 let recordingConfig = SCRecordingOutputConfiguration()
                 recordingConfig.outputURL = outputURL
                 recordingConfig.outputFileType = .mp4
-                // Use H.264 for compatibility, or HEVC for better compression
-                recordingConfig.videoCodecType = .h264
+                // Use HEVC (H.265) for better compression on modern Macs, fallback to H.264
+                if #available(macOS 15.0, *) {
+                    recordingConfig.videoCodecType = .hevc
+                    AppLogger.recording.info("🎥 Using HEVC (H.265) for hardware recording")
+                } else {
+                    recordingConfig.videoCodecType = .h264
+                }
                 
                 let output = SCRecordingOutput(configuration: recordingConfig, delegate: self)
                 try newStream.addRecordingOutput(output)

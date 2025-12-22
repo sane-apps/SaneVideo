@@ -54,7 +54,7 @@ actor SmartThumbnailService {
         for time in candidateTimes {
             do {
                 let (image, actualTime) = try await generator.image(at: time)
-                let score = try evaluateFrameQuality(image)
+                let score = try await evaluateFrameQuality(image)
                 scoredFrames.append(ScoredFrame(time: actualTime, score: score, image: image))
             } catch {
                 AppLogger.vision.warning("Failed to generate candidate frame at \(time.seconds): \(error)")
@@ -102,44 +102,24 @@ actor SmartThumbnailService {
     }
     
     /// Scores a single image using Vision
-    private func evaluateFrameQuality(_ image: CGImage) throws -> Float {
+    private func evaluateFrameQuality(_ image: CGImage) async throws -> Float {
         var score: Float = 0.0
         
         let handler = VNImageRequestHandler(cgImage: image, options: [:])
         
-        // Request 1: Face Quality
         let faceRequest = VNDetectFaceCaptureQualityRequest()
-        
-        // Request 2: Saliency (as backup)
-        // VNGenerateAttentionBasedSaliencyImageRequest is heavy, maybe just use face presence first.
-        // Let's use Face Rectangles to simpler detect presence first.
         let faceRectRequest = VNDetectFaceRectanglesRequest()
         
-        try handler.perform([faceRequest, faceRectRequest])
+        try await handler.perform([faceRequest, faceRectRequest])
         
-        // Scoring Strategy:
-        // - If faces are found, use the highest FaceCaptureQuality
-        // - Score bonus for face size (closer is usually better for thumbnails)
-        
-        // Check results
         if let faceObservations = faceRequest.results, !faceObservations.isEmpty {
-            // Find max quality
-            // Note: VNDetectFaceCaptureQualityRequest results are VNFaceObservation with a specific property?
-            // Actually, `VNDetectFaceCaptureQualityRequest` produces `VNFaceObservation`s populated with `faceCaptureQuality`.
-            
+            // Note: faceCaptureQuality is the legacy VN* API, still available in macOS 26
+            // The modern Vision Swift API uses FaceObservation.captureQuality.score
             let maxQuality = faceObservations.compactMap { $0.faceCaptureQuality }.max() ?? 0.1
-            
-            // Add size weight (area of bounding box)
             let maxFaceArea = faceObservations.map { $0.boundingBox.width * $0.boundingBox.height }.max() ?? 0.0
             
-            // Score = Quality (0-1) * 0.7 + Size (0-1) * 0.3 + Base Bonus (1.0)
             score = (maxQuality * 0.7) + (Float(maxFaceArea) * 0.3) + 1.0
         } else {
-            // No faces. Use pure saliency or just assign a low base score.
-            // For MVP "Quick Win", we assign a random variations or use Saliency.
-            // Let's try to detect if it's not blurry.
-            // Simplified: Default score 0.5 for non-face frames.
-            // Real implementation would use VNGenerateBlurMapRequest, but that's heavier.
             score = 0.5
         }
         

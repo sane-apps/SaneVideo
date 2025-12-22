@@ -107,19 +107,22 @@ actor FFmpegService {
         let errorPipe = Pipe()
         process.standardError = errorPipe
         
-        do {
-            try process.run()
-            process.waitUntilExit()
-            
-            if process.terminationStatus != 0 {
-                let errorData = errorPipe.fileHandleForReading.readDataToEndOfFile()
-                let errorMessage = String(data: errorData, encoding: .utf8) ?? "Unknown error"
-                throw FFmpegError.executionFailed(errorMessage)
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+            process.terminationHandler = { process in
+                if process.terminationStatus == 0 {
+                    continuation.resume()
+                } else {
+                    let errorData = errorPipe.fileHandleForReading.readDataToEndOfFile()
+                    let errorMessage = String(data: errorData, encoding: .utf8) ?? "Unknown error"
+                    continuation.resume(throwing: FFmpegError.executionFailed(errorMessage))
+                }
             }
-        } catch let error as FFmpegError {
-            throw error
-        } catch {
-            throw FFmpegError.executionFailed(error.localizedDescription)
+            
+            do {
+                try process.run()
+            } catch {
+                continuation.resume(throwing: FFmpegError.executionFailed(error.localizedDescription))
+            }
         }
     }
 }

@@ -168,7 +168,7 @@ actor BodyPoseService {
         let request = VNDetectHumanBodyPoseRequest()
 
         let handler = VNImageRequestHandler(ciImage: image)
-        try handler.perform([request])
+        try await handler.perform([request])
 
         guard let observations = request.results else {
             return []
@@ -181,7 +181,7 @@ actor BodyPoseService {
                 if let point = try? observation.recognizedPoint(jointName.visionJointName),
                    point.confidence > 0.3 {
                     joints[jointName] = JointPosition(
-                        position: CGPoint(x: point.x, y: 1.0 - point.y),
+                        position: CGPoint(x: point.location.x, y: 1.0 - point.location.y),
                         confidence: point.confidence
                     )
                 }
@@ -211,7 +211,7 @@ actor BodyPoseService {
         request.maximumHandCount = 2
 
         let handler = VNImageRequestHandler(ciImage: image)
-        try handler.perform([request])
+        try await handler.perform([request])
 
         guard let observations = request.results else {
             return []
@@ -234,7 +234,7 @@ actor BodyPoseService {
                 if let points = try? observation.recognizedPoints(jointGroup) {
                     let jointPositions = points.values
                         .sorted { $0.location.y > $1.location.y }
-                        .map { JointPosition(position: CGPoint(x: $0.x, y: 1.0 - $0.y), confidence: $0.confidence) }
+                        .map { JointPosition(position: CGPoint(x: $0.location.x, y: 1.0 - $0.location.y), confidence: $0.confidence) }
                     if !jointPositions.isEmpty {
                         fingers[finger] = jointPositions
                     }
@@ -245,7 +245,7 @@ actor BodyPoseService {
             let wrist: JointPosition?
             if let wristPoint = try? observation.recognizedPoint(.wrist), wristPoint.confidence > 0.3 {
                 wrist = JointPosition(
-                    position: CGPoint(x: wristPoint.x, y: 1.0 - wristPoint.y),
+                    position: CGPoint(x: wristPoint.location.x, y: 1.0 - wristPoint.location.y),
                     confidence: wristPoint.confidence
                 )
             } else {

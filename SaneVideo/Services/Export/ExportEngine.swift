@@ -43,34 +43,28 @@ class ExportEngine: ExportServiceProtocol {
 
     // MARK: - Export
 
-    nonisolated func export(
+    func export(
         project: VideoProject,
         settings: SaneExportSettings,
         outputURL: URL,
-        progressHandler: @escaping @Sendable (Double) -> Void,
-        completion: @escaping @Sendable (Result<URL, Error>) -> Void
-    ) {
-        Task { @MainActor in
-            await self.performExport(
-                project: project,
-                settings: settings,
-                outputURL: outputURL,
-                progressHandler: progressHandler,
-                completion: completion
-            )
-        }
+        progressHandler: @escaping @Sendable (Double) -> Void
+    ) async throws -> URL {
+        return try await self.performExport(
+            project: project,
+            settings: settings,
+            outputURL: outputURL,
+            progressHandler: progressHandler
+        )
     }
 
     private func performExport(
         project: VideoProject,
         settings: SaneExportSettings,
         outputURL: URL,
-        progressHandler: @escaping @Sendable (Double) -> Void,
-        completion: @escaping @Sendable (Result<URL, Error>) -> Void
-    ) async {
+        progressHandler: @escaping @Sendable (Double) -> Void
+    ) async throws -> URL {
         guard !isExporting else {
-            completion(.failure(ExportError.alreadyExporting))
-            return
+            throw ExportError.alreadyExporting
         }
 
         isExporting = true
@@ -114,39 +108,39 @@ class ExportEngine: ExportServiceProtocol {
                 .store(in: &exportCancellables)
 
             if #available(macOS 15.0, *) {
+                AppLogger.project.info("🚀 Using modern async export pattern (macOS 15+)")
                 try await exportSession.export(to: outputURL, as: .mp4)
-                await handleExportCompletion(outputURL: outputURL, error: nil, completion: completion)
+                return try await handleExportCompletion(outputURL: outputURL, error: nil)
             } else {
+                AppLogger.project.info("⏳ Using legacy export pattern")
                 await exportSession.export()
-                // Legacy check
-                let error = exportSession.error
                 if exportSession.status == .completed {
-                    await handleExportCompletion(outputURL: outputURL, error: nil, completion: completion)
+                    return try await handleExportCompletion(outputURL: outputURL, error: nil)
                 } else {
-                    await handleExportCompletion(outputURL: outputURL, error: error ?? ExportError.unknown, completion: completion)
+                    return try await handleExportCompletion(outputURL: outputURL, error: exportSession.error ?? ExportError.unknown)
                 }
             }
         } catch {
             isExporting = false
             progressTracker.stopMonitoring()
             exportCancellables.removeAll()
-            completion(.failure(error))
             exportSession = nil
+            throw error
         }
     }
 
-    private func handleExportCompletion(outputURL: URL, error: Error?, completion: @escaping (Result<URL, Error>) -> Void) async {
+    private func handleExportCompletion(outputURL: URL, error: Error?) async throws -> URL {
         isExporting = false
         progressTracker.stopMonitoring()
         exportCancellables.removeAll()
 
-        if let error = error {
-            completion(.failure(error))
-        } else {
-            completion(.success(outputURL))
-        }
-
         exportSession = nil
+        
+        if let error = error {
+            throw error
+        } else {
+            return outputURL
+        }
     }
 
     func cancelExport() {

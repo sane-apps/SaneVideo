@@ -114,8 +114,15 @@ class CameraState {
         ensureCamerasDiscovered()
         
         if !cameraService.isActive {
-            cameraService.start(completion: completion)
-            AppLogger.camera.info("Started camera")
+            Task {
+                do {
+                    try await cameraService.start()
+                    AppLogger.camera.info("Started camera")
+                } catch {
+                    AppLogger.camera.error("Failed to start camera: \(error.localizedDescription)")
+                }
+                completion()
+            }
         } else {
             completion()
         }

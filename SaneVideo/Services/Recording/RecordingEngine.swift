@@ -261,8 +261,11 @@ class RecordingEngine: NSObject, @unchecked Sendable {
         await MainActor.run { self.diskSpaceMonitor.start() }
 
         if initialSource == .camera {
-            await MainActor.run { 
-                cameraService.start { } 
+            do {
+                try await cameraService.start()
+            } catch {
+                await MainActor.run { self.onError?(.cameraSetupFailed(error)) }
+                return
             }
         } else {
             do { 

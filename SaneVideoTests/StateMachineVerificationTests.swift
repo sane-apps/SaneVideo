@@ -192,7 +192,8 @@ class MockCameraService: NSObject, CameraServiceProtocol {
     // nonisolated required by protocol
     nonisolated var sampleBufferSubject: PassthroughSubject<CMSampleBuffer, Never> { PassthroughSubject() }
     
-    func start(completion: @escaping @Sendable () -> Void) { completion() }
+    // Updated for macOS 26 async protocol
+    func start() async throws {}
     func stop() {}
     func toggle() {}
     func switchCamera(to device: AVCaptureDevice) {}

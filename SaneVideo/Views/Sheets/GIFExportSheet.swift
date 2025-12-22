@@ -127,49 +127,35 @@ struct GIFExportSheet: View {
 
     private var fpsSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text(String(localized: "gif.fps.header", defaultValue: "Frame Rate"))
-                    .font(.caption)
-                Spacer()
-                Text("\(fps) FPS")
-                    .font(.caption.monospacedDigit())
-                    .foregroundStyle(.secondary)
-            }
+            Text(String(localized: "gif.fps.header", defaultValue: "Frame Rate"))
+                .font(.caption)
 
-            IntOptionButtonGroup(
-                options: fpsOptions,
-                selected: $fps,
-                accessibilityPrefix: "gif.fps"
-            )
-
-            HStack {
-                Text(String(localized: "gif.fps.footer.low", defaultValue: "Lower = smaller file"))
-                    .font(.caption2)
-                    .foregroundStyle(.tertiary)
-                Spacer()
-                Text(String(localized: "gif.fps.footer.high", defaultValue: "Higher = smoother"))
-                    .font(.caption2)
-                    .foregroundStyle(.tertiary)
+            Picker("", selection: $fps) {
+                ForEach(fpsOptions, id: \.self) { option in
+                    Text("\(option) FPS").tag(option)
+                }
             }
+            .pickerStyle(.segmented)
+            .labelsHidden()
+
+            Text(String(localized: "gif.fps.footer.low", defaultValue: "Lower = smaller file"))
+                .font(.caption2)
+                .foregroundStyle(.tertiary)
         }
     }
 
     private var widthSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text(String(localized: "gif.width.header", defaultValue: "Width"))
-                    .font(.caption)
-                Spacer()
-                Text("\(width)px")
-                    .font(.caption.monospacedDigit())
-                    .foregroundStyle(.secondary)
-            }
+            Text(String(localized: "gif.width.header", defaultValue: "Width"))
+                .font(.caption)
 
-            IntOptionButtonGroup(
-                options: widthOptions,
-                selected: $width,
-                accessibilityPrefix: "gif.width"
-            )
+            Picker("", selection: $width) {
+                ForEach(widthOptions, id: \.self) { option in
+                    Text("\(option)px").tag(option)
+                }
+            }
+            .pickerStyle(.menu)
+            .labelsHidden()
         }
     }
 
@@ -305,7 +291,7 @@ private struct PresetButton: View {
 
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 4) {
+            VStack(spacing: 2) {
                 Text(title)
                     .font(.caption.weight(.semibold))
                 Text(subtitle)
@@ -313,17 +299,10 @@ private struct PresetButton: View {
                     .foregroundStyle(.secondary)
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 10)
-            .background(
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(isSelected ? Color.blue.opacity(0.15) : Color.white.opacity(0.05))
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 8)
-                    .stroke(isSelected ? Color.blue : Color.white.opacity(0.1), lineWidth: 1)
-            )
+            .padding(.vertical, 8)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.bordered)
+        .tint(isSelected ? .blue : .secondary)
         .accessibilityIdentifier(id)
     }
 }

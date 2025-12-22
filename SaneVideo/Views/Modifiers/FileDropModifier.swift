@@ -11,9 +11,11 @@ import UniformTypeIdentifiers
 struct FileDropModifier: ViewModifier {
     @Environment(AppState.self) var appState
 
+    @Binding var isTargeted: Bool
+
     func body(content: Content) -> some View {
         content
-            .onDrop(of: [.fileURL], isTargeted: nil) { providers in
+            .onDrop(of: [.fileURL], isTargeted: $isTargeted) { providers in
                 let validProviders = providers.filter { $0.hasItemConformingToTypeIdentifier(UTType.fileURL.identifier) }
                 guard let provider = validProviders.first else { return false }
 
@@ -54,7 +56,7 @@ struct FileDropModifier: ViewModifier {
 }
 
 extension View {
-    func withFileDropHandling() -> some View {
-        modifier(FileDropModifier())
+    func withFileDropHandling(isTargeted: Binding<Bool>) -> some View {
+        modifier(FileDropModifier(isTargeted: isTargeted))
     }
 }

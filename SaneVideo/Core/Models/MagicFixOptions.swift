@@ -23,6 +23,10 @@ struct MagicFixOptions: Codable, Equatable {
     var applyHighlightCursor: Bool = true // Cursor highlights for recordings
     var smoothJumpCuts: Bool = true // Use Morph-cut like smoothing for jump cuts
     
+    // Generative AI options
+    var magicRemovePeople: Bool = false // AI-based object removal
+    var generativeStyle: Bool = false // Prompt-based style transfer
+    
     // Silence removal settings
     var silenceThreshold: Double = -45.0 // dB (-60 sensitive, -30 aggressive)
     var minSilenceDuration: Double = 0.3 // seconds (0.1-2.0)

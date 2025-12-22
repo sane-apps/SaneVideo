@@ -13,27 +13,34 @@ import UniformTypeIdentifiers
 struct SidebarView: View {
     @Environment(AppState.self) var appState
     @Binding var selectedClip: VideoClip?
+    @State private var selectedTab = 0
 
     var body: some View {
         VStack(spacing: 0) {
-            // Simple header - no tabs, just "Media"
-            HStack {
-                Text(String(localized: "sidebar.header", defaultValue: "Media"))
-                    .font(.system(.headline, design: .rounded))
-                Spacer()
+            // Tab Switcher - Tahoe Style
+            Picker("", selection: $selectedTab) {
+                Text(String(localized: "sidebar.tab.media", defaultValue: "Media")).tag(0)
+                Text(String(localized: "sidebar.tab.transcript", defaultValue: "Transcript")).tag(1)
             }
-            .accessibilityIdentifier("sidebar.header")
-            .padding(.horizontal, 12)
-            .padding(.vertical, 10)
+            .pickerStyle(.segmented)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 8)
             .background(.ultraThinMaterial)
 
             Divider()
 
-            // Single view - Library/Media browser
-            LibraryView(selectedClip: $selectedClip)
+            if selectedTab == 0 {
+                // Library/Media browser
+                LibraryView(selectedClip: $selectedClip)
+                    .transition(.move(edge: .leading).combined(with: .opacity))
+            } else {
+                // Text-Based Editing View
+                TranscriptionEditorView(selectedClip: $selectedClip)
+                    .transition(.move(edge: .trailing).combined(with: .opacity))
+            }
         }
         .frame(minWidth: 180, idealWidth: 240, maxWidth: 350)
-        .background(.ultraThinMaterial)
+        .liquidGlass() // Applying the Tahoe aesthetic
     }
 }
 

@@ -128,7 +128,20 @@ struct EditorLayoutView: View {
             .animation(.easeInOut(duration: 0.2), value: isSidebarCollapsed)
             .animation(.easeInOut(duration: 0.2), value: isInspectorCollapsed)
         }
-        .background(Color.black)
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ToggleSidebar"))) { _ in
+            withAnimation { isSidebarCollapsed.toggle() }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ToggleInspector"))) { _ in
+            withAnimation { isInspectorCollapsed.toggle() }
+        }
+        .background(
+            LinearGradient(
+                colors: [Color(white: 0.02), Color(white: 0.05)],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        )
+        .liquidGlass(radius: 0) // Full screen edge lighting logic if needed, or 0 for seamless base
 
         // MARK: - Keyboard Shortcuts (J/K/L/Space)
 

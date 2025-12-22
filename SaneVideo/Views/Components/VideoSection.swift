@@ -237,16 +237,10 @@ struct TransformControlsView: View {
                 .buttonStyle(.bordered)
                 .accessibilityIdentifier("video.rotate_cw")
 
-                // Rotate 90° Counter-Clockwise (same as 270° CW)
+                // Rotate 90° Counter-Clockwise
                 Button {
-                    // Rotate 3 times for 270° (same as -90°)
-                    appState.projectState.rotateClip(clip)
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                        appState.projectState.rotateClip(clip)
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                            appState.projectState.rotateClip(clip)
-                        }
-                    }
+                    let targetRotation = clip.rotation.counterClockwise
+                    appState.projectState.setClipRotation(clip, to: targetRotation)
                 } label: {
                     VStack(spacing: 4) {
                         Image(systemName: "rotate.left")
@@ -264,29 +258,13 @@ struct TransformControlsView: View {
             // Reset to Original
             if clip.rotation != .none {
                 Button(String(localized: "video.transform.reset", defaultValue: "Reset to Original")) {
-                    rotateToOriginal()
+                    appState.projectState.setClipRotation(clip, to: .none)
                 }
                 .font(.caption)
                 .buttonStyle(.bordered)
                 .controlSize(.small)
                 .tint(.orange)
                 .accessibilityIdentifier("video.reset_rotation")
-            }
-        }
-    }
-
-    private func rotateToOriginal() {
-        let rotationsNeeded: Int
-        switch clip.rotation {
-        case .none: rotationsNeeded = 0
-        case .clockwise90: rotationsNeeded = 3
-        case .clockwise180: rotationsNeeded = 2
-        case .clockwise270: rotationsNeeded = 1
-        }
-
-        for i in 0 ..< rotationsNeeded {
-            DispatchQueue.main.asyncAfter(deadline: .now() + Double(i) * 0.1) {
-                appState.projectState.rotateClip(clip)
             }
         }
     }

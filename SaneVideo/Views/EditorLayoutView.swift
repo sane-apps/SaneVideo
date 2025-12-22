@@ -30,17 +30,24 @@ struct EditorLayoutView: View {
             // MAIN SPLIT VIEW (3 Panes) - Using native HSplitView for resizing
             HSplitView {
                 // LEFT: Sidebar (Collapsible)
-                if !isSidebarCollapsed {
-                    SidebarView(selectedClip: $selectedClip)
-                        .frame(minWidth: 200, idealWidth: 260, maxWidth: 400)
-                        .transition(.move(edge: .leading).combined(with: .opacity))
+                ZStack(alignment: .trailing) {
+                    if !isSidebarCollapsed {
+                        SidebarView(selectedClip: $selectedClip)
+                            .frame(minWidth: 200, idealWidth: 260, maxWidth: 400)
+                            .transition(.move(edge: .leading).combined(with: .opacity))
+                    }
+                    
+                    CollapseButton(isCollapsed: $isSidebarCollapsed, edge: .leading)
+                        .accessibilityIdentifier("SidebarToggle")
+                        .offset(x: 8)
+                        .zIndex(1)
                 }
 
                 // CENTER: Stage (Player + Timeline)
                 VSplitView {
                     // PLAYER STAGE
                     ZStack {
-                        // Adaptive Studio Backdrop
+                        // ... existing backdrop code ...
                         LinearGradient(
                             stops: [
                                 .init(color: Color(white: 0.08), location: 0),
@@ -104,10 +111,17 @@ struct EditorLayoutView: View {
                 .frame(minWidth: 400, maxWidth: .infinity, maxHeight: .infinity)
 
                 // RIGHT: Inspector (Collapsible)
-                if !isInspectorCollapsed {
-                    StylesInspectorView(selectedClip: $selectedClip)
-                        .frame(minWidth: 260, idealWidth: 320, maxWidth: 450)
-                        .transition(.move(edge: .trailing).combined(with: .opacity))
+                ZStack(alignment: .leading) {
+                    CollapseButton(isCollapsed: $isInspectorCollapsed, edge: .trailing)
+                        .accessibilityIdentifier("InspectorToggle")
+                        .offset(x: -8)
+                        .zIndex(1)
+
+                    if !isInspectorCollapsed {
+                        StylesInspectorView(selectedClip: $selectedClip)
+                            .frame(minWidth: 260, idealWidth: 320, maxWidth: 450)
+                            .transition(.move(edge: .trailing).combined(with: .opacity))
+                    }
                 }
             }
             .animation(.easeInOut(duration: 0.2), value: isSidebarCollapsed)

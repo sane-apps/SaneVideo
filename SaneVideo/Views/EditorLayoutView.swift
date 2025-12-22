@@ -27,83 +27,74 @@ struct EditorLayoutView: View {
 
             Divider()
 
-            // MAIN SPLIT VIEW (3 Panes)
-            HStack(spacing: 0) {
+            // MAIN SPLIT VIEW (3 Panes) - Using native HSplitView for resizing
+            HSplitView {
                 // LEFT: Sidebar (Collapsible)
                 if !isSidebarCollapsed {
                     SidebarView(selectedClip: $selectedClip)
-                        .frame(minWidth: 180, idealWidth: 240, maxWidth: 300)
+                        .frame(minWidth: 200, idealWidth: 260, maxWidth: 400)
                         .transition(.move(edge: .leading).combined(with: .opacity))
                 }
 
-                // Sidebar Toggle Button
-                CollapseButton(isCollapsed: $isSidebarCollapsed, edge: .leading)
-                    .accessibilityIdentifier("SidebarToggle")
-
-                Divider()
-
-                // CENTER: Player & Timeline
+                // CENTER: Stage (Player + Timeline)
                 VSplitView {
-                    // Player Area with gradient background
-                    GeometryReader { geometry in
-                        ZStack {
-                            // Background: Dark gradient (CapCut-style)
-                            LinearGradient(
-                                colors: [
-                                    Color(white: 0.08),
-                                    Color(white: 0.04),
-                                    Color(white: 0.08)
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
+                    // PLAYER STAGE
+                    ZStack {
+                        // Adaptive Studio Backdrop
+                        LinearGradient(
+                            stops: [
+                                .init(color: Color(white: 0.08), location: 0),
+                                .init(color: Color(white: 0.12), location: 0.5),
+                                .init(color: Color(white: 0.08), location: 1)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                        .ignoresSafeArea()
+                        
+                        // Subtle grid pattern
+                        GridPattern()
+                            .stroke(Color.white.opacity(0.04), lineWidth: 0.5)
 
-                            if let player = appState.playbackState.player {
-                                // Video Player - centered
+                        if let player = appState.playbackState.player {
+                            VStack(spacing: 0) {
+                                Spacer()
+                                
+                                // Video Window with Heavy Professional Shadow
                                 AdvancedVideoPlayer(player: player)
                                     .overlay {
                                         CanvasOverlay(clip: selectedClip, projectState: appState.projectState)
                                     }
-                                    .overlay(alignment: .bottom) {
-                                        // Caption Overlay - shows current caption at playhead position
-                                        if let (caption, mediaTime) = currentCaption(for: selectedClip, at: appState.playbackState.currentTime) {
-                                            CaptionOverlayView(
-                                                caption: caption,
-                                                currentTime: mediaTime,
-                                                style: appState.projectState.currentProject?.captionStyle ?? .classic,
-                                                offset: .constant(.zero)
-                                            )
-                                            .padding(.bottom, 60) // Above control bar
-                                        }
+                                    .aspectRatio(16/9, contentMode: .fit)
+                                    .padding(40)
+                                    .background {
+                                        Color.black.opacity(0.4)
+                                            .blur(radius: 40)
+                                            .offset(y: 20)
                                     }
-                                    .aspectRatio(16 / 9, contentMode: .fit)
-                                    .frame(maxWidth: geometry.size.width, maxHeight: geometry.size.height)
-                                    .shadow(color: .black.opacity(0.5), radius: 10)
-
-                                // Control Bar Overlay
-                                VStack {
-                                    Spacer()
-                                    PlayerControlBar(
-                                        playbackState: appState.playbackState,
-                                        projectState: appState.projectState
-                                    )
-                                    .padding(.bottom, 8)
-                                }
-                            } else {
-                                VStack(spacing: 12) {
-                                    Image(systemName: "film")
-                                        .font(.system(size: 40))
-                                        .foregroundStyle(.tertiary)
-                                    Text(String(localized: "editor.no_project", defaultValue: "No Project Loaded"))
-                                        .font(.headline)
-                                        .foregroundColor(.gray)
-                                }
+                                    .shadow(color: .black.opacity(0.6), radius: 30, x: 0, y: 15)
+                                    .overlay {
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                                    }
+                                
+                                Spacer()
+                                
+                                PlayerControlBar(
+                                    playbackState: appState.playbackState,
+                                    projectState: appState.projectState
+                                )
+                                .padding(.bottom, 12)
                             }
+                        } else {
+                            // EMPTY STATE: Elevated Magic Fix
+                            magicFixEmptyState
                         }
                     }
-                    .frame(minHeight: 200)
+                    .frame(minHeight: 250)
+                    .clipShape(Rectangle())
 
-                    // Timeline
+                    // TIMELINE
                     SaneTimelineView(
                         selectedClip: $selectedClip,
                         selectedClipIds: $selectedClipIds
@@ -112,21 +103,20 @@ struct EditorLayoutView: View {
                 }
                 .frame(minWidth: 400, maxWidth: .infinity, maxHeight: .infinity)
 
-                Divider()
-
-                // Inspector Toggle Button
-                CollapseButton(isCollapsed: $isInspectorCollapsed, edge: .trailing)
-                    .accessibilityIdentifier("InspectorToggle")
-
                 // RIGHT: Inspector (Collapsible)
                 if !isInspectorCollapsed {
                     StylesInspectorView(selectedClip: $selectedClip)
-                        .frame(minWidth: 200, idealWidth: 280, maxWidth: 350)
+                        .frame(minWidth: 260, idealWidth: 320, maxWidth: 450)
                         .transition(.move(edge: .trailing).combined(with: .opacity))
                 }
             }
             .animation(.easeInOut(duration: 0.2), value: isSidebarCollapsed)
             .animation(.easeInOut(duration: 0.2), value: isInspectorCollapsed)
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("TriggerMagicFix"))) { _ in
+            withAnimation {
+                isInspectorCollapsed = false
+            }
         }
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ToggleSidebar"))) { _ in
             withAnimation { isSidebarCollapsed.toggle() }
@@ -292,6 +282,68 @@ struct EditorLayoutView: View {
             return (caption, mediaTime)
         }
         return nil
+    }
+
+    @ViewBuilder
+    private var magicFixEmptyState: some View {
+        VStack(spacing: 24) {
+            Image(systemName: "wand.and.stars")
+                .font(.system(size: 80))
+                .foregroundStyle(
+                    LinearGradient(
+                        colors: [.purple, .blue],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .shadow(color: .purple.opacity(0.5), radius: 10)
+
+            VStack(spacing: 8) {
+                Text(String(localized: "editor.empty.title", defaultValue: "Starting Something Great?"))
+                    .font(.title)
+                    .fontWeight(.bold)
+                Text(String(localized: "editor.empty.subtitle", defaultValue: "Drop a video here or record to see the magic."))
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+            }
+
+            Button {
+                appState.importVideo()
+            } label: {
+                HStack {
+                    Image(systemName: "plus.square.fill")
+                    Text(String(localized: "action.import_first_video", defaultValue: "Import Your First Video"))
+                }
+                .fontWeight(.semibold)
+                .padding(.horizontal, 24)
+                .padding(.vertical, 12)
+                .background(Theme.Colors.accentGradient)
+                .foregroundColor(.white)
+                .cornerRadius(12)
+            }
+            .buttonStyle(.plain)
+        }
+    }
+}
+
+// MARK: - Helper Components
+
+struct GridPattern: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        let step: CGFloat = 40
+        
+        for x in stride(from: 0, through: rect.width, by: step) {
+            path.move(to: CGPoint(x: x, y: 0))
+            path.addLine(to: CGPoint(x: x, y: rect.height))
+        }
+        
+        for y in stride(from: 0, through: rect.height, by: step) {
+            path.move(to: CGPoint(x: 0, y: y))
+            path.addLine(to: CGPoint(x: rect.width, y: y))
+        }
+        
+        return path
     }
 }
 

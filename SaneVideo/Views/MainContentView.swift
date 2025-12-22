@@ -216,23 +216,73 @@ struct MainContentView: View {
         }
         .animation(.spring(response: 0.4, dampingFraction: 0.8), value: appState.appMode)
         .toolbar {
-            ToolbarItem(placement: .automatic) {
-                Button(action: { undoManager?.undo() }, label: {
-                    Label(String(localized: "action.undo", defaultValue: "Undo"), systemImage: "arrow.uturn.backward")
-                })
-                .disabled(!(undoManager?.canUndo ?? false))
-                .keyboardShortcut("z", modifiers: [.command])
-                .help(KeyboardShortcutHelper.helpWithShortcut(String(localized: "action.undo.help", defaultValue: "Undo last action"), key: "z", modifiers: [.command]))
-                .accessibilityIdentifier("toolbar.undo")
+            ToolbarItem(placement: .navigation) {
+                HStack(spacing: 8) {
+                    Button(action: { 
+                        withAnimation {
+                            appState.appMode = (appState.appMode == .recording ? .editing : .recording)
+                        }
+                    }, label: {
+                        Label(appState.appMode == .recording ? "Editor" : "Record", 
+                              systemImage: appState.appMode == .recording ? "scissors" : "record.circle")
+                    })
+                    .keyboardShortcut("M", modifiers: [.command])
+                    .help("Toggle Record/Edit Mode (Cmd+M)")
+                }
             }
+            
             ToolbarItem(placement: .automatic) {
-                Button(action: { undoManager?.redo() }, label: {
-                    Label(String(localized: "action.redo", defaultValue: "Redo"), systemImage: "arrow.uturn.forward")
-                })
-                .disabled(!(undoManager?.canRedo ?? false))
-                .keyboardShortcut("z", modifiers: [.command, .shift])
-                .help(KeyboardShortcutHelper.helpWithShortcut(String(localized: "action.redo.help", defaultValue: "Redo last action"), key: "z", modifiers: [.command, .shift]))
-                .accessibilityIdentifier("toolbar.redo")
+                HStack(spacing: 12) {
+                    Button(action: { undoManager?.undo() }, label: {
+                        Image(systemName: "arrow.uturn.backward")
+                    })
+                    .disabled(!(undoManager?.canUndo ?? false))
+                    .keyboardShortcut("z", modifiers: [.command])
+
+                    Button(action: { undoManager?.redo() }, label: {
+                        Image(systemName: "arrow.uturn.forward")
+                    })
+                    .disabled(!(undoManager?.canRedo ?? false))
+                    .keyboardShortcut("z", modifiers: [.command, .shift])
+                }
+            }
+            
+            ToolbarItem(placement: .principal) {
+                if appState.appMode == .editing {
+                    HStack(spacing: 4) {
+                        Image(systemName: "sparkles")
+                            .symbolEffect(.pulse, options: .repeating)
+                            .foregroundStyle(Theme.Colors.accentGradient)
+                        Text(appState.projectState.currentProject?.name ?? "Untitled Project")
+                            .font(.headline)
+                    }
+                }
+            }
+
+            ToolbarItem(placement: .primaryAction) {
+                HStack(spacing: 12) {
+                    // MAGIC QUICK BUTTON
+                    Button(action: { 
+                        // Trigger Magic Fix for selected clip or global project
+                        NotificationCenter.default.post(name: NSNotification.Name("TriggerMagicFix"), object: nil)
+                    }, label: {
+                        Label("Magic Fix", systemImage: "wand.and.stars")
+                            .foregroundStyle(Theme.Colors.accentGradient)
+                    })
+                    .help("Apply Magic Fix to Selected Clip (Cmd+Shift+M)")
+                    .keyboardShortcut("m", modifiers: [.command, .shift])
+
+                    Divider()
+                        .frame(height: 16)
+
+                    // SHARE/EXPORT
+                    Button(action: { appState.showExportSheet = true }, label: {
+                        Label("Share", systemImage: "square.and.arrow.up")
+                    })
+                    .buttonStyle(.borderedProminent)
+                    .tint(.blue)
+                    .help("Export and Share Video")
+                }
             }
         }
     }

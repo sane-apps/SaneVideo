@@ -14,39 +14,34 @@ import SwiftUI
 struct VoiceoverSettingsSheet: View {
     @Environment(\.dismiss) private var dismiss
     var voiceoverService = ServiceContainer.shared.voiceoverService
-    
+
     let captions: [Caption]
     let projectName: String
     let onGenerate: (URL) -> Void
-    
+
     @State private var isGenerating = false
     @State private var errorMessage: String?
-    
+
     var body: some View {
         @Bindable var voiceoverService = voiceoverService
         return VStack(spacing: 0) {
-            // Header
-            header
-            
+            SheetHeader(
+                title: String(localized: "voiceover.header.title", defaultValue: "Generate Voiceover"),
+                subtitle: "\(captions.count) captions - ~\(formattedDuration)",
+                dismissAction: { dismiss() },
+                accessibilityID: "voiceover.sheet.close"
+            )
+
             Divider()
-            
-            // Content
+
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
-                    // Voice Selection
                     voiceSection
-                    
                     Divider()
-                    
-                    // Speed & Pitch
                     settingsSection
-                    
                     Divider()
-                    
-                    // Preview
                     previewSection
-                    
-                    // Error
+
                     if let error = errorMessage {
                         Text(error)
                             .foregroundStyle(.red)
@@ -55,48 +50,36 @@ struct VoiceoverSettingsSheet: View {
                 }
                 .padding(20)
             }
-            
+
             Divider()
-            
-            // Footer
-            footer
+
+            SheetFooter(
+                actionTitle: String(localized: "voiceover.action.generate", defaultValue: "Generate Voiceover"),
+                isLoading: isGenerating,
+                loadingTitle: String(localized: "voiceover.action.generating", defaultValue: "Generating..."),
+                isDisabled: captions.isEmpty,
+                cancelID: "voiceover.action.cancel",
+                actionID: "voiceover.action.generate",
+                onCancel: { dismiss() },
+                onAction: { generateVoiceover() }
+            )
         }
         .frame(width: 450, height: 520)
         .onAppear {
             voiceoverService.loadAvailableVoices()
         }
     }
-    
-    // MARK: - Components
-    
-    private var header: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(String(localized: "voiceover.header.title", defaultValue: "Generate Voiceover"))
-                    .font(.headline)
-                Text("\(captions.count) captions • ~\(formattedDuration)")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            Spacer()
-            Button {
-                dismiss()
-            } label: {
-                Image(systemName: "xmark.circle.fill")
-                    .foregroundStyle(.secondary)
-            }
-            .buttonStyle(.plain)
-            .accessibilityIdentifier("voiceover.sheet.close")
-        }
-        .padding(16)
-    }
-    
+
+    // MARK: - Sections
+
     private var voiceSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Label(String(localized: "voiceover.voice.header", defaultValue: "Voice"), systemImage: "person.wave.2.fill")
-                .font(.subheadline.weight(.semibold))
-            
-            // Voice picker grid
+            Label(
+                String(localized: "voiceover.voice.header", defaultValue: "Voice"),
+                systemImage: "person.wave.2.fill"
+            )
+            .font(.subheadline.weight(.semibold))
+
             LazyVGrid(columns: [
                 GridItem(.flexible()),
                 GridItem(.flexible())
@@ -112,118 +95,76 @@ struct VoiceoverSettingsSheet: View {
             }
         }
     }
-    
+
     private var settingsSection: some View {
         @Bindable var voiceoverService = voiceoverService
         return VStack(alignment: .leading, spacing: 16) {
-            Label(String(localized: "voiceover.settings.header", defaultValue: "Settings"), systemImage: "slider.horizontal.3")
-                .font(.subheadline.weight(.semibold))
-            
-            // Speed slider
-            VStack(alignment: .leading, spacing: 6) {
-                HStack {
-                    Text(String(localized: "voiceover.settings.speed.title", defaultValue: "Speed"))
-                        .font(.caption)
-                    Spacer()
-                    Text(speedLabel)
-                        .font(.caption.monospacedDigit())
-                        .foregroundStyle(.secondary)
-                }
-                Slider(value: $voiceoverService.speechRate, in: 0.25...1.0, step: 0.05)
-                    .accessibilityIdentifier("voiceover.settings.speed")
-                HStack {
-                    Text(String(localized: "voiceover.settings.speed.slower", defaultValue: "Slower"))
-                        .font(.caption2)
-                        .foregroundStyle(.tertiary)
-                    Spacer()
-                    Text(String(localized: "voiceover.settings.speed.faster", defaultValue: "Faster"))
-                        .font(.caption2)
-                        .foregroundStyle(.tertiary)
-                }
-            }
-            
-            // Pitch slider
-            VStack(alignment: .leading, spacing: 6) {
-                HStack {
-                    Text(String(localized: "voiceover.settings.pitch.title", defaultValue: "Pitch"))
-                        .font(.caption)
-                    Spacer()
-                    Text(pitchLabel)
-                        .font(.caption.monospacedDigit())
-                        .foregroundStyle(.secondary)
-                }
-                Slider(value: $voiceoverService.pitchMultiplier, in: 0.5...2.0, step: 0.1)
-                    .accessibilityIdentifier("voiceover.settings.pitch")
-                HStack {
-                    Text(String(localized: "voiceover.settings.pitch.lower", defaultValue: "Lower"))
-                        .font(.caption2)
-                        .foregroundStyle(.tertiary)
-                    Spacer()
-                    Text(String(localized: "voiceover.settings.pitch.higher", defaultValue: "Higher"))
-                        .font(.caption2)
-                        .foregroundStyle(.tertiary)
-                }
-            }
+            Label(
+                String(localized: "voiceover.settings.header", defaultValue: "Settings"),
+                systemImage: "slider.horizontal.3"
+            )
+            .font(.subheadline.weight(.semibold))
+
+            LabeledSliderControl(
+                label: String(localized: "voiceover.settings.speed.title", defaultValue: "Speed"),
+                value: $voiceoverService.speechRate,
+                range: 0.25...1.0,
+                step: 0.05,
+                valueFormatter: { _ in speedLabel },
+                minLabel: String(localized: "voiceover.settings.speed.slower", defaultValue: "Slower"),
+                maxLabel: String(localized: "voiceover.settings.speed.faster", defaultValue: "Faster"),
+                accessibilityID: "voiceover.settings.speed"
+            )
+
+            LabeledSliderControl(
+                label: String(localized: "voiceover.settings.pitch.title", defaultValue: "Pitch"),
+                value: $voiceoverService.pitchMultiplier,
+                range: 0.5...2.0,
+                step: 0.1,
+                valueFormatter: { _ in pitchLabel },
+                minLabel: String(localized: "voiceover.settings.pitch.lower", defaultValue: "Lower"),
+                maxLabel: String(localized: "voiceover.settings.pitch.higher", defaultValue: "Higher"),
+                accessibilityID: "voiceover.settings.pitch"
+            )
         }
     }
-    
+
     private var previewSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Label(String(localized: "voiceover.preview.header", defaultValue: "Preview"), systemImage: "play.circle.fill")
-                .font(.subheadline.weight(.semibold))
-            
+            Label(
+                String(localized: "voiceover.preview.header", defaultValue: "Preview"),
+                systemImage: "play.circle.fill"
+            )
+            .font(.subheadline.weight(.semibold))
+
             HStack {
                 Button {
                     voiceoverService.previewVoice(voiceoverService.selectedVoiceId)
                 } label: {
-                    Label(String(localized: "voiceover.preview.play", defaultValue: "Play Sample"), systemImage: "speaker.wave.2.fill")
+                    Label(
+                        String(localized: "voiceover.preview.play", defaultValue: "Play Sample"),
+                        systemImage: "speaker.wave.2.fill"
+                    )
                 }
                 .buttonStyle(.bordered)
                 .accessibilityIdentifier("voiceover.preview.play")
-                
+
                 Button {
                     voiceoverService.stopPreview()
                 } label: {
-                    Label(String(localized: "voiceover.preview.stop", defaultValue: "Stop"), systemImage: "stop.fill")
+                    Label(
+                        String(localized: "voiceover.preview.stop", defaultValue: "Stop"),
+                        systemImage: "stop.fill"
+                    )
                 }
                 .buttonStyle(.bordered)
                 .accessibilityIdentifier("voiceover.preview.stop")
             }
         }
     }
-    
-    private var footer: some View {
-        HStack {
-            Button(String(localized: "voiceover.action.cancel", defaultValue: "Cancel")) {
-                dismiss()
-            }
-            .keyboardShortcut(.cancelAction)
-            .accessibilityIdentifier("voiceover.action.cancel")
-            
-            Spacer()
-            
-            Button {
-                generateVoiceover()
-            } label: {
-                if isGenerating {
-                    ProgressView()
-                        .scaleEffect(0.6)
-                        .frame(width: 16, height: 16)
-                    Text(String(localized: "voiceover.action.generating", defaultValue: "Generating..."))
-                } else {
-                    Label(String(localized: "voiceover.action.generate", defaultValue: "Generate Voiceover"), systemImage: "waveform")
-                }
-            }
-            .buttonStyle(.borderedProminent)
-            .disabled(isGenerating || captions.isEmpty)
-            .keyboardShortcut(.defaultAction)
-            .accessibilityIdentifier("voiceover.action.generate")
-        }
-        .padding(16)
-    }
-    
+
     // MARK: - Computed Properties
-    
+
     private var formattedDuration: String {
         let text = captions.map { $0.text }.joined(separator: " ")
         let duration = voiceoverService.estimateDuration(for: text)
@@ -231,7 +172,7 @@ struct VoiceoverSettingsSheet: View {
         let seconds = Int(duration) % 60
         return String(format: "%d:%02d", minutes, seconds)
     }
-    
+
     private var speedLabel: String {
         if voiceoverService.speechRate < 0.4 {
             return String(localized: "voiceover.settings.speed.slow", defaultValue: "Slow")
@@ -241,7 +182,7 @@ struct VoiceoverSettingsSheet: View {
             return String(localized: "voiceover.settings.speed.normal", defaultValue: "Normal")
         }
     }
-    
+
     private var pitchLabel: String {
         if voiceoverService.pitchMultiplier < 0.8 {
             return String(localized: "voiceover.settings.pitch.low", defaultValue: "Low")
@@ -251,29 +192,28 @@ struct VoiceoverSettingsSheet: View {
             return String(localized: "voiceover.settings.pitch.normal", defaultValue: "Normal")
         }
     }
-    
+
     // MARK: - Actions
-    
+
     private func generateVoiceover() {
         isGenerating = true
         errorMessage = nil
-        
+
         Task {
             do {
-                // Show save panel
                 let savePanel = NSSavePanel()
                 savePanel.allowedContentTypes = [.audio]
                 savePanel.nameFieldStringValue = "\(projectName)_Voiceover.m4a"
-                
+
                 let response = await savePanel.beginSheetModal(for: NSApp.keyWindow!)
-                
+
                 guard response == .OK, let url = savePanel.url else {
                     isGenerating = false
                     return
                 }
-                
+
                 try await voiceoverService.generateVoiceoverFromCaptions(captions, outputURL: url)
-                
+
                 await MainActor.run {
                     isGenerating = false
                     onGenerate(url)
@@ -295,7 +235,7 @@ private struct VoiceButton: View {
     let voice: VoiceInfo
     let isSelected: Bool
     let onSelect: () -> Void
-    
+
     var body: some View {
         Button(action: onSelect) {
             HStack {
@@ -333,7 +273,7 @@ private struct VoiceButton: View {
         .buttonStyle(.plain)
         .accessibilityIdentifier("voiceover.voice.\(voice.identifier).button")
     }
-    
+
     private var genderLabel: String {
         switch voice.gender {
         case .male: return String(localized: "voiceover.voice.gender.male", defaultValue: "Male")
@@ -347,8 +287,16 @@ private struct VoiceButton: View {
 #Preview {
     VoiceoverSettingsSheet(
         captions: [
-            Caption(text: "Hello world", startTime: .zero, endTime: CMTime(seconds: 1, preferredTimescale: 600)),
-            Caption(text: "This is a test", startTime: CMTime(seconds: 1, preferredTimescale: 600), endTime: CMTime(seconds: 2, preferredTimescale: 600))
+            Caption(
+                text: "Hello world",
+                startTime: .zero,
+                endTime: CMTime(seconds: 1, preferredTimescale: 600)
+            ),
+            Caption(
+                text: "This is a test",
+                startTime: CMTime(seconds: 1, preferredTimescale: 600),
+                endTime: CMTime(seconds: 2, preferredTimescale: 600)
+            )
         ],
         projectName: "TestProject",
         onGenerate: { _ in }

@@ -16,7 +16,7 @@ enum TranscriptFormat: String, CaseIterable, Identifiable {
     case srt = "transcript.format.srt"
     case vtt = "transcript.format.vtt"
     case txt = "transcript.format.txt"
-    
+
     var id: String { rawValue }
 
     var displayName: String {
@@ -27,7 +27,7 @@ enum TranscriptFormat: String, CaseIterable, Identifiable {
         case .txt: return String(localized: "transcript.format.txt", defaultValue: "Plain Text")
         }
     }
-    
+
     var icon: String {
         switch self {
         case .pdf: return "doc.richtext"
@@ -36,7 +36,7 @@ enum TranscriptFormat: String, CaseIterable, Identifiable {
         case .txt: return "doc.plaintext"
         }
     }
-    
+
     var fileExtension: String {
         switch self {
         case .pdf: return "pdf"
@@ -45,7 +45,7 @@ enum TranscriptFormat: String, CaseIterable, Identifiable {
         case .txt: return "txt"
         }
     }
-    
+
     var contentType: UTType {
         switch self {
         case .pdf: return .pdf
@@ -57,35 +57,32 @@ enum TranscriptFormat: String, CaseIterable, Identifiable {
 /// Sheet for configuring transcript export
 struct TranscriptExportSheet: View {
     @Environment(\.dismiss) private var dismiss
-    
+
     let captions: [Caption]
     let projectName: String
-    
+
     @State private var selectedFormat: TranscriptFormat = .pdf
     @State private var includeTimestamps = true
     @State private var isExporting = false
     @State private var errorMessage: String?
-    
+
     var body: some View {
         VStack(spacing: 0) {
-            // Header
-            header
-            
+            SheetHeader(
+                title: String(localized: "transcript.header.title", defaultValue: "Export Transcript"),
+                subtitle: "\(captions.count) captions",
+                dismissAction: { dismiss() },
+                accessibilityID: "transcript.sheet.close"
+            )
+
             Divider()
-            
-            // Content
+
             VStack(alignment: .leading, spacing: 20) {
-                // Format picker
                 formatSection
-                
                 Divider()
-                
-                // Options
                 optionsSection
-                
-                // Preview
                 previewSection
-                
+
                 if let error = errorMessage {
                     Text(error)
                         .foregroundStyle(.red)
@@ -93,44 +90,34 @@ struct TranscriptExportSheet: View {
                 }
             }
             .padding(20)
-            
+
             Divider()
-            
-            // Footer
-            footer
+
+            SheetFooter(
+                actionTitle: String(localized: "transcript.action.export", defaultValue: "Export") +
+                    " \(selectedFormat.fileExtension.uppercased())",
+                isLoading: isExporting,
+                loadingTitle: String(localized: "transcript.action.exporting", defaultValue: "Exporting..."),
+                isDisabled: captions.isEmpty,
+                cancelID: "transcript.action.cancel",
+                actionID: "transcript.action.export",
+                onCancel: { dismiss() },
+                onAction: { exportTranscript() }
+            )
         }
         .frame(width: 450, height: 480)
     }
-    
-    // MARK: - Components
-    
-    private var header: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(String(localized: "transcript.header.title", defaultValue: "Export Transcript"))
-                    .font(.headline)
-                Text("\(captions.count) captions")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            Spacer()
-            Button {
-                dismiss()
-            } label: {
-                Image(systemName: "xmark.circle.fill")
-                    .foregroundStyle(.secondary)
-            }
-            .buttonStyle(.plain)
-            .accessibilityIdentifier("transcript.sheet.close")
-        }
-        .padding(16)
-    }
-    
+
+    // MARK: - Sections
+
     private var formatSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Label(String(localized: "transcript.format.header", defaultValue: "Format"), systemImage: "doc.badge.gearshape")
-                .font(.subheadline.weight(.semibold))
-            
+            Label(
+                String(localized: "transcript.format.header", defaultValue: "Format"),
+                systemImage: "doc.badge.gearshape"
+            )
+            .font(.subheadline.weight(.semibold))
+
             LazyVGrid(columns: [
                 GridItem(.flexible()),
                 GridItem(.flexible())
@@ -146,40 +133,61 @@ struct TranscriptExportSheet: View {
             }
         }
     }
-    
+
     private var optionsSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Label(String(localized: "transcript.options.header", defaultValue: "Options"), systemImage: "slider.horizontal.3")
-                .font(.subheadline.weight(.semibold))
-            
-            Toggle(String(localized: "transcript.options.timestamps", defaultValue: "Include timestamps"), isOn: $includeTimestamps)
-                .font(.caption)
-                .accessibilityIdentifier("transcript.options.timestamps")
-            
+            Label(
+                String(localized: "transcript.options.header", defaultValue: "Options"),
+                systemImage: "slider.horizontal.3"
+            )
+            .font(.subheadline.weight(.semibold))
+
+            Toggle(
+                String(localized: "transcript.options.timestamps", defaultValue: "Include timestamps"),
+                isOn: $includeTimestamps
+            )
+            .font(.caption)
+            .accessibilityIdentifier("transcript.options.timestamps")
+
             Text(optionsDescription)
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
     }
-    
+
     private var optionsDescription: String {
         switch selectedFormat {
         case .pdf:
-            return String(localized: "transcript.description.pdf", defaultValue: "Creates a formatted study guide with title, date, and timestamped captions.")
+            return String(
+                localized: "transcript.description.pdf",
+                defaultValue: "Creates a formatted study guide with title, date, and timestamped captions."
+            )
         case .srt:
-            return String(localized: "transcript.description.srt", defaultValue: "SubRip format, compatible with YouTube, Premiere, Final Cut Pro.")
+            return String(
+                localized: "transcript.description.srt",
+                defaultValue: "SubRip format, compatible with YouTube, Premiere, Final Cut Pro."
+            )
         case .vtt:
-            return String(localized: "transcript.description.vtt", defaultValue: "WebVTT format for web video players and HTML5.")
+            return String(
+                localized: "transcript.description.vtt",
+                defaultValue: "WebVTT format for web video players and HTML5."
+            )
         case .txt:
-            return String(localized: "transcript.description.txt", defaultValue: "Simple plain text, one caption per line.")
+            return String(
+                localized: "transcript.description.txt",
+                defaultValue: "Simple plain text, one caption per line."
+            )
         }
     }
-    
+
     private var previewSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Label(String(localized: "transcript.preview.header", defaultValue: "Preview"), systemImage: "eye")
-                .font(.subheadline.weight(.semibold))
-            
+            Label(
+                String(localized: "transcript.preview.header", defaultValue: "Preview"),
+                systemImage: "eye"
+            )
+            .font(.subheadline.weight(.semibold))
+
             ScrollView {
                 Text(generatePreview())
                     .font(.system(.caption, design: .monospaced))
@@ -191,49 +199,19 @@ struct TranscriptExportSheet: View {
             .cornerRadius(8)
         }
     }
-    
-    private var footer: some View {
-        HStack {
-            Button(String(localized: "transcript.action.cancel", defaultValue: "Cancel")) {
-                dismiss()
-            }
-            .keyboardShortcut(.cancelAction)
-            .accessibilityIdentifier("transcript.action.cancel")
-            
-            Spacer()
-            
-            Button {
-                exportTranscript()
-            } label: {
-                if isExporting {
-                    ProgressView()
-                        .scaleEffect(0.6)
-                        .frame(width: 16, height: 16)
-                    Text(String(localized: "transcript.action.exporting", defaultValue: "Exporting..."))
-                } else {
-                    Label(String(localized: "transcript.action.export", defaultValue: "Export") + " \(selectedFormat.fileExtension.uppercased())", systemImage: "square.and.arrow.up")
-                }
-            }
-            .buttonStyle(.borderedProminent)
-            .disabled(isExporting || captions.isEmpty)
-            .keyboardShortcut(.defaultAction)
-            .accessibilityIdentifier("transcript.action.export")
-        }
-        .padding(16)
-    }
-    
+
     // MARK: - Helpers
-    
+
     private func generatePreview() -> String {
         let preview = captions.prefix(3)
-        
+
         switch selectedFormat {
         case .pdf:
             return preview.map { caption in
                 let time = formatTime(caption.startTime)
                 return includeTimestamps ? "[\(time)] \(caption.text)" : caption.text
             }.joined(separator: "\n")
-            
+
         case .srt:
             return preview.enumerated().map { index, caption in
                 """
@@ -242,26 +220,26 @@ struct TranscriptExportSheet: View {
                 \(caption.text)
                 """
             }.joined(separator: "\n\n")
-            
+
         case .vtt:
             var result = "WEBVTT\n\n"
             result += preview.map { caption in
                 "\(formatVTTTime(caption.startTime)) --> \(formatVTTTime(caption.endTime))\n\(caption.text)"
             }.joined(separator: "\n\n")
             return result
-            
+
         case .txt:
             return preview.map { $0.text }.joined(separator: "\n")
         }
     }
-    
+
     private func formatTime(_ time: CMTime) -> String {
         let seconds = CMTimeGetSeconds(time)
         let mins = Int(seconds) / 60
         let secs = Int(seconds) % 60
         return String(format: "%02d:%02d", mins, secs)
     }
-    
+
     private func formatSRTTime(_ time: CMTime) -> String {
         let seconds = CMTimeGetSeconds(time)
         let hrs = Int(seconds) / 3600
@@ -270,7 +248,7 @@ struct TranscriptExportSheet: View {
         let ms = Int((seconds.truncatingRemainder(dividingBy: 1)) * 1000)
         return String(format: "%02d:%02d:%02d,%03d", hrs, mins, secs, ms)
     }
-    
+
     private func formatVTTTime(_ time: CMTime) -> String {
         let seconds = CMTimeGetSeconds(time)
         let hrs = Int(seconds) / 3600
@@ -279,38 +257,33 @@ struct TranscriptExportSheet: View {
         let ms = Int((seconds.truncatingRemainder(dividingBy: 1)) * 1000)
         return String(format: "%02d:%02d:%02d.%03d", hrs, mins, secs, ms)
     }
-    
+
     private func exportTranscript() {
         isExporting = true
         errorMessage = nil
-        
+
         Task {
             do {
                 let savePanel = NSSavePanel()
                 savePanel.allowedContentTypes = [selectedFormat.contentType]
                 savePanel.nameFieldStringValue = "\(projectName).\(selectedFormat.fileExtension)"
-                
+
                 guard let window = NSApp.keyWindow else { return }
                 let response = await savePanel.beginSheetModal(for: window)
-                
+
                 guard response == .OK, let url = savePanel.url else {
                     await MainActor.run { isExporting = false }
                     return
                 }
-                
+
                 let content = generateFullContent()
-                
-                if selectedFormat == .pdf {
-                    // Use PDFGeneratorService for PDF
-                    // For now, just write as text - PDFGeneratorService handles real PDF
-                    try content.write(to: url, atomically: true, encoding: .utf8)
-                } else {
-                    try content.write(to: url, atomically: true, encoding: .utf8)
-                }
-                
+                try content.write(to: url, atomically: true, encoding: .utf8)
+
                 await MainActor.run {
                     isExporting = false
-                    ServiceContainer.shared.toastManager.show(String(localized: "transcript.toast.exported", defaultValue: "✅ Transcript exported!"))
+                    ServiceContainer.shared.toastManager.show(
+                        String(localized: "transcript.toast.exported", defaultValue: "Transcript exported!")
+                    )
                     NSWorkspace.shared.activateFileViewerSelecting([url])
                     dismiss()
                 }
@@ -322,7 +295,7 @@ struct TranscriptExportSheet: View {
             }
         }
     }
-    
+
     private func generateFullContent() -> String {
         switch selectedFormat {
         case .pdf, .txt:
@@ -334,7 +307,7 @@ struct TranscriptExportSheet: View {
                     return caption.text
                 }
             }.joined(separator: "\n")
-            
+
         case .srt:
             return captions.enumerated().map { index, caption in
                 """
@@ -343,7 +316,7 @@ struct TranscriptExportSheet: View {
                 \(caption.text)
                 """
             }.joined(separator: "\n\n")
-            
+
         case .vtt:
             var result = "WEBVTT\n\n"
             result += captions.map { caption in
@@ -360,14 +333,14 @@ private struct FormatButton: View {
     let format: TranscriptFormat
     let isSelected: Bool
     let onSelect: () -> Void
-    
+
     var body: some View {
         Button(action: onSelect) {
             HStack {
                 Image(systemName: format.icon)
                     .font(.title3)
                     .frame(width: 24)
-                
+
                 VStack(alignment: .leading, spacing: 2) {
                     Text(format.displayName)
                         .font(.caption.weight(.medium))
@@ -375,9 +348,9 @@ private struct FormatButton: View {
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                 }
-                
+
                 Spacer()
-                
+
                 if isSelected {
                     Image(systemName: "checkmark.circle.fill")
                         .foregroundStyle(.blue)

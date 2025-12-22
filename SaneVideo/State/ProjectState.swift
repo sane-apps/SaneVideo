@@ -20,6 +20,8 @@ class ProjectState {
     var recentlyAddedClip: VideoClip?
     var showingImportPicker = false
     var isProcessing = false
+    var processingProgress: Double = 0.0
+    var processingStatus: String?
 
     /// CRITICAL FIX: Track if initial project load is in progress
     /// UI should check this to avoid accessing empty project list during startup

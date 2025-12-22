@@ -109,6 +109,7 @@ struct SaneVideoApp: App {
                 Button(String(localized: "menu.file.export_transcript", defaultValue: "Export Transcript (PDF)...")) {
                     NotificationCenter.default.post(name: NSNotification.Name("ExportTranscriptPDF"), object: nil)
                 }
+                .keyboardShortcut("t", modifiers: [.command, .option])
                 .accessibilityIdentifier("menu.file.export_transcript")
                 
                 Divider()
@@ -116,6 +117,7 @@ struct SaneVideoApp: App {
                 Button(String(localized: "menu.file.generate_thumbnail", defaultValue: "Generate AI Thumbnail")) {
                     NotificationCenter.default.post(name: NSNotification.Name("GenerateThumbnail"), object: nil)
                 }
+                .keyboardShortcut("t", modifiers: [.command])
                 .accessibilityIdentifier("menu.file.generate_thumbnail")
                 
                 Button(String(localized: "menu.file.generate_voiceover", defaultValue: "Generate Voiceover")) {

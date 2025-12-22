@@ -215,14 +215,39 @@ struct SmartToolsSection: View {
                     await appState.projectState.performMagicFix(for: clip, options: options)
                 }
             } label: {
-                HStack {
-                    Image(systemName: "wand.and.stars")
-                    Text(String(localized: "smart_tools.action.apply.title", defaultValue: "Apply Super Magic Fix"))
-                        .fontWeight(.bold)
+                VStack(spacing: 4) {
+                    HStack {
+                        if appState.projectState.isProcessing {
+                            ProgressView()
+                                .controlSize(.small)
+                                .tint(.white)
+                        } else {
+                            Image(systemName: "wand.and.stars")
+                        }
+                        
+                        Text(appState.projectState.isProcessing ? 
+                             (appState.projectState.processingStatus ?? String(localized: "smart_tools.status.processing", defaultValue: "Processing...")) : 
+                             String(localized: "smart_tools.action.apply.title", defaultValue: "Apply Super Magic Fix"))
+                            .fontWeight(.bold)
+                    }
+                    
+                    if appState.projectState.isProcessing && appState.projectState.processingProgress > 0 {
+                        ProgressView(value: appState.projectState.processingProgress, total: 1.0)
+                            .progressViewStyle(.linear)
+                            .tint(.white.opacity(0.8))
+                            .frame(height: 2)
+                            .padding(.horizontal, 40)
+                    }
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 12)
-                .background(Theme.Colors.accentGradient)
+                .background {
+                    if appState.projectState.isProcessing {
+                        Color.gray
+                    } else {
+                        Theme.Colors.accentGradient
+                    }
+                }
                 .foregroundColor(.white)
                 .cornerRadius(10)
                 .shadow(color: Color.purple.opacity(0.3), radius: 6, x: 0, y: 3)
@@ -230,6 +255,7 @@ struct SmartToolsSection: View {
             .buttonStyle(.plain)
             .disabled(appState.projectState.isProcessing)
             .keyboardShortcut("m", modifiers: [.command, .shift])
+            .help(KeyboardShortcutHelper.helpWithShortcut(String(localized: "smart_tools.action.apply.title", defaultValue: "Apply Super Magic Fix"), key: "m", modifiers: [.command, .shift]))
             .accessibilityIdentifier("MagicFixButton")
             
             Text(String(localized: "smart_tools.footer.description", defaultValue: "One-click AI cleanup for your entire clip."))

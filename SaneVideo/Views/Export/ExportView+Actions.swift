@@ -218,37 +218,35 @@ extension ExportView {
         isExporting = true
         exportProgress = 0
 
-        exportEngine.export(
-            project: project,
-            settings: exportSettings, // Use configured settings
-            outputURL: outputURL,
-            progressHandler: { progress in
-                Task { @MainActor in
-                    self.exportProgress = progress
-                }
-            },
-            completion: { result in
-                Task { @MainActor in
-                    self.isExporting = false
-                    switch result {
-                    case .success:
-                        AppLogger.export.info("Export success: \(outputURL)")
-                        if uploadToYouTube {
-                            Task {
-                                await self.performYouTubeUpload(fileURL: outputURL)
-                            }
-                        } else {
-                            NSWorkspace.shared.activateFileViewerSelecting([outputURL])
-                            self.dismiss()
+        Task {
+            do {
+                _ = try await exportEngine.export(
+                    project: project,
+                    settings: exportSettings,
+                    outputURL: outputURL,
+                    progressHandler: { progress in
+                        Task { @MainActor in
+                            self.exportProgress = progress
                         }
-                    case let .failure(error):
-                        AppLogger.export.error("Export failed: \(error)")
-                        self.exportError = error
-                        self.showingError = true
                     }
+                )
+                
+                self.isExporting = false
+                AppLogger.export.info("Export success: \(outputURL)")
+                
+                if uploadToYouTube {
+                    await self.performYouTubeUpload(fileURL: outputURL)
+                } else {
+                    NSWorkspace.shared.activateFileViewerSelecting([outputURL])
+                    self.dismiss()
                 }
+            } catch {
+                self.isExporting = false
+                AppLogger.export.error("Export failed: \(error)")
+                self.exportError = error
+                self.showingError = true
             }
-        )
+        }
     }
 
     func performYouTubeUpload(fileURL: URL) async {
@@ -305,9 +303,9 @@ extension ExportView {
                 let track = Track(name: "Export Track", type: .video, clips: [clip], zIndex: 0)
                 tempProject.timeline.tracks.append(track)
 
-                // Export using async continuation (Swift 6 compliant)
-                let result: Result<Void, Error> = await withCheckedContinuation { continuation in
-                    engine.export(
+                // Export using async (Swift 6 compliant)
+                do {
+                    _ = try await engine.export(
                         project: tempProject,
                         settings: settings,
                         outputURL: outputURL,
@@ -317,25 +315,11 @@ extension ExportView {
                             Task { @MainActor in
                                 self.exportProgress = overallProgress
                             }
-                        },
-                        completion: { exportResult in
-                            Task { @MainActor in
-                                switch exportResult {
-                                case .success:
-                                    continuation.resume(returning: .success(()))
-                                case let .failure(error):
-                                    continuation.resume(returning: .failure(error))
-                                }
-                            }
                         }
                     )
-                }
-
-                switch result {
-                case .success:
                     exportedURLs.append(outputURL)
                     successCount += 1
-                case let .failure(error):
+                } catch {
                     failedCount += 1
                     AppLogger.export.error("Batch export failed for clip \(clip.url.lastPathComponent): \(error)")
                 }
@@ -373,30 +357,28 @@ extension ExportView {
         isExporting = true
         exportProgress = 0
 
-        exportEngine.export(
-            project: project,
-            settings: exportSettings,
-            outputURL: outputURL,
-            progressHandler: { progress in
-                Task { @MainActor in
-                    self.exportProgress = progress
-                }
-            },
-            completion: { result in
-                Task { @MainActor in
-                    self.isExporting = false
-                    switch result {
-                    case .success:
-                        let url = outputURL
-                        ServiceContainer.shared.shareLinkService.shareFile(at: url, from: nil)
-                    // Don't dismiss immediately so user can see share sheet
-                    case let .failure(error):
-                        AppLogger.export.error("Share export failed: \(error)")
-                        self.exportError = error
-                        self.showingError = true
+        Task {
+            do {
+                _ = try await exportEngine.export(
+                    project: project,
+                    settings: exportSettings,
+                    outputURL: outputURL,
+                    progressHandler: { progress in
+                        Task { @MainActor in
+                            self.exportProgress = progress
+                        }
                     }
-                }
+                )
+                
+                self.isExporting = false
+                let url = outputURL
+                ServiceContainer.shared.shareLinkService.shareFile(at: url, from: nil)
+            } catch {
+                self.isExporting = false
+                AppLogger.export.error("Share export failed: \(error)")
+                self.exportError = error
+                self.showingError = true
             }
-        )
+        }
     }
 }

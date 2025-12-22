@@ -58,6 +58,11 @@ final class ServiceContainer {
     let smartFillerDetector: SmartFillerDetector
     let sentimentAnalysisService: SentimentAnalysisService
     
+    @available(macOS 15.0, *)
+    var translationService: TranslationService {
+        TranslationService.shared
+    }
+    
     // MARK: - Vision Services
     
     let bodyPoseService: BodyPoseService

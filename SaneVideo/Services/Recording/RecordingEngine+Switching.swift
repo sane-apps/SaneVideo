@@ -50,9 +50,16 @@ extension RecordingEngine {
 
             // Ensure camera is running (it should be, but just in case)
             await MainActor.run { [weak self] in
-                if let cameraService = self?.cameraService, !cameraService.isActive {
-                    cameraService.start {
-                        AppLogger.recording.info("Camera restarted after source switch")
+                guard let self = self else { return }
+                
+                if !self.cameraService.isActive {
+                    Task {
+                        do {
+                            try await self.cameraService.start()
+                            AppLogger.recording.info("Camera restarted after source switch")
+                        } catch {
+                            AppLogger.recording.error("Failed to restart camera after source switch: \(error.localizedDescription)")
+                        }
                     }
                 } else {
                     AppLogger.recording.info("Camera already running, continuing with camera source")
@@ -69,9 +76,10 @@ extension RecordingEngine {
                 try await screenRecorder.start()
                 AppLogger.recording.info("Screen recorder started after source switch")
             } catch {
+                AppLogger.recording.error("Failed to start screen recorder: \(error.localizedDescription)")
+                let appError = AppError.recordingEngineError("Screen recording failed: \(error.localizedDescription)")
                 await MainActor.run { [weak self] in
-                    AppLogger.recording.error("Failed to start screen recorder: \(error.localizedDescription)")
-                    self?.onError?(AppError.recordingEngineError("Screen recording failed: \(error.localizedDescription)"))
+                    self?.onError?(appError)
                 }
             }
         }

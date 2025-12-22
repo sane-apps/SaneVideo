@@ -22,7 +22,7 @@ protocol CameraServiceProtocol: AnyObject, Sendable {
     // Must be nonisolated to allow access from RecordingEngine's processingQueue
     nonisolated var sampleBufferSubject: PassthroughSubject<CMSampleBuffer, Never> { get }
 
-    func start(completion: @escaping @Sendable () -> Void)
+    func start() async throws
     func stop()
     func toggle()
     func requestPermissionAgain()

@@ -16,9 +16,8 @@ protocol ExportServiceProtocol {
         project: VideoProject,
         settings: SaneExportSettings,
         outputURL: URL,
-        progressHandler: @escaping @Sendable (Double) -> Void,
-        completion: @escaping @Sendable (Result<URL, Error>) -> Void
-    )
+        progressHandler: @escaping @Sendable (Double) -> Void
+    ) async throws -> URL
 
     func cancelExport()
 }

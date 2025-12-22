@@ -52,7 +52,7 @@ actor TextRecognitionService {
         request.recognitionLanguages = ["en-US"]
 
         let handler = VNImageRequestHandler(ciImage: image)
-        try handler.perform([request])
+        try await handler.perform([request])
 
         guard let observations = request.results else {
             return []

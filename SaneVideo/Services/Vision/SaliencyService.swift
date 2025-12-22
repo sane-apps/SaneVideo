@@ -28,18 +28,15 @@ actor SaliencyService {
     /// Uses Apple's attention-based saliency model
     func detectAttention(in image: CIImage) async throws -> SaliencyResult {
         let request = VNGenerateAttentionBasedSaliencyImageRequest()
-
         let handler = VNImageRequestHandler(ciImage: image)
-        try handler.perform([request])
+
+        try await handler.perform([request])
 
         guard let observation = request.results?.first else {
             throw SaliencyError.noResults
         }
 
-        // Get the salient objects
-        let salientObjects = observation.salientObjects ?? []
-
-        if let primaryObject = salientObjects.first {
+        if let primaryObject = observation.salientObjects?.first {
             // Convert from Vision coordinates (bottom-left origin) to normalized
             let rect = primaryObject.boundingBox
             let centerX = rect.midX
@@ -70,22 +67,24 @@ actor SaliencyService {
     /// Detect objects in an image (object-based saliency)
     func detectObjects(in image: CIImage) async throws -> [CGRect] {
         let request = VNGenerateObjectnessBasedSaliencyImageRequest()
-
         let handler = VNImageRequestHandler(ciImage: image)
-        try handler.perform([request])
 
-        guard let observation = request.results?.first else {
+        try await handler.perform([request])
+
+        guard let observations = request.results else {
             return []
         }
 
-        return (observation.salientObjects ?? []).map { obj in
-            let rect = obj.boundingBox
-            return CGRect(
-                x: rect.minX,
-                y: 1.0 - rect.maxY,
-                width: rect.width,
-                height: rect.height
-            )
+        return observations.flatMap { observation in
+            (observation.salientObjects ?? []).map { obj in
+                let rect = obj.boundingBox
+                return CGRect(
+                    x: rect.minX,
+                    y: 1.0 - rect.maxY,
+                    width: rect.width,
+                    height: rect.height
+                )
+            }
         }
     }
 

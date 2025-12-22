@@ -57,7 +57,7 @@ actor ThumbnailGeneratorService {
         for time in times {
             do {
                 let (cgImage, _) = try await generator.image(at: time)
-                let score = try calculateAestheticScore(for: cgImage)
+                let score = try await calculateAestheticScore(for: cgImage)
 
                 // track the most aesthetically pleasing frame (lighting, composition, blur, etc.)
                 if score > maxAestheticScore {
@@ -81,19 +81,15 @@ actor ThumbnailGeneratorService {
     private let cache = NSCache<NSString, NSImage>()
     
     /// Calculates the aesthetic score using Apple's pre-trained Vision models (macOS 15+)
-    private func calculateAestheticScore(for cgImage: CGImage) throws -> Float {
-        // Modern API: VNCalculateImageAestheticsScoresRequest
+    private func calculateAestheticScore(for cgImage: CGImage) async throws -> Float {
+        // Modern API: CalculateImageAestheticsScoresRequest
         // This analyzes lighting, composition, and overall quality
-        let request = VNCalculateImageAestheticsScoresRequest()
-        let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
+        let request = CalculateImageAestheticsScoresRequest()
+        let handler = ImageRequestHandler(cgImage)
 
-        try handler.perform([request])
-
-        guard let result = request.results?.first else {
-            return 0.0
-        }
+        let observation = try await handler.perform(request)
 
         // overallScore is a value between 0.0 and 1.0 (usually ~0.5-0.8 for good frames)
-        return result.overallScore
+        return observation.overallScore
     }
 }

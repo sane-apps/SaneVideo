@@ -122,58 +122,51 @@ final class CameraManager: NSObject, CameraServiceProtocol {
 
     // MARK: - Public API
 
-    func start(completion: @escaping @Sendable () -> Void = {}) {
-        Task {
-            // CRITICAL: Skip in tests to prevent TCC crash
-            let isTesting = ProcessInfo.processInfo.arguments.contains("-uitesting") || 
-                            ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
-            
-            if isTesting {
-                AppLogger.camera.info("🧪 CameraManager: Skipping start (Test Environment detected)")
-                await MainActor.run { self.isActive = true }
-                completion()
-                return
-            }
-
-            // Check permission via Manager to ensure centralized state
-            let isAuthorized = ServiceContainer.shared.permissionManager.cameraStatus == .granted
-            
-            guard isAuthorized else {
-                AppLogger.camera.warning("Camera permission not granted, requesting...")
-                let granted = await ServiceContainer.shared.permissionManager.requestCameraPermission()
-                if granted {
-                    AppLogger.camera.info("Permission granted, starting session...")
-                    self.start(completion: completion)
-                } else {
-                    AppLogger.camera.error("Camera permission denied. User must enable it in System Settings.")
-                    self.lastError = .cameraPermissionDenied // Crash protection: Surface error to UI.
-                    completion()
-                }
-                return
-            }
-            
-            // Proceed with session start
-            await self.internalStart(completion: completion)
+    func start() async throws {
+        // 1. Skip in tests to prevent TCC crash
+        if TestEnvironment.isUITesting {
+            AppLogger.camera.info("🧪 CameraManager: Skipping start (Test Environment detected)")
+            self.isActive = true
+            return
         }
+
+        // 2. Check permission
+        let isAuthorized = ServiceContainer.shared.permissionManager.cameraStatus == .granted
+        
+        guard isAuthorized else {
+            AppLogger.camera.warning("Camera permission not granted, requesting...")
+            let granted = await ServiceContainer.shared.permissionManager.requestCameraPermission()
+            if granted {
+                AppLogger.camera.info("Permission granted, starting session...")
+                try await self.start()
+            } else {
+                AppLogger.camera.error("Camera permission denied.")
+                self.lastError = .cameraPermissionDenied
+                throw AppError.cameraPermissionDenied
+            }
+            return
+        }
+        
+        // 3. Proceed with session start
+        try await self.internalStart()
     }
 
-    private func internalStart(completion: @escaping @Sendable () -> Void) async {
+    private func internalStart() async throws {
         // Guard against starting while stopping
         guard !_isStoppingSession else {
             AppLogger.camera.warning("Camera is stopping, deferring start request")
-            try? await Task.sleep(nanoseconds: 300_000_000)
-            await self.internalStart(completion: completion)
+            try await Task.sleep(nanoseconds: 300_000_000)
+            try await self.internalStart()
             return
         }
 
         if let existingSession = session {
-            await startSessionInternal(existingSession, completion: completion)
+            try await startSessionInternal(existingSession)
             return
         }
 
         if _isSettingUpSession {
             AppLogger.camera.warning("Session setup already in progress. Ignoring start request.")
-            completion()
             return
         }
 
@@ -184,14 +177,13 @@ final class CameraManager: NSObject, CameraServiceProtocol {
         guard let session = newSession else {
             AppLogger.camera.error("Failed to start: Session is nil after setup attempt")
             self.lastError = .noCameraFound
-            completion()
-            return
+            throw AppError.noCameraFound
         }
         
-        await self.startSessionInternal(session, completion: completion)
+        try await self.startSessionInternal(session)
     }
 
-    private func startSessionInternal(_ session: AVCaptureSession, completion: @escaping @Sendable () -> Void) async {
+    private func startSessionInternal(_ session: AVCaptureSession) async throws {
         if !session.isRunning {
             AppLogger.camera.info("Attempting to start capture session...")
             
@@ -203,7 +195,7 @@ final class CameraManager: NSObject, CameraServiceProtocol {
             AppLogger.camera.info("Session .startRunning() returned. isRunning: \(session.isRunning)")
 
             // Verify it actually started with retry logic
-            try? await Task.sleep(nanoseconds: 300_000_000)
+            try await Task.sleep(nanoseconds: 300_000_000)
             
             if !session.isRunning {
                 AppLogger.camera.warning("⚠️ Camera session not running, retrying...")
@@ -211,11 +203,13 @@ final class CameraManager: NSObject, CameraServiceProtocol {
                     session.startRunning()
                 }.value
                 
-                try? await Task.sleep(nanoseconds: 300_000_000)
+                try await Task.sleep(nanoseconds: 300_000_000)
                 
                 if !session.isRunning {
                     AppLogger.camera.error("❌ Camera session FAILED after retry")
-                    self.lastError = .cameraSetupFailed(NSError(domain: "SaneVideo", code: -1, userInfo: [NSLocalizedDescriptionKey: "Camera session failed to start"]))
+                    let error = NSError(domain: "SaneVideo", code: -1, userInfo: [NSLocalizedDescriptionKey: "Camera session failed to start"])
+                    self.lastError = .cameraSetupFailed(error)
+                    throw AppError.cameraSetupFailed(error)
                 } else {
                     AppLogger.camera.info("✅ Camera session started on retry")
                 }
@@ -228,7 +222,6 @@ final class CameraManager: NSObject, CameraServiceProtocol {
 
         self.isActive = true
         AppLogger.camera.info("CameraManager set to active")
-        completion()
     }
     func stop() {
         isActive = false
@@ -251,12 +244,12 @@ final class CameraManager: NSObject, CameraServiceProtocol {
     }
 
     func toggle() {
-        // Debounce slightly to prevent rapid-fire toggling issues if needed,
-        // but for now just check the target state.
-        if isActive {
-            stop()
-        } else {
-            start()
+        Task {
+            if isActive {
+                stop()
+            } else {
+                try? await start()
+            }
         }
     }
 
@@ -268,7 +261,7 @@ final class CameraManager: NSObject, CameraServiceProtocol {
         // Wait longer to ensure full teardown completes before restart
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { [weak self] in
             AppLogger.camera.info("Starting camera after restart delay")
-            self?.start()
+            Task { try? await self?.start() }
         }
     }
 
@@ -290,8 +283,14 @@ final class CameraManager: NSObject, CameraServiceProtocol {
         try? await Task.sleep(nanoseconds: 200_000_000) // 0.2s
 
         // 1. Discovery - Include Continuity Camera (iPhone as webcam)
+        // Modernized with macOS 15 device types
+        var deviceTypes: [AVCaptureDevice.DeviceType] = [.builtInWideAngleCamera, .external, .continuityCamera]
+        if #available(macOS 15.0, *) {
+            deviceTypes.append(.deskViewCamera)
+        }
+        
         let discoverySession = AVCaptureDevice.DiscoverySession(
-            deviceTypes: [.builtInWideAngleCamera, .external, .continuityCamera],
+            deviceTypes: deviceTypes,
             mediaType: .video,
             position: .unspecified
         )
@@ -407,6 +406,8 @@ final class CameraManager: NSObject, CameraServiceProtocol {
 
         if session.canAddOutput(videoOutput) {
             session.addOutput(videoOutput)
+            
+            // Stabilization is handled by system or specific formats on macOS
         }
 
         session.commitConfiguration()

@@ -17,10 +17,6 @@ import AVFoundation
 /// Detects faces and provides coordinates for auto-framing
 actor FaceTrackingService {
     
-    /// Tracking request for continuous face tracking
-    private var trackingRequest: VNTrackObjectRequest?
-    private var lastObservation: VNDetectedObjectObservation?
-    
     init() {}
     
     // MARK: - Public API
@@ -29,38 +25,47 @@ actor FaceTrackingService {
     /// Returns array of normalized face rectangles (0-1 coordinate space)
     func detectFaces(in image: CIImage) async throws -> [CGRect] {
         let request = VNDetectFaceRectanglesRequest()
-        
         let handler = VNImageRequestHandler(ciImage: image)
-        try handler.perform([request])
+        
+        try await handler.perform([request])
         
         guard let results = request.results else {
             return []
         }
         
-        return results.map { $0.boundingBox }
+        return results.map { observation in
+            let box = observation.boundingBox
+            return CGRect(x: box.minX, y: box.minY, width: box.width, height: box.height)
+        }
     }
     
     /// Detect faces with landmarks (eyes, nose, mouth)
     func detectFacesWithLandmarks(in image: CIImage) async throws -> [FaceDetection] {
         let request = VNDetectFaceLandmarksRequest()
-        
         let handler = VNImageRequestHandler(ciImage: image)
-        try handler.perform([request])
+        
+        try await handler.perform([request])
         
         guard let results = request.results else {
             return []
         }
         
         return results.compactMap { observation -> FaceDetection? in
-            guard let landmarks = observation.landmarks else { return nil }
+            let box = observation.boundingBox
+            let faceRect = CGRect(
+                x: box.minX,
+                y: 1.0 - box.maxY, // Flip Y
+                width: box.width,
+                height: box.height
+            )
             
             return FaceDetection(
-                boundingBox: observation.boundingBox,
+                boundingBox: faceRect,
                 confidence: observation.confidence,
-                leftEye: landmarks.leftEye?.normalizedPoints.first,
-                rightEye: landmarks.rightEye?.normalizedPoints.first,
-                nose: landmarks.nose?.normalizedPoints.first,
-                mouth: landmarks.innerLips?.normalizedPoints.first
+                leftEye: observation.landmarks?.leftEye?.normalizedPoints.first,
+                rightEye: observation.landmarks?.rightEye?.normalizedPoints.first,
+                nose: observation.landmarks?.nose?.normalizedPoints.first,
+                mouth: observation.landmarks?.innerLips?.normalizedPoints.first
             )
         }
     }
@@ -134,24 +139,22 @@ actor FaceTrackingService {
     }
     
     /// Track a face across frames (for smooth following)
-    func trackFace(in image: CIImage, previousObservation: VNDetectedObjectObservation?) async throws -> VNDetectedObjectObservation? {
+    func trackFace(in image: CIImage, previousObservation: VNFaceObservation?) async throws -> VNFaceObservation? {
         if let previous = previousObservation {
             // Continue tracking existing face
             let trackRequest = VNTrackObjectRequest(detectedObjectObservation: previous)
             trackRequest.trackingLevel = .fast
             
             let handler = VNImageRequestHandler(ciImage: image)
-            try handler.perform([trackRequest])
+            try await handler.perform([trackRequest])
             
-            if let result = trackRequest.results?.first as? VNDetectedObjectObservation {
-                return result
-            }
+            return trackRequest.results?.first as? VNFaceObservation
         }
         
         // If tracking failed or no previous, detect new face
         let detectRequest = VNDetectFaceRectanglesRequest()
         let handler = VNImageRequestHandler(ciImage: image)
-        try handler.perform([detectRequest])
+        try await handler.perform([detectRequest])
         
         // Return largest face
         return detectRequest.results?.max(by: { $0.boundingBox.width * $0.boundingBox.height < $1.boundingBox.width * $1.boundingBox.height })
@@ -174,7 +177,7 @@ actor FaceTrackingService {
         
         var results: [CMTime: CGRect] = [:]
         var currentTime = CMTime.zero
-        var lastObservation: VNDetectedObjectObservation?
+        var lastObservation: VNFaceObservation?
         
         // Loop through video
         while currentTime < duration {

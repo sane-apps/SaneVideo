@@ -11,6 +11,8 @@ import AppKit
 import CoreImage
 import Foundation
 import Vision
+import CoreVideo
+import AVFoundation
 
 /// Person segmentation using Vision framework
 /// Separates person from background for blur/replacement effects
@@ -61,13 +63,12 @@ actor PersonSegmentationService {
         }
 
         let handler = VNImageRequestHandler(ciImage: image)
-        try handler.perform([request])
+        try await handler.perform([request])
 
         guard let observation = request.results?.first else {
             throw SegmentationError.noResults
         }
 
-        // Convert pixel buffer to CIImage mask
         let maskImage = CIImage(cvPixelBuffer: observation.pixelBuffer)
 
         // Scale mask to match input image size

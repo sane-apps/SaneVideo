@@ -61,6 +61,22 @@ class LogManager {
         if logs.count > maxLogs {
             logs.removeFirst(logs.count - maxLogs)
         }
+        
+        // DEBUG: Write to file so AI can read it
+        if let logFileURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("SaneVideo_Log.txt") {
+            let logString = "[\(entry.date)] [\(category)] \(entry.levelEmoji) \(message)\n"
+            if let data = logString.data(using: .utf8) {
+                if FileManager.default.fileExists(atPath: logFileURL.path) {
+                    if let fileHandle = try? FileHandle(forWritingTo: logFileURL) {
+                        fileHandle.seekToEndOfFile()
+                        fileHandle.write(data)
+                        try? fileHandle.close()
+                    }
+                } else {
+                    try? data.write(to: logFileURL)
+                }
+            }
+        }
     }
 
     func logUserAction(_ action: String, details: String? = nil) {

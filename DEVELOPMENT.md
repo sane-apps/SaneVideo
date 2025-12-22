@@ -14,7 +14,8 @@
 ## 1. The "Golden Rules" (CRITICAL)
 
 1. **USE SaneMaster.rb FIRST**: Use `./Scripts/SaneMaster.rb` for verification, setup, and diagnostics.
-2. **FILE CREATION = XCODEGEN**: If you create a new file, run `xcodegen generate` immediately.
+2. **VERIFY LOGS ALWAYS**: Run `./Scripts/SaneMaster.rb diagnose --dump` after every build/test to see runtime logs (e.g. `ProjectStore initialized at...`).
+3. **FILE CREATION = XCODEGEN**: If you create a new file, run `xcodegen generate` immediately.
 3. **MAX FILE SIZE = 500 LINES**: Absolute limit per Swift file. Enforced by automation.
 4. **SAFETY FIRST**: Every bug fix **MUST** have a regression test.
 5. **NO HALLUCINATIONS**: Verify APIs via web search.
@@ -164,24 +165,29 @@ AppLogger.general     // Everything else
 
 ## 5. Workflows
 
-### Building & Testing
+### Building & Verification (Unified Workflow)
 
-**Standard**: `./Scripts/SaneMaster.rb verify`
+**The Mandate**: You must see the logs every time you build.
 
-**Manual UI Testing**:
+#### 1. Build, Test, & Dump Logs (One Step)
+
+Use the Agent workflow or run manually:
+
+```bash
+# 1. Build and Run Tests to generate logs
+mcp_XcodeBuildMCP_test_macos({ "scheme": "SaneVideo", "derivedDataPath": "/Users/sj/SaneVideo/.derivedData" })
+
+# 2. REQUIRED: Dump the full log to console
+./Scripts/SaneMaster.rb diagnose --dump
+```
+
+*Why?* This ensures you see "ProjectStore initialized at..." and other critical runtime events that Xcode/MCP might swallow.
+
+#### 2. Manual UI Testing
 
 1. Run `./Scripts/SaneMaster.rb gen_assets` to ensure test media exists.
 2. Run `xcodebuild test -scheme SaneVideo ...`
-
-### Diagnosing UI Test Failures
-
-**MANDATED**: If a UI test fails, run:
-
-```bash
-./Scripts/SaneMaster.rb diagnose
-```
-
-This tool analyzes `.xcresult` and logs to find the root cause (e.g., window focus issues).
+3. Run `./Scripts/SaneMaster.rb diagnose --dump` to check the result.
 
 ---
 
@@ -197,6 +203,7 @@ This tool analyzes `.xcresult` and logs to find the root cause (e.g., window foc
 ## 7. Available Tools
 
 1. **SaneMaster.rb**: The master controller.
+   - Includes **Permission Monitor** ("God Mode"): Automatically clicks "Allow" on TCC dialogs during tests using AppleScript.
 2. **XcodeBuildMCP**: Use for granular programmatic builds/tests.
 3. **Fastlane**: For CI/CD (`fastlane verify_full`).
 

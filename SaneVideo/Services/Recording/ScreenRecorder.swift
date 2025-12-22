@@ -188,8 +188,10 @@ class ScreenRecorder: NSObject, SCContentSharingPickerObserver, SCStreamDelegate
             config.excludesCurrentProcessAudio = true
             
             // Microphone Capture (macOS 15+)
-            // This consolidates all audio into a single stream for perfect sync
-            config.captureMicrophone = true
+            // DISABLED: Using SCStream for mic triggers system Voice Processing (VPIO) 
+            // which degrades system audio quality ("tinny" sound). 
+            // We rely on our dedicated AudioService for high-fidelity mic capture.
+            config.captureMicrophone = false
             
             config.channelCount = 2
             config.sampleRate = 48000
@@ -212,12 +214,8 @@ class ScreenRecorder: NSObject, SCContentSharingPickerObserver, SCStreamDelegate
                 sampleHandlerQueue: DispatchQueue(label: "com.sanevideo.system-audio")
             )
 
-            // Add microphone audio stream output
-            try newStream.addStreamOutput(
-                self,
-                type: .microphone,
-                sampleHandlerQueue: DispatchQueue(label: "com.sanevideo.mic-audio")
-            )
+            // Microphone output removed since captureMicrophone is false
+
             
             // 5. Setup SCRecordingOutput if an output URL was provided
             if let outputURL = currentOutputURL {

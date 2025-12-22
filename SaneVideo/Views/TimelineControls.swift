@@ -22,6 +22,9 @@ struct TimelineControls: View {
 
     @AppStorage("snapEnabled") private var snapEnabled = true
     @AppStorage("magneticTimeline") private var magneticTimeline = true
+    
+    // State for delete confirmation
+    @State private var showDeleteConfirmation = false
 
     var body: some View {
         HStack(spacing: 0) {
@@ -53,12 +56,23 @@ struct TimelineControls: View {
                 .help(KeyboardShortcutHelper.helpWithShortcut(String(localized: "timeline.tool.split.help", defaultValue: "Split clip (B)"), key: "b", modifiers: [.command]))
 
                 ToolButton(icon: "trash", isSelected: false, id: "DeleteClipButton") {
-                    if let clip = selectedClip {
-                        projectState.deleteClip(clip)
+                    if selectedClip != nil {
+                        showDeleteConfirmation = true
                     }
                 }
                 .disabled(selectedClip == nil || projectState.isProcessing)
                 .help(KeyboardShortcutHelper.helpWithShortcut(String(localized: "timeline.tool.delete.help", defaultValue: "Delete selection"), key: .delete))
+                .confirmationDialog("Delete Clip?", isPresented: $showDeleteConfirmation, presenting: selectedClip) { clip in
+                    Button("Remove from Project (Reference Only)", role: .destructive) {
+                        projectState.deleteClip(clip)
+                    }
+                    Button("Move Source File to Trash", role: .destructive) {
+                        projectState.deleteClipFile(clip)
+                    }
+                    Button("Cancel", role: .cancel) { }
+                } message: { clip in
+                    Text("Do you want to remove the clip reference from the project, or move the actual '\(clip.url.lastPathComponent)' file to the Trash?")
+                }
             }
             .padding(4)
             .background(Color.white.opacity(0.05))

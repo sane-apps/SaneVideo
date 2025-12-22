@@ -198,11 +198,11 @@ struct ThumbnailPickerSheet: View {
                         .padding(.vertical, 8)
                         .background(
                             RoundedRectangle(cornerRadius: 8)
-                                .fill(selectedStyle == style ? Color.blue.opacity(0.2) : Color.white.opacity(0.05))
+                                .fill(selectedStyle == style ? Color.accentColor.opacity(0.2) : Color.white.opacity(0.05))
                         )
                         .overlay(
                             RoundedRectangle(cornerRadius: 8)
-                                .stroke(selectedStyle == style ? Color.blue : Color.clear, lineWidth: 1)
+                                .stroke(selectedStyle == style ? Color.accentColor : Color.clear, lineWidth: 1)
                         )
                     }
                     .buttonStyle(.plain)

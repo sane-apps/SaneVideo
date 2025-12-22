@@ -192,7 +192,7 @@ struct CanvasOverlay: View {
 
                         // Hit Box / Selection Box
                         Rectangle()
-                            .strokeBorder(isInteracting ? Color.blue : Color.white.opacity(0.5), style: StrokeStyle(lineWidth: 2, dash: [5]))
+                            .strokeBorder(isInteracting ? Color.accentColor : Color.white.opacity(0.5), style: StrokeStyle(lineWidth: 2, dash: [5]))
                             .background(Color.black.opacity(0.01)) // catch hits
                             .frame(width: 0.5 * geo.size.width, height: 0.2 * geo.size.height) // Base size matches logic above
                             .scaleEffect(currentScale)
@@ -212,11 +212,11 @@ struct CanvasOverlay: View {
                     if clip != nil {
                         ZStack {
                             Circle()
-                                .strokeBorder(Color.blue, lineWidth: 2)
-                                .background(Circle().fill(Color.blue.opacity(0.2)))
+                                .strokeBorder(Color.accentColor, lineWidth: 2)
+                                .background(Circle().fill(Color.accentColor.opacity(0.2)))
                                 .frame(width: 20, height: 20)
-                            Rectangle().fill(Color.blue).frame(width: 40, height: 1)
-                            Rectangle().fill(Color.blue).frame(width: 1, height: 40)
+                            Rectangle().fill(Color.accentColor).frame(width: 40, height: 1)
+                            Rectangle().fill(Color.accentColor).frame(width: 1, height: 40)
                         }
                         .position(x: geo.size.width / 2, y: geo.size.height / 2)
                         .offset(x: (interactionTarget == .clip) ? localTranslation.width : 0,

@@ -30,25 +30,44 @@ struct UnifiedRecordButton: View {
                 ZStack {
                     // 1. Outer Ring (Always visible)
                     Circle()
-                        .strokeBorder(Color.white, lineWidth: 4)
+                        .strokeBorder(Color.white.opacity(0.3), lineWidth: 4)
                         .frame(width: size, height: size)
 
-                    // 2. Inner Indicator (Red Circle -> Red Square)
+                    // 2. Inner Indicator (Red Circle with White Dot -> Red Square)
                     // Scales down and changes shape when recording
-                    RoundedRectangle(cornerRadius: appState.isRecording ? 4 : size / 2)
-                        .fill(Color.red)
-                        .frame(
-                            width: appState.isRecording ? size * 0.45 : size - 12,
-                            height: appState.isRecording ? size * 0.45 : size - 12
-                        )
-                        .animation(.spring(response: 0.3, dampingFraction: 0.6), value: appState.isRecording)
+                    ZStack {
+                        RoundedRectangle(cornerRadius: appState.isRecording ? 4 : size / 2)
+                            .fill(Color.red)
+                            .frame(
+                                width: appState.isRecording ? size * 0.45 : size - 12,
+                                height: appState.isRecording ? size * 0.45 : size - 12
+                            )
+                        
+                        if !appState.isRecording {
+                            Circle()
+                                .fill(Color.white)
+                                .frame(width: size * 0.15, height: size * 0.15)
+                                .transition(.scale.combined(with: .opacity))
+                        }
+                    }
+                    .animation(.spring(response: 0.3, dampingFraction: 0.6), value: appState.isRecording)
                 }
             })
-            .buttonStyle(.plain)
+            .buttonStyle(SystemRecordButtonStyle())
             .accessibilityLabel(appState.isRecording ? String(localized: "recording.stop", defaultValue: "Stop recording") : String(localized: "recording.start", defaultValue: "Start recording"))
             .accessibilityIdentifier("RecordButton")
         }
         .help(KeyboardShortcutHelper.helpWithShortcut(appState.isRecording ? String(localized: "recording.stop", defaultValue: "Stop recording") : String(localized: "recording.start", defaultValue: "Start recording"), key: "r", modifiers: [.command]))
         .featureTooltip("record_button", message: String(localized: "recording.tooltip", defaultValue: "Press to start recording. Use ⌘R for quick access!"))
+    }
+}
+
+// Support for "System Styling" feedback (Hover/Press)
+struct SystemRecordButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.94 : 1.0)
+            .opacity(configuration.isPressed ? 0.8 : 1.0)
+            .animation(.interactiveSpring(), value: configuration.isPressed)
     }
 }

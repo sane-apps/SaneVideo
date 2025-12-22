@@ -1759,9 +1759,6 @@
     "Empty Timeline. Drop video clips here to start." : {
 
     },
-    "Enables the camera for recording" : {
-
-    },
     "End: %@" : {
 
     },
@@ -2671,6 +2668,9 @@
     "Minimal Fix" : {
 
     },
+    "Mode" : {
+
+    },
     "mode.action.export" : {
       "extractionState" : "extracted_with_value",
       "localizations" : {
@@ -2773,19 +2773,13 @@
     "Mute Microphone" : {
 
     },
-    "No cameras found" : {
-
-    },
-    "No microphones found" : {
-
-    },
     "Nothing Selected" : {
 
     },
     "Orchestrate your entire project with AI." : {
 
     },
-    "Pause recording" : {
+    "Pause/Resume" : {
 
     },
     "pip.help.mic.mute" : {
@@ -2904,6 +2898,9 @@
     "Preview" : {
 
     },
+    "Pro" : {
+
+    },
     "Pro Clean-up" : {
 
     },
@@ -2986,7 +2983,7 @@
     "Requires captions - generate them first" : {
 
     },
-    "Resume recording" : {
+    "SANE" : {
 
     },
     "screen.switch" : {
@@ -3820,6 +3817,9 @@
         }
       }
     },
+    "Simple" : {
+
+    },
     "sk-..." : {
 
     },
@@ -3843,10 +3843,7 @@
     "Switch back to camera mode" : {
 
     },
-    "Switch to camera" : {
-
-    },
-    "Switch to screen recording" : {
+    "Switch to Pro Mode for manual video, audio, and effect controls." : {
 
     },
     "thermal.emergency" : {
@@ -4633,6 +4630,9 @@
         }
       }
     },
+    "Toggle between Simple (AI) and Pro (Manual) controls" : {
+
+    },
     "Toggle Record/Edit Mode (Cmd+M)" : {
 
     },
@@ -4955,13 +4955,7 @@
         }
       }
     },
-    "Turn on camera" : {
-
-    },
     "Turn On Camera" : {
-
-    },
-    "Turn on the camera to start recording" : {
 
     },
     "Undo" : {
@@ -4973,13 +4967,10 @@
     "Uploading to YouTube..." : {
 
     },
-    "Use Control Center for Video Effects" : {
-
-    },
     "Video" : {
 
     },
-    "Video Effects in Control Center" : {
+    "VIDEO" : {
 
     },
     "video.action.analyzing" : {
@@ -5069,9 +5060,6 @@
           }
         }
       }
-    },
-    "View Recent Clip" : {
-
     },
     "voiceover.action.generate" : {
       "extractionState" : "extracted_with_value",

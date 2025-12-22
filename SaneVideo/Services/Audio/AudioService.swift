@@ -140,6 +140,9 @@ class AudioService: NSObject {
             }
             
             await self.internalStart()
+            
+            // Ensure we have the list for the UI
+            self.refreshMicrophones()
         }
     }
 

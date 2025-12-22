@@ -130,7 +130,7 @@ extension ProjectState {
         // Find main video track or create one
         var targetTrackIndex = timeline.tracks.firstIndex { $0.type == .video }
         if targetTrackIndex == nil {
-            let newTrack = Track(name: "Video 1", type: .video, zIndex: 0)
+            let newTrack = Track(name: "", type: .video, zIndex: 0)
             timeline.addTrack(newTrack)
             targetTrackIndex = timeline.tracks.count - 1
         }

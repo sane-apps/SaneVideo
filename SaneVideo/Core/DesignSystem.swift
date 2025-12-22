@@ -96,12 +96,14 @@ extension Color {
 struct IconButtonStyle: ButtonStyle {
     enum Size {
         case small, medium, large
+        case custom(CGFloat)
 
         var diameter: CGFloat {
             switch self {
             case .small: return 36
             case .medium: return 48
             case .large: return 64
+            case .custom(let val): return val
             }
         }
 
@@ -110,6 +112,7 @@ struct IconButtonStyle: ButtonStyle {
             case .small: return 14
             case .medium: return 18
             case .large: return 24
+            case .custom(let val): return val * 0.4
             }
         }
     }

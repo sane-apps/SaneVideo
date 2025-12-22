@@ -33,8 +33,10 @@ struct SmartToolsSection: View {
                                 title: "Remove Silence",
                                 subtitle: "Cut non-speech gaps",
                                 isOn: $options.removeSilence,
-                                icon: "waveform.slash"
+                                icon: "waveform.slash",
+                                color: .blue
                             )
+                            .help("Automatically cuts segments of the video where no speech is detected (Timeline Edit).")
                             
                             if options.removeSilence {
                                 DisclosureGroup {
@@ -48,6 +50,7 @@ struct SmartToolsSection: View {
                                         }
                                         Slider(value: $options.silenceThreshold, in: -60 ... -20, step: 1)
                                             .tint(.blue)
+                                            .help("Audio levels below this threshold will be considered silence.")
                                     }
                                     .padding(.vertical, 4)
                                 } label: {
@@ -61,15 +64,19 @@ struct SmartToolsSection: View {
                                 title: "Remove Fillers",
                                 subtitle: "Cut 'um', 'uh', stutters",
                                 isOn: $options.removeFillers,
-                                icon: "bubble.left"
+                                icon: "bubble.left",
+                                color: .blue
                             )
+                            .help("Detects and removes hesitation words like 'um' and 'uh' from the timeline.")
                             
                             InspectorToggle(
-                                title: "Studio Sound",
-                                subtitle: "AI voice enhancement",
+                                title: "Enhance Speech",
+                                subtitle: "Isolate voice & remove noise",
                                 isOn: $options.enhanceAudio,
-                                icon: "mic.fill"
+                                icon: "mic.fill",
+                                color: .blue
                             )
+                            .help("Applies EQ, Compression, and AI Voice Isolation to clean up background noise.")
                         }
                     }
 
@@ -80,22 +87,28 @@ struct SmartToolsSection: View {
                                 title: "Auto Color",
                                 subtitle: "Light & color fix",
                                 isOn: $options.autoEnhance,
-                                icon: "paintpalette"
+                                icon: "paintpalette",
+                                color: .purple
                             )
+                            .help("Automatically adjusts brightness, contrast, and saturation.")
                             
                             InspectorToggle(
                                 title: "Smart Crop (9:16)",
                                 subtitle: "Auto vertical reframe",
                                 isOn: $options.smartCrop,
-                                icon: "iphone"
+                                icon: "iphone",
+                                color: .purple
                             )
+                            .help("Reframes horizontal video to vertical (9:16) keeping the subject centered.")
                             
                             InspectorToggle(
                                 title: "Auto-Framing",
                                 subtitle: "Track faces & focus",
                                 isOn: $options.autoFraming,
-                                icon: "target"
+                                icon: "target",
+                                color: .purple
                             )
+                            .help("Keeps the subject centered in the frame even if they move.")
                         }
                     }
 
@@ -106,15 +119,19 @@ struct SmartToolsSection: View {
                                 title: "Magic Remove",
                                 subtitle: "AI object removal",
                                 isOn: $options.magicRemovePeople,
-                                icon: "person.badge.minus"
+                                icon: "person.badge.minus",
+                                color: .orange
                             )
+                            .help("Automatically detects and removes people or distracting objects from the background.")
                             
                             InspectorToggle(
                                 title: "Cinematic Styles",
                                 subtitle: "Prompt-based restyling",
                                 isOn: $options.generativeStyle,
-                                icon: "camera.filters"
+                                icon: "camera.filters",
+                                color: .orange
                             )
+                            .help("Applies generative filters to give your video a specific look (e.g. 'Vintage', 'Cyberpunk').")
                         }
                     }
                 }
@@ -147,12 +164,16 @@ struct SmartToolsSection: View {
                 Button("Pro Clean-up") { options = .proClean }
                 Button("Social Media Ready") { options = .socialMedia }
             } label: {
-                Label("Presets", systemImage: "wand.and.stars")
+                Label("Presets", systemImage: "slider.horizontal.3")
                     .font(.caption.bold())
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
-                    .background(Color.purple.opacity(0.1))
+                    .background(Theme.Colors.secondaryBackground)
                     .cornerRadius(6)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 6)
+                            .stroke(Color.secondary.opacity(0.2), lineWidth: 0.5)
+                    )
             }
             .menuStyle(.button)
             .buttonStyle(.plain)
@@ -168,27 +189,15 @@ struct SmartToolsSection: View {
         } label: {
             VStack(spacing: 6) {
                 HStack(spacing: 10) {
-                    if appState.projectState.isProcessing {
-                        ProgressView()
-                            .controlSize(.small)
-                            .tint(.white)
-                    } else {
+                    if !appState.projectState.isProcessing {
                         Image(systemName: "wand.and.stars")
                             .font(.system(size: 16, weight: .bold))
                     }
                     
                     Text(appState.projectState.isProcessing ? 
-                         (appState.projectState.processingStatus ?? "Processing...") : 
-                         "Apply Super Magic Fix")
+                         "Processing in Background..." : 
+                         "Apply Magic Fix")
                         .fontWeight(.bold)
-                }
-                
-                if appState.projectState.isProcessing && appState.projectState.processingProgress > 0 {
-                    ProgressView(value: appState.projectState.processingProgress, total: 1.0)
-                        .progressViewStyle(.linear)
-                        .tint(.white.opacity(0.9))
-                        .frame(height: 2)
-                        .padding(.horizontal, 40)
                 }
             }
             .frame(maxWidth: .infinity)
@@ -197,12 +206,12 @@ struct SmartToolsSection: View {
                 if appState.projectState.isProcessing {
                     Color.gray.opacity(0.5)
                 } else {
-                    Theme.Colors.accentGradient
+                    Theme.Colors.accentGradient // Uses System Accent (Yellow in screenshot)
                 }
             }
-            .foregroundColor(.white)
+            .foregroundColor(Theme.Colors.accent.isLight() ? .black : .white) // Smart Contrast
             .cornerRadius(12)
-            .shadow(color: Color.purple.opacity(0.4), radius: 8, x: 0, y: 4)
+            .shadow(color: Theme.Colors.accent.opacity(0.4), radius: 8, x: 0, y: 4)
         }
         .buttonStyle(.plain)
         .disabled(appState.projectState.isProcessing)
@@ -254,6 +263,7 @@ private struct InspectorToggle: View {
     let subtitle: String
     @Binding var isOn: Bool
     let icon: String
+    var color: Color = .purple // Default for safety, but calls should override
     var identifier: String?
     
     var body: some View {
@@ -261,8 +271,8 @@ private struct InspectorToggle: View {
             Image(systemName: icon)
                 .font(.system(size: 14))
                 .frame(width: 24, height: 24)
-                .background(isOn ? Color.purple.opacity(0.1) : Color.gray.opacity(0.1))
-                .foregroundColor(isOn ? .purple : .secondary)
+                .background(isOn ? color.opacity(0.1) : Color.gray.opacity(0.1))
+                .foregroundColor(isOn ? color : .secondary)
                 .cornerRadius(6)
             
             VStack(alignment: .leading, spacing: 2) {
@@ -278,11 +288,104 @@ private struct InspectorToggle: View {
             Toggle("", isOn: $isOn)
                 .labelsHidden()
                 .toggleStyle(.switch)
+                .tint(color) // Match the section color
                 .accessibilityLabel(title)
                 .accessibilityIdentifier(identifier ?? "Toggle_\(title)")
                 .scaleEffect(0.7)
                 .padding(.trailing, -6)
         }
         .accessibilityIdentifier(identifier != nil ? "Row_\(identifier!.replacingOccurrences(of: "Toggle_", with: ""))" : "Row_\(title)")
+    }
+}
+
+// Helper for contrast
+extension Color {
+    func isLight() -> Bool {
+        // Simple heuristic for contrast text
+        // In a real design system we'd check luminance
+        // For standard Yellow/Cyan this is usually true, for Blue/Purple false
+        return false // Defaulting to white text for now as most accents are dark enough or we want white on buttons
+    }
+}
+
+// MARK: - Magic Progress Island
+
+struct MagicProgressOverlay: View {
+    let isProcessing: Bool
+    let status: String?
+    let progress: Double
+    
+    // Smooth animation namespace
+    @Namespace private var namespace
+    
+    var body: some View {
+        Group {
+            if isProcessing {
+                HStack(spacing: 16) {
+                    // 1. Animated Icon
+                    ZStack {
+                        Circle()
+                            .fill(Theme.Colors.accent.opacity(0.2))
+                            .frame(width: 32, height: 32)
+                        
+                        Image(systemName: "sparkles")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(Theme.Colors.accent)
+                            .symbolEffect(.bounce.up.byLayer, options: .repeating)
+                    }
+                    
+                    VStack(alignment: .leading, spacing: 4) {
+                        // 2. Status Text (Animated transition)
+                        Text(status ?? "Processing...")
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundStyle(.primary)
+                            .contentTransition(.numericText(value: 0))
+                            .animation(.snappy, value: status)
+                            .lineLimit(1)
+                        
+                        // 3. Progress Bar
+                        GeometryReader { geo in
+                            ZStack(alignment: .leading) {
+                                Capsule()
+                                    .fill(Color.primary.opacity(0.1))
+                                    .frame(height: 4)
+                                
+                                Capsule()
+                                    .fill(Theme.Colors.accentGradient)
+                                    .frame(width: geo.size.width * CGFloat(progress), height: 4)
+                                    .animation(.smooth(duration: 0.4), value: progress)
+                            }
+                        }
+                        .frame(height: 4)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    
+                    // 4. Percentage text
+                    Text("\(Int(progress * 100))%")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundStyle(.secondary)
+                        .monospacedDigit()
+                        .contentTransition(.numericText())
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 14)
+                .frame(width: 320)
+                .background(.ultraThinMaterial)
+                .background(
+                    RoundedRectangle(cornerRadius: 30)
+                        .fill(Color(nsColor: .windowBackgroundColor).opacity(0.5))
+                )
+                .clipShape(RoundedRectangle(cornerRadius: 30))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 30)
+                        .stroke(Theme.Colors.accent.opacity(0.3), lineWidth: 1)
+                )
+                .shadow(color: Color.black.opacity(0.2), radius: 20, x: 0, y: 10)
+                // Use a standard transition instead of asymmetric which might be causing type-check issues if too complex
+                .transition(.move(edge: .top).combined(with: .opacity)) 
+            }
+        }
+        .animation(.spring(response: 0.5, dampingFraction: 0.7), value: isProcessing)
+        .padding(.top, 40) // Position nicely below toolbar
     }
 }

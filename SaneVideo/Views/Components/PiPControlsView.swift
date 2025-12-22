@@ -58,7 +58,7 @@ struct PiPControlsView: View {
                 Image(systemName: "arrow.uturn.backward.circle.fill")
                     .foregroundColor(.white)
                     .frame(width: 28, height: 28)
-                    .background(Color.blue)
+                    .background(Color.accentColor)
                     .clipShape(Circle())
             })
             .buttonStyle(.plain)

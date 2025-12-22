@@ -44,20 +44,25 @@ public struct SaneTimelineView: View {
                 onSplit: splitSelectedClip
             )
 
-            ScrollView(.horizontal, showsIndicators: true) {
-                TimelineTracksView(
-                    zoomLevel: zoomLevel,
-                    isScrubbing: $isScrubbing,
-                    scrubTime: $scrubTime,
-                    clipToDelete: $clipToDelete,
-                    showDeleteConfirmation: $showDeleteConfirmation,
-                    selectedClip: $selectedClip,
-                    draggingClip: $draggingClip,
-                    selectedClipIds: $selectedClipIds,
-                    pixelsPerSecond: pixelsPerSecond
-                )
+            if projectState.currentProject?.timeline.tracks.flatMap({ $0.clips }).isEmpty ?? true {
+                TimelineEmptyStateView()
+                    .frame(minHeight: 150, maxHeight: .infinity)
+            } else {
+                ScrollView(.horizontal, showsIndicators: true) {
+                    TimelineTracksView(
+                        zoomLevel: zoomLevel,
+                        isScrubbing: $isScrubbing,
+                        scrubTime: $scrubTime,
+                        clipToDelete: $clipToDelete,
+                        showDeleteConfirmation: $showDeleteConfirmation,
+                        selectedClip: $selectedClip,
+                        draggingClip: $draggingClip,
+                        selectedClipIds: $selectedClipIds,
+                        pixelsPerSecond: pixelsPerSecond
+                    )
+                }
+                .frame(minHeight: 150, maxHeight: .infinity)
             }
-            .frame(minHeight: 150, maxHeight: .infinity)
         }
         .alert(String(localized: "timeline.alert.delete.title", defaultValue: "Delete Clip"), isPresented: $showDeleteConfirmation, presenting: clipToDelete) { clip in
             Button(String(localized: "timeline.alert.delete.remove", defaultValue: "Remove from Project only"), role: .none) {

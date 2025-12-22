@@ -117,6 +117,20 @@ struct SaneVideoApp: App {
                 .keyboardShortcut("s", modifiers: [.command, .shift])
                 .accessibilityIdentifier("menu.file.share")
             }
+            
+            CommandGroup(replacing: .help) {
+                Button(String(localized: "menu.help.shortcuts", defaultValue: "Keyboard Shortcuts")) {
+                    NotificationCenter.default.post(name: NSNotification.Name("ShowKeyboardShortcuts"), object: nil)
+                }
+                .keyboardShortcut("?", modifiers: [.command])
+                .accessibilityIdentifier("menu.help.shortcuts")
+                
+                Button(String(localized: "menu.help.sane_video_help", defaultValue: "SaneVideo Help")) {
+                    if let url = URL(string: "https://www.sanevideo.app/help") {
+                        NSWorkspace.shared.open(url)
+                    }
+                }
+            }
         }
     }
 

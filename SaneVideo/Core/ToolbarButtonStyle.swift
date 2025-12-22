@@ -16,19 +16,13 @@ struct ToolbarActionStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.system(size: 12, weight: isPrimary ? .semibold : .medium))
-            .foregroundColor(isEnabled ? .white : .secondary)
-            .padding(.horizontal, isPrimary ? 12 : 10)
-            .padding(.vertical, 7)
+            .foregroundColor(isEnabled ? .primary : .secondary)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
             .background(
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(isEnabled ? Material.regular : Material.ultraThin)
+                RoundedRectangle(cornerRadius: 6)
+                    .fill(configuration.isPressed ? Color.secondary.opacity(0.2) : Color.secondary.opacity(0.1))
             )
-            .overlay(
-                RoundedRectangle(cornerRadius: 8)
-                    .stroke(isEnabled ? Color.white.opacity(0.15) : Color.clear, lineWidth: 1)
-            )
-            .scaleEffect(configuration.isPressed ? 0.96 : 1.0)
-            .animation(.spring(response: 0.2, dampingFraction: 0.6), value: configuration.isPressed)
             .opacity(isEnabled ? 1.0 : 0.5)
     }
 }
@@ -39,14 +33,12 @@ struct DestructiveToolbarStyle: ButtonStyle {
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.system(size: 13, weight: .medium))
-            .foregroundColor(isEnabled ? .white : .secondary)
-            .frame(width: 32, height: 28)
+            .font(.system(size: 12, weight: .medium))
+            .foregroundColor(isEnabled ? .red : .secondary)
+            .frame(width: 28, height: 24)
             .background(
-                RoundedRectangle(cornerRadius: 6)
-                    .fill(isEnabled ? Theme.Colors.destructive.opacity(0.8) : Color.gray.opacity(0.2))
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(configuration.isPressed ? Color.red.opacity(0.2) : Color.clear)
             )
-            .scaleEffect(configuration.isPressed ? 0.92 : 1.0)
-            .animation(.spring(response: 0.2, dampingFraction: 0.6), value: configuration.isPressed)
     }
 }

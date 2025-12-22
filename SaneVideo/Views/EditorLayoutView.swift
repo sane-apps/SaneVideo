@@ -44,16 +44,8 @@ struct EditorLayoutView: View {
                     // PLAYER STAGE
                     ZStack {
                         // ... existing backdrop code ...
-                        LinearGradient(
-                            stops: [
-                                .init(color: Color(white: 0.08), location: 0),
-                                .init(color: Color(white: 0.12), location: 0.5),
-                                .init(color: Color(white: 0.08), location: 1)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                        .ignoresSafeArea()
+                        Color(nsColor: .windowBackgroundColor)
+                            .ignoresSafeArea()
                         
                         // Subtle grid pattern
                         GridPattern()
@@ -70,12 +62,7 @@ struct EditorLayoutView: View {
                                     }
                                     .aspectRatio(16/9, contentMode: .fit)
                                     .padding(40)
-                                    .background {
-                                        Color.black.opacity(0.4)
-                                            .blur(radius: 40)
-                                            .offset(y: 20)
-                                    }
-                                    .shadow(color: .black.opacity(0.6), radius: 30, x: 0, y: 15)
+                                    .shadow(color: .black.opacity(0.3), radius: 10, y: 5)
                                     .overlay {
                                         RoundedRectangle(cornerRadius: 12)
                                             .stroke(Color.white.opacity(0.1), lineWidth: 1)
@@ -134,13 +121,7 @@ struct EditorLayoutView: View {
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ToggleInspector"))) { _ in
             withAnimation { isInspectorCollapsed.toggle() }
         }
-        .background(
-            LinearGradient(
-                colors: [Color(white: 0.02), Color(white: 0.05)],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-        )
+        .background(Color(nsColor: .windowBackgroundColor))
         .liquidGlass(radius: 0) // Full screen edge lighting logic if needed, or 0 for seamless base
 
         // MARK: - Keyboard Shortcuts (J/K/L/Space)
@@ -297,17 +278,9 @@ struct EditorLayoutView: View {
     @ViewBuilder
     private var magicFixEmptyState: some View {
         VStack(spacing: 32) {
-            ZStack {
-                Circle()
-                    .fill(Theme.Colors.accentGradient.opacity(0.1))
-                    .frame(width: 120, height: 120)
-                    .blur(radius: 20)
-                
-                Image(systemName: "wand.and.stars")
-                    .font(.system(size: 64))
-                    .foregroundStyle(Theme.Colors.accentGradient)
-                    .shadow(color: Theme.Colors.accent.opacity(0.4), radius: 10)
-            }
+            Image(systemName: "wand.and.stars")
+                .font(.system(size: 64))
+                .foregroundStyle(.secondary)
 
             VStack(spacing: 12) {
                 Text("Let's Make Some Magic")
@@ -320,22 +293,14 @@ struct EditorLayoutView: View {
                     .frame(maxWidth: 300)
             }
 
-            Button {
-                appState.importVideo()
-            } label: {
-                HStack(spacing: 10) {
-                    Image(systemName: "plus.circle.fill")
-                    Text("Import Your First Video")
-                }
-                .font(.system(size: 15, weight: .semibold))
-                .padding(.horizontal, 28)
-                .padding(.vertical, 14)
-                .background(Theme.Colors.accentGradient)
-                .foregroundColor(.white)
-                .clipShape(Capsule())
-                .shadow(color: Theme.Colors.accent.opacity(0.3), radius: 8, y: 4)
+            Button(action: { appState.importVideo() }) {
+                Label("Import Your First Video", systemImage: "plus.circle.fill")
+                    .font(.headline)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.borderedProminent)
+            .controlSize(.large)
         }
     }
 }

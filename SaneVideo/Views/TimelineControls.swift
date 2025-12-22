@@ -32,7 +32,7 @@ struct TimelineControls: View {
                     .font(.system(size: 11))
                 Text(timecodeString(from: playbackState.currentTime))
                     .font(.system(size: 13, weight: .medium, design: .monospaced))
-                    .foregroundColor(.white)
+                    .foregroundColor(.primary)
             }
             .frame(width: 140, alignment: .leading)
             .padding(.leading, 16)
@@ -71,7 +71,7 @@ struct TimelineControls: View {
                 // Snap
                 Button(action: { snapEnabled.toggle() }, label: {
                     Image(systemName: "bolt.fill")
-                        .foregroundColor(snapEnabled ? .purple : .secondary)
+                        .foregroundColor(snapEnabled ? .accentColor : .secondary)
                         .font(.system(size: 13))
                         .opacity(snapEnabled ? 1.0 : 0.7)
                 })
@@ -82,7 +82,7 @@ struct TimelineControls: View {
                 // Magnetic
                 Button(action: { magneticTimeline.toggle() }, label: {
                     Image(systemName: magneticTimeline ? "arrow.left.to.line.compact" : "arrow.left.to.line")
-                        .foregroundColor(magneticTimeline ? .purple : .secondary)
+                        .foregroundColor(magneticTimeline ? .accentColor : .secondary)
                         .font(.system(size: 13))
                 })
                 .buttonStyle(.plain)
@@ -97,7 +97,7 @@ struct TimelineControls: View {
                     
                     Slider(value: $zoomLevel, in: 0.1 ... 5.0, step: 0.1)
                         .frame(width: 80)
-                        .tint(.purple)
+                        .tint(.accentColor)
                         .accessibilityIdentifier("timeline.zoom_slider")
                     
                     Image(systemName: "plus.magnifyingglass")
@@ -108,8 +108,8 @@ struct TimelineControls: View {
             .padding(.trailing, 16)
         }
         .frame(height: 38)
-        .background(Color(white: 0.08))
-        .overlay(Divider().opacity(0.1), alignment: .bottom)
+        .background(Color(nsColor: .controlBackgroundColor))
+        .overlay(Divider(), alignment: .bottom)
         .zIndex(100)
     }
 
@@ -143,8 +143,8 @@ struct ToolButton: View {
             Image(systemName: icon)
                 .font(.system(size: 13, weight: .medium))
                 .frame(width: 32, height: 32)
-                .background(isSelected ? Color.purple.opacity(0.2) : Color.clear)
-                .foregroundColor(isSelected ? .purple : .white)
+                .background(isSelected ? Color.accentColor.opacity(0.15) : Color.clear)
+                .foregroundColor(isSelected ? .accentColor : .primary)
                 .cornerRadius(6)
         }
         .buttonStyle(.plain)

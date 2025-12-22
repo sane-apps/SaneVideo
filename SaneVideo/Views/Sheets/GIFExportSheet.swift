@@ -293,13 +293,11 @@ private struct PresetButton: View {
         Button(action: action) {
             VStack(spacing: 2) {
                 Text(title)
-                    .font(.caption.weight(.semibold))
+                    .fontWeight(.semibold)
                 Text(subtitle)
-                    .font(.caption2)
                     .foregroundStyle(.secondary)
             }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 8)
+            .font(.caption2)
         }
         .buttonStyle(.bordered)
         .tint(isSelected ? .blue : .secondary)

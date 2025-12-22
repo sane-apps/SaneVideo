@@ -296,8 +296,11 @@ final class CameraManager: NSObject, CameraServiceProtocol {
             position: .unspecified
         )
         
-        // Log discovered cameras including Continuity Camera
-        for device in discoverySession.devices {
+        // Log discovered cameras sparingly
+        let devices = discoverySession.devices
+        AppLogger.camera.info("Found \(devices.count) camera devices")
+
+        for device in devices {
             let deviceTypeStr: String
             switch device.deviceType {
             case .continuityCamera:

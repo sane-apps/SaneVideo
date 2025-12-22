@@ -42,108 +42,19 @@ extension ProjectState {
         guard let currentClipId = Optional(clip.id), let updatedClip = getClip(by: currentClipId) else { return }
 
         do {
+            // 2. Analyis and Cuts
             processingStatus = "✂️ Analyzing for cuts (Silence & Fillers)..."
-            AppLogger.project.info("✨ Magic Fix: Calling MagicFixService.applyMagicFix for cuts...")
-            let keepRanges = try await MagicFixService.applyMagicFix(
-                to: updatedClip,
-                options: options,
-                progressHandler: { p, _ in 
-                    let subProgress = Double(p) / 100.0
-                    Task { @MainActor in
-                        self.processingProgress = 0.3 + (subProgress * 0.3) // 30% -> 60%
-                    }
-                    AppLogger.project.debug("✨ Magic Fix Progress: \(p)%")
-                }
-            )
-            AppLogger.project.info("✨ Magic Fix: Received \(keepRanges.count) keep ranges from service")
-            
-            // 3. Convert Keep Ranges -> Removed Ranges (Inversion)
-            let removedRanges = MagicFixService.calculateRemovedRanges(from: keepRanges, duration: updatedClip.duration)
-            let codableRemovals = removedRanges.map { CodableTimeRange($0) }
-            
-            // 4. Update Clip Removals (If changed)
-            if codableRemovals != updatedClip.removedRanges || options.smoothJumpCuts != updatedClip.useSmoothCutForRemovals {
-                await MainActor.run {
-                    self.registerUndo("Magic Fix (Cuts & Smoothing)")
-                    guard var project = self.currentProject else { return }
-                    
-                    if let index = project.timeline.tracks.firstIndex(where: { $0.clips.contains(where: { $0.id == updatedClip.id }) }),
-                       let clipIndex = project.timeline.tracks[index].clips.firstIndex(where: { $0.id == updatedClip.id }) {
-                        project.timeline.tracks[index].clips[clipIndex].removedRanges = codableRemovals
-                        project.timeline.tracks[index].clips[clipIndex].useSmoothCutForRemovals = options.smoothJumpCuts
-                        
-                        self.currentProject = project
-                        self.saveProject(project)
-                    }
-                    
-                    let cutCount = codableRemovals.count - updatedClip.removedRanges.count
-                    AppLogger.project.info("✨ Magic Fix: Applied \(codableRemovals.count) removals (\(cutCount) new cuts). Smooth: \(options.smoothJumpCuts)")
-                    if cutCount > 0 {
-                        ServiceContainer.shared.toastManager.show("✅ Magically fixed: Added \(cutCount) cuts")
-                    }
-                }
-            }
-            
+            try await processCutsAndSmoothing(for: updatedClip, options: options)
             processingProgress = 0.6
 
             // Refresh clip for subsequent steps
             guard let refreshedClip = getClip(by: updatedClip.id) else { return }
 
-            // 5. Smart Crop (Video Reframing)
-            if options.smartCrop {
-                processingStatus = "📐 Auto-reframing to 9:16..."
-                ServiceContainer.shared.toastManager.show("📐 Auto-reframing to 9:16...") 
-                await applySmartCrop(to: refreshedClip, targetAspectRatio: 9.0/16.0)
-            }
-            processingProgress = 0.7
+            // 3. Visual & Audio Enhancements
+            try await applyVisualAndAudioEnhancements(to: refreshedClip, options: options)
             
-            // 6. Auto Framing (Face Tracking)
-            if options.autoFraming {
-                processingStatus = "🎯 Tracking subjects..."
-                await applyAutoFraming(to: refreshedClip)
-            }
-            processingProgress = 0.75
-            
-            // 7. Mood-Based Color Grading
-            if options.analyzeMood {
-                processingStatus = "🎨 Grading colors..."
-                await applySmartColorGrade(to: refreshedClip)
-            }
-            processingProgress = 0.8
-            
-            // 8. Auto Enhance (Visuals)
-            if options.autoEnhance {
-                processingStatus = "🪄 Enhancing visuals..."
-                self.applyEffect(to: refreshedClip, effect: VideoEffect(type: .autoEnhance))
-                ServiceContainer.shared.toastManager.show("🪄 Visuals auto-enhanced")
-            }
-            processingProgress = 0.85
-            
-            // 9. Scan for Text (OCR)
-            if options.scanForText {
-                processingStatus = "🔍 Scanning for text..."
-                ServiceContainer.shared.toastManager.show("🔍 Scanning for text...") 
-                do {
-                    _ = try await ServiceContainer.shared.textRecognitionService.scanVideoForText(videoURL: refreshedClip.url)
-                } catch {
-                    AppLogger.vision.error("Magic Fix: OCR scan failed: \(error)")
-                }
-            }
-            processingProgress = 0.9
-            
-            // 11. Audio Enhancement (Studio Sound)
-            if options.enhanceAudio {
-                processingStatus = "🎙️ Enhancing audio..."
-                await enhanceAudio(for: refreshedClip)
-            }
-            processingProgress = 0.95
-            
-            // 13. Magic Remove / Cinematic Style (AI)
-            if options.magicRemovePeople || options.generativeStyle {
-                processingStatus = "🤖 Running AI Generative models..."
-                if options.magicRemovePeople { await applyMagicRemove(to: refreshedClip) }
-                if options.generativeStyle { await applyCinematicStyle(to: refreshedClip) }
-            }
+            // 4. AI & Generative Features
+            try await applyAIGenerativeFeatures(to: refreshedClip, options: options)
 
             processingProgress = 1.0
             processingStatus = "✅ Magic Fix Completed"
@@ -156,6 +67,104 @@ extension ProjectState {
         }
     }
     
+    // MARK: - Magic Fix Modular Helpers
+
+    private func processCutsAndSmoothing(for clip: VideoClip, options: MagicFixOptions) async throws {
+        AppLogger.project.info("✨ Magic Fix: Calling MagicFixService.applyMagicFix for cuts...")
+        let keepRanges = try await MagicFixService.applyMagicFix(
+            to: clip,
+            options: options,
+            progressHandler: { progressPercent, _ in 
+                let subProgress = Double(progressPercent) / 100.0
+                Task { @MainActor in
+                    self.processingProgress = 0.3 + (subProgress * 0.3) // 30% -> 60%
+                }
+                AppLogger.project.debug("✨ Magic Fix Progress: \(progressPercent)%")
+            }
+        )
+        AppLogger.project.info("✨ Magic Fix: Received \(keepRanges.count) keep ranges from service")
+        
+        let removedRanges = MagicFixService.calculateRemovedRanges(from: keepRanges, duration: clip.duration)
+        let codableRemovals = removedRanges.map { CodableTimeRange($0) }
+        
+        if codableRemovals != clip.removedRanges || options.smoothJumpCuts != clip.useSmoothCutForRemovals {
+            await MainActor.run {
+                self.registerUndo("Magic Fix (Cuts & Smoothing)")
+                guard var project = self.currentProject else { return }
+                
+                if let index = project.timeline.tracks.firstIndex(where: { $0.clips.contains(where: { $0.id == clip.id }) }),
+                   let clipIndex = project.timeline.tracks[index].clips.firstIndex(where: { $0.id == clip.id }) {
+                    project.timeline.tracks[index].clips[clipIndex].removedRanges = codableRemovals
+                    project.timeline.tracks[index].clips[clipIndex].useSmoothCutForRemovals = options.smoothJumpCuts
+                    
+                    self.currentProject = project
+                    self.saveProject(project)
+                }
+                
+                let cutCount = codableRemovals.count - clip.removedRanges.count
+                if cutCount > 0 {
+                    ServiceContainer.shared.toastManager.show("✅ Magically fixed: Added \(cutCount) cuts")
+                }
+            }
+        }
+    }
+
+    private func applyVisualAndAudioEnhancements(to clip: VideoClip, options: MagicFixOptions) async throws {
+        // Smart Crop
+        if options.smartCrop {
+            processingStatus = "📐 Auto-reframing to 9:16..."
+            await applySmartCrop(to: clip, targetAspectRatio: 9.0/16.0)
+            processingProgress = 0.7
+        }
+        
+        // Auto Framing
+        if options.autoFraming {
+            processingStatus = "🎯 Tracking subjects..."
+            await applyAutoFraming(to: clip)
+            processingProgress = 0.75
+        }
+        
+        // Color Grade
+        if options.analyzeMood {
+            processingStatus = "🎨 Grading colors..."
+            await applySmartColorGrade(to: clip)
+            processingProgress = 0.8
+        }
+        
+        // Auto Enhance
+        if options.autoEnhance {
+            processingStatus = "🪄 Enhancing visuals..."
+            self.applyEffect(to: clip, effect: VideoEffect(type: .autoEnhance))
+            processingProgress = 0.85
+        }
+
+        // Text Scan
+        if options.scanForText {
+            processingStatus = "🔍 Scanning for text..."
+            do {
+                _ = try await ServiceContainer.shared.textRecognitionService.scanVideoForText(videoURL: clip.url)
+            } catch {
+                AppLogger.vision.error("Magic Fix: OCR scan failed: \(error)")
+            }
+            processingProgress = 0.9
+        }
+
+        // Studio Sound
+        if options.enhanceAudio {
+            processingStatus = "🎙️ Enhancing audio..."
+            await enhanceAudio(for: clip)
+            processingProgress = 0.95
+        }
+    }
+
+    private func applyAIGenerativeFeatures(to clip: VideoClip, options: MagicFixOptions) async throws {
+        if options.magicRemovePeople || options.generativeStyle {
+            processingStatus = "🤖 Running AI Generative models..."
+            if options.magicRemovePeople { await applyMagicRemove(to: clip) }
+            if options.generativeStyle { await applyCinematicStyle(to: clip) }
+        }
+    }
+
     // Helper to update clip removals
     private func updateClipRemovals(clipId: UUID, removedRanges: [CodableTimeRange]) {
         guard var project = currentProject else { return }

@@ -42,13 +42,16 @@ struct PlayerControlBar: View {
                 .accessibilityIdentifier("player.step_backward")
 
                 // Play/Pause Button (main control)
-                Button(action: { playbackState.togglePlayPause() }) {
-                    Image(systemName: playbackState.isPlaying ? "pause.fill" : "play.fill")
-                        .font(.system(size: 20))
-                        .foregroundColor(.white)
-                        .frame(width: 36, height: 36)
-                        .background(Color.white.opacity(0.1), in: Circle())
-                }
+                Button(
+                    action: { playbackState.togglePlayPause() },
+                    label: {
+                        Image(systemName: playbackState.isPlaying ? "pause.fill" : "play.fill")
+                            .font(.system(size: 20))
+                            .foregroundColor(.white)
+                            .frame(width: 36, height: 36)
+                            .background(Color.white.opacity(0.1), in: Circle())
+                    }
+                )
                 .buttonStyle(.plain)
                 .keyboardShortcut(.space, modifiers: [])
                 .help(String(localized: "player.help.play_pause", defaultValue: "Play/Pause (Space) • J/K/L for shuttle control"))

@@ -35,44 +35,69 @@
     "%lld FPS" : {
 
     },
+    "%lld Mbps" : {
+
+    },
     "%lldpx" : {
 
     },
     "• %@" : {
 
     },
-    "1:1 (Instagram)" : {
-
+    "action.auto_generate" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Auto-Generate"
+          }
+        }
+      }
     },
-    "4K (2160p)" : {
-
+    "action.back" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Back"
+          }
+        }
+      }
     },
-    "4K UHD" : {
-
+    "action.cancel" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Cancel"
+          }
+        }
+      }
     },
-    "9:16 (TikTok/Reels)" : {
-
+    "action.close" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Close"
+          }
+        }
+      }
     },
-    "16:9 (YouTube)" : {
-
-    },
-    "21:9 (Cinematic)" : {
-
-    },
-    "90° CCW" : {
-
-    },
-    "90° CW" : {
-
-    },
-    "720p" : {
-
-    },
-    "1080p" : {
-
-    },
-    "1080p HD" : {
-
+    "action.delete_forever" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Delete Forever"
+          }
+        }
+      }
     },
     "action.generateCaptions" : {
       "extractionState" : "manual",
@@ -81,6 +106,127 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Generate Captions"
+          }
+        }
+      }
+    },
+    "action.get_started" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Get Started"
+          }
+        }
+      }
+    },
+    "action.grant_permissions" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Grant Permissions"
+          }
+        }
+      }
+    },
+    "action.hide" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Hide"
+          }
+        }
+      }
+    },
+    "action.hide_panel" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Hide Panel"
+          }
+        }
+      }
+    },
+    "action.more_options" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "More Options"
+          }
+        }
+      }
+    },
+    "action.next" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Next"
+          }
+        }
+      }
+    },
+    "action.ok" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "OK"
+          }
+        }
+      }
+    },
+    "action.preview" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Preview"
+          }
+        }
+      }
+    },
+    "action.preview.help" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Jump to first caption"
+          }
+        }
+      }
+    },
+    "action.redo" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Redo"
+          }
+        }
+      }
+    },
+    "action.redo.help" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Redo last action"
           }
         }
       }
@@ -107,29 +253,82 @@
         }
       }
     },
-    "Add Track" : {
-
+    "action.requesting" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Requesting..."
+          }
+        }
+      }
     },
-    "Add Transition" : {
-
+    "action.show_panel" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Show Panel"
+          }
+        }
+      }
     },
-    "AI ANALYSIS" : {
-
+    "action.start_recording" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Start Recording"
+          }
+        }
+      }
     },
-    "All API keys are stored securely in your Mac's Keychain. They never leave your device and are encrypted at rest." : {
-
+    "action.stop_recording" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Stop Recording"
+          }
+        }
+      }
     },
-    "Alternative AI provider for title/description generation. Get your key from [Google AI Studio](https://aistudio.google.com/app/apikey)." : {
-
+    "action.undo" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Undo"
+          }
+        }
+      }
     },
-    "Analyzing video for best frames..." : {
-
+    "action.undo.help" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Undo last action"
+          }
+        }
+      }
     },
-    "Analyzing..." : {
-
-    },
-    "API Key" : {
-
+    "action.youtube" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "YouTube"
+          }
+        }
+      }
     },
     "app.name" : {
       "extractionState" : "manual",
@@ -142,62 +341,544 @@
         }
       }
     },
-    "Appearance" : {
-
+    "aspect_ratio.1_1" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "1:1"
+          }
+        }
+      }
     },
-    "Application Logs" : {
-
+    "aspect_ratio.9_16" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "9:16"
+          }
+        }
+      }
     },
-    "Apply %@" : {
-
+    "aspect_ratio.16_9" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "16:9"
+          }
+        }
+      }
     },
-    "Apply Smart Crop" : {
-
+    "aspect_ratio.21_9" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "21:9"
+          }
+        }
+      }
     },
-    "Apply Super Magic Fix" : {
-
+    "aspect_ratio.platform.cinema" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Cinematic"
+          }
+        }
+      }
     },
-    "Are you sure you want to delete this project?" : {
-
+    "aspect_ratio.platform.horizontal" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "YouTube"
+          }
+        }
+      }
     },
-    "Audio" : {
-
+    "aspect_ratio.platform.square" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Instagram"
+          }
+        }
+      }
     },
-    "AUDIO" : {
-
+    "aspect_ratio.platform.vertical" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "TikTok/Reels"
+          }
+        }
+      }
     },
-    "Audio Track" : {
-
+    "audio.action.analyze_audio.subtitle" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Detect speech, music, silence"
+          }
+        }
+      }
     },
-    "Auto-Generate" : {
-
+    "audio.action.analyze_audio.title" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Analyze Audio"
+          }
+        }
+      }
     },
-    "Auto-Grade (AI)" : {
-
+    "audio.action.find_highlights.subtitle" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Detect applause & laughter"
+          }
+        }
+      }
     },
-    "Back" : {
-
+    "audio.action.find_highlights.title" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Find Highlights"
+          }
+        }
+      }
     },
-    "Background" : {
-
+    "audio.ai_gating.subtitle" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Automatically mute non-speech segments"
+          }
+        }
+      }
     },
-    "Background Color" : {
-
+    "audio.ai_gating.title" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "AI Gating"
+          }
+        }
+      }
     },
-    "Batch Export Only" : {
-
+    "audio.ai_tools.header" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "AI Audio"
+          }
+        }
+      }
     },
-    "Bitrate: %lld Mbps" : {
-
+    "audio.analysis.failed" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "❌ Audio analysis failed"
+          }
+        }
+      }
     },
-    "Blur Intensity" : {
-
+    "audio.analysis.found_highlights" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "🎉 Found highlights"
+          }
+        }
+      }
     },
-    "Blur Sensitive Text" : {
-
+    "audio.analysis.no_highlights" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "No highlights (applause/laughter) detected"
+          }
+        }
+      }
     },
-    "Cache Cleared" : {
-
+    "audio.analysis.summary" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "🎵 Audio summary"
+          }
+        }
+      }
+    },
+    "audio.smart_tools.header" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Smart Tools"
+          }
+        }
+      }
+    },
+    "audio.voice_isolation.subtitle" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Remove background noise with Apple ML"
+          }
+        }
+      }
+    },
+    "audio.voice_isolation.title" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Voice Isolation"
+          }
+        }
+      }
+    },
+    "audio.volume.header" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Volume"
+          }
+        }
+      }
+    },
+    "background.blur.heavy" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Heavy"
+          }
+        }
+      }
+    },
+    "background.blur.intensity" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Blur Intensity"
+          }
+        }
+      }
+    },
+    "background.blur.light" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Light"
+          }
+        }
+      }
+    },
+    "background.blur.medium" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Medium"
+          }
+        }
+      }
+    },
+    "background.color.label" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Background Color"
+          }
+        }
+      }
+    },
+    "background.effect.blur" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Blur"
+          }
+        }
+      }
+    },
+    "background.effect.color" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Color"
+          }
+        }
+      }
+    },
+    "background.effect.image" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Image"
+          }
+        }
+      }
+    },
+    "background.header" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Background"
+          }
+        }
+      }
+    },
+    "background.image.choose" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Choose Image"
+          }
+        }
+      }
+    },
+    "background.image.virtual" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Virtual Background"
+          }
+        }
+      }
+    },
+    "browser.action.cancel" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Cancel"
+          }
+        }
+      }
+    },
+    "browser.action.delete" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Delete"
+          }
+        }
+      }
+    },
+    "browser.action.new" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "New Project"
+          }
+        }
+      }
+    },
+    "browser.action.open" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Open"
+          }
+        }
+      }
+    },
+    "browser.action.rename" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Rename"
+          }
+        }
+      }
+    },
+    "browser.action.rename_menu" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Rename..."
+          }
+        }
+      }
+    },
+    "browser.delete.message" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "This action cannot be undone."
+          }
+        }
+      }
+    },
+    "browser.delete.title" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Are you sure you want to delete this project?"
+          }
+        }
+      }
+    },
+    "browser.header" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Projects"
+          }
+        }
+      }
+    },
+    "browser.project.clips" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "clips"
+          }
+        }
+      }
+    },
+    "browser.project.edited" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Edited"
+          }
+        }
+      }
+    },
+    "browser.rename.message" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Enter a new name for project"
+          }
+        }
+      }
+    },
+    "browser.rename.placeholder" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Project Name"
+          }
+        }
+      }
+    },
+    "browser.rename.title" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Rename Project"
+          }
+        }
+      }
+    },
+    "browser.templates.header" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Choose a Template"
+          }
+        }
+      }
     },
     "Camera" : {
 
@@ -244,130 +925,866 @@
         }
       }
     },
-    "Cancel" : {
-
-    },
-    "Caption" : {
-
+    "caption.placeholder" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Caption"
+          }
+        }
+      }
     },
     "Captions Area" : {
 
     },
-    "Center Face" : {
-
+    "captions.action.analyze_mood" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Analyze Mood"
+          }
+        }
+      }
     },
-    "Choose a Template" : {
-
+    "captions.action.analyze_mood.subtitle" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Get color grading suggestions"
+          }
+        }
+      }
     },
-    "Choose Image" : {
-
+    "captions.action.refine" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Refine Captions"
+          }
+        }
+      }
     },
-    "Clear" : {
-
+    "captions.action.refine.subtitle" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Fix grammar & tone with AI"
+          }
+        }
+      }
     },
-    "Clear All" : {
-
+    "captions.action.scan_text" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Scan for Text"
+          }
+        }
+      }
     },
-    "Clear All API Keys" : {
-
+    "captions.action.scan_text.subtitle" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Find text in video (OCR)"
+          }
+        }
+      }
     },
-    "Clear All API Keys?" : {
-
+    "captions.count" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%lld captions"
+          }
+        }
+      }
     },
-    "Clear Cache" : {
-
+    "captions.cursor.desc" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Enhance cursor visibility for screen recordings"
+          }
+        }
+      }
     },
-    "Clear cached previews and temporary recordings to free up space." : {
-
+    "captions.cursor.toggle" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Show Highlight"
+          }
+        }
+      }
     },
-    "Click to rename project" : {
-
+    "captions.empty_hint" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Use Magic Fix to generate captions"
+          }
+        }
+      }
     },
-    "Client ID" : {
-
+    "clip.menu.audio" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Audio"
+          }
+        }
+      }
     },
-    "Client Secret" : {
-
+    "clip.menu.center_face" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Center Face"
+          }
+        }
+      }
     },
-    "Close" : {
-
+    "clip.menu.delete" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Delete"
+          }
+        }
+      }
     },
-    "Codec" : {
-
+    "clip.menu.delete_disk" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Delete from Disk..."
+          }
+        }
+      }
     },
-    "Configured" : {
-
+    "clip.menu.find_gestures" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Find Gestures"
+          }
+        }
+      }
     },
-    "Copy All" : {
-
+    "clip.menu.find_highlights" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Find Highlights"
+          }
+        }
+      }
     },
-    "Copy to Clipboard" : {
-
+    "clip.menu.finder" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Show in Finder"
+          }
+        }
+      }
     },
-    "Create an eye-catching thumbnail" : {
-
+    "clip.menu.generate_captions" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Generate Captions"
+          }
+        }
+      }
     },
-    "Create animated GIF from video" : {
-
+    "clip.menu.privacy_blur" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Blur Sensitive Text"
+          }
+        }
+      }
+    },
+    "clip.menu.remove_fillers" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Remove Filler Words"
+          }
+        }
+      }
+    },
+    "clip.menu.remove_silence" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Remove Silence (Sane Cut)"
+          }
+        }
+      }
+    },
+    "clip.menu.smart_crop" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Smart Crop"
+          }
+        }
+      }
+    },
+    "clip.menu.smart_crop.1_1" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "1:1 (Instagram)"
+          }
+        }
+      }
+    },
+    "clip.menu.smart_crop.9_16" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "9:16 (TikTok/Reels)"
+          }
+        }
+      }
+    },
+    "clip.menu.smart_crop.16_9" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "16:9 (YouTube)"
+          }
+        }
+      }
+    },
+    "clip.menu.smart_crop.21_9" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "21:9 (Cinematic)"
+          }
+        }
+      }
+    },
+    "clip.menu.split" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Split Clip"
+          }
+        }
+      }
+    },
+    "clip.menu.transition.active" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Transition"
+          }
+        }
+      }
+    },
+    "clip.menu.transition.add" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Add Transition"
+          }
+        }
+      }
+    },
+    "clip.menu.vision" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Vision"
+          }
+        }
+      }
+    },
+    "common.cancel" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Cancel"
+          }
+        }
+      }
     },
     "Current:" : {
 
     },
-    "Custom Frame" : {
-
-    },
-    "Debug" : {
-
-    },
-    "Default Export Configuration" : {
-
-    },
-    "Delete" : {
-
-    },
-    "Delete '%@'" : {
-
-    },
-    "Delete Clip" : {
-
-    },
-    "Delete File from Disk?" : {
-
-    },
-    "Delete File?" : {
-
-    },
-    "Delete Forever" : {
-
-    },
-    "Delete from Disk" : {
-
-    },
-    "Delete from Disk..." : {
-
-    },
-    "Description" : {
-
-    },
-    "Do you want to remove '%@' from the project, or permanently delete the file from your disk?" : {
-
-    },
-    "Done" : {
-
-    },
-    "Drag & Drop Video Here" : {
-
-    },
-    "Duration" : {
+    "Drop video clips here or press ⌘I to import" : {
 
     },
     "Duration: %@" : {
 
     },
-    "Edit" : {
-
+    "editor.no_project" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "No Project Loaded"
+          }
+        }
+      }
     },
-    "Edited %@" : {
+    "effect.category.adjustments" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Adjust"
+          }
+        }
+      }
+    },
+    "effect.category.blur" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Blur"
+          }
+        }
+      }
+    },
+    "effect.category.looks" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Looks"
+          }
+        }
+      }
+    },
+    "effect.category.magic" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "✨ Auto"
+          }
+        }
+      }
+    },
+    "effect.category.stylize" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Stylize"
+          }
+        }
+      }
+    },
+    "effect.type.background" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Background"
+          }
+        }
+      }
+    },
+    "effect.type.bloom" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Bloom"
+          }
+        }
+      }
+    },
+    "effect.type.bokeh" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Bokeh"
+          }
+        }
+      }
+    },
+    "effect.type.brightness" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Bright"
+          }
+        }
+      }
+    },
+    "effect.type.chrome" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Chrome"
+          }
+        }
+      }
+    },
+    "effect.type.color_fix" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Color Fix"
+          }
+        }
+      }
+    },
+    "effect.type.comic" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Comic"
+          }
+        }
+      }
+    },
+    "effect.type.contrast" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Contrast"
+          }
+        }
+      }
+    },
+    "effect.type.crystallize" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Crystallize"
+          }
+        }
+      }
+    },
+    "effect.type.edges" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Edges"
+          }
+        }
+      }
+    },
+    "effect.type.enhance" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Enhance"
+          }
+        }
+      }
+    },
+    "effect.type.exposure" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Exposure"
+          }
+        }
+      }
+    },
+    "effect.type.fade" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Fade"
+          }
+        }
+      }
+    },
+    "effect.type.false_color" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "False Color"
+          }
+        }
+      }
+    },
+    "effect.type.gaussian" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Gaussian"
+          }
+        }
+      }
+    },
+    "effect.type.highlights" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Highlights"
+          }
+        }
+      }
+    },
+    "effect.type.instant" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Instant"
+          }
+        }
+      }
+    },
+    "effect.type.invert" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Invert"
+          }
+        }
+      }
+    },
+    "effect.type.lut" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Cinema Style"
+          }
+        }
+      }
+    },
+    "effect.type.mono" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Mono"
+          }
+        }
+      }
+    },
+    "effect.type.mosaic" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Mosaic"
+          }
+        }
+      }
+    },
+    "effect.type.motion" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Motion"
+          }
+        }
+      }
+    },
+    "effect.type.noir" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Noir"
+          }
+        }
+      }
+    },
+    "effect.type.pixellate" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Pixellate"
+          }
+        }
+      }
+    },
+    "effect.type.pointillize" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Pointillize"
+          }
+        }
+      }
+    },
+    "effect.type.posterize" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Posterize"
+          }
+        }
+      }
+    },
+    "effect.type.saturation" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Saturate"
+          }
+        }
+      }
+    },
+    "effect.type.sepia" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Sepia"
+          }
+        }
+      }
+    },
+    "effect.type.sharpen" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Sharpen"
+          }
+        }
+      }
+    },
+    "effect.type.thermal" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Heat Map"
+          }
+        }
+      }
+    },
+    "effect.type.tonal" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Tonal"
+          }
+        }
+      }
+    },
+    "effect.type.vibrance" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Vibrance"
+          }
+        }
+      }
+    },
+    "effect.type.vignette" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Vignette"
+          }
+        }
+      }
+    },
+    "effect.type.warmth" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Warmth"
+          }
+        }
+      }
+    },
+    "effect.type.zoom" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Zoom"
+          }
+        }
+      }
+    },
+    "effects.action.auto_grade" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Auto-Grade (AI)"
+          }
+        }
+      }
+    },
+    "effects.active.status.on" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "On"
+          }
+        }
+      }
+    },
+    "effects.tile.apply" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Apply"
+          }
+        }
+      }
+    },
+    "effects.tile.remove" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Remove"
+          }
+        }
+      }
+    },
+    "Empty Timeline. Drop video clips here to start." : {
 
     },
     "Enables the camera for recording" : {
@@ -376,77 +1793,93 @@
     "End: %@" : {
 
     },
-    "Enhance cursor visibility for screen recordings" : {
-
+    "error.title" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Error"
+          }
+        }
+      }
     },
-    "Enter a new name for '%@'" : {
-
+    "export.action.batch_export" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Batch Export Only"
+          }
+        }
+      }
     },
-    "Enter a new name for this project." : {
-
+    "export.action.export_file" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Export File"
+          }
+        }
+      }
     },
-    "Enter API Key" : {
-
+    "export.action.export_upload" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Export & Upload"
+          }
+        }
+      }
     },
-    "Enter Client ID" : {
-
+    "export.codec.h264" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "H.264 (Compat)"
+          }
+        }
+      }
     },
-    "Enter Client Secret" : {
-
+    "export.codec.hevc" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "HEVC (Small)"
+          }
+        }
+      }
     },
-    "Enter title text..." : {
-
+    "export.codec.prores" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "ProRes (Edit)"
+          }
+        }
+      }
     },
-    "Error" : {
-
-    },
-    "Est. Size" : {
-
-    },
-    "Estimated Size" : {
-
-    },
-    "Export" : {
-
-    },
-    "Export & Upload" : {
-
-    },
-    "Export %@" : {
-
-    },
-    "Export as GIF" : {
-
-    },
-    "Export as GIF..." : {
-
-    },
-    "Export Error" : {
-
-    },
-    "Export File" : {
-
-    },
-    "Export GIF" : {
-
-    },
-    "Export Study Guide (PDF)" : {
-
-    },
-    "Export Thumbnail" : {
-
-    },
-    "Export to File" : {
-
-    },
-    "Export Transcript" : {
-
-    },
-    "Export Transcript (PDF)..." : {
-
-    },
-    "Export Video..." : {
-
+    "export.error.title" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Export Error"
+          }
+        }
+      }
     },
     "export.failed" : {
       "extractionState" : "manual",
@@ -459,6 +1892,72 @@
         }
       }
     },
+    "export.format.label" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Format"
+          }
+        }
+      }
+    },
+    "export.option.gif" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Export as GIF"
+          }
+        }
+      }
+    },
+    "export.option.study_guide" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Export Study Guide (PDF)"
+          }
+        }
+      }
+    },
+    "export.option.thumbnail" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Export Thumbnail"
+          }
+        }
+      }
+    },
+    "export.option.voiceover" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Generate Voiceover"
+          }
+        }
+      }
+    },
+    "export.preset.label" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Preset"
+          }
+        }
+      }
+    },
     "export.progress" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -466,6 +1965,61 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Exporting..."
+          }
+        }
+      }
+    },
+    "export.quality.label" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Quality"
+          }
+        }
+      }
+    },
+    "export.res.hd" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "1080p"
+          }
+        }
+      }
+    },
+    "export.res.sd" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "720p"
+          }
+        }
+      }
+    },
+    "export.res.uhd" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "4K (2160p)"
+          }
+        }
+      }
+    },
+    "export.size.label" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Est. Size"
           }
         }
       }
@@ -492,131 +2046,620 @@
         }
       }
     },
+    "export.youtube.description" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Description"
+          }
+        }
+      }
+    },
+    "export.youtube.header" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "YouTube Details"
+          }
+        }
+      }
+    },
+    "export.youtube.title" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Title"
+          }
+        }
+      }
+    },
+    "export.youtube.uploading" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Uploading..."
+          }
+        }
+      }
+    },
     "Exporting..." : {
-
-    },
-    "Faster" : {
-
-    },
-    "Find Gestures" : {
-
-    },
-    "Find Highlights" : {
-
-    },
-    "Fine Tune" : {
 
     },
     "Finishing up..." : {
 
     },
-    "Format" : {
-
-    },
-    "Frame Rate" : {
-
-    },
-    "Full video" : {
-
-    },
-    "General" : {
-
-    },
-    "Generate AI Thumbnail" : {
-
-    },
-    "Generate Captions" : {
-
-    },
     "Generate title & description from transcript" : {
 
     },
-    "Generate Voiceover" : {
-
+    "gif.action.cancel" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Cancel"
+          }
+        }
+      }
     },
-    "Generating..." : {
-
+    "gif.action.export" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Export GIF"
+          }
+        }
+      }
     },
-    "Get Started" : {
-
+    "gif.action.exporting" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Exporting..."
+          }
+        }
+      }
     },
-    "Google Gemini" : {
-
+    "gif.duration.full_video" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Full video"
+          }
+        }
+      }
     },
-    "Grant Permissions" : {
-
+    "gif.duration.header" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Duration"
+          }
+        }
+      }
     },
-    "H.264" : {
-
+    "gif.error.ffmpeg_missing" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "FFmpeg not installed. Run: brew install ffmpeg"
+          }
+        }
+      }
     },
-    "H.264 (Compat)" : {
-
+    "gif.fps.footer.high" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Higher = smoother"
+          }
+        }
+      }
+    },
+    "gif.fps.footer.low" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Lower = smaller file"
+          }
+        }
+      }
+    },
+    "gif.fps.header" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Frame Rate"
+          }
+        }
+      }
+    },
+    "gif.header.subtitle" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Create animated GIF from video"
+          }
+        }
+      }
+    },
+    "gif.header.title" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Export as GIF"
+          }
+        }
+      }
+    },
+    "gif.preset.high.subtitle" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Smooth"
+          }
+        }
+      }
+    },
+    "gif.preset.high.title" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "High"
+          }
+        }
+      }
+    },
+    "gif.preset.social.subtitle" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Small, fast"
+          }
+        }
+      }
+    },
+    "gif.preset.social.title" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Social"
+          }
+        }
+      }
+    },
+    "gif.preset.standard.subtitle" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Balanced"
+          }
+        }
+      }
+    },
+    "gif.preset.standard.title" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Standard"
+          }
+        }
+      }
+    },
+    "gif.presets.header" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Quality Presets"
+          }
+        }
+      }
+    },
+    "gif.size.estimate" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Estimated Size"
+          }
+        }
+      }
+    },
+    "gif.toast.exported" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "✅ GIF exported!"
+          }
+        }
+      }
+    },
+    "gif.width.header" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Width"
+          }
+        }
+      }
+    },
+    "global.action.cancel" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Cancel"
+          }
+        }
+      }
+    },
+    "global.action.rename" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Rename"
+          }
+        }
+      }
+    },
+    "global.rename.message" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Enter a new name for this project."
+          }
+        }
+      }
+    },
+    "global.rename.placeholder" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Project Name"
+          }
+        }
+      }
+    },
+    "global.rename.title" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Rename Project"
+          }
+        }
+      }
     },
     "Hello" : {
-
-    },
-    "HEVC (H.265)" : {
-
-    },
-    "HEVC (Small)" : {
-
-    },
-    "Hide" : {
-
-    },
-    "Hide Panel" : {
-
-    },
-    "Higher" : {
-
-    },
-    "Higher = smoother" : {
-
-    },
-    "Import" : {
 
     },
     "Import Audio File" : {
 
     },
-    "Import Video" : {
-
+    "import.drop_zone.subtitle" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "or click to browse"
+          }
+        }
+      }
     },
-    "Import video or record to get started" : {
-
+    "import.drop_zone.title" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Drag & Drop Video Here"
+          }
+        }
+      }
     },
-    "Import Video..." : {
-
-    },
-    "Include timestamps" : {
-
+    "import.title" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Import Video"
+          }
+        }
+      }
     },
     "Initializing Screen Share..." : {
 
     },
-    "Inspector" : {
+    "inspector.empty_selection" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "No selection"
+          }
+        }
+      }
+    },
+    "inspector.header.title" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Inspector"
+          }
+        }
+      }
+    },
+    "Keyboard Shortcuts" : {
 
     },
-    "Jump to first caption" : {
-
+    "logs.action.clear" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Clear"
+          }
+        }
+      }
     },
-    "Lock Track" : {
-
+    "logs.action.copy_all" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Copy All"
+          }
+        }
+      }
     },
-    "Logs:" : {
-
+    "logs.action.done" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Done"
+          }
+        }
+      }
     },
-    "Lower" : {
-
+    "logs.action.export" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Export to File"
+          }
+        }
+      }
     },
-    "Lower = smaller file" : {
-
+    "logs.error.export_failed" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Log export failed"
+          }
+        }
+      }
     },
-    "Magnetic Timeline (M)" : {
-
+    "logs.header.title" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Application Logs"
+          }
+        }
+      }
     },
-    "Media" : {
-
+    "menu.file.export_gif" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Export as GIF..."
+          }
+        }
+      }
+    },
+    "menu.file.export_transcript" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Export Transcript (PDF)..."
+          }
+        }
+      }
+    },
+    "menu.file.export_video" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Export Video..."
+          }
+        }
+      }
+    },
+    "menu.file.generate_thumbnail" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Generate AI Thumbnail"
+          }
+        }
+      }
+    },
+    "menu.file.generate_voiceover" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Generate Voiceover"
+          }
+        }
+      }
+    },
+    "menu.file.import_video" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Import Video..."
+          }
+        }
+      }
+    },
+    "menu.file.new_recording" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "New Recording"
+          }
+        }
+      }
+    },
+    "menu.file.open_project" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Open Project..."
+          }
+        }
+      }
+    },
+    "menu.file.rename_project" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Rename Project..."
+          }
+        }
+      }
+    },
+    "menu.file.save_project" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Save Project"
+          }
+        }
+      }
+    },
+    "menu.file.share" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Share..."
+          }
+        }
+      }
+    },
+    "menu.help.sane_video_help" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "SaneVideo Help"
+          }
+        }
+      }
+    },
+    "menu.help.shortcuts" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Keyboard Shortcuts"
+          }
+        }
+      }
     },
     "mic.mute" : {
       "extractionState" : "manual",
@@ -643,133 +2686,234 @@
     "Microphone" : {
 
     },
-    "Minimal Fix" : {
-
+    "mode.action.export" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Export"
+          }
+        }
+      }
     },
-    "More Options" : {
-
+    "mode.action.import" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Import"
+          }
+        }
+      }
+    },
+    "mode.edit" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Edit"
+          }
+        }
+      }
+    },
+    "mode.help.editing" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Switch to editing mode"
+          }
+        }
+      }
+    },
+    "mode.help.export" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Export Video"
+          }
+        }
+      }
+    },
+    "mode.help.import" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Import Video"
+          }
+        }
+      }
+    },
+    "mode.help.recording" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Switch to recording mode"
+          }
+        }
+      }
+    },
+    "mode.help.rename_project" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Click to rename project"
+          }
+        }
+      }
+    },
+    "mode.record" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Record"
+          }
+        }
+      }
     },
     "Mute Microphone" : {
-
-    },
-    "Mute Track" : {
-
-    },
-    "New Project" : {
-
-    },
-    "New Recording" : {
-
-    },
-    "Next" : {
-
-    },
-    "Next frame (→)" : {
 
     },
     "No cameras found" : {
 
     },
-    "No clips yet" : {
-
-    },
     "No microphones found" : {
-
-    },
-    "No Project Loaded" : {
-
-    },
-    "No selection" : {
-
-    },
-    "Not Set" : {
-
-    },
-    "OK" : {
-
-    },
-    "On" : {
-
-    },
-    "One-click AI cleanup for your entire clip." : {
-
-    },
-    "Open" : {
-
-    },
-    "Open Project..." : {
-
-    },
-    "OpenAI" : {
-
-    },
-    "Options" : {
-
-    },
-    "or click to browse" : {
-
-    },
-    "Overlay Track" : {
-
-    },
-    "Pause" : {
 
     },
     "Pause recording" : {
 
     },
-    "Pitch" : {
-
+    "pip.help.mic.mute" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Mute Microphone"
+          }
+        }
+      }
     },
-    "Play Sample" : {
-
+    "pip.help.mic.unmute" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Unmute Microphone"
+          }
+        }
+      }
     },
-    "Play/Pause (Space) • J/K/L for shuttle control" : {
-
+    "pip.help.pause" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Pause"
+          }
+        }
+      }
     },
-    "Preset" : {
-
+    "pip.help.recording.start" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Start Recording"
+          }
+        }
+      }
     },
-    "Presets" : {
-
+    "pip.help.recording.stop" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Stop Recording"
+          }
+        }
+      }
     },
-    "PRESETS" : {
-
+    "pip.help.resume" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Resume"
+          }
+        }
+      }
+    },
+    "pip.help.return" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Stop Sharing & Return to App"
+          }
+        }
+      }
+    },
+    "player.help.play_pause" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Play/Pause (Space) • J/K/L for shuttle control"
+          }
+        }
+      }
+    },
+    "player.help.step_backward" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Previous frame (←)"
+          }
+        }
+      }
+    },
+    "player.help.step_forward" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Next frame (→)"
+          }
+        }
+      }
     },
     "Preview" : {
-
-    },
-    "Previous frame (←)" : {
-
-    },
-    "Pro Clean-up" : {
-
-    },
-    "Project Clips" : {
-
-    },
-    "Project Name" : {
-
-    },
-    "Projects" : {
-
-    },
-    "ProRes (Edit)" : {
-
-    },
-    "Quality" : {
-
-    },
-    "Quality Presets" : {
 
     },
     "REC" : {
 
     },
     "Recent" : {
-
-    },
-    "Record" : {
 
     },
     "Record your screen" : {
@@ -819,97 +2963,21 @@
         }
       }
     },
-    "Redo" : {
-
-    },
-    "Remove %@" : {
-
-    },
-    "Remove Filler Words" : {
-
-    },
-    "Remove Fillers" : {
-
-    },
-    "Remove from Project" : {
-
-    },
-    "Remove from Project only" : {
-
-    },
-    "Remove Silence" : {
-
-    },
-    "Remove Silence (Sane Cut)" : {
-
-    },
-    "Rename" : {
-
-    },
-    "Rename Project" : {
-
-    },
-    "Rename Project..." : {
-
-    },
-    "Rename..." : {
-
-    },
-    "Requesting..." : {
-
-    },
-    "Required for uploading videos directly to YouTube. Get credentials from [Google Cloud Console](https://console.cloud.google.com/apis/credentials)." : {
-
+    "recording.tooltip" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Press to start recording. Use ⌘R for quick access!"
+          }
+        }
+      }
     },
     "Requires captions - generate them first" : {
 
     },
-    "Reset" : {
-
-    },
-    "Reset to Original" : {
-
-    },
-    "Resolution" : {
-
-    },
-    "Resume" : {
-
-    },
     "Resume recording" : {
-
-    },
-    "Rotate 90°" : {
-
-    },
-    "Run automated stress tests to identify performance bottlenecks and breaking points." : {
-
-    },
-    "Run Stress Tests" : {
-
-    },
-    "Running..." : {
-
-    },
-    "Save as JPEG..." : {
-
-    },
-    "Save as PNG..." : {
-
-    },
-    "Save Gemini Key" : {
-
-    },
-    "Save OpenAI Key" : {
-
-    },
-    "Save Project" : {
-
-    },
-    "Save YouTube Credentials" : {
-
-    },
-    "Saved successfully" : {
 
     },
     "screen.switch" : {
@@ -923,32 +2991,698 @@
         }
       }
     },
-    "Security" : {
-
+    "settings.action.cancel" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Cancel"
+          }
+        }
+      }
     },
-    "Select Frame" : {
-
+    "settings.action.clear_all" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Clear All API Keys"
+          }
+        }
+      }
     },
-    "Select Tool (A)" : {
-
+    "settings.action.clear_all_confirm" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Clear All"
+          }
+        }
+      }
     },
-    "Sensitivity" : {
-
+    "settings.action.clear_cache" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Clear Cache"
+          }
+        }
+      }
     },
-    "Settings" : {
-
+    "settings.action.ok" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "OK"
+          }
+        }
+      }
     },
-    "Share..." : {
-
+    "settings.appearance.header" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Appearance"
+          }
+        }
+      }
     },
-    "Show Highlight" : {
-
+    "settings.appearance.theme" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Theme"
+          }
+        }
+      }
     },
-    "Show in Finder" : {
-
+    "settings.cache_cleared.title" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Cache Cleared"
+          }
+        }
+      }
     },
-    "Show Panel" : {
-
+    "settings.clear_all.message" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "This will remove all stored API credentials. You'll need to re-enter them to use YouTube upload and AI features."
+          }
+        }
+      }
+    },
+    "settings.clear_all.title" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Clear All API Keys?"
+          }
+        }
+      }
+    },
+    "settings.debug.description" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Run automated stress tests to identify performance bottlenecks and breaking points."
+          }
+        }
+      }
+    },
+    "settings.debug.header" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Stress Testing & Limits"
+          }
+        }
+      }
+    },
+    "settings.debug.logs" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Logs:"
+          }
+        }
+      }
+    },
+    "settings.debug.run_tests" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Run Stress Tests"
+          }
+        }
+      }
+    },
+    "settings.debug.running" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Running..."
+          }
+        }
+      }
+    },
+    "settings.error.message" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Error"
+          }
+        }
+      }
+    },
+    "settings.error.title" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Error"
+          }
+        }
+      }
+    },
+    "settings.export.codec" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Codec"
+          }
+        }
+      }
+    },
+    "settings.export.codec.h264" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "H.264"
+          }
+        }
+      }
+    },
+    "settings.export.codec.hevc" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "HEVC (H.265)"
+          }
+        }
+      }
+    },
+    "settings.export.description" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "These settings will be used as the default for new exports."
+          }
+        }
+      }
+    },
+    "settings.export.header" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Default Export Configuration"
+          }
+        }
+      }
+    },
+    "settings.export.resolution" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Resolution"
+          }
+        }
+      }
+    },
+    "settings.export.resolution.4k" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "4K UHD"
+          }
+        }
+      }
+    },
+    "settings.export.resolution.1080p" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "1080p HD"
+          }
+        }
+      }
+    },
+    "settings.gemini.action.clear" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Clear"
+          }
+        }
+      }
+    },
+    "settings.gemini.action.save" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Save Gemini Key"
+          }
+        }
+      }
+    },
+    "settings.gemini.description" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Alternative AI provider for title/description generation. Get your key from [Google AI Studio](https://aistudio.google.com/app/apikey)."
+          }
+        }
+      }
+    },
+    "settings.gemini.header" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Google Gemini"
+          }
+        }
+      }
+    },
+    "settings.gemini.key_label" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "API Key"
+          }
+        }
+      }
+    },
+    "settings.gemini.key_placeholder" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Enter API Key"
+          }
+        }
+      }
+    },
+    "settings.openai.action.clear" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Clear"
+          }
+        }
+      }
+    },
+    "settings.openai.action.save" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Save OpenAI Key"
+          }
+        }
+      }
+    },
+    "settings.openai.description" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Used for AI-powered video title and description suggestions. Get your key from [OpenAI Platform](https://platform.openai.com/api-keys)."
+          }
+        }
+      }
+    },
+    "settings.openai.header" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "OpenAI"
+          }
+        }
+      }
+    },
+    "settings.openai.key_label" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "API Key"
+          }
+        }
+      }
+    },
+    "settings.save_success" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Saved successfully"
+          }
+        }
+      }
+    },
+    "settings.security.description" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "All API keys are stored securely in your Mac's Keychain. They never leave your device and are encrypted at rest."
+          }
+        }
+      }
+    },
+    "settings.security.header" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Security"
+          }
+        }
+      }
+    },
+    "settings.status.configured" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Configured"
+          }
+        }
+      }
+    },
+    "settings.status.not_set" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Not Set"
+          }
+        }
+      }
+    },
+    "settings.storage.description" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Clear cached previews and temporary recordings to free up space."
+          }
+        }
+      }
+    },
+    "settings.storage.header" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Storage & Performance"
+          }
+        }
+      }
+    },
+    "settings.storage.temp_files" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Temporary Files"
+          }
+        }
+      }
+    },
+    "settings.tab.debug" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Debug"
+          }
+        }
+      }
+    },
+    "settings.tab.export" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Export"
+          }
+        }
+      }
+    },
+    "settings.tab.general" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "General"
+          }
+        }
+      }
+    },
+    "settings.youtube.action.clear" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Clear"
+          }
+        }
+      }
+    },
+    "settings.youtube.action.save" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Save YouTube Credentials"
+          }
+        }
+      }
+    },
+    "settings.youtube.client_id_label" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Client ID"
+          }
+        }
+      }
+    },
+    "settings.youtube.client_id_placeholder" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Enter Client ID"
+          }
+        }
+      }
+    },
+    "settings.youtube.client_secret_label" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Client Secret"
+          }
+        }
+      }
+    },
+    "settings.youtube.client_secret_placeholder" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Enter Client Secret"
+          }
+        }
+      }
+    },
+    "settings.youtube.description" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Required for uploading videos directly to YouTube. Get credentials from [Google Cloud Console](https://console.cloud.google.com/apis/credentials)."
+          }
+        }
+      }
+    },
+    "settings.youtube.header" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "YouTube Upload"
+          }
+        }
+      }
+    },
+    "sidebar.action.cancel" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Cancel"
+          }
+        }
+      }
+    },
+    "sidebar.action.delete" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Delete"
+          }
+        }
+      }
+    },
+    "sidebar.action.import_audio" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Audio"
+          }
+        }
+      }
+    },
+    "sidebar.action.import_video" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Video"
+          }
+        }
+      }
+    },
+    "sidebar.clip.recording" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Recording"
+          }
+        }
+      }
+    },
+    "sidebar.clips.header" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Project Clips"
+          }
+        }
+      }
+    },
+    "sidebar.delete.message" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "This will move the source file to the Trash. This action cannot be undone."
+          }
+        }
+      }
+    },
+    "sidebar.delete.title" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Delete File from Disk?"
+          }
+        }
+      }
     },
     "sidebar.edit" : {
       "extractionState" : "manual",
@@ -961,6 +3695,39 @@
         }
       }
     },
+    "sidebar.empty.message" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Import video or record to get started"
+          }
+        }
+      }
+    },
+    "sidebar.empty.title" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "No clips yet"
+          }
+        }
+      }
+    },
+    "sidebar.error.import_audio" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Failed to import audio"
+          }
+        }
+      }
+    },
     "sidebar.export" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -968,6 +3735,94 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Export"
+          }
+        }
+      }
+    },
+    "sidebar.header" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Media"
+          }
+        }
+      }
+    },
+    "sidebar.menu.captions" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Generate Captions"
+          }
+        }
+      }
+    },
+    "sidebar.menu.delete_disk" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Delete from Disk"
+          }
+        }
+      }
+    },
+    "sidebar.menu.finder" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Show in Finder"
+          }
+        }
+      }
+    },
+    "sidebar.menu.remove" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Remove from Project"
+          }
+        }
+      }
+    },
+    "sidebar.menu.remove_fillers" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Remove Fillers"
+          }
+        }
+      }
+    },
+    "sidebar.menu.remove_silence" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Remove Silence"
+          }
+        }
+      }
+    },
+    "sidebar.menu.rotate" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Rotate 90°"
           }
         }
       }
@@ -997,49 +3852,406 @@
     "sk-..." : {
 
     },
-    "Slower" : {
-
+    "smart_tools.action.apply.title" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Apply Super Magic Fix"
+          }
+        }
+      }
     },
-    "Smart Crop" : {
-
+    "smart_tools.analysis.find_highlights.subtitle" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Applause/Laughter detection"
+          }
+        }
+      }
     },
-    "Social Media Ready" : {
-
+    "smart_tools.analysis.find_highlights.title" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Find Highlights"
+          }
+        }
+      }
     },
-    "Speed" : {
-
+    "smart_tools.analysis.header" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "AI ANALYSIS"
+          }
+        }
+      }
     },
-    "Split Clip" : {
-
+    "smart_tools.analysis.mood_grading.subtitle" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Grade based on sentiment"
+          }
+        }
+      }
     },
-    "Start recording" : {
-
+    "smart_tools.analysis.mood_grading.title" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Mood Grading"
+          }
+        }
+      }
     },
-    "Start Recording" : {
+    "smart_tools.analysis.scan_text.subtitle" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "OCR analysis & indexing"
+          }
+        }
+      }
+    },
+    "smart_tools.analysis.scan_text.title" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Scan for Text"
+          }
+        }
+      }
+    },
+    "smart_tools.audio.header" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "AUDIO"
+          }
+        }
+      }
+    },
+    "smart_tools.audio.remove_fillers.subtitle" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Cut 'um', 'uh', stutters"
+          }
+        }
+      }
+    },
+    "smart_tools.audio.remove_fillers.title" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Remove Fillers"
+          }
+        }
+      }
+    },
+    "smart_tools.audio.remove_silence.subtitle" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Cut non-speech gaps"
+          }
+        }
+      }
+    },
+    "smart_tools.audio.remove_silence.title" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Remove Silence"
+          }
+        }
+      }
+    },
+    "smart_tools.audio.studio_sound.subtitle" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "AI voice enhancement"
+          }
+        }
+      }
+    },
+    "smart_tools.audio.studio_sound.title" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Studio Sound"
+          }
+        }
+      }
+    },
+    "smart_tools.audio.threshold" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Threshold"
+          }
+        }
+      }
+    },
+    "smart_tools.footer.description" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "One-click AI cleanup for your entire clip."
+          }
+        }
+      }
+    },
+    "smart_tools.generative.cinematic_styles.subtitle" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Prompt-based restyling"
+          }
+        }
+      }
+    },
+    "smart_tools.generative.cinematic_styles.title" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Cinematic Styles"
+          }
+        }
+      }
+    },
+    "smart_tools.generative.header" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "GENERATIVE VISUALS"
+          }
+        }
+      }
+    },
+    "smart_tools.generative.magic_remove.subtitle" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "AI object/people removal"
+          }
+        }
+      }
+    },
+    "smart_tools.generative.magic_remove.title" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Magic Remove"
+          }
+        }
+      }
+    },
+    "smart_tools.preset.minimal" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Minimal Fix"
+          }
+        }
+      }
+    },
+    "smart_tools.preset.pro" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Pro Clean-up"
+          }
+        }
+      }
+    },
+    "smart_tools.preset.social" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Social Media Ready"
+          }
+        }
+      }
+    },
+    "smart_tools.presets.header" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "PRESETS"
+          }
+        }
+      }
+    },
+    "smart_tools.presets.label" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Presets"
+          }
+        }
+      }
+    },
+    "smart_tools.video.auto_color.subtitle" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Light & color fix"
+          }
+        }
+      }
+    },
+    "smart_tools.video.auto_color.title" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Auto Color"
+          }
+        }
+      }
+    },
+    "smart_tools.video.auto_framing.subtitle" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Track faces & focus"
+          }
+        }
+      }
+    },
+    "smart_tools.video.auto_framing.title" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Auto-Framing"
+          }
+        }
+      }
+    },
+    "smart_tools.video.header" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "VIDEO & FRAMING"
+          }
+        }
+      }
+    },
+    "smart_tools.video.highlight_cursor.subtitle" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "For screen recordings"
+          }
+        }
+      }
+    },
+    "smart_tools.video.highlight_cursor.title" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Highlight Cursor"
+          }
+        }
+      }
+    },
+    "smart_tools.video.smart_crop.subtitle" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Auto vertical reframe"
+          }
+        }
+      }
+    },
+    "smart_tools.video.smart_crop.title" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Smart Crop (9:16)"
+          }
+        }
+      }
+    },
+    "Start Your Project" : {
 
     },
     "Start: %@" : {
-
-    },
-    "Stop" : {
-
-    },
-    "Stop recording" : {
-
-    },
-    "Stop Recording" : {
-
-    },
-    "Stop Sharing & Return to App" : {
-
-    },
-    "Storage & Performance" : {
-
-    },
-    "Stress Testing & Limits" : {
-
-    },
-    "Style Presets" : {
 
     },
     "Switch back to camera mode" : {
@@ -1048,41 +4260,470 @@
     "Switch to camera" : {
 
     },
-    "Switch to editing mode" : {
-
-    },
     "Switch to screen recording" : {
 
     },
-    "Temporary Files" : {
-
+    "thermal.emergency" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "System Overheating: Performance reduced"
+          }
+        }
+      }
     },
-    "Text Overlay" : {
-
+    "thermal.throttled" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "System Hot: Optimizing performance"
+          }
+        }
+      }
     },
-    "Text will appear at bottom of thumbnail" : {
-
+    "thumbnail.action.cancel" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Cancel"
+          }
+        }
+      }
     },
-    "Theme" : {
-
+    "thumbnail.action.copy" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Copy to Clipboard"
+          }
+        }
+      }
     },
-    "These settings will be used as the default for new exports." : {
-
+    "thumbnail.action.reset" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Reset"
+          }
+        }
+      }
     },
-    "This action cannot be undone." : {
-
+    "thumbnail.action.save_jpeg" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Save as JPEG..."
+          }
+        }
+      }
     },
-    "This will move '%@' to the Trash." : {
-
+    "thumbnail.action.save_png" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Save as PNG..."
+          }
+        }
+      }
     },
-    "This will move the source file to the Trash. This action cannot be undone." : {
-
+    "thumbnail.action.use" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Use Thumbnail"
+          }
+        }
+      }
     },
-    "This will remove all stored API credentials. You'll need to re-enter them to use YouTube upload and AI features." : {
-
+    "thumbnail.action.use_ai" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Use AI Pick"
+          }
+        }
+      }
     },
-    "Thumbnail Studio" : {
-
+    "thumbnail.action.use_custom" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Custom Frame"
+          }
+        }
+      }
+    },
+    "thumbnail.adjust.brightness" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Brightness"
+          }
+        }
+      }
+    },
+    "thumbnail.adjust.contrast" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Contrast"
+          }
+        }
+      }
+    },
+    "thumbnail.adjust.header" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Fine Tune"
+          }
+        }
+      }
+    },
+    "thumbnail.adjust.saturation" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Saturation"
+          }
+        }
+      }
+    },
+    "thumbnail.error.load_failed" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Failed to load video"
+          }
+        }
+      }
+    },
+    "thumbnail.footer.options" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Options"
+          }
+        }
+      }
+    },
+    "thumbnail.frames.header" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Select Frame"
+          }
+        }
+      }
+    },
+    "thumbnail.header.subtitle" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Create an eye-catching thumbnail"
+          }
+        }
+      }
+    },
+    "thumbnail.header.title" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Thumbnail Studio"
+          }
+        }
+      }
+    },
+    "thumbnail.loading" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Analyzing video for best frames..."
+          }
+        }
+      }
+    },
+    "thumbnail.overlay.footer" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Text will appear at bottom of thumbnail"
+          }
+        }
+      }
+    },
+    "thumbnail.overlay.header" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Text Overlay"
+          }
+        }
+      }
+    },
+    "thumbnail.overlay.placeholder" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Enter title text..."
+          }
+        }
+      }
+    },
+    "thumbnail.preview.header" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Preview"
+          }
+        }
+      }
+    },
+    "thumbnail.style.bw" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "B&W"
+          }
+        }
+      }
+    },
+    "thumbnail.style.cool" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Cool"
+          }
+        }
+      }
+    },
+    "thumbnail.style.dramatic" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Dramatic"
+          }
+        }
+      }
+    },
+    "thumbnail.style.original" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Original"
+          }
+        }
+      }
+    },
+    "thumbnail.style.vibrant" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Vibrant"
+          }
+        }
+      }
+    },
+    "thumbnail.style.warm" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Warm"
+          }
+        }
+      }
+    },
+    "thumbnail.styles.header" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Style Presets"
+          }
+        }
+      }
+    },
+    "thumbnail.toast.copied" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "✅ Copied to clipboard!"
+          }
+        }
+      }
+    },
+    "thumbnail.toast.saved" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "✅ Saved!"
+          }
+        }
+      }
+    },
+    "timeline.add_track" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Add Track"
+          }
+        }
+      }
+    },
+    "timeline.alert.delete.disk" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Delete from Disk"
+          }
+        }
+      }
+    },
+    "timeline.alert.delete.message" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Do you want to remove the clip from the project, or permanently delete the file from your disk?"
+          }
+        }
+      }
+    },
+    "timeline.alert.delete.remove" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Remove from Project only"
+          }
+        }
+      }
+    },
+    "timeline.alert.delete.title" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Delete Clip"
+          }
+        }
+      }
+    },
+    "timeline.clip.action.delete.help" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Delete clip"
+          }
+        }
+      }
+    },
+    "timeline.clip.action.split.help" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Split clip at playhead"
+          }
+        }
+      }
+    },
+    "timeline.clip.delete_file.message" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "This will move the file to the Trash"
+          }
+        }
+      }
+    },
+    "timeline.clip.delete_file.title" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Delete File?"
+          }
+        }
+      }
     },
     "timeline.delete" : {
       "extractionState" : "manual",
@@ -1091,6 +4732,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Delete Clip"
+          }
+        }
+      }
+    },
+    "timeline.help.magnetic" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Magnetic Timeline (M)"
+          }
+        }
+      }
+    },
+    "timeline.help.snap" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Toggle Snapping (N)"
           }
         }
       }
@@ -1106,14 +4769,533 @@
         }
       }
     },
-    "Title" : {
-
+    "timeline.tool.delete.help" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Delete selection"
+          }
+        }
+      }
     },
-    "Toggle Snapping (N)" : {
-
+    "timeline.tool.select" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Select Tool (A)"
+          }
+        }
+      }
     },
-    "Transition: %@" : {
-
+    "timeline.tool.split.help" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Split clip (B)"
+          }
+        }
+      }
+    },
+    "toast.captions_refine_failed" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Refinement failed: %@"
+          }
+        }
+      }
+    },
+    "toast.captions_refined" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Captions refined! ✨"
+          }
+        }
+      }
+    },
+    "toast.error.gif_failed" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "GIF export failed"
+          }
+        }
+      }
+    },
+    "toast.error.no_captions_for_pdf" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "No captions to export. Generate captions first."
+          }
+        }
+      }
+    },
+    "toast.error.no_captions_for_voiceover" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "No captions for voiceover. Generate captions first."
+          }
+        }
+      }
+    },
+    "toast.error.no_clip_for_thumbnail" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "No clip for thumbnail"
+          }
+        }
+      }
+    },
+    "toast.error.no_clip_to_export" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "No clip to export"
+          }
+        }
+      }
+    },
+    "toast.error.no_project" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "No project open"
+          }
+        }
+      }
+    },
+    "toast.error.pdf_failed" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "PDF export failed"
+          }
+        }
+      }
+    },
+    "toast.error.thumbnail_failed" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Thumbnail generation failed"
+          }
+        }
+      }
+    },
+    "toast.error.voiceover_failed" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Voiceover failed"
+          }
+        }
+      }
+    },
+    "toast.exporting_gif" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "🎞️ Exporting GIF..."
+          }
+        }
+      }
+    },
+    "toast.generating_pdf" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "📄 Generating PDF..."
+          }
+        }
+      }
+    },
+    "toast.generating_thumbnail" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "🎨 Generating thumbnail..."
+          }
+        }
+      }
+    },
+    "toast.generating_voiceover" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "🎤 Generating voiceover..."
+          }
+        }
+      }
+    },
+    "toast.gif_saved" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "GIF saved!"
+          }
+        }
+      }
+    },
+    "toast.pdf_saved" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "PDF saved to Desktop!"
+          }
+        }
+      }
+    },
+    "toast.thumbnail_copied" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "✅ Thumbnail copied!"
+          }
+        }
+      }
+    },
+    "toast.thumbnail_copied_clipboard" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "✅ Thumbnail copied to clipboard!"
+          }
+        }
+      }
+    },
+    "toast.voiceover_saved" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "✅ Voiceover saved!"
+          }
+        }
+      }
+    },
+    "toast.voiceover_saved_desktop" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "✅ Voiceover saved to Desktop!"
+          }
+        }
+      }
+    },
+    "track.help.lock" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Lock Track"
+          }
+        }
+      }
+    },
+    "track.help.mute" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Mute Track"
+          }
+        }
+      }
+    },
+    "track.help.unlock" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Unlock Track"
+          }
+        }
+      }
+    },
+    "track.help.unmute" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Unmute Track"
+          }
+        }
+      }
+    },
+    "track.type.audio" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Audio Track"
+          }
+        }
+      }
+    },
+    "track.type.overlay" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Overlay Track"
+          }
+        }
+      }
+    },
+    "track.type.video" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Video Track"
+          }
+        }
+      }
+    },
+    "transcript.action.cancel" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Cancel"
+          }
+        }
+      }
+    },
+    "transcript.action.export" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Export"
+          }
+        }
+      }
+    },
+    "transcript.action.exporting" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Exporting..."
+          }
+        }
+      }
+    },
+    "transcript.description.pdf" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Creates a formatted study guide with title, date, and timestamped captions."
+          }
+        }
+      }
+    },
+    "transcript.description.srt" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "SubRip format, compatible with YouTube, Premiere, Final Cut Pro."
+          }
+        }
+      }
+    },
+    "transcript.description.txt" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Simple plain text, one caption per line."
+          }
+        }
+      }
+    },
+    "transcript.description.vtt" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "WebVTT format for web video players and HTML5."
+          }
+        }
+      }
+    },
+    "transcript.format.header" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Format"
+          }
+        }
+      }
+    },
+    "transcript.format.pdf" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "PDF Study Guide"
+          }
+        }
+      }
+    },
+    "transcript.format.srt" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "SRT Subtitles"
+          }
+        }
+      }
+    },
+    "transcript.format.txt" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Plain Text"
+          }
+        }
+      }
+    },
+    "transcript.format.vtt" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "WebVTT"
+          }
+        }
+      }
+    },
+    "transcript.header.title" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Export Transcript"
+          }
+        }
+      }
+    },
+    "transcript.options.header" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Options"
+          }
+        }
+      }
+    },
+    "transcript.options.timestamps" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Include timestamps"
+          }
+        }
+      }
+    },
+    "transcript.preview.header" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Preview"
+          }
+        }
+      }
+    },
+    "transcript.toast.exported" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "✅ Transcript exported!"
+          }
+        }
+      }
     },
     "Turn on camera" : {
 
@@ -1124,74 +5306,372 @@
     "Turn on the camera to start recording" : {
 
     },
-    "Undo" : {
-
-    },
-    "Unlock Track" : {
-
-    },
     "Unmute Microphone" : {
-
-    },
-    "Unmute Track" : {
 
     },
     "Uploading to YouTube..." : {
 
     },
-    "Uploading..." : {
-
-    },
-    "Use AI Pick" : {
-
-    },
     "Use Control Center for Video Effects" : {
-
-    },
-    "Use Magic Fix to generate captions" : {
-
-    },
-    "Use Thumbnail" : {
-
-    },
-    "Used for AI-powered video title and description suggestions. Get your key from [OpenAI Platform](https://platform.openai.com/api-keys)." : {
-
-    },
-    "Video" : {
-
-    },
-    "VIDEO & FRAMING" : {
 
     },
     "Video Effects in Control Center" : {
 
     },
-    "Video Track" : {
-
+    "video.action.analyzing" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Analyzing..."
+          }
+        }
+      }
+    },
+    "video.action.apply_smart_crop" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Apply Smart Crop"
+          }
+        }
+      }
+    },
+    "video.section.smart_crop" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Smart Crop"
+          }
+        }
+      }
+    },
+    "video.section.speed" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Speed"
+          }
+        }
+      }
+    },
+    "video.section.transform" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Transform"
+          }
+        }
+      }
+    },
+    "video.transform.reset" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Reset to Original"
+          }
+        }
+      }
+    },
+    "video.transform.rotate_ccw" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "90° CCW"
+          }
+        }
+      }
+    },
+    "video.transform.rotate_cw" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "90° CW"
+          }
+        }
+      }
     },
     "View Recent Clip" : {
 
     },
-    "Virtual Background" : {
-
+    "voiceover.action.cancel" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Cancel"
+          }
+        }
+      }
     },
-    "Vision" : {
-
+    "voiceover.action.generate" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Generate Voiceover"
+          }
+        }
+      }
     },
-    "Voice" : {
-
+    "voiceover.action.generating" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Generating..."
+          }
+        }
+      }
     },
-    "Width" : {
-
+    "voiceover.header.title" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Generate Voiceover"
+          }
+        }
+      }
     },
-    "YouTube" : {
-
+    "voiceover.preview.header" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Preview"
+          }
+        }
+      }
     },
-    "YouTube Details" : {
-
+    "voiceover.preview.play" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Play Sample"
+          }
+        }
+      }
     },
-    "YouTube Upload" : {
-
+    "voiceover.preview.stop" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Stop"
+          }
+        }
+      }
+    },
+    "voiceover.settings.header" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Settings"
+          }
+        }
+      }
+    },
+    "voiceover.settings.pitch.high" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "High"
+          }
+        }
+      }
+    },
+    "voiceover.settings.pitch.higher" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Higher"
+          }
+        }
+      }
+    },
+    "voiceover.settings.pitch.low" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Low"
+          }
+        }
+      }
+    },
+    "voiceover.settings.pitch.lower" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Lower"
+          }
+        }
+      }
+    },
+    "voiceover.settings.pitch.normal" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Normal"
+          }
+        }
+      }
+    },
+    "voiceover.settings.pitch.title" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Pitch"
+          }
+        }
+      }
+    },
+    "voiceover.settings.speed.fast" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Fast"
+          }
+        }
+      }
+    },
+    "voiceover.settings.speed.faster" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Faster"
+          }
+        }
+      }
+    },
+    "voiceover.settings.speed.normal" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Normal"
+          }
+        }
+      }
+    },
+    "voiceover.settings.speed.slow" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Slow"
+          }
+        }
+      }
+    },
+    "voiceover.settings.speed.slower" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Slower"
+          }
+        }
+      }
+    },
+    "voiceover.settings.speed.title" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Speed"
+          }
+        }
+      }
+    },
+    "voiceover.voice.gender.female" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Female"
+          }
+        }
+      }
+    },
+    "voiceover.voice.gender.male" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Male"
+          }
+        }
+      }
+    },
+    "voiceover.voice.gender.neutral" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Neutral"
+          }
+        }
+      }
+    },
+    "voiceover.voice.header" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Voice"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

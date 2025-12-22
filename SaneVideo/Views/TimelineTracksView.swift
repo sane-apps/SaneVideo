@@ -81,13 +81,22 @@ struct TimelineTracksView: View {
     }
 
     private func trackRow(for track: Track) -> some View {
-        ZStack(alignment: .leading) {
-            Rectangle()
-                .fill(Color.secondary.opacity(0.1))
-                .frame(height: timelineHeight)
-                .frame(minWidth: calculateWidth() + 24)
-
-            ForEach(track.clips, id: \.id) { (clip: VideoClip) in
+        // OPTIMIZATION: Use LazyHStack with calculated spacers instead of ZStack+Offset
+        // This prevents eager loading of all 500+ clips in a complex project.
+        // We assume clips are sorted by startTime.
+        let sortedClips = track.clips.sorted { $0.startTime < $1.startTime }
+        
+        return LazyHStack(alignment: .top, spacing: 0) {
+            ForEach(Array(sortedClips.enumerated()), id: \.element.id) { index, clip in
+                // Calculate spacer from previous clip end (or 0)
+                let previousEnd = index == 0 ? CMTime.zero : sortedClips[index - 1].startTime + sortedClips[index - 1].effectiveDuration
+                let gap = max(0, clip.startTime.seconds - previousEnd.seconds)
+                let gapWidth = gap * pixelsPerSecond
+                
+                if gapWidth > 0 {
+                    Rectangle().fill(Color.clear).frame(width: gapWidth)
+                }
+                
                 let isClipSelected = appState.selectedClipIds.contains(clip.id) || selectedClip?.id == clip.id
 
                 TimelineClipView(
@@ -141,10 +150,24 @@ struct TimelineTracksView: View {
                         }
                     }
                 )
-                .offset(x: clip.startTime.seconds * pixelsPerSecond)
+            }
+            
+            // Trailing spacer to fill timeline duration if needed
+            if let lastClip = sortedClips.last {
+                let duration = max(60, appState.projectState.currentProject?.timeline.duration.seconds ?? 60)
+                let lastEndTime = lastClip.startTime + lastClip.effectiveDuration
+                let remaining = max(0, duration - lastEndTime.seconds)
+                if remaining > 0 {
+                    Rectangle().fill(Color.clear).frame(width: remaining * pixelsPerSecond)
+                }
+            } else {
+                // Empty track spacer
+               let duration = max(60, appState.projectState.currentProject?.timeline.duration.seconds ?? 60)
+               Rectangle().fill(Color.clear).frame(width: duration * pixelsPerSecond)
             }
         }
-        .frame(width: calculateWidth() + 24, height: timelineHeight)
+        .frame(height: timelineHeight)
+        .background(Color.secondary.opacity(0.1))
     }
 
     private var playheadOverlay: some View {

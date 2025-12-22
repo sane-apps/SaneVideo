@@ -1,0 +1,2185 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='UTF-8' />
+    <title>RuboCop Inspection Report</title>
+    
+    <style>
+    * {
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+    }
+
+    body, html {
+    font-size: 62.5%;
+    }
+    body {
+    background-color: #ecedf0;
+    font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+    margin: 0;
+    }
+    code {
+    font-family: Consolas, "Liberation Mono", Menlo, Courier, monospace;
+    font-size: 85%;
+    }
+    #header {
+    background: #f9f9f9;
+    color: #333;
+    border-bottom: 3px solid #ccc;
+    height: 50px;
+    padding: 0;
+    }
+    #header .logo {
+    float: left;
+    margin: 5px 12px 7px 20px;
+    width: 38px;
+    height: 38px;
+    }
+    #header .title {
+    display: inline-block;
+    float: left;
+    height: 50px;
+    font-size: 2.4rem;
+    letter-spacing: normal;
+    line-height: 50px;
+    margin: 0;
+    }
+
+    .information, #offenses {
+    width: 100%;
+    padding: 20px;
+    color: #333;
+    }
+    #offenses {
+    padding: 0 20px;
+    }
+
+    .information .infobox {
+    border-left: 3px solid;
+    border-radius: 4px;
+    background-color: #fff;
+    -webkit-box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
+    padding: 15px;
+    border-color: #0088cc;
+    font-size: 1.4rem;
+    }
+    .information .infobox .info-title {
+    font-size: 1.8rem;
+    line-height: 2.2rem;
+    margin: 0 0 0.5em;
+    }
+    .information .offenses-list li {
+    line-height: 1.8rem
+    }
+    .information .offenses-list {
+    padding-left: 20px;
+    margin-bottom: 0;
+    }
+
+    #offenses .offense-box {
+    border-radius: 4px;
+    margin-bottom: 20px;
+    background-color: #fff;
+    -webkit-box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
+    }
+    .fixed .box-title {
+    position: fixed;
+    top: 0;
+    z-index: 10;
+    width: 100%;
+    }
+    .box-title-placeholder {
+    display: none;
+    }
+    .fixed .box-title-placeholder {
+    display: block;
+    }
+    #offenses .offense-box .box-title h3, #offenses .offense-box .box-title-placeholder h3 {
+    color: #33353f;
+    background-color: #f6f6f6;
+    font-size: 2rem;
+    line-height: 2rem;
+    display: block;
+    padding: 15px;
+    border-radius: 5px;
+    margin: 0;
+    }
+    #offenses .offense-box .offense-reports  {
+    padding: 0 15px;
+    }
+    #offenses .offense-box .offense-reports .report {
+    border-bottom: 1px dotted #ddd;
+    padding: 15px 0px;
+    position: relative;
+    font-size: 1.3rem;
+    }
+    #offenses .offense-box .offense-reports .report:last-child {
+    border-bottom: none;
+    }
+    #offenses .offense-box .offense-reports .report pre code {
+    display: block;
+    background: #000;
+    color: #fff;
+    padding: 10px 15px;
+    border-radius: 5px;
+    line-height: 1.6rem;
+    }
+    #offenses .offense-box .offense-reports .report .location {
+    font-weight: bold;
+    }
+    #offenses .offense-box .offense-reports .report .message code {
+    padding: 0.3em;
+    background-color: rgba(0,0,0,0.07);
+    border-radius: 3px;
+    }
+    .severity {
+    text-transform: capitalize;
+    font-weight: bold;
+    }
+    .highlight {
+    padding: 2px;
+    border-radius: 2px;
+    font-weight: bold;
+    }
+
+    .severity.refactor {
+    color: rgba(237, 156, 40, 1.0);
+    }
+    .highlight.refactor {
+    background-color: rgba(237, 156, 40, 0.6);
+    border: 1px solid rgba(237, 156, 40, 0.4);
+    }
+
+    .severity.convention {
+    color: rgba(237, 156, 40, 1.0);
+    }
+    .highlight.convention {
+    background-color: rgba(237, 156, 40, 0.6);
+    border: 1px solid rgba(237, 156, 40, 0.4);
+    }
+
+    .severity.warning {
+    color: rgba(150, 40, 239, 1.0);
+    }
+    .highlight.warning {
+    background-color: rgba(150, 40, 239, 0.6);
+    border: 1px solid rgba(150, 40, 239, 0.4);
+    }
+
+    .severity.error {
+    color: rgba(210, 50, 45, 1.0);
+    }
+    .highlight.error {
+    background-color: rgba(210, 50, 45, 0.6);
+    border: 1px solid rgba(210, 50, 45, 0.4);
+    }
+
+    .severity.fatal {
+    color: rgba(210, 50, 45, 1.0);
+    }
+    .highlight.fatal {
+    background-color: rgba(210, 50, 45, 0.6);
+    border: 1px solid rgba(210, 50, 45, 0.4);
+    }
+
+    footer {
+    margin-bottom: 20px;
+    margin-right: 20px;
+    font-size: 1.3rem;
+    color: #777;
+    text-align: right;
+    }
+    .extra-code {
+      color: #ED9C28
+    }
+    </style>
+
+    <script>
+    (function() {
+      // floating headers. requires classList support.
+      if (!('classList' in document.createElement("_"))) return;
+
+      var loaded = false,
+        boxes,
+        boxPositions;
+
+      window.onload = function() {
+        var scrollY = window.scrollY;
+        boxes = document.querySelectorAll('.offense-box');
+        boxPositions = [];
+        for (var i = 0; i < boxes.length; i++)
+          // need to add scrollY because the page might be somewhere other than the top when loaded.
+          boxPositions[i] = boxes[i].getBoundingClientRect().top + scrollY;
+        loaded = true;
+      };
+
+      window.onscroll = function() {
+        if (!loaded) return;
+        var i,
+          idx,
+          scrollY = window.scrollY;
+        for (i = 0; i < boxPositions.length; i++) {
+          if (scrollY <= boxPositions[i] - 1) {
+            idx = i;
+            break;
+          }
+        }
+        if (typeof idx == 'undefined') idx = boxes.length;
+        if (idx > 0)
+          boxes[idx - 1].classList.add('fixed');
+        for (i = 0; i < boxes.length; i++) {
+          if (i < idx) continue;
+          boxes[i].classList.remove('fixed');
+        }
+      };
+    })();
+    </script>
+  </head>
+  <body>
+    <div id="header">
+      <img class="logo" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEwAAABMCAYAAADHl1ErAAAKQWlDQ1BJQ0Mg
+UHJvZmlsZQAASA2dlndUU9kWh8+9N73QEiIgJfQaegkg0jtIFQRRiUmAUAKG
+hCZ2RAVGFBEpVmRUwAFHhyJjRRQLg4Ji1wnyEFDGwVFEReXdjGsJ7601896a
+/cdZ39nnt9fZZ+9917oAUPyCBMJ0WAGANKFYFO7rwVwSE8vE9wIYEAEOWAHA
+4WZmBEf4RALU/L09mZmoSMaz9u4ugGS72yy/UCZz1v9/kSI3QyQGAApF1TY8
+fiYX5QKUU7PFGTL/BMr0lSkyhjEyFqEJoqwi48SvbPan5iu7yZiXJuShGlnO
+Gbw0noy7UN6aJeGjjAShXJgl4GejfAdlvVRJmgDl9yjT0/icTAAwFJlfzOcm
+oWyJMkUUGe6J8gIACJTEObxyDov5OWieAHimZ+SKBIlJYqYR15hp5ejIZvrx
+s1P5YjErlMNN4Yh4TM/0tAyOMBeAr2+WRQElWW2ZaJHtrRzt7VnW5mj5v9nf
+Hn5T/T3IevtV8Sbsz55BjJ5Z32zsrC+9FgD2JFqbHbO+lVUAtG0GQOXhrE/v
+IADyBQC03pzzHoZsXpLE4gwnC4vs7GxzAZ9rLivoN/ufgm/Kv4Y595nL7vtW
+O6YXP4EjSRUzZUXlpqemS0TMzAwOl89k/fcQ/+PAOWnNycMsnJ/AF/GF6FVR
+6JQJhIlou4U8gViQLmQKhH/V4X8YNicHGX6daxRodV8AfYU5ULhJB8hvPQBD
+IwMkbj96An3rWxAxCsi+vGitka9zjzJ6/uf6Hwtcim7hTEEiU+b2DI9kciWi
+LBmj34RswQISkAd0oAo0gS4wAixgDRyAM3AD3iAAhIBIEAOWAy5IAmlABLJB
+PtgACkEx2AF2g2pwANSBetAEToI2cAZcBFfADXALDIBHQAqGwUswAd6BaQiC
+8BAVokGqkBakD5lC1hAbWgh5Q0FQOBQDxUOJkBCSQPnQJqgYKoOqoUNQPfQj
+dBq6CF2D+qAH0CA0Bv0BfYQRmALTYQ3YALaA2bA7HAhHwsvgRHgVnAcXwNvh
+SrgWPg63whfhG/AALIVfwpMIQMgIA9FGWAgb8URCkFgkAREha5EipAKpRZqQ
+DqQbuY1IkXHkAwaHoWGYGBbGGeOHWYzhYlZh1mJKMNWYY5hWTBfmNmYQM4H5
+gqVi1bGmWCesP3YJNhGbjS3EVmCPYFuwl7ED2GHsOxwOx8AZ4hxwfrgYXDJu
+Na4Etw/XjLuA68MN4SbxeLwq3hTvgg/Bc/BifCG+Cn8cfx7fjx/GvyeQCVoE
+a4IPIZYgJGwkVBAaCOcI/YQRwjRRgahPdCKGEHnEXGIpsY7YQbxJHCZOkxRJ
+hiQXUiQpmbSBVElqIl0mPSa9IZPJOmRHchhZQF5PriSfIF8lD5I/UJQoJhRP
+ShxFQtlOOUq5QHlAeUOlUg2obtRYqpi6nVpPvUR9Sn0vR5Mzl/OX48mtk6uR
+a5Xrl3slT5TXl3eXXy6fJ18hf0r+pvy4AlHBQMFTgaOwVqFG4bTCPYVJRZqi
+lWKIYppiiWKD4jXFUSW8koGStxJPqUDpsNIlpSEaQtOledK4tE20Otpl2jAd
+Rzek+9OT6cX0H+i99AllJWVb5SjlHOUa5bPKUgbCMGD4M1IZpYyTjLuMj/M0
+5rnP48/bNq9pXv+8KZX5Km4qfJUilWaVAZWPqkxVb9UU1Z2qbapP1DBqJmph
+atlq+9Uuq43Pp893ns+dXzT/5PyH6rC6iXq4+mr1w+o96pMamhq+GhkaVRqX
+NMY1GZpumsma5ZrnNMe0aFoLtQRa5VrntV4wlZnuzFRmJbOLOaGtru2nLdE+
+pN2rPa1jqLNYZ6NOs84TXZIuWzdBt1y3U3dCT0svWC9fr1HvoT5Rn62fpL9H
+v1t/ysDQINpgi0GbwaihiqG/YZ5ho+FjI6qRq9Eqo1qjO8Y4Y7ZxivE+41sm
+sImdSZJJjclNU9jU3lRgus+0zwxr5mgmNKs1u8eisNxZWaxG1qA5wzzIfKN5
+m/krCz2LWIudFt0WXyztLFMt6ywfWSlZBVhttOqw+sPaxJprXWN9x4Zq42Oz
+zqbd5rWtqS3fdr/tfTuaXbDdFrtOu8/2DvYi+yb7MQc9h3iHvQ732HR2KLuE
+fdUR6+jhuM7xjOMHJ3snsdNJp9+dWc4pzg3OowsMF/AX1C0YctFx4bgccpEu
+ZC6MX3hwodRV25XjWuv6zE3Xjed2xG3E3dg92f24+ysPSw+RR4vHlKeT5xrP
+C16Il69XkVevt5L3Yu9q76c+Oj6JPo0+E752vqt9L/hh/QL9dvrd89fw5/rX
++08EOASsCegKpARGBFYHPgsyCRIFdQTDwQHBu4IfL9JfJFzUFgJC/EN2hTwJ
+NQxdFfpzGC4sNKwm7Hm4VXh+eHcELWJFREPEu0iPyNLIR4uNFksWd0bJR8VF
+1UdNRXtFl0VLl1gsWbPkRoxajCCmPRYfGxV7JHZyqffS3UuH4+ziCuPuLjNc
+lrPs2nK15anLz66QX8FZcSoeGx8d3xD/iRPCqeVMrvRfuXflBNeTu4f7kufG
+K+eN8V34ZfyRBJeEsoTRRJfEXYljSa5JFUnjAk9BteB1sl/ygeSplJCUoykz
+qdGpzWmEtPi000IlYYqwK10zPSe9L8M0ozBDuspp1e5VE6JA0ZFMKHNZZruY
+jv5M9UiMJJslg1kLs2qy3mdHZZ/KUcwR5vTkmuRuyx3J88n7fjVmNXd1Z752
+/ob8wTXuaw6thdauXNu5Tnddwbrh9b7rj20gbUjZ8MtGy41lG99uit7UUaBR
+sL5gaLPv5sZCuUJR4b0tzlsObMVsFWzt3WazrWrblyJe0fViy+KK4k8l3JLr
+31l9V/ndzPaE7b2l9qX7d+B2CHfc3em681iZYlle2dCu4F2t5czyovK3u1fs
+vlZhW3FgD2mPZI+0MqiyvUqvakfVp+qk6oEaj5rmvep7t+2d2sfb17/fbX/T
+AY0DxQc+HhQcvH/I91BrrUFtxWHc4azDz+ui6rq/Z39ff0TtSPGRz0eFR6XH
+wo911TvU1zeoN5Q2wo2SxrHjccdv/eD1Q3sTq+lQM6O5+AQ4ITnx4sf4H++e
+DDzZeYp9qukn/Z/2ttBailqh1tzWibakNml7THvf6YDTnR3OHS0/m/989Iz2
+mZqzymdLz5HOFZybOZ93fvJCxoXxi4kXhzpXdD66tOTSna6wrt7LgZevXvG5
+cqnbvfv8VZerZ645XTt9nX297Yb9jdYeu56WX+x+aem172296XCz/ZbjrY6+
+BX3n+l37L972un3ljv+dGwOLBvruLr57/17cPel93v3RB6kPXj/Mejj9aP1j
+7OOiJwpPKp6qP6391fjXZqm99Oyg12DPs4hnj4a4Qy//lfmvT8MFz6nPK0a0
+RupHrUfPjPmM3Xqx9MXwy4yX0+OFvyn+tveV0auffnf7vWdiycTwa9HrmT9K
+3qi+OfrW9m3nZOjk03dp76anit6rvj/2gf2h+2P0x5Hp7E/4T5WfjT93fAn8
+8ngmbWbm3/eE8/syOll+AAAACXBIWXMAAAsTAAALEwEAmpwYAAAEJGlUWHRY
+TUw6Y29tLmFkb2JlLnhtcAAAAAAAPHg6eG1wbWV0YSB4bWxuczp4PSJhZG9i
+ZTpuczptZXRhLyIgeDp4bXB0az0iWE1QIENvcmUgNS40LjAiPgogICA8cmRm
+OlJERiB4bWxuczpyZGY9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkvMDIvMjIt
+cmRmLXN5bnRheC1ucyMiPgogICAgICA8cmRmOkRlc2NyaXB0aW9uIHJkZjph
+Ym91dD0iIgogICAgICAgICAgICB4bWxuczp0aWZmPSJodHRwOi8vbnMuYWRv
+YmUuY29tL3RpZmYvMS4wLyIKICAgICAgICAgICAgeG1sbnM6ZXhpZj0iaHR0
+cDovL25zLmFkb2JlLmNvbS9leGlmLzEuMC8iCiAgICAgICAgICAgIHhtbG5z
+OmRjPSJodHRwOi8vcHVybC5vcmcvZGMvZWxlbWVudHMvMS4xLyIKICAgICAg
+ICAgICAgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAv
+Ij4KICAgICAgICAgPHRpZmY6UmVzb2x1dGlvblVuaXQ+MTwvdGlmZjpSZXNv
+bHV0aW9uVW5pdD4KICAgICAgICAgPHRpZmY6Q29tcHJlc3Npb24+NTwvdGlm
+ZjpDb21wcmVzc2lvbj4KICAgICAgICAgPHRpZmY6WFJlc29sdXRpb24+NzI8
+L3RpZmY6WFJlc29sdXRpb24+CiAgICAgICAgIDx0aWZmOk9yaWVudGF0aW9u
+PjE8L3RpZmY6T3JpZW50YXRpb24+CiAgICAgICAgIDx0aWZmOllSZXNvbHV0
+aW9uPjcyPC90aWZmOllSZXNvbHV0aW9uPgogICAgICAgICA8ZXhpZjpQaXhl
+bFhEaW1lbnNpb24+NzY8L2V4aWY6UGl4ZWxYRGltZW5zaW9uPgogICAgICAg
+ICA8ZXhpZjpDb2xvclNwYWNlPjE8L2V4aWY6Q29sb3JTcGFjZT4KICAgICAg
+ICAgPGV4aWY6UGl4ZWxZRGltZW5zaW9uPjc2PC9leGlmOlBpeGVsWURpbWVu
+c2lvbj4KICAgICAgICAgPGRjOnN1YmplY3Q+CiAgICAgICAgICAgIDxyZGY6
+U2VxLz4KICAgICAgICAgPC9kYzpzdWJqZWN0PgogICAgICAgICA8eG1wOk1v
+ZGlmeURhdGU+MjAxNDowOToyMyAyMjowOToxNDwveG1wOk1vZGlmeURhdGU+
+CiAgICAgICAgIDx4bXA6Q3JlYXRvclRvb2w+UGl4ZWxtYXRvciAzLjIuMTwv
+eG1wOkNyZWF0b3JUb29sPgogICAgICA8L3JkZjpEZXNjcmlwdGlvbj4KICAg
+PC9yZGY6UkRGPgo8L3g6eG1wbWV0YT4KkpvroQAABkNJREFUeAHtm0uIHFUY
+hWveM8ZpHN/RYCIS34mKGGSMMmLA6CKILmQwBOJCEcwqKzELceVWN+IyIgQM
+4gt84SMqBpNBkBiJGkEFMRFNMmSSzEzm5fmG7qEpbt1bt7q6XuOBQ3Xfuvf/
+z/nr3qrq6u6OIH9cLAlrxGvr20e0vVsE34rviL+Lv9W3J7XNDR05Zb5deR8U
+7xfXiVeKnaIN89p5XPxB/EL8WPxerCxqcrZd3CdOiwstkhj7RGISuzLol5On
+xSNiq0WKGk9scpCr1LhP6veLUUbTbicXOUuHHil+QZwS0y6KKx45yY2GUuAy
+qXxXdBlr9340oKXQWC11Y2K7ixE3PlrQVEhcI1WHxLhmsuqHJrQVCtx8cpOZ
+VRF886ANjYVAl1TsFX1NZN0fjWjNHTulIGvzSfOhNVfcpuwTYlIDWY9DK5pz
+AdP7EzFr063mQ3MuS/PREharUWy0Zwruog+IDQFl26I9008Cm0tcrMbBxYM3
+XM+gogI+GbWjRO2ZebhKRTklNo5UWbd4wIsXksywEWW4yCtLMTvjYcRXWpKC
+bfJNUuD+3l58C9Yt83cWuAC+0vCCp7aBT/3nxbKet8K68eL1JMO3unzLtFtk
+WwVQwKp4Kebx8KnurbLwjLhBHCimHW9VkxpxUHxVPOw92jJgi/bxjXP4HFCV
+93jDYypYrSj/iFUpTpQPPK4RrYhzW7FVES61RqnGTjw+4bISp2B3uIJUaL/T
+a5yC9VaoIC4rTq9xCjbrylKh/U6vroLdpGKsr1BBXFbwiudE4NP8j2LUVaWq
+7XiOfBpjm2HbNPBmcbkBz3g3wnanf1ojBo2j6o1DnZ3B6IpasL6nb/Hng0y5
+IgKT8+Khmelgz9nTwal53lnB13E1Uw9bwaz+r+jqCvZcsjIY7hsIZhdXrSl8
+sdq69Tl7//RkMHriWPD33JxLnLE2vk8rlpLsGBwKhvsHggn30Voak/+LhUXN
+aN81/m8iObZzWGRABg339QfTC9ZJGDk+zx1oRnsi4xKeaBxlmlJi45zNsxox
+cqMZ7UkPdeKCvX3uTNCrkpWpaGhFM9qTFizxOWy3rjZru3uD7RfWgoGOcpRt
+UjPrlYnxAO1JYXN6QEF5WGgFtxQ39vQGXbZI1gjZ7JzTlPpp5vzirUWMjGPq
+4/QejjOiBmbuciTevcH57TWRu7zlUjS84jnRuV3jFr+z+1Lb5VKwr+qe8W6E
+q5I87jhpHFnNxhOyZX3E4yoYZcnl13o5HQ+n1zgFS34Nzsl1C2mdXuMU7PMW
+BJRtaCpeecTDfUnVT/x4tD7O8jn616nz1xUuGt7w6ITP/Xmfoj0s8n/sFSIz
+Low4Szw8Jov33F+FgfezIn+r+UDkH77/I+0K+MywRm7+0P6hGF7vM2rbIh4V
+i4S1EvOeGP6ZOY+hHxKPi7GR5GkFYxDBsmwGS5RlWzSg6QYxPDlYjt7+vQfU
+q2G6G6bNdF6rD1naPKZXHNk0wEx/yxEITWgLzzCTB0eoBBV2RrR3eEC7Xxcv
+sHeLvXdUPcfFz2KPaLFjllc1foD7hphWsbBOLGISOxMkXZJJxLEMuWAALuEY
+PcebBKBQW0XOT8Qk9ndiIbFKqlgGnBuayS+SbxGj0KUdz4sUaUdUJ492YhCL
+mMSOAppMv/zGA17ajqQFawhj+YSvWI19PltixFmKqRYsyyXZKEZaS4fZnVas
+hjbnNo+ChUVtVMP1omvWUaCfxW/EUuFqqTX9m21W7es8nTyl/oxrPhfaXtOX
+MT5AkykHHvDSdgwpw1+iyRgfjeLiHnU8I5ri2NoYw9i4QJMpHh7w0nZw7zYm
+mkS8GTP7SvX7JSKGKW64jbHEiIO96hQez3s8ZHYf+nKECKb+NtEGzpvviyYT
+Pm3EcJ2D0WJajuTBQ2bYqEz8wMpkcErtu8TLxTC4X3pJNI1L0kYs0z0YudGA
+FlNctOPBG64rU1RARH4kborqoPZj4mGx8cUCuVaJG8Q0cVDB/hQpDKiJ/C/K
+tmQ/1f7NovNXdeqTGu5SJB6RmI5gkdvQjPZc8KyyFrk4Jm1ozhXPKTvPzE3i
+itSGRrQWAo9LxR9ikQrUrAVtaCwUOMm+KB4Vm8Xm+RotaLJdALQ7Xwwq/b3i
+TvFXMeuCkZPcaEBLqvgPBhCuiZo8+sAAAAAASUVORK5CYII=
+" alt="">
+      <h1 class="title">RuboCop Inspection Report</h1>
+    </div>
+    <div class="information">
+      <div class="infobox">
+        <div class="total">
+          1 file inspected,
+          165 offenses detected:
+        </div>
+        <ul class="offenses-list">
+          
+            
+            <li>
+              <a href="#offense_Scripts/SaneMaster.rb">
+                Scripts/SaneMaster.rb - 165 offenses
+              </a>
+            </li>
+          
+        </ul>
+      </div>
+    </div>
+    <div id="offenses">
+      
+      
+      <div class="offense-box" id="offense_Scripts/SaneMaster.rb">
+        <div class="box-title-placeholder"><h3>&nbsp;</h3></div>
+        <div class="box-title"><h3>Scripts/SaneMaster.rb - 165 offenses</h3></div>
+        <div class="offense-reports">
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #1</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/FrozenStringLiteralComment: Missing frozen string literal comment.</span>
+            </div>
+            
+            <pre><code><span class="highlight convention">#</span>!/usr/bin/env ruby</code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #23</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Metrics/ClassLength: Class has too many lines. [223/100]</span>
+            </div>
+            
+            <pre><code><span class="highlight convention">class SaneMaster</span> <span class="extra-code">...</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #25</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>    @bundle_id = <span class="highlight convention">&quot;com.sanevideo.SaneVideo&quot;</span> # Centralized for tccutil</code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #28</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Metrics/AbcSize: Assignment Branch Condition size for run is too high. [<1, 16, 11> 19.44/17]</span>
+            </div>
+            
+            <pre><code>  <span class="highlight convention">def run(args)</span> <span class="extra-code">...</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #28</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Metrics/CyclomaticComplexity: Cyclomatic complexity for run is too high. [12/7]</span>
+            </div>
+            
+            <pre><code>  <span class="highlight convention">def run(args)</span> <span class="extra-code">...</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #28</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Metrics/MethodLength: Method has too many lines. [20/10]</span>
+            </div>
+            
+            <pre><code>  <span class="highlight convention">def run(args)</span> <span class="extra-code">...</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #36</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>    when <span class="highlight convention">&quot;diagnose&quot;</span> then diagnose(args.first)</code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #37</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>    when <span class="highlight convention">&quot;doctor&quot;</span>   then doctor</code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #38</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>    when <span class="highlight convention">&quot;verify&quot;</span>   then verify(args)</code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #39</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>    when <span class="highlight convention">&quot;clean&quot;</span>    then clean(args)</code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #40</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>    when <span class="highlight convention">&quot;reset&quot;</span>    then reset_permissions</code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #41</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>    when <span class="highlight convention">&quot;audit&quot;</span>    then audit_project</code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #42</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>    when <span class="highlight convention">&quot;setup&quot;</span>    then setup_environment</code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #43</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>    when <span class="highlight convention">&quot;lint&quot;</span>     then run_lint</code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #44</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>    when <span class="highlight convention">&quot;quality&quot;</span>  then run_quality_report</code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #45</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>    when <span class="highlight convention">&quot;restore&quot;</span>  then restore_xcode</code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #54</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Metrics/MethodLength: Method has too many lines. [13/10]</span>
+            </div>
+            
+            <pre><code>  <span class="highlight convention">def restore_xcode</span> <span class="extra-code">...</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #55</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>    puts <span class="highlight convention">&quot;🛠️ --- [ SANEMASTER RESTORE ] ---&quot;</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #56</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>    puts <span class="highlight convention">&quot;Fixing common Xcode/Launch Services issues...&quot;</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #57</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Layout/TrailingWhitespace: Trailing whitespace detected.</span>
+            </div>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #59</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>    lsregister = <span class="highlight convention">&quot;/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister&quot;</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #59</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Layout/LineLength: Line is too long. [123/120]</span>
+            </div>
+            
+            <pre><code>    lsregister = &quot;/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregist<span class="highlight convention">er&quot;</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #61</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>      print <span class="highlight convention">&quot;  Resetting Launch Services database... &quot;</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #63</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>      puts <span class="highlight convention">&quot;✅&quot;</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #67</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>    print <span class="highlight convention">&quot;  Restarting Dock... &quot;</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #68</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>    system(<span class="highlight convention">&quot;killall Dock&quot;</span>)</code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #69</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>    puts <span class="highlight convention">&quot;✅&quot;</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #72</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>    clean([<span class="highlight convention">&quot;--nuclear&quot;</span>])</code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #73</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Layout/TrailingWhitespace: Trailing whitespace detected.</span>
+            </div>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #77</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Metrics/MethodLength: Method has too many lines. [18/10]</span>
+            </div>
+            
+            <pre><code>  <span class="highlight convention">def setup_environment</span> <span class="extra-code">...</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #78</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>    puts <span class="highlight convention">&quot;🛠️ --- [ SANEMASTER SETUP ] ---&quot;</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #79</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Layout/TrailingWhitespace: Trailing whitespace detected.</span>
+            </div>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #80</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>    print <span class="highlight convention">&quot;📦 Running bundle install... &quot;</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #81</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>    if system(<span class="highlight convention">&quot;bundle install --path vendor/bundle &gt; /dev/null 2&gt;&amp;1&quot;</span>)</code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #82</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>      puts <span class="highlight convention">&quot;✅&quot;</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #84</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>      puts <span class="highlight convention">&quot;❌ FAILED&quot;</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #92</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>        puts <span class="highlight convention">&quot;✅&quot;</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #94</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>        puts <span class="highlight convention">&quot;❌ MISSING&quot;</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #98</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Layout/TrailingWhitespace: Trailing whitespace detected.</span>
+            </div>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #99</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>    puts <span class="highlight convention">&quot;✅ Setup check complete.&quot;</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #102</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Metrics/MethodLength: Method has too many lines. [12/10]</span>
+            </div>
+            
+            <pre><code>  <span class="highlight convention">def reset_permissions</span> <span class="extra-code">...</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #103</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>    puts <span class="highlight convention">&quot;🔐 --- [ SANEMASTER RESET ] ---&quot;</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #105</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Layout/TrailingWhitespace: Trailing whitespace detected.</span>
+            </div>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #111</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>        puts <span class="highlight convention">&quot;✅&quot;</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #113</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>        puts <span class="highlight convention">&quot;⚠️&quot;</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #116</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>    puts <span class="highlight convention">&quot;✅ Privacy permissions cleared. The app will prompt for access on next launch.&quot;</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #119</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Metrics/AbcSize: Assignment Branch Condition size for audit_project is too high. [<14, 30, 14> 35.94/17]</span>
+            </div>
+            
+            <pre><code>  <span class="highlight convention">def audit_project</span> <span class="extra-code">...</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #119</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Metrics/CyclomaticComplexity: Cyclomatic complexity for audit_project is too high. [13/7]</span>
+            </div>
+            
+            <pre><code>  <span class="highlight convention">def audit_project</span> <span class="extra-code">...</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #119</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Metrics/MethodLength: Method has too many lines. [40/10]</span>
+            </div>
+            
+            <pre><code>  <span class="highlight convention">def audit_project</span> <span class="extra-code">...</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #119</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Metrics/PerceivedComplexity: Perceived complexity for audit_project is too high. [14/8]</span>
+            </div>
+            
+            <pre><code>  <span class="highlight convention">def audit_project</span> <span class="extra-code">...</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #120</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>    puts <span class="highlight convention">&quot;🔍 --- [ SANEMASTER AUDIT ] ---&quot;</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #126</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Layout/TrailingWhitespace: Trailing whitespace detected.</span>
+            </div>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #127</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>    project_path = <span class="highlight convention">&quot;SaneVideo.xcodeproj&quot;</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #128</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/IfUnlessModifier: Favor modifier <code>unless</code> usage when having a single-line body. Another good alternative is the usage of control flow <code>&&</code>/<code>||</code>.</span>
+            </div>
+            
+            <pre><code>    <span class="highlight convention">unless</span> File.exist?(project_path)</code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #134</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Layout/TrailingWhitespace: Trailing whitespace detected.</span>
+            </div>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #135</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>    puts <span class="highlight convention">&quot;📂 Scanning Swift files for missing identifiers...&quot;</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #137</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>      next unless file.path.end_with?(<span class="highlight convention">&quot;.swift&quot;</span>)</code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #138</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Layout/EmptyLineAfterGuardClause: Add empty line after guard clause.</span>
+            </div>
+            
+            <pre><code>      <span class="highlight convention">next if file.path.include?(&quot;Test&quot;)</span> # Skip test files</code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #138</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>      next if file.path.include?(<span class="highlight convention">&quot;Test&quot;</span>) # Skip test files</code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #147</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Layout/EmptyLineAfterGuardClause: Add empty line after guard clause.</span>
+            </div>
+            
+            <pre><code>      <span class="highlight convention">next unless File.exist?(path)</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #149</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Layout/TrailingWhitespace: Trailing whitespace detected.</span>
+            </div>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #156</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Layout/SpaceAroundOperators: Surrounding space missing for operator <code>+</code>.</span>
+            </div>
+            
+            <pre><code>          context = content[start_idx..start_idx<span class="highlight convention">+</span>200] || &quot;&quot;</code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #156</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>          context = content[start_idx..start_idx+200] || <span class="highlight convention">&quot;&quot;</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #157</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>          unless context.include?(<span class="highlight convention">&quot;accessibilityIdentifier&quot;</span>)</code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #165</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/NumericPredicate: Use <code>missing_count.zero?</code> instead of <code>missing_count == 0</code>.</span>
+            </div>
+            
+            <pre><code>    if <span class="highlight convention">missing_count == 0</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #166</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>      puts <span class="highlight convention">&quot;✅ Audit Passed: All detected interactive elements have identifiers.&quot;</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #173</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>    puts <span class="highlight convention">&quot;🎨 --- [ SANEMASTER LINT ] ---&quot;</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #174</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>    if system(<span class="highlight convention">&quot;bundle exec fastlane lint&quot;</span>)</code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #175</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>      puts <span class="highlight convention">&quot;✅ Linting complete.&quot;</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #177</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>      puts <span class="highlight convention">&quot;❌ Linting failed or SwiftLint not found.&quot;</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #182</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>    puts <span class="highlight convention">&quot;📊 --- [ SANEMASTER QUALITY ] ---&quot;</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #183</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>    if system(<span class="highlight convention">&quot;bundle exec fastlane quality&quot;</span>)</code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #184</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>      puts <span class="highlight convention">&quot;✅ Quality report generation complete.&quot;</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #186</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>      puts <span class="highlight convention">&quot;❌ Quality report generation failed.&quot;</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #197</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>      puts <span class="highlight convention">&quot;❌ Failed to export diagnostics.&quot;</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #201</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Metrics/AbcSize: Assignment Branch Condition size for doctor is too high. [<8, 27, 16> 32.39/17]</span>
+            </div>
+            
+            <pre><code>  <span class="highlight convention">def doctor</span> <span class="extra-code">...</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #201</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Metrics/CyclomaticComplexity: Cyclomatic complexity for doctor is too high. [15/7]</span>
+            </div>
+            
+            <pre><code>  <span class="highlight convention">def doctor</span> <span class="extra-code">...</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #201</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Metrics/MethodLength: Method has too many lines. [23/10]</span>
+            </div>
+            
+            <pre><code>  <span class="highlight convention">def doctor</span> <span class="extra-code">...</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #201</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Metrics/PerceivedComplexity: Perceived complexity for doctor is too high. [16/8]</span>
+            </div>
+            
+            <pre><code>  <span class="highlight convention">def doctor</span> <span class="extra-code">...</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #202</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>    puts <span class="highlight convention">&quot;🩺 --- [ SANEMASTER DOCTOR ] ---&quot;</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #204</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiteralsInInterpolation: Prefer single-quoted strings inside interpolations.</span>
+            </div>
+            
+            <pre><code>    puts &quot;📂 Project: #{File.directory?(<span class="highlight convention">&quot;SaneVideo.xcodeproj&quot;</span>) ? &quot;✅ Found&quot; : &quot;❌ Missing&quot;}&quot;</code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #204</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiteralsInInterpolation: Prefer single-quoted strings inside interpolations.</span>
+            </div>
+            
+            <pre><code>    puts &quot;📂 Project: #{File.directory?(&quot;SaneVideo.xcodeproj&quot;) ? <span class="highlight convention">&quot;✅ Found&quot;</span> : &quot;❌ Missing&quot;}&quot;</code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #204</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiteralsInInterpolation: Prefer single-quoted strings inside interpolations.</span>
+            </div>
+            
+            <pre><code>    puts &quot;📂 Project: #{File.directory?(&quot;SaneVideo.xcodeproj&quot;) ? &quot;✅ Found&quot; : <span class="highlight convention">&quot;❌ Missing&quot;</span>}&quot;</code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #205</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>    test_video = <span class="highlight convention">&quot;/tmp/SaneVideo/test_video.mp4&quot;</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #206</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiteralsInInterpolation: Prefer single-quoted strings inside interpolations.</span>
+            </div>
+            
+            <pre><code>    puts &quot;📁 Mock Video: #{File.exist?(test_video) ? <span class="highlight convention">&quot;✅ Found&quot;</span> : &quot;⚠️  Missing&quot;}&quot;</code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #206</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiteralsInInterpolation: Prefer single-quoted strings inside interpolations.</span>
+            </div>
+            
+            <pre><code>    puts &quot;📁 Mock Video: #{File.exist?(test_video) ? &quot;✅ Found&quot; : <span class="highlight convention">&quot;⚠️  Missing&quot;</span>}&quot;</code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #207</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Layout/TrailingWhitespace: Trailing whitespace detected.</span>
+            </div>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #211</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiteralsInInterpolation: Prefer single-quoted strings inside interpolations.</span>
+            </div>
+            
+            <pre><code>      puts &quot;🔧 #{tool}: #{status ? <span class="highlight convention">&quot;✅&quot;</span> : &quot;❌&quot;}&quot;</code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #211</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiteralsInInterpolation: Prefer single-quoted strings inside interpolations.</span>
+            </div>
+            
+            <pre><code>      puts &quot;🔧 #{tool}: #{status ? &quot;✅&quot; : <span class="highlight convention">&quot;❌&quot;</span>}&quot;</code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #217</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>    Dir.glob(<span class="highlight convention">&quot;**/*.swift&quot;</span>).each do |path|</code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #218</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Layout/EmptyLineAfterGuardClause: Add empty line after guard clause.</span>
+            </div>
+            
+            <pre><code>      <span class="highlight convention">next if path.include?(&quot;Test&quot;) || path.include?(&quot;Packages/&quot;) || path.include?(&quot;.derivedData/&quot;) || path.include?(&quot;vendor/&quot;)</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #218</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/IfUnlessModifier: Modifier form of <code>if</code> makes the line too long.</span>
+            </div>
+            
+            <pre><code>      next <span class="highlight convention">if</span> path.include?(&quot;Test&quot;) || path.include?(&quot;Packages/&quot;) || path.include?(&quot;.derivedData/&quot;) || path.include?(&quot;vendor/&quot;)</code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #218</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>      next if path.include?(<span class="highlight convention">&quot;Test&quot;</span>) || path.include?(&quot;Packages/&quot;) || path.include?(&quot;.derivedData/&quot;) || path.include?(&quot;vendor/&quot;)</code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #218</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>      next if path.include?(&quot;Test&quot;) || path.include?(<span class="highlight convention">&quot;Packages/&quot;</span>) || path.include?(&quot;.derivedData/&quot;) || path.include?(&quot;vendor/&quot;)</code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #218</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>      next if path.include?(&quot;Test&quot;) || path.include?(&quot;Packages/&quot;) || path.include?(<span class="highlight convention">&quot;.derivedData/&quot;</span>) || path.include?(&quot;vendor/&quot;)</code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #218</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>      next if path.include?(&quot;Test&quot;) || path.include?(&quot;Packages/&quot;) || path.include?(&quot;.derivedData/&quot;) || path.include?(<span class="highlight convention">&quot;vendor/&quot;</span>)</code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #218</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Layout/LineLength: Line is too long. [127/120]</span>
+            </div>
+            
+            <pre><code>      next if path.include?(&quot;Test&quot;) || path.include?(&quot;Packages/&quot;) || path.include?(&quot;.derivedData/&quot;) || path.include?(&quot;ve<span class="highlight convention">ndor/&quot;)</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #224</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>      puts <span class="highlight convention">&quot;✅ All Swift files are within the 500-line modularity limit.&quot;</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #226</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>      puts <span class="highlight convention">&quot;⚠️  Modularity Violations:&quot;</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #233</span> –
+              <span class="severity warning">warning:</span>
+              <span class="message">Lint/UnusedMethodArgument: Unused method argument - <code>args</code>. If it's necessary, use <code>_</code> or <code>_args</code> as an argument name to indicate that it won't be used. If it's unnecessary, remove it. You can also write as <code>verify(*)</code> if you want the method to accept any arguments but don't care about them.</span>
+            </div>
+            
+            <pre><code>  def verify(<span class="highlight warning">args</span> = [])</code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #234</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>    puts <span class="highlight convention">&quot;🚀 --- [ SANEMASTER VERIFY ] ---&quot;</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #235</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Layout/TrailingWhitespace: Trailing whitespace detected.</span>
+            </div>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #236</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>    success = system(<span class="highlight convention">&quot;bundle exec fastlane verify&quot;</span>)</code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #237</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Layout/TrailingWhitespace: Trailing whitespace detected.</span>
+            </div>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #241</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>      bundle_path = <span class="highlight convention">&quot;fastlane/test_output/SaneVideo.xcresult&quot;</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #247</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Metrics/AbcSize: Assignment Branch Condition size for clean is too high. [<5, 21, 5> 22.16/17]</span>
+            </div>
+            
+            <pre><code>  <span class="highlight convention">def clean(args = [])</span> <span class="extra-code">...</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #247</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Metrics/MethodLength: Method has too many lines. [25/10]</span>
+            </div>
+            
+            <pre><code>  <span class="highlight convention">def clean(args = [])</span> <span class="extra-code">...</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #248</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>    puts <span class="highlight convention">&quot;🧹 --- [ SANEMASTER CLEAN ] ---&quot;</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #249</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>    nuclear = args.include?(<span class="highlight convention">&quot;--nuclear&quot;</span>)</code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #250</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Layout/TrailingWhitespace: Trailing whitespace detected.</span>
+            </div>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #251</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>    puts <span class="highlight convention">&quot;Cleaning build artifacts...&quot;</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #252</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>    system(<span class="highlight convention">&quot;xcodebuild clean -scheme SaneVideo -quiet&quot;</span>)</code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #253</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Layout/TrailingWhitespace: Trailing whitespace detected.</span>
+            </div>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #255</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>      puts <span class="highlight convention">&quot;☢️  PERFORMING NUCLEAR CLEAN...&quot;</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #257</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>        <span class="highlight convention">&quot;~/Library/Developer/Xcode/DerivedData&quot;</span>,</code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #258</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>        <span class="highlight convention">&quot;./.derivedData&quot;</span>,</code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #259</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>        <span class="highlight convention">&quot;./.swiftpm&quot;</span>,</code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #260</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>        <span class="highlight convention">&quot;./build&quot;</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #263</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/Next: Use <code>next</code> to skip iteration.</span>
+            </div>
+            
+            <pre><code>        <span class="highlight convention">if File.exist?(expanded_path)</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #266</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>          puts <span class="highlight convention">&quot;✅&quot;</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #271</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>    FileUtils.rm_rf(Dir.glob(<span class="highlight convention">&quot;/tmp/*.xcresult&quot;</span>))</code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #272</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>    FileUtils.rm_rf(<span class="highlight convention">&quot;/tmp/SaneVideo&quot;</span>)</code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #274</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>    Dir.glob(<span class="highlight convention">&quot;*.log&quot;</span>).each { |f| FileUtils.rm_f(f) }</code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #275</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>    Dir.glob(<span class="highlight convention">&quot;build_log.txt&quot;</span>).each { |f| FileUtils.rm_f(f) }</code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #277</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>    puts <span class="highlight convention">&quot;✅ Clean complete.&quot;</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #282</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Naming/PredicateName: Rename <code>is_gem_installed?</code> to <code>gem_installed?</code>.</span>
+            </div>
+            
+            <pre><code>  def <span class="highlight convention">is_gem_installed?</span>(name)</code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #283</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>    `gem list #{name} -i`.strip == <span class="highlight convention">&quot;true&quot;</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #286</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Metrics/MethodLength: Method has too many lines. [14/10]</span>
+            </div>
+            
+            <pre><code>  <span class="highlight convention">def print_help</span> <span class="extra-code">...</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #287</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>    puts <span class="highlight convention">&quot;SaneMaster: Professional High-Level Power Tools for SaneVideo&quot;</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #288</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>    puts <span class="highlight convention">&quot;Note: Use XcodeBuildMCP for primitive build/test/UI operations.&quot;</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #291</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>    puts <span class="highlight convention">&quot;  verify [--launch]  Build, test, and run intelligent diagnostics on failure.&quot;</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #292</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>    puts <span class="highlight convention">&quot;  diagnose [path]    Deep analysis of SwiftUI traps in an .xcresult bundle.&quot;</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #293</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>    puts <span class="highlight convention">&quot;  doctor             Check environment health and enforce 500-line modularity.&quot;</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #294</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>    puts <span class="highlight convention">&quot;  clean [--nuclear]  Wipe all caches, derived data, and temporary artifacts.&quot;</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #295</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>    puts <span class="highlight convention">&quot;  audit              Scan project for missing accessibility identifiers.&quot;</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #296</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>    puts <span class="highlight convention">&quot;  restore            Restore Launch Services and fix broken Xcode icons.&quot;</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #297</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>    puts <span class="highlight convention">&quot;  reset              Wipe all TCC privacy permissions (Camera, Mic, Screen).&quot;</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #298</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>    puts <span class="highlight convention">&quot;  setup              Provision environment (gems, system dependencies).&quot;</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #299</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>    puts <span class="highlight convention">&quot;  lint               Run SwiftLint with auto-fix and full audit.&quot;</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #300</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>    puts <span class="highlight convention">&quot;  quality            Generate Ruby quality reports (HTML).&quot;</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #313</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>    Dir.glob(<span class="highlight convention">&quot;/tmp/*.xcresult&quot;</span>).max_by { |f| File.mtime(f) }</code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #316</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Metrics/CyclomaticComplexity: Cyclomatic complexity for export_diagnostics is too high. [8/7]</span>
+            </div>
+            
+            <pre><code>  <span class="highlight convention">def export_diagnostics</span> <span class="extra-code">...</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #316</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Metrics/MethodLength: Method has too many lines. [21/10]</span>
+            </div>
+            
+            <pre><code>  <span class="highlight convention">def export_diagnostics</span> <span class="extra-code">...</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #317</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Layout/EmptyLineAfterGuardClause: Add empty line after guard clause.</span>
+            </div>
+            
+            <pre><code>    <span class="highlight convention">return false unless @xcresult_path</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #322</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Layout/TrailingWhitespace: Trailing whitespace detected.</span>
+            </div>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #328</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Layout/TrailingWhitespace: Trailing whitespace detected.</span>
+            </div>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #330</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>    data.fetch(<span class="highlight convention">&quot;actions&quot;</span>, {}).fetch(&quot;_values&quot;, []).each do |action|</code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #330</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>    data.fetch(&quot;actions&quot;, {}).fetch(<span class="highlight convention">&quot;_values&quot;</span>, []).each do |action|</code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #331</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>      diag_ref = action.dig(<span class="highlight convention">&quot;actionResult&quot;</span>, &quot;diagnosticsRef&quot;)</code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #331</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>      diag_ref = action.dig(&quot;actionResult&quot;, <span class="highlight convention">&quot;diagnosticsRef&quot;</span>)</code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #333</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>        diag_id = diag_ref.dig(<span class="highlight convention">&quot;id&quot;</span>, &quot;_value&quot;)</code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #333</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>        diag_id = diag_ref.dig(&quot;id&quot;, <span class="highlight convention">&quot;_value&quot;</span>)</code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #340</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>    @diagnostics_dir = Dir.mktmpdir(<span class="highlight convention">&quot;sanemaster_&quot;</span>)</code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #341</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Layout/LineLength: Line is too long. [138/120]</span>
+            </div>
+            
+            <pre><code>    `xcrun xcresulttool export --legacy --path &quot;#{@xcresult_path}&quot; --id &quot;#{diag_id}&quot; --type directory --output-path &quot;#{@<span class="highlight convention">diagnostics_dir}&quot;`</span></code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #347</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>    return puts <span class="highlight convention">&quot;  ⚠️ No app logs found in diagnostics.&quot;</span> unless log_path</code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #350</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Layout/TrailingWhitespace: Trailing whitespace detected.</span>
+            </div>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #352</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>    puts <span class="highlight convention">&quot;  🔴 WINDOW FOCUS BLOCKED&quot;</span> if content.include?(&quot;makeKeyWindow] called on&quot;) &amp;&amp; content.include?(&quot;returned NO&quot;)</code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #352</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>    puts &quot;  🔴 WINDOW FOCUS BLOCKED&quot; if content.include?(<span class="highlight convention">&quot;makeKeyWindow] called on&quot;</span>) &amp;&amp; content.include?(&quot;returned NO&quot;)</code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #352</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>    puts &quot;  🔴 WINDOW FOCUS BLOCKED&quot; if content.include?(&quot;makeKeyWindow] called on&quot;) &amp;&amp; content.include?(<span class="highlight convention">&quot;returned NO&quot;</span>)</code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #353</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>    puts <span class="highlight convention">&quot;  🟡 DOUBLE BOOTSTRAP DETECTED&quot;</span> if content.scan(/Triggering Editor Bootstrap/).size &gt; 1</code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #354</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>    puts &quot;  🔴 MASKING DETECTED: SwiftUI tree is &#39;Disabled&#39;.&quot; if content.include?(<span class="highlight convention">&quot;SaneVideo, {{Disabled}}&quot;</span>)</code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #355</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>    puts <span class="highlight convention">&quot;  ✅ Window restoration logic verified.&quot;</span> if content.include?(&quot;Restoring main window&quot;)</code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #355</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>    puts &quot;  ✅ Window restoration logic verified.&quot; if content.include?(<span class="highlight convention">&quot;Restoring main window&quot;</span>)</code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #359</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>    Dir.glob(File.join(@diagnostics_dir, <span class="highlight convention">&quot;**&quot;</span>, &quot;StandardOutputAndStandardError*.txt&quot;)).first</code></pre>
+            
+          </div>
+          
+          <div class="report">
+            <div class="meta">
+              <span class="location">Line #359</span> –
+              <span class="severity convention">convention:</span>
+              <span class="message">Style/StringLiterals: Prefer single-quoted strings when you don't need string interpolation or special symbols.</span>
+            </div>
+            
+            <pre><code>    Dir.glob(File.join(@diagnostics_dir, &quot;**&quot;, <span class="highlight convention">&quot;StandardOutputAndStandardError*.txt&quot;</span>)).first</code></pre>
+            
+          </div>
+          
+        </div>
+      </div>
+      
+      
+    </div>
+    <footer>
+      Generated by <a href="https://github.com/rubocop/rubocop">RuboCop</a>
+      <span class="version">1.50.2</span>
+    </footer>
+  </body>
+</html>

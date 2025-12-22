@@ -1,0 +1,108 @@
+name: SaneVideo
+options:
+  bundleIdPrefix: com.sanevideo
+  deploymentTarget:
+    macOS: 26.2
+  xcodeVersion: 16.0
+settings:
+  DEAD_CODE_STRIPPING: YES
+  SWIFT_EMIT_LOC_STRINGS: YES
+  ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS: YES
+packages:
+  swift-grok:
+    url: https://github.com/klu-ai/swift-grok
+    branch: main
+schemes:
+  SaneVideo:
+    build:
+      targets:
+        SaneVideo: all
+        SaneVideoTests: [test]
+    frameworks:
+      - framework: AVFoundation
+      - framework: CoreMedia
+      - framework: Speech
+      - framework: Vision
+      - framework: FoundationModels
+    test:
+      targets:
+        - SaneVideoTests
+        - SaneVideoUITests
+    profile:
+      config: Release
+    run:
+      config: Debug
+    archive:
+      config: Release
+targets:
+  SaneVideo:
+    type: application
+    platform: macOS
+    bundleId: com.sanevideo.app
+    deploymentTarget:
+      macOS: 26.2
+    sources:
+      - path: SaneVideo
+    settings:
+      base:
+        INFOPLIST_FILE: SaneVideo/Info.plist
+        PRODUCT_NAME: SaneVideo
+        ENABLE_PREVIEWS: YES
+        SWIFT_VERSION: 6.2
+        SWIFT_STRICT_CONCURRENCY: complete
+        MACOSX_DEPLOYMENT_TARGET: 26.2
+        ARCHS: arm64
+        VALID_ARCHS: arm64
+        MTL_ENABLE_APPLE_SILICON_ONLY_OPTIMIZATIONS: YES
+        ENABLE_USER_SCRIPT_SANDBOXING: NO
+        CODE_SIGN_ENTITLEMENTS: SaneVideo/SaneVideo.entitlements
+        CODE_SIGN_IDENTITY: "-"
+        CODE_SIGN_STYLE: Manual
+        # Enforce recommended settings
+        DEAD_CODE_STRIPPING: YES
+        SWIFT_EMIT_LOC_STRINGS: YES
+        ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS: YES
+    preCompileScripts:
+      - script: |
+          export PATH="$PATH:/opt/homebrew/bin"
+          if which swiftformat >/dev/null; then
+            swiftformat .
+          else
+            echo "warning: SwiftFormat not installed"
+          fi
+        name: SwiftFormat Auto-fix
+        basedOnDependencyAnalysis: false
+    dependencies:
+      - package: swift-grok
+        product: GrokClient
+    postCompileScripts:
+      - script: |
+          if which swiftlint >/dev/null; then
+            swiftlint "${SRCROOT}/SaneVideo" || true
+          else
+            echo "warning: SwiftLint not installed, download from https://github.com/realm/SwiftLint"
+          fi
+        name: Run SwiftLint
+        basedOnDependencyAnalysis: false
+  SaneVideoTests:
+    type: bundle.unit-test
+    platform: macOS
+    bundleId: com.sanevideo.SaneVideoTests
+    deploymentTarget:
+      macOS: 26.2
+    sources:
+      - SaneVideoTests
+    dependencies:
+      - target: SaneVideo
+  SaneVideoUITests:
+    type: bundle.ui-testing
+    platform: macOS
+    bundleId: com.sanevideo.SaneVideoUITests
+    deploymentTarget:
+      macOS: 26.2
+    sources:
+      - SaneVideoUITests
+    settings:
+      GENERATE_INFOPLIST_FILE: YES
+    dependencies:
+      - target: SaneVideo

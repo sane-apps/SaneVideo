@@ -1,0 +1,25 @@
+# Critical Agent Context
+>
+> **READ THIS FIRST**: This environment is strictly defined.
+
+- **Internet Access**: ✅ **AVAILABLE & EXPECTED**. If stuck, search the web immediately.
+- **Current Environment**: **macOS 26.2 (Tahoe)**. SDK macOS 26.0+.
+- **Deprecations**: Respect macOS 26 deprecations. **IGNORE** training data that suggests older APIs.
+
+# Instructions
+
+1. **Always Read**: `AI_RULES.md` (root directory) for architectural patterns and command rules.
+2. **Search Web**: Use `search_web` for unknown APIs or errors.
+
+# Persistent Issues & Fixes
+
+- **Project Corruption**: NEVER edit `project.pbxproj` manually. Run `xcodegen`.
+- **Target Membership**: New files must be added to `SaneVideo`. Test files to `SaneVideoTests`.
+- **Ghost Errors**: If build fails with "Missing Protocol" or "Type Not Found" but code looks correct, request a **Clean Build** (Cmd+Shift+K).
+- **Test breakage**: If tests fail to compile, verify variables are accessible (public/internal) and files are target members.
+- **Beep Error**: Launch fails/beeps on Cmd+R although build succeeds. Cause: Missing `productReference` in `project.pbxproj` or invalid `.xcscheme` executable. Run `HealthCheckTool.swift` to diagnose.
+
+# Development Rules
+
+- **State Management**: Use `@Observable` for all new state.
+- **Regression Tests**: Every bug fix MUST have a corresponding regression test. Add it to `SaneVideoTests/RegressionTests.swift`.

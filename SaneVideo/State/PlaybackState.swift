@@ -1,0 +1,296 @@
+//
+//  PlaybackState.swift
+//  SaneVideo
+//
+//  Created by SaneVideo Refactor
+//
+
+@preconcurrency import AVFoundation
+import Combine
+import SwiftUI
+
+@MainActor
+@Observable
+class PlaybackState {
+    // MARK: - Published Properties
+
+    var isPlaying = false
+    var currentTime: CMTime = .zero
+    var duration: CMTime = .zero
+    var player: AVPlayer?
+
+    // MARK: - Internal Properties
+
+    private var timeObserver: Any?
+    private var cancellables = Set<AnyCancellable>()
+
+    // MARK: - Initialization
+
+    init() {
+        setupAudioSession()
+    }
+
+    // Helper for safe cleanup of player resources AND security scope
+    // Note: This is a plain class (not MainActor) because deinit must be nonisolated
+    private class TokenHolder {
+        weak var player: AVPlayer?
+        var observer: Any?
+
+        // CRITICAL FIX: Hold security-scoped resource access for duration of playback
+        // Without this, playback of files from Downloads/external drives may fail
+        private var accessedURL: URL?
+
+        func startAccessing(_ url: URL) {
+            // Stop any previous access
+            stopAccessing()
+
+            if url.startAccessingSecurityScopedResource() {
+                accessedURL = url
+            }
+        }
+
+        func stopAccessing() {
+            if let url = accessedURL {
+                url.stopAccessingSecurityScopedResource()
+                accessedURL = nil
+            }
+        }
+
+        deinit {
+            // Inline the security scope release to avoid actor isolation issues
+            // stopAccessingSecurityScopedResource is thread-safe
+            if let url = accessedURL {
+                url.stopAccessingSecurityScopedResource()
+            }
+            if let observer, let player {
+                player.removeTimeObserver(observer)
+            }
+        }
+    }
+
+    private var tokenHolder = TokenHolder()
+
+    nonisolated deinit {
+        // TokenHolder handles cleanup
+    }
+
+    private func setupAudioSession() {
+        // Ensure audio plays even if silent switch is on (iOS) or backgrounded
+        // Less critical for macOS but good practice
+    }
+
+    // MARK: - Player Management
+
+    func loadClip(_ clip: VideoClip) {
+        // Cleanup old player (also releases previous security scope)
+        unload()
+
+        // CRITICAL FIX: Hold security scope for duration of playback
+        // TokenHolder will release it when we unload or load a new clip
+        tokenHolder.startAccessing(clip.url)
+
+        let playerItem = AVPlayerItem(url: clip.url)
+        setupPlayer(with: playerItem, duration: clip.duration)
+
+        AppLogger.playback.info("Loaded clip \(clip.url.lastPathComponent)")
+    }
+
+    // Debounce properties to avoid double-loading
+    // CRITICAL: Track clip IDs, not just count, to detect when clips change
+    private var lastLoadedProjectID: UUID?
+    private var lastLoadedClipsHash: Int = 0
+
+    // CRITICAL FIX: Track loading task for cancellation on rapid reload
+    private var loadingTask: Task<Void, Never>?
+
+    /// Reset playback state - call when switching projects
+    func reset() {
+        loadingTask?.cancel()
+        loadingTask = nil
+        unload()
+        lastLoadedProjectID = nil
+        lastLoadedClipsHash = 0
+        AppLogger.playback.debug("PlaybackState reset")
+    }
+
+    func loadProject(_ project: VideoProject, forceReload: Bool = false) {
+        // GUARD: Don't try to compose empty timelines - causes freeze
+        // Check if any track has any clips
+        let hasClips = project.timeline.tracks.contains { !$0.clips.isEmpty }
+        guard hasClips else {
+            AppLogger.playback.debug("loadProject called with empty timeline - skipping composition")
+            // Still unload old player so we don't show stale video
+            unload()
+            return
+        }
+
+        // Compute hash of clip IDs to detect actual content changes
+        // CRITICAL FIX: Use Hashable array order to ensure reordering triggers reload
+        // Hash all clips in all tracks
+        // Hash all clips in all tracks
+        var hasher = Hasher()
+        // Include project-level properties that affect composition
+        hasher.combine(project.captionOffset.width)
+        hasher.combine(project.captionOffset.height)
+        hasher.combine(project.captionStyleName)
+        hasher.combine(project.captionFontName)
+
+        for track in project.timeline.tracks {
+            for clip in track.clips {
+                hasher.combine(clip)
+            }
+        }
+        let currentClipsHash = hasher.finalize()
+
+        // DEBOUNCE: Skip if we just loaded this exact same project with same clips
+        if !forceReload, lastLoadedProjectID == project.id, lastLoadedClipsHash == currentClipsHash {
+            AppLogger.playback.debug("loadProject skipped - already loaded this exact project state")
+            return
+        }
+
+        // Update tracking BEFORE async work to prevent race conditions
+        lastLoadedProjectID = project.id
+        lastLoadedClipsHash = currentClipsHash
+
+        // CRITICAL FIX: Cancel any previous loading task to prevent races
+        loadingTask?.cancel()
+
+        loadingTask = Task {
+            do {
+                let totalClips = project.timeline.tracks.reduce(0) { $0 + $1.clips.count }
+                AppLogger.playback.debug("Composing player item for project: \(project.name) with \(totalClips) clips")
+                let playerItem = try await ServiceContainer.shared.timelineEngine.composePlayerItem(for: project)
+
+                // Check if task was cancelled while composing
+                guard !Task.isCancelled else { return }
+
+                await MainActor.run {
+                    self.unload()
+                    self.setupPlayer(with: playerItem, duration: project.timeline.duration)
+                    AppLogger.playback.info("Loaded project \(project.name)")
+                }
+            } catch {
+                guard !Task.isCancelled else { return }
+                AppLogger.playback.error("Failed to compose project timeline: \(error)")
+            }
+        }
+    }
+
+    private func setupPlayer(with item: AVPlayerItem, duration: CMTime) {
+        let newPlayer = AVPlayer(playerItem: item)
+        player = newPlayer
+        self.duration = duration
+
+        // Update token holder
+        tokenHolder.player = newPlayer
+
+        // Add time observer
+        let interval = CMTime(seconds: 0.05, preferredTimescale: 600)
+        let observer = newPlayer.addPeriodicTimeObserver(forInterval: interval, queue: DispatchQueue.main) { [weak self] time in
+            guard let self = self else { return }
+            Task { @MainActor in
+                self.currentTime = time
+            }
+        }
+
+        timeObserver = observer
+        tokenHolder.observer = observer
+    }
+
+    func unload() {
+        if let observer = timeObserver {
+            player?.removeTimeObserver(observer)
+            timeObserver = nil
+            tokenHolder.observer = nil
+        }
+        player?.pause()
+        player = nil
+        tokenHolder.player = nil
+
+        // CRITICAL FIX: Release security-scoped resource access
+        tokenHolder.stopAccessing()
+
+        isPlaying = false
+        currentTime = .zero
+        duration = .zero
+    }
+
+    // MARK: - Controls
+
+    func play() {
+        guard let player = player else { return }
+        if player.currentTime() >= duration {
+            player.seek(to: .zero)
+        }
+        player.play()
+        isPlaying = true
+    }
+
+    func pause() {
+        player?.pause()
+        isPlaying = false
+    }
+
+    func togglePlayPause() {
+        if isPlaying {
+            pause()
+        } else {
+            play()
+        }
+    }
+
+    func seek(to time: CMTime) {
+        player?.seek(to: time, toleranceBefore: .zero, toleranceAfter: .zero)
+        currentTime = time
+    }
+
+    func rewind(by seconds: Double = 5.0) {
+        guard duration.seconds > 0 else { return }
+        let newTime = max(0, currentTime.seconds - seconds)
+        seek(to: CMTime(seconds: newTime, preferredTimescale: 600))
+    }
+
+    func forward(by seconds: Double = 5.0) {
+        guard duration.seconds > 0 else { return }
+        let newTime = min(duration.seconds, currentTime.seconds + seconds)
+        seek(to: CMTime(seconds: newTime, preferredTimescale: 600))
+    }
+
+    // MARK: - Frame Stepping (Arrow Keys)
+
+    /// Step forward one frame (~30fps assumed)
+    func stepForward() {
+        pause()
+        let frameDuration = 1.0 / 30.0 // Assume 30fps
+        let newTime = min(duration.seconds, currentTime.seconds + frameDuration)
+        seek(to: CMTime(seconds: newTime, preferredTimescale: 600))
+    }
+
+    /// Step backward one frame (~30fps assumed)
+    func stepBackward() {
+        pause()
+        let frameDuration = 1.0 / 30.0 // Assume 30fps
+        let newTime = max(0, currentTime.seconds - frameDuration)
+        seek(to: CMTime(seconds: newTime, preferredTimescale: 600))
+    }
+
+    // MARK: - Playback Rate Control (J/K/L Shuttle)
+
+    /// Set playback rate for shuttle control (negative = reverse, >1 = fast forward)
+    func setPlaybackRate(_ rate: Float) {
+        guard let player = player else { return }
+
+        if rate == 0 {
+            pause()
+        } else {
+            // Seek requires pause first for reverse playback on some media
+            if rate < 0, player.rate >= 0 {
+                // Going from forward/pause to reverse
+                player.rate = rate
+            } else {
+                player.rate = rate
+            }
+            isPlaying = rate != 0
+        }
+    }
+}

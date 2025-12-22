@@ -1,0 +1,25 @@
+name: Verify SaneVideo
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  verify:
+    runs-on: macos-14
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Ruby
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: '2.6' # Matching local environment for determinism
+        bundler-cache: true # runs 'bundle install' and caches installed gems automatically
+
+    - name: Run SaneMaster Doctor
+      run: bundle exec ./Scripts/SaneMaster.rb doctor
+
+    - name: Run Build and Tests (Fastlane)
+      run: bundle exec fastlane verify

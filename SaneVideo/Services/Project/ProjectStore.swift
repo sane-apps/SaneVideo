@@ -10,6 +10,7 @@ import OSLog
 /// File-based implementation of ProjectStoreProtocol
 final class ProjectStore: ProjectStoreProtocol {
     private let projectsDirectory: URL
+    private let loadState = OSAllocatedUnfairLock<Task<[VideoProject], Error>?>(initialState: nil)
 
     init(rootDirectory: URL? = nil) {
         if let rootDirectory {
@@ -60,64 +61,78 @@ final class ProjectStore: ProjectStoreProtocol {
     // MARK: - ProjectStoreProtocol
 
     func loadProjects() async throws -> [VideoProject] {
-        NSLog("🕵️‍♀️ ProjectStore: loadProjects called!")
-        for symbol in Thread.callStackSymbols.prefix(10) { NSLog("\(symbol)") }
-        let directory = projectsDirectory
-        return try await Task.detached(priority: .userInitiated) {
-            let fileManager = FileManager.default
-
-            var projectFiles = try fileManager.contentsOfDirectory(
-                at: directory,
-                includingPropertiesForKeys: [.contentModificationDateKey],
-                options: [.skipsHiddenFiles]
-            ).filter { $0.pathExtension == "svproj" }
-
-            // Sort by modification date (newest first)
-            projectFiles.sort { url1, url2 in
-                let date1 = (try? url1.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast
-                let date2 = (try? url2.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast
-                return date1 > date2
+        let task = loadState.withLock { state -> Task<[VideoProject], Error> in
+            if let existing = state {
+                AppLogger.project.debug("♻️ ProjectStore: Reusing existing load task")
+                return existing
             }
+            
+            // Capture necessary values to avoid capturing `self` strongly if possible,
+            // or rely on self being Sendable.
+            let directory = projectsDirectory
+            
+            let newTask = Task<[VideoProject], Error> {
+                NSLog("🕵️‍♀️ ProjectStore: loadProjects started loading from disk")
+                let fileManager = FileManager.default
 
-            await MainActor.run {
+                var projectFiles = try fileManager.contentsOfDirectory(
+                    at: directory,
+                    includingPropertiesForKeys: [.contentModificationDateKey],
+                    options: [.skipsHiddenFiles]
+                ).filter { $0.pathExtension == "svproj" }
+
+                // Sort by modification date (newest first)
+                projectFiles.sort { url1, url2 in
+                    let date1 = (try? url1.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast
+                    let date2 = (try? url2.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast
+                    return date1 > date2
+                }
+
                 AppLogger.project.info("Found \(projectFiles.count) project files on disk")
-            }
 
-            // Load all projects (removed hardcoded limit of 10)
-            let limitedFiles = projectFiles
+                var projects: [VideoProject] = []
 
-            var projects: [VideoProject] = []
+                for fileURL in projectFiles {
+                    do {
+                        // Load file data
+                        let data = try Data(contentsOf: fileURL)
 
-            for fileURL in limitedFiles {
-                do {
-                    // Load file data on background thread to avoid blocking
-                    let data = try await Task.detached(priority: .utility) {
-                        try Data(contentsOf: fileURL)
-                    }.value
+                        // Decode on MainActor to satisfy Swift 6 Codable isolation
+                        let rawProject = try await MainActor.run {
+                            try JSONDecoder().decode(VideoProject.self, from: data)
+                        }
 
-                    // Decode on MainActor to satisfy Swift 6 Codable isolation
-                    let rawProject = try await MainActor.run {
-                        try JSONDecoder().decode(VideoProject.self, from: data)
-                    }
+                        // Hydrate project
+                        let hydratedProject = await MainActor.run {
+                            ServiceContainer.shared.projectFileManager.hydrateProject(rawProject)
+                        }
 
-                    // Hydrate project (resolve bookmarks, update URLs)
-                    // ProjectFileManager is now Sendable, so calling it from Task.detached is safe.
-                    let hydratedProject = await MainActor.run {
-                        ServiceContainer.shared.projectFileManager.hydrateProject(rawProject)
-                    }
-
-                    projects.append(hydratedProject)
-                } catch {
-                    await MainActor.run {
-                        AppLogger.logError(
-                            AppError.projectLoadFailed(error),
-                            category: AppLogger.project
-                        )
+                        projects.append(hydratedProject)
+                    } catch {
+                        AppLogger.project.error("Failed to load project at \(fileURL.path): \(error)")
                     }
                 }
+                return projects
             }
+            
+            state = newTask
+            return newTask
+        }
+        
+        do {
+            let projects = try await task.value
+            
+            loadState.withLock { state in
+                if state == task { state = nil }
+            }
+            
             return projects
-        }.value
+        } catch {
+            loadState.withLock { state in
+                if state == task { state = nil }
+            }
+            throw error
+        }
     }
 
     func saveProject(_ project: VideoProject) async throws {

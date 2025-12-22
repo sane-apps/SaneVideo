@@ -207,6 +207,7 @@
 		CD7563A9CFA391B987220603 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 8D630F6720BAA0E8012A9030 /* README.md */; };
 		CE0CE49A717CF0CAAF020B37 /* GlobalHotkeyManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7FFED499B0C58F7E40E93FF0 /* GlobalHotkeyManager.swift */; };
 		CEC2679F2CC9324B628711C6 /* EffectsPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B96C6D68D62D1C359649D097 /* EffectsPickerView.swift */; };
+		CFB0F539C15BA20B0AB4FB72 /* GlobalMagicView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B1314773BD9E52D4560371A /* GlobalMagicView.swift */; };
 		D045E773D7F3125F368B1678 /* PDFExportDocument.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADECD46DE6680A0000F612F8 /* PDFExportDocument.swift */; };
 		D084129F4434B991B1B797CC /* Secrets.template.txt in Resources */ = {isa = PBXBuildFile; fileRef = 38C8B42BB99239E4533CE63D /* Secrets.template.txt */; };
 		D0DE60238E30EEAC37CFC699 /* ThumbnailService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C31421456AC06BE56C27C36 /* ThumbnailService.swift */; };
@@ -296,6 +297,7 @@
 		168B46724094D3DB80AF8610 /* GIFExportSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GIFExportSheet.swift; sourceTree = "<group>"; };
 		177A6A8A8E7871FA5585D142 /* ProjectState+AudioServices.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ProjectState+AudioServices.swift"; sourceTree = "<group>"; };
 		1ABC689676CADC2A598218DC /* ProjectState+Editing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ProjectState+Editing.swift"; sourceTree = "<group>"; };
+		1B1314773BD9E52D4560371A /* GlobalMagicView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlobalMagicView.swift; sourceTree = "<group>"; };
 		1D4C444510E4293654872089 /* VideoClip+TimeMapping.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "VideoClip+TimeMapping.swift"; sourceTree = "<group>"; };
 		1D9D206CAEC553C2BDBF5417 /* ProjectState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectState.swift; sourceTree = "<group>"; };
 		1FCD8AAB387D843690989FC6 /* SanePerformanceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SanePerformanceTests.swift; sourceTree = "<group>"; };
@@ -733,6 +735,7 @@
 				6E07F10E52A2B1DB6429E946 /* ClipTrimHandle.swift */,
 				29E2E80D424936C20D07B098 /* ClipWaveformCalculator.swift */,
 				B96C6D68D62D1C359649D097 /* EffectsPickerView.swift */,
+				1B1314773BD9E52D4560371A /* GlobalMagicView.swift */,
 				D483F636C49C974165C17B4C /* InspectorHelpers.swift */,
 				3876A0E22E0EB36CBFCA8D6C /* LogView.swift */,
 				7F80F1B31EA24B8DF63A1A71 /* ModeSwitcherView.swift */,
@@ -1370,6 +1373,7 @@
 				7061A3A2D9730C1193D616E0 /* GeminiProvider.swift in Sources */,
 				C8F2714B13CE7D414EA0E9F3 /* GenerativeVisionService.swift in Sources */,
 				CE0CE49A717CF0CAAF020B37 /* GlobalHotkeyManager.swift in Sources */,
+				CFB0F539C15BA20B0AB4FB72 /* GlobalMagicView.swift in Sources */,
 				39AE0D733DBF2FBA50588142 /* GlobalSheetModifier.swift in Sources */,
 				9DB23D37442BB0130811A917 /* HapticsManager.swift in Sources */,
 				97CBCA44F4F7EAD75D573E6C /* InspectorHelpers.swift in Sources */,

@@ -321,5 +321,3 @@ final class SaneEditorFeatureTests: XCTestCase {
         }
     }
 }
-
-

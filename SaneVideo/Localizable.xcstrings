@@ -154,6 +154,17 @@
         }
       }
     },
+    "action.import_first_video" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Import Your First Video"
+          }
+        }
+      }
+    },
     "action.more_options" : {
       "extractionState" : "extracted_with_value",
       "localizations" : {
@@ -205,28 +216,6 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Jump to first caption"
-          }
-        }
-      }
-    },
-    "action.redo" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Redo"
-          }
-        }
-      }
-    },
-    "action.redo.help" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Redo last action"
           }
         }
       }
@@ -297,28 +286,6 @@
         }
       }
     },
-    "action.undo" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Undo"
-          }
-        }
-      }
-    },
-    "action.undo.help" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Undo last action"
-          }
-        }
-      }
-    },
     "action.youtube" : {
       "extractionState" : "extracted_with_value",
       "localizations" : {
@@ -330,6 +297,12 @@
         }
       }
     },
+    "Advanced Settings" : {
+
+    },
+    "AI-Powered Polish" : {
+
+    },
     "app.name" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -340,6 +313,9 @@
           }
         }
       }
+    },
+    "Apply Magic Fix to Selected Clip (Cmd+Shift+M)" : {
+
     },
     "aspect_ratio.1_1" : {
       "extractionState" : "extracted_with_value",
@@ -1289,13 +1265,27 @@
     "Duration: %@" : {
 
     },
-    "editor.no_project" : {
+    "Editor" : {
+
+    },
+    "editor.empty.subtitle" : {
       "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "No Project Loaded"
+            "value" : "Drop a video here or record to see the magic."
+          }
+        }
+      }
+    },
+    "editor.empty.title" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Starting Something Great?"
           }
         }
       }
@@ -1803,6 +1793,9 @@
           }
         }
       }
+    },
+    "Export and Share Video" : {
+
     },
     "export.action.batch_export" : {
       "extractionState" : "extracted_with_value",
@@ -2330,6 +2323,12 @@
         }
       }
     },
+    "Global Magic" : {
+
+    },
+    "Global Magic actions analyze your entire timeline to ensure consistency in color, audio levels, and caption styles." : {
+
+    },
     "global.action.cancel" : {
       "extractionState" : "extracted_with_value",
       "localizations" : {
@@ -2518,6 +2517,9 @@
         }
       }
     },
+    "Magic Fix" : {
+
+    },
     "menu.file.export_gif" : {
       "extractionState" : "extracted_with_value",
       "localizations" : {
@@ -2661,6 +2663,28 @@
         }
       }
     },
+    "menu.view.toggle_inspector" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Toggle Inspector"
+          }
+        }
+      }
+    },
+    "menu.view.toggle_sidebar" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Toggle Sidebar"
+          }
+        }
+      }
+    },
     "mic.mute" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2684,6 +2708,9 @@
       }
     },
     "Microphone" : {
+
+    },
+    "Minimal Fix" : {
 
     },
     "mode.action.export" : {
@@ -2792,6 +2819,9 @@
 
     },
     "No microphones found" : {
+
+    },
+    "Orchestrate your entire project with AI." : {
 
     },
     "Pause recording" : {
@@ -2907,13 +2937,25 @@
         }
       }
     },
+    "Presets" : {
+
+    },
     "Preview" : {
+
+    },
+    "Pro Clean-up" : {
+
+    },
+    "Pro Tip" : {
 
     },
     "REC" : {
 
     },
     "Recent" : {
+
+    },
+    "Record" : {
 
     },
     "Record your screen" : {
@@ -3596,6 +3638,9 @@
         }
       }
     },
+    "Share" : {
+
+    },
     "sidebar.action.cancel" : {
       "extractionState" : "extracted_with_value",
       "localizations" : {
@@ -3739,17 +3784,6 @@
         }
       }
     },
-    "sidebar.header" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Media"
-          }
-        }
-      }
-    },
     "sidebar.menu.captions" : {
       "extractionState" : "extracted_with_value",
       "localizations" : {
@@ -3852,182 +3886,6 @@
     "sk-..." : {
 
     },
-    "smart_tools.action.apply.title" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Apply Super Magic Fix"
-          }
-        }
-      }
-    },
-    "smart_tools.analysis.find_highlights.subtitle" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Applause/Laughter detection"
-          }
-        }
-      }
-    },
-    "smart_tools.analysis.find_highlights.title" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Find Highlights"
-          }
-        }
-      }
-    },
-    "smart_tools.analysis.header" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "AI ANALYSIS"
-          }
-        }
-      }
-    },
-    "smart_tools.analysis.mood_grading.subtitle" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Grade based on sentiment"
-          }
-        }
-      }
-    },
-    "smart_tools.analysis.mood_grading.title" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Mood Grading"
-          }
-        }
-      }
-    },
-    "smart_tools.analysis.scan_text.subtitle" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "OCR analysis & indexing"
-          }
-        }
-      }
-    },
-    "smart_tools.analysis.scan_text.title" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Scan for Text"
-          }
-        }
-      }
-    },
-    "smart_tools.audio.header" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "AUDIO"
-          }
-        }
-      }
-    },
-    "smart_tools.audio.remove_fillers.subtitle" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Cut 'um', 'uh', stutters"
-          }
-        }
-      }
-    },
-    "smart_tools.audio.remove_fillers.title" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Remove Fillers"
-          }
-        }
-      }
-    },
-    "smart_tools.audio.remove_silence.subtitle" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Cut non-speech gaps"
-          }
-        }
-      }
-    },
-    "smart_tools.audio.remove_silence.title" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Remove Silence"
-          }
-        }
-      }
-    },
-    "smart_tools.audio.studio_sound.subtitle" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "AI voice enhancement"
-          }
-        }
-      }
-    },
-    "smart_tools.audio.studio_sound.title" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Studio Sound"
-          }
-        }
-      }
-    },
-    "smart_tools.audio.threshold" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Threshold"
-          }
-        }
-      }
-    },
     "smart_tools.footer.description" : {
       "extractionState" : "extracted_with_value",
       "localizations" : {
@@ -4039,214 +3897,8 @@
         }
       }
     },
-    "smart_tools.generative.cinematic_styles.subtitle" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Prompt-based restyling"
-          }
-        }
-      }
-    },
-    "smart_tools.generative.cinematic_styles.title" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Cinematic Styles"
-          }
-        }
-      }
-    },
-    "smart_tools.generative.header" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "GENERATIVE VISUALS"
-          }
-        }
-      }
-    },
-    "smart_tools.generative.magic_remove.subtitle" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "AI object/people removal"
-          }
-        }
-      }
-    },
-    "smart_tools.generative.magic_remove.title" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Magic Remove"
-          }
-        }
-      }
-    },
-    "smart_tools.preset.minimal" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Minimal Fix"
-          }
-        }
-      }
-    },
-    "smart_tools.preset.pro" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Pro Clean-up"
-          }
-        }
-      }
-    },
-    "smart_tools.preset.social" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Social Media Ready"
-          }
-        }
-      }
-    },
-    "smart_tools.presets.header" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "PRESETS"
-          }
-        }
-      }
-    },
-    "smart_tools.presets.label" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Presets"
-          }
-        }
-      }
-    },
-    "smart_tools.video.auto_color.subtitle" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Light & color fix"
-          }
-        }
-      }
-    },
-    "smart_tools.video.auto_color.title" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Auto Color"
-          }
-        }
-      }
-    },
-    "smart_tools.video.auto_framing.subtitle" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Track faces & focus"
-          }
-        }
-      }
-    },
-    "smart_tools.video.auto_framing.title" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Auto-Framing"
-          }
-        }
-      }
-    },
-    "smart_tools.video.header" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "VIDEO & FRAMING"
-          }
-        }
-      }
-    },
-    "smart_tools.video.highlight_cursor.subtitle" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "For screen recordings"
-          }
-        }
-      }
-    },
-    "smart_tools.video.highlight_cursor.title" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Highlight Cursor"
-          }
-        }
-      }
-    },
-    "smart_tools.video.smart_crop.subtitle" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Auto vertical reframe"
-          }
-        }
-      }
-    },
-    "smart_tools.video.smart_crop.title" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Smart Crop (9:16)"
-          }
-        }
-      }
+    "Social Media Ready" : {
+
     },
     "Start Your Project" : {
 
@@ -4284,6 +3936,9 @@
           }
         }
       }
+    },
+    "Threshold" : {
+
     },
     "thumbnail.action.cancel" : {
       "extractionState" : "extracted_with_value",
@@ -4742,7 +4397,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "Magnetic Timeline (M)"
+            "value" : "Magnetic Timeline"
           }
         }
       }
@@ -4753,7 +4408,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "Toggle Snapping (N)"
+            "value" : "Toggle Snapping"
           }
         }
       }
@@ -4786,7 +4441,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "Select Tool (A)"
+            "value" : "Select Tool"
           }
         }
       }
@@ -5011,6 +4666,17 @@
         }
       }
     },
+    "toast.transcript.refined" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "✨ Transcript refined!"
+          }
+        }
+      }
+    },
     "toast.voiceover_saved" : {
       "extractionState" : "extracted_with_value",
       "localizations" : {
@@ -5032,6 +4698,9 @@
           }
         }
       }
+    },
+    "Toggle Record/Edit Mode (Cmd+M)" : {
+
     },
     "track.help.lock" : {
       "extractionState" : "extracted_with_value",
@@ -5143,6 +4812,28 @@
         }
       }
     },
+    "transcript.action.generate" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Generate AI Transcript"
+          }
+        }
+      }
+    },
+    "transcript.delete_segment" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Delete this segment from video"
+          }
+        }
+      }
+    },
     "transcript.description.pdf" : {
       "extractionState" : "extracted_with_value",
       "localizations" : {
@@ -5183,6 +4874,17 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "WebVTT format for web video players and HTML5."
+          }
+        }
+      }
+    },
+    "transcript.empty.title" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "No Transcript"
           }
         }
       }
@@ -5253,6 +4955,17 @@
         }
       }
     },
+    "transcript.no_clip" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Select a clip to edit transcript"
+          }
+        }
+      }
+    },
     "transcript.options.header" : {
       "extractionState" : "extracted_with_value",
       "localizations" : {
@@ -5282,6 +4995,28 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Preview"
+          }
+        }
+      }
+    },
+    "transcript.refine.help" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "AI Refine Grammar & Punctuation"
+          }
+        }
+      }
+    },
+    "transcript.search" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Search transcript..."
           }
         }
       }

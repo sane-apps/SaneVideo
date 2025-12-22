@@ -22,6 +22,10 @@ actor AppleSpeechService {
 
     init() {}
 
+    func cancel() {
+        analyzer = nil
+    }
+
     /// Check if speech recognition is available
     func checkAvailability() async -> Bool {
         return SFSpeechRecognizer.authorizationStatus() == .authorized
@@ -57,40 +61,58 @@ actor AppleSpeechService {
         let analyzer = try await SpeechAnalyzer(inputAudioFile: audioFile, modules: [transcriber])
         self.analyzer = analyzer
         
-        var allCaptions: [Caption] = []
-        
         AppLogger.project.info("🎙️ Transcribing \(String(format: "%.1f", duration))s audio natively (macOS 26+ API)...")
 
-        // 4. Process Results via the transcriber's results sequence
-        AppLogger.project.debug("🎤 AppleSpeechService: Starting transcriber results iteration...")
-        var segmentCount = 0
-        for try await result in transcriber.results {
-             segmentCount += 1
-             let preview = String(result.text.characters.prefix(30))
-             AppLogger.project.debug("🎤 AppleSpeechService: Result segment #\(segmentCount): \"\(preview)...\" [\(String(format: "%.2f", result.range.start.seconds))s - \(String(format: "%.2f", result.range.end.seconds))s]")
-             // Extract text from AttributedString
-             let text = String(result.text.characters)
-             
-             // Extract timing (result.range is CMTimeRange)
-             let startTime = result.range.start.seconds
-             let endTime = result.range.end.seconds
-             
-             // Map to our internal Caption model
-             let caption = Caption(
-                 text: text,
-                 startTime: CMTime(seconds: startTime, preferredTimescale: 600),
-                 endTime: CMTime(seconds: endTime, preferredTimescale: 600)
-             )
-             allCaptions.append(caption)
-             
-             // Update progress
-             let progress = Int((startTime / duration) * 100)
-             progressHandler?(progress, 100, 0)
+        // 4. Process Results via a task group with a watchdog
+        return try await withThrowingTaskGroup(of: [Caption].self) { group in
+            // Transcription Task
+            group.addTask {
+                var localCaptions: [Caption] = []
+                var segmentCount = 0
+                
+                for try await result in transcriber.results {
+                    segmentCount += 1
+                    let preview = String(result.text.characters.prefix(30))
+                    AppLogger.project.debug("🎤 AppleSpeechService: Result segment #\(segmentCount): \"\(preview)...\" [\(String(format: "%.2f", result.range.start.seconds))s - \(String(format: "%.2f", result.range.end.seconds))s]")
+                    
+                    let text = String(result.text.characters)
+                    let startTime = result.range.start.seconds
+                    let endTime = result.range.end.seconds
+                    
+                    let caption = Caption(
+                        text: text,
+                        startTime: CMTime(seconds: startTime, preferredTimescale: 600),
+                        endTime: CMTime(seconds: endTime, preferredTimescale: 600)
+                    )
+                    localCaptions.append(caption)
+                    
+                    let progress = Int((startTime / duration) * 100)
+                    progressHandler?(progress, 100, 0)
+                }
+                return localCaptions
+            }
+            
+            // Watchdog Task: Max of 2x duration or 60s
+            let timeout = max(60.0, duration * 2.0)
+            group.addTask {
+                try await Task.sleep(nanoseconds: UInt64(timeout * 1_000_000_000))
+                throw SpeechError.analysisFailed("Transcription timed out after \(Int(timeout))s")
+            }
+            
+            do {
+                if let first = try await group.next() {
+                    group.cancelAll()
+                    AppLogger.project.info("✅ SpeechAnalyzer generated \(first.count) caption segments")
+                    self.analyzer = nil
+                    return first
+                }
+                throw SpeechError.analysisFailed("No results generated")
+            } catch {
+                self.analyzer = nil
+                group.cancelAll()
+                throw error
+            }
         }
-
-        AppLogger.project.info("✅ SpeechAnalyzer generated \(allCaptions.count) caption segments")
-
-        return allCaptions
     }
 }
 

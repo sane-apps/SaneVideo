@@ -65,6 +65,7 @@ final class ServiceContainer {
     let personSegmentationService: PersonSegmentationService
     let saliencyService: SaliencyService
     let textRecognitionService: TextRecognitionService
+    let generativeVisionService: GenerativeVisionService
     
     // MARK: - Project/Timeline Services
     
@@ -144,6 +145,7 @@ final class ServiceContainer {
         self.personSegmentationService = PersonSegmentationService(ciContext: renderingService.ciContext)
         self.saliencyService = SaliencyService()
         self.textRecognitionService = TextRecognitionService()
+        self.generativeVisionService = GenerativeVisionService(ciContext: renderingService.ciContext)
         
         // Utility Services  
         self.logManager = LogManager()

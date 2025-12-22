@@ -144,6 +144,15 @@ struct VideoClip: Identifiable, Equatable, Hashable, Codable, Sendable {
             }
         }
 
+        var counterClockwise: Rotation {
+            switch self {
+            case .none: return .clockwise270
+            case .clockwise90: return .none
+            case .clockwise180: return .clockwise90
+            case .clockwise270: return .clockwise180
+            }
+        }
+
         var radians: CGFloat {
             CGFloat(rawValue) * .pi / 180.0
         }

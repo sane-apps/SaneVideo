@@ -122,6 +122,7 @@
 		7084FD30CB729D0CCDA8E619 /* FFmpegService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F59EABDE2F28741309976F6C /* FFmpegService.swift */; };
 		709855A9628AC7C8A412C862 /* OpenAIProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04B3CB5901F29155C4DCDD54 /* OpenAIProvider.swift */; };
 		71A455420F8D3466D71569F6 /* ProgressTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 006E966828594CCE5A5971C1 /* ProgressTracker.swift */; };
+		728E5AA543B1020EA75273AD /* KeyboardShortcutsSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = A342377C30AED5ABC105C049 /* KeyboardShortcutsSheet.swift */; };
 		73D18C992213C0BE9B348A63 /* ProjectStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 474175ABFC2324D7AF00628F /* ProjectStore.swift */; };
 		754A1549072A9169620B70D7 /* RecordingEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16549F5BD76FCD3C1D2552B0 /* RecordingEngine.swift */; };
 		774C9C383320FC26FEAFED4D /* MagicFixService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D12515A45FEEFCBB8B160DC7 /* MagicFixService.swift */; };
@@ -147,6 +148,7 @@
 		905A639FA6661D3B23F0FEC0 /* RecordingActor.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4BFAC24349232A01BC9D5C6 /* RecordingActor.swift */; };
 		90A20B5FB2449F6E25092FA3 /* ModeSwitcherView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F80F1B31EA24B8DF63A1A71 /* ModeSwitcherView.swift */; };
 		939DB933F00B0D3CCC97B78F /* SmartFillerDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFD23EAECDFD4C1DC24AA721 /* SmartFillerDetector.swift */; };
+		9508A4B1B963ACE8043183C2 /* TimelineEmptyStateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5ED10F4257585E2BAB3EABE0 /* TimelineEmptyStateView.swift */; };
 		95D0B99DCE821BC4C3C40C27 /* LogExportService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4C3133221D1F4C8352C90D2 /* LogExportService.swift */; };
 		95EE377AD3DE35D10F133680 /* CameraFramePublisher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6584DA074C6DC333F2EBF0B0 /* CameraFramePublisher.swift */; };
 		95EEED9FAE5A7AF6AD4CD177 /* CanvasOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2B36FD2A23D7945C2D91BC4 /* CanvasOverlay.swift */; };
@@ -357,6 +359,7 @@
 		5CBBF72A4B111750FC738C98 /* PiPControlsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PiPControlsView.swift; sourceTree = "<group>"; };
 		5E2E98CCDD7F27B8FDAF89D6 /* RecordingModeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingModeView.swift; sourceTree = "<group>"; };
 		5E97C3945FA5DBD4AE339649 /* ThermalManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThermalManagerTests.swift; sourceTree = "<group>"; };
+		5ED10F4257585E2BAB3EABE0 /* TimelineEmptyStateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimelineEmptyStateView.swift; sourceTree = "<group>"; };
 		60D609E8C651F533865DF398 /* ProjectState+VisionEffects.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ProjectState+VisionEffects.swift"; sourceTree = "<group>"; };
 		618B34531C6B384313C7DDCB /* GestureConflictTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GestureConflictTests.swift; sourceTree = "<group>"; };
 		6269B2E3DF3C424D7A346BC1 /* SaneVideoUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SaneVideoUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -409,6 +412,7 @@
 		9B1283165D7802B9346BACD3 /* CaptionPreviewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptionPreviewTests.swift; sourceTree = "<group>"; };
 		A06F9EE170FFAD1B58531FCD /* BodyPoseService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BodyPoseService.swift; sourceTree = "<group>"; };
 		A108575752A6714DF37A4B1F /* TimelineControls.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimelineControls.swift; sourceTree = "<group>"; };
+		A342377C30AED5ABC105C049 /* KeyboardShortcutsSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardShortcutsSheet.swift; sourceTree = "<group>"; };
 		A355604A387109CF4F1B1B6B /* PlaybackState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaybackState.swift; sourceTree = "<group>"; };
 		A3D2099532ECEF7D01E92197 /* ExportProgressTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportProgressTracker.swift; sourceTree = "<group>"; };
 		A42C16DCB83AB914A34FCB82 /* CursorTrackingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CursorTrackingService.swift; sourceTree = "<group>"; };
@@ -723,6 +727,7 @@
 				06448340C7950EC337482E35 /* SmartToolsSection.swift */,
 				AC3D4945C14811375FAD9B65 /* StylesInspectorView.swift */,
 				3524B65A92AD5600041887DE /* TimelineClipView.swift */,
+				5ED10F4257585E2BAB3EABE0 /* TimelineEmptyStateView.swift */,
 				CDFEC4DC6B55BD6C8EE282FB /* TimeRulerView.swift */,
 				A9AF199415A2ABB6326640A8 /* TooltipModifier.swift */,
 				A6BBFB6156C1761B03CF00E1 /* UnifiedRecordButton.swift */,
@@ -964,6 +969,7 @@
 			isa = PBXGroup;
 			children = (
 				168B46724094D3DB80AF8610 /* GIFExportSheet.swift */,
+				A342377C30AED5ABC105C049 /* KeyboardShortcutsSheet.swift */,
 				5CBA9ECDF9E31D7CBF88683F /* ThumbnailPickerSheet.swift */,
 				D8DD2AAEB0A2623EF94D2C1C /* ThumbnailUIModels.swift */,
 				32BF1C5F4F7C2E68AB9CDCD9 /* TranscriptExportSheet.swift */,
@@ -1336,6 +1342,7 @@
 				9DB23D37442BB0130811A917 /* HapticsManager.swift in Sources */,
 				97CBCA44F4F7EAD75D573E6C /* InspectorHelpers.swift in Sources */,
 				AEDEDAB1ECA09187CE3F5249 /* KeyboardShortcutHelper.swift in Sources */,
+				728E5AA543B1020EA75273AD /* KeyboardShortcutsSheet.swift in Sources */,
 				9644C6DCDAA80A5348A12467 /* KeychainService.swift in Sources */,
 				00E0CBB804587A2B307DF9C3 /* Keyframe.swift in Sources */,
 				95D0B99DCE821BC4C3C40C27 /* LogExportService.swift in Sources */,
@@ -1422,6 +1429,7 @@
 				44F279B41C003AD95E6A2393 /* Timeline.swift in Sources */,
 				1A1451DCBBA00A18711C496F /* TimelineClipView.swift in Sources */,
 				192495B59BE2B6FE21B46111 /* TimelineControls.swift in Sources */,
+				9508A4B1B963ACE8043183C2 /* TimelineEmptyStateView.swift in Sources */,
 				2CB341D0313E17892C1A487C /* TimelineEngine.swift in Sources */,
 				FC55596DD9ED428EDFC30B1D /* TimelineTracksView.swift in Sources */,
 				A6483088D22D8598EDE90969 /* TimelineView.swift in Sources */,

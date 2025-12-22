@@ -107,9 +107,9 @@ struct TimelineControls: View {
             }
             .padding(.trailing, 16)
         }
-        .frame(height: 48)
-        .background(Color(white: 0.10))
-        .overlay(Divider().opacity(0.2), alignment: .bottom)
+        .frame(height: 38)
+        .background(Color(white: 0.08))
+        .overlay(Divider().opacity(0.1), alignment: .bottom)
         .zIndex(100)
     }
 

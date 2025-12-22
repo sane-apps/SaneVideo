@@ -20,10 +20,6 @@ struct EditorLayoutView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // Top Bar - Compact
-            ModeSwitcherView()
-                .padding(.vertical, 4)
-                .background(.regularMaterial)
 
             Divider()
 
@@ -300,40 +296,44 @@ struct EditorLayoutView: View {
 
     @ViewBuilder
     private var magicFixEmptyState: some View {
-        VStack(spacing: 24) {
-            Image(systemName: "wand.and.stars")
-                .font(.system(size: 80))
-                .foregroundStyle(
-                    LinearGradient(
-                        colors: [.purple, .blue],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
-                .shadow(color: .purple.opacity(0.5), radius: 10)
+        VStack(spacing: 32) {
+            ZStack {
+                Circle()
+                    .fill(Theme.Colors.accentGradient.opacity(0.1))
+                    .frame(width: 120, height: 120)
+                    .blur(radius: 20)
+                
+                Image(systemName: "wand.and.stars")
+                    .font(.system(size: 64))
+                    .foregroundStyle(Theme.Colors.accentGradient)
+                    .shadow(color: Theme.Colors.accent.opacity(0.4), radius: 10)
+            }
 
-            VStack(spacing: 8) {
-                Text(String(localized: "editor.empty.title", defaultValue: "Starting Something Great?"))
-                    .font(.title)
-                    .fontWeight(.bold)
+            VStack(spacing: 12) {
+                Text("Let's Make Some Magic")
+                    .font(.system(size: 28, weight: .bold))
+                
                 Text(String(localized: "editor.empty.subtitle", defaultValue: "Drop a video here or record to see the magic."))
-                    .font(.subheadline)
+                    .font(.system(size: 15))
                     .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: 300)
             }
 
             Button {
                 appState.importVideo()
             } label: {
-                HStack {
-                    Image(systemName: "plus.square.fill")
-                    Text(String(localized: "action.import_first_video", defaultValue: "Import Your First Video"))
+                HStack(spacing: 10) {
+                    Image(systemName: "plus.circle.fill")
+                    Text("Import Your First Video")
                 }
-                .fontWeight(.semibold)
-                .padding(.horizontal, 24)
-                .padding(.vertical, 12)
+                .font(.system(size: 15, weight: .semibold))
+                .padding(.horizontal, 28)
+                .padding(.vertical, 14)
                 .background(Theme.Colors.accentGradient)
                 .foregroundColor(.white)
-                .cornerRadius(12)
+                .clipShape(Capsule())
+                .shadow(color: Theme.Colors.accent.opacity(0.3), radius: 8, y: 4)
             }
             .buttonStyle(.plain)
         }

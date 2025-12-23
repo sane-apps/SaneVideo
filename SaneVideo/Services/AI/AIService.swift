@@ -18,7 +18,7 @@ class AIService {
     private let providerType: AIProvider
     private let engine: AIModelProvider
 
-    init(provider: AIProvider = .openAI) {
+    init(provider: AIProvider = .appleFoundation) {
         self.providerType = provider
         switch provider {
         case .openAI:

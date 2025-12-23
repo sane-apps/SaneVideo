@@ -17,6 +17,7 @@ struct EditorLayoutView: View {
     // Collapsible panel states
     @State private var isSidebarCollapsed = false
     @State private var isInspectorCollapsed = false
+    @State private var lastLoadedProjectId: UUID? // For playhead restoration
 
     var body: some View {
         VStack(spacing: 0) {
@@ -25,6 +26,7 @@ struct EditorLayoutView: View {
 
             // MAIN SPLIT VIEW (3 Panes) - Using native HSplitView for resizing
             HSplitView {
+                // ... (content omitted for brevity, match existing)
                 // LEFT: Sidebar (Collapsible)
                 ZStack(alignment: .trailing) {
                     if !isSidebarCollapsed {
@@ -110,9 +112,63 @@ struct EditorLayoutView: View {
             .animation(.easeInOut(duration: 0.2), value: isSidebarCollapsed)
             .animation(.easeInOut(duration: 0.2), value: isInspectorCollapsed)
         }
+        .onAppear {
+            if let project = appState.projectState.currentProject, lastLoadedProjectId != project.id {
+                // Restore state on first appear
+                lastLoadedProjectId = project.id
+                if project.currentTime > 0 {
+                    appState.playbackState.seek(to: CMTime(seconds: project.currentTime, preferredTimescale: 600))
+                    AppLogger.general.info("Restored playhead to \(project.currentTime)")
+                }
+            }
+        }
+        .onChange(of: appState.projectState.currentProject) { old, new in
+            if let newProfile = new, newProfile.id != lastLoadedProjectId {
+                lastLoadedProjectId = newProfile.id
+                // Restore state when switching projects
+                if newProfile.currentTime > 0 {
+                    appState.playbackState.seek(to: CMTime(seconds: newProfile.currentTime, preferredTimescale: 600))
+                    AppLogger.general.info("Restored playhead to \(newProfile.currentTime)")
+                }
+            }
+        }
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("TriggerMagicFix"))) { _ in
             withAnimation {
                 isInspectorCollapsed = false
+            }
+            // Trigger Magic Fix for selected clip
+            if let clip = selectedClip {
+                Task {
+                    await appState.projectState.performMagicFix(for: clip, options: appState.projectState.magicFixOptions)
+                }
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("TriggerMagicFixAll"))) { _ in
+            // Batch Magic Fix for all clips
+            Task {
+                guard let project = appState.projectState.currentProject else { return }
+                for track in project.timeline.tracks {
+                    for clip in track.clips {
+                        await appState.projectState.performMagicFix(for: clip, options: appState.projectState.magicFixOptions)
+                    }
+                }
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("GenerateAllCaptions"))) { _ in
+            // Batch generate captions for all clips
+            Task {
+                guard let project = appState.projectState.currentProject else { return }
+                for track in project.timeline.tracks {
+                    for clip in track.clips {
+                        _ = try? await appState.projectState.generateCaptions(for: clip)
+                    }
+                }
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("CleanAllAudio"))) { _ in
+            // Clean all audio (remove silence/fillers)
+            Task {
+                await appState.projectState.cleanProjectAudio()
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ToggleSidebar"))) { _ in

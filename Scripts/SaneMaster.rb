@@ -327,6 +327,14 @@ class SaneMaster
   def verify(args = [])
     puts "🚀 --- [ SANEMASTER VERIFY ] ---"
     
+    # Check for clean flag
+    if args.include?("--clean")
+      puts "✨ Clean build requested..."
+      clean
+    else
+      puts "⚡️ Incremental build enabled (Pass --clean for full rebuild)"
+    end
+    
     # Start the Permission Monitor in the background
     puts "🛡️  Launching Permission Monitor (God Mode)..."
     monitor_pid = spawn("/usr/bin/osascript Scripts/grant_permissions.applescript SaneVideo", [:out, :err] => "/dev/null")
@@ -586,11 +594,12 @@ class UITestMaster
   end
 
   def find_latest_xcresult
-    # Priority: 1. DerivedData logs (most recent test), 2. Tmp directory
+    # Priority: 1. DerivedData logs (Agent workflow), 2. Fastlane output, 3. Tmp directory
     dd_logs = Dir.glob(".derivedData/Logs/Test/*.xcresult")
+    fl_logs = Dir.glob("fastlane/test_output/*.xcresult")
     tmp_logs = Dir.glob("/tmp/*.xcresult")
     
-    (dd_logs + tmp_logs).max_by { |f| File.mtime(f) }
+    (dd_logs + fl_logs + tmp_logs).max_by { |f| File.mtime(f) }
   end
 end
 

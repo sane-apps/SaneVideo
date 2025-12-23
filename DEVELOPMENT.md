@@ -16,15 +16,20 @@
 1. **USE SaneMaster.rb FIRST**: Use `./Scripts/SaneMaster.rb` for verification, setup, and diagnostics.
 2. **VERIFY LOGS ALWAYS**: Run `./Scripts/SaneMaster.rb diagnose --dump` after every build/test to see runtime logs (e.g. `ProjectStore initialized at...`).
 3. **FILE CREATION = XCODEGEN**: If you create a new file, run `xcodegen generate` immediately.
-3. **MAX FILE SIZE = 500 LINES**: Absolute limit per Swift file. Enforced by automation.
-4. **SAFETY FIRST**: Every bug fix **MUST** have a regression test.
-5. **NO HALLUCINATIONS**: Verify APIs via web search.
-6. **FIX THE TOOL (Critical Protocol)**
+4. **MAX FILE SIZE = 500 LINES**: Absolute limit per Swift file. Enforced by automation.
+5. **SAFETY FIRST**: Every bug fix **MUST** have a regression test.
+6. **SDK IS THE SOURCE OF TRUTH (CRITICAL)**:
+   - **NEVER trust web search for API existence or signatures**.
+   - **ALWAYS query the SDK directly** before assuming an API exists or is deprecated.
+   - The SDK `.swiftinterface` files are the **authoritative source**.
+   - See workflow: `.agent/workflows/sdk-api-verification.md`
+   - Example: `grep "APIName" /Applications/Xcode.app/.../MacOSX26.2.sdk/.../Framework.swiftinterface`
+7. **FIX THE TOOL (Critical Protocol)**
    - **Trigger**: Persistent errors or repetitive manual work.
    - **Action**: STOP. Fix or upgrade the underlying tool (`SaneMaster.rb`).
-   - **Constraint**: If you don't get something right twice in a row, check the web for help.
-7. **WEB SEARCH IS MANDATORY**: Search authoritative docs when stuck.
-8. **MISSING TOOL = UPGRADE SANEMASTER**: Do not create separate scripts. Upgrade the central `SaneMaster.rb`.
+   - **Constraint**: If you don't get something right twice in a row, check the SDK then the web for help.
+8. **WEB SEARCH IS SECONDARY**: Only use web search for understanding *why* or *how* after verifying with SDK.
+9. **MISSING TOOL = UPGRADE SANEMASTER**: Do not create separate scripts. Upgrade the central `SaneMaster.rb`.
 
 ---
 
@@ -169,25 +174,35 @@ AppLogger.general     // Everything else
 
 **The Mandate**: You must see the logs every time you build.
 
-#### 1. Build, Test, & Dump Logs (One Step)
+#### 1. Quick Verification (Fast, Incremental)
 
-Use the Agent workflow or run manually:
+Use this for rapid iteration (Unit Tests only, skips UI tests).
 
 ```bash
-# 1. Build and Run Tests to generate logs
-mcp_XcodeBuildMCP_test_macos({ "scheme": "SaneVideo", "derivedDataPath": "/Users/sj/SaneVideo/.derivedData" })
+# Default: Incremental build (Fast, ~5s)
+./Scripts/SaneMaster.rb verify
 
-# 2. REQUIRED: Dump the full log to console
+# Optional: Full Clean Build (Slow, ~30s)
+./Scripts/SaneMaster.rb verify --clean
+```
+
+#### 2. Full System Check (Slow, Complete)
+
+Use this before pushing code (Unit + UI Tests).
+
+```bash
+bundle exec fastlane verify_full
+```
+
+#### 3. Analyzing Logs
+
+Always diagnostics after a run:
+
+```bash
 ./Scripts/SaneMaster.rb diagnose --dump
 ```
 
 *Why?* This ensures you see "ProjectStore initialized at..." and other critical runtime events that Xcode/MCP might swallow.
-
-#### 2. Manual UI Testing
-
-1. Run `./Scripts/SaneMaster.rb gen_assets` to ensure test media exists.
-2. Run `xcodebuild test -scheme SaneVideo ...`
-3. Run `./Scripts/SaneMaster.rb diagnose --dump` to check the result.
 
 ---
 
@@ -203,9 +218,14 @@ mcp_XcodeBuildMCP_test_macos({ "scheme": "SaneVideo", "derivedDataPath": "/Users
 ## 7. Available Tools
 
 1. **SaneMaster.rb**: The master controller.
-   - Includes **Permission Monitor** ("God Mode"): Automatically clicks "Allow" on TCC dialogs during tests using AppleScript.
+    - `verify`: Incremental build + Unit Tests.
+    - `verify --clean`: Full clean build + Unit Tests.
+    - `doctor`: Health check.
+    - Includes **Permission Monitor** ("God Mode"): Automatically clicks "Allow" on TCC dialogs.
 2. **XcodeBuildMCP**: Use for granular programmatic builds/tests.
-3. **Fastlane**: For CI/CD (`fastlane verify_full`).
+3. **Fastlane**:
+    - `verify`: Unit tests only (Incremental by default).
+    - `verify_full`: Unit + UI tests (runs via SaneMaster for local dev).
 
 ---
 

@@ -30,7 +30,7 @@ actor SaliencyService {
         let request = VNGenerateAttentionBasedSaliencyImageRequest()
         let handler = VNImageRequestHandler(ciImage: image)
 
-        try await handler.perform([request])
+        try handler.perform([request])
 
         guard let observation = request.results?.first else {
             throw SaliencyError.noResults
@@ -69,7 +69,7 @@ actor SaliencyService {
         let request = VNGenerateObjectnessBasedSaliencyImageRequest()
         let handler = VNImageRequestHandler(ciImage: image)
 
-        try await handler.perform([request])
+        try handler.perform([request])
 
         guard let observations = request.results else {
             return []

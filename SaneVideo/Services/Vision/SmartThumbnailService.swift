@@ -110,7 +110,7 @@ actor SmartThumbnailService {
         let faceRequest = VNDetectFaceCaptureQualityRequest()
         let faceRectRequest = VNDetectFaceRectanglesRequest()
         
-        try await handler.perform([faceRequest, faceRectRequest])
+        try handler.perform([faceRequest, faceRectRequest])
         
         if let faceObservations = faceRequest.results, !faceObservations.isEmpty {
             // Note: faceCaptureQuality is the legacy VN* API, still available in macOS 26

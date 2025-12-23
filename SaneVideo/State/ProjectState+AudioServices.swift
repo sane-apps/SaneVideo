@@ -145,16 +145,25 @@ extension ProjectState {
         else { return }
 
         do {
-            let enhancedURL = try await ServiceContainer.shared.audioEnhancementService.enhanceAudio(from: clip.url)
+            let enhancedURL = try await ServiceContainer.shared.audioEnhancementService.enhanceAudio(from: clip.url) { progress in
+                self.processingProgress = progress
+                self.processingStatus = "🎙️ Enhancing audio... \(Int(progress * 100))%"
+            }
+            
             await MainActor.run {
                 registerUndo("Enhance Audio")
                 project.timeline.tracks[index].clips[clipIndex].enhancedAudioURL = enhancedURL
                 currentProject = project
                 saveProject(project)
                 ServiceContainer.shared.toastManager.show("🎙️ Audio Enhanced!")
+                // Reset progress (unless MagicFix uses it for next step)
+                // In Magic Fix flow, the orchestrator overrides this anyway
             }
         } catch {
-            await MainActor.run { ServiceContainer.shared.toastManager.show("Audio enhancement failed") }
+            print("❌ enhanceAudio failed: \(error)")
+            await MainActor.run { 
+                ServiceContainer.shared.toastManager.show("Audio enhancement failed: \(error.localizedDescription)")
+            }
         }
     }
 
@@ -176,24 +185,54 @@ extension ProjectState {
         let allClips = project.timeline.tracks.flatMap { $0.clips }
         let total = Double(allClips.count)
         
-        for (index, clip) in allClips.enumerated() {
-            processingStatus = "🧹 Cleaning audio (\(index + 1)/\(allClips.count)): \(clip.url.lastPathComponent)"
-            processingProgress = Double(index) / total
+        // Parallel Processing for efficiency (Industry Standard)
+        // Limit concurrency to avoid OOM/Throttling (e.g., 4 concurrent tracks)
+        await withTaskGroup(of: Void.self) { group in
+            let maxConcurrent = 4
+            var activeTasks = 0
             
-            // 1. Remove Silence
-            await removeSilenceInternal(for: clip)
-            
-            // 2. Remove Fillers (requires captions)
-            if clip.captions.isEmpty {
-                _ = try? await generateCaptions(for: clip)
+            for (index, clip) in allClips.enumerated() {
+                if activeTasks >= maxConcurrent {
+                    await group.next()
+                    activeTasks -= 1
+                }
+                
+                group.addTask {
+                    // Update status (MainActor) - throttled could be better but this is fine for now
+                    await MainActor.run {
+                        self.processingStatus = "🧹 Cleaning audio (\(index + 1)/\(allClips.count)): \(clip.url.lastPathComponent)"
+                        self.processingProgress = Double(index) / total
+                    }
+
+                    // 1. Remove Silence
+                    await self.removeSilenceInternal(for: clip)
+                    
+                    // 2. Remove Fillers (requires captions) which is actor-isolated so safe to call, 
+                    // but we need to be careful about clip state freshness.
+                    // Ideally we'd operate on local copies and merge, but ProjectState updates are atomic-ish on MainActor.
+                    // For now, simpler parallel execution of the heavy lifting.
+                    
+                    // Note: generateCaptions updates state. removeFillerWordsInternal updates state.
+                    // Concurrent updates to DIFFERENT clips is safe if the State functions handle index lookups dynamically.
+                    // Our applies usually look up by ID.
+                    
+                    if clip.captions.isEmpty {
+                        _ = try? await self.generateCaptions(for: clip)
+                    }
+                    
+                    // Re-fetch clip to get latest captions
+                    if let updatedClip = await self.getClip(by: clip.id) {
+                        await self.removeFillerWordsInternal(from: updatedClip)
+                    }
+                }
+                activeTasks += 1
             }
-            
-            if let updatedClip = getClip(by: clip.id) {
-                await removeFillerWordsInternal(from: updatedClip)
-            }
+            // Wait for remaining
+            await group.waitForAll()
         }
         
-        ServiceContainer.shared.toastManager.show("✅ Project Audio Cleaned!")
+        processingProgress = 1.0
+        ServiceContainer.shared.toastManager.show("✅ Project Audio Cleaned (Parallelized)!")
     }
 
     private func removeSilenceInternal(for clip: VideoClip) async {

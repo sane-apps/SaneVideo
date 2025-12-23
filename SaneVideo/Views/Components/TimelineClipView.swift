@@ -132,24 +132,45 @@ struct TimelineClipView: View {
     
     private var clipContent: some View {
         VStack(spacing: 0) {
-            // VIDEO TRACK (Top ~55%)
-            ZStack(alignment: .leading) {
-                Rectangle().fill(Color.accentColor.opacity(0.3))
-                thumbnailStrip
-                clipLabel
+            if clip.isMissing {
+                // OFFLINE STATE
+                ZStack {
+                    Rectangle()
+                        .fill(Color.red.opacity(0.8))
+                        .overlay(
+                            Rectangle()
+                                .strokeBorder(Color.red, lineWidth: 2)
+                        )
+                    
+                    VStack {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .font(.system(size: 16))
+                            .foregroundColor(.white)
+                        Text("MEDIA OFFLINE")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundColor(.white)
+                    }
+                }
+            } else {
+                // VIDEO TRACK (Top ~55%)
+                ZStack(alignment: .leading) {
+                    Rectangle().fill(Color.accentColor.opacity(0.3))
+                    thumbnailStrip
+                    clipLabel
+                }
+                .frame(height: clipHeight * 0.55)
+                .clipped()
+                
+                // AUDIO TRACK (Bottom ~45%)
+                ZStack(alignment: .bottom) {
+                    Rectangle().fill(Color(white: 0.15))
+                    waveformDisplay
+                    stitchMarkerOverlay
+                    durationLabel
+                }
+                .frame(height: clipHeight * 0.45)
+                .clipped()
             }
-            .frame(height: clipHeight * 0.55)
-            .clipped()
-            
-            // AUDIO TRACK (Bottom ~45%)
-            ZStack(alignment: .bottom) {
-                Rectangle().fill(Color(white: 0.15))
-                waveformDisplay
-                stitchMarkerOverlay
-                durationLabel
-            }
-            .frame(height: clipHeight * 0.45)
-            .clipped()
         }
         .frame(width: max(0, clipWidth - handleWidth * 2 + (isDraggingRightHandle ? rightTrimOffset : 0) - (isDraggingLeftHandle ? leftTrimOffset : 0)), height: clipHeight)
         .offset(x: isDraggingLeftHandle ? -leftTrimOffset : 0)

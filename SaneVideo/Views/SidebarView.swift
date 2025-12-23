@@ -14,16 +14,26 @@ struct SidebarView: View {
 
     var body: some View {
         HStack(spacing: 0) {
-            // RAIL: Vertical Navigation Rail (Pro Style)
+            // RAIL: Simplified 2-tab navigation
+            // Magic consolidated to Inspector, Settings to Preferences menu (⌘,)
             VStack(spacing: 20) {
                 SidebarRailItem(icon: "film", label: "Media", tag: 0, selection: $selectedTab)
-                SidebarRailItem(icon: "text.quote", label: "Edit", tag: 1, selection: $selectedTab)
-                SidebarRailItem(icon: "wand.and.rays", label: "Magic", tag: 2, selection: $selectedTab)
+                SidebarRailItem(icon: "doc.text", label: "Script", tag: 1, selection: $selectedTab)
 
                 Spacer()
-
-                // Bottom actions
-                SidebarRailItem(icon: "gearshape", label: "Settings", tag: 99, selection: $selectedTab)
+                
+                // Help link at bottom (non-intrusive)
+                Button {
+                    if let url = URL(string: "https://sanevideo.app/help") {
+                        NSWorkspace.shared.open(url)
+                    }
+                } label: {
+                    Image(systemName: "questionmark.circle")
+                        .font(.system(size: 16))
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+                .help("Get Help")
             }
             .frame(width: 50)
             .padding(.vertical, 16)
@@ -36,12 +46,9 @@ struct SidebarView: View {
                 Group {
                     if selectedTab == 0 {
                         LibraryView(selectedClip: $selectedClip)
-                    } else if selectedTab == 1 {
-                        TranscriptionEditorView(selectedClip: $selectedClip)
-                    } else if selectedTab == 2 {
-                        GlobalMagicView()
                     } else {
-                        SettingsView()
+                        // Script tab = text-based editing (Descript-style)
+                        TranscriptionEditorView(selectedClip: $selectedClip)
                     }
                 }
                 .transition(.asymmetric(

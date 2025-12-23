@@ -23,7 +23,8 @@ final class SaneAudioEnhancementService {
     
     /// Enhances audio from a video/audio file and saves to a new location
     /// - Returns: URL of the enhanced audio file (.m4a)
-    func enhanceAudio(from sourceURL: URL) async throws -> URL {
+    func enhanceAudio(from sourceURL: URL, onProgress: ((Double) -> Void)? = nil) async throws -> URL {
+        print("🎙️ AudioEnhancement: Starting for \(sourceURL.lastPathComponent)")
         // 1. Setup paths
         let fileManager = FileManager.default
         let folder = fileManager.temporaryDirectory.appendingPathComponent("EnhancedAudio", isDirectory: true)
@@ -65,15 +66,19 @@ final class SaneAudioEnhancementService {
         engine.attach(eq)
         
         // B. Voice Isolation (Modern macOS 13+ ML-based isolation)
+        // Note: Voice isolation is OPTIONAL - it may timeout or fail on macOS 26
         let isolationService = ServiceContainer.shared.voiceIsolationService
+        print("🎙️ AudioEnhancement: Preparing Isolation Unit...")
         await isolationService.prepareIsolationUnit()
         
-        guard let isolationUnit = isolationService.getAudioUnit() else {
-            throw EnhancementError.processingFailed("Failed to load AUSoundIsolation unit")
+        let isolationUnit = isolationService.getAudioUnit()
+        if let unit = isolationUnit {
+            print("🎙️ AudioEnhancement: Isolation Unit Ready")
+            isolationService.setIntensity(1.0)
+            engine.attach(unit)
+        } else {
+            print("⚠️ AudioEnhancement: Voice isolation unavailable, continuing without it")            
         }
-        
-        isolationService.setIntensity(1.0)
-        engine.attach(isolationUnit)
         
         // C. Dynamics Processor (Legacy/Cleanup)
         let dynamics = AVAudioUnitEffect(audioComponentDescription: AudioComponentDescription(
@@ -86,13 +91,22 @@ final class SaneAudioEnhancementService {
         engine.attach(dynamics)
         
         // 5. Connect Nodes
-        // Player -> EQ -> VoiceIsolation -> Dynamics -> MainMixer
+        // Player -> EQ -> [VoiceIsolation if available] -> Dynamics -> MainMixer
         
         let file = try AVAudioFile(forReading: sourceURL)
-        // Connect
+        
+        // Connect: player -> eq always
         engine.connect(player, to: eq, format: file.processingFormat)
-        engine.connect(eq, to: isolationUnit, format: file.processingFormat)
-        engine.connect(isolationUnit, to: dynamics, format: file.processingFormat)
+        
+        // Conditionally include voice isolation in the chain
+        if let unit = isolationUnit {
+            engine.connect(eq, to: unit, format: file.processingFormat)
+            engine.connect(unit, to: dynamics, format: file.processingFormat)
+        } else {
+            // Skip voice isolation: EQ -> Dynamics directly
+            engine.connect(eq, to: dynamics, format: file.processingFormat)
+        }
+        
         engine.connect(dynamics, to: engine.mainMixerNode, format: file.processingFormat)
         
         // 6. Configure Offline Rendering
@@ -120,8 +134,17 @@ final class SaneAudioEnhancementService {
             throw EnhancementError.processingFailed("Could not create render buffer")
         }
         
+        print("🎙️ AudioEnhancement: Starting Render Loop")
+        var lastProgressUpdate = Date()
+        
         while engine.manualRenderingSampleTime < file.length {
-            await Task.yield() // Keep UI responsive during render loop
+            // Check for cancellation? (Not implemented yet)
+            
+            // Yield to main thread periodically to prevent blocking
+            if engine.manualRenderingSampleTime % Int64(maxFrames * 10) == 0 {
+                 await Task.yield() 
+            }
+            
             let remaining = file.length - engine.manualRenderingSampleTime
             let frameCount = min(maxFrames, AVAudioFrameCount(remaining))
             
@@ -129,6 +152,13 @@ final class SaneAudioEnhancementService {
             
             if status == .success {
                 try outputFile.write(from: renderBuffer)
+                
+                // Update Progress (Memoize to avoid flooding MainActor)
+                if Date().timeIntervalSince(lastProgressUpdate) > 0.1 {
+                    let progress = Double(engine.manualRenderingSampleTime) / Double(file.length)
+                    Task { @MainActor in onProgress?(progress) }
+                    lastProgressUpdate = Date()
+                }
             } else {
                 // If it fails, log and break
                 print("Render failed: \(status.rawValue)")
@@ -139,7 +169,7 @@ final class SaneAudioEnhancementService {
         player.stop()
         engine.stop()
         
-        print("Enhanced audio saved to: \(outputURL.path)")
+        print("🎙️ AudioEnhancement: Enhanced audio saved to: \(outputURL.path)")
         return outputURL
     }
 }

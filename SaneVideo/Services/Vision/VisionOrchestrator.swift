@@ -81,10 +81,6 @@ actor VisionOrchestrator {
     videoURL: URL, config: VisionAnalysisConfig, progressHandler: ((Double) -> Void)? = nil
   ) async throws -> VisionAnalysisResult {
 
-    _ = VNVideoProcessor(url: videoURL)
-      var _: [VNRequest] = []
-    _ = VisionAnalysisResult()
-
     // 1. Text Request
     if config.detectText || config.detectPrivacy {
       let textReq = VNRecognizeTextRequest { request, _ in

@@ -1,4 +1,5 @@
 import AVFoundation
+import Accelerate
 
 /// Service for detecting silence in video clips
 actor SilenceDetector {
@@ -125,16 +126,25 @@ actor SilenceDetector {
             let sampleCount = length / 2
             let samples = data.withMemoryRebound(to: Int16.self, capacity: sampleCount) { $0 }
 
-            // Check if this buffer is silent
-            var isBufferSilent = true
-
-            for i in stride(from: 0, to: sampleCount, by: 10) { // Check every 10th sample for speed
-                let amp = Float(abs(samples[i])) / Float(Int16.max)
-                if toDB(amp) > config.dbThreshold {
-                    isBufferSilent = false
-                    break
-                }
-            }
+            // PERFORMANCE: Use Accelerate for M1 optimization
+            // Convert Int16 to Float32 for vDSP
+            var floatSamples = [Float](repeating: 0, count: sampleCount)
+            vDSP_vflt16(samples, 1, &floatSamples, 1, vDSP_Length(sampleCount))
+            
+            // Normalize to -1.0 to 1.0 range
+            var normalized = [Float](repeating: 0, count: sampleCount)
+            var scale: Float = 1.0 / Float(Int16.max)
+            vDSP_vsmul(floatSamples, 1, &scale, &normalized, 1, vDSP_Length(sampleCount))
+            
+            // Calculate RMS using vDSP (much faster than manual loop)
+            var rms: Float = 0
+            vDSP_rmsqv(normalized, 1, &rms, vDSP_Length(sampleCount))
+            
+            // Convert to dB
+            let db = toDB(rms)
+            
+            // Check if silent
+            let isBufferSilent = db <= config.dbThreshold
 
             // Time logic
             let bufferTime = CMSampleBufferGetPresentationTimeStamp(buffer)

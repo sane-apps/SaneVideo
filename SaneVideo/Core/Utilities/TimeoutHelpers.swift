@@ -8,9 +8,9 @@
 import Foundation
 
 /// Wraps an async operation with a timeout
-func withTimeout<T>(
+func withTimeout<T: Sendable>(
     seconds: TimeInterval,
-    operation: @escaping () async throws -> T
+    operation: @escaping @Sendable () async throws -> T
 ) async throws -> T {
     try await withThrowingTaskGroup(of: T.self) { group in
         // Operation task
@@ -34,10 +34,10 @@ func withTimeout<T>(
 }
 
 /// Wraps an async operation with timeout and cancellation support
-func withTimeoutAndCancellation<T>(
+func withTimeoutAndCancellation<T: Sendable>(
     seconds: TimeInterval,
     cancellation: @escaping @Sendable () -> Bool,
-    operation: @escaping () async throws -> T
+    operation: @escaping @Sendable () async throws -> T
 ) async throws -> T {
     try await withThrowingTaskGroup(of: T.self) { group in
         // Operation task

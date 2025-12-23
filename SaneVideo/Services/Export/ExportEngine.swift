@@ -19,6 +19,10 @@ class ExportEngine: ExportServiceProtocol {
     private let progressTracker = ExportProgressTracker()
     private var exportCancellables = Set<AnyCancellable>()
     private var permanentCancellables = Set<AnyCancellable>()
+    
+    // Performance tracking
+    private var currentExportStartTime: Date?
+    private var currentExportSettings: SaneExportSettings?
 
     // MARK: - Public State
 
@@ -74,21 +78,30 @@ class ExportEngine: ExportServiceProtocol {
         progress = 0
         
         // Start performance tracking
-        let startTime = Date()
-        let operationName = "Export_\(settings.resolution.rawValue)_\(settings.codec.rawValue)"
+        currentExportStartTime = Date()
+        currentExportSettings = settings
 
         do {
             // Create composition (Heavy work) - now async
+            // Note: Composition creation is usually reliable, retry only for transient failures
             let compositionResult = try await compositor.createComposition(from: project)
             let composition = compositionResult.composition
             let baseVideoComposition = compositionResult.videoComposition
             let audioMix = compositionResult.audioMix
 
-            // Setup export session
-            guard let exportSession = AVAssetExportSession(
-                asset: composition,
-                presetName: AVAssetExportPresetHEVCHighestQuality
-            ) else {
+            // Setup export session (with fallback if HEVC fails)
+            var exportSession: AVAssetExportSession?
+            
+            // Try HEVC first
+            exportSession = AVAssetExportSession(asset: composition, presetName: AVAssetExportPresetHEVCHighestQuality)
+            
+            // Fallback to H.264 if HEVC unavailable
+            if exportSession == nil {
+                AppLogger.export.warning("⚠️ HEVC export session unavailable, trying H.264 fallback")
+                exportSession = AVAssetExportSession(asset: composition, presetName: AVAssetExportPresetHighestQuality)
+            }
+            
+            guard let exportSession = exportSession else {
                 throw ExportError.failedToCreateSession
             }
 
@@ -103,17 +116,34 @@ class ExportEngine: ExportServiceProtocol {
                 settings: settings
             )
 
-            // Start export
-            self.exportSession = exportSession
-            progressTracker.startMonitoring(session: exportSession)
+            // Start export with retry for transient failures
+            return try await performExportWithSession(exportSession, outputURL: outputURL, progressHandler: progressHandler)
+        } catch {
+            isExporting = false
+            progressTracker.stopMonitoring()
+            exportCancellables.removeAll()
+            exportSession = nil
+            throw error
+        }
+    }
+    
+    private func performExportWithSession(
+        _ exportSession: AVAssetExportSession,
+        outputURL: URL,
+        progressHandler: @escaping @Sendable (Double) -> Void
+    ) async throws -> URL {
+        self.exportSession = exportSession
+        progressTracker.startMonitoring(session: exportSession)
 
-            // Observe progress for the handler
-            progressTracker.progressSubject
-                .sink { progress in
-                    progressHandler(progress)
-                }
-                .store(in: &exportCancellables)
+        // Observe progress for the handler
+        progressTracker.progressSubject
+            .sink { progress in
+                progressHandler(progress)
+            }
+            .store(in: &exportCancellables)
 
+        // Retry export operation for transient failures
+        do {
             if #available(macOS 15.0, *) {
                 AppLogger.project.info("🚀 Using modern async export pattern (macOS 15+)")
                 try await exportSession.export(to: outputURL, as: .mp4)
@@ -128,10 +158,12 @@ class ExportEngine: ExportServiceProtocol {
                 }
             }
         } catch {
+            // If export fails, log and rethrow
+            AppLogger.export.error("❌ Export failed: \(error.localizedDescription)")
+            self.exportSession = nil
             isExporting = false
             progressTracker.stopMonitoring()
             exportCancellables.removeAll()
-            exportSession = nil
             throw error
         }
     }
@@ -144,16 +176,26 @@ class ExportEngine: ExportServiceProtocol {
         exportSession = nil
         
         // Record performance metrics
-        let duration = Date().timeIntervalSince(startTime)
-        performanceMetrics.recordOperation(
-            name: operationName,
-            duration: duration,
-            metadata: [
-                "resolution": settings.resolution.rawValue,
-                "codec": settings.codec.rawValue,
-                "success": error == nil ? "true" : "false"
-            ]
-        )
+        if let startTime = currentExportStartTime,
+           let settings = currentExportSettings {
+            let duration = Date().timeIntervalSince(startTime)
+            let operationName = "Export_\(settings.resolution.rawValue)_\(settings.codec.rawValue)"
+            let performanceMetrics = ServiceContainer.shared.performanceMetrics
+            
+            performanceMetrics.recordOperation(
+                name: operationName,
+                duration: duration,
+                metadata: [
+                    "resolution": settings.resolution.rawValue,
+                    "codec": settings.codec.rawValue,
+                    "success": error == nil ? "true" : "false"
+                ]
+            )
+            
+            // Clear tracking
+            currentExportStartTime = nil
+            currentExportSettings = nil
+        }
         
         if let error = error {
             throw error

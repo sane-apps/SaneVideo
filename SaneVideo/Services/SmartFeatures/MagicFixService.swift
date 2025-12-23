@@ -57,33 +57,14 @@ enum MagicFixService {
                 rangesToRemove.append(contentsOf: fillerRanges)
             }
             
-            // Semantic Analysis (AI)
-            if !transcript.isEmpty {
-                 // Check if we should use AI
-                 // Note: Ideally we'd have a flag in Options for "Use AI Analysis".
-                 // For now, if autoEnhance is true, we use it for deeper cleaning
-                 if options.autoEnhance {
-                     do {
-                         // ROBUSTNESS: AI analysis already has timeout in provider, but add extra safety
-                         let analysis = try await ServiceContainer.shared.aiService.analyzeTranscriptForEdits(transcript: transcript)
-                         
-                         for segment in analysis.segments {
-                             if segment.type == .filler || segment.type == .silence {
-                                 rangesToRemove.append(CMTimeRange(
-                                    start: CMTime(seconds: segment.startTime, preferredTimescale: 600),
-                                    end: CMTime(seconds: segment.endTime, preferredTimescale: 600)
-                                 ))
-                             }
-                             // Note: 'topic' and 'highlight' types are metadata we might want to return separately
-                             // checking implementation_plan, we wanted "Cut list".
-                             // For now, Magic Fix = Undo Bad Stuff.
-                         }
-                     } catch {
-                         AppLogger.general.warning("Magic Fix AI analysis failed: \(error)")
-                         // Continue without AI results
-                     }
-                 }
-            }
+            // NOTE: We use on-device NaturalLanguage framework for filler detection (SmartFillerDetector)
+            // Cloud AI analysis is optional and only used if explicitly enabled via API keys
+            // The primary Magic Fix uses 100% on-device Apple APIs:
+            // - SpeechAnalyzer for transcription
+            // - NaturalLanguage for filler detection
+            // - Vision framework for visual analysis
+            // - Accelerate/vDSP for audio processing
+            // Cloud AI is only for optional title/description generation
         }
         
         progressHandler(90, 100)

@@ -36,6 +36,9 @@ class ExportEngine: ExportServiceProtocol {
             .sink { [weak self] progress in
                 Task { @MainActor in
                     self?.progress = progress
+                    // Update speed tracker if we have file size info
+                    // Note: AVAssetExportSession doesn't provide bytes processed directly
+                    // We'll estimate based on progress
                 }
             }
             .store(in: &permanentCancellables)
@@ -69,6 +72,10 @@ class ExportEngine: ExportServiceProtocol {
 
         isExporting = true
         progress = 0
+        
+        // Start performance tracking
+        let startTime = Date()
+        let operationName = "Export_\(settings.resolution.rawValue)_\(settings.codec.rawValue)"
 
         do {
             // Create composition (Heavy work) - now async
@@ -135,6 +142,18 @@ class ExportEngine: ExportServiceProtocol {
         exportCancellables.removeAll()
 
         exportSession = nil
+        
+        // Record performance metrics
+        let duration = Date().timeIntervalSince(startTime)
+        performanceMetrics.recordOperation(
+            name: operationName,
+            duration: duration,
+            metadata: [
+                "resolution": settings.resolution.rawValue,
+                "codec": settings.codec.rawValue,
+                "success": error == nil ? "true" : "false"
+            ]
+        )
         
         if let error = error {
             throw error

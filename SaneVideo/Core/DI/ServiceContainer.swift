@@ -99,6 +99,12 @@ final class ServiceContainer {
     let logExportService: LogExportService
     let audioEnhancementService: SaneAudioEnhancementService
     
+    // MARK: - Diagnostics Services
+    
+    let performanceMetrics: PerformanceMetricsService
+    let systemHealth: SystemHealthService
+    let exportSpeedTracker: ExportSpeedTracker
+    
     // Main-actor isolated lazy properties - must be accessed from main thread
     lazy var appState: AppState = AppState()
     lazy var userPreferences: UserPreferences = UserPreferences()
@@ -172,6 +178,11 @@ final class ServiceContainer {
         self.debugVerifier = DebugVerifier()
         self.logExportService = LogExportService()
         self.audioEnhancementService = SaneAudioEnhancementService()
+        
+        // Diagnostics Services
+        self.performanceMetrics = PerformanceMetricsService()
+        self.systemHealth = SystemHealthService()
+        self.exportSpeedTracker = ExportSpeedTracker()
         
         // Warm up critical heavy systems
         Task { await self.visionOrchestrator.warmup() }

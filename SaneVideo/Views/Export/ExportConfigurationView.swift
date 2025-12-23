@@ -23,11 +23,21 @@ struct ExportConfigurationView: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
 
-                    HStack(spacing: 8) {
-                        ExportPresetButton(preset: .youtube4K, icon: "4k.tv", title: "YouTube 4K", selected: selectedPreset == .youtube4K, id: "export.preset.youtube4k") { applyPreset(.youtube4K) }
-                        ExportPresetButton(preset: .youtube1080, icon: "play.tv", title: "YouTube 1080p", selected: selectedPreset == .youtube1080, id: "export.preset.youtube1080") { applyPreset(.youtube1080) }
-                        ExportPresetButton(preset: .social1080, icon: "iphone", title: "Social", selected: selectedPreset == .social1080, id: "export.preset.social") { applyPreset(.social1080) }
-                        ExportPresetButton(preset: .compressed, icon: "arrow.down.circle", title: "Small File", selected: selectedPreset == .compressed, id: "export.preset.small") { applyPreset(.compressed) }
+                    // Enhanced presets: Primary row + Social media row
+                    VStack(spacing: 8) {
+                        // Primary presets row
+                        HStack(spacing: 8) {
+                            ExportPresetButton(preset: .youtube4K, icon: ExportPreset.youtube4K.icon, title: "YouTube 4K", selected: selectedPreset == .youtube4K, id: "export.preset.youtube4k") { applyPreset(.youtube4K) }
+                            ExportPresetButton(preset: .youtube1080, icon: ExportPreset.youtube1080.icon, title: "YouTube 1080p", selected: selectedPreset == .youtube1080, id: "export.preset.youtube1080") { applyPreset(.youtube1080) }
+                            ExportPresetButton(preset: .compressed, icon: ExportPreset.compressed.icon, title: "Small File", selected: selectedPreset == .compressed, id: "export.preset.small") { applyPreset(.compressed) }
+                        }
+                        
+                        // Social media presets row (Creator-friendly)
+                        HStack(spacing: 8) {
+                            ExportPresetButton(preset: .tiktok, icon: ExportPreset.tiktok.icon, title: "TikTok", selected: selectedPreset == .tiktok, id: "export.preset.tiktok") { applyPreset(.tiktok) }
+                            ExportPresetButton(preset: .instagram, icon: ExportPreset.instagram.icon, title: "Instagram", selected: selectedPreset == .instagram, id: "export.preset.instagram") { applyPreset(.instagram) }
+                            ExportPresetButton(preset: .twitter, icon: ExportPreset.twitter.icon, title: "Twitter/X", selected: selectedPreset == .twitter, id: "export.preset.twitter") { applyPreset(.twitter) }
+                        }
                     }
 
                     if let description = selectedPreset?.description {

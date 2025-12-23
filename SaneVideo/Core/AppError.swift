@@ -173,3 +173,86 @@ enum AppError: LocalizedError, Identifiable {
         String(reflecting: self)
     }
 }
+
+// MARK: - User-Facing Error Extensions
+
+extension AppError {
+    var userFacingTitle: String {
+        switch self {
+        case .cameraPermissionDenied, .cameraPermissionRestricted:
+            return "Permission Required"
+        case .microphonePermissionDenied, .microphonePermissionRestricted:
+            return "Permission Required"
+        case .diskSpaceLow:
+            return "Not Enough Disk Space"
+        case .exportFailed:
+            return "Export Failed"
+        case .recordingEngineError:
+            return "Recording Error"
+        case .projectLoadFailed:
+            return "Couldn't Load Project"
+        case .clipNotFound:
+            return "Clip Not Found"
+        default:
+            return "Error"
+        }
+    }
+    
+    var userFacingMessage: String {
+        switch self {
+        case .cameraPermissionDenied, .cameraPermissionRestricted:
+            return "SaneVideo needs camera permission to work. Please grant access in System Settings."
+        case .microphonePermissionDenied, .microphonePermissionRestricted:
+            return "SaneVideo needs microphone permission to work. Please grant access in System Settings."
+        case .diskSpaceLow:
+            return "You don't have enough free space to complete this operation. Free up some disk space and try again."
+        case .exportFailed:
+            return "The export couldn't be completed. This might be due to disk space, file permissions, or system resources."
+        case .recordingEngineError(let message):
+            return message
+        case .projectLoadFailed:
+            return "The project file couldn't be loaded. It may be corrupted or in use by another app."
+        case .clipNotFound:
+            return "The video clip couldn't be found. It may have been moved or deleted."
+        default:
+            return localizedDescription
+        }
+    }
+    
+    var recoverySuggestions: [String] {
+        switch self {
+        case .cameraPermissionDenied, .cameraPermissionRestricted, .microphonePermissionDenied, .microphonePermissionRestricted:
+            return [
+                "Open System Settings → Privacy & Security",
+                "Find the permission type and enable it for SaneVideo",
+                "Restart SaneVideo after granting permission"
+            ]
+        case .exportFailed:
+            return [
+                "Check available disk space",
+                "Try a lower resolution or codec",
+                "Close other apps to free up resources",
+                "Restart SaneVideo and try again"
+            ]
+        case .recordingEngineError:
+            return [
+                "Check that your camera/microphone is not in use by another app",
+                "Restart SaneVideo",
+                "Check System Settings → Privacy & Security for permissions"
+            ]
+        case .projectLoadFailed:
+            return [
+                "Check if the project file is corrupted",
+                "Restore from backup if available",
+                "Create a new project if needed"
+            ]
+        case .clipNotFound:
+            return [
+                "Check if the video file was moved or deleted",
+                "Re-import the clip if needed"
+            ]
+        default:
+            return []
+        }
+    }
+}

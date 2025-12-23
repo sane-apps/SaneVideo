@@ -76,4 +76,26 @@ struct MagicFixOptions: Codable, Equatable {
         applyHighlightCursor: false,
         smoothJumpCuts: false
     )
+    
+    /// Display name for presets
+    var presetName: String {
+        if self == .minimal { return "Minimal Fix" }
+        if self == .proClean { return "Pro Clean-up" }
+        if self == .socialMedia { return "Social Media Ready" }
+        return "Custom"
+    }
+    
+    /// Description for presets
+    var presetDescription: String {
+        if self == .minimal {
+            return "Just remove silence. Quick and simple."
+        }
+        if self == .proClean {
+            return "Full cleanup: silence, fillers, audio enhancement, and visual polish."
+        }
+        if self == .socialMedia {
+            return "Optimized for short-form: aggressive cuts, smart crop, and auto-framing."
+        }
+        return "Custom configuration"
+    }
 }

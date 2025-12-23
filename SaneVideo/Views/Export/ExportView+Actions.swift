@@ -191,7 +191,8 @@ extension ExportView {
 
         Task {
             do {
-                let content = try await aiService.generateTitleAndDescription(transcript: transcript)
+                // Use dynamic provider selection (prefers on-device, falls back to cloud if available)
+                let content = try await aiService.generateTitleAndDescriptionWithBestProvider(transcript: transcript)
                 self.videoTitle = content.title
                 self.videoDescription = content.description
                 self.isGeneratingAI = false

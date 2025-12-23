@@ -45,8 +45,13 @@ struct GeminiProvider: AIModelProvider {
         ]
 
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        
+        // PERFORMANCE: Add explicit timeout for robustness
+        request.timeoutInterval = 30.0 // 30 second timeout
 
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await withTimeout(seconds: 35.0) {
+            try await URLSession.shared.data(for: request)
+        }
 
         guard let httpResponse = response as? HTTPURLResponse else {
             throw AIError.invalidResponse
@@ -98,7 +103,12 @@ struct GeminiProvider: AIModelProvider {
         ]
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
         
-        let (data, response) = try await URLSession.shared.data(for: request)
+        // PERFORMANCE: Add explicit timeout for robustness
+        request.timeoutInterval = 30.0 // 30 second timeout
+
+        let (data, response) = try await withTimeout(seconds: 35.0) {
+            try await URLSession.shared.data(for: request)
+        }
         guard (response as? HTTPURLResponse)?.statusCode == 200 else { throw AIError.apiError("Gemini Error") }
         
         guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
@@ -131,7 +141,12 @@ struct GeminiProvider: AIModelProvider {
         ]
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
         
-        let (data, response) = try await URLSession.shared.data(for: request)
+        // PERFORMANCE: Add explicit timeout for robustness
+        request.timeoutInterval = 30.0 // 30 second timeout
+
+        let (data, response) = try await withTimeout(seconds: 35.0) {
+            try await URLSession.shared.data(for: request)
+        }
         guard (response as? HTTPURLResponse)?.statusCode == 200 else { throw AIError.apiError("Gemini Error") }
         
         return try AIProviderParser.parseRefinedResponse(data: data, originalCaptions: captions, isGemini: true)

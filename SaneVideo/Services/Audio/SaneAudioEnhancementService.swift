@@ -136,13 +136,26 @@ final class SaneAudioEnhancementService {
         
         print("🎙️ AudioEnhancement: Starting Render Loop")
         var lastProgressUpdate = Date()
+        let startTime = Date()
+        let maxProcessingTime: TimeInterval = 600.0 // 10 minutes max
         
         while engine.manualRenderingSampleTime < file.length {
-            // Check for cancellation? (Not implemented yet)
+            // ROBUSTNESS: Check for timeout
+            if Date().timeIntervalSince(startTime) > maxProcessingTime {
+                throw EnhancementError.processingFailed("Audio enhancement timed out after 10 minutes")
+            }
+            
+            // Check for cancellation
+            if Task.isCancelled {
+                throw CancellationError()
+            }
             
             // Yield to main thread periodically to prevent blocking
             if engine.manualRenderingSampleTime % Int64(maxFrames * 10) == 0 {
-                 await Task.yield() 
+                 await Task.yield()
+                 // ROBUSTNESS: Update progress more frequently
+                 let progress = Double(engine.manualRenderingSampleTime) / Double(file.length)
+                 Task { @MainActor in onProgress?(progress) }
             }
             
             let remaining = file.length - engine.manualRenderingSampleTime

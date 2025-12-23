@@ -88,9 +88,31 @@ actor SilenceDetector {
         // Process samples
         var lastProgressUpdate = Date()
         var processedBuffers = 0
+        let startTime = Date()
+        let maxProcessingTime: TimeInterval = 300.0 // 5 minutes max
         AppLogger.project.debug("🔇 SilenceDetector: Starting buffer loop...")
 
         while reader.status == .reading {
+            // ROBUSTNESS: Check for timeout
+            if Date().timeIntervalSince(startTime) > maxProcessingTime {
+                await MainActor.run {
+                    AppLogger.project.warning("⚠️ Silence detection: Timeout after 5 minutes, stopping analysis")
+                }
+                break
+            }
+            
+            // ROBUSTNESS: Check for cancellation
+            if Task.isCancelled {
+                await MainActor.run {
+                    AppLogger.project.info("🔇 Silence detection: Cancelled by user")
+                }
+                break
+            }
+            
+            // ROBUSTNESS: Yield periodically
+            if processedBuffers % 1000 == 0 {
+                await Task.yield()
+            }
             guard let buffer = output.copyNextSampleBuffer() else { break }
             guard let blockBuffer = CMSampleBufferGetDataBuffer(buffer) else { continue }
 

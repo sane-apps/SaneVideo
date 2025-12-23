@@ -29,8 +29,8 @@ extension ProjectState {
         }
 
         // 0. Start Concurrent Vision Analysis (Unified Pipeline)
-        // 0. Start Concurrent Vision Analysis (Unified Pipeline)
         // Run with .utility priority to avoid starving the Audio enhancement (Primary UI task)
+        // ROBUSTNESS: Add timeout to prevent hangs
         async let visionTask: VisionAnalysisResult? = await Task.detached(priority: .utility) {
             let config = VisionAnalysisConfig(
                 detectText: options.scanForText,
@@ -43,7 +43,10 @@ extension ProjectState {
             if config.detectText || config.detectFaces || config.detectSaliency {
                 print("👁️ Magic Fix: Starting Vision Orchestrator (Unified Pipeline)...")
                 do {
-                    return try await ServiceContainer.shared.visionOrchestrator.analyze(videoURL: clip.url, config: config)
+                    // ROBUSTNESS: Add timeout (5 minutes max for vision analysis)
+                    return try await withTimeout(seconds: 300.0) {
+                        try await ServiceContainer.shared.visionOrchestrator.analyze(videoURL: clip.url, config: config)
+                    }
                 } catch {
                     AppLogger.vision.error("Vision pipeline failed: \(error)")
                     return nil
@@ -71,10 +74,13 @@ extension ProjectState {
         // 2. Generate Captions if needed (Using enhanced audio if available)
         if (options.generateCaptions || options.removeFillers || options.autoEnhance) && preAnalysisClip.captions.isEmpty {
              processingStatus = "🎤 Transcribing audio..."
-             do { 
-                 _ = try await generateCaptions(for: preAnalysisClip) 
+             do {
+                 // ROBUSTNESS: Add timeout (10 minutes max for transcription)
+                 _ = try await withTimeout(seconds: 600.0) {
+                     try await generateCaptions(for: preAnalysisClip)
+                 }
              } catch {
-                 AppLogger.project.warning("Magic Fix: Caption generation failed, some features like Filler Removal may be skipped.")
+                 AppLogger.project.warning("Magic Fix: Caption generation failed (timeout or error): \(error.localizedDescription). Some features like Filler Removal may be skipped.")
              }
         }
         processingProgress = 0.4
@@ -99,7 +105,10 @@ extension ProjectState {
             try await applyVisualEffects(to: visualClip, options: options, visionResult: visionResult)
             
             // 5. AI & Generative Features
-            try await applyAIGenerativeFeatures(to: visualClip, options: options)
+            // ROBUSTNESS: Add timeout for AI operations (2 minutes max)
+            try await withTimeout(seconds: 120.0) {
+                try await applyAIGenerativeFeatures(to: visualClip, options: options)
+            }
 
             // Wait for background analysis - Already awaited above
 

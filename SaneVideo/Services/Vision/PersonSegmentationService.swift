@@ -63,7 +63,7 @@ actor PersonSegmentationService {
         }
 
         let handler = VNImageRequestHandler(ciImage: image)
-        try await handler.perform([request])
+        try handler.perform([request])
 
         guard let observation = request.results?.first else {
             throw SegmentationError.noResults

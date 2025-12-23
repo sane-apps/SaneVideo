@@ -1,371 +1,494 @@
-import Foundation
 import Combine
 import CoreMedia
+import Foundation
 @preconcurrency import ScreenCaptureKit
 
 /// Modern screen recorder using SCContentSharingPicker (macOS 14+)
 /// This eliminates manual permission handling and provides native macOS UI
 @MainActor
 class ScreenRecorder: NSObject, SCContentSharingPickerObserver, SCStreamDelegate {
-    // MARK: - Publishers
-    
-    /// Publisher for screen frames (nonisolated for Swift 6 concurrency)
-    nonisolated(unsafe) let sampleBufferSubject = PassthroughSubject<CMSampleBuffer, Never>()
-    
-    /// Publisher for system audio (YouTube, Spotify, etc.)
-    nonisolated(unsafe) let audioSampleBufferSubject = PassthroughSubject<CMSampleBuffer, Never>()
-    
-    /// Publisher for microphone audio (consolidated in stream)
-    nonisolated(unsafe) let micSampleBufferSubject = PassthroughSubject<CMSampleBuffer, Never>()
-    
-    // MARK: - Private State
-    
-    private var activeStream: SCStream?
-    private var recordingOutput: SCRecordingOutput?
-    private var isStopping = false
-    private let targetSize = CGSize(width: 1920, height: 1080)
-    nonisolated(unsafe) private var loggedScreenAudioFormat = false
-    
-    /// Output URL for direct recording
-    private var currentOutputURL: URL?
+  // MARK: - Publishers
 
-    /// Callback triggered when the stream stops (e.g. user cancelled via system UI)
-    var onStop: ((Error?) -> Void)?
-    
-    /// Callback triggered when Presenter Overlay state changes (active/inactive)
-    var onPresenterOverlayChanged: ((Bool) -> Void)?
+  /// Publisher for screen frames (nonisolated for Swift 6 concurrency)
+  nonisolated(unsafe) let sampleBufferSubject = PassthroughSubject<CMSampleBuffer, Never>()
 
-    // MARK: - Public Interface
-    
-    /// Start screen recording by presenting the system picker
-    /// - Parameter outputURL: Optional URL to record directly to file using SCRecordingOutput
-    func start(outputURL: URL? = nil) async throws {
-        let isTesting = ProcessInfo.processInfo.arguments.contains("-uitesting")
-        if isTesting {
-            AppLogger.recording.info("🧪 [UI TEST] ScreenRecorder: Bypassing system picker")
-            self.currentOutputURL = outputURL
-            // In a real scenario, handleContentSelected would be called by the picker.
-            // Here we just stay in a "ready" state for RecordingEngine to "record" samples.
-            return
-        }
-        
-        // Guard against stopping state
-        guard !isStopping else {
-            AppLogger.recording.warning("Screen recorder is stopping, cannot start")
-            throw NSError(
-                domain: "SaneVideo",
-                code: -101,
-                userInfo: [NSLocalizedDescriptionKey: "Screen recorder is stopping"]
-            )
-        }
-        
-        self.currentOutputURL = outputURL
-        
-        // Stop existing stream if running
-        if activeStream != nil {
-            AppLogger.recording.warning("Screen recorder already running, stopping first...")
-            await stop()
-            try await Task.sleep(nanoseconds: 100_000_000) // 100ms cleanup delay
-        }
-        
-        loggedScreenAudioFormat = false
-        
+  /// Publisher for system audio (YouTube, Spotify, etc.)
+  nonisolated(unsafe) let audioSampleBufferSubject = PassthroughSubject<CMSampleBuffer, Never>()
+
+  /// Publisher for microphone audio (consolidated in stream)
+  nonisolated(unsafe) let micSampleBufferSubject = PassthroughSubject<CMSampleBuffer, Never>()
+
+  // MARK: - Private State
+
+  private var activeStream: SCStream?
+  private var recordingOutput: SCRecordingOutput?
+  private var isStopping = false
+  private let targetSize = CGSize(width: 1920, height: 1080)
+  nonisolated(unsafe) private var loggedScreenAudioFormat = false
+
+  /// The original filter selected by the user (usually a display capture)
+  /// We keep this to reconstruct the filter when adding/removing exception windows (PiP)
+  private var baseFilter: SCContentFilter?
+
+  /// Output URL for direct recording
+  private var currentOutputURL: URL?
+
+  /// Callback triggered when the stream stops (e.g. user cancelled via system UI)
+  var onStop: ((Error?) -> Void)?
+
+  /// Callback triggered when Presenter Overlay state changes (active/inactive)
+  var onPresenterOverlayChanged: ((Bool) -> Void)?
+
+  // MARK: - Public Interface
+
+  /// Start screen recording by presenting the system picker
+  /// - Parameter outputURL: Optional URL to record directly to file using SCRecordingOutput
+  func start(outputURL: URL? = nil) async throws {
+    let isTesting = ProcessInfo.processInfo.arguments.contains("-uitesting")
+    if isTesting {
+      AppLogger.recording.info("🧪 [UI TEST] ScreenRecorder: Bypassing system picker")
+      self.currentOutputURL = outputURL
+      // In a real scenario, handleContentSelected would be called by the picker.
+      // Here we just stay in a "ready" state for RecordingEngine to "record" samples.
+      return
+    }
+
+    // Guard against stopping state
+    guard !isStopping else {
+      AppLogger.recording.warning("Screen recorder is stopping, cannot start")
+      throw NSError(
+        domain: "SaneVideo",
+        code: -101,
+        userInfo: [NSLocalizedDescriptionKey: "Screen recorder is stopping"]
+      )
+    }
+
+    self.currentOutputURL = outputURL
+
+    // Stop existing stream if running
+    if activeStream != nil {
+      AppLogger.recording.warning("Screen recorder already running, stopping first...")
+      await stop()
+      try await Task.sleep(nanoseconds: 100_000_000)  // 100ms cleanup delay
+    }
+
+    loggedScreenAudioFormat = false
+
+    let picker = SCContentSharingPicker.shared
+
+    // Register as observer
+    picker.add(self)
+    picker.isActive = true
+
+    // TAHOE FIX: Limit stream count to prevent redundant picker triggers
+    picker.maximumStreamCount = 1
+
+    // TAHOE PERSISTENCE FIX: Check if we already have a valid selection to reuse.
+    // This prevents the picker from popping up every time the user switches between Camera and Screen.
+    if let existingFilter = baseFilter {
+      AppLogger.recording.info("📺 Reusing existing screen capture filter...")
+      await handleContentSelected(filter: existingFilter)
+      return
+    }
+
+    AppLogger.recording.info("📺 No existing filter found. Presenting screen picker...")
+
+    // Present the picker with default style (allows windows, displays, apps)
+    // User selects content → delegate callback receives SCContentFilter
+    var config = SCContentSharingPickerConfiguration()
+    config.allowedPickerModes = [
+      .singleWindow, .multipleWindows, .singleApplication, .multipleApplications, .singleDisplay,
+    ]
+    picker.configuration = config
+    picker.defaultConfiguration = config
+
+    picker.present()
+
+    AppLogger.recording.info("📺 Screen picker presented successfully")
+  }
+
+  /// Stop screen recording
+  func stop() async {
+    guard activeStream != nil else { return }
+    guard !isStopping else {
+      AppLogger.recording.warning("Already stopping, skipping")
+      return
+    }
+
+    isStopping = true
+    defer { isStopping = false }
+
+    // Stop the active stream
+    if let stream = activeStream {
+      do {
+        try await stream.stopCapture()
+        AppLogger.recording.info("Screen Recorder Stopped")
+      } catch {
+        AppLogger.recording.warning(
+          "Screen Recorder stop error (non-fatal): \(error.localizedDescription)")
+      }
+    }
+
+    activeStream = nil
+
+    // TAHOE FIX: Do NOT deactivate picker or remove observer here.
+    // Keeping picker.isActive = true preserves the selection persistence in the system UI.
+    // We only remove/deactivate in a "total teardown" if needed.
+    AppLogger.recording.info("Screen stream stopped, but picker remains active for persistence.")
+  }
+
+  /// Complete teardown (e.g. app closing)
+  func teardown() {
+    let picker = SCContentSharingPicker.shared
+    picker.isActive = false
+    picker.remove(self)
+    activeStream = nil
+    AppLogger.recording.info("ScreenRecorder teardown complete")
+  }
+
+  // MARK: - SCContentSharingPickerObserver
+
+  /// Called when user selects content in the picker
+  nonisolated func contentSharingPicker(
+    _ picker: SCContentSharingPicker,
+    didUpdateWith filter: SCContentFilter,
+    for stream: SCStream?
+  ) {
+    // TAHOE FIX: SCStream is not Sendable, but in this specific observer callback,
+    // we are guaranteed safe access from the system.
+    nonisolated(unsafe) let unsafeStream = stream
+
+    Task { @MainActor in
+      AppLogger.recording.info("📺 User selected content, starting capture...")
+
+      // TAHOE FIX: Associate configuration with the stream for persistence
+      if let stream = unsafeStream {
         let picker = SCContentSharingPicker.shared
-        
-        // Register as observer
-        picker.add(self)
-        picker.isActive = true
-        
-        AppLogger.recording.info("📺 Presenting screen picker to user...")
-        
-        // Present the picker with default style (allows windows, displays, apps)
-        // User selects content → delegate callback receives SCContentFilter
-        var config = SCContentSharingPickerConfiguration()
-        config.allowedPickerModes = [.singleWindow, .multipleWindows, .singleApplication, .multipleApplications, .singleDisplay]
-        picker.configuration = config
-        
-        picker.present()
-        
-        AppLogger.recording.info("📺 Screen picker presented successfully")
-    }
-    
-    /// Stop screen recording
-    func stop() async {
-        guard !isStopping else {
-            AppLogger.recording.warning("Already stopping, skipping")
-            return
-        }
-        
-        isStopping = true
-        defer { isStopping = false }
-        
-        // Stop the active stream
-        if let stream = activeStream {
-            do {
-                try await stream.stopCapture()
-                AppLogger.recording.info("Screen Recorder Stopped")
-            } catch {
-                AppLogger.recording.warning("Screen Recorder stop error (non-fatal): \(error.localizedDescription)")
-            }
-        }
-        
-        activeStream = nil
-        
-        // Deactivate picker
-        let picker = SCContentSharingPicker.shared
-        picker.isActive = false
-        picker.remove(self)
-    }
-    
-    // MARK: - SCContentSharingPickerObserver
-    
-    /// Called when user selects content in the picker
-    nonisolated func contentSharingPicker(
-        _ picker: SCContentSharingPicker,
-        didUpdateWith filter: SCContentFilter,
-        for stream: SCStream?
-    ) {
-        Task { @MainActor in
-            AppLogger.recording.info("📺 User selected content, starting capture...")
-            await handleContentSelected(filter: filter)
-        }
-    }
-    
-    /// Called when user cancels the picker
-    nonisolated func contentSharingPicker(
-        _ picker: SCContentSharingPicker,
-        didCancelFor stream: SCStream?
-    ) {
-        AppLogger.recording.info("📺 User cancelled screen picker")
-        // Graceful cancellation - no error needed
-    }
-    
-    /// Called when picker fails to start
-    nonisolated func contentSharingPickerStartDidFailWithError(_ error: Error) {
-        AppLogger.recording.error("📺 Picker failed to start: \(error.localizedDescription)")
-    }
-    
-    // MARK: - Private Methods
-    
-    /// Handle user's content selection and start the stream
-    private func handleContentSelected(filter: SCContentFilter) async {
-        do {
-            // Create stream configuration (Apple Silicon optimized)
-            let config = SCStreamConfiguration()
-            
-            // Resolution - 1080p for good quality/performance balance
-            config.width = Int(targetSize.width)
-            config.height = Int(targetSize.height)
-            
-            // Frame rate - 60fps for smooth recording
-            config.minimumFrameInterval = CMTime(value: 1, timescale: 60)
-            
-            // Pixel format - BGRA for best M1 performance
-            config.pixelFormat = kCVPixelFormatType_32BGRA
-            
-            // Color space - Display P3 for HDR-like support on Tahoe
-            config.colorSpaceName = CGColorSpace.displayP3
-            
-            // Queue depth - optimized for low latency
-            config.queueDepth = 5
-            
-            // Show cursor
-            config.showsCursor = true
-            
-            // Scaling mode - optimized quality
-            config.scalesToFit = true
-            
-            // System Audio Capture (macOS 13+)
-            config.capturesAudio = true
-            config.excludesCurrentProcessAudio = true
-            
-            // Microphone Capture (macOS 15+)
-            // DISABLED: Using SCStream for mic triggers system Voice Processing (VPIO) 
-            // which degrades system audio quality ("tinny" sound). 
-            // We rely on our dedicated AudioService for high-fidelity mic capture.
-            config.captureMicrophone = false
-            
-            config.channelCount = 2
-            config.sampleRate = 48000
-            
-            // Create stream with user's selected content filter
-            var finalFilter = filter
-            
-            // CRITICAL FIX: Ensure PiP and Floating Controls are VISIBLE in the recording
-            // 1. Get all shareable content to find our windows and displays
-            let shareableContent = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: true)
-            
-            // 2. Identify our process
-            if let myApp = shareableContent.applications.first(where: { $0.bundleIdentifier == Bundle.main.bundleIdentifier }) {
-                AppLogger.recording.info("📺 Identified SaneVideo process for filter modification")
-                
-                // 3. Find our special windows (PiP, Controls)
-                let pipWindows = shareableContent.windows.filter { window in
-                    window.owningApplication?.bundleIdentifier == myApp.bundleIdentifier &&
-                    (window.title?.contains("PiP") == true || window.title?.contains("Controls") == true || window.windowLayer > 0)
-                }
-                
-                if !pipWindows.isEmpty {
-                    AppLogger.recording.info("📺 Found \(pipWindows.count) internal windows to include in recording")
-                    
-                    // 4. Reconstruct filter if it's a display filter
-                    // We check if the filter already includes a display
-                    if #available(macOS 15.2, *), let display = filter.includedDisplays.first {
-                        finalFilter = SCContentFilter(display: display, excludingApplications: [myApp], exceptingWindows: pipWindows)
-                        AppLogger.recording.info("✅ Reconstructed SCContentFilter for display '\(display.displayID)' including PiP windows")
-                    } else if let display = shareableContent.displays.first {
-                        // Fallback for older macOS or if includedDisplays is empty
-                        finalFilter = SCContentFilter(display: display, excludingApplications: [myApp], exceptingWindows: pipWindows)
-                        AppLogger.recording.info("✅ Reconstructed SCContentFilter using first shareable display")
-                    }
-                } else {
-                    AppLogger.recording.warning("⚠️ Could not find specific PiP windows in shareable content")
-                }
-            }
+        picker.setConfiguration(picker.defaultConfiguration, for: stream)
+      }
 
-            // Create stream with final filter
-            let newStream = SCStream(filter: finalFilter, configuration: config, delegate: self)
-            
-            // Add video stream output
-            try newStream.addStreamOutput(
-                self,
-                type: .screen,
-                sampleHandlerQueue: DispatchQueue(label: "com.sanevideo.screen")
-            )
-            
-            // Add system audio stream output
-            try newStream.addStreamOutput(
-                self,
-                type: .audio,
-                sampleHandlerQueue: DispatchQueue(label: "com.sanevideo.system-audio")
-            )
-
-            // Microphone output removed since captureMicrophone is false
-
-            
-            // 5. Setup SCRecordingOutput if an output URL was provided
-            if let outputURL = currentOutputURL {
-                let recordingConfig = SCRecordingOutputConfiguration()
-                recordingConfig.outputURL = outputURL
-                recordingConfig.outputFileType = .mp4
-                // Use HEVC (H.265) for better compression on modern Macs, fallback to H.264
-                if #available(macOS 15.0, *) {
-                    recordingConfig.videoCodecType = .hevc
-                    AppLogger.recording.info("🎥 Using HEVC (H.265) for hardware recording")
-                } else {
-                    recordingConfig.videoCodecType = .h264
-                }
-                
-                let output = SCRecordingOutput(configuration: recordingConfig, delegate: self)
-                try newStream.addRecordingOutput(output)
-                self.recordingOutput = output
-                AppLogger.recording.info("🎥 Configured SCRecordingOutput for direct file recording")
-            }
-            
-            // Start capture
-            try await newStream.startCapture()
-            
-            // Store active stream
-            activeStream = newStream
-            
-            AppLogger.recording.info("✅ Screen capture started successfully")
-            
-        } catch {
-            AppLogger.recording.error("❌ Failed to start screen capture: \(error.localizedDescription)")
-            // Error will propagate through the recording engine's error handler
-        }
+      await handleContentSelected(filter: filter)
     }
+  }
+
+  /// Called when user cancels the picker
+  nonisolated func contentSharingPicker(
+    _ picker: SCContentSharingPicker,
+    didCancelFor stream: SCStream?
+  ) {
+    AppLogger.recording.info("📺 User cancelled screen picker")
+    // Graceful cancellation - no error needed
+  }
+
+  /// Called when picker fails to start
+  nonisolated func contentSharingPickerStartDidFailWithError(_ error: Error) {
+    AppLogger.recording.error("📺 Picker failed to start: \(error.localizedDescription)")
+  }
+
+  // MARK: - Filter Updates
+
+  /// Update the current content filter to include/exclude new windows (like PiP)
+  func updateContentFilter() async {
+    guard let stream = activeStream, let base = baseFilter else { return }
+
+    // Only rebuild if it's a display style capture. Window captures don't need app-wide exclusions.
+    guard base.style == .display else {
+      AppLogger.recording.info("ℹ️ Skipping filter rebuild for non-display style (\(base.style))")
+      return
+    }
+
+    AppLogger.recording.info("🔄 Refreshing screen content filter...")
+    let newFilter = await rebuildFilter(from: base)
+
+    do {
+      try await stream.updateContentFilter(newFilter)
+      AppLogger.recording.info("✅ Screen content filter updated successfully")
+    } catch {
+      AppLogger.recording.error("Failed to update content filter: \(error.localizedDescription)")
+    }
+  }
+
+  // MARK: - Private Methods
+
+  /// Rebuild filter to include our app's overlay windows (PiP, Controls)
+  private func rebuildFilter(from base: SCContentFilter) async -> SCContentFilter {
+    // Only apply complex display-level exclusion logic to display style captures
+    guard base.style == .display else {
+      return base
+    }
+
+    // TAHOE FIX: Use currentProcess to reliably find our own windows without full screen recording TCC
+    do {
+      let shareableContent = try await SCShareableContent.currentProcess
+
+      // Identify the display for the filter
+      // In macOS 15.2+, use includedDisplays. For older, we'd need to guess, but Tahoe is newer.
+      let display = base.includedDisplays.first ?? shareableContent.displays.first
+
+      guard let display = display else {
+        AppLogger.recording.warning("⚠️ No display found for filter rebuild")
+        return base
+      }
+
+      // Find ALL our app's windows
+      let appWindows = shareableContent.windows
+
+      // Filter for our special windows
+      // CRITICAL: We ONLY want to EXCEPT the PiP Camera Window.
+      // The Controls/Buttons should remained HIDDEN by the parent app exclusion.
+      let overlayWindows = appWindows.filter { window in
+        (window.title?.lowercased().contains("pip") == true)
+          && !(window.title?.lowercased().contains("control") == true)
+      }
+
+      if !overlayWindows.isEmpty {
+        let names = overlayWindows.map { "\($0.title ?? "Untitled") (ID: \($0.windowID))" }
+          .joined(separator: ", ")
+        AppLogger.recording.info(
+          "📺 [Filter Rebuild] Found \(overlayWindows.count) overlay windows via currentProcess: \(names)"
+        )
+
+        return SCContentFilter(
+          display: display,
+          excludingApplications: shareableContent.applications,  // Exclude our app's main windows
+          exceptingWindows: overlayWindows
+        )
+      } else {
+        // Fallback to simpler exclusion if no overlays found
+        return SCContentFilter(
+          display: display,
+          excludingApplications: shareableContent.applications,
+          exceptingWindows: []
+        )
+      }
+    } catch {
+      AppLogger.recording.warning("⚠️ Filter rebuild failed: \(error.localizedDescription)")
+    }
+
+    // Return original if modification fails
+    return base
+  }
+
+  /// Handle user's content selection and start the stream
+  private func handleContentSelected(filter: SCContentFilter) async {
+    // TAHOE OPTIMIZATION: If we already have an active stream, just update its filter.
+    // This is much faster and completely flicker-free.
+    if let stream = activeStream {
+      AppLogger.recording.info("🔄 Updating existing stream with new content selection...")
+      self.baseFilter = filter
+      do {
+        try await stream.updateContentFilter(filter)
+        AppLogger.recording.info("✅ Existing stream filter updated successfully")
+
+        // Asynchronously add PiP exceptions if it's a display share
+        Task {
+          await updateContentFilter()
+        }
+        return
+      } catch {
+        AppLogger.recording.warning(
+          "⚠️ Failed to update filter on active stream, falling back to recreation: \(error.localizedDescription)"
+        )
+        // Fallthrough to recreate the stream if update fails
+      }
+    }
+
+    do {
+      // Create stream configuration (Apple Silicon optimized)
+      let config = SCStreamConfiguration()
+
+      // Resolution - 1080p for good quality/performance balance
+      config.width = Int(targetSize.width)
+      config.height = Int(targetSize.height)
+
+      // Frame rate - 60fps for smooth recording
+      config.minimumFrameInterval = CMTime(value: 1, timescale: 60)
+
+      // Pixel format - BGRA for best M1 performance
+      config.pixelFormat = kCVPixelFormatType_32BGRA
+
+      // Color space - Display P3 for HDR-like support on Tahoe
+      config.colorSpaceName = CGColorSpace.displayP3
+
+      // Queue depth - optimized for low latency
+      config.queueDepth = 5
+
+      // Show cursor
+      config.showsCursor = true
+
+      // Scaling mode - optimized quality
+      config.scalesToFit = true
+
+      // System Audio Capture (macOS 13+)
+      config.capturesAudio = true
+      config.excludesCurrentProcessAudio = true
+
+      // Microphone Capture (macOS 15+)
+      // DISABLED: Using SCStream for mic triggers system Voice Processing (VPIO)
+      // which degrades system audio quality ("tinny" sound).
+      // We rely on our dedicated AudioService for high-fidelity mic capture.
+      config.captureMicrophone = false
+
+      config.channelCount = 2
+      config.sampleRate = 48000
+
+      // Create stream with user's selected content filter
+      self.baseFilter = filter
+
+      // TAHOE FLICKER FIX: Start the stream with the user's provided filter IMMEDIATELY.
+      // This ensures they see what they picked without a black flash.
+      // We will then asynchronously update the filter to exclude our app windows.
+      let newStream = SCStream(filter: filter, configuration: config, delegate: self)
+
+      Task {
+        // Deferred rebuild to add PiP exceptions if it's a display share
+        await updateContentFilter()
+      }
+
+      // Add video stream output
+      try newStream.addStreamOutput(
+        self,
+        type: .screen,
+        sampleHandlerQueue: DispatchQueue(label: "com.sanevideo.screen")
+      )
+
+      // Add system audio stream output
+      try newStream.addStreamOutput(
+        self,
+        type: .audio,
+        sampleHandlerQueue: DispatchQueue(label: "com.sanevideo.system-audio")
+      )
+
+      // Microphone output removed since captureMicrophone is false
+
+      // 5. Setup SCRecordingOutput if an output URL was provided
+      if let outputURL = currentOutputURL {
+        let recordingConfig = SCRecordingOutputConfiguration()
+        recordingConfig.outputURL = outputURL
+        recordingConfig.outputFileType = .mp4
+        // Use HEVC (H.265) for better compression on modern Macs, fallback to H.264
+        if #available(macOS 15.0, *) {
+          recordingConfig.videoCodecType = .hevc
+          AppLogger.recording.info("🎥 Using HEVC (H.265) for hardware recording")
+        } else {
+          recordingConfig.videoCodecType = .h264
+        }
+
+        let output = SCRecordingOutput(configuration: recordingConfig, delegate: self)
+        try newStream.addRecordingOutput(output)
+        self.recordingOutput = output
+        AppLogger.recording.info("🎥 Configured SCRecordingOutput for direct file recording")
+      }
+
+      // Start capture
+      try await newStream.startCapture()
+
+      // Store active stream
+      activeStream = newStream
+
+      AppLogger.recording.info("✅ Screen capture started successfully")
+
+    } catch {
+      AppLogger.recording.error("❌ Failed to start screen capture: \(error.localizedDescription)")
+      // Error will propagate through the recording engine's error handler
+    }
+  }
 }
 
 // MARK: - SCRecordingOutputDelegate
 
 extension ScreenRecorder: SCRecordingOutputDelegate {
-    nonisolated func recordingOutputDidStartRecording(_ recordingOutput: SCRecordingOutput) {
-        AppLogger.recording.info("🎥 SCRecordingOutput started recording")
-    }
-    
-    nonisolated func recordingOutputDidFinishRecording(_ recordingOutput: SCRecordingOutput) {
-        AppLogger.recording.info("🎥 SCRecordingOutput finished recording")
-    }
-    
-    nonisolated func recordingOutput(_ recordingOutput: SCRecordingOutput, didFailWithError error: Error) {
-        AppLogger.recording.error("🎥 SCRecordingOutput failed: \(error.localizedDescription)")
-    }
+  nonisolated func recordingOutputDidStartRecording(_ recordingOutput: SCRecordingOutput) {
+    AppLogger.recording.info("🎥 SCRecordingOutput started recording")
+  }
+
+  nonisolated func recordingOutputDidFinishRecording(_ recordingOutput: SCRecordingOutput) {
+    AppLogger.recording.info("🎥 SCRecordingOutput finished recording")
+  }
+
+  nonisolated func recordingOutput(
+    _ recordingOutput: SCRecordingOutput, didFailWithError error: Error
+  ) {
+    AppLogger.recording.error("🎥 SCRecordingOutput failed: \(error.localizedDescription)")
+  }
 }
 
 // MARK: - SCStreamOutput
 
 extension ScreenRecorder: SCStreamOutput {
-    nonisolated func stream(
-        _ stream: SCStream,
-        didOutputSampleBuffer sampleBuffer: CMSampleBuffer,
-        of type: SCStreamOutputType
-    ) {
-        switch type {
-        case .screen:
-            sampleBufferSubject.send(sampleBuffer)
-            
-        case .audio:
-            // Log audio format once for debugging
-            if !loggedScreenAudioFormat,
-               let format = CMSampleBufferGetFormatDescription(sampleBuffer),
-               let asbdPointer = CMAudioFormatDescriptionGetStreamBasicDescription(format)?.pointee {
-                AppLogger.recording.info("Screen audio format sampleRate=\(asbdPointer.mSampleRate), channels=\(asbdPointer.mChannelsPerFrame), formatID=\(asbdPointer.mFormatID)")
-                loggedScreenAudioFormat = true
-            }
-            audioSampleBufferSubject.send(sampleBuffer)
-            
-        case .microphone:
-            // Send mic samples for real-time analysis
-            // Note: RecordingEngine will now receive these via this subject
-            // instead of its own AudioService subscription when in screen mode
-            micSampleBufferSubject.send(sampleBuffer)
-            
-        @unknown default:
-            break
-        }
+  nonisolated func stream(
+    _ stream: SCStream,
+    didOutputSampleBuffer sampleBuffer: CMSampleBuffer,
+    of type: SCStreamOutputType
+  ) {
+    switch type {
+    case .screen:
+      sampleBufferSubject.send(sampleBuffer)
+
+    case .audio:
+      // Log audio format once for debugging
+      if !loggedScreenAudioFormat,
+        let format = CMSampleBufferGetFormatDescription(sampleBuffer),
+        let asbdPointer = CMAudioFormatDescriptionGetStreamBasicDescription(format)?.pointee
+      {
+        AppLogger.recording.info(
+          "Screen audio format sampleRate=\(asbdPointer.mSampleRate), channels=\(asbdPointer.mChannelsPerFrame), formatID=\(asbdPointer.mFormatID)"
+        )
+        loggedScreenAudioFormat = true
+      }
+      audioSampleBufferSubject.send(sampleBuffer)
+
+    case .microphone:
+      // Send mic samples for real-time analysis
+      // Note: RecordingEngine will now receive these via this subject
+      // instead of its own AudioService subscription when in screen mode
+      micSampleBufferSubject.send(sampleBuffer)
+
+    @unknown default:
+      break
     }
+  }
 }
 
 // MARK: - SCStreamDelegate (Error Handling)
 
 extension ScreenRecorder {
-    /// Called when the stream encounters an error (display unplugged, permission revoked, etc.)
-    nonisolated func stream(_ stream: SCStream, didStopWithError error: any Error) {
-        Task { @MainActor in
-            AppLogger.recording.error("Screen stream stopped with error: \(error.localizedDescription)")
-            
-            // Notify listener if this was not an intentional stop
-            if !self.isStopping {
-                self.onStop?(error)
-            }
-            
-            // Clean up the stream
-            self.activeStream = nil
-            
-            // Deactivate picker
-            let picker = SCContentSharingPicker.shared
-            picker.isActive = false
-            picker.remove(self)
-            
-            // Note: RecordingEngine will detect the stream stopped via sample buffer interruption
-            // and will handle the error appropriately
-        }
+  /// Called when the stream encounters an error (display unplugged, permission revoked, etc.)
+  nonisolated func stream(_ stream: SCStream, didStopWithError error: any Error) {
+    Task { @MainActor in
+      AppLogger.recording.error("Screen stream stopped with error: \(error.localizedDescription)")
+
+      // Notify listener if this was not an intentional stop
+      if !self.isStopping {
+        self.onStop?(error)
+      }
+
+      // Clean up the stream
+      self.activeStream = nil
+
+      // Deactivate picker
+      let picker = SCContentSharingPicker.shared
+      picker.isActive = false
+      picker.remove(self)
+
+      // Note: RecordingEngine will detect the stream stopped via sample buffer interruption
+      // and will handle the error appropriately
     }
-    
-    /// Called when the system's Presenter Overlay (video effect) is activated
-    nonisolated func outputVideoEffectDidStartForStream(_ stream: SCStream) {
-        Task { @MainActor in
-            AppLogger.recording.info("🎥 Presenter Overlay STARTED. Hiding App PiP.")
-            self.onPresenterOverlayChanged?(true)
-        }
+  }
+
+  /// Called when the system's Presenter Overlay (video effect) is activated
+  nonisolated func outputVideoEffectDidStartForStream(_ stream: SCStream) {
+    Task { @MainActor in
+      AppLogger.recording.info("🎥 Presenter Overlay STARTED. Hiding App PiP.")
+      self.onPresenterOverlayChanged?(true)
     }
-    
-    /// Called when the system's Presenter Overlay (video effect) is deactivated
-    nonisolated func outputVideoEffectDidStopForStream(_ stream: SCStream) {
-        Task { @MainActor in
-            AppLogger.recording.info("🎥 Presenter Overlay STOPPED. Restoring App PiP.")
-            self.onPresenterOverlayChanged?(false)
-        }
+  }
+
+  /// Called when the system's Presenter Overlay (video effect) is deactivated
+  nonisolated func outputVideoEffectDidStopForStream(_ stream: SCStream) {
+    Task { @MainActor in
+      AppLogger.recording.info("🎥 Presenter Overlay STOPPED. Restoring App PiP.")
+      self.onPresenterOverlayChanged?(false)
     }
+  }
 }

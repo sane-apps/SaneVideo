@@ -6,11 +6,10 @@ platform :mac do
     scan(
       scheme: "SaneVideo",
       destination: "platform=macOS,arch=arm64",
-      xcargs: "CODE_SIGNING_ALLOWED=NO",
       skip_testing: "SaneVideoUITests", # Skip environment-sensitive UITests by default
       result_bundle: true,
       output_directory: "fastlane/test_output",
-      clean: true
+      clean: false # Optimization: Allow incremental builds for speed (use verify_full for clean)
     )
   end
 
@@ -19,7 +18,6 @@ platform :mac do
     scan(
       scheme: "SaneVideo",
       destination: "platform=macOS,arch=arm64",
-      xcargs: "CODE_SIGNING_ALLOWED=NO",
       result_bundle: true,
       output_directory: "fastlane/test_output",
       clean: true

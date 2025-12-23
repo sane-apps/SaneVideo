@@ -93,13 +93,22 @@ public struct SaneTimelineView: View {
             if selectedClip == nil {
                 autoSelectFirstClip()
             }
-            fitToView()
+            
+            // Restore Zoom Level
+            if let project = appState.projectState.currentProject, project.zoomLevel > 0 {
+                self.zoomLevel = project.zoomLevel
+            } else {
+                fitToView()
+            }
+        }
+        .onChange(of: zoomLevel) { _, newZoom in
+            appState.projectState.updateZoomLevel(newZoom)
         }
         .onChange(of: appState.projectState.currentProject?.timeline.tracks) {
             if selectedClip == nil {
                 autoSelectFirstClip()
             }
-            fitToView()
+            // Removed automatic fitToView() on track change to preserve user zoom
         }
         .overlay {
             Group {

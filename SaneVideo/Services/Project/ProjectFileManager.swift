@@ -242,14 +242,32 @@ final class ProjectFileManager: Sendable {
                             // Update URL
                             clip.url = resolvedURL
                         }
+                        
+                        // Check existence
+                        if !FileManager.default.fileExists(atPath: resolvedURL.path) {
+                            print("ProjectFileManager: File missing at \(resolvedURL.path)")
+                            clip.isMissing = true
+                        } else {
+                            clip.isMissing = false
+                        }
+                        
                         updatedClips.append(clip)
 
                     } catch {
                         print("ProjectFileManager: Failed to resolve bookmark for \(clip.url.lastPathComponent): \(error)")
                         AppLogger.project.warning("Failed to resolve bookmark for \(clip.url.lastPathComponent): \(error)")
-                        updatedClips.append(clip) // Keep original if resolution fails
+                        
+                        // Mark as missing if we can't resolve
+                        clip.isMissing = true
+                        updatedClips.append(clip) 
                     }
                 } else {
+                    // No bookmark - check if file exists at original URL (unlikely for sandboxed app but possible for temp files)
+                    if !FileManager.default.fileExists(atPath: clip.url.path) {
+                        clip.isMissing = true
+                    } else {
+                        clip.isMissing = false
+                    }
                     updatedClips.append(clip)
                 }
             }

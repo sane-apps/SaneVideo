@@ -1,25 +1,154 @@
-# Critical Agent Context
->
-> **READ THIS FIRST**: This environment is strictly defined.
+# SaneVideo Agent Directive
 
-- **Internet Access**: ✅ **AVAILABLE & EXPECTED**. If stuck, search the web immediately.
-- **Current Environment**: **macOS 26.2 (Tahoe)**. SDK macOS 26.0+.
-- **Deprecations**: Respect macOS 26 deprecations. **IGNORE** training data that suggests older APIs.
+> **PURPOSE**: Universal rules for ALL AI agents working on this codebase.
+> Combines resource optimization with project-specific SOP requirements.
 
-# Instructions
+---
 
-1. **Always Read**: `AI_RULES.md` (root directory) for architectural patterns and command rules.
-2. **Search Web**: Use `search_web` for unknown APIs or errors.
+## 0. CRITICAL FIRST ACTION
 
-# Persistent Issues & Fixes
+**READ THE SOP**: Before touching ANY code, read [DEVELOPMENT.md](file:///Users/sj/SaneVideo/DEVELOPMENT.md) entirely.
+This is the **SINGLE SOURCE OF TRUTH** for architecture, style, and workflows.
 
-- **Project Corruption**: NEVER edit `project.pbxproj` manually. Run `xcodegen`.
-- **Target Membership**: New files must be added to `SaneVideo`. Test files to `SaneVideoTests`.
-- **Ghost Errors**: If build fails with "Missing Protocol" or "Type Not Found" but code looks correct, request a **Clean Build** (Cmd+Shift+K).
-- **Test breakage**: If tests fail to compile, verify variables are accessible (public/internal) and files are target members.
-- **Beep Error**: Launch fails/beeps on Cmd+R although build succeeds. Cause: Missing `productReference` in `project.pbxproj` or invalid `.xcscheme` executable. Run `HealthCheckTool.swift` to diagnose.
+---
 
-# Development Rules
+## 1. Golden Rules (From SOP)
 
-- **State Management**: Use `@Observable` for all new state.
-- **Regression Tests**: Every bug fix MUST have a corresponding regression test. Add it to `SaneVideoTests/RegressionTests.swift`.
+1. **SaneMaster.rb FIRST**: Use `./Scripts/SaneMaster.rb` for all verification, setup, and diagnostics.
+2. **VERIFY LOGS ALWAYS**: Run `./Scripts/SaneMaster.rb diagnose --dump` after EVERY build/test.
+3. **FILE CREATION = XCODEGEN**: If you create a new file, run `xcodegen generate` immediately.
+4. **MAX FILE SIZE = 500 LINES**: Absolute limit per Swift file. No exceptions.
+5. **REGRESSION TESTS**: Every bug fix MUST have a corresponding test.
+6. **SDK IS SOURCE OF TRUTH**: NEVER trust web search for API existence. Query SDK `.swiftinterface` files first:
+
+   ```bash
+   grep "APIName" /Applications/Xcode.app/.../MacOSX26.2.sdk/.../Framework.swiftinterface
+   ```
+
+7. **TWO-FIX RULE**: If you don't get something right twice in a row, STOP guessing. Search SDK, then web.
+
+---
+
+## 2. Resource & Context Optimization
+
+### Token Efficiency
+
+1. **Artifact-First Workflow**: Store implementation plans, complex code blocks, and documentation in Artifacts. Do NOT repeat large code blocks in chat after saving to Artifact.
+
+2. **Context Pruning**: Prioritize recency. When a sub-task completes, archive intermediate reasoning and maintain only final state/requirements.
+
+3. **Data Filtering**: When reading large files, extract only relevant sections. Summarize before returning to main reasoning.
+
+### Tool Loading
+
+4. **Dynamic Tool Discovery**: Load only the MCP tools required for the current sub-task. Use semantic search to discover tools on-demand.
+
+2. **Execution Mode**:
+   - **High-Reasoning**: Planning, architecture decisions, debugging
+   - **Low-Reasoning**: Repetitive file edits, syntax fixes, formatting
+
+---
+
+## 3. Verification Loop (MANDATORY)
+
+```bash
+# After ANY code change, run this sequence:
+
+# 1. Build and test
+./Scripts/SaneMaster.rb verify
+
+# 2. ALWAYS dump logs to see runtime behavior
+./Scripts/SaneMaster.rb diagnose --dump
+
+# 3. If new files were created
+xcodegen generate
+```
+
+**Why logs?** Critical events like "ProjectStore initialized at..." are swallowed by Xcode/MCP. You MUST see them.
+
+---
+
+## 4. Architecture Quick Reference
+
+### System Layers
+
+```
+User Action → AppState → Service → Model Update → UI Refresh
+```
+
+### Concurrency
+
+- **@MainActor**: AppState, all ObservableObjects, UI updates
+- **Actors**: For shared state in services
+- **async/await**: Prefer over completion handlers
+
+### Logging Categories
+
+```swift
+AppLogger.camera      // AVCapture
+AppLogger.recording   // Recording lifecycle
+AppLogger.export      // Export operations
+AppLogger.timeline    // Timeline edits
+AppLogger.project     // Persistence
+AppLogger.ui          // UI events
+AppLogger.general     // Everything else
+```
+
+---
+
+## 5. Common Gotchas
+
+| Problem | Solution |
+|---------|----------|
+| Ghost beeps / no launch | Run `xcodegen generate` |
+| Signal 9 crash | Check `SaneVideo.entitlements` |
+| Phantom build errors | Run `./Scripts/SaneMaster.rb clean --nuclear` |
+| Permissions black screen | Run `tccutil reset Camera` |
+| API doesn't exist | Verify in SDK before assuming web is correct |
+| File > 500 lines | Extract to new file, run xcodegen |
+
+---
+
+## 6. Prohibited Actions
+
+❌ **DO NOT** edit `project.pbxproj` manually  
+❌ **DO NOT** create separate scripts - upgrade `SaneMaster.rb` instead  
+❌ **DO NOT** trust web search for API signatures without SDK verification  
+❌ **DO NOT** skip the log dump after builds  
+❌ **DO NOT** exceed 500 lines per Swift file  
+
+---
+
+## 7. Quick Commands Reference
+
+```bash
+# Setup environment
+./Scripts/SaneMaster.rb setup
+
+# Build + Test + Verify
+./Scripts/SaneMaster.rb verify
+
+# See runtime logs (CRITICAL)
+./Scripts/SaneMaster.rb diagnose --dump
+
+# Generate test assets
+./Scripts/SaneMaster.rb gen_assets
+
+# Nuclear clean (when stuck)
+./Scripts/SaneMaster.rb clean --nuclear
+
+# Regenerate Xcode project
+xcodegen generate
+```
+
+---
+
+## 8. Target Platform Context
+
+- **OS**: macOS 26.2 (Tahoe) - APIs differ from older versions
+- **Hardware**: Apple Silicon (M1+) ONLY
+- **Rule**: When unsure about an API, SEARCH THE WEB after SDK check
+
+---
+
+*Last Updated: December 2025*

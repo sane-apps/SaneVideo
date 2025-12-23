@@ -25,6 +25,9 @@
     "%lld Mbps" : {
 
     },
+    "%lld%%" : {
+
+    },
     "%lldpx" : {
 
     },
@@ -301,6 +304,15 @@
         }
       }
     },
+    "Applies EQ, Compression, and AI Voice Isolation to clean up background noise." : {
+
+    },
+    "Applies generative filters to give your video a specific look (e.g. 'Vintage', 'Cyberpunk')." : {
+
+    },
+    "Apply Magic Fix" : {
+
+    },
     "aspect_ratio.1_1" : {
       "extractionState" : "extracted_with_value",
       "localizations" : {
@@ -390,6 +402,9 @@
       }
     },
     "Audio" : {
+
+    },
+    "Audio levels below this threshold will be considered silence." : {
 
     },
     "audio.action.analyze_audio.subtitle" : {
@@ -558,6 +573,15 @@
       }
     },
     "Auto-Fix Project (Cmd+Shift+M)" : {
+
+    },
+    "Automatically adjusts brightness, contrast, and saturation." : {
+
+    },
+    "Automatically cuts segments of the video where no speech is detected (Timeline Edit)." : {
+
+    },
+    "Automatically detects and removes people or distracting objects from the background." : {
 
     },
     "background.blur.heavy" : {
@@ -890,6 +914,9 @@
           }
         }
       }
+    },
+    "Cancel" : {
+
     },
     "caption.placeholder" : {
       "extractionState" : "extracted_with_value",
@@ -1248,6 +1275,15 @@
           }
         }
       }
+    },
+    "Delete Clip?" : {
+
+    },
+    "Detects and removes hesitation words like 'um' and 'uh' from the timeline." : {
+
+    },
+    "Do you want to remove the clip reference from the project, or move the actual '%@' file to the Trash?" : {
+
     },
     "Drop media clips here to start your project" : {
 
@@ -2071,6 +2107,9 @@
     "Generate title & description from transcript" : {
 
     },
+    "Get Help" : {
+
+    },
     "gif.action.export" : {
       "extractionState" : "extracted_with_value",
       "localizations" : {
@@ -2280,12 +2319,6 @@
         }
       }
     },
-    "Global Magic" : {
-
-    },
-    "Global Magic actions analyze your entire timeline to ensure consistency in color, audio levels, and caption styles." : {
-
-    },
     "global.action.cancel" : {
       "extractionState" : "extracted_with_value",
       "localizations" : {
@@ -2400,6 +2433,9 @@
         }
       }
     },
+    "Keeps the subject centered in the frame even if they move." : {
+
+    },
     "Keyboard Shortcuts" : {
 
     },
@@ -2474,6 +2510,53 @@
     },
     "Magic Fix" : {
 
+    },
+    "MEDIA OFFLINE" : {
+
+    },
+    "menu.edit.clean_all_audio" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Clean All Audio"
+          }
+        }
+      }
+    },
+    "menu.edit.generate_all_captions" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Generate All Captions"
+          }
+        }
+      }
+    },
+    "menu.edit.magic_fix" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Magic Fix Selected Clip"
+          }
+        }
+      }
+    },
+    "menu.edit.magic_fix_all" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Magic Fix All Clips"
+          }
+        }
+      }
     },
     "menu.file.export_gif" : {
       "extractionState" : "extracted_with_value",
@@ -2671,112 +2754,13 @@
     "Mode" : {
 
     },
-    "mode.action.export" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Export"
-          }
-        }
-      }
-    },
-    "mode.action.import" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Import"
-          }
-        }
-      }
-    },
-    "mode.edit" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Edit"
-          }
-        }
-      }
-    },
-    "mode.help.editing" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Switch to editing mode"
-          }
-        }
-      }
-    },
-    "mode.help.export" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Export Video"
-          }
-        }
-      }
-    },
-    "mode.help.import" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Import Video"
-          }
-        }
-      }
-    },
-    "mode.help.recording" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Switch to recording mode"
-          }
-        }
-      }
-    },
-    "mode.help.rename_project" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Click to rename project"
-          }
-        }
-      }
-    },
-    "mode.record" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Record"
-          }
-        }
-      }
+    "Move Source File to Trash" : {
+
     },
     "Mute Microphone" : {
 
     },
     "Nothing Selected" : {
-
-    },
-    "Orchestrate your entire project with AI." : {
 
     },
     "Pause/Resume" : {
@@ -2904,9 +2888,6 @@
     "Pro Clean-up" : {
 
     },
-    "Pro Tip" : {
-
-    },
     "REC" : {
 
     },
@@ -2963,24 +2944,25 @@
         }
       }
     },
-    "recording.tooltip" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Press to start recording. Use ⌘R for quick access!"
-          }
-        }
-      }
-    },
     "Redo" : {
+
+    },
+    "Reframes horizontal video to vertical (9:16) keeping the subject centered." : {
+
+    },
+    "Remove from Project (Reference Only)" : {
 
     },
     "Rename Project" : {
 
     },
     "Requires captions - generate them first" : {
+
+    },
+    "Rotate 90°" : {
+
+    },
+    "Rotation" : {
 
     },
     "SANE" : {
@@ -4608,6 +4590,17 @@
         }
       }
     },
+    "toast.transcript.translated" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "🌍 Transcript translated to Spanish!"
+          }
+        }
+      }
+    },
     "toast.voiceover_saved" : {
       "extractionState" : "extracted_with_value",
       "localizations" : {
@@ -4951,6 +4944,17 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Transcript exported!"
+          }
+        }
+      }
+    },
+    "transcript.translate.help" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Translate to Spanish (macOS 15+)"
           }
         }
       }

@@ -168,7 +168,7 @@ actor BodyPoseService {
         let request = VNDetectHumanBodyPoseRequest()
 
         let handler = VNImageRequestHandler(ciImage: image)
-        try await handler.perform([request])
+        try handler.perform([request])
 
         guard let observations = request.results else {
             return []
@@ -211,7 +211,7 @@ actor BodyPoseService {
         request.maximumHandCount = 2
 
         let handler = VNImageRequestHandler(ciImage: image)
-        try await handler.perform([request])
+        try handler.perform([request])
 
         guard let observations = request.results else {
             return []

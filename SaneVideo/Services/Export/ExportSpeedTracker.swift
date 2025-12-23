@@ -11,7 +11,7 @@ import Foundation
 @Observable
 class ExportSpeedTracker {
     
-    struct SpeedMetrics {
+    struct SpeedMetrics: Sendable {
         let currentSpeedMBps: Double
         let averageSpeedMBps: Double
         let estimatedTimeRemaining: TimeInterval

@@ -20,34 +20,21 @@ extension ProjectState {
         let startTime = Date()
         let performanceMetrics = ServiceContainer.shared.performanceMetrics
         
-        // Start performance tracking
-        let startTime = Date()
-        let performanceMetrics = ServiceContainer.shared.performanceMetrics
-        
         AppLogger.project.info("✨ Magic Fix: Starting for clip \(clip.id) (\(clip.url.lastPathComponent))")
         ServiceContainer.shared.toastManager.show("✨ Starting Magic Fix...")
         
         defer {
             // Record performance metrics
             let duration = Date().timeIntervalSince(startTime)
+            let optionsDescription = "\(options.removeSilence ? "silence " : "")\(options.removeFillers ? "fillers " : "")\(options.autoEnhance ? "enhance" : "")"
             performanceMetrics.recordOperation(
                 name: "Magic Fix",
                 duration: duration,
                 metadata: [
                     "clipDuration": String(format: "%.1f", clip.duration.seconds),
-                    "options": "\(options.removeSilence ? "silence " : "")\(options.removeFillers ? "fillers " : "")\(options.autoEnhance ? "enhance" : "")"
+                    "options": optionsDescription.isEmpty ? "none" : optionsDescription
                 ]
             )
-            // Record performance metrics
-            let duration = Date().timeIntervalSince(startTime)
-            performanceMetrics.recordOperation(
-                name: "Magic Fix",
-                duration: duration,
-                metadata: [
-                    "clipDuration": String(format: "%.1f", clip.duration.seconds),
-                    "options": options.debugDescription
-                ]
-            ) 
             AppLogger.project.info("✨ Magic Fix: Finished processing for clip \(clip.id)")
             Task { @MainActor in 
                 self.isProcessing = false 
@@ -105,7 +92,7 @@ extension ProjectState {
              do {
                  // ROBUSTNESS: Add timeout (10 minutes max for transcription)
                  _ = try await withTimeout(seconds: 600.0) {
-                     try await generateCaptions(for: preAnalysisClip)
+                     try await self.generateCaptions(for: preAnalysisClip)
                  }
              } catch {
                  AppLogger.project.warning("Magic Fix: Caption generation failed (timeout or error): \(error.localizedDescription). Some features like Filler Removal may be skipped.")
@@ -135,7 +122,7 @@ extension ProjectState {
             // 5. AI & Generative Features
             // ROBUSTNESS: Add timeout for AI operations (2 minutes max)
             try await withTimeout(seconds: 120.0) {
-                try await applyAIGenerativeFeatures(to: visualClip, options: options)
+                try await self.applyAIGenerativeFeatures(to: visualClip, options: options)
             }
 
             // Wait for background analysis - Already awaited above

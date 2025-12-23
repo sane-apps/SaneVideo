@@ -26,18 +26,20 @@ enum MagicFixService {
         // 1. Silence Detection
         if options.removeSilence {
             do {
-                // ROBUSTNESS: Add timeout (5 minutes max for silence detection)
-                let silenceRanges = try await withTimeout(seconds: 300.0) {
-                    try await detectSilence(
-                        in: clip,
-                        options: options,
-                        progressHandler: { p, _ in progressHandler(Int(Double(p)/100.0 * 30.0), 100) }
-                    )
+                // ROBUSTNESS: Add timeout (5 minutes max for silence detection) with retry
+                let silenceRanges = try await retryOperation(maxAttempts: 2, initialDelay: 1.0) {
+                    try await withTimeout(seconds: 300.0) {
+                        try await detectSilence(
+                            in: clip,
+                            options: options,
+                            progressHandler: { p, _ in progressHandler(Int(Double(p)/100.0 * 30.0), 100) }
+                        )
+                    }
                 }
                 rangesToRemove.append(contentsOf: silenceRanges)
             } catch {
-                AppLogger.project.error("⚠️ Magic Fix: Silence detection failed (timeout or error): \(error.localizedDescription)")
-                // Continue execution - do not fail the whole process
+                AppLogger.project.error("⚠️ Magic Fix: Silence detection failed after retries: \(error.localizedDescription)")
+                // Continue execution - do not fail the whole process (graceful degradation)
             }
         }
         

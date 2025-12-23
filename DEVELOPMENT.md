@@ -1,6 +1,11 @@
 # SaneVideo Development Guide (SOP)
 
 > **SINGLE SOURCE OF TRUTH** for all Developers and AI Agents.
+> 
+> **SOP = Standard Operating Procedure = This File (DEVELOPMENT.md)**
+> 
+> When you see "SOP", "use our SOP", or "follow the SOP", this is the document.
+> 
 > Read this entirely before touching code.
 
 ## 0. Critical System Context: macOS 26.2 (Tahoe)
@@ -260,3 +265,58 @@ We balance speed and robustness using two tiers of tests. **Use the right tool f
 
 - **Expectations over Polling**: Use `expectation(for: predicate, evaluatedWith: object)` instead of `while` loops with `sleep`.
 - **Assets**: Use `SaneMaster.rb gen_assets` to create lightweight test media. Use `TestEnvironment` to load heavy media only when necessary.
+
+---
+
+## 9. Documentation Structure
+
+### Primary Documentation (Single Source of Truth)
+
+- **This File (DEVELOPMENT.md)**: Complete SOP, architecture, workflows, style guide
+- **README.md**: User-facing features, quick start, keyboard shortcuts
+- **AI_AGENT_QUICK_START.md**: Quick reference for AI agents (points to this file)
+
+### Reference Documentation
+
+- **INSTALLED_TOOLS.md**: Development tools inventory (swift-format, swiftlint, etc.)
+- **ON_DEVICE_ARCHITECTURE.md**: Details on 100% on-device processing architecture
+- **VISUAL_TESTS_SETUP.md**: UI testing setup and permission automation
+
+### Historical/Archive Documentation
+
+The following files are historical records and should NOT be used as primary sources:
+- `COMPLETED_IMPROVEMENTS.md` - Completed work log
+- `TOOLS_SUMMARY.md` - Superseded by INSTALLED_TOOLS.md
+- `TOOLS_AND_IMPROVEMENTS.md` - Superseded by INSTALLED_TOOLS.md
+- `TOOLS_RECOMMENDATIONS.md` - Recommendations (some implemented)
+- `PERFORMANCE_AUDIT.md` - Audit results (issues addressed)
+- `*_COMPLETE.md` files - Historical progress logs
+- `UI_UX_IMPROVEMENTS.md` - Historical UI work
+- `UI_REFACTOR_PROGRESS.md` - Historical refactor log
+
+**Rule**: When in doubt, refer to DEVELOPMENT.md. If information is missing, add it here rather than creating new files.
+
+---
+
+## 10. For AI Agents
+
+### First Steps
+
+1. **Read this entire file (DEVELOPMENT.md)** - It's the single source of truth
+2. **Check AI_AGENT_QUICK_START.md** - Quick reference (but this file is authoritative)
+3. **Use SaneMaster.rb** - Don't run raw xcodebuild commands
+4. **Always dump logs** - Critical for debugging
+
+### Documentation Priority
+
+1. **DEVELOPMENT.md** - Always check here first
+2. **README.md** - For user-facing features
+3. **Reference docs** - Only when needed for specific topics
+4. **Historical docs** - For context only, not as source of truth
+
+### When Adding Documentation
+
+- **Add to DEVELOPMENT.md** if it's a rule, workflow, or architecture detail
+- **Add to README.md** if it's user-facing
+- **Create reference doc** only if it's a large, specialized topic (like ON_DEVICE_ARCHITECTURE.md)
+- **Don't create** new documentation files for small updates

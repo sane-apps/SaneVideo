@@ -3,6 +3,7 @@
 //  SaneVideo
 //
 
+import AppKit
 import AVFoundation
 import CoreMedia
 import Foundation
@@ -12,6 +13,23 @@ extension RecordingEngine {
 
   @RecordingActor func processSample(_ sampleBuffer: CMSampleBuffer, source: RecordingSource) {
     autoreleasepool {
+      // Update camera frame for PiP overlay (always, even during screen recording)
+      if source == .camera, let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) {
+        videoWriter?.updateCameraFrame(pixelBuffer)
+      }
+      
+      // Update PiP window frame for accurate compositing (only during screen recording)
+      // Note: We update this periodically, not on every frame to avoid overhead
+      if source == .screen {
+        Task { @MainActor in
+          let pipFrame = ServiceContainer.shared.appState.windowManager.pipWindowFrame
+          let screenFrame = NSScreen.main?.frame
+          Task { @RecordingActor in
+            self.videoWriter?.updatePiPFrame(pipFrame, screenFrame: screenFrame)
+          }
+        }
+      }
+      
       // Debug guard failures during critical recalibration phase
       if timeCoordinator.startTimeNeedsRecalibration, source == currentSource {
         if isPaused { AppLogger.recording.debug("Drop: isPaused") }
@@ -63,7 +81,7 @@ extension RecordingEngine {
         sourceSwitchTimeoutTask = nil
       }
 
-      videoWriter?.writeVideo(sampleBuffer: sampleBuffer, presentationTime: result.presentationTime)
+      videoWriter?.writeVideo(sampleBuffer: sampleBuffer, presentationTime: result.presentationTime, source: source)
     }
   }
 

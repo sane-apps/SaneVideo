@@ -34,7 +34,8 @@ struct SmartToolsSection: View {
                                 subtitle: "Cut non-speech gaps",
                                 isOn: $options.removeSilence,
                                 icon: "waveform.slash",
-                                color: .blue
+                                color: .blue,
+                                identifier: "Toggle_RemoveSilence"
                             )
                             .help("Automatically cuts segments of the video where no speech is detected (Timeline Edit).")
                             
@@ -65,7 +66,8 @@ struct SmartToolsSection: View {
                                 subtitle: "Cut 'um', 'uh', stutters",
                                 isOn: $options.removeFillers,
                                 icon: "bubble.left",
-                                color: .blue
+                                color: .blue,
+                                identifier: "Toggle_RemoveFillers"
                             )
                             .help("Detects and removes hesitation words like 'um' and 'uh' from the timeline.")
                             
@@ -74,7 +76,8 @@ struct SmartToolsSection: View {
                                 subtitle: "Isolate voice & remove noise",
                                 isOn: $options.enhanceAudio,
                                 icon: "mic.fill",
-                                color: .blue
+                                color: .blue,
+                                identifier: "Toggle_EnhanceSpeech"
                             )
                             .help("Applies EQ, Compression, and AI Voice Isolation to clean up background noise.")
                         }
@@ -88,7 +91,8 @@ struct SmartToolsSection: View {
                                 subtitle: "Light & color fix",
                                 isOn: $options.autoEnhance,
                                 icon: "paintpalette",
-                                color: .purple
+                                color: .purple,
+                                identifier: "Toggle_AutoColor"
                             )
                             .help("Automatically adjusts brightness, contrast, and saturation.")
                             
@@ -161,8 +165,11 @@ struct SmartToolsSection: View {
             Spacer()
             Menu {
                 Button("Minimal Fix") { options = .minimal }
+                    .accessibilityIdentifier("Preset_Minimal")
                 Button("Pro Clean-up") { options = .proClean }
+                    .accessibilityIdentifier("Preset_ProClean")
                 Button("Social Media Ready") { options = .socialMedia }
+                    .accessibilityIdentifier("Preset_SocialMedia")
             } label: {
                 Label("Presets", systemImage: "slider.horizontal.3")
                     .font(.caption.bold())
@@ -177,6 +184,7 @@ struct SmartToolsSection: View {
             }
             .menuStyle(.button)
             .buttonStyle(.plain)
+            .accessibilityIdentifier("PresetsMenu")
         }
     }
 
@@ -257,6 +265,8 @@ struct SmartToolsSection: View {
                     .shadow(color: Theme.Colors.accent.opacity(0.4), radius: 8, x: 0, y: 4)
                 }
                 .buttonStyle(.plain)
+                .accessibilityIdentifier("MagicFixButton")
+                .accessibilityLabel("Apply Magic Fix")
             }
         }
     }

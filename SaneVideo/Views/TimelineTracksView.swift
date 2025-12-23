@@ -155,23 +155,47 @@ struct TimelineTracksView: View {
 
     private var playheadOverlay: some View {
         ZStack(alignment: .top) {
+            // Glow effect
+            Rectangle()
+                .fill(Color.red.opacity(0.3))
+                .frame(width: 4)
+                .blur(radius: 2)
+            
+            // Main line
             Rectangle()
                 .fill(Color.red)
                 .frame(width: 2)
 
+            // Glowing circle
+            Circle()
+                .fill(
+                    RadialGradient(
+                        colors: [Color.red.opacity(0.8), Color.red.opacity(0.3)],
+                        center: .center,
+                        startRadius: 2,
+                        endRadius: 8
+                    )
+                )
+                .frame(width: 16, height: 16)
+                .blur(radius: 2)
+                .offset(y: 2)
+            
+            // Sharp circle
             Circle()
                 .fill(Color.red)
                 .frame(width: 10, height: 10)
                 .offset(y: 4)
-                .scaleEffect(isScrubbing ? 1.2 : 1.0)
-                .animation(.spring(response: 0.2, dampingFraction: 0.6), value: isScrubbing)
+                .scaleEffect(isScrubbing ? 1.3 : 1.0)
+                .shadow(color: .red.opacity(0.6), radius: isScrubbing ? 8 : 4)
         }
         .contentShape(Rectangle())
         .highPriorityGesture(
             DragGesture(coordinateSpace: .named("TimelineContent"))
                 .onChanged { value in
                     if !isScrubbing {
-                        isScrubbing = true
+                        withAnimation(.spring(response: 0.2, dampingFraction: 0.6)) {
+                            isScrubbing = true
+                        }
                         ServiceContainer.shared.hapticsManager.selection()
                     }
                     let time = max(0, value.location.x / pixelsPerSecond)
@@ -179,7 +203,9 @@ struct TimelineTracksView: View {
                     appState.playbackState.seek(to: scrubTime)
                 }
                 .onEnded { _ in
-                    isScrubbing = false
+                    withAnimation(.spring(response: 0.2, dampingFraction: 0.6)) {
+                        isScrubbing = false
+                    }
                     ServiceContainer.shared.hapticsManager.selection()
                 }
         )

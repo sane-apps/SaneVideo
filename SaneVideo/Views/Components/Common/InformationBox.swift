@@ -28,6 +28,11 @@ struct InformationBox: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(color.opacity(0.1))
         .cornerRadius(4)
+        .overlay(
+            RoundedRectangle(cornerRadius: 4)
+                .stroke(color.opacity(0.2), lineWidth: 0.5)
+        )
+        .smoothAppear()
     }
 }
 
@@ -50,6 +55,12 @@ struct EstimateBox: View {
         .padding(10)
         .background(color.opacity(0.1))
         .cornerRadius(8)
+        .overlay(
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(color.opacity(0.3), lineWidth: 1)
+        )
+        .shadow(color: color.opacity(0.1), radius: 4, x: 0, y: 2)
+        .smoothAppear()
     }
 }
 

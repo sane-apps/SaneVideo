@@ -90,6 +90,8 @@ struct TimelineControls: View {
                         .opacity(snapEnabled ? 1.0 : 0.7)
                 })
                 .buttonStyle(.plain)
+                .hoverScale(1.15)
+                .animation(.smoothUI, value: snapEnabled)
                 .help(KeyboardShortcutHelper.helpWithShortcut(String(localized: "timeline.help.snap", defaultValue: "Toggle Snapping"), key: "n", modifiers: []))
                 .accessibilityIdentifier("timeline.toggle_snap")
 
@@ -100,6 +102,8 @@ struct TimelineControls: View {
                         .font(.system(size: 13))
                 })
                 .buttonStyle(.plain)
+                .hoverScale(1.15)
+                .animation(.smoothUI, value: magneticTimeline)
                 .help(KeyboardShortcutHelper.helpWithShortcut(String(localized: "timeline.help.magnetic", defaultValue: "Magnetic Timeline"), key: "m", modifiers: []))
                 .accessibilityIdentifier("timeline.toggle_magnetic")
 
@@ -163,6 +167,8 @@ struct ToolButton: View {
         }
         .buttonStyle(.plain)
         .contentShape(Rectangle())
+        .hoverScale(1.1)
+        .animation(.smoothUI, value: isSelected)
         .accessibilityIdentifier(id)
     }
 }

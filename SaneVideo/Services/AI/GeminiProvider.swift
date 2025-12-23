@@ -7,8 +7,10 @@ import Foundation
 
 struct GeminiProvider: AIModelProvider {
     func generateTitleAndDescription(transcript: String) async throws -> AIGeneratedContent {
-        let key = await Secrets.geminiKey()
-        guard !key.isEmpty && key != "YOUR_GEMINI_API_KEY" else {
+        // Use KeychainService for user-provided API keys (optional cloud enhancement)
+        let keychain = ServiceContainer.shared.keychainService
+        let key = await keychain.retrieve(for: .geminiKey) ?? ""
+        guard !key.isEmpty else {
             throw AIError.noAPIKey
         }
 
@@ -90,8 +92,10 @@ struct GeminiProvider: AIModelProvider {
     }
 
     func analyzeTranscriptForEdits(prompt: String) async throws -> MagicFixAnalysis {
-        let key = await Secrets.geminiKey()
-        guard !key.isEmpty && key != "YOUR_GEMINI_API_KEY" else { throw AIError.noAPIKey }
+        // Use KeychainService for user-provided API keys (optional cloud enhancement)
+        let keychain = ServiceContainer.shared.keychainService
+        let key = await keychain.retrieve(for: .geminiKey) ?? ""
+        guard !key.isEmpty else { throw AIError.noAPIKey }
         
         let urlString = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=\(key)"
         guard let url = URL(string: urlString) else { throw AIError.invalidResponse }
@@ -131,8 +135,10 @@ struct GeminiProvider: AIModelProvider {
     }
 
     func refineCaptions(captions: [Caption], prompt: String) async throws -> [Caption] {
-        let key = await Secrets.geminiKey()
-        guard !key.isEmpty && key != "YOUR_GEMINI_API_KEY" else { throw AIError.noAPIKey }
+        // Use KeychainService for user-provided API keys (optional cloud enhancement)
+        let keychain = ServiceContainer.shared.keychainService
+        let key = await keychain.retrieve(for: .geminiKey) ?? ""
+        guard !key.isEmpty else { throw AIError.noAPIKey }
         
         let urlString = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=\(key)"
         guard let url = URL(string: urlString) else { throw AIError.invalidResponse }

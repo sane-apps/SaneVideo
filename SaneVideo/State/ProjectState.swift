@@ -28,6 +28,9 @@ class ProjectState {
     var isLoadingProjects = true
 
     private var currentScopeSession: ProjectFileManager.SecurityScopeSession?
+    
+    /// Current processing task for cancellation support
+    private var currentProcessingTask: Task<Void, Never>?
 
     // MARK: - Smart Features State
     

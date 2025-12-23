@@ -25,6 +25,18 @@ struct SettingsView: View {
                 }
                 .tag("export")
 
+            PrivacySettingsView()
+                .tabItem {
+                    Label(String(localized: "settings.tab.privacy", defaultValue: "Privacy & AI"), systemImage: "lock.shield")
+                }
+                .tag("privacy")
+            
+            APIKeysSettingsView()
+                .tabItem {
+                    Label("API Keys", systemImage: "key.fill")
+                }
+                .tag("apikeys")
+
             DebugSettingsView()
                 .tabItem {
                     Label(String(localized: "settings.tab.debug", defaultValue: "Debug"), systemImage: "ladybug")
@@ -70,6 +82,40 @@ struct GeneralSettingsView: View {
                         showingCacheAlert = true
                     }
                     .accessibilityIdentifier("settings.clear_cache")
+                }
+            }
+            .padding(.bottom, 20)
+            
+            // MARK: - Privacy Section
+            Section(header: Text("Privacy & AI").font(.headline)) {
+                VStack(alignment: .leading, spacing: 12) {
+                    HStack {
+                        CompactPrivacyBadge()
+                        Spacer()
+                    }
+                    
+                    Text("SaneVideo processes all AI features on-device using Apple Intelligence. Your videos never leave your Mac.")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    
+                    HStack {
+                        Text("Cloud AI:")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        Spacer()
+                        Text("Optional (your API keys)")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    
+                    Button("Configure API Keys") {
+                        // Open API keys settings
+                        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy") {
+                            NSWorkspace.shared.open(url)
+                        }
+                    }
+                    .font(.caption)
+                    .buttonStyle(.link)
                 }
             }
         }

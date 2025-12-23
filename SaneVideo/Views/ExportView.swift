@@ -65,21 +65,17 @@ struct ExportView: View {
             // Header Section
             VStack(spacing: 8) {
                 if isExporting {
-                    ProgressView(value: exportProgress, total: 1.0)
-                        .progressViewStyle(.linear)
-                        .frame(height: 8)
-                        .padding(.horizontal)
-    
-                    Text(exportProgress >= 1.0 ? "Finishing up..." : "Exporting...")
-                        .font(.headline)
+                    LoadingIndicator(
+                        message: exportProgress >= 1.0 ? "Finishing up..." : "Exporting...",
+                        progress: exportProgress
+                    )
+                    .transition(.smoothScale)
                 } else if youtubeService.isUploading {
-                    ProgressView(value: youtubeService.uploadProgress, total: 1.0)
-                        .progressViewStyle(.linear)
-                        .frame(height: 8)
-                        .padding(.horizontal)
-    
-                    Text("Uploading to YouTube...")
-                        .font(.headline)
+                    LoadingIndicator(
+                        message: "Uploading to YouTube...",
+                        progress: youtubeService.uploadProgress
+                    )
+                    .transition(.smoothScale)
                 } else {
                     Image(systemName: "film.stack")
                         .font(.system(size: 48))
@@ -91,13 +87,17 @@ struct ExportView: View {
                             )
                         )
                         .padding(.bottom, 8)
+                        .smoothAppear()
     
                     Text(appState.currentProject?.name ?? "Untitled Project")
                         .font(.title2)
                         .fontWeight(.bold)
+                        .smoothAppear()
                 }
             }
             .padding(.top, 10)
+            .animation(.smoothUI, value: isExporting)
+            .animation(.smoothUI, value: youtubeService.isUploading)
     
             // YouTube Config
             ExportYouTubeSection(

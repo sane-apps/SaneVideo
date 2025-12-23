@@ -81,6 +81,13 @@ struct LibraryClipRow: View {
         .padding(6)
         .background(isSelected ? Color.accentColor.opacity(0.2) : Color.clear)
         .cornerRadius(6)
+        .overlay(
+            RoundedRectangle(cornerRadius: 6)
+                .stroke(isSelected ? Color.accentColor.opacity(0.4) : Color.clear, lineWidth: 1)
+        )
+        .shadow(color: isSelected ? Color.accentColor.opacity(0.2) : .clear, radius: 4, x: 0, y: 2)
+        .animation(.smoothUI, value: isSelected)
+        .smoothAppear()
         .accessibilityIdentifier("sidebar.clip_row.\(clip.id)")
         .task {
             thumbnail = await ServiceContainer.shared.timelineThumbnailService.thumbnail(

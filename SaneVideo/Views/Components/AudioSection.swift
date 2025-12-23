@@ -82,6 +82,12 @@ struct AudioSection: View {
                     .padding(6)
                     .background(Color.secondary.opacity(0.1))
                     .cornerRadius(4)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 4)
+                            .stroke(Color.secondary.opacity(0.2), lineWidth: 0.5)
+                    )
+                    .transition(.smoothScale)
+                    .smoothAppear()
             }
 
             Divider().padding(.vertical, 4)

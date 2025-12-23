@@ -96,10 +96,17 @@ struct VideoSection: View {
                 .padding(8)
                 .background(Color.purple.opacity(0.15))
                 .cornerRadius(6)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 6)
+                        .stroke(Color.purple.opacity(0.3), lineWidth: 1)
+                )
             }
             .buttonStyle(.plain)
+            .hoverScale(1.02)
+            .pressScale()
             .disabled(isAnalyzingCrop)
             .accessibilityIdentifier("video.apply_smart_crop")
+            .smoothAppear()
 
             if let result = cropResult {
                 Text(result)
@@ -193,9 +200,14 @@ struct AspectRatioButton: View {
                 RoundedRectangle(cornerRadius: 6)
                     .stroke(isSelected ? Color.purple : Color.clear, lineWidth: 1)
             )
+            .shadow(color: isSelected ? Color.purple.opacity(0.3) : .clear, radius: 4, x: 0, y: 2)
         }
         .buttonStyle(.plain)
+        .hoverScale(1.05)
+        .pressScale()
+        .animation(.smoothUI, value: isSelected)
         .help(option.localizedPlatform)
+        .smoothAppear()
     }
 }
 

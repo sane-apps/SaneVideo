@@ -45,10 +45,17 @@ struct EffectsPickerView: View {
                 .padding(8)
                 .background(Color.purple.opacity(0.1))
                 .cornerRadius(6)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 6)
+                        .stroke(Color.purple.opacity(0.3), lineWidth: 1)
+                )
             })
             .buttonStyle(.plain)
+            .hoverScale(1.02)
+            .pressScale()
             .padding(.bottom, 4)
             .accessibilityIdentifier("effects.action.auto_grade")
+            .smoothAppear()
 
             // Active effects (if any) - shown at top with sliders
             if !effects.isEmpty {
@@ -70,7 +77,9 @@ struct EffectsPickerView: View {
                 HStack(spacing: 6) {
                     ForEach(EffectCategory.allCases, id: \.self) { category in
                         Button(category.displayName) {
-                            selectedCategory = category
+                            withAnimation(.smoothUI) {
+                                selectedCategory = category
+                            }
                         }
                         .font(.caption2)
                         .fontWeight(selectedCategory == category ? .bold : .regular)
@@ -79,7 +88,14 @@ struct EffectsPickerView: View {
                         .background(selectedCategory == category ? Color.accentColor : Color.secondary.opacity(0.2))
                         .foregroundColor(selectedCategory == category ? .white : .primary)
                         .cornerRadius(12)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(selectedCategory == category ? Color.accentColor.opacity(0.5) : Color.clear, lineWidth: 1)
+                        )
+                        .shadow(color: selectedCategory == category ? Color.accentColor.opacity(0.3) : .clear, radius: 4, x: 0, y: 2)
                         .buttonStyle(.plain)
+                        .hoverScale(1.05)
+                        .animation(.smoothUI, value: selectedCategory)
                         .accessibilityIdentifier("effects.category.\(category.rawValue)")
                     }
                 }
@@ -182,11 +198,15 @@ struct EffectTile: View {
             }
         })
         .buttonStyle(.plain)
+        .hoverScale(1.1)
+        .pressScale()
+        .shadow(color: isActive ? Color.accentColor.opacity(0.3) : .clear, radius: 6, x: 0, y: 3)
+        .animation(.smoothUI, value: isActive)
         .help(isActive ? 
             String(localized: "effects.tile.remove", defaultValue: "Remove") + " \(effectType.displayName)" : 
             String(localized: "effects.tile.apply", defaultValue: "Apply") + " \(effectType.displayName)")
         .accessibilityIdentifier(id)
-        .animation(.easeInOut(duration: 0.15), value: isActive)
+        .smoothAppear()
     }
 }
 
@@ -248,5 +268,10 @@ struct ActiveEffectRow: View {
         .padding(.horizontal, 6)
         .background(Color.accentColor.opacity(0.1))
         .cornerRadius(6)
+        .overlay(
+            RoundedRectangle(cornerRadius: 6)
+                .stroke(Color.accentColor.opacity(0.2), lineWidth: 1)
+        )
+        .smoothAppear()
     }
 }

@@ -10,9 +10,6 @@ import Combine
 import SwiftUI
 import UniformTypeIdentifiers
 
-// Import new modifiers
-// StateChangePipeline, LoadingStateModifier, AnimationModifiers, PerformanceModifiers, AccessibilityModifiers
-
 struct MainContentView: View {
   @Environment(AppState.self) var appState
   @Environment(ErrorPresenter.self) var errorPresenter
@@ -36,8 +33,8 @@ struct MainContentView: View {
   var body: some View {
     @Bindable var appState = appState
     @Bindable var errorPresenter = errorPresenter
-    return
-      mainContent
+    
+    return mainContent
       .background(.regularMaterial)
       .overlay(alignment: .top) {
         MagicOverlayView()
@@ -263,7 +260,9 @@ struct MainContentView: View {
         // Center is now dedicated to the main Mode Switcher
         Button(
           action: {
-            appState.appMode = (appState.appMode == .recording ? .editing : .recording)
+            withAnimation(.smoothUI) {
+              appState.appMode = (appState.appMode == .recording ? .editing : .recording)
+            }
           },
           label: {
             Label(
@@ -277,8 +276,16 @@ struct MainContentView: View {
         .buttonStyle(.borderedProminent)
         .tint(Theme.Colors.accent)  // Force App Theme Color
         .controlSize(.regular)
+        .hoverScale(1.05)
+        .animation(.smoothUI, value: appState.appMode)
         .help("Toggle Record/Edit Mode (Cmd+M)")
         .padding(.vertical, 4)
+        .enhancedAccessibility(
+            label: appState.appMode == .recording ? "Switch to Editor" : "Switch to Record",
+            hint: "Toggle between recording and editing modes",
+            traits: .isButton
+        )
+        .keyboardShortcutHint("⌘M")
       }
 
       ToolbarItem(placement: .automatic) {
@@ -320,8 +327,15 @@ struct MainContentView: View {
             )
             .buttonStyle(.borderedProminent)
             .tint(Theme.Colors.accent)  // Force App Theme Color
+            .hoverScale(1.05)
             .help("Auto-Fix Project (Cmd+Shift+M)")
             .keyboardShortcut("m", modifiers: [.command, .shift])
+            .enhancedAccessibility(
+                label: "Magic Fix",
+                hint: "Automatically removes silence, filler words, and enhances your video",
+                traits: .isButton
+            )
+            .keyboardShortcutHint("⌘⇧M")
 
             Divider()
               .frame(height: 16)
@@ -335,8 +349,15 @@ struct MainContentView: View {
             )
             .buttonStyle(.borderedProminent)
             .tint(Theme.Colors.accent)  // Force App Theme Color
+            .hoverScale(1.05)
             .help("Export Gallery (Cmd+E)")
             .keyboardShortcut("e", modifiers: [.command])
+            .enhancedAccessibility(
+                label: "Share",
+                hint: "Export your video project",
+                traits: .isButton
+            )
+            .keyboardShortcutHint("⌘E")
           }
         }
       }

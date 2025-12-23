@@ -98,6 +98,8 @@ private struct SidebarRailItem: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .hoverScale(1.1)
+        .animation(.smoothUI, value: isSelected)
         .help(label)
     }
 }

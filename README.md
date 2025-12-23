@@ -5,8 +5,14 @@
 SaneVideo is a modern,native macOS application built with SwiftUI and AVFoundation for recording, editing, and exporting high-quality videos. Designed for creators who want powerful tools with an elegant, native interface.
 
 > **🚨 FOR DEVELOPERS & AI AGENTS 🚨**
-> **Consolidated SOP**: See [DEVELOPMENT.md](DEVELOPMENT.md) for **ALL** build rules, AI constraints, architecture, style guides, and tools.
-> **DO NOT** look elsewhere.
+> 
+> **SOP (Standard Operating Procedure)**: [DEVELOPMENT.md](DEVELOPMENT.md) is the **SINGLE SOURCE OF TRUTH**.
+> 
+> When you see "SOP", "use our SOP", or "follow the SOP", that means [DEVELOPMENT.md](DEVELOPMENT.md).
+> 
+> **Quick Reference**: See [AI_AGENT_QUICK_START.md](AI_AGENT_QUICK_START.md) for a TL;DR version.
+> 
+> **DO NOT** use other documentation files as primary sources - they are historical/archive only.
 
 ---
 

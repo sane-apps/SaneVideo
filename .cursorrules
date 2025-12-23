@@ -8,6 +8,11 @@
 ## 0. CRITICAL FIRST ACTION
 
 **READ THE SOP**: Before touching ANY code, read [DEVELOPMENT.md](file:///Users/sj/SaneVideo/DEVELOPMENT.md) entirely.
+
+**SOP = Standard Operating Procedure = DEVELOPMENT.md**
+
+When the user says "use our SOP", "follow the SOP", or just "SOP", they mean DEVELOPMENT.md.
+
 This is the **SINGLE SOURCE OF TRUTH** for architecture, style, and workflows.
 
 ---

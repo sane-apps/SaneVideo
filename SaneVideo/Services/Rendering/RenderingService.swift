@@ -39,8 +39,8 @@ final class RenderingService: @unchecked Sendable {
 
     private init() {
         let device = MTLCreateSystemDefaultDevice()
-        self.mtlDevice = device
-        self.commandQueue = device?.makeCommandQueue()
+        self.mtlDevice = device.map { MetalOptimization.configureDevice($0) }
+        self.commandQueue = self.mtlDevice?.makeCommandQueue()
 
         if let device = device {
             // High Quality Context: Tuned for precision

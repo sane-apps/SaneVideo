@@ -30,8 +30,6 @@ final class ErrorHandlingTests: XCTestCase {
 
     // MARK: - Corrupted Project File Tests
 
-    // MARK: - Corrupted Project File Tests
-
     func testCorruptedProjectFile() async throws {
         // Create a project file with invalid JSON
         let projectsDir = tempDir.appendingPathComponent("Projects")

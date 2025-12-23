@@ -104,59 +104,9 @@ class RecordingEngine: NSObject, @unchecked Sendable {
     setupInterruptionObservers()
   }
 
-  // MARK: - Internal Setup
+  // MARK: - Internal Setup (Setup logic in RecordingEngine+Setup.swift)
 
-  @MainActor
-  private func setupDiskMonitor() {
-    diskSpaceMonitor.onLowDiskSpace = { [weak self] error in
-      guard let self = self else { return }
-
-      Task {
-        AppLogger.recording.error("Low disk space - stopping recording: \(error)")
-        _ = await self.stopRecording()
-
-        await MainActor.run {
-          self.onError?(
-            error as? AppError ?? AppError.recordingEngineError(error.localizedDescription))
-        }
-      }
-    }
-  }
-
-  @MainActor
-  func verifyDiskSpace() throws {
-    try diskSpaceMonitor.verifyDiskSpace()
-  }
-
-  private func setupSleepObservers() {
-    let center = NSWorkspace.shared.notificationCenter
-    center.addObserver(
-      self, selector: #selector(handleSleep), name: NSWorkspace.willSleepNotification, object: nil)
-    center.addObserver(
-      self, selector: #selector(handleWake), name: NSWorkspace.didWakeNotification, object: nil)
-  }
-
-  private func setupInterruptionObservers() {
-    let center = NotificationCenter.default
-
-    // Capture Session Interruptions (Camera/Mic hardware issues)
-    center.addObserver(
-      self, selector: #selector(handleSessionWasInterrupted),
-      name: AVCaptureSession.wasInterruptedNotification, object: nil)
-    center.addObserver(
-      self, selector: #selector(handleSessionInterruptionEnded),
-      name: AVCaptureSession.interruptionEndedNotification, object: nil)
-    center.addObserver(
-      self, selector: #selector(handleSessionRuntimeError),
-      name: AVCaptureSession.runtimeErrorNotification, object: nil)
-
-    // Audio Engine Changes (Device unplugged/switched)
-    center.addObserver(
-      self, selector: #selector(handleAudioConfigurationChange),
-      name: .AVAudioEngineConfigurationChange, object: nil)
-  }
-
-  @objc private func handleSleep() {
+  @objc func handleSleep() {
     Task { @RecordingActor in
       if isRecording, !isPaused {
         pauseRecording()
@@ -164,19 +114,15 @@ class RecordingEngine: NSObject, @unchecked Sendable {
     }
   }
 
-  @objc private func handleWake() {
-    // Optional: Notify user that recording was paused
-  }
+  @objc func handleWake() {}
 
   // MARK: - Interruption Handlers
 
-  @objc private func handleSessionWasInterrupted(notification: Notification) {
+  @objc func handleSessionWasInterrupted(notification: Notification) {
     Task { @RecordingActor in
       guard isRecording, !isPaused else { return }
-
       AppLogger.recording.warning("⚠️ Recording Interrupted. Pausing...")
       pauseRecording()
-
       await MainActor.run {
         ServiceContainer.shared.toastManager.show(
           "Recording Paused: Camera Interrupted", type: .error)
@@ -184,20 +130,16 @@ class RecordingEngine: NSObject, @unchecked Sendable {
     }
   }
 
-  @objc private func handleSessionInterruptionEnded(notification: Notification) {
+  @objc func handleSessionInterruptionEnded(notification: Notification) {
     AppLogger.recording.info("✅ Recording Interruption Ended. Ready to resume.")
   }
 
-  @objc private func handleSessionRuntimeError(notification: Notification) {
+  @objc func handleSessionRuntimeError(notification: Notification) {
     guard let error = notification.userInfo?[AVCaptureSessionErrorKey] as? Error else { return }
-
     Task { @RecordingActor in
       guard isRecording else { return }
       AppLogger.recording.error("❌ Recording Runtime Error: \(error.localizedDescription)")
-
-      // Try to stop safely to save what we have
       _ = await stopRecording()
-
       await MainActor.run {
         ServiceContainer.shared.errorPresenter.present(
           AppError.recordingEngineError("Camera Error: \(error.localizedDescription)"))
@@ -205,14 +147,11 @@ class RecordingEngine: NSObject, @unchecked Sendable {
     }
   }
 
-  @objc private func handleAudioConfigurationChange(notification: Notification) {
+  @objc func handleAudioConfigurationChange(notification: Notification) {
     Task { @RecordingActor in
       guard isRecording, !isPaused else { return }
-      AppLogger.recording.warning(
-        "⚠️ Audio Configuration Changed (e.g. Device Unplugged). Pausing...")
-
+      AppLogger.recording.warning("⚠️ Audio Configuration Changed. Pausing...")
       pauseRecording()
-
       await MainActor.run {
         ServiceContainer.shared.toastManager.show(
           "Recording Paused: Check Audio Device", type: .error)
@@ -417,92 +356,5 @@ class RecordingEngine: NSObject, @unchecked Sendable {
 
     NotificationCenter.default.removeObserver(self)
     NSWorkspace.shared.notificationCenter.removeObserver(self)
-  }
-
-  // MARK: - UI Test Helpers
-
-  private func generateMockVideo(to url: URL) async {
-    print("🎥 [UI TEST] Generating mock video at: \(url.path)")
-
-    // Delete existing if any
-    try? FileManager.default.removeItem(at: url)
-
-    guard let writer = try? AVAssetWriter(outputURL: url, fileType: .mp4) else {
-      print("❌ [UI TEST] Failed to create asset writer (Result: nil)")
-      return
-    }
-
-    let settings: [String: Any] = [
-      AVVideoCodecKey: AVVideoCodecType.h264,
-      AVVideoWidthKey: 1280,
-      AVVideoHeightKey: 720,
-    ]
-
-    let input = AVAssetWriterInput(mediaType: .video, outputSettings: settings)
-    input.expectsMediaDataInRealTime = false
-
-    guard writer.canAdd(input) else {
-      print("❌ [UI TEST] Cannot add input to writer")
-      return
-    }
-    writer.add(input)
-
-    guard writer.startWriting() else {
-      print(
-        "❌ [UI TEST] Writer failed to start: \(writer.error?.localizedDescription ?? "unknown")")
-      return
-    }
-
-    writer.startSession(atSourceTime: .zero)
-
-    let adaptor = AVAssetWriterInputPixelBufferAdaptor(
-      assetWriterInput: input, sourcePixelBufferAttributes: nil)
-
-    // Wait for input
-    while !input.isReadyForMoreMediaData {
-      try? await Task.sleep(nanoseconds: 10 * 1_000_000)
-    }
-
-    if let buffer = createMockPixelBuffer() {
-      adaptor.append(buffer, withPresentationTime: .zero)
-      let frameTime = CMTime(value: 1, timescale: 30)  // 1 frame
-
-      // Wait for ready
-      while !input.isReadyForMoreMediaData { try? await Task.sleep(nanoseconds: 1_000_000) }
-      adaptor.append(buffer, withPresentationTime: frameTime)
-
-      let endTime = CMTime(value: 30, timescale: 30)  // 1 second
-      while !input.isReadyForMoreMediaData { try? await Task.sleep(nanoseconds: 1_000_000) }
-      adaptor.append(buffer, withPresentationTime: endTime)
-
-      print("✅ [UI TEST] Appended frames")
-    } else {
-      print("❌ [UI TEST] Failed to create pixel buffer")
-    }
-
-    input.markAsFinished()
-    await writer.finishWriting()
-
-    if writer.status == .completed {
-      print("✅ [UI TEST] AssetWriter COMPLETED successfully")
-    } else {
-      print(
-        "❌ [UI TEST] AssetWriter FAILED status: \(writer.status.rawValue) error: \(writer.error?.localizedDescription ?? "nil")"
-      )
-    }
-  }
-
-  private func createMockPixelBuffer() -> CVPixelBuffer? {
-    var pixelBuffer: CVPixelBuffer?
-    let attrs =
-      [
-        kCVPixelBufferCGImageCompatibilityKey: kCFBooleanTrue,
-        kCVPixelBufferCGBitmapContextCompatibilityKey: kCFBooleanTrue,
-      ] as CFDictionary
-
-    let status = CVPixelBufferCreate(
-      kCFAllocatorDefault, 1280, 720, kCVPixelFormatType_32ARGB, attrs, &pixelBuffer)
-    guard status == kCVReturnSuccess else { return nil }
-    return pixelBuffer
   }
 }

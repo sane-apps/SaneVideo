@@ -181,40 +181,84 @@ struct SmartToolsSection: View {
     }
 
     private var magicButton: some View {
-        Button {
-            ServiceContainer.shared.hapticsManager.impact()
-            Task {
-                await appState.projectState.performMagicFix(for: clip, options: options)
-            }
-        } label: {
-            VStack(spacing: 6) {
-                HStack(spacing: 10) {
-                    if !appState.projectState.isProcessing {
-                        Image(systemName: "wand.and.stars")
-                            .font(.system(size: 16, weight: .bold))
+        Group {
+            if appState.projectState.isProcessing {
+                // Inline Progress View (replaces button during processing)
+                VStack(spacing: 8) {
+                    HStack(spacing: 12) {
+                        // Animated sparkle icon
+                        Image(systemName: "sparkles")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(Theme.Colors.accent)
+                            .symbolEffect(.bounce.up.byLayer, options: .repeating)
+                        
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(appState.projectState.processingStatus ?? "Processing...")
+                                .font(.system(size: 13, weight: .medium))
+                                .foregroundStyle(.primary)
+                                .lineLimit(1)
+                            
+                            // Progress Bar
+                            GeometryReader { geo in
+                                ZStack(alignment: .leading) {
+                                    Capsule()
+                                        .fill(Color.primary.opacity(0.1))
+                                        .frame(height: 4)
+                                    
+                                    Capsule()
+                                        .fill(Theme.Colors.accentGradient)
+                                        .frame(width: geo.size.width * CGFloat(appState.projectState.processingProgress), height: 4)
+                                        .animation(.smooth(duration: 0.4), value: appState.projectState.processingProgress)
+                                }
+                            }
+                            .frame(height: 4)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        
+                        // Percentage
+                        Text("\(Int(appState.projectState.processingProgress * 100))%")
+                            .font(.system(size: 12, weight: .bold))
+                            .foregroundStyle(.secondary)
+                            .monospacedDigit()
+                            .contentTransition(.numericText())
                     }
-                    
-                    Text(appState.projectState.isProcessing ? 
-                         "Processing in Background..." : 
-                         "Apply Magic Fix")
-                        .fontWeight(.bold)
                 }
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 14)
-            .background {
-                if appState.projectState.isProcessing {
-                    Color.gray.opacity(0.5)
-                } else {
-                    Theme.Colors.accentGradient // Uses System Accent (Yellow in screenshot)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 14)
+                .padding(.horizontal, 16)
+                .background(Color.gray.opacity(0.2))
+                .cornerRadius(12)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Theme.Colors.accent.opacity(0.3), lineWidth: 1)
+                )
+            } else {
+                // Normal button
+                Button {
+                    ServiceContainer.shared.hapticsManager.impact()
+                    Task {
+                        await appState.projectState.performMagicFix(for: clip, options: options)
+                    }
+                } label: {
+                    VStack(spacing: 6) {
+                        HStack(spacing: 10) {
+                            Image(systemName: "wand.and.stars")
+                                .font(.system(size: 16, weight: .bold))
+                            
+                            Text("Apply Magic Fix")
+                                .fontWeight(.bold)
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                    .background(Theme.Colors.accentGradient)
+                    .foregroundColor(Theme.Colors.accent.isLight() ? .black : .white)
+                    .cornerRadius(12)
+                    .shadow(color: Theme.Colors.accent.opacity(0.4), radius: 8, x: 0, y: 4)
                 }
+                .buttonStyle(.plain)
             }
-            .foregroundColor(Theme.Colors.accent.isLight() ? .black : .white) // Smart Contrast
-            .cornerRadius(12)
-            .shadow(color: Theme.Colors.accent.opacity(0.4), radius: 8, x: 0, y: 4)
         }
-        .buttonStyle(.plain)
-        .disabled(appState.projectState.isProcessing)
     }
 }
 

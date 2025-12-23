@@ -136,6 +136,34 @@ struct StylesInspectorView: View {
                                 ClipInfoSection(clip: clip)
                             }
                         } else {
+                            // Simple Mode: Basic Adjustments
+                            CollapsibleSection(
+                                title: "Adjustments",
+                                icon: "slider.horizontal.3", 
+                                isExpanded: .constant(true)
+                            ) {
+                                HStack {
+                                    Text("Rotation")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                    Spacer()
+                                    Button {
+                                        withAnimation {
+                                            appState.projectState.rotateClip(clip)
+                                        }
+                                    } label: {
+                                        Label("Rotate 90°", systemImage: "rotate.right")
+                                            .font(.body)
+                                    }
+                                    .buttonStyle(.bordered)
+                                    .controlSize(.small)
+                                }
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 8)
+                            }
+                            
+                            Divider().padding(.horizontal)
+
                             // Simple Mode Footer
                             Text("Switch to Pro Mode for manual video, audio, and effect controls.")
                                 .font(.caption)

@@ -64,6 +64,10 @@ struct VideoClip: Identifiable, Equatable, Hashable, Codable, Sendable {
     var isVoiceIsolationEnabled: Bool = false
     var isGatingEnabled: Bool = false
 
+    // Runtime State (Not Persisted)
+    var isMissing: Bool = false // Tracks if file is offline/missing
+
+
     /// Flattened list of all words from all captions (for filler detection)
     var allWords: [CaptionWord] {
         captions.flatMap { $0.words ?? [] }

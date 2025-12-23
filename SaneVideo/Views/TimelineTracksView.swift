@@ -30,26 +30,9 @@ struct TimelineTracksView: View {
     var body: some View {
         HStack(spacing: 0) {
             // FIXED LEFT COLUMN: Track Headers
-            VStack(spacing: 0) {
-                Rectangle()
-                    .fill(Color.clear)
-                    .frame(height: 30)
-
-                VStack(spacing: 8) {
-                    if let project = appState.projectState.currentProject {
-                        ForEach(project.timeline.tracks) { track in
-                            TrackHeaderView(
-                                track: track,
-                                onMuteToggle: { appState.projectState.toggleTrackMute(track) },
-                                onLockToggle: { appState.projectState.toggleTrackLock(track) }
-                            )
-                        }
-                    }
-                }
-            }
-            .frame(width: 100)
-            .background(Color(white: 0.12))
-            .zIndex(10)
+            // LEFT COLUMN: Track Headers REMOVED per user request
+            // VStack(spacing: 0) { ... } .frame(width: 100)
+            // Functionality (Mute/Lock) may need to be moved elsewhere or triggered via context menu in future.
 
             // SCROLLING RIGHT SECTION: Ruler + Track Content
             ZStack(alignment: .topLeading) {

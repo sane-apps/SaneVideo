@@ -58,6 +58,10 @@ final class ServiceContainer {
     let smartFillerDetector: SmartFillerDetector
     let sentimentAnalysisService: SentimentAnalysisService
     
+    // MARK: - Vision Services
+    
+    let visionOrchestrator: VisionOrchestrator
+    
     @available(macOS 15.0, *)
     var translationService: TranslationService {
         TranslationService.shared
@@ -136,6 +140,8 @@ final class ServiceContainer {
         self.smartFillerDetector = SmartFillerDetector()
         self.sentimentAnalysisService = SentimentAnalysisService()
         
+        self.visionOrchestrator = VisionOrchestrator()
+        
         // Project/Timeline Services
         self.projectFileManager = ProjectFileManager()
         self.timelineEngine = TimelineEngine()
@@ -166,5 +172,8 @@ final class ServiceContainer {
         self.debugVerifier = DebugVerifier()
         self.logExportService = LogExportService()
         self.audioEnhancementService = SaneAudioEnhancementService()
+        
+        // Warm up critical heavy systems
+        Task { await self.visionOrchestrator.warmup() }
     }
 }

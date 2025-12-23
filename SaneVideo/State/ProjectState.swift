@@ -215,6 +215,22 @@ class ProjectState {
         }
     }
 
+    /// Update playback state (time, scroll, zoom) and save
+    func updatePlaybackState(currentTime: Double, scrollOffset: CGFloat, zoomLevel: CGFloat) {
+        guard var project = currentProject else { return }
+        project.updatePlaybackState(time: currentTime, scroll: scrollOffset, zoom: zoomLevel)
+        currentProject = project
+
+        saveProject(project)
+    }
+
+    /// Update zoom level in memory (persisted on autosave)
+    func updateZoomLevel(_ level: CGFloat) {
+        guard var project = currentProject else { return }
+        project.zoomLevel = level
+        currentProject = project
+    }
+
     /// Update the caption style for the current project
     func updateCaptionStyle(_ style: CaptionStyle) {
         guard var project = currentProject else { return }
@@ -318,10 +334,13 @@ class ProjectState {
     // MARK: - Internal Helpers
 
     private func updateCurrentProject(_ project: VideoProject?) {
-        currentProject = project
         if let project = project {
-            currentScopeSession = ServiceContainer.shared.projectFileManager.enterSecurityScope(for: project)
+            // Hydrate project to resolve stale bookmarks before ensuring access
+            let hydratedProject = ServiceContainer.shared.projectFileManager.hydrateProject(project)
+            currentProject = hydratedProject
+            currentScopeSession = ServiceContainer.shared.projectFileManager.enterSecurityScope(for: hydratedProject)
         } else {
+            currentProject = nil
             currentScopeSession = nil
         }
     }

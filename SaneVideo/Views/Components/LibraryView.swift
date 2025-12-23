@@ -69,8 +69,23 @@ struct LibraryView: View {
             Spacer()
 
             if appState.projectState.isProcessing {
-                ProgressView()
-                    .controlSize(.small)
+                HStack(spacing: 8) {
+                    ProgressView(value: appState.projectState.processingProgress, total: 1.0)
+                        .progressViewStyle(.linear)
+                        .frame(width: 60)
+                        .tint(Theme.Colors.accent)
+                    
+                    Text(appState.projectState.processingStatus ?? "Processing...")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                        .fixedSize(horizontal: true, vertical: false)
+                }
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(Color.secondary.opacity(0.1))
+                .cornerRadius(4)
+                .transition(.opacity)
             }
         }
         .padding(.horizontal, 10)

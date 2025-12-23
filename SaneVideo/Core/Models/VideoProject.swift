@@ -17,9 +17,12 @@ struct VideoProject: Identifiable, Codable, Equatable, Sendable {
     var name: String
     var timeline: Timeline
     var modifiedAt: Date
-    var captionStyleName: String // Store style name for Codable compatibility
-    var captionOffset: CGSize = .zero // Store custom drag offset for captions
-    var captionFontName: String? // Optional override for font
+    var currentTime: Double = 0.0 // Persist playhead position
+    var scrollOffset: CGFloat = 0.0 // Persist horizontal scroll position
+    var zoomLevel: CGFloat = 1.0 // Persist timeline zoom level
+    var captionStyleName: String = "Classic"
+    var captionOffset: CGSize = .zero
+    var captionFontName: String?
 
     init(id: UUID = UUID(), name: String = "Untitled Project", createdAt: Date = Date()) {
         self.id = id
@@ -30,6 +33,9 @@ struct VideoProject: Identifiable, Codable, Equatable, Sendable {
         captionStyleName = "Classic"
         captionOffset = .zero
         captionFontName = nil
+        currentTime = 0.0
+        scrollOffset = 0.0
+        zoomLevel = 1.0
     }
 
     // MARK: - Mutations
@@ -57,6 +63,17 @@ struct VideoProject: Identifiable, Codable, Equatable, Sendable {
         captionFontName = fontName
         modifiedAt = Date()
     }
+    
+    /// Update playback state
+    mutating func updatePlaybackState(time: Double, scroll: CGFloat, zoom: CGFloat) {
+        currentTime = time
+        scrollOffset = scroll
+        zoomLevel = zoom
+        // Don't update modifiedAt for purely navigational changes to avoid excessive saves?
+        // Actually, for "restore state", we probably DO want to save.
+        // But maybe debounce it strongly in State.
+        modifiedAt = Date() 
+    }
 
     // MARK: - Equatable
 
@@ -65,15 +82,17 @@ struct VideoProject: Identifiable, Codable, Equatable, Sendable {
             lhs.captionOffset == rhs.captionOffset &&
             lhs.captionStyleName == rhs.captionStyleName &&
             lhs.captionFontName == rhs.captionFontName &&
-            lhs.timeline == rhs.timeline
-        // Note: Not comparing dates for equality check efficiency if IDs match usually enough,
-        // but for state updates we want full equality on data properties.
+            lhs.timeline == rhs.timeline &&
+            lhs.currentTime == rhs.currentTime &&
+            lhs.scrollOffset == rhs.scrollOffset &&
+            lhs.zoomLevel == rhs.zoomLevel
     }
 
     // MARK: - Codable
 
     enum CodingKeys: String, CodingKey {
         case id, createdAt, modifiedAt, name, timeline, captionStyleName, captionOffset, captionFontName
+        case currentTime, scrollOffset, zoomLevel
     }
 
     init(from decoder: Decoder) throws {
@@ -86,6 +105,9 @@ struct VideoProject: Identifiable, Codable, Equatable, Sendable {
         captionStyleName = try container.decodeIfPresent(String.self, forKey: .captionStyleName) ?? "Classic"
         captionOffset = try container.decodeIfPresent(CGSize.self, forKey: .captionOffset) ?? .zero
         captionFontName = try container.decodeIfPresent(String.self, forKey: .captionFontName)
+        currentTime = try container.decodeIfPresent(Double.self, forKey: .currentTime) ?? 0.0
+        scrollOffset = try container.decodeIfPresent(CGFloat.self, forKey: .scrollOffset) ?? 0.0
+        zoomLevel = try container.decodeIfPresent(CGFloat.self, forKey: .zoomLevel) ?? 1.0
     }
 
     func encode(to encoder: Encoder) throws {
@@ -98,5 +120,8 @@ struct VideoProject: Identifiable, Codable, Equatable, Sendable {
         try container.encode(captionStyleName, forKey: .captionStyleName)
         try container.encode(captionOffset, forKey: .captionOffset)
         try container.encodeIfPresent(captionFontName, forKey: .captionFontName)
+        try container.encode(currentTime, forKey: .currentTime)
+        try container.encode(scrollOffset, forKey: .scrollOffset)
+        try container.encode(zoomLevel, forKey: .zoomLevel)
     }
 }

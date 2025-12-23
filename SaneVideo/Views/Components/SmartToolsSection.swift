@@ -8,6 +8,9 @@
 import SwiftUI
 import AVFoundation
 
+// Import new modifiers
+// AnimationModifiers, AccessibilityModifiers
+
 struct SmartToolsSection: View {
     @Environment(AppState.self) var appState
     let clip: VideoClip
@@ -191,55 +194,12 @@ struct SmartToolsSection: View {
     private var magicButton: some View {
         Group {
             if appState.projectState.isProcessing {
-                // Inline Progress View (replaces button during processing)
-                VStack(spacing: 8) {
-                    HStack(spacing: 12) {
-                        // Animated sparkle icon
-                        Image(systemName: "sparkles")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundStyle(Theme.Colors.accent)
-                            .symbolEffect(.bounce.up.byLayer, options: .repeating)
-                        
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(appState.projectState.processingStatus ?? "Processing...")
-                                .font(.system(size: 13, weight: .medium))
-                                .foregroundStyle(.primary)
-                                .lineLimit(1)
-                            
-                            // Progress Bar
-                            GeometryReader { geo in
-                                ZStack(alignment: .leading) {
-                                    Capsule()
-                                        .fill(Color.primary.opacity(0.1))
-                                        .frame(height: 4)
-                                    
-                                    Capsule()
-                                        .fill(Theme.Colors.accentGradient)
-                                        .frame(width: geo.size.width * CGFloat(appState.projectState.processingProgress), height: 4)
-                                        .animation(.smooth(duration: 0.4), value: appState.projectState.processingProgress)
-                                }
-                            }
-                            .frame(height: 4)
-                        }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        
-                        // Percentage
-                        Text("\(Int(appState.projectState.processingProgress * 100))%")
-                            .font(.system(size: 12, weight: .bold))
-                            .foregroundStyle(.secondary)
-                            .monospacedDigit()
-                            .contentTransition(.numericText())
-                    }
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 14)
-                .padding(.horizontal, 16)
-                .background(Color.gray.opacity(0.2))
-                .cornerRadius(12)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(Theme.Colors.accent.opacity(0.3), lineWidth: 1)
+                // OPTIMIZED: Use new LoadingIndicator component
+                LoadingIndicator(
+                    message: appState.projectState.processingStatus,
+                    progress: appState.projectState.processingProgress
                 )
+                .transition(.smoothScale)
             } else {
                 // Normal button
                 Button {
@@ -267,6 +227,7 @@ struct SmartToolsSection: View {
                 .buttonStyle(.plain)
                 .accessibilityIdentifier("MagicFixButton")
                 .accessibilityLabel("Apply Magic Fix")
+                .accessibilityHint("Automatically removes silence, filler words, and enhances your video. Keyboard shortcut: Command Shift M")
             }
         }
     }
@@ -308,6 +269,8 @@ struct ToolCard<Content: View>: View {
             RoundedRectangle(cornerRadius: 10)
                 .stroke(Color.secondary.opacity(0.1), lineWidth: 0.5)
         )
+        .enhancedLiquidGlass(radius: 10, opacity: 0.3)
+        .smoothAppear()
     }
 }
 

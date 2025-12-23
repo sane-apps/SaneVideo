@@ -89,8 +89,10 @@ struct TimelineClipView: View {
         .shadow(color: .black.opacity(0.3), radius: 2, x: 0, y: 1)
         .overlay(RoundedRectangle(cornerRadius: 6).stroke(isSelected ? Color.yellow : Color.clear, lineWidth: 2))
         .onHover { hovering in
-            withAnimation(.easeInOut(duration: 0.15)) { isHovering = hovering }
+            withAnimation(.smoothUI) { isHovering = hovering }
         }
+        .scaleEffect(isHovering ? 1.02 : 1.0)
+        .animation(.smoothUI, value: isHovering)
         .simultaneousGesture(
             DragGesture(minimumDistance: 0, coordinateSpace: .local)
                 .onEnded { value in
@@ -192,9 +194,10 @@ struct TimelineClipView: View {
         let thumbCount = max(1, Int(clipWidth / targetThumbWidth))
         let singleThumbWidth = clipWidth / CGFloat(thumbCount)
         
+        // PERFORMANCE: LazyHStack with explicit frame to prevent layout thrashing
         return LazyHStack(spacing: 0) {
             ForEach(0..<thumbCount, id: \.self) { index in
-                // Calculate time for this specific thumnnail slot
+                // Calculate time for this specific thumbnail slot
                 let fraction = Double(index) / Double(max(1, thumbCount))
                 let time = CMTime(seconds: clip.effectiveDuration.seconds * fraction, preferredTimescale: 600)
                 let originalTime = clip.originalTime(forEffectiveTime: time)
@@ -204,7 +207,8 @@ struct TimelineClipView: View {
                     time: originalTime,
                     size: CGSize(width: singleThumbWidth * 2, height: 80 * 2) // Request retina quality
                 )
-                .frame(width: singleThumbWidth)
+                .frame(width: singleThumbWidth, height: clipHeight * 0.55)
+                .clipped()
             }
         }
     }
@@ -259,6 +263,8 @@ struct TimelineClipView: View {
                         .shadow(color: .black.opacity(0.3), radius: 2)
                 })
                 .buttonStyle(.plain)
+                .hoverScale(1.15)
+                .pressScale()
                 .accessibilityIdentifier("timeline.clip.action.split")
                 .help(KeyboardShortcutHelper.helpWithShortcut(String(localized: "timeline.clip.action.split.help", defaultValue: "Split clip at playhead"), key: "b", modifiers: [.command]))
                 
@@ -268,6 +274,8 @@ struct TimelineClipView: View {
                         .shadow(color: .black.opacity(0.3), radius: 2)
                 })
                 .buttonStyle(.plain)
+                .hoverScale(1.15)
+                .pressScale()
                 .accessibilityIdentifier("timeline.clip.action.delete")
                 .help(KeyboardShortcutHelper.helpWithShortcut(String(localized: "timeline.clip.action.delete.help", defaultValue: "Delete clip"), key: .delete))
             }.padding(8)
@@ -324,18 +332,20 @@ struct TimelineThumbnailCell: View {
         }
         .clipped()
         .task {
-            // Check cache or load
+            // PERFORMANCE: Check cache first, then load
             // Note: ServiceContainer handles internal caching of generated results
             guard image == nil && !isLoading else { return }
             isLoading = true
             
-            // Prioritize Visible Area: Detached task with userInteractive QoS
-            // This ensures scrolling feels snappy
-            let thumb = await ServiceContainer.shared.timelineThumbnailService.thumbnail(
-                for: clip,
-                time: time,
-                size: size
-            )
+            // PERFORMANCE: Use detached task with utility priority for thumbnails
+            // This prevents thumbnail loading from blocking UI
+            let thumb = await Task.detached(priority: .utility) {
+                await ServiceContainer.shared.timelineThumbnailService.thumbnail(
+                    for: clip,
+                    time: time,
+                    size: size
+                )
+            }.value
             
             await MainActor.run {
                 self.image = thumb

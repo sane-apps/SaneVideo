@@ -186,8 +186,12 @@ struct TemplateCard: View {
         .buttonStyle(.plain)
         .accessibilityIdentifier("browser.template_card.\(template.id)")
         .onHover { hover in
-            isHovering = hover
+            withAnimation(.smoothUI) {
+                isHovering = hover
+            }
         }
+        .scaleEffect(isHovering ? 1.02 : 1.0)
+        .animation(.smoothUI, value: isHovering)
     }
 }
 
@@ -245,8 +249,12 @@ struct ProjectCard: View {
             onSelect()
         }
         .onHover { hover in
-            isHovering = hover
+            withAnimation(.smoothUI) {
+                isHovering = hover
+            }
         }
+        .scaleEffect(isHovering ? 1.02 : 1.0)
+        .animation(.smoothUI, value: isHovering)
         .contextMenu {
             Button(String(localized: "browser.action.open", defaultValue: "Open")) { onSelect() }
                 .accessibilityIdentifier("browser.card_menu.open")

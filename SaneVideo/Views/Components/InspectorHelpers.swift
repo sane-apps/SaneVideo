@@ -61,7 +61,7 @@ struct CollapsibleSection<Content: View>: View {
                 content()
                     .padding(.horizontal, 12)
                     .padding(.vertical, 8)
-                    .transition(.opacity.combined(with: .move(edge: .top)))
+                    .transition(.smoothScale)
             }
         }
     }
@@ -121,10 +121,17 @@ struct SmartToolButton: View {
             .padding(8)
             .background(color.opacity(0.1))
             .cornerRadius(6)
+            .overlay(
+                RoundedRectangle(cornerRadius: 6)
+                    .stroke(color.opacity(0.3), lineWidth: 1)
+            )
         })
         .buttonStyle(.plain)
+        .hoverScale(1.02)
+        .pressScale()
         .disabled(isLoading)
         .accessibilityIdentifier(id)
+        .smoothAppear()
     }
 }
 
@@ -165,9 +172,16 @@ struct AIToolButton: View {
             .padding(.vertical, 8)
             .background(color.opacity(0.1))
             .cornerRadius(8)
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(color.opacity(0.3), lineWidth: 1)
+            )
         })
         .buttonStyle(.plain)
+        .hoverScale(1.02)
+        .pressScale()
         .accessibilityIdentifier(id)
+        .smoothAppear()
     }
 }
 

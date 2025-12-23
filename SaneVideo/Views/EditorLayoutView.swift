@@ -9,6 +9,9 @@ import AVFoundation
 import CoreMedia
 import SwiftUI
 
+// Import new modifiers
+// AnimationModifiers
+
 struct EditorLayoutView: View {
     @Environment(AppState.self) var appState
     @Binding var selectedClip: VideoClip?
@@ -33,6 +36,7 @@ struct EditorLayoutView: View {
                         SidebarView(selectedClip: $selectedClip)
                             .frame(minWidth: 200, idealWidth: 260, maxWidth: 400)
                             .transition(.move(edge: .leading).combined(with: .opacity))
+                            .animation(.spring(response: 0.4, dampingFraction: 0.8), value: isSidebarCollapsed)
                     }
                     
                     CollapseButton(isCollapsed: $isSidebarCollapsed, edge: .leading)

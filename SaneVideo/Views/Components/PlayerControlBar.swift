@@ -38,6 +38,8 @@ struct PlayerControlBar: View {
                         .foregroundColor(.white.opacity(0.8))
                 })
                 .buttonStyle(.plain)
+                .hoverScale(1.15)
+                .pressScale()
                 .help(String(localized: "player.help.step_backward", defaultValue: "Previous frame (←)"))
                 .accessibilityIdentifier("player.step_backward")
 
@@ -53,6 +55,9 @@ struct PlayerControlBar: View {
                     }
                 )
                 .buttonStyle(.plain)
+                .hoverScale(1.2)
+                .pressScale()
+                .animation(.smoothUI, value: playbackState.isPlaying)
                 .keyboardShortcut(.space, modifiers: [])
                 .help(String(localized: "player.help.play_pause", defaultValue: "Play/Pause (Space) • J/K/L for shuttle control"))
                 .accessibilityIdentifier("player.toggle_play_pause")
@@ -64,6 +69,8 @@ struct PlayerControlBar: View {
                         .foregroundColor(.white.opacity(0.8))
                 })
                 .buttonStyle(.plain)
+                .hoverScale(1.15)
+                .pressScale()
                 .help(String(localized: "player.help.step_forward", defaultValue: "Next frame (→)"))
                 .accessibilityIdentifier("player.step_forward")
             }

@@ -62,6 +62,8 @@ struct RecordingModeView: View {
                             }
                             .buttonStyle(.borderedProminent)
                             .controlSize(.large)
+                            .hoverScale(1.05)
+                            .smoothAppear()
                         }
                     }
                 }

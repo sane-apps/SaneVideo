@@ -7,50 +7,106 @@ on run argv
         set appName to item 1 of argv
     end if
     
-    log "Starting permission monitor for: " & appName
+    log "🛡️ Starting enhanced permission monitor for: " & appName
     
-    -- Loop for 60 seconds (monitor duration)
-    repeat 60 times
+    -- Extended monitoring: 5 minutes (300 seconds) for longer test runs
+    set monitorDuration to 300
+    set checkInterval to 0.5 -- Check every 0.5 seconds for faster response
+    
+    repeat (monitorDuration / checkInterval) times
         tell application "System Events"
-            -- Access the CoreServicesUIAgent which hosts the TCC dialogs
+            -- 1. Check UserNotificationCenter (modern macOS permission dialogs)
             if exists process "UserNotificationCenter" then
                 tell process "UserNotificationCenter"
-                    if exists (window 1) then
-                        set winName to name of window 1
-                        if winName contains appName and winName contains "access" then
-                            -- Click Allow
-                            if exists button "Allow" of window 1 then
-                                click button "Allow" of window 1
-                                log "Clicked Allow on UserNotificationCenter"
+                    repeat with w in windows
+                        try
+                            set winName to name of w
+                            if winName contains appName or winName contains "access" or winName contains "permission" then
+                                -- Look for Allow button (try multiple possible labels)
+                                repeat with btnLabel in {"Allow", "OK", "Grant", "Enable"}
+                                    try
+                                        if exists button btnLabel of w then
+                                            click button btnLabel of w
+                                            log "✅ Clicked " & btnLabel & " on UserNotificationCenter"
+                                            delay 0.5 -- Brief pause after click
+                                        end if
+                                    end try
+                                end repeat
                             end if
-                        end if
+                        end try
+                    end repeat
+                end tell
+            end if
+            
+            -- 2. Check CoreServicesUIAgent (legacy TCC dialogs)
+            if exists process "CoreServicesUIAgent" then
+                tell process "CoreServicesUIAgent"
+                    repeat with w in windows
+                        try
+                            set winText to ""
+                            try
+                                set winText to value of static text 1 of w
+                            end try
+                            
+                            if winText contains appName or winText contains "access" or winText contains "permission" then
+                                repeat with btnLabel in {"Allow", "OK", "Grant", "Enable", "Open System Preferences"}
+                                    try
+                                        if exists button btnLabel of w then
+                                            click button btnLabel of w
+                                            log "✅ Clicked " & btnLabel & " on CoreServicesUIAgent"
+                                            delay 0.5
+                                        end if
+                                    end try
+                                end repeat
+                            end if
+                        end try
+                    end repeat
+                end tell
+            end if
+            
+            -- 3. Check the app itself (sometimes dialogs appear in-app)
+            if exists process appName then
+                tell process appName
+                    repeat with w in windows
+                        try
+                            set winName to name of w
+                            if winName contains "permission" or winName contains "access" or winName contains "Privacy" then
+                                repeat with btnLabel in {"Allow", "OK", "Grant", "Open System Settings"}
+                                    try
+                                        if exists button btnLabel of w then
+                                            click button btnLabel of w
+                                            log "✅ Clicked " & btnLabel & " in " & appName & " window"
+                                            delay 0.5
+                                        end if
+                                    end try
+                                end repeat
+                            end if
+                        end try
+                    end repeat
+                end tell
+            end if
+            
+            -- 4. Check for System Preferences/Settings windows that might have opened
+            if exists process "System Settings" then
+                tell process "System Settings"
+                    -- If System Settings opened, we can't auto-grant, but we log it
+                    if exists (window 1) then
+                        log "⚠️ System Settings opened - manual grant may be needed"
                     end if
                 end tell
             end if
             
-            -- Also check for standard alerts in the app process itself (sometimes they present differently)
-            -- or the specialized TCC daemon wrapper
-            
-            -- Check "CoreServicesUIAgent" (Historical host for some alerts)
-            if exists process "CoreServicesUIAgent" then
-                tell process "CoreServicesUIAgent"
-                     if exists (window 1) then
-                        set winText to ""
-                        try
-                            set winText to value of static text 1 of window 1
-                        end try
-                        
-                        if winText contains appName then
-                            if exists button "Allow" of window 1 then
-                                click button "Allow" of window 1
-                                log "Clicked Allow on CoreServicesUIAgent"
-                            end if
-                        end if
-                     end if
+            if exists process "System Preferences" then
+                tell process "System Preferences"
+                    if exists (window 1) then
+                        log "⚠️ System Preferences opened - manual grant may be needed"
+                    end if
                 end tell
             end if
             
         end tell
-        delay 1
+        delay checkInterval
     end repeat
+    
+    log "🛡️ Permission monitor finished (ran for " & monitorDuration & " seconds)"
 end run

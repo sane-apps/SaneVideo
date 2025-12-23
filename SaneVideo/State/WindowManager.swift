@@ -34,6 +34,12 @@ class WindowManager {
     }
     return ids
   }
+  
+  /// Get the current PiP window frame for compositing into recordings
+  var pipWindowFrame: CGRect? {
+    guard let window = pipWindow, window.isVisible else { return nil }
+    return window.frame
+  }
 
   // MARK: - Floating Controls Management
 
@@ -118,7 +124,11 @@ class WindowManager {
     // Force break parent-child relationship in AppKit to avoid zombie access
     if let controls = window.controlsWindow {
       window.removeChildWindow(controls)
+      // Ensure controls window is fully hidden and closed
+      controls.orderOut(nil)
       controls.close()
+      // Clear the reference to ensure it's released
+      window.controlsWindow = nil
     }
 
     window.orderOut(nil)

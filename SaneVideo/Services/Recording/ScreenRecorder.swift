@@ -44,8 +44,7 @@ class ScreenRecorder: NSObject, SCContentSharingPickerObserver, SCStreamDelegate
   /// Start screen recording by presenting the system picker
   /// - Parameter outputURL: Optional URL to record directly to file using SCRecordingOutput
   func start(outputURL: URL? = nil) async throws {
-    let isTesting = ProcessInfo.processInfo.arguments.contains("-uitesting")
-    if isTesting {
+    if TestEnvironment.isUITesting {
       AppLogger.recording.info("🧪 [UI TEST] ScreenRecorder: Bypassing system picker")
       self.currentOutputURL = outputURL
       // In a real scenario, handleContentSelected would be called by the picker.
@@ -233,19 +232,24 @@ class ScreenRecorder: NSObject, SCContentSharingPickerObserver, SCStreamDelegate
       // Find ALL our app's windows
       let appWindows = shareableContent.windows
 
+      // LOG ALL WINDOWS FOR DEBUGGING
+      for w in appWindows {
+        AppLogger.recording.info(
+          "🔲 [Window Audit] ID: \(w.windowID), Title: '\(w.title ?? "nil")', Frame: \(w.frame)")
+      }
+
       // Filter for our special windows
       // CRITICAL: We ONLY want to EXCEPT the PiP Camera Window.
-      // The Controls/Buttons should remained HIDDEN by the parent app exclusion.
       let overlayWindows = appWindows.filter { window in
-        (window.title?.lowercased().contains("pip") == true)
-          && !(window.title?.lowercased().contains("control") == true)
+        let title = window.title?.lowercased() ?? ""
+        return title.contains("pip") && !title.contains("control")
       }
 
       if !overlayWindows.isEmpty {
-        let names = overlayWindows.map { "\($0.title ?? "Untitled") (ID: \($0.windowID))" }
+        let names = overlayWindows.map { "\($0.title ?? "NoTitle") (ID: \($0.windowID))" }
           .joined(separator: ", ")
         AppLogger.recording.info(
-          "📺 [Filter Rebuild] Found \(overlayWindows.count) overlay windows via currentProcess: \(names)"
+          "📺 [Filter Rebuild] Found \(overlayWindows.count) overlay windows to EXCEPT: \(names)"
         )
 
         return SCContentFilter(
@@ -254,7 +258,8 @@ class ScreenRecorder: NSObject, SCContentSharingPickerObserver, SCStreamDelegate
           exceptingWindows: overlayWindows
         )
       } else {
-        // Fallback to simpler exclusion if no overlays found
+        AppLogger.recording.warning(
+          "⚠️ No PiP window found in shareableContent.windows - it will be invisible!")
         return SCContentFilter(
           display: display,
           excludingApplications: shareableContent.applications,
@@ -280,10 +285,8 @@ class ScreenRecorder: NSObject, SCContentSharingPickerObserver, SCStreamDelegate
         try await stream.updateContentFilter(filter)
         AppLogger.recording.info("✅ Existing stream filter updated successfully")
 
-        // Asynchronously add PiP exceptions if it's a display share
-        Task {
-          await updateContentFilter()
-        }
+        // NOTE: We don't call updateContentFilter() here anymore.
+        // Let the WindowManager trigger it after a delay to ensure PiP visibility.
         return
       } catch {
         AppLogger.recording.warning(
@@ -335,15 +338,11 @@ class ScreenRecorder: NSObject, SCContentSharingPickerObserver, SCStreamDelegate
       // Create stream with user's selected content filter
       self.baseFilter = filter
 
-      // TAHOE FLICKER FIX: Start the stream with the user's provided filter IMMEDIATELY.
-      // This ensures they see what they picked without a black flash.
-      // We will then asynchronously update the filter to exclude our app windows.
       let newStream = SCStream(filter: filter, configuration: config, delegate: self)
 
-      Task {
-        // Deferred rebuild to add PiP exceptions if it's a display share
-        await updateContentFilter()
-      }
+      // NOTE: We removed the deferred updateContentFilter() task from here.
+      // WindowManager.swift now handles this 150ms after the PiP appears,
+      // which completely eliminates the startup flicker.
 
       // Add video stream output
       try newStream.addStreamOutput(

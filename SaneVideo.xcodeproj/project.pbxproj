@@ -35,6 +35,7 @@
 		1208676E476598FC74D5C142 /* TrimHandleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 476915A43435F91886E35FF4 /* TrimHandleTests.swift */; };
 		139046CCC92CD3AD2F60B74F /* ProjectStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37A3331C08BE93919F489748 /* ProjectStoreTests.swift */; };
 		13C09050311329EDA2414341 /* AudioService.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD4647817F5C13F256F99F17 /* AudioService.swift */; };
+		14BD1BDA650E4B65065D3FD6 /* AppState+Actions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 203694E166EB409E28F6FFEF /* AppState+Actions.swift */; };
 		14F6188583A50F716BAD0C9B /* RenderingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A65AF13B6C0416AF72BBFA7A /* RenderingService.swift */; };
 		1561C89D5D3A12EEBEE9FC12 /* Secrets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23CD0E602658AB89B3D7550B /* Secrets.swift */; };
 		163EC2818F420D8F0357A984 /* View+Modernization.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB5671F047FDF3D719DC903F /* View+Modernization.swift */; };
@@ -314,6 +315,7 @@
 		1D4C444510E4293654872089 /* VideoClip+TimeMapping.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "VideoClip+TimeMapping.swift"; sourceTree = "<group>"; };
 		1D9D206CAEC553C2BDBF5417 /* ProjectState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectState.swift; sourceTree = "<group>"; };
 		1FCD8AAB387D843690989FC6 /* SanePerformanceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SanePerformanceTests.swift; sourceTree = "<group>"; };
+		203694E166EB409E28F6FFEF /* AppState+Actions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppState+Actions.swift"; sourceTree = "<group>"; };
 		228FB3C2D1078B3A44B07192 /* TransformCalculator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransformCalculator.swift; sourceTree = "<group>"; };
 		2317C69D9178FC84478822A2 /* ProjectBrowserView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectBrowserView.swift; sourceTree = "<group>"; };
 		2337C0CFA571EB2CA6CEEB1C /* RegressionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegressionTests.swift; sourceTree = "<group>"; };
@@ -1116,6 +1118,7 @@
 			isa = PBXGroup;
 			children = (
 				62841C516E8BCB9FA8035B4E /* AppState.swift */,
+				203694E166EB409E28F6FFEF /* AppState+Actions.swift */,
 				304BF0B1E8E01A3ACF4AED0E /* CameraState.swift */,
 				A355604A387109CF4F1B1B6B /* PlaybackState.swift */,
 				1D9D206CAEC553C2BDBF5417 /* ProjectState.swift */,
@@ -1356,6 +1359,7 @@
 				0DE5D0A82E8E71841A41F3CE /* AppConstants.swift in Sources */,
 				FE608C2AAAF0119EFF482C38 /* AppError.swift in Sources */,
 				8179608773D411A4E6AB516F /* AppLogger.swift in Sources */,
+				14BD1BDA650E4B65065D3FD6 /* AppState+Actions.swift in Sources */,
 				25B9FC19CE17BA59AC2FF256 /* AppState.swift in Sources */,
 				D31E5E691412D7B0617F984E /* AppleFoundationProvider.swift in Sources */,
 				37C16D943A0F86178832B29A /* AppleSpeechService.swift in Sources */,

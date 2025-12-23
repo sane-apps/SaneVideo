@@ -3,25 +3,84 @@ default_platform(:mac)
 platform :mac do
   desc "Verify build and run tests"
   lane :verify do
-    scan(
-      scheme: "SaneVideo",
-      destination: "platform=macOS,arch=arm64",
-      skip_testing: "SaneVideoUITests", # Skip environment-sensitive UITests by default
-      result_bundle: true,
-      output_directory: "fastlane/test_output",
-      clean: false # Optimization: Allow incremental builds for speed (use verify_full for clean)
-    )
+    begin
+      scan(
+        scheme: "SaneVideo",
+        destination: "platform=macOS,arch=arm64",
+        skip_testing: "SaneVideoUITests", # Skip environment-sensitive UITests by default
+        result_bundle: true,
+        output_directory: "fastlane/test_output",
+        output_types: "junit", # Use junit for reliable parsing, xcresult kept for diagnostics
+        clean: false, # Optimization: Allow incremental builds for speed (use verify_full for clean)
+        fail_build: true
+      )
+    rescue => ex
+      # Handle xcresulttool parsing errors gracefully
+      # Tests may have passed but fastlane's trainer gem failed to parse results
+      if ex.message.include?("xcresulttool") || ex.message.include?("item missing for id")
+        UI.important("⚠️  xcresulttool parsing failed, but tests may have passed.")
+        UI.important("📊 Check junit report at: fastlane/test_output/report.junit")
+        UI.important("📦 Check xcresult bundle at: fastlane/test_output/SaneVideo.xcresult")
+        
+        # Verify tests actually passed by checking junit report
+        junit_path = "fastlane/test_output/report.junit"
+        if File.exist?(junit_path)
+          junit_content = File.read(junit_path)
+          failures = junit_content.scan(/failures="(\d+)"/).flatten.map(&:to_i).sum
+          errors = junit_content.scan(/errors="(\d+)"/).flatten.map(&:to_i).sum
+          
+          if failures == 0 && errors == 0
+            UI.success("✅ All tests passed (verified via junit report)")
+            next # Continue lane execution
+          else
+            UI.user_error!("❌ Tests failed: #{failures} failures, #{errors} errors")
+          end
+        else
+          UI.user_error!("❌ Cannot verify test results: junit report not found")
+        end
+      else
+        # Re-raise if it's a different error
+        raise ex
+      end
+    end
   end
 
   desc "Run full test suite including UI tests (requires graphical session)"
   lane :verify_full do
-    scan(
-      scheme: "SaneVideo",
-      destination: "platform=macOS,arch=arm64",
-      result_bundle: true,
-      output_directory: "fastlane/test_output",
-      clean: true
-    )
+    begin
+      scan(
+        scheme: "SaneVideo",
+        destination: "platform=macOS,arch=arm64",
+        result_bundle: true,
+        output_directory: "fastlane/test_output",
+        output_types: "junit", # Use junit for reliable parsing
+        clean: true
+      )
+    rescue => ex
+      # Handle xcresulttool parsing errors gracefully
+      if ex.message.include?("xcresulttool") || ex.message.include?("item missing for id")
+        UI.important("⚠️  xcresulttool parsing failed, but tests may have passed.")
+        UI.important("📊 Check junit report at: fastlane/test_output/report.junit")
+        
+        junit_path = "fastlane/test_output/report.junit"
+        if File.exist?(junit_path)
+          junit_content = File.read(junit_path)
+          failures = junit_content.scan(/failures="(\d+)"/).flatten.map(&:to_i).sum
+          errors = junit_content.scan(/errors="(\d+)"/).flatten.map(&:to_i).sum
+          
+          if failures == 0 && errors == 0
+            UI.success("✅ All tests passed (verified via junit report)")
+            next
+          else
+            UI.user_error!("❌ Tests failed: #{failures} failures, #{errors} errors")
+          end
+        else
+          UI.user_error!("❌ Cannot verify test results: junit report not found")
+        end
+      else
+        raise ex
+      end
+    end
   end
 
   desc "Run project health check (modularity audit)"

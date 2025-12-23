@@ -4,6 +4,7 @@
 //
 
 import AVFoundation
+import AppKit
 import Combine
 import CoreMedia
 import Foundation
@@ -11,15 +12,60 @@ import Foundation
 extension RecordingEngine {
   // MARK: - Monitoring
 
+  @MainActor
   func setupSoundAnalysisMonitoring() {
-    Task {
-      for await classification in soundAnalysisService.resultsStream.values
-      where classification.confidence > 0.7 {
-        AppLogger.recording.info(
-          "🎯 Detected sound: \(classification.label.displayName) (\(Int(classification.confidence * 100))%)"
-        )
+    soundAnalysisService.onSoundDetected = { [weak self] result in
+      guard self != nil else { return }
+      AppLogger.recording.info(
+        "🔊 Sound Detected: \(result.label) at \(result.timeRange.start.seconds)")
+    }
+  }
+
+  @MainActor
+  func setupDiskMonitor() {
+    diskSpaceMonitor.onLowDiskSpace = { [weak self] error in
+      guard let self = self else { return }
+
+      Task {
+        AppLogger.recording.error("Low disk space - stopping recording: \(error)")
+        _ = await self.stopRecording()
+
+        await MainActor.run {
+          self.onError?(
+            error as? AppError ?? AppError.recordingEngineError(error.localizedDescription))
+        }
       }
     }
+  }
+
+  @MainActor
+  func setupSleepObservers() {
+    let center = NSWorkspace.shared.notificationCenter
+    center.addObserver(
+      self, selector: #selector(handleSleep), name: NSWorkspace.willSleepNotification, object: nil)
+    center.addObserver(
+      self, selector: #selector(handleWake), name: NSWorkspace.didWakeNotification, object: nil)
+  }
+
+  @MainActor
+  func setupInterruptionObservers() {
+    let center = NotificationCenter.default
+
+    // Capture Session Interruptions (Camera/Mic hardware issues)
+    center.addObserver(
+      self, selector: #selector(handleSessionWasInterrupted),
+      name: AVCaptureSession.wasInterruptedNotification, object: nil)
+    center.addObserver(
+      self, selector: #selector(handleSessionInterruptionEnded),
+      name: AVCaptureSession.interruptionEndedNotification, object: nil)
+    center.addObserver(
+      self, selector: #selector(handleSessionRuntimeError),
+      name: AVCaptureSession.runtimeErrorNotification, object: nil)
+
+    // Audio Engine Changes (Device unplugged/switched)
+    center.addObserver(
+      self, selector: #selector(handleAudioConfigurationChange),
+      name: .AVAudioEngineConfigurationChange, object: nil)
   }
 
   func setupSubscriptions() {
@@ -76,9 +122,9 @@ extension RecordingEngine {
 
   @MainActor
   private func setupScreenRecorderOverlayBinding() {
-    screenRecorder.onPresenterOverlayChanged = { [weak self] isPresenterOverlayActive in
+    screenRecorder.onPresenterOverlayChanged = { [weak self] active in
       // Forward to AppState via closure callback on MainActor
-      self?.onPresenterOverlayChanged?(isPresenterOverlayActive)
+      self?.onPresenterOverlayChanged?(active)
     }
   }
 
@@ -96,5 +142,73 @@ extension RecordingEngine {
         }
       }
     }
+  }
+
+  // MARK: - UI Test Helpers
+
+  @RecordingActor
+  func generateMockVideo(to url: URL) async {
+    AppLogger.recording.info("🎥 [UI TEST] Generating mock video at: \(url.path)")
+
+    // Delete existing if any
+    try? FileManager.default.removeItem(at: url)
+
+    guard let writer = try? AVAssetWriter(outputURL: url, fileType: .mp4) else {
+      AppLogger.recording.error("❌ [UI TEST] Failed to create asset writer")
+      return
+    }
+
+    let settings: [String: Any] = [
+      AVVideoCodecKey: AVVideoCodecType.h264,
+      AVVideoWidthKey: 1280,
+      AVVideoHeightKey: 720,
+    ]
+
+    let input = AVAssetWriterInput(mediaType: .video, outputSettings: settings)
+    input.expectsMediaDataInRealTime = false
+
+    guard writer.canAdd(input) else { return }
+    writer.add(input)
+
+    guard writer.startWriting() else { return }
+
+    writer.startSession(atSourceTime: .zero)
+
+    let adaptor = AVAssetWriterInputPixelBufferAdaptor(
+      assetWriterInput: input, sourcePixelBufferAttributes: nil)
+
+    // Wait for input
+    while !input.isReadyForMoreMediaData {
+      try? await Task.sleep(nanoseconds: 10 * 1_000_000)
+    }
+
+    if let buffer = await createMockPixelBuffer() {
+      adaptor.append(buffer, withPresentationTime: .zero)
+      let frameTime = CMTime(value: 1, timescale: 30)
+      while !input.isReadyForMoreMediaData { try? await Task.sleep(nanoseconds: 1_000_000) }
+      adaptor.append(buffer, withPresentationTime: frameTime)
+
+      let endTime = CMTime(value: 30, timescale: 30)
+      while !input.isReadyForMoreMediaData { try? await Task.sleep(nanoseconds: 1_000_000) }
+      adaptor.append(buffer, withPresentationTime: endTime)
+    }
+
+    input.markAsFinished()
+    await writer.finishWriting()
+  }
+
+  @RecordingActor
+  func createMockPixelBuffer() async -> CVPixelBuffer? {
+    var pixelBuffer: CVPixelBuffer?
+    let attrs =
+      [
+        kCVPixelBufferCGImageCompatibilityKey: kCFBooleanTrue,
+        kCVPixelBufferCGBitmapContextCompatibilityKey: kCFBooleanTrue,
+      ] as CFDictionary
+
+    let status = CVPixelBufferCreate(
+      kCFAllocatorDefault, 1280, 720, kCVPixelFormatType_32ARGB, attrs, &pixelBuffer)
+    guard status == kCVReturnSuccess else { return nil }
+    return pixelBuffer
   }
 }

@@ -10,6 +10,9 @@ import Combine
 import SwiftUI
 import UniformTypeIdentifiers
 
+// Import new modifiers
+// StateChangePipeline, LoadingStateModifier, AnimationModifiers, PerformanceModifiers, AccessibilityModifiers
+
 struct MainContentView: View {
   @Environment(AppState.self) var appState
   @Environment(ErrorPresenter.self) var errorPresenter
@@ -60,35 +63,8 @@ struct MainContentView: View {
           selectedClip = clip
         }
       }
-      // CONSOLIDATED: Single handler for project/timeline changes
-      // Using a computed trigger to prevent double-firing
-      .onChange(of: appState.projectState.currentProject?.id) {
-        // Project identity changed - reset and load
-        appState.playbackState.reset()
-        if let project = appState.projectState.currentProject {
-          appState.playbackState.loadProject(project, forceReload: true)
-        }
-      }
-      .onChange(of: appState.projectState.currentProject?.timeline.tracks) {
-        // When tracks change (clip added, removed, or properties changed)
-        if let project = appState.projectState.currentProject {
-          // Reload player - hash debounce in PlaybackState prevents duplicates
-          appState.playbackState.loadProject(project)
-          appState.projectState.saveProject(project)
-        }
-      }
-      // Backup trigger for new clip + new project race condition
-      // Uses debounce to coalesce rapid changes and avoid duplicate compositions
-      .onReceive(
-        NotificationCenter.default.publisher(for: .clipAddedToTimeline)
-          .debounce(for: .milliseconds(150), scheduler: DispatchQueue.main)
-      ) { notification in
-        if let project = notification.object as? VideoProject {
-          // Don't use forceReload - let hash debounce prevent duplicates
-          // The hash WILL be different since a clip was added
-          appState.playbackState.loadProject(project)
-        }
-      }
+      // OPTIMIZED: Unified state change pipeline (replaces multiple onChange handlers)
+      .withUnifiedStateChanges()
       .alert(item: $errorPresenter.activeError) { error in
         let message =
           if let suggestion = error.recoverySuggestion {

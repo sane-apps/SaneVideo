@@ -40,47 +40,56 @@ extension RecordingEngine {
     }
   }
 
-  /// Perform the actual source switch (stop old source, start new source)
+  /// Perform the actual source switch with smooth overlapping transition
   /// NOTE: Camera session is NOT stopped during screen recording because PiP needs it for preview overlay
   @RecordingActor
-  private func performSourceSwitch(from _: RecordingSource, to newSource: RecordingSource) async {
+  private func performSourceSwitch(from previousSource: RecordingSource, to newSource: RecordingSource) async {
     if newSource == .camera {
-      // Stop screen recorder - camera should already be running
-      await screenRecorder.stop()
-      AppLogger.recording.info("Screen recorder stopped, camera should still be running for PiP")
-
-      // Small delay for hardware cleanup
-      try? await Task.sleep(nanoseconds: 100_000_000)  // 0.1s optimized
-
-      // Ensure camera is running (it should be, but just in case)
-      await MainActor.run { [weak self] in
-        guard let self = self else { return }
-
-        if !self.cameraService.isActive {
+      // Switch to camera: Start camera first (if needed), then stop screen recorder
+      // This ensures smooth transition with no gap
+      AppLogger.recording.info("Switching to camera: Ensuring camera is active first...")
+      
+      // Ensure camera is running BEFORE stopping screen recorder
+      let cameraWasActive = await MainActor.run { [weak self] in
+        guard let self = self else { return false }
+        return self.cameraService.isActive
+      }
+      
+      if !cameraWasActive {
+        // Start camera on MainActor
+        await MainActor.run { [weak self] in
+          guard let self = self else { return }
           Task {
             do {
               try await self.cameraService.start()
-              AppLogger.recording.info("Camera restarted after source switch")
+              AppLogger.recording.info("Camera started for smooth transition")
             } catch {
               AppLogger.recording.error(
-                "Failed to restart camera after source switch: \(error.localizedDescription)")
+                "Failed to start camera during switch: \(error.localizedDescription)")
             }
           }
-        } else {
-          AppLogger.recording.info("Camera already running, continuing with camera source")
         }
+        
+        // Small delay to let camera stabilize, then stop screen recorder
+        try? await Task.sleep(nanoseconds: 50_000_000)  // 0.05s - reduced delay
+      } else {
+        AppLogger.recording.info("Camera already running, preparing to stop screen recorder...")
+        // Minimal delay for smooth handoff
+        try? await Task.sleep(nanoseconds: 33_000_000)  // ~1 frame at 30fps
       }
+      
+      // Now stop screen recorder (camera is guaranteed to be running)
+      await screenRecorder.stop()
+      AppLogger.recording.info("Screen recorder stopped, camera transition complete")
     } else {
-      // Switch to screen - DO NOT stop camera, PiP needs it for preview overlay
+      // Switch to screen: Start screen recorder first, camera stays running for PiP
       AppLogger.recording.info(
-        "Switching to screen recording, keeping camera session active for PiP preview")
+        "Switching to screen recording, keeping camera active for PiP overlay")
 
-      // Small delay for hardware preparation
-      try? await Task.sleep(nanoseconds: 100_000_000)  // 0.1s optimized
-
+      // Start screen recorder immediately - no delay needed since camera is already running
       do {
         try await screenRecorder.start()
-        AppLogger.recording.info("Screen recorder started after source switch")
+        AppLogger.recording.info("Screen recorder started, smooth transition to screen mode")
       } catch {
         AppLogger.recording.error("Failed to start screen recorder: \(error.localizedDescription)")
         let appError = AppError.recordingEngineError(

@@ -96,8 +96,8 @@ class PiPCameraWindow: NSPanel {
         NSLayoutConstraint.activate([
             resizeHandle.trailingAnchor.constraint(equalTo: visualEffect.trailingAnchor, constant: -4),
             resizeHandle.bottomAnchor.constraint(equalTo: visualEffect.bottomAnchor, constant: -4),
-            resizeHandle.widthAnchor.constraint(equalToConstant: 24), // Larger hit area
-            resizeHandle.heightAnchor.constraint(equalToConstant: 24)
+            resizeHandle.widthAnchor.constraint(equalToConstant: 40), // Larger, easier to grab
+            resizeHandle.heightAnchor.constraint(equalToConstant: 40)
         ])
     }
     
@@ -137,8 +137,8 @@ class PiPCameraWindow: NSPanel {
             NSLayoutConstraint.activate([
                 imageView.centerXAnchor.constraint(equalTo: centerXAnchor),
                 imageView.centerYAnchor.constraint(equalTo: centerYAnchor),
-                imageView.widthAnchor.constraint(equalToConstant: 16),
-                imageView.heightAnchor.constraint(equalToConstant: 16)
+                imageView.widthAnchor.constraint(equalToConstant: 20), // Slightly larger icon for visibility
+                imageView.heightAnchor.constraint(equalToConstant: 20)
             ])
 
             // Add cursor tracking

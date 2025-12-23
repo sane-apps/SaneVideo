@@ -82,7 +82,7 @@ actor VisionOrchestrator {
   ) async throws -> VisionAnalysisResult {
 
     _ = VNVideoProcessor(url: videoURL)
-    var requests: [VNRequest] = []
+      var _: [VNRequest] = []
     _ = VisionAnalysisResult()
 
     // 1. Text Request
@@ -201,8 +201,26 @@ actor VisionOrchestrator {
     // Stats
     var frameCount = 0
     let processingStartTime = Date()
+    let maxProcessingTime: TimeInterval = 300.0 // 5 minutes max
+    var lastProgressTime = Date()
 
     while let sampleBuffer = output.copyNextSampleBuffer() {
+      // ROBUSTNESS: Check for timeout
+      if Date().timeIntervalSince(processingStartTime) > maxProcessingTime {
+        AppLogger.vision.warning("👁️ VisionOrchestrator: Timeout after 5 minutes, stopping analysis")
+        break
+      }
+      
+      // ROBUSTNESS: Check for cancellation
+      if Task.isCancelled {
+        AppLogger.vision.info("👁️ VisionOrchestrator: Cancelled by user")
+        break
+      }
+      
+      // ROBUSTNESS: Yield periodically to prevent blocking
+      if frameCount % 10 == 0 {
+        await Task.yield()
+      }
       let pts = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
 
       // Cadence Control
@@ -285,10 +303,12 @@ actor VisionOrchestrator {
         nextSampleTime = pts + sampleInterval
         frameCount += 1
 
-        // Progress
-        if frameCount % 5 == 0 {
+        // Progress (more frequent updates)
+        let now = Date()
+        if now.timeIntervalSince(lastProgressTime) >= 1.0 || frameCount % 5 == 0 {
           let progress = pts.seconds / duration.seconds
           progressHandler?(progress)
+          lastProgressTime = now
         }
       }
     }

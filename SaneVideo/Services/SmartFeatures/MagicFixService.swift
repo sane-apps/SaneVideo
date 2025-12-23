@@ -26,14 +26,17 @@ enum MagicFixService {
         // 1. Silence Detection
         if options.removeSilence {
             do {
-                let silenceRanges = try await detectSilence(
-                    in: clip,
-                    options: options,
-                    progressHandler: { p, _ in progressHandler(Int(Double(p)/100.0 * 30.0), 100) }
-                )
+                // ROBUSTNESS: Add timeout (5 minutes max for silence detection)
+                let silenceRanges = try await withTimeout(seconds: 300.0) {
+                    try await detectSilence(
+                        in: clip,
+                        options: options,
+                        progressHandler: { p, _ in progressHandler(Int(Double(p)/100.0 * 30.0), 100) }
+                    )
+                }
                 rangesToRemove.append(contentsOf: silenceRanges)
             } catch {
-                AppLogger.project.error("⚠️ Magic Fix: Silence detection failed (skipping): \(error.localizedDescription)")
+                AppLogger.project.error("⚠️ Magic Fix: Silence detection failed (timeout or error): \(error.localizedDescription)")
                 // Continue execution - do not fail the whole process
             }
         }
@@ -61,6 +64,7 @@ enum MagicFixService {
                  // For now, if autoEnhance is true, we use it for deeper cleaning
                  if options.autoEnhance {
                      do {
+                         // ROBUSTNESS: AI analysis already has timeout in provider, but add extra safety
                          let analysis = try await ServiceContainer.shared.aiService.analyzeTranscriptForEdits(transcript: transcript)
                          
                          for segment in analysis.segments {

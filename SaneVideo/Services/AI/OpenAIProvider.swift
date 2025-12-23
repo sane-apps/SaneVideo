@@ -5,6 +5,38 @@
 
 import Foundation
 
+// MARK: - Timeout Helper
+
+private enum TimeoutError: Error, LocalizedError {
+    case timeout(seconds: TimeInterval)
+    var errorDescription: String? {
+        switch self {
+        case .timeout(let seconds):
+            return "Operation timed out after \(Int(seconds)) seconds"
+        }
+    }
+}
+
+private func withTimeout<T: Sendable>(
+    seconds: TimeInterval,
+    operation: @escaping @Sendable () async throws -> T
+) async throws -> T {
+    try await withThrowingTaskGroup(of: T.self) { group in
+        group.addTask { @Sendable in
+            try await operation()
+        }
+        group.addTask {
+            try await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
+            throw TimeoutError.timeout(seconds: seconds)
+        }
+        guard let result = try await group.next() else {
+            throw TimeoutError.timeout(seconds: seconds)
+        }
+        group.cancelAll()
+        return result
+    }
+}
+
 struct OpenAIProvider: AIModelProvider {
     func generateTitleAndDescription(transcript: String) async throws -> AIGeneratedContent {
         let key = await Secrets.openAIKey()
@@ -44,9 +76,12 @@ struct OpenAIProvider: AIModelProvider {
         // PERFORMANCE: Add explicit timeout for robustness
         request.timeoutInterval = 30.0 // 30 second timeout
 
-        let (data, response) = try await withTimeout(seconds: 35.0) {
-            try await URLSession.shared.data(for: request)
+        // Copy request to avoid concurrency issues
+        let requestCopy = request
+        let result = try await withTimeout(seconds: 35.0) {
+            try await URLSession.shared.data(for: requestCopy)
         }
+        let (data, response) = result
 
         guard let httpResponse = response as? HTTPURLResponse else {
             throw AIError.invalidResponse
@@ -63,7 +98,7 @@ struct OpenAIProvider: AIModelProvider {
               let firstChoice = choices.first,
               let message = firstChoice["message"] as? [String: Any],
               let content = message["content"] as? String,
-              let contentData = content.data(using: .utf8),
+              let contentData = content.data(using: String.Encoding.utf8),
               let contentJson = try JSONSerialization.jsonObject(with: contentData) as? [String: String],
               let title = contentJson["title"],
               let description = contentJson["description"]
@@ -98,9 +133,12 @@ struct OpenAIProvider: AIModelProvider {
         // PERFORMANCE: Add explicit timeout for robustness
         request.timeoutInterval = 30.0 // 30 second timeout
 
-        let (data, response) = try await withTimeout(seconds: 35.0) {
-            try await URLSession.shared.data(for: request)
+        // Copy request to avoid concurrency issues
+        let requestCopy = request
+        let result = try await withTimeout(seconds: 35.0) {
+            try await URLSession.shared.data(for: requestCopy)
         }
+        let (data, response) = result
         guard (response as? HTTPURLResponse)?.statusCode == 200 else { throw AIError.apiError("OpenAI Error") }
         
         guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
@@ -108,7 +146,7 @@ struct OpenAIProvider: AIModelProvider {
               let firstChoice = choices.first,
               let message = firstChoice["message"] as? [String: Any],
               let text = message["content"] as? String,
-              let data = text.data(using: .utf8)
+              let data = text.data(using: String.Encoding.utf8)
         else { throw AIError.invalidResponse }
         
         return try JSONDecoder().decode(MagicFixAnalysis.self, from: data)
@@ -138,9 +176,12 @@ struct OpenAIProvider: AIModelProvider {
         // PERFORMANCE: Add explicit timeout for robustness
         request.timeoutInterval = 30.0 // 30 second timeout
 
-        let (data, response) = try await withTimeout(seconds: 35.0) {
-            try await URLSession.shared.data(for: request)
+        // Copy request to avoid concurrency issues
+        let requestCopy = request
+        let result = try await withTimeout(seconds: 35.0) {
+            try await URLSession.shared.data(for: requestCopy)
         }
+        let (data, response) = result
         guard (response as? HTTPURLResponse)?.statusCode == 200 else { throw AIError.apiError("OpenAI Error") }
         
         return try AIProviderParser.parseRefinedResponse(data: data, originalCaptions: captions)

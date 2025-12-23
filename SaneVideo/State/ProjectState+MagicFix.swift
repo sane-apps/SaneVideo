@@ -16,10 +16,38 @@ extension ProjectState {
         processingProgress = 0.0
         processingStatus = "✨ Starting Magic Fix..."
         
+        // Start performance tracking
+        let startTime = Date()
+        let performanceMetrics = ServiceContainer.shared.performanceMetrics
+        
+        // Start performance tracking
+        let startTime = Date()
+        let performanceMetrics = ServiceContainer.shared.performanceMetrics
+        
         AppLogger.project.info("✨ Magic Fix: Starting for clip \(clip.id) (\(clip.url.lastPathComponent))")
         ServiceContainer.shared.toastManager.show("✨ Starting Magic Fix...")
         
-        defer { 
+        defer {
+            // Record performance metrics
+            let duration = Date().timeIntervalSince(startTime)
+            performanceMetrics.recordOperation(
+                name: "Magic Fix",
+                duration: duration,
+                metadata: [
+                    "clipDuration": String(format: "%.1f", clip.duration.seconds),
+                    "options": "\(options.removeSilence ? "silence " : "")\(options.removeFillers ? "fillers " : "")\(options.autoEnhance ? "enhance" : "")"
+                ]
+            )
+            // Record performance metrics
+            let duration = Date().timeIntervalSince(startTime)
+            performanceMetrics.recordOperation(
+                name: "Magic Fix",
+                duration: duration,
+                metadata: [
+                    "clipDuration": String(format: "%.1f", clip.duration.seconds),
+                    "options": options.debugDescription
+                ]
+            ) 
             AppLogger.project.info("✨ Magic Fix: Finished processing for clip \(clip.id)")
             Task { @MainActor in 
                 self.isProcessing = false 

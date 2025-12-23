@@ -7,8 +7,10 @@ import Foundation
 
 struct OpenAIProvider: AIModelProvider {
     func generateTitleAndDescription(transcript: String) async throws -> AIGeneratedContent {
-        let key = await Secrets.openAIKey()
-        guard !key.isEmpty && key != "YOUR_OPENAI_API_KEY" else {
+        // Use KeychainService for user-provided API keys (optional cloud enhancement)
+        let keychain = ServiceContainer.shared.keychainService
+        let key = await keychain.retrieve(for: .openAIKey) ?? ""
+        guard !key.isEmpty else {
             throw AIError.noAPIKey
         }
 
@@ -78,8 +80,10 @@ struct OpenAIProvider: AIModelProvider {
     }
 
     func analyzeTranscriptForEdits(prompt: String) async throws -> MagicFixAnalysis {
-        let key = await Secrets.openAIKey()
-        guard !key.isEmpty && key != "YOUR_OPENAI_API_KEY" else { throw AIError.noAPIKey }
+        // Use KeychainService for user-provided API keys (optional cloud enhancement)
+        let keychain = ServiceContainer.shared.keychainService
+        let key = await keychain.retrieve(for: .openAIKey) ?? ""
+        guard !key.isEmpty else { throw AIError.noAPIKey }
         
         guard let url = URL(string: "https://api.openai.com/v1/chat/completions") else { throw AIError.invalidResponse }
         var request = URLRequest(url: url)
@@ -121,8 +125,10 @@ struct OpenAIProvider: AIModelProvider {
     }
 
     func refineCaptions(captions: [Caption], prompt: String) async throws -> [Caption] {
-        let key = await Secrets.openAIKey()
-        guard !key.isEmpty && key != "YOUR_OPENAI_API_KEY" else { throw AIError.noAPIKey }
+        // Use KeychainService for user-provided API keys (optional cloud enhancement)
+        let keychain = ServiceContainer.shared.keychainService
+        let key = await keychain.retrieve(for: .openAIKey) ?? ""
+        guard !key.isEmpty else { throw AIError.noAPIKey }
         
         guard let url = URL(string: "https://api.openai.com/v1/chat/completions") else { throw AIError.invalidResponse }
         var request = URLRequest(url: url)

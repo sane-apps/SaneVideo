@@ -7,7 +7,8 @@
 
 import Foundation
 
-enum ExportPreset: String, CaseIterable {
+enum ExportPreset: String, CaseIterable, Identifiable {
+    var id: String { rawValue }
     case custom = "Custom"
     case youtube4K = "YouTube 4K"
     case youtube1080 = "YouTube 1080p"

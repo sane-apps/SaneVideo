@@ -157,37 +157,64 @@ struct SmartToolsSection: View {
     }
 
     private var headerView: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Magic Fix")
-                    .font(.headline)
-                Text("AI-Powered Polish")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            }
-            Spacer()
-            Menu {
-                Button("Minimal Fix") { options = .minimal }
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Magic Fix")
+                        .font(.headline)
+                    Text("AI-Powered Polish")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                Spacer()
+                Menu {
+                    Button {
+                        options = .minimal
+                    } label: {
+                        Label("Minimal Fix", systemImage: "scissors")
+                    }
                     .accessibilityIdentifier("Preset_Minimal")
-                Button("Pro Clean-up") { options = .proClean }
+                    
+                    Button {
+                        options = .proClean
+                    } label: {
+                        Label("Pro Clean-up", systemImage: "sparkles")
+                    }
                     .accessibilityIdentifier("Preset_ProClean")
-                Button("Social Media Ready") { options = .socialMedia }
+                    
+                    Button {
+                        options = .socialMedia
+                    } label: {
+                        Label("Social Media Ready", systemImage: "square.stack.3d.up")
+                    }
                     .accessibilityIdentifier("Preset_SocialMedia")
-            } label: {
-                Label("Presets", systemImage: "slider.horizontal.3")
-                    .font(.caption.bold())
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(Theme.Colors.secondaryBackground)
-                    .cornerRadius(6)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 6)
-                            .stroke(Color.secondary.opacity(0.2), lineWidth: 0.5)
-                    )
+                } label: {
+                    Label("Presets", systemImage: "slider.horizontal.3")
+                        .font(.caption.bold())
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(Theme.Colors.secondaryBackground)
+                        .cornerRadius(6)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 6)
+                                .stroke(Color.secondary.opacity(0.2), lineWidth: 0.5)
+                        )
+                }
+                .menuStyle(.button)
+                .buttonStyle(.plain)
+                .accessibilityIdentifier("PresetsMenu")
             }
-            .menuStyle(.button)
-            .buttonStyle(.plain)
-            .accessibilityIdentifier("PresetsMenu")
+            
+            // Preset description and privacy badge
+            HStack {
+                if !options.presetName.isEmpty && options.presetName != "Custom" {
+                    Text(options.presetDescription)
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                }
+                Spacer()
+                PrivacyBadge()
+            }
         }
     }
 

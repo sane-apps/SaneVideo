@@ -62,21 +62,16 @@ struct MainContentView: View {
       }
       // OPTIMIZED: Unified state change pipeline (replaces multiple onChange handlers)
       .withUnifiedStateChanges()
-      .alert(item: $errorPresenter.activeError) { error in
-        let message =
-          if let suggestion = error.recoverySuggestion {
-            "\(error.localizedDescription)\n\n💡 \(suggestion)"
-          } else {
-            error.localizedDescription
-          }
-
-        return Alert(
-          title: Text(String(localized: "error.title", defaultValue: "Error")),
-          message: Text(message),
-          dismissButton: .default(Text(String(localized: "action.ok", defaultValue: "OK"))) {
+      .sheet(item: $errorPresenter.activeError) { error in
+        ErrorDisplayView(
+          error: error,
+          onDismiss: { errorPresenter.dismiss() },
+          onRetry: error.recoverySuggestions.isEmpty ? nil : {
             errorPresenter.dismiss()
+            // Retry logic would be implemented per error type
           }
         )
+        .frame(width: 500, height: 400)
       }
       // Refactored Modifiers
       .withFileDropHandling(isTargeted: $isDraggingFile)

@@ -12,38 +12,45 @@ extension ProjectState {
 
     func performMagicFix(for clip: VideoClip, options: MagicFixOptions) async {
         guard !isProcessing, currentProject != nil else { return }
-        isProcessing = true
-        processingProgress = 0.0
-        processingStatus = "✨ Starting Magic Fix..."
         
-        // Start performance tracking
-        let startTime = Date()
-        let performanceMetrics = ServiceContainer.shared.performanceMetrics
-        
-        AppLogger.project.info("✨ Magic Fix: Starting for clip \(clip.id) (\(clip.url.lastPathComponent))")
-        ServiceContainer.shared.toastManager.show("✨ Starting Magic Fix...")
-        
-        defer {
-            // Record performance metrics
-            let duration = Date().timeIntervalSince(startTime)
-            let optionsDescription = "\(options.removeSilence ? "silence " : "")\(options.removeFillers ? "fillers " : "")\(options.autoEnhance ? "enhance" : "")"
-            performanceMetrics.recordOperation(
-                name: "Magic Fix",
-                duration: duration,
-                metadata: [
-                    "clipDuration": String(format: "%.1f", clip.duration.seconds),
-                    "options": optionsDescription.isEmpty ? "none" : optionsDescription
-                ]
-            )
-            AppLogger.project.info("✨ Magic Fix: Finished processing for clip \(clip.id)")
-            Task { @MainActor in 
-                self.isProcessing = false 
+        // Create cancellable task
+        let task = Task { @MainActor [weak self] in
+            guard let self = self else { return }
+            
+            self.isProcessing = true
+            self.processingProgress = 0.0
+            self.processingStatus = "✨ Starting Magic Fix..."
+            
+            // Start performance tracking
+            let startTime = Date()
+            let performanceMetrics = ServiceContainer.shared.performanceMetrics
+            
+            AppLogger.project.info("✨ Magic Fix: Starting for clip \(clip.id) (\(clip.url.lastPathComponent))")
+            ServiceContainer.shared.toastManager.show("✨ Starting Magic Fix...")
+            
+            defer {
+                // Record performance metrics
+                let duration = Date().timeIntervalSince(startTime)
+                let optionsDescription = "\(options.removeSilence ? "silence " : "")\(options.removeFillers ? "fillers " : "")\(options.autoEnhance ? "enhance" : "")"
+                performanceMetrics.recordOperation(
+                    name: "Magic Fix",
+                    duration: duration,
+                    metadata: [
+                        "clipDuration": String(format: "%.1f", clip.duration.seconds),
+                        "options": optionsDescription.isEmpty ? "none" : optionsDescription
+                    ]
+                )
+                AppLogger.project.info("✨ Magic Fix: Finished processing for clip \(clip.id)")
+                self.isProcessing = false
                 self.processingStatus = nil
                 self.processingProgress = 1.0
-            } 
-        }
+            }
+            
+            // Check for cancellation before starting
+            try Task.checkCancellation()
 
-        // 0. Start Concurrent Vision Analysis (Unified Pipeline)
+            // 0. Start Concurrent Vision Analysis (Unified Pipeline)
+            // Note: Vision task runs detached, cancellation handled via Task cancellation
         // Run with .utility priority to avoid starving the Audio enhancement (Primary UI task)
         // ROBUSTNESS: Add timeout to prevent hangs
         async let visionTask: VisionAnalysisResult? = await Task.detached(priority: .utility) {
@@ -73,6 +80,7 @@ extension ProjectState {
         // 1. Audio Enhancement (Primary Priority)
         // Enhance audio FIRST so that transcription and silence detection use clean audio
         if options.enhanceAudio {
+            try Task.checkCancellation()
             processingStatus = "🎙️ Enhancing audio first..."
             await enhanceAudioFirst(for: clip)
             processingProgress = 0.2
@@ -88,12 +96,15 @@ extension ProjectState {
 
         // 2. Generate Captions if needed (Using enhanced audio if available)
         if (options.generateCaptions || options.removeFillers || options.autoEnhance) && preAnalysisClip.captions.isEmpty {
+             try Task.checkCancellation()
              processingStatus = "🎤 Transcribing audio..."
              do {
                  // ROBUSTNESS: Add timeout (10 minutes max for transcription)
                  _ = try await withTimeout(seconds: 600.0) {
                      try await self.generateCaptions(for: preAnalysisClip)
                  }
+             } catch is CancellationError {
+                 throw CancellationError()
              } catch {
                  AppLogger.project.warning("Magic Fix: Caption generation failed (timeout or error): \(error.localizedDescription). Some features like Filler Removal may be skipped.")
              }
@@ -106,6 +117,7 @@ extension ProjectState {
         do {
             // 3. Analyis and Cuts (Silence & Fillers)
             // Now runs on clean audio + accurate captions
+            try Task.checkCancellation()
             processingStatus = "✂️ Analyzing for cuts (Silence & Fillers)..."
             try await processCutsAndSmoothing(for: readyForCutsClip, options: options)
             processingProgress = 0.6
@@ -117,10 +129,12 @@ extension ProjectState {
             let visionResult = await visionTask
 
             // 4. Visual Enhancements
+            try Task.checkCancellation()
             try await applyVisualEffects(to: visualClip, options: options, visionResult: visionResult)
             
             // 5. AI & Generative Features
             // ROBUSTNESS: Add timeout for AI operations (2 minutes max)
+            try Task.checkCancellation()
             try await withTimeout(seconds: 120.0) {
                 try await self.applyAIGenerativeFeatures(to: visualClip, options: options)
             }
@@ -131,12 +145,24 @@ extension ProjectState {
             processingStatus = "✅ Magic Fix Completed"
             ServiceContainer.shared.toastManager.show("✨ Magic Fix Completed", type: .info)
             AppLogger.project.info("✨ Magic Fix: One-click flow finished successfully")
+        } catch is CancellationError {
+            AppLogger.project.info("✨ Magic Fix: Cancelled by user")
+            self.isProcessing = false
+            self.processingStatus = nil
+            self.processingProgress = 0.0
         } catch {
             print("❌ Magic Fix CRITICAL FAILURE: \(error)")
             processingStatus = "❌ Failed"
             ServiceContainer.shared.toastManager.show("Magic Fix failed: \(error.localizedDescription)", type: .error) 
             AppLogger.project.error("✨ Magic Fix: Error during orchestration: \(error)")
         }
+    }
+        
+        // Store task for cancellation
+        setProcessingTask(task)
+        
+        // Await task completion
+        await task.value
     }
     
     // MARK: - Magic Fix Modular Helpers

@@ -198,32 +198,17 @@ extension MainContentView {
 extension MainContentView {
   @ViewBuilder
   func MagicOverlayView() -> some View {
-    // Thermal Warning
-    if ThermalManager.shared.isThermalPressureHigh {
-      VStack {
-        HStack {
-          Image(systemName: "thermometer.sun.fill")
-            .foregroundColor(.orange)
-          Text(
-            ThermalManager.shared.performanceLevel == .emergency
-              ? String(
-                localized: "thermal.emergency",
-                defaultValue: "System Overheating: Performance reduced")
-              : String(
-                localized: "thermal.throttled", defaultValue: "System Hot: Optimizing performance")
-          )
-          .font(.caption)
-          .fontWeight(.medium)
-          Spacer()
-        }
-        .padding(8)
-        .background(Color.black.opacity(0.8))
-        .cornerRadius(8)
+    VStack {
+      // Enhanced Magic Fix Progress Overlay
+      EnhancedMagicOverlayView()
         .padding()
-        Spacer()
+      
+      // Enhanced Thermal Status Indicator
+      if ThermalManager.shared.isThermalPressureHigh {
+        ThermalStatusIndicator()
+          .padding()
       }
-      .transition(.move(edge: .top).combined(with: .opacity))
-      .accessibilityIdentifier("thermal.status.overlay")
+      Spacer()
     }
   }
 }

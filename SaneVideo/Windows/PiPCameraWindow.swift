@@ -106,6 +106,11 @@ class PiPCameraWindow: NSPanel {
         let controls = PiPControlsWindow(frame: frame)
         self.addChildWindow(controls, ordered: .above)
         self.controlsWindow = controls
+        
+        // CRITICAL FIX: Ensure controls window stays visible even when app is deactivated
+        controls.orderFrontRegardless()
+        controls.level = .floating // Match parent window level
+        controls.hidesOnDeactivate = false // Keep visible when app loses focus
     }
 
     // MARK: - Internal Helpers

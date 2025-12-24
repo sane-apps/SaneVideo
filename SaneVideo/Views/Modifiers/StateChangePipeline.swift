@@ -90,6 +90,14 @@ struct UnifiedStateChangeModifier: ViewModifier {
                     coordinator.notifyClipAdded(project)
                 }
             }
+            .onReceive(
+                NotificationCenter.default.publisher(for: NSNotification.Name("ProjectEffectsChanged"))
+            ) { notification in
+                // INSTANT PREVIEW: Force reload when effects change
+                if let project = notification.object as? VideoProject {
+                    appState.playbackState.loadProject(project, forceReload: true)
+                }
+            }
     }
     
     private func setupStateChangeHandlers() {

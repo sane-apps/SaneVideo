@@ -151,6 +151,14 @@ extension ProjectState {
             saveProject(project)
 
             AppLogger.project.info("Updated clip effects: \(effects.count) effects applied")
+            
+            // INSTANT PREVIEW: Trigger immediate project reload to show effects
+            // This ensures effects appear instantly in video preview
+            // Post notification to trigger reload via UnifiedStateChangeModifier
+            NotificationCenter.default.post(
+                name: NSNotification.Name("ProjectEffectsChanged"),
+                object: project
+            )
         }
     }
     

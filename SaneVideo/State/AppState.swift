@@ -44,6 +44,13 @@ class AppState {
   // MARK: - Export Sheet (for ⌘E shortcut)
 
   var showExportSheet = false
+  
+  // MARK: - Quick Access Overlay (post-recording)
+  
+  var showQuickAccessOverlay = false
+  var quickAccessRecordingURL: URL?
+  var quickAccessThumbnail: NSImage?
+  
   // MARK: - Timeline Selection (for multi-select and batch operations)
 
   var selectedClipIds: Set<UUID> = []  // Multi-select support for batch operations

@@ -8,7 +8,7 @@ import Foundation
 struct GeminiProvider: AIModelProvider {
     func generateTitleAndDescription(transcript: String) async throws -> AIGeneratedContent {
         // Use KeychainService for user-provided API keys (optional cloud enhancement)
-        let keychain = ServiceContainer.shared.keychainService
+        let keychain = await MainActor.run { ServiceContainer.shared.keychainService }
         let key = await keychain.retrieve(for: .geminiKey) ?? ""
         guard !key.isEmpty else {
             throw AIError.noAPIKey
@@ -93,7 +93,7 @@ struct GeminiProvider: AIModelProvider {
 
     func analyzeTranscriptForEdits(prompt: String) async throws -> MagicFixAnalysis {
         // Use KeychainService for user-provided API keys (optional cloud enhancement)
-        let keychain = ServiceContainer.shared.keychainService
+        let keychain = await MainActor.run { ServiceContainer.shared.keychainService }
         let key = await keychain.retrieve(for: .geminiKey) ?? ""
         guard !key.isEmpty else { throw AIError.noAPIKey }
         
@@ -136,7 +136,7 @@ struct GeminiProvider: AIModelProvider {
 
     func refineCaptions(captions: [Caption], prompt: String) async throws -> [Caption] {
         // Use KeychainService for user-provided API keys (optional cloud enhancement)
-        let keychain = ServiceContainer.shared.keychainService
+        let keychain = await MainActor.run { ServiceContainer.shared.keychainService }
         let key = await keychain.retrieve(for: .geminiKey) ?? ""
         guard !key.isEmpty else { throw AIError.noAPIKey }
         

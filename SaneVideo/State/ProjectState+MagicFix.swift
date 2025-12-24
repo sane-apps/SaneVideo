@@ -161,8 +161,13 @@ extension ProjectState {
         // Store task for cancellation
         setProcessingTask(task)
         
-        // Await task completion
-        await task.value
+        // Await task completion (errors are handled inside the task)
+        do {
+            try await task.value
+        } catch {
+            // Task errors are already handled in the task's catch block
+            AppLogger.project.info("✨ Magic Fix: Task completed with error: \(error)")
+        }
     }
     
     // MARK: - Magic Fix Modular Helpers

@@ -105,6 +105,10 @@ final class ServiceContainer {
     let systemHealth: SystemHealthService
     let exportSpeedTracker: ExportSpeedTracker
     
+    // MARK: - Configuration
+    
+    let pricingConfiguration: PricingConfiguration
+    
     // Main-actor isolated lazy properties - must be accessed from main thread
     lazy var appState: AppState = AppState()
     lazy var userPreferences: UserPreferences = UserPreferences()
@@ -183,6 +187,9 @@ final class ServiceContainer {
         self.performanceMetrics = PerformanceMetricsService()
         self.systemHealth = SystemHealthService()
         self.exportSpeedTracker = ExportSpeedTracker()
+        
+        // Configuration
+        self.pricingConfiguration = PricingConfiguration()
         
         // Warm up critical heavy systems
         Task { await self.visionOrchestrator.warmup() }

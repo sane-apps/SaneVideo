@@ -30,7 +30,7 @@ class ProjectState {
     private var currentScopeSession: ProjectFileManager.SecurityScopeSession?
     
     /// Current processing task for cancellation support
-    private var currentProcessingTask: Task<Void, Never>?
+    var currentProcessingTask: Task<Void, Error>?
 
     // MARK: - Smart Features State
     

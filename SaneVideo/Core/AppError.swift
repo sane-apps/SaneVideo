@@ -36,6 +36,8 @@ enum AppError: LocalizedError, Identifiable {
     case projectLoadFailed(Error)
     case projectSaveFailed(Error)
     case invalidProjectData
+    case diskSpaceLow
+    case clipNotFound
 
     // Screen capture errors
     case screenCaptureUnavailable  // User cancelled picker or system error
@@ -97,6 +99,10 @@ enum AppError: LocalizedError, Identifiable {
             "Failed to save project: \(error.localizedDescription)"
         case .invalidProjectData:
             "Invalid project data"
+        case .diskSpaceLow:
+            "Not enough disk space"
+        case .clipNotFound:
+            "Video clip not found"
         // Screen capture
         case .screenCaptureUnavailable:
             "Screen recording unavailable. Please try again."
@@ -132,6 +138,10 @@ enum AppError: LocalizedError, Identifiable {
             "Failed to save project. Try: 1) Check disk space, 2) Verify write permissions, 3) Try saving to a different location."
         case .invalidProjectData:
             "Project file is corrupted. Try: 1) Restore from backup, 2) Create a new project, 3) Contact support if you have a backup."
+        case .diskSpaceLow:
+            "Not enough disk space. Try: 1) Free up at least 1GB of space, 2) Delete old recordings, 3) Empty Trash."
+        case .clipNotFound:
+            "Video clip not found. Try: 1) Check if the file was moved, 2) Re-import the clip, 3) Check file permissions."
         case .recordingStartFailed:
             "Failed to start recording. Try: 1) Check camera/microphone permissions, 2) Restart the app, 3) Check available disk space."
         case .recordingStopFailed:

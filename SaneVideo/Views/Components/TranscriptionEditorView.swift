@@ -122,7 +122,20 @@ struct TranscriptionEditorView: View {
     }
     
     private func updateCaptionText(_ caption: Caption, _ newText: String) {
-        // Implementation for text update
+        guard let clip = selectedClip else { return }
+        
+        // Update caption text while preserving timestamps
+        var updatedCaptions = clip.captions
+        if let index = updatedCaptions.firstIndex(where: { $0.id == caption.id }) {
+            var updatedCaption = updatedCaptions[index]
+            updatedCaption.text = newText
+            updatedCaptions[index] = updatedCaption
+            
+            // Apply changes to project
+            appState.projectState.updateCaptions(updatedCaptions, for: clip)
+            
+            AppLogger.project.info("📝 Updated caption \(caption.id): '\(newText)'")
+        }
     }
     
     private func deleteCaptionSegment(_ caption: Caption, in clip: VideoClip) {

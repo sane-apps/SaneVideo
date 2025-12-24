@@ -11,6 +11,7 @@ import SwiftUI
 struct ThermalStatusIndicator: View {
     @State private var thermalState: ProcessInfo.ThermalState = .nominal
     @State private var isThrottled: Bool = false
+    @State private var performanceLevel: PerformanceLevel = .high
     
     var body: some View {
         if ThermalManager.shared.isThermalPressureHigh {

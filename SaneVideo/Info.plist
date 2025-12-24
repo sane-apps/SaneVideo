@@ -28,5 +28,9 @@
 	<string>SaneVideo generates intelligent captions to make your content accessible to everyone. All processing happens on-device for maximum privacy.</string>
 	<key>NSScreenCaptureDescription</key>
 	<string>SaneVideo lets you record your screen effortlessly to create tutorials, demos, and professional content right from your Mac.</string>
+	<key>NSHumanReadableCopyright</key>
+	<string>Copyright © 2025 SaneVideo. All rights reserved.</string>
+	<key>NSHighResolutionCapable</key>
+	<true/>
 </dict>
 </plist>

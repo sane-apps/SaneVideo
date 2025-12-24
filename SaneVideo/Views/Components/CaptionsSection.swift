@@ -19,9 +19,39 @@ struct CaptionsSection: View {
     @State private var isRefining = false
     @State private var detectedText: [String] = []
     @State private var analysisResult: String?
+    @State private var showTranscriptEditor = false
+    @State private var showTranscriptTimeline = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
+            // Header with Text-Based Editing toggle
+            HStack {
+                Label("Captions", systemImage: "text.bubble")
+                    .font(.headline)
+                Spacer()
+                if !clip.captions.isEmpty {
+                    HStack(spacing: 8) {
+                        Button {
+                            showTranscriptTimeline.toggle()
+                        } label: {
+                            Label("Text Editor", systemImage: "text.cursor")
+                                .font(.caption)
+                        }
+                        .buttonStyle(.bordered)
+                        .accessibilityIdentifier("captions.text_editor_button")
+                        
+                        Button {
+                            showTranscriptEditor.toggle()
+                        } label: {
+                            Label("List View", systemImage: "list.bullet")
+                                .font(.caption)
+                        }
+                        .buttonStyle(.bordered)
+                        .accessibilityIdentifier("captions.list_editor_button")
+                    }
+                }
+            }
+            
             // Caption count & status
             if clip.captions.isEmpty {
                 emptyCaptionsHint
@@ -33,6 +63,14 @@ struct CaptionsSection: View {
 
             // OCR / Scan for Text
             textDetectionSection
+        }
+        .sheet(isPresented: $showTranscriptEditor) {
+            TranscriptionEditorView(selectedClip: .constant(clip))
+                .frame(minWidth: 600, minHeight: 400)
+        }
+        .sheet(isPresented: $showTranscriptTimeline) {
+            TranscriptTimelineView(clip: clip)
+                .frame(minWidth: 800, minHeight: 500)
         }
     }
 

@@ -25,7 +25,7 @@ extension ProjectState {
     }
     
     /// Store the processing task for cancellation
-    func setProcessingTask(_ task: Task<Void, Never>) {
+    func setProcessingTask(_ task: Task<Void, Error>) {
         currentProcessingTask = task
     }
 }

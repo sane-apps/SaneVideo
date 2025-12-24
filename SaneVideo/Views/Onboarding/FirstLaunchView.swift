@@ -60,7 +60,7 @@ struct FirstLaunchView: View {
                         .tag(index)
                 }
             }
-            .tabViewStyle(.page(indexDisplayMode: .never))
+            .tabViewStyle(.automatic)
             .frame(height: 400)
             
             // Navigation

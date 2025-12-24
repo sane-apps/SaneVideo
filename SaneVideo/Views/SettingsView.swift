@@ -67,6 +67,11 @@ struct GeneralSettingsView: View {
             }
             .padding(.bottom, 20)
 
+            Section(header: Text(String(localized: "settings.transcription.header", defaultValue: "Transcription Engine")).font(.headline)) {
+                TranscriptionEnginePicker()
+            }
+            .padding(.bottom, 20)
+            
             Section(header: Text(String(localized: "settings.storage.header", defaultValue: "Storage & Performance")).font(.headline)) {
                 HStack {
                     VStack(alignment: .leading) {

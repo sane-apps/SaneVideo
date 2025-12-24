@@ -27,8 +27,20 @@ extension ProjectState {
 
         AppLogger.project.info("🎤 ProjectState: Requesting caption generation for clip \(clip.id)")
         let tracker = ProgressTracker(interval: 3.0)
+        let coordinator = ServiceContainer.shared.transcriptionCoordinator
+        
+        // Check if we should suggest WhisperKit
+        if coordinator.shouldSuggestWhisperKit && coordinator.selectedEngine == .apple {
+            await MainActor.run {
+                ServiceContainer.shared.toastManager.show(
+                    "💡 Tip: Try WhisperKit for better accuracy with accents or noisy audio",
+                    type: .info
+                )
+            }
+        }
+        
         do {
-            let captions = try await ServiceContainer.shared.appleSpeechService.generateCaptions(for: clip.url) { chunk, total, eta in
+            let captions = try await coordinator.generateCaptions(for: clip.url) { chunk, total, eta in
                 if tracker.shouldUpdate() || chunk == 1 || chunk == total {
                     Task { @MainActor in
                         let percent = Double(chunk) / Double(total)

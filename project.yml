@@ -12,6 +12,9 @@ packages:
   swift-grok:
     url: https://github.com/klu-ai/swift-grok
     branch: main
+  WhisperKit:
+    url: https://github.com/argmaxinc/WhisperKit
+    from: 0.9.4
 schemes:
   SaneVideo:
     build:
@@ -75,6 +78,8 @@ targets:
     dependencies:
       - package: swift-grok
         product: GrokClient
+      - package: WhisperKit
+        product: WhisperKit
     postCompileScripts:
       - script: |
           if which swiftlint >/dev/null; then
@@ -92,6 +97,8 @@ targets:
       macOS: 26.2
     sources:
       - SaneVideoTests
+      - path: SaneVideoTests/Mocks
+        createIntermediateGroups: true
     dependencies:
       - target: SaneVideo
   SaneVideoUITests:

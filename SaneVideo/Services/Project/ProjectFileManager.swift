@@ -238,14 +238,14 @@ final class ProjectFileManager: Sendable {
 
                         // Check if file moved
                         if clip.url != resolvedURL {
-                            print("ProjectFileManager: Resolved moved file: \(clip.url.lastPathComponent) -> \(resolvedURL.path)")
+                            AppLogger.project.info("Resolved moved file: \(clip.url.lastPathComponent) -> \(resolvedURL.path)")
                             // Update URL
                             clip.url = resolvedURL
                         }
                         
                         // Check existence
                         if !FileManager.default.fileExists(atPath: resolvedURL.path) {
-                            print("ProjectFileManager: File missing at \(resolvedURL.path)")
+                            AppLogger.project.warning("File missing at \(resolvedURL.path)")
                             clip.isMissing = true
                         } else {
                             clip.isMissing = false
@@ -254,7 +254,6 @@ final class ProjectFileManager: Sendable {
                         updatedClips.append(clip)
 
                     } catch {
-                        print("ProjectFileManager: Failed to resolve bookmark for \(clip.url.lastPathComponent): \(error)")
                         AppLogger.project.warning("Failed to resolve bookmark for \(clip.url.lastPathComponent): \(error)")
                         
                         // Mark as missing if we can't resolve

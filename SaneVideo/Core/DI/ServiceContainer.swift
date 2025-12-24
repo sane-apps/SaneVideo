@@ -50,11 +50,13 @@ final class ServiceContainer {
     let waveformService: WaveformService
     let soundAnalysisService: SoundAnalysisService
     let voiceIsolationService: VoiceIsolationService
+    let realTimeAudioProcessor: RealTimeAudioProcessor
     
     // MARK: - AI/ML Services
     
     let aiService: AIService
     let appleSpeechService: AppleSpeechService
+    let transcriptionCoordinator: TranscriptionCoordinator
     let smartFillerDetector: SmartFillerDetector
     let sentimentAnalysisService: SentimentAnalysisService
     
@@ -144,10 +146,12 @@ final class ServiceContainer {
         self.waveformService = WaveformService()
         self.soundAnalysisService = SoundAnalysisService()
         self.voiceIsolationService = VoiceIsolationService()
+        self.realTimeAudioProcessor = RealTimeAudioProcessor()
         
         // AI/ML Services
         self.aiService = AIService()
         self.appleSpeechService = AppleSpeechService()
+        self.transcriptionCoordinator = TranscriptionCoordinator()
         self.smartFillerDetector = SmartFillerDetector()
         self.sentimentAnalysisService = SentimentAnalysisService()
         

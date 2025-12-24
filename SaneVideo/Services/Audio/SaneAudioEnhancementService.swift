@@ -24,7 +24,7 @@ final class SaneAudioEnhancementService {
     /// Enhances audio from a video/audio file and saves to a new location
     /// - Returns: URL of the enhanced audio file (.m4a)
     func enhanceAudio(from sourceURL: URL, onProgress: ((Double) -> Void)? = nil) async throws -> URL {
-        print("🎙️ AudioEnhancement: Starting for \(sourceURL.lastPathComponent)")
+        AppLogger.recording.info("🎙️ AudioEnhancement: Starting for \(sourceURL.lastPathComponent)")
         // 1. Setup paths
         let fileManager = FileManager.default
         let folder = fileManager.temporaryDirectory.appendingPathComponent("EnhancedAudio", isDirectory: true)
@@ -68,16 +68,16 @@ final class SaneAudioEnhancementService {
         // B. Voice Isolation (Modern macOS 13+ ML-based isolation)
         // Note: Voice isolation is OPTIONAL - it may timeout or fail on macOS 26
         let isolationService = ServiceContainer.shared.voiceIsolationService
-        print("🎙️ AudioEnhancement: Preparing Isolation Unit...")
+        AppLogger.recording.info("🎙️ AudioEnhancement: Preparing Isolation Unit...")
         await isolationService.prepareIsolationUnit()
         
         let isolationUnit = isolationService.getAudioUnit()
         if let unit = isolationUnit {
-            print("🎙️ AudioEnhancement: Isolation Unit Ready")
+            AppLogger.recording.info("🎙️ AudioEnhancement: Isolation Unit Ready")
             isolationService.setIntensity(1.0)
             engine.attach(unit)
         } else {
-            print("⚠️ AudioEnhancement: Voice isolation unavailable, continuing without it")            
+            AppLogger.recording.warning("⚠️ AudioEnhancement: Voice isolation unavailable, continuing without it")            
         }
         
         // C. Dynamics Processor (Legacy/Cleanup)
@@ -134,7 +134,7 @@ final class SaneAudioEnhancementService {
             throw EnhancementError.processingFailed("Could not create render buffer")
         }
         
-        print("🎙️ AudioEnhancement: Starting Render Loop")
+        AppLogger.recording.info("🎙️ AudioEnhancement: Starting Render Loop")
         var lastProgressUpdate = Date()
         let startTime = Date()
         let maxProcessingTime: TimeInterval = 600.0 // 10 minutes max
@@ -174,7 +174,7 @@ final class SaneAudioEnhancementService {
                 }
             } else {
                 // If it fails, log and break
-                print("Render failed: \(status.rawValue)")
+                AppLogger.recording.error("Render failed: \(status.rawValue)")
                 throw EnhancementError.processingFailed("Render status: \(status.rawValue)")
             }
         }
@@ -182,7 +182,7 @@ final class SaneAudioEnhancementService {
         player.stop()
         engine.stop()
         
-        print("🎙️ AudioEnhancement: Enhanced audio saved to: \(outputURL.path)")
+        AppLogger.recording.info("🎙️ AudioEnhancement: Enhanced audio saved to: \(outputURL.path)")
         return outputURL
     }
 }

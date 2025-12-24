@@ -11,11 +11,11 @@ import FoundationModels
 
 struct AppleFoundationProvider: AIModelProvider {
     func generateTitleAndDescription(transcript: String) async throws -> AIGeneratedContent {
+        #if canImport(FoundationModels)
+        // Primary: Use Apple Foundation Models (macOS 26.2+)
         AppLogger.general.info("Using Apple Foundation Models for local processing")
         
-        #if canImport(FoundationModels) && false
-        // Integration for macOS Tahoe local language models (stubbed)
-        let model = try await LanguageModel.load(.large)
+        let session = LanguageModelSession()
         
         let prompt = """
         Generate a catchy YouTube video title and description for this transcript.
@@ -24,9 +24,10 @@ struct AppleFoundationProvider: AIModelProvider {
         Transcript: \(transcript)
         """
         
-        let response = try await model.generate(prompt)
+        let response = try await session.respond(to: prompt)
+        let responseText = response.content
         
-        guard let data = response.text.data(using: String.Encoding.utf8),
+        guard let data = responseText.data(using: String.Encoding.utf8),
               let json = try? JSONSerialization.jsonObject(with: data) as? [String: String],
               let title = json["title"],
               let description = json["description"] else {
@@ -36,11 +37,10 @@ struct AppleFoundationProvider: AIModelProvider {
         return AIGeneratedContent(title: title, description: description)
         
         #else
-        // On-device FoundationModels not available yet (macOS 26.2+)
-        // For now, return a simple on-device title/description based on transcript
-        AppLogger.general.info("Using on-device transcript analysis for title/description")
+        // Fallback: Fast, performant text extraction (no performance degradation)
+        // This is instant and doesn't block - acceptable graceful degradation
+        AppLogger.general.info("Using fast text extraction fallback for title/description")
         
-        // Simple on-device extraction: Use first sentence as title, first paragraph as description
         let sentences = transcript.components(separatedBy: ". ")
         let title = sentences.first?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "Video"
         let description = sentences.prefix(3).joined(separator: ". ").trimmingCharacters(in: .whitespacesAndNewlines)
@@ -53,28 +53,29 @@ struct AppleFoundationProvider: AIModelProvider {
     }
 
     func analyzeTranscriptForEdits(prompt: String) async throws -> MagicFixAnalysis {
-        #if canImport(FoundationModels) && false
-        let model = try await LanguageModel.load(.large) 
-        let response = try await model.generate(prompt)
-        guard let data = response.text.data(using: String.Encoding.utf8) else { throw AIError.invalidResponse }
+        #if canImport(FoundationModels)
+        // Primary: Use Apple Foundation Models for intelligent analysis
+        let session = LanguageModelSession()
+        let response = try await session.respond(to: prompt)
+        guard let data = response.content.data(using: String.Encoding.utf8) else { throw AIError.invalidResponse }
         return try JSONDecoder().decode(MagicFixAnalysis.self, from: data)
-        #else
-        // On-device analysis: Use NaturalLanguage framework instead of cloud APIs
-        AppLogger.general.info("Using on-device NaturalLanguage for transcript analysis")
         
-        // Return empty analysis - Magic Fix uses SmartFillerDetector (on-device) instead
-        // This method is only called if autoEnhance is true, but we prefer on-device processing
+        #else
+        // Fallback: Return empty analysis - Magic Fix uses SmartFillerDetector (on-device) instead
+        // This is fast and doesn't block - the app remains fully functional
+        AppLogger.general.info("Using on-device SmartFillerDetector for transcript analysis (fallback)")
         return MagicFixAnalysis(segments: [])
         #endif
     }
 
     func refineCaptions(captions: [Caption], prompt: String) async throws -> [Caption] {
-        #if canImport(FoundationModels) && false
-        let model = try await LanguageModel.load(.large)
-        let response = try await model.generate(prompt)
-        guard let data = response.text.data(using: String.Encoding.utf8) else { throw AIError.invalidResponse }
+        #if canImport(FoundationModels)
+        // Primary: Use Apple Foundation Models for intelligent refinement
+        let session = LanguageModelSession()
+        let response = try await session.respond(to: prompt)
+        guard let data = response.content.data(using: String.Encoding.utf8) else { throw AIError.invalidResponse }
         
-        // Use common parser
+        // Parse refined captions from JSON response
         let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] ?? [:]
         guard let refinedList = json["refined"] as? [[String: String]] else { throw AIError.invalidResponse }
         
@@ -88,11 +89,12 @@ struct AppleFoundationProvider: AIModelProvider {
             }
         }
         return refinedCaptions
-        #else
-        // On-device refinement: Use NaturalLanguage framework for grammar/punctuation
-        AppLogger.general.info("Using on-device NaturalLanguage for caption refinement")
         
-        // Simple on-device refinement: Capitalize first letter, add punctuation if missing
+        #else
+        // Fallback: Fast, performant text formatting (instant, no performance degradation)
+        // Simple capitalization and punctuation - keeps app fully functional
+        AppLogger.general.info("Using fast text formatting fallback for caption refinement")
+        
         return captions.map { caption in
             var refined = caption
             if !caption.text.isEmpty {

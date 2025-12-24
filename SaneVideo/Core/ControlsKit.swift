@@ -1,42 +1,7 @@
 import SwiftUI
 
-public struct RecordButton: View {
-    @Binding var isRecording: Bool
-    public var action: () -> Void
-    public init(isRecording: Binding<Bool>, action: @escaping () -> Void) {
-        _isRecording = isRecording
-        self.action = action
-    }
-
-    public var body: some View {
-        Button(action: action) {
-            ZStack {
-                Circle()
-                    .fill(.ultraThinMaterial)
-                    .frame(width: 72, height: 72)
-                    .shadow(color: .black.opacity(0.2), radius: 8, x: 0, y: 4)
-                    .overlay(
-                        Circle()
-                            .strokeBorder(Color.white.opacity(0.15), lineWidth: 1)
-                    )
-                if isRecording {
-                    RoundedRectangle(cornerRadius: 6, style: .continuous)
-                        .fill(Color.red)
-                        .frame(width: 28, height: 28)
-                        .transition(.scale.combined(with: .opacity))
-                } else {
-                    Circle()
-                        .stroke(Color.red, lineWidth: 4)
-                        .frame(width: 36, height: 36)
-                        .transition(.scale.combined(with: .opacity))
-                }
-            }
-        }
-        .buttonStyle(.plain)
-        .help(isRecording ? String(localized: "action.stop_recording", defaultValue: "Stop Recording") : String(localized: "action.start_recording", defaultValue: "Start Recording"))
-        .accessibilityIdentifier(isRecording ? "record.action.stop" : "record.action.start")
-    }
-}
+// Note: RecordButton was removed - all code now uses UnifiedRecordButton
+// See: PIP_CONTROLS_CONSOLIDATION.md for details
 
 public struct IconCircleButton: View {
     public enum Size { case small, medium }

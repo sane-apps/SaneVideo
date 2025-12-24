@@ -114,6 +114,17 @@ extension ProjectState {
             saveProject(project)
 
             AppLogger.project.info("Updated clip volume to \(Int(volume * 100))%")
+            
+            // INSTANT PREVIEW: Update real-time audio processor immediately
+            if let clip = getClip(by: clipId) {
+                Task {
+                    do {
+                        try await ServiceContainer.shared.realTimeAudioProcessor.updateEffects(for: clip)
+                    } catch {
+                        AppLogger.audio.warning("Failed to update real-time audio volume: \(error.localizedDescription)")
+                    }
+                }
+            }
         }
     }
 
@@ -364,7 +375,19 @@ extension ProjectState {
             AppLogger.project.info("Updated clip voice isolation to \(enabled)")
             ServiceContainer.shared.toastManager.show("Voice Isolation: \(enabled ? "On" : "Off")")
             
-            // Trigger enhancement if enabled and not already done
+            // INSTANT PREVIEW: Update real-time audio processor immediately
+            if let clip = getClip(by: clipId) {
+                Task {
+                    do {
+                        try await ServiceContainer.shared.realTimeAudioProcessor.updateEffects(for: clip)
+                        AppLogger.audio.info("Real-time audio effects updated instantly")
+                    } catch {
+                        AppLogger.audio.warning("Failed to update real-time audio effects: \(error.localizedDescription)")
+                    }
+                }
+            }
+            
+            // Trigger background enhancement for export (but preview is instant)
             if enabled {
                 Task {
                     await triggerAudioEnhancement(for: clipId)
@@ -440,6 +463,17 @@ extension ProjectState {
 
             AppLogger.project.info("Updated clip AI gating to \(enabled)")
             ServiceContainer.shared.toastManager.show("AI Gating: \(enabled ? "On" : "Off")")
+            
+            // INSTANT PREVIEW: Update real-time audio processor immediately
+            if let clip = getClip(by: clipId) {
+                Task {
+                    do {
+                        try await ServiceContainer.shared.realTimeAudioProcessor.updateEffects(for: clip)
+                    } catch {
+                        AppLogger.audio.warning("Failed to update real-time audio gating: \(error.localizedDescription)")
+                    }
+                }
+            }
         }
     }
 }

@@ -187,21 +187,16 @@ class RecordingState {
   }
 
   func stopRecording(completion: @escaping @Sendable (URL?) -> Void) {
-    print("🕵️‍♀️ RecordingState: stopRecording called!")
-    for symbol in Thread.callStackSymbols.prefix(10) { print("  \(symbol)") }
-
-    print(
-      "🛑 [DEBUG] State: stopRecording called. isPreparing=\(isPreparing), isRecording=\(isRecording)"
-    )
+    AppLogger.recording.debug("🛑 stopRecording called. isPreparing=\(isPreparing), isRecording=\(isRecording)")
 
     if isPreparing {
-      print("🛑 [DEBUG] State: stopRecording cancelled (isPreparing=true)")
+      AppLogger.recording.debug("🛑 stopRecording cancelled (isPreparing=true)")
       cancelCountdown()
       completion(nil)
       return
     }
     guard isRecording else {
-      print("🛑 [DEBUG] State: stopRecording ignored (isRecording=false)")
+      AppLogger.recording.debug("🛑 stopRecording ignored (isRecording=false)")
       completion(nil)
       return
     }
@@ -217,9 +212,9 @@ class RecordingState {
     ServiceContainer.shared.hapticsManager.impact()
 
     Task {
-      print("🛑 [DEBUG] State: calling engine.stopRecording()")
+      AppLogger.recording.debug("🛑 Calling engine.stopRecording()")
       let url = await recordingEngine?.stopRecording()
-      print("🛑 [DEBUG] State: engine returned url=\(url?.path ?? "nil")")
+      AppLogger.recording.debug("🛑 Engine returned url=\(url?.path ?? "nil")")
       await MainActor.run { completion(url) }
     }
   }

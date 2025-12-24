@@ -13,7 +13,7 @@ import Speech
 /// Modern Apple Speech Recognition service using the SpeechAnalyzer API (macOS 26+)
 /// This replaces the legacy SFSpeechRecognizer-based chunking logic with a native,
 /// high-performance analysis engine.
-actor AppleSpeechService {
+actor AppleSpeechService: TranscriptionServiceProtocol {
 
     // MARK: - Core Components
 
@@ -22,7 +22,7 @@ actor AppleSpeechService {
 
     init() {}
 
-    func cancel() {
+    func cancel() async {
         analyzer = nil
     }
 

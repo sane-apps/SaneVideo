@@ -19,7 +19,7 @@ class PiPCameraWindow: NSPanel {
     var controlsWindow: PiPControlsWindow?
 
     deinit {
-        print("⚰️ PiPCameraWindow deinit")
+        AppLogger.window.debug("PiPCameraWindow deinit")
     }
 
     convenience init() {
@@ -290,13 +290,24 @@ class PiPCameraWindow: NSPanel {
     }
 
     override func close() {
-        controlsWindow?.close()
+        // CRITICAL FIX: Store reference and clear before closing to prevent zombie access
+        let controls = controlsWindow
         controlsWindow = nil
+        
+        // Remove child window relationship before closing
+        if let controls = controls {
+            removeChildWindow(controls)
+            controls.isReleasedWhenClosed = true
+            controls.close()
+        }
+        
         super.close()
     }
 
     override func orderOut(_ sender: Any?) {
-        controlsWindow?.orderOut(sender)
+        // CRITICAL FIX: Store reference to prevent zombie access
+        let controls = controlsWindow
+        controls?.orderOut(sender)
         super.orderOut(sender)
     }
 
@@ -349,5 +360,3 @@ class PiPCameraWindow: NSPanel {
         case topLeft, topRight, bottomLeft, bottomRight
     }
 }
-
-// PiPControlsView is now defined in Views/Components/PiPControlsView.swift

@@ -6,8 +6,9 @@
 //  Inspired by CleanShot X's instant gratification workflow
 //
 
-import SwiftUI
+import AppKit
 import AVFoundation
+import SwiftUI
 
 struct QuickAccessOverlay: View {
     @Environment(AppState.self) var appState

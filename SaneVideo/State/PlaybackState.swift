@@ -188,12 +188,13 @@ class PlaybackState {
         // PERFORMANCE: Use 0.1s interval (10fps) instead of 0.05s (20fps) for UI updates
         // This reduces update frequency by 50% while maintaining smooth playback feel
         let interval = CMTime(seconds: 0.1, preferredTimescale: 600)
-        // PERFORMANCE: Direct MainActor update instead of creating Task wrapper
-        // Since we're already on DispatchQueue.main, we can update directly
+        // CRITICAL FIX: Must use Task { @MainActor in } for Sendable closure
         let observer = newPlayer.addPeriodicTimeObserver(forInterval: interval, queue: DispatchQueue.main) { [weak self] time in
             guard let self = self else { return }
-            // Direct update - we're already on main queue
-            self.currentTime = time
+            // Update via MainActor task to satisfy Sendable closure requirements
+            Task { @MainActor in
+                self.currentTime = time
+            }
         }
 
         timeObserver = observer

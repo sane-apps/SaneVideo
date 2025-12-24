@@ -42,7 +42,9 @@ class SystemHealthService {
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            self?.updateHealth()
+            Task { @MainActor in
+                self?.updateHealth()
+            }
         }
         
         // Periodic health checks

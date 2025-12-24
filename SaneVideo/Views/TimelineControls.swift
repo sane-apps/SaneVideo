@@ -75,8 +75,7 @@ struct TimelineControls: View {
                 }
             }
             .padding(4)
-            .background(Color.white.opacity(0.05))
-            .cornerRadius(8)
+            .subtleGlass(radius: 8) // Enhanced liquid glass
 
             Spacer()
 
@@ -168,6 +167,12 @@ struct ToolButton: View {
         .buttonStyle(.plain)
         .contentShape(Rectangle())
         .hoverScale(1.1)
+        .pressScale() // Enhanced press animation
+        .simultaneousGesture(
+            TapGesture().onEnded {
+                ServiceContainer.shared.hapticsManager.selection()
+            }
+        )
         .animation(.smoothUI, value: isSelected)
         .accessibilityIdentifier(id)
     }

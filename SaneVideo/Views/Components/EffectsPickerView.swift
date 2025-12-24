@@ -140,6 +140,8 @@ struct EffectsPickerView: View {
     private func updateEffectIntensity(_ id: UUID, intensity: Float) {
         if let index = effects.firstIndex(where: { $0.id == id }) {
             effects[index].intensity = intensity
+            // INSTANT PREVIEW: Save immediately for real-time slider feedback
+            // No debouncing - user wants to see effect changes as they drag
             saveEffects()
         }
     }

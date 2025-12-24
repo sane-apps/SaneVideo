@@ -60,6 +60,39 @@ struct VideoSection: View {
 
             Divider().padding(.vertical, 4)
 
+            // Auto-Zoom (Screen Studio style)
+            if clip.clickDataURL != nil {
+                SubsectionHeader(title: String(localized: "video.section.auto_zoom", defaultValue: "Auto-Zoom"))
+                Button {
+                    Task { await appState.projectState.applyAutoZoom(to: clip) }
+                } label: {
+                    HStack {
+                        Image(systemName: "magnifyingglass")
+                        Text(String(localized: "video.action.apply_auto_zoom", defaultValue: "Apply Auto-Zoom"))
+                            .font(.caption)
+                        Spacer()
+                        Image(systemName: "sparkles")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding(8)
+                    .background(Color.blue.opacity(0.15))
+                    .cornerRadius(6)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 6)
+                            .stroke(Color.blue.opacity(0.3), lineWidth: 1)
+                    )
+                }
+                .buttonStyle(.plain)
+                .hoverScale(1.02)
+                .pressScale()
+                .disabled(appState.projectState.isProcessing)
+                .accessibilityIdentifier("video.apply_auto_zoom")
+                .smoothAppear()
+                
+                Divider().padding(.vertical, 4)
+            }
+
             // Smart Crop with Aspect Ratio Options
             SubsectionHeader(title: String(localized: "video.section.smart_crop", defaultValue: "Smart Crop"))
 

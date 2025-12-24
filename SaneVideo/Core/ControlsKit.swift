@@ -105,11 +105,20 @@ public struct IconCircleButton: View {
             }
         }
         .buttonStyle(.plain)
+        .pressScale() // Enhanced press animation
         .onHover { hovering in
-            withAnimation(.easeInOut(duration: 0.2)) {
+            withAnimation(.smoothUI) {
                 isHovering = hovering
             }
+            if hovering {
+                ServiceContainer.shared.hapticsManager.selection()
+            }
         }
+        .simultaneousGesture(
+            TapGesture().onEnded {
+                ServiceContainer.shared.hapticsManager.impact()
+            }
+        )
         .help(helpText ?? "")
         .accessibilityIdentifier("control.\(systemName)")
     }

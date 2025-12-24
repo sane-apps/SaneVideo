@@ -67,7 +67,22 @@ extension ProjectState {
                 }
             }
             
-            if let resultClip = clip {
+            if var resultClip = clip {
+                // Attach click data if available (for auto-zoom feature)
+                // Click data is saved alongside the video file with .clicks.json extension
+                let clickDataURL = targetURL.deletingPathExtension().appendingPathExtension("clicks.json")
+                if FileManager.default.fileExists(atPath: clickDataURL.path) {
+                    resultClip.clickDataURL = clickDataURL
+                    AppLogger.project.info("Attached click data for auto-zoom: \(clickDataURL.lastPathComponent)")
+                }
+                
+                // Attach cursor data if available (for cursor highlighting)
+                let cursorDataURL = targetURL.deletingPathExtension().appendingPathExtension("json")
+                if FileManager.default.fileExists(atPath: cursorDataURL.path) {
+                    resultClip.cursorDataURL = cursorDataURL
+                    AppLogger.project.info("Attached cursor data: \(cursorDataURL.lastPathComponent)")
+                }
+                
                 AppLogger.project.info("Successfully loaded clip. Duration: \(resultClip.duration.seconds)s. Adding to timeline...")
                 addClip(resultClip)
                 AppLogger.project.info("Clip added.")

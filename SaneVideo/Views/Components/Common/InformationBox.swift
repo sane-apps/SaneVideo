@@ -26,11 +26,10 @@ struct InformationBox: View {
         }
         .padding(6)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(color.opacity(0.1))
-        .cornerRadius(4)
+        .subtleGlass(radius: 4) // Enhanced liquid glass
         .overlay(
             RoundedRectangle(cornerRadius: 4)
-                .stroke(color.opacity(0.2), lineWidth: 0.5)
+                .stroke(color.opacity(0.3), lineWidth: 0.5)
         )
         .smoothAppear()
     }
@@ -53,8 +52,7 @@ struct EstimateBox: View {
                 .foregroundStyle(color)
         }
         .padding(10)
-        .background(color.opacity(0.1))
-        .cornerRadius(8)
+        .subtleGlass(radius: 8) // Enhanced liquid glass
         .overlay(
             RoundedRectangle(cornerRadius: 8)
                 .stroke(color.opacity(0.3), lineWidth: 1)
@@ -81,8 +79,7 @@ struct DetectedItemsList: View {
             }
             .padding(6)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(color.opacity(0.1))
-            .cornerRadius(4)
+            .subtleGlass(radius: 4) // Enhanced liquid glass
         }
     }
 }

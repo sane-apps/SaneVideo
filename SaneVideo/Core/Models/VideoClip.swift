@@ -46,6 +46,7 @@ struct VideoClip: Identifiable, Equatable, Hashable, Codable, Sendable {
 
     var cursorDataURL: URL?
     var showCursorHighlight: Bool = false
+    var clickDataURL: URL? // Auto-zoom click events
     
     // Background Effects (Person Segmentation)
     var backgroundEffect: BackgroundEffect?
@@ -237,6 +238,7 @@ struct VideoClip: Identifiable, Equatable, Hashable, Codable, Sendable {
         case removedRanges, useSmoothCutForRemovals
         case transform
         case cursorDataURL, showCursorHighlight
+        case clickDataURL
         case backgroundEffect
         case privacyRegions
         case isVoiceIsolationEnabled
@@ -275,6 +277,7 @@ struct VideoClip: Identifiable, Equatable, Hashable, Codable, Sendable {
 
         cursorDataURL = try container.decodeIfPresent(URL.self, forKey: .cursorDataURL)
         showCursorHighlight = try container.decodeIfPresent(Bool.self, forKey: .showCursorHighlight) ?? false
+        clickDataURL = try container.decodeIfPresent(URL.self, forKey: .clickDataURL)
         backgroundEffect = try container.decodeIfPresent(BackgroundEffect.self, forKey: .backgroundEffect)
         privacyRegions = try container.decodeIfPresent([PrivacyRegion].self, forKey: .privacyRegions) ?? []
         isVoiceIsolationEnabled = try container.decodeIfPresent(Bool.self, forKey: .isVoiceIsolationEnabled) ?? false
@@ -303,6 +306,7 @@ struct VideoClip: Identifiable, Equatable, Hashable, Codable, Sendable {
         try container.encode(useSmoothCutForRemovals, forKey: .useSmoothCutForRemovals)
         try container.encodeIfPresent(cursorDataURL, forKey: .cursorDataURL)
         try container.encode(showCursorHighlight, forKey: .showCursorHighlight)
+        try container.encodeIfPresent(clickDataURL, forKey: .clickDataURL)
         try container.encodeIfPresent(backgroundEffect, forKey: .backgroundEffect)
         try container.encode(privacyRegions, forKey: .privacyRegions)
         try container.encode(isVoiceIsolationEnabled, forKey: .isVoiceIsolationEnabled)

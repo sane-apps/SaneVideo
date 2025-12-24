@@ -10,6 +10,17 @@ enum TestEnvironment {
     return args.contains("-uitesting") || args.contains("-ui_testing")
       || UserDefaults.standard.bool(forKey: "ui_testing") || env["UI_TESTING"] != nil
   }
+  
+  /// True if running in any test (unit or UI test)
+  static var isTesting: Bool {
+    // Check for XCTest environment
+    let args = ProcessInfo.processInfo.arguments
+    let env = ProcessInfo.processInfo.environment
+    return isUITesting
+      || args.contains("-XCTest") || args.contains("-xctest")
+      || env["XCTestConfigurationFilePath"] != nil
+      || NSClassFromString("XCTestCase") != nil
+  }
 
   /// True if the app should jump directly into the editor for testing
   static var shouldOpenEditor: Bool {

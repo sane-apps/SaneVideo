@@ -130,14 +130,22 @@ extension ProjectState {
     /// - Returns: The corresponding CMTimeRange in media time, or nil if mapping fails
     @MainActor
     func textRangeToTimeRange(_ textRange: NSRange, in clip: VideoClip) -> CMTimeRange? {
+        // Helper struct to avoid large tuple violation
+        struct WordSegment {
+            let text: String
+            let startTime: CMTime
+            let endTime: CMTime
+            let offset: Int
+        }
+        
         // Build word segments from captions
-        var wordSegments: [(text: String, startTime: CMTime, endTime: CMTime, offset: Int)] = []
+        var wordSegments: [WordSegment] = []
         var currentOffset = 0
         
         for caption in clip.captions.sorted(by: { $0.startTime.seconds < $1.startTime.seconds }) {
             if let words = caption.words, !words.isEmpty {
                 for word in words {
-                    wordSegments.append((
+                    wordSegments.append(WordSegment(
                         text: word.text,
                         startTime: CMTime(seconds: word.start, preferredTimescale: 600),
                         endTime: CMTime(seconds: word.end, preferredTimescale: 600),
@@ -154,7 +162,7 @@ extension ProjectState {
                 for (index, word) in words.enumerated() {
                     let startTime = caption.startTime.seconds + (Double(index) * wordDuration)
                     let endTime = startTime + wordDuration
-                    wordSegments.append((
+                    wordSegments.append(WordSegment(
                         text: String(word),
                         startTime: CMTime(seconds: startTime, preferredTimescale: 600),
                         endTime: CMTime(seconds: endTime, preferredTimescale: 600),

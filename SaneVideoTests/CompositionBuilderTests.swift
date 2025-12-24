@@ -27,8 +27,6 @@ struct CompositionBuilderTests {
         // Should not throw, but create empty composition
         let result = try await CompositionBuilder.build(from: project)
         let composition = result.composition
-        let videoComposition = result.videoComposition
-        let audioMix = result.audioMix
         
         // Check for valid output
         #expect(composition.tracks.count >= 0)

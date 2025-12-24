@@ -6,6 +6,7 @@
 
 import Foundation
 
+/// @mockable
 /// Protocol defining project storage operations
 protocol ProjectStoreProtocol: AnyObject, Sendable {
     /// Load all saved projects

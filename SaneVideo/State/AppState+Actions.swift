@@ -163,7 +163,7 @@ extension AppState {
   }
   
   func handleQuickAccessShare() {
-    guard let url = quickAccessRecordingURL else { return }
+    guard quickAccessRecordingURL != nil else { return }
     
     showQuickAccessOverlay = false
     showExportSheet = true
@@ -182,6 +182,16 @@ extension AppState {
   }
 
   func toggleScreenShare() {
+    // CRITICAL FIX: Prevent concurrent execution to avoid race conditions
+    // This is especially important when ending screen sharing to prevent double-cleanup
+    guard !windowManager.isTogglingScreenShare else {
+      AppLogger.window.warning("toggleScreenShare: Already toggling, ignoring duplicate call")
+      return
+    }
+    
+    windowManager.isTogglingScreenShare = true
+    defer { windowManager.isTogglingScreenShare = false }
+    
     let wasScreenSharing = windowManager.isScreenSharing
 
     if wasScreenSharing {
@@ -211,18 +221,44 @@ extension AppState {
         }
       } else {
         // Not recording - just stop screen share and deactivate picker
-        Task {
-          let picker = SCContentSharingPicker.shared
-          picker.isActive = false
-          AppLogger.recording.info("🛑 AppState: Deactivated screen share picker")
+        // CRITICAL FIX: Stop stream FIRST, then deactivate picker, then cleanup windows
+        // This prevents crashes from deactivating picker while stream is still active
+        Task { @MainActor in
+          // Step 1: Stop the screen recorder stream FIRST
+          if let screenRecorder = recordingState.engine?.screenRecorder {
+            AppLogger.recording.info("🛑 AppState: Stopping screen recorder stream...")
+            await screenRecorder.stop()
+            AppLogger.recording.info("✅ Screen recorder stream stopped")
+          }
+          
+          // Step 2: Small delay to ensure stream cleanup completes
+          try? await Task.sleep(nanoseconds: 100_000_000) // 100ms
+          
+          // Step 3: Now deactivate picker (safe after stream is stopped)
+          // CRITICAL: Only deactivate picker if NOT in test environment (test environment bypasses picker)
+          if !TestEnvironment.isTesting {
+            let picker = SCContentSharingPicker.shared
+            picker.isActive = false
+            AppLogger.recording.info("🛑 AppState: Deactivated screen share picker")
+          } else {
+            AppLogger.recording.info("🧪 [TEST] AppState: Skipping picker deactivation (test environment)")
+          }
+          
+          // Step 4: Update state and cleanup windows
+          windowManager.isScreenSharing = false
+          windowManager.updatePiPState(
+            isCameraActive: cameraState.isActive,
+            isRecording: recordingState.isRecording
+          )
+          
+          // Step 5: Small delay to ensure window cleanup completes
+          try? await Task.sleep(nanoseconds: 100_000_000) // 100ms
+          
+          // Step 6: Restore main window
+          windowManager.restoreMainWindow()
+          
+          AppLogger.recording.info("✅ Screen share exit cleanup complete")
         }
-        
-        windowManager.restoreMainWindow()
-        windowManager.isScreenSharing = false
-        windowManager.updatePiPState(
-          isCameraActive: cameraState.isActive,
-          isRecording: recordingState.isRecording
-        )
       }
     } else {
       // Starting screen share

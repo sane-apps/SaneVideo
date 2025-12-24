@@ -82,6 +82,7 @@ struct QuickAccessOverlay: View {
                             onEdit()
                         }
                     }
+                    .accessibilityIdentifier("quick_access.edit")
                     
                     // Save for Later
                     QuickAccessButton(
@@ -96,6 +97,7 @@ struct QuickAccessOverlay: View {
                             onSave()
                         }
                     }
+                    .accessibilityIdentifier("quick_access.save")
                     
                     // Share
                     QuickAccessButton(
@@ -110,6 +112,7 @@ struct QuickAccessOverlay: View {
                             onShare()
                         }
                     }
+                    .accessibilityIdentifier("quick_access.share")
                 }
                 .padding(.horizontal, 32)
                 .padding(.bottom, 32)
@@ -144,6 +147,7 @@ struct QuickAccessOverlay: View {
             .scaleEffect(isVisible ? 1.0 : 0.9)
             .opacity(isVisible ? 1.0 : 0.0)
             .animation(.gentleSpring, value: isVisible)
+            .accessibilityIdentifier("quick_access.overlay")
         }
         .onAppear {
             // Animate in

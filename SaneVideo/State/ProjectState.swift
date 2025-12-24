@@ -337,6 +337,13 @@ class ProjectState {
     // MARK: - Internal Helpers
 
     private func updateCurrentProject(_ project: VideoProject?) {
+        // CRITICAL FIX: Stop existing security scope session before creating a new one
+        // This prevents security scope leaks when switching projects
+        if let existingSession = currentScopeSession {
+            existingSession.stop()
+            currentScopeSession = nil
+        }
+        
         if let project = project {
             // Hydrate project to resolve stale bookmarks before ensuring access
             let hydratedProject = ServiceContainer.shared.projectFileManager.hydrateProject(project)
@@ -344,7 +351,7 @@ class ProjectState {
             currentScopeSession = ServiceContainer.shared.projectFileManager.enterSecurityScope(for: hydratedProject)
         } else {
             currentProject = nil
-            currentScopeSession = nil
+            // Session already stopped above
         }
     }
 }

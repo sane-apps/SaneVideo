@@ -7,6 +7,7 @@
 
 import Foundation
 
+/// @mockable
 @MainActor
 protocol ExportServiceProtocol {
     var progress: Double { get }

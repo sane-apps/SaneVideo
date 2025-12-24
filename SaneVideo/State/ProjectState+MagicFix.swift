@@ -63,7 +63,7 @@ extension ProjectState {
             
             // Only run if at least one vision feature is enabled
             if config.detectText || config.detectFaces || config.detectSaliency {
-                print("👁️ Magic Fix: Starting Vision Orchestrator (Unified Pipeline)...")
+                AppLogger.vision.info("👁️ Magic Fix: Starting Vision Orchestrator (Unified Pipeline)...")
                 do {
                     // ROBUSTNESS: Add timeout (5 minutes max for vision analysis)
                     return try await withTimeout(seconds: 300.0) {
@@ -151,7 +151,7 @@ extension ProjectState {
             self.processingStatus = nil
             self.processingProgress = 0.0
         } catch {
-            print("❌ Magic Fix CRITICAL FAILURE: \(error)")
+            AppLogger.project.error("❌ Magic Fix CRITICAL FAILURE: \(error)")
             processingStatus = "❌ Failed"
             ServiceContainer.shared.toastManager.show("Magic Fix failed: \(error.localizedDescription)", type: .error) 
             AppLogger.project.error("✨ Magic Fix: Error during orchestration: \(error)")

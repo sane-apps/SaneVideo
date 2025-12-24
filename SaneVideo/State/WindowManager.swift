@@ -17,6 +17,9 @@ class WindowManager {
 
   var isPiPVisible = true
   var isScreenSharing = false
+  
+  // CRITICAL FIX: Flag to prevent concurrent screen share toggles
+  var isTogglingScreenShare = false
 
   // MARK: - Internal Properties
 
@@ -26,7 +29,8 @@ class WindowManager {
   /// Windows that should be excluded from screen recordings (Controls, PiP Overlay)
   var excludedWindowIDs: [CGWindowID] {
     var ids: [CGWindowID] = []
-    if let controls = pipWindow?.controlsWindow {
+    // CRITICAL FIX: Store reference to prevent zombie access
+    if let window = pipWindow, let controls = window.controlsWindow {
       ids.append(CGWindowID(controls.windowNumber))
     }
     if let floating = floatingControls {
@@ -37,7 +41,10 @@ class WindowManager {
   
   /// Get the current PiP window frame for compositing into recordings
   var pipWindowFrame: CGRect? {
-    guard let window = pipWindow, window.isVisible else { return nil }
+    // CRITICAL FIX: Store reference and check visibility safely
+    guard let window = pipWindow else { return nil }
+    // CRITICAL FIX: Check if window is still valid before accessing properties
+    guard !window.isReleasedWhenClosed, window.isVisible else { return nil }
     return window.frame
   }
 
@@ -123,7 +130,9 @@ class WindowManager {
     }
 
     // Update Screen Recorder filter
-    updateRecorderFilter()
+    Task { @MainActor in
+      await updateRecorderFilter()
+    }
   }
 
   private func hidePiPWindow() {
@@ -134,30 +143,55 @@ class WindowManager {
 
     AppLogger.window.info("Hiding PiP Window")
 
-    // CRITICAL FIX: Ensure controls window is fully closed and removed
-    if let controls = window.controlsWindow {
-      AppLogger.window.info("Closing PiP Controls Window")
-      // Remove parent-child relationship first
-      window.removeChildWindow(controls)
-      // Force hide and close
-      controls.orderOut(nil)
-      controls.isReleasedWhenClosed = true  // Ensure it's released
-      controls.close()
-      // Clear the reference to ensure it's released
-      window.controlsWindow = nil
+    // CRITICAL FIX: Store all references before any operations
+    // Access controlsWindow BEFORE clearing pipWindow to prevent zombie access
+    let controls = window.controlsWindow
+    
+    // CRITICAL FIX: Clear reference IMMEDIATELY to prevent re-entry
+    // But we've already stored the window and controls references
+    pipWindow = nil
+
+    // CRITICAL FIX: Remove child window relationship while parent is still valid
+    // Check window validity before accessing - use multiple safety checks
+    if let controls = controls {
+      // Verify window is still valid by checking multiple properties
+      let windowIsValid = !window.isReleasedWhenClosed && window.windowNumber > 0
+      
+      if windowIsValid {
+        AppLogger.window.info("Closing PiP Controls Window")
+        // Remove parent-child relationship while window is still valid
+        window.removeChildWindow(controls)
+      }
+      
+      // Always close controls, even if parent window is invalid
+      // Use safe access pattern
+      if !controls.isReleasedWhenClosed {
+        controls.orderOut(nil)
+        controls.isReleasedWhenClosed = true
+        controls.close()
+      }
     }
 
-    // Close PiP window itself
-    window.orderOut(nil)
-    window.close()
-    pipWindow = nil
+    // CRITICAL FIX: Close PiP window itself
+    // Check if window is still valid before closing - use multiple safety checks
+    let windowIsValid = !window.isReleasedWhenClosed && window.windowNumber > 0
+    if windowIsValid {
+      window.orderOut(nil)
+      window.isReleasedWhenClosed = true
+      window.close()
+    } else {
+      AppLogger.window.warning("PiP window already released, skipping close")
+    }
 
     // CRITICAL FIX: Also hide floating controls when PiP is hidden
     // (They were shown as backup when PiP was shown, but should go away when returning to main app)
     hideFloatingControls()
 
     // Update Screen Recorder filter to remove window
-    updateRecorderFilter()
+    // Use Task to avoid blocking, but ensure it's safe
+    Task { @MainActor in
+      await updateRecorderFilter()
+    }
     
     AppLogger.window.info("PiP Window and controls fully hidden")
   }
@@ -174,10 +208,17 @@ class WindowManager {
     // @MainActor ensures we're already on main thread
     AppLogger.window.info("Attempting to minimize main window...")
 
+    // CRITICAL FIX: Store references before iteration to prevent zombie access
+    let currentPiPWindow = pipWindow
+    let currentFloatingControls = floatingControls
+    
+    // CRITICAL FIX: Create snapshot to prevent iteration issues
+    let windowsSnapshot = NSApp.windows
+
     // Hide only the main application windows, keeping PiP visible
-    for window in NSApp.windows {
-      // Skip our special windows
-      if window === pipWindow || window === floatingControls {
+    for window in windowsSnapshot {
+      // CRITICAL FIX: Use reference equality to prevent zombie access
+      if window === currentPiPWindow || window === currentFloatingControls {
         AppLogger.window.info("Skipping special window: \(window.title)")
         continue
       }
@@ -202,20 +243,35 @@ class WindowManager {
     // Bring app back to front
     NSApp.activate(ignoringOtherApps: true)
 
+    // CRITICAL FIX: Store pipWindow reference to safely check against it
+    let currentPiPWindow = pipWindow
+    let currentFloatingControls = floatingControls
+
+    // CRITICAL FIX: Create a snapshot of windows array to prevent iteration issues
+    // NSApp.windows can change during iteration, causing crashes
+    let windowsSnapshot = NSApp.windows
+
     // Find and show main window
     var foundMain = false
-    for window in NSApp.windows {
-      // CRITICAL FIX: Explicitly exclude PiP classes to prevent zombie access
-      if window is PiPCameraWindow || window is PiPControlsWindow
-        || window is FloatingControlsWindow
-      {
+    for window in windowsSnapshot {
+      // CRITICAL FIX: Use reference equality instead of type checking to prevent zombie access
+      // Type checking on deallocated windows can cause crashes
+      if window === currentPiPWindow || window === currentFloatingControls {
+        continue
+      }
+      
+      // CRITICAL FIX: Also check by window class name safely
+      let windowClassName = String(describing: type(of: window))
+      if windowClassName.contains("PiPCameraWindow") || 
+         windowClassName.contains("PiPControlsWindow") ||
+         windowClassName.contains("FloatingControlsWindow") {
         continue
       }
 
       // UI TEST FIX: Exclude windows that cannot become key (like NSStatusBarWindow)
       // This prevents "failed to become key" warnings and ensures the REAL main window gets focus.
       guard window.canBecomeKey else {
-        AppLogger.window.info("Skipping window that cannot become key: \(type(of: window))")
+        AppLogger.window.info("Skipping window that cannot become key: \(windowClassName)")
         continue
       }
 
@@ -239,15 +295,15 @@ class WindowManager {
 
   // MARK: - Filter Helpers
 
-  private func updateRecorderFilter() {
-    Task {
-      // Fix: Add slight delay to allow Window Server to register the new window state.
-      // In Tahoe, 150ms is usually sufficient for currentProcess to see the change.
-      try? await Task.sleep(nanoseconds: 150_000_000)
+  private func updateRecorderFilter() async {
+    // Fix: Add slight delay to allow Window Server to register the new window state.
+    // In Tahoe, 150ms is usually sufficient for currentProcess to see the change.
+    try? await Task.sleep(nanoseconds: 150_000_000)
 
-      // Access screenRecorder via AppState -> RecordingState -> engine
-      await ServiceContainer.shared.appState.recordingState.engine?.screenRecorder
-        .updateContentFilter()
+    // Access screenRecorder via AppState -> RecordingState -> engine
+    // CRITICAL FIX: Check if engine and screenRecorder exist before accessing
+    if let engine = ServiceContainer.shared.appState.recordingState.engine {
+      await engine.screenRecorder.updateContentFilter()
     }
   }
 }

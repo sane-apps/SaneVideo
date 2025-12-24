@@ -2,7 +2,9 @@
 
 **The Professional Video Recording & Editing App for macOS**
 
-SaneVideo is a modern,native macOS application built with SwiftUI and AVFoundation for recording, editing, and exporting high-quality videos. Designed for creators who want powerful tools with an elegant, native interface.
+SaneVideo is a modern, native macOS application built with SwiftUI and AVFoundation for recording, editing, and exporting high-quality videos. Designed for creators who want powerful tools with an elegant, native interface.
+
+**Built for the future**: SaneVideo leverages the latest macOS 26.2+ features including Apple Intelligence (FoundationModels) for on-device AI processing. We prioritize cutting-edge capabilities while maintaining performant fallbacks that don't degrade the user experience.
 
 > **🚨 FOR DEVELOPERS & AI AGENTS 🚨**
 > 
@@ -74,11 +76,15 @@ SaneVideo is a modern,native macOS application built with SwiftUI and AVFoundati
 
 ---
 
-## 🎯 Requirements
+## 🎯 System Requirements
 
-- macOS 26.2 (Tahoe) or later
-- Apple Silicon (M1/M2/M3/M4) only
-- 8GB RAM minimum (16GB recommended for 4K editing)
+**Minimum Requirements:**
+- **macOS 26.2 (Tahoe)** or later (required)
+- **Apple Silicon** (M1/M2/M3/M4/M5) only - Intel Macs not supported
+- **8GB RAM** minimum (16GB recommended for 4K editing)
+- **FoundationModels framework** (included with macOS 26.2+)
+
+> **Note**: SaneVideo is designed for the latest macOS and Apple Silicon architecture. We prioritize future-proof features over backward compatibility. If you're on an older system, please upgrade to macOS 26.2+ to use SaneVideo.
 
 ---
 

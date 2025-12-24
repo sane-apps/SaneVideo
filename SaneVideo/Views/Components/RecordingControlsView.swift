@@ -14,10 +14,8 @@ struct RecordingControlsView: View {
         @Bindable var recordingState = appState.recordingState
         return HStack(spacing: 12) {
             // Record/Stop Button
-            RecordButton(isRecording: $recordingState.isRecording) {
-                appState.toggleRecording()
-            }
-            // Removed fixed width 60
+            // Using UnifiedRecordButton for consistency with PiP and main recording view
+            UnifiedRecordButton(size: 68) // Match main window size
 
             Divider()
                 .frame(height: 40)

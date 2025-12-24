@@ -202,8 +202,7 @@ struct ExportView: View {
         .frame(width: 520)
         .accessibilityIdentifier("Export Sheet")
         .onAppear {
-            AppLogger.general.info("ExportView: appeared")
-            print("DEBUG: ExportView appeared. isExporting: \(isExporting), isUploading: \(youtubeService.isUploading)")
+            AppLogger.general.info("ExportView: appeared. isExporting: \(isExporting), isUploading: \(youtubeService.isUploading)")
             /*
             // Apply template settings if project was created from template
             if let template = templateSettings {

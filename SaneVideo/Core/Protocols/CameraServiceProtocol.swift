@@ -9,6 +9,7 @@ import AVFoundation
 import Combine
 import Foundation
 
+/// @mockable
 @MainActor
 protocol CameraServiceProtocol: AnyObject, Sendable {
     var isActive: Bool { get }

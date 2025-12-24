@@ -44,8 +44,10 @@ class ScreenRecorder: NSObject, SCContentSharingPickerObserver, SCStreamDelegate
   /// Start screen recording by presenting the system picker
   /// - Parameter outputURL: Optional URL to record directly to file using SCRecordingOutput
   func start(outputURL: URL? = nil) async throws {
-    if TestEnvironment.isUITesting {
-      AppLogger.recording.info("🧪 [UI TEST] ScreenRecorder: Bypassing system picker")
+    // CRITICAL FIX: Bypass picker in ALL test environments (unit tests AND UI tests)
+    // SCContentSharingPicker crashes in unit test environment
+    if TestEnvironment.isTesting {
+      AppLogger.recording.info("🧪 [TEST] ScreenRecorder: Bypassing system picker (test environment)")
       self.currentOutputURL = outputURL
       // In a real scenario, handleContentSelected would be called by the picker.
       // Here we just stay in a "ready" state for RecordingEngine to "record" samples.
@@ -108,6 +110,13 @@ class ScreenRecorder: NSObject, SCContentSharingPickerObserver, SCStreamDelegate
 
   /// Stop screen recording
   func stop() async {
+    // CRITICAL FIX: In test environment, there's no stream to stop
+    if TestEnvironment.isTesting {
+      AppLogger.recording.info("🧪 [TEST] ScreenRecorder: stop() called in test environment (no-op)")
+      activeStream = nil
+      return
+    }
+    
     guard activeStream != nil else { return }
     guard !isStopping else {
       AppLogger.recording.warning("Already stopping, skipping")
@@ -138,6 +147,13 @@ class ScreenRecorder: NSObject, SCContentSharingPickerObserver, SCStreamDelegate
 
   /// Complete teardown (e.g. app closing)
   func teardown() {
+    // CRITICAL FIX: In test environment, skip picker operations to avoid crashes
+    if TestEnvironment.isTesting {
+      AppLogger.recording.info("🧪 [TEST] ScreenRecorder: teardown() called in test environment (no-op)")
+      activeStream = nil
+      return
+    }
+    
     let picker = SCContentSharingPicker.shared
     picker.isActive = false
     picker.remove(self)
@@ -465,10 +481,15 @@ extension ScreenRecorder {
       // Clean up the stream
       self.activeStream = nil
 
-      // Deactivate picker
-      let picker = SCContentSharingPicker.shared
-      picker.isActive = false
-      picker.remove(self)
+      // CRITICAL FIX: Only deactivate picker if NOT in test environment
+      if !TestEnvironment.isTesting {
+        // Deactivate picker
+        let picker = SCContentSharingPicker.shared
+        picker.isActive = false
+        picker.remove(self)
+      } else {
+        AppLogger.recording.info("🧪 [TEST] ScreenRecorder: Skipping picker deactivation in error handler (test environment)")
+      }
 
       // Note: RecordingEngine will detect the stream stopped via sample buffer interruption
       // and will handle the error appropriately

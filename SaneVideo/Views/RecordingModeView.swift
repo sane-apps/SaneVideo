@@ -217,7 +217,7 @@ struct RecordingModeView: View {
         }
         .onAppear {
             Task {
-                print("🚀 RecordingModeView: onAppear")
+                AppLogger.uiLog.debug("RecordingModeView: onAppear")
                 // Auto-start camera if not screen sharing
                 if !appState.isScreenSharing && !appState.cameraState.isActive {
                     appState.cameraEnabled = true

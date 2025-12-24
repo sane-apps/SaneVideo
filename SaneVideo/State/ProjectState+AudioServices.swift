@@ -160,7 +160,7 @@ extension ProjectState {
                 // In Magic Fix flow, the orchestrator overrides this anyway
             }
         } catch {
-            print("❌ enhanceAudio failed: \(error)")
+            AppLogger.recording.error("❌ enhanceAudio failed: \(error)")
             await MainActor.run { 
                 ServiceContainer.shared.toastManager.show("Audio enhancement failed: \(error.localizedDescription)")
             }

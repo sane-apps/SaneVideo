@@ -14,8 +14,7 @@ extension RecordingEngine {
 
   @MainActor
   func setupSoundAnalysisMonitoring() {
-    soundAnalysisService.onSoundDetected = { [weak self] result in
-      guard self != nil else { return }
+    soundAnalysisService.onSoundDetected = { result in
       AppLogger.recording.info(
         "🔊 Sound Detected: \(result.label) at \(result.timeRange.start.seconds)")
     }

@@ -226,11 +226,36 @@ Always diagnostics after a run:
     - `verify`: Incremental build + Unit Tests.
     - `verify --clean`: Full clean build + Unit Tests.
     - `doctor`: Health check.
+    - `gen_test <name> [options]`: **Generate test file from template** (NEW)
     - Includes **Permission Monitor** ("God Mode"): Automatically clicks "Allow" on TCC dialogs.
 2. **XcodeBuildMCP**: Use for granular programmatic builds/tests.
 3. **Fastlane**:
     - `verify`: Unit tests only (Incremental by default).
     - `verify_full`: Unit + UI tests (runs via SaneMaster for local dev).
+
+### Test Generation Tool
+
+**Usage:**
+```bash
+# Generate unit test with Swift Testing framework (default)
+./Scripts/SaneMaster.rb gen_test MyFeatureTests --target MyFeature
+
+# Generate UI test with XCTest
+./Scripts/SaneMaster.rb gen_test MyUITests --type ui --framework xctest
+
+# Generate async test
+./Scripts/SaneMaster.rb gen_test AsyncTests --async
+```
+
+**Features:**
+- ✅ Generates proper test structure following AAA pattern
+- ✅ Includes timeout configuration
+- ✅ Adds TestEnvironment helper methods
+- ✅ Supports both Swift Testing and XCTest frameworks
+- ✅ Handles async/await patterns
+- ✅ Follows project conventions
+
+**See:** `TESTING_BEST_PRACTICES.md` for comprehensive testing guidelines.
 
 ---
 

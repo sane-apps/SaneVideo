@@ -16,8 +16,8 @@ final class CancellationTests: XCTestCase {
         let projectState = ProjectState()
         
         // Create a mock processing task
-        let task = Task {
-            try? await Task.sleep(nanoseconds: 1_000_000_000) // 1 second
+        let task = Task<Void, Error> {
+            try await Task.sleep(nanoseconds: 1_000_000_000) // 1 second
         }
         
         // Store the task
@@ -43,8 +43,8 @@ final class CancellationTests: XCTestCase {
         
         // Test cancellation mechanism
         // Note: Full Magic Fix requires actual video file, so we test cancellation infrastructure
-        let task = Task {
-            try? await Task.sleep(nanoseconds: 500_000_000) // 0.5s
+        let task = Task<Void, Error> {
+            try await Task.sleep(nanoseconds: 500_000_000) // 0.5s
         }
         
         projectState.setProcessingTask(task)

@@ -184,6 +184,26 @@ class PlaybackState {
         // Update token holder
         tokenHolder.player = newPlayer
 
+        // Setup real-time audio processing for instant effects
+        // Get the current clip from the project to setup audio effects
+        Task {
+            if let project = ServiceContainer.shared.appState.projectState.currentProject {
+                // Find the first clip that's currently playing (or first clip if none playing)
+                let clips = project.timeline.tracks.flatMap { $0.clips }
+                if let clip = clips.first {
+                    do {
+                        try await ServiceContainer.shared.realTimeAudioProcessor.setupForPlayerItem(
+                            item,
+                            clip: clip,
+                            videoPlayer: newPlayer
+                        )
+                    } catch {
+                        AppLogger.audio.warning("Failed to setup real-time audio processing: \(error.localizedDescription)")
+                    }
+                }
+            }
+        }
+
         // Add time observer
         // PERFORMANCE: Use 0.1s interval (10fps) instead of 0.05s (20fps) for UI updates
         // This reduces update frequency by 50% while maintaining smooth playback feel
@@ -208,6 +228,7 @@ class PlaybackState {
             tokenHolder.observer = nil
         }
         player?.pause()
+        ServiceContainer.shared.realTimeAudioProcessor.cleanup()
         player = nil
         tokenHolder.player = nil
 
@@ -227,11 +248,13 @@ class PlaybackState {
             player.seek(to: .zero)
         }
         player.play()
+        ServiceContainer.shared.realTimeAudioProcessor.play()
         isPlaying = true
     }
 
     func pause() {
         player?.pause()
+        ServiceContainer.shared.realTimeAudioProcessor.pause()
         isPlaying = false
     }
 
@@ -245,6 +268,7 @@ class PlaybackState {
 
     func seek(to time: CMTime) {
         player?.seek(to: time, toleranceBefore: .zero, toleranceAfter: .zero)
+        ServiceContainer.shared.realTimeAudioProcessor.seek(to: time)
         currentTime = time
     }
 

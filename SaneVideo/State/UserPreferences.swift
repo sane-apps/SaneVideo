@@ -56,11 +56,24 @@ class UserPreferences {
     @ObservationIgnored @AppStorage("AppTheme") private var _appTheme: AppTheme = .system
     @ObservationIgnored @AppStorage("DefaultExportResolution") private var _defaultResolution: SaneExportSettings.ExportResolution = .uhd4K
     @ObservationIgnored @AppStorage("DefaultExportCodec") private var _defaultCodec: String = "hvc1"
+    @ObservationIgnored @AppStorage("TranscriptionEngine") private var _transcriptionEngine: String = TranscriptionEngine.default.rawValue
 
     // Helper to get typed AVVideoCodecType (since AppStorage doesn't support it directly)
     var defaultAVCodec: AVVideoCodecType {
         get { AVVideoCodecType(rawValue: defaultCodec) }
         set { defaultCodec = newValue.rawValue }
+    }
+    
+    var transcriptionEngine: TranscriptionEngine {
+        get {
+            access(keyPath: \.transcriptionEngine)
+            return TranscriptionEngine(rawValue: _transcriptionEngine) ?? .default
+        }
+        set {
+            withMutation(keyPath: \.transcriptionEngine) {
+                _transcriptionEngine = newValue.rawValue
+            }
+        }
     }
 
     init() {}

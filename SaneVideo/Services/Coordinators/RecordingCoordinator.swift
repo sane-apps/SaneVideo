@@ -78,9 +78,8 @@ class RecordingCoordinator {
             if let url = url {
                 Task { @MainActor in
                     AppLogger.general.info("📹 Recording saved to: \(url.path)")
-                    // Delegate to AppState or ProjectState for project creation
-                    // Ideally this logic should be here or in ProjectCoordinator
-                    self.handleRecordingFinished(url: url)
+                    // Delegate to AppState to show Quick Access Overlay
+                    self.appState.handleRecordingFinished(url: url)
                 }
             } else {
                 AppLogger.general.warning("⚠️ No recording URL returned")
@@ -106,39 +105,7 @@ class RecordingCoordinator {
         windowManager.restoreMainWindow()
     }
 
-    private func handleRecordingFinished(url: URL) {
-        AppLogger.recording.info("🎬 Coordinator: Handling finished recording")
-
-        // UI Cleanup (redundant but safe)
-        cameraState.stopCamera()
-        appState.cameraEnabled = false
-        windowManager.updatePiPState(isCameraActive: false, isRecording: false)
-
-        // Add to timeline
-        Task { @MainActor in
-            AppLogger.recording.info("📹 Starting new project and importing recording...")
-            ServiceContainer.shared.toastManager.show("📹 Importing recording...")
-
-            // Persistence Fix: Check if we already have an active project (e.g. user renamed it)
-            if projectState.currentProject != nil {
-                AppLogger.recording.info("📹 Adding recording to existing project")
-            } else {
-                projectState.startNewProject()
-            }
-
-            await projectState.addVideoToTimeline(url: url)
-
-            AppLogger.recording.info("📹 Recording imported. Switching to editor...")
-
-            // Auto-switch to editing mode
-            appState.switchToEditing()
-
-            // CRITICAL: Bring app back to foreground
-            windowManager.restoreMainWindow()
-
-            ServiceContainer.shared.toastManager.show("✅ Recording imported!")
-        }
-    }
+    // REMOVED: handleRecordingFinished now handled by AppState to show Quick Access Overlay
 
     // MARK: - Screen Share Logic
 

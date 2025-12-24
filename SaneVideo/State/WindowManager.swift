@@ -97,6 +97,12 @@ class WindowManager {
     // Check if window exists and is visible
     if let existingWindow = pipWindow, existingWindow.isVisible {
       existingWindow.setupPreview()
+      // CRITICAL FIX: Ensure controls window is visible even if PiP already exists
+      if let controls = existingWindow.controlsWindow {
+        controls.orderFrontRegardless()
+        controls.level = .floating
+        controls.hidesOnDeactivate = false
+      }
       return
     }
 
@@ -108,6 +114,13 @@ class WindowManager {
 
     pipWindow?.orderFrontRegardless()
     pipWindow?.snapToCorner(.bottomRight)
+    
+    // CRITICAL FIX: Ensure controls window is visible and on top
+    if let controls = pipWindow?.controlsWindow {
+      controls.orderFrontRegardless()
+      controls.level = .floating
+      controls.hidesOnDeactivate = false
+    }
 
     // Update Screen Recorder filter
     updateRecorderFilter()
@@ -121,22 +134,32 @@ class WindowManager {
 
     AppLogger.window.info("Hiding PiP Window")
 
-    // Force break parent-child relationship in AppKit to avoid zombie access
+    // CRITICAL FIX: Ensure controls window is fully closed and removed
     if let controls = window.controlsWindow {
+      AppLogger.window.info("Closing PiP Controls Window")
+      // Remove parent-child relationship first
       window.removeChildWindow(controls)
-      // Ensure controls window is fully hidden and closed
+      // Force hide and close
       controls.orderOut(nil)
+      controls.isReleasedWhenClosed = true  // Ensure it's released
       controls.close()
       // Clear the reference to ensure it's released
       window.controlsWindow = nil
     }
 
+    // Close PiP window itself
     window.orderOut(nil)
     window.close()
     pipWindow = nil
 
+    // CRITICAL FIX: Also hide floating controls when PiP is hidden
+    // (They were shown as backup when PiP was shown, but should go away when returning to main app)
+    hideFloatingControls()
+
     // Update Screen Recorder filter to remove window
     updateRecorderFilter()
+    
+    AppLogger.window.info("PiP Window and controls fully hidden")
   }
 
   func toggleScreenShare(isRecording: Bool, isCameraActive: Bool) {

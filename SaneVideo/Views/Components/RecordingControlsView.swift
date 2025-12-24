@@ -79,11 +79,7 @@ struct RecordingControlsView: View {
         }
         .padding(.horizontal, 24)
         .padding(.vertical, 16)
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(.ultraThinMaterial)
-                .shadow(color: .black.opacity(0.3), radius: 20)
-        )
+        .premiumGlass(radius: 16) // Enhanced liquid glass
     }
 
     private func timeString(from duration: TimeInterval) -> String {

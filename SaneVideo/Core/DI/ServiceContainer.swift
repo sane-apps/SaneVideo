@@ -82,6 +82,7 @@ final class ServiceContainer {
     let projectFileManager: ProjectFileManager
     let timelineEngine: TimelineEngine
     let cursorTrackingService: CursorTrackingService
+    let clickTrackingService: ClickTrackingService
     let timelineThumbnailService: ThumbnailService
     let renderingService: RenderingService
     
@@ -156,6 +157,7 @@ final class ServiceContainer {
         self.projectFileManager = ProjectFileManager()
         self.timelineEngine = TimelineEngine()
         self.cursorTrackingService = CursorTrackingService()
+        self.clickTrackingService = ClickTrackingService()
         self.timelineThumbnailService = ThumbnailService()
         
         let renderingService = RenderingService.shared

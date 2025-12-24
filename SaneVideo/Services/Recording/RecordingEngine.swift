@@ -254,6 +254,10 @@ class RecordingEngine: NSObject, @unchecked Sendable {
     if initialSource == .screen {
       let cursorService = await ServiceContainer.shared.cursorTrackingService
       await cursorService.startTracking()
+      
+      // Start click tracking for auto-zoom feature
+      let clickService = await ServiceContainer.shared.clickTrackingService
+      await clickService.startTracking()
     }
 
     AppLogger.recording.info(
@@ -313,6 +317,10 @@ class RecordingEngine: NSObject, @unchecked Sendable {
     if let url = finalURL {
       let cursorService = await ServiceContainer.shared.cursorTrackingService
       _ = try? await cursorService.stopTrackingAndSave(to: url)
+      
+      // Stop click tracking and save
+      let clickService = await ServiceContainer.shared.clickTrackingService
+      _ = try? await clickService.stopTrackingAndSave(to: url)
     }
 
     // Cleanup

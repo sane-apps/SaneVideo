@@ -39,6 +39,29 @@ struct MainContentView: View {
       .overlay(alignment: .top) {
         MagicOverlayView()
       }
+      .overlay {
+        // Quick Access Overlay (post-recording)
+        if appState.showQuickAccessOverlay,
+           let url = appState.quickAccessRecordingURL {
+          QuickAccessOverlay(
+            recordingURL: url,
+            thumbnail: appState.quickAccessThumbnail,
+            onEdit: {
+              appState.handleQuickAccessEdit()
+            },
+            onSave: {
+              appState.handleQuickAccessSave()
+            },
+            onShare: {
+              appState.handleQuickAccessShare()
+            },
+            onDismiss: {
+              appState.dismissQuickAccessOverlay()
+            }
+          )
+          .zIndex(1000) // Ensure it's on top
+        }
+      }
       // Global Keyboard Shortcuts
       .background {
         Button("") {
@@ -272,6 +295,12 @@ struct MainContentView: View {
         .tint(Theme.Colors.accent)  // Force App Theme Color
         .controlSize(.regular)
         .hoverScale(1.05)
+        .pressScale() // Enhanced press animation
+        .simultaneousGesture(
+            TapGesture().onEnded {
+                ServiceContainer.shared.hapticsManager.impact()
+            }
+        )
         .animation(.smoothUI, value: appState.appMode)
         .help("Toggle Record/Edit Mode (Cmd+M)")
         .padding(.vertical, 4)
@@ -323,6 +352,12 @@ struct MainContentView: View {
             .buttonStyle(.borderedProminent)
             .tint(Theme.Colors.accent)  // Force App Theme Color
             .hoverScale(1.05)
+            .pressScale() // Enhanced press animation
+            .simultaneousGesture(
+                TapGesture().onEnded {
+                    ServiceContainer.shared.hapticsManager.impact()
+                }
+            )
             .help("Auto-Fix Project (Cmd+Shift+M)")
             .keyboardShortcut("m", modifiers: [.command, .shift])
             .enhancedAccessibility(

@@ -41,7 +41,7 @@ final class UserExperienceTests: XCTestCase {
         
         // Create a test clip
         let testURL = FileManager.default.temporaryDirectory.appendingPathComponent("test.mp4")
-        let testClip = VideoClip(id: UUID(), url: testURL, duration: CMTime(seconds: 10, preferredTimescale: 600))
+        let testClip = VideoClip(url: testURL, duration: CMTime(seconds: 10, preferredTimescale: 600))
         
         // Start Magic Fix
         let options = MagicFixOptions()
@@ -73,8 +73,8 @@ final class UserExperienceTests: XCTestCase {
         let keychain = ServiceContainer.shared.keychainService
         
         // Ensure no keys are set
-        await keychain.delete(for: .openAIKey)
-        await keychain.delete(for: .geminiKey)
+        try? await keychain.delete(for: .openAIKey)
+        try? await keychain.delete(for: .geminiKey)
         
         // Privacy badge should detect on-device mode
         // (Actual UI test would verify the badge text, but this tests the logic)

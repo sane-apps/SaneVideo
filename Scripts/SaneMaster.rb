@@ -1847,6 +1847,190 @@ class SaneMaster
     puts "⚠️  Total: #{deprecation_warnings.length} deprecation warning(s)"
     puts '💡 Tip: Review each warning and update to modern APIs when possible'
   end
+
+  def run_test_suite(args)
+    quick_mode = args.include?('--quick')
+    full_mode = args.include?('--full')
+    ci_mode = args.include?('--ci')
+    
+    puts '🧪 --- [ COMPREHENSIVE TEST SUITE ] ---'
+    puts 'Running all available validation tools...'
+    puts ''
+    
+    results = {
+      passed: [],
+      failed: [],
+      warnings: [],
+      skipped: []
+    }
+    
+    # Always run fast checks
+    puts '📋 Phase 1: Fast Validation Checks'
+    puts '─' * 50
+    
+    # 1. Build verification
+    puts "\n1️⃣  Build Verification..."
+    if system('xcodebuild -project SaneVideo.xcodeproj -scheme SaneVideo -destination "platform=macOS,arch=arm64" build -quiet 2>&1 | grep -q "BUILD SUCCEEDED"')
+      puts '   ✅ Build successful'
+      results[:passed] << 'Build'
+    else
+      puts '   ❌ Build failed'
+      results[:failed] << 'Build'
+      puts '   ⚠️  Skipping remaining checks due to build failure'
+      print_summary(results)
+      exit 1
+    end
+    
+    # 2. XcodeGen sync check
+    puts "\n2️⃣  XcodeGen Project Sync..."
+    if system('xcodegen generate --check 2>&1 > /dev/null')
+      puts '   ✅ Project in sync'
+      results[:passed] << 'XcodeGen'
+    else
+      puts '   ⚠️  Project out of sync (run: xcodegen generate)'
+      results[:warnings] << 'XcodeGen'
+    end
+    
+    # 3. Linting
+    puts "\n3️⃣  Code Linting..."
+    lint_output = `./Scripts/SaneMaster.rb lint 2>&1`
+    if lint_output.include?('✅') || $?.success?
+      puts '   ✅ Linting passed'
+      results[:passed] << 'Lint'
+    else
+      puts '   ⚠️  Linting issues found (non-blocking)'
+      results[:warnings] << 'Lint'
+    end
+    
+    # 4. Test reference validation
+    puts "\n4️⃣  Test Reference Validation..."
+    test_ref_output = `./Scripts/SaneMaster.rb validate_test_references 2>&1`
+    if test_ref_output.include?('✅') && $?.success?
+      puts '   ✅ All test references valid'
+      results[:passed] << 'Test References'
+    else
+      puts '   ❌ Test reference validation failed'
+      results[:failed] << 'Test References'
+    end
+    
+    # 5. Documentation sync
+    puts "\n5️⃣  Documentation Sync..."
+    docs_output = `./Scripts/SaneMaster.rb check_docs 2>&1`
+    if docs_output.include?('✅') || !docs_output.include?('drift')
+      puts '   ✅ Documentation in sync'
+      results[:passed] << 'Documentation'
+    else
+      puts '   ⚠️  Documentation drift detected (non-blocking)'
+      results[:warnings] << 'Documentation'
+    end
+    
+    # Phase 2: Medium checks (unless quick mode)
+    unless quick_mode
+      puts "\n📋 Phase 2: Medium Validation Checks"
+      puts '─' * 50
+      
+      # 6. Mock verification
+      puts "\n6️⃣  Mock Synchronization..."
+      mock_output = `./Scripts/SaneMaster.rb verify_mocks 2>&1`
+      if mock_output.include?('✅') || $?.success?
+        puts '   ✅ Mocks in sync'
+        results[:passed] << 'Mocks'
+      else
+        puts '   ⚠️  Mock sync issues (non-blocking)'
+        results[:warnings] << 'Mocks'
+      end
+      
+      # 7. Deprecation checking (can be slow)
+      if full_mode || ci_mode
+        puts "\n7️⃣  Deprecation Check..."
+        deprec_output = `./Scripts/SaneMaster.rb check_deprecations 2>&1`
+        if deprec_output.include?('✅') || !deprec_output.include?('Found')
+          puts '   ✅ No deprecations found'
+          results[:passed] << 'Deprecations'
+        else
+          puts '   ⚠️  Deprecations found (non-blocking)'
+          results[:warnings] << 'Deprecations'
+        end
+      else
+        puts "\n7️⃣  Deprecation Check... (skipped, use --full to include)"
+        results[:skipped] << 'Deprecations'
+      end
+    else
+      results[:skipped] << 'Mocks'
+      results[:skipped] << 'Deprecations'
+    end
+    
+    # Phase 3: Slow checks (only in full mode)
+    if full_mode && !ci_mode
+      puts "\n📋 Phase 3: Deep Analysis Checks"
+      puts '─' * 50
+      
+      # 8. Dead code detection
+      puts "\n8️⃣  Dead Code Detection..."
+      dead_code_output = `./Scripts/SaneMaster.rb dead_code 2>&1`
+      if dead_code_output.include?('✅') || $?.success?
+        puts '   ✅ No dead code detected'
+        results[:passed] << 'Dead Code'
+      else
+        puts '   ⚠️  Dead code detected (review output)'
+        results[:warnings] << 'Dead Code'
+      end
+    else
+      results[:skipped] << 'Dead Code'
+    end
+    
+    # Print summary
+    print_summary(results)
+    
+    # Exit with appropriate code
+    if results[:failed].any?
+      exit 1
+    elsif results[:warnings].any? && ci_mode
+      exit 0  # Warnings don't fail CI
+    else
+      exit 0
+    end
+  end
+  
+  def print_summary(results)
+    puts "\n" + "=" * 50
+    puts "📊 TEST SUITE SUMMARY"
+    puts "=" * 50
+    
+    if results[:passed].any?
+      puts "\n✅ PASSED (#{results[:passed].count}):"
+      results[:passed].each { |item| puts "   • #{item}" }
+    end
+    
+    if results[:failed].any?
+      puts "\n❌ FAILED (#{results[:failed].count}):"
+      results[:failed].each { |item| puts "   • #{item}" }
+    end
+    
+    if results[:warnings].any?
+      puts "\n⚠️  WARNINGS (#{results[:warnings].count}):"
+      results[:warnings].each { |item| puts "   • #{item}" }
+    end
+    
+    if results[:skipped].any?
+      puts "\n⏭️  SKIPPED (#{results[:skipped].count}):"
+      results[:skipped].each { |item| puts "   • #{item}" }
+    end
+    
+    total = results[:passed].count + results[:failed].count + results[:warnings].count
+    puts "\n📈 Total Checks: #{total}"
+    puts "   ✅ Passed: #{results[:passed].count}"
+    puts "   ❌ Failed: #{results[:failed].count}"
+    puts "   ⚠️  Warnings: #{results[:warnings].count}"
+    
+    if results[:failed].any?
+      puts "\n❌ Test suite failed. Fix issues above before proceeding."
+    elsif results[:warnings].any?
+      puts "\n⚠️  Test suite passed with warnings. Review warnings above."
+    else
+      puts "\n✅ All checks passed!"
+    end
+  end
 end
 
 # Execute

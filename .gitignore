@@ -3,8 +3,8 @@ build_log*.txt
 build_output*.txt
 *.log
 
-# Secrets
-SaneVideo/Core/Utilities/Secrets.swift
+# Secrets (Secrets.swift is now committed - uses Keychain/APIKeyManager, no hardcoded secrets)
+# SaneVideo/Core/Utilities/Secrets.swift
 
 # Xcode
 *.xcuserstate

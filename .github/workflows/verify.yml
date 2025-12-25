@@ -26,6 +26,9 @@ jobs:
         bundle install
         ./Scripts/SaneMaster.rb setup || true
     
+    - name: Install xcodegen
+      run: brew install xcodegen || true
+    
     - name: Enable tests for CI
       run: ./Scripts/enable_tests_for_ci.sh
 

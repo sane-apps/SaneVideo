@@ -39,10 +39,10 @@ Debug configuration for running the app.
 
 ### `.cursor/settings.json`
 Cursor-specific AI settings:
-- Chat model configuration
 - Code completion settings
 - Project context inclusion
 - Swift-specific optimizations
+- **Note**: Model selection (GPT-4, Claude 3.5 Sonnet, etc.) is done via Cursor UI (Settings > Models), not in this file
 
 ## Key Features
 
@@ -65,6 +65,10 @@ Cursor-specific AI settings:
 - Includes DEVELOPMENT.md in context
 - Excludes build artifacts from AI context
 - Optimized for Swift code completion
+- **Model Selection**: Choose your AI model via Cursor Settings > Models
+  - **Recommended**: Claude 3.5 Sonnet (often better for coding tasks)
+  - **Alternative**: GPT-4o (faster, good for quick completions)
+  - **Default**: GPT-4-Turbo (Cursor's default)
 
 ## Usage
 
@@ -91,4 +95,3 @@ All settings can be customized. However, the following should remain:
 - `DEVELOPMENT.md` - Main SOP with all project rules
 - `.cursorrules` - Cursor-specific rules
 - `lefthook.yml` - Git hooks configuration
-

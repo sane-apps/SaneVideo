@@ -185,12 +185,12 @@ AppLogger.general     // Everything else
 Use this for rapid iteration. **UI tests are optional and skipped by default** - run them manually when ready.
 
 ```bash
-# Default: Incremental build + Unit Tests only (Fast, ~5s)
-# ⚠️ UI tests are NOT included by default
+# Default: Build only (tests disabled due to environment limitations)
+# ⚠️ Tests are currently disabled - see TEST_DISABLED_NOTICE.md
 ./Scripts/SaneMaster.rb verify
 
-# Include UI tests explicitly (Slower, ~60s+)
-# Run this when you want to test UI workflows
+# Note: Test execution is currently disabled
+# Use alternative testing methods (see "Alternative Testing Methods" section)
 ./Scripts/SaneMaster.rb verify --ui
 
 # Optional: Full Clean Build (Slow, ~30s)
@@ -199,7 +199,7 @@ Use this for rapid iteration. **UI tests are optional and skipped by default** -
 
 #### 2. Full System Check (Slow, Complete)
 
-Use this before pushing code. **Note**: CI runs unit tests only. UI tests are optional.
+Use this before pushing code. **Note**: Tests are currently disabled in both local and CI environments. Use static analysis tools instead (see "Alternative Testing Methods").
 
 ```bash
 bundle exec fastlane verify_full
@@ -223,15 +223,20 @@ Always diagnostics after a run:
 - **"Signal 9" Crash**: Check `SaneVideo.entitlements` for App Sandbox.
 - **Phantom Errors**: Run `./Scripts/SaneMaster.rb clean --nuclear`.
 - **Permissions Black Screen**: Run `tccutil reset Camera`.
+- **Test Execution Disabled**: 
+  - **Local**: SwiftUICore linker error (Xcode 16/macOS 26.2 bug) - see `TEST_DISABLED_NOTICE.md`
+  - **CI**: Deployment target mismatch (CI runners have macOS 26.0.1, app requires 26.2) - see `CI_TEST_STATUS.md`
+  - **Workaround**: Use alternative testing methods (static analysis, API verification, manual testing)
+  - **To re-enable**: See `TEST_DISABLED_NOTICE.md` for local, `CI_TEST_STATUS.md` for CI
 
 ---
 
 ## 7. Available Tools
 
 1. **SaneMaster.rb** (`./Scripts/SaneMaster.rb`): The master controller.
-    - `verify`: Incremental build + Unit Tests (fast, default).
-    - `verify --ui`: Build + all tests including UI tests.
-    - `verify --clean`: Full clean build + Unit Tests.
+    - `verify`: Build app only (tests automatically skipped when disabled).
+    - `verify --clean`: Full clean build (tests skipped).
+    - **Note**: Test execution is currently disabled - use alternative testing methods.
     - `doctor`: Health check (environment, assets, permissions, XcodeGen sync).
     - `console`: **Interactive Ruby REPL** (Pry) for debugging scripts.
     - `gen_test <name>`: Generate test files.
@@ -239,6 +244,8 @@ Always diagnostics after a run:
     - `verify_api <APIName> [Framework]`: Verify API exists in SDK (prevents hallucinations).
     - `verify_mocks`: Check if mocks are synchronized with protocols.
     - `check_docs`: Verify documentation matches tool capabilities.
+    - `check_deprecations`: Scan for deprecated API usage and warnings.
+    - `dead_code`: Scan for unused code using Periphery.
 2. **Ruby Power Tools** (via `bundle exec`):
     - **Lefthook**: **The Enforcer**. Automates `swiftlint` on commit and `verify` on push.
     - **Fastlane**: Release orchestration & CI/CD.
@@ -279,18 +286,27 @@ Always diagnostics after a run:
 
 ---
 
-## 8. Testing Strategy (Two-Tier)
+## 8. Testing Strategy (Current Status)
 
-We balance speed and robustness using two tiers of tests. **Use the right tool for the job.**
+> **⚠️ IMPORTANT**: Automated test execution is currently **disabled** due to environmental limitations:
+> - **Local**: Tests disabled due to SwiftUICore linker error (Xcode 16/macOS 26.2 bug)
+> - **CI**: Tests disabled due to deployment target mismatch (CI runners have macOS 26.0.1, app requires 26.2)
+> 
+> **What Still Works**:
+> - ✅ Build verification (`./Scripts/SaneMaster.rb verify` builds app only)
+> - ✅ Static analysis tools (see "Alternative Testing Methods" below)
+> - ✅ Test code is preserved and will be re-enabled when environment supports it
+>
+> **See**: `TEST_DISABLED_NOTICE.md` and `CI_TEST_STATUS.md` for details.
 
-### Tier 1: Unit Tests (Fast, <1s)
+### Tier 1: Unit Tests (Fast, <1s) - ⚠️ Currently Disabled
 
 - **Target**: `SaneVideoTests`
 - **Scope**: Isolated logic, regex parsing, state machines, math algorithms.
 - **Data**: Mocked services, small buffers. **NO** file I/O or app launching.
 - **Goal**: Verify logic instantly.
 
-### Tier 2: Integration/UI Tests (Real-World, 10s-60s)
+### Tier 2: Integration/UI Tests (Real-World, 10s-60s) - ⚠️ Currently Disabled
 
 - **Target**: `SaneVideoUITests`
 - **Scope**: End-to-end user flows, AVFoundation pipeline, CoreML execution.
@@ -306,7 +322,31 @@ We balance speed and robustness using two tiers of tests. **Use the right tool f
 - **Command**: `xcodebuild test ... -only-testing:SaneVideoUITests/SaneEditorFeatureTests/testExportPerformance`
 - **Best Practice**: Run before releases. Inspect memory deltas to catch leaks.
 
-### Regression Testing
+### Alternative Testing Methods (Available Now)
+
+Since automated test execution is disabled, use these tools for code validation:
+
+1. **Static Analysis**:
+   ```bash
+   ./Scripts/SaneMaster.rb validate_test_references  # Verify UI test references match code
+   ./Scripts/SaneMaster.rb check_deprecations         # Find deprecated API usage
+   ./Scripts/SaneMaster.rb dead_code                  # Find unused code
+   ./Scripts/SaneMaster.rb lint                       # Code style and quality
+   ```
+
+2. **API Verification**:
+   ```bash
+   ./Scripts/SaneMaster.rb verify_api <APIName> [Framework]  # Verify APIs exist in SDK
+   ```
+
+3. **Build Verification**:
+   ```bash
+   ./Scripts/SaneMaster.rb verify  # Builds app (tests skipped automatically)
+   ```
+
+4. **Manual Testing**: Run the app and test features manually until automated tests are re-enabled.
+
+### Regression Testing (When Tests Re-enabled)
 
 Regression tests are critical for preventing the reintroduction of fixed bugs.
 

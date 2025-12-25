@@ -288,9 +288,11 @@ struct SmartToolsSection: View {
                 }
                 .buttonStyle(.plain)
                 .disabled(clip.isMissing || isOperationInProgress)
+                .help(clip.isMissing ? "Clip file is missing. Use 'Locate File' in Clip Info to relink the file." : (isOperationInProgress ? "Operation in progress..." : "Automatically removes silence, filler words, and enhances your video"))
                 .accessibilityIdentifier("MagicFixButton")
                 .accessibilityLabel("Apply Magic Fix")
-                .accessibilityHint("Automatically removes silence, filler words, and enhances your video. Keyboard shortcut: Command Shift M")
+                .accessibilityHint(clip.isMissing ? "Clip file is missing. Use 'Locate File' in Clip Info to relink the file." : (isOperationInProgress ? "Operation in progress" : "Automatically removes silence, filler words, and enhances your video. Keyboard shortcut: Command Shift M"))
+                .accessibilityValue(isOperationInProgress ? "Processing" : "")
             }
         }
     }

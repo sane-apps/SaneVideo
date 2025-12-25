@@ -78,10 +78,11 @@ struct StylesInspectorView: View {
                 .frame(width: 120) // Fixed width for stability
                 .controlSize(.small)
                 .padding(.trailing, 16)
-                .help("Toggle between Simple (AI) and Pro (Manual) controls")
+                .help(isOperationInProgress ? "Cannot switch modes while an operation is in progress" : "Toggle between Simple (AI) and Pro (Manual) controls")
                 .disabled(isOperationInProgress) // CRITICAL FIX: Prevent mode switch during operations
                 .accessibilityLabel("Inspector Mode")
-                .accessibilityHint("Switch between Simple mode for AI tools and Pro mode for manual controls")
+                .accessibilityHint(isOperationInProgress ? "Cannot switch modes while an operation is in progress" : "Switch between Simple mode for AI tools and Pro mode for manual controls")
+                .accessibilityValue(isOperationInProgress ? "Operation in progress" : (isProMode ? "Pro Mode" : "Simple Mode"))
                 .focusable() // P0 FIX: Keyboard navigation
             }
 
@@ -183,6 +184,13 @@ struct StylesInspectorView: View {
                                         .foregroundStyle(.secondary)
                                     Spacer()
                                     Button {
+                                        guard !clip.isMissing else {
+                                            ServiceContainer.shared.toastManager.show(
+                                                "Cannot rotate: Clip file is missing. Use 'Locate File' in Clip Info to relink the file.",
+                                                type: .error
+                                            )
+                                            return
+                                        }
                                         withAnimation {
                                             appState.projectState.rotateClip(clip)
                                         }
@@ -192,6 +200,9 @@ struct StylesInspectorView: View {
                                     }
                                     .buttonStyle(.bordered)
                                     .controlSize(.small)
+                                    .disabled(clip.isMissing)
+                                    .help(clip.isMissing ? "Clip file is missing. Use 'Locate File' in Clip Info to relink the file." : "Rotate video 90 degrees clockwise")
+                                    .accessibilityHint(clip.isMissing ? "Clip file is missing. Use 'Locate File' in Clip Info to relink the file." : "Rotate video 90 degrees clockwise")
                                 }
                                 .padding(.horizontal, 12)
                                 .padding(.vertical, 8)
@@ -227,12 +238,10 @@ struct StylesInspectorView: View {
         .background(.ultraThinMaterial)
         // CRITICAL FIX: Auto-deselect if clip is deleted
         .onChange(of: appState.projectState.currentProject?.timeline.tracks) { _, _ in
-            if let clip = selectedClip {
-                if validatedClip == nil {
-                    // Clip was deleted, deselect it
-                    selectedClip = nil
-                    AppLogger.general.info("Inspector: Auto-deselected deleted clip")
-                }
+            if selectedClip != nil, validatedClip == nil {
+                // Clip was deleted, deselect it
+                selectedClip = nil
+                AppLogger.general.info("Inspector: Auto-deselected deleted clip")
             }
         }
         // CRITICAL FIX: Sync selectedClip if it becomes invalid

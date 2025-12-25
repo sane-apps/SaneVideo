@@ -1,0 +1,23 @@
+# Lefthook Configuration
+# "The Enforcer" - Eliminates manual errors by running checks automatically.
+
+pre-commit:
+  parallel: true
+  commands:
+    lint:
+      glob: "*.swift"
+      run: swiftlint lint --fix {staged_files} && git add {staged_files}
+    rubocop:
+      glob: "*.rb"
+      run: bundle exec rubocop -a {staged_files} && git add {staged_files}
+
+pre-push:
+  parallel: false
+  commands:
+    security:
+      run: bundle exec bundle-audit check --update
+    doctor:
+      run: ./Scripts/SaneMaster.rb doctor
+    verify_tests:
+      # Run the verification script to ensure no regressions before pushing
+      run: ./Scripts/SaneMaster.rb verify

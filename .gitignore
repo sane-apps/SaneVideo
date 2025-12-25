@@ -41,6 +41,8 @@ vendor/
 
 # Large media/test artifacts
 *.mp4
+*.mov
+*.m4v
 *.m4a
 *.png
 *.jpg

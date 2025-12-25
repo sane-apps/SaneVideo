@@ -44,7 +44,7 @@ class RecordingEngine: NSObject, @unchecked Sendable {
   @RecordingActor var isPaused = false
   @RecordingActor var isStopping = false  // Flag to prevent rapid restart during concatenation
   @RecordingActor var currentSource: RecordingSource = .camera
-  @RecordingActor var pendingSource: RecordingSource? = nil  // Track transition for graceful handoff
+  @RecordingActor var pendingSource: RecordingSource?  // Track transition for graceful handoff
   @RecordingActor var isSwitching = false  // Prevention of overlapping switches
   @RecordingActor var isMicMuted = false  // Mic muting state
   @RecordingActor var outputURL: URL?
@@ -169,8 +169,8 @@ class RecordingEngine: NSObject, @unchecked Sendable {
     }
 
     // isTesting is now a class-level property
-    if TestEnvironment.isUITesting {
-      AppLogger.recording.info("🛠️ [UI TEST] Bypassing real recording engine")
+    if TestEnvironment.isTesting {
+      AppLogger.recording.info("🛠️ [TEST] Bypassing real recording engine")
       let tempDir = FileManager.default.temporaryDirectory
       let filename = "MockRecording_\(Date().timeIntervalSince1970).mp4"
       self.outputURL = tempDir.appendingPathComponent(filename)
@@ -254,7 +254,7 @@ class RecordingEngine: NSObject, @unchecked Sendable {
     if initialSource == .screen {
       let cursorService = await ServiceContainer.shared.cursorTrackingService
       await cursorService.startTracking()
-      
+
       // Start click tracking for auto-zoom feature
       let clickService = await ServiceContainer.shared.clickTrackingService
       await clickService.startTracking()
@@ -285,8 +285,8 @@ class RecordingEngine: NSObject, @unchecked Sendable {
       diskSpaceMonitor.stop()
     }
 
-    if TestEnvironment.isUITesting {
-      AppLogger.recording.info("🛠️ [UI TEST] Generating programmatic mock file")
+    if TestEnvironment.isTesting {
+      AppLogger.recording.info("🛠️ [TEST] Generating programmatic mock file")
 
       // Use Temporary Directory to avoid Sandbox/TCC issues
       let tempDir = FileManager.default.temporaryDirectory
@@ -317,7 +317,7 @@ class RecordingEngine: NSObject, @unchecked Sendable {
     if let url = finalURL {
       let cursorService = await ServiceContainer.shared.cursorTrackingService
       _ = try? await cursorService.stopTrackingAndSave(to: url)
-      
+
       // Stop click tracking and save
       let clickService = await ServiceContainer.shared.clickTrackingService
       _ = try? await clickService.stopTrackingAndSave(to: url)

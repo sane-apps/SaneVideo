@@ -202,6 +202,7 @@
 		97CA1FE3A26F520589C67A3A /* TextLayerBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48628827B930594724593B48 /* TextLayerBuilder.swift */; };
 		97CBCA44F4F7EAD75D573E6C /* InspectorHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = D483F636C49C974165C17B4C /* InspectorHelpers.swift */; };
 		9A3E31A1F71AEE4B6580E45F /* CursorRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9320C41AD844F1ACF9475684 /* CursorRenderer.swift */; };
+		9B8D9F529FFC7824912AD7F7 /* VideoEffectGenerators.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B71585E1BB771ED66DFC8CC /* VideoEffectGenerators.swift */; };
 		9DB23D37442BB0130811A917 /* HapticsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 432F8F1A2304768337B8CEA9 /* HapticsManager.swift */; };
 		9F9AE490FEDA546571F4CAD9 /* FloatingControlsWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42D32D7AFEEEA896D051187F /* FloatingControlsWindow.swift */; };
 		A0858DDD36B5F64FAB3042CA /* ControlsKit.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05C91E697A485D15E34D4078 /* ControlsKit.swift */; };
@@ -380,6 +381,7 @@
 		26C801249A9120E82DFFE996 /* VideoSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoSection.swift; sourceTree = "<group>"; };
 		28D4D5C42D8DADCB1FDC985F /* SaneSmartFeaturesVisualTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SaneSmartFeaturesVisualTests.swift; sourceTree = "<group>"; };
 		29E2E80D424936C20D07B098 /* ClipWaveformCalculator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipWaveformCalculator.swift; sourceTree = "<group>"; };
+		2B71585E1BB771ED66DFC8CC /* VideoEffectGenerators.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoEffectGenerators.swift; sourceTree = "<group>"; };
 		2C21BAFFCB5D5A4C05B726E9 /* PersonSegmentationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersonSegmentationService.swift; sourceTree = "<group>"; };
 		2CD950BFD621C5E8A66EB6BB /* DiskSpaceMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiskSpaceMonitor.swift; sourceTree = "<group>"; };
 		2D11D491DFFF7E5A85914D8E /* CaptionRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptionRow.swift; sourceTree = "<group>"; };
@@ -814,6 +816,7 @@
 				1D4C444510E4293654872089 /* VideoClip+TimeMapping.swift */,
 				C57EA8DA63484FDE3435092A /* VideoClipTypes.swift */,
 				91E7AAA374D94BC7FB7C993E /* VideoEffect.swift */,
+				2B71585E1BB771ED66DFC8CC /* VideoEffectGenerators.swift */,
 				45FCF5B1C7895B584EAA306D /* VideoProject.swift */,
 				480728FB25D437F5AA08179E /* VideoProject+CaptionStyle.swift */,
 				5ACB33C5F11E3281E949E9AC /* VideoTransition.swift */,
@@ -1783,6 +1786,7 @@
 				D2FA930D2E5F86ABA5EC5905 /* VideoClip.swift in Sources */,
 				60E1A94EC24B40BAC0CF0AE1 /* VideoClipTypes.swift in Sources */,
 				F2E0115E57B118071CEF2953 /* VideoEffect.swift in Sources */,
+				9B8D9F529FFC7824912AD7F7 /* VideoEffectGenerators.swift in Sources */,
 				BD25C51B44C2E58868E1668C /* VideoProject+CaptionStyle.swift in Sources */,
 				2BD167A1471246678E4DFAC1 /* VideoProject.swift in Sources */,
 				B416BF209EE85357EAC7B5BA /* VideoSection.swift in Sources */,

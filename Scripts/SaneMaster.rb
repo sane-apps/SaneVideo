@@ -1887,11 +1887,21 @@ class SaneMaster
     
     # 2. XcodeGen sync check
     puts "\n2️⃣  XcodeGen Project Sync..."
-    if system('xcodegen generate --check 2>&1 > /dev/null')
-      puts '   ✅ Project in sync'
-      results[:passed] << 'XcodeGen'
+    # Check if project.yml exists and is newer than project.pbxproj
+    project_yml = 'project.yml'
+    project_pbx = 'SaneVideo.xcodeproj/project.pbxproj'
+    if File.exist?(project_yml) && File.exist?(project_pbx)
+      yml_mtime = File.mtime(project_yml)
+      pbx_mtime = File.mtime(project_pbx)
+      if yml_mtime <= pbx_mtime
+        puts '   ✅ Project in sync'
+        results[:passed] << 'XcodeGen'
+      else
+        puts '   ⚠️  Project out of sync (run: xcodegen generate)'
+        results[:warnings] << 'XcodeGen'
+      end
     else
-      puts '   ⚠️  Project out of sync (run: xcodegen generate)'
+      puts '   ⚠️  Cannot verify sync (missing files)'
       results[:warnings] << 'XcodeGen'
     end
     

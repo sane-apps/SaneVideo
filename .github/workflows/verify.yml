@@ -17,6 +17,7 @@ jobs:
       with:
         ruby-version: '3.2'
         bundler-cache: true
+        bundler: '2.4'
 
     - name: Show Xcode version
       run: xcodebuild -version

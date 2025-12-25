@@ -246,6 +246,10 @@ Always diagnostics after a run:
     - `check_docs`: Verify documentation matches tool capabilities.
     - `check_deprecations`: Scan for deprecated API usage and warnings.
     - `dead_code`: Scan for unused code using Periphery.
+    - `test_suite [--quick] [--full] [--ci]`: **Comprehensive validation suite** - Runs all static analysis tools in one command.
+      - `--quick`: Fast checks only (build, lint, test references, xcodegen)
+      - `--full`: All checks including slow ones (dead code, deprecations)
+      - `--ci`: CI-optimized (excludes slow checks, includes build)
 2. **Ruby Power Tools** (via `bundle exec`):
     - **Lefthook**: **The Enforcer**. Automates `swiftlint` on commit and `verify` on push.
     - **Fastlane**: Release orchestration & CI/CD.

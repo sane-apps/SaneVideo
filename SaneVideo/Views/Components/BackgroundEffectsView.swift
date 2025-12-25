@@ -40,6 +40,24 @@ struct BackgroundEffectsView: View {
   
   var body: some View {
     VStack(alignment: .leading, spacing: 10) {
+      // CRITICAL FIX: Show warning if clip is missing
+      if clip.isMissing {
+        HStack(spacing: 6) {
+          Image(systemName: "exclamationmark.triangle.fill")
+            .foregroundColor(.orange)
+          Text("Clip file is missing. Background effects require the video file.")
+            .font(.caption2)
+            .foregroundColor(.secondary)
+        }
+        .padding(8)
+        .background(Color.orange.opacity(0.1))
+        .cornerRadius(6)
+        .overlay(
+          RoundedRectangle(cornerRadius: 6)
+            .stroke(Color.orange.opacity(0.3), lineWidth: 1)
+        )
+      }
+      
       // Header with toggle
       HStack {
         Label(
@@ -56,6 +74,13 @@ struct BackgroundEffectsView: View {
             get: { selectedEffect != nil },
             set: { enabled in
               if enabled {
+                guard !clip.isMissing else {
+                  ServiceContainer.shared.toastManager.show(
+                    "Cannot enable background effects: Clip file is missing. Use 'Locate File' in Clip Info to relink the file.",
+                    type: .error
+                  )
+                  return
+                }
                 selectedEffect = .blur(radius: 20)
                 saveEffect()
               } else {
@@ -67,7 +92,9 @@ struct BackgroundEffectsView: View {
         )
         .toggleStyle(.switch)
         .controlSize(.mini)
+        .disabled(clip.isMissing) // CRITICAL FIX: Disable if clip is missing
         .accessibilityIdentifier("background.toggle")
+        .accessibilityHint(clip.isMissing ? "Clip file is missing. Use 'Locate File' in Clip Info to relink the file." : "Toggle background effects")
       }
 
       if selectedEffect != nil {
@@ -424,6 +451,14 @@ struct BackgroundEffectsView: View {
   }
 
   private func saveEffect() {
+    // CRITICAL FIX: Validate clip before saving effect
+    guard !clip.isMissing else {
+      ServiceContainer.shared.toastManager.show(
+        "Cannot save background effect: Clip file is missing. Use 'Locate File' in Clip Info to relink the file.",
+        type: .error
+      )
+      return
+    }
     appState.projectState.updateClipBackgroundEffect(clipId: clip.id, effect: selectedEffect)
   }
 }

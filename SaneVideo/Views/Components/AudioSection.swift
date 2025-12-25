@@ -89,21 +89,18 @@ struct AudioSection: View {
             // Smart Audio Tools
             SubsectionHeader(title: String(localized: "audio.smart_tools.header", defaultValue: "Smart Tools"))
 
-            // P0 FIX: Separate loading states for each operation
-            @State private var isFindingHighlights = false
-            @State private var isAnalyzingAudio = false
-
             // Find Highlights
             SmartToolButton(
                 title: String(localized: "audio.action.find_highlights.title", defaultValue: "Find Highlights"),
                 subtitle: String(localized: "audio.action.find_highlights.subtitle", defaultValue: "Detect applause & laughter"),
                 icon: "star.fill",
                 color: .yellow,
-                isLoading: isFindingHighlights, // P0 FIX: Use separate state
+                isLoading: isFindingHighlights,
                 id: "audio.action.find_highlights"
             ) {
                 Task { await findHighlights() }
             }
+            .disabled(clip.isMissing) // CRITICAL FIX: Disable if clip is missing
 
             // Analyze Audio
             SmartToolButton(
@@ -111,11 +108,12 @@ struct AudioSection: View {
                 subtitle: String(localized: "audio.action.analyze_audio.subtitle", defaultValue: "Detect speech, music, silence"),
                 icon: "waveform.badge.magnifyingglass",
                 color: .green,
-                isLoading: isAnalyzingAudio, // P0 FIX: Use separate state
+                isLoading: isAnalyzingAudio,
                 id: "audio.action.analyze_audio"
             ) {
                 Task { await analyzeAudio() }
             }
+            .disabled(clip.isMissing) // CRITICAL FIX: Disable if clip is missing
 
             if let result = analysisResult {
                 Text(result)
@@ -194,27 +192,81 @@ struct AudioSection: View {
     // MARK: - Actions
 
     private func findHighlights() async {
+        // CRITICAL FIX: Validate clip before operation
+        guard !clip.isMissing else {
+            await MainActor.run {
+                analysisResult = "Cannot analyze: Clip file is missing. Use 'Locate File' in Clip Info to relink the file."
+                ServiceContainer.shared.toastManager.show(
+                    "Clip file is missing. Check Clip Info section to relink the file.",
+                    type: .error
+                )
+            }
+            return
+        }
+        
+        isFindingHighlights = true
+        defer {
+            Task { @MainActor in
+                isFindingHighlights = false
+            }
+        }
+        
         do {
             let highlights = try await ServiceContainer.shared.soundAnalysisService.findHighlights(in: clip.url)
-            if highlights.isEmpty {
-                analysisResult = String(localized: "audio.analysis.no_highlights", defaultValue: "No highlights (applause/laughter) detected")
-            } else {
-                let times = highlights.prefix(3).map { formatTime($0.timeRange.start) }
-                analysisResult = String(localized: "audio.analysis.found_highlights", defaultValue: "🎉 Found highlights") + " (\(highlights.count)) at: \(times.joined(separator: ", "))"
+            await MainActor.run {
+                if highlights.isEmpty {
+                    analysisResult = String(localized: "audio.analysis.no_highlights", defaultValue: "No highlights (applause/laughter) detected")
+                } else {
+                    let times = highlights.prefix(3).map { formatTime($0.timeRange.start) }
+                    analysisResult = String(localized: "audio.analysis.found_highlights", defaultValue: "🎉 Found highlights") + " (\(highlights.count)) at: \(times.joined(separator: ", "))"
+                }
             }
         } catch {
-            analysisResult = String(localized: "audio.analysis.failed", defaultValue: "❌ Audio analysis failed") + ": \(error.localizedDescription)"
+            await MainActor.run {
+                analysisResult = String(localized: "audio.analysis.failed", defaultValue: "❌ Audio analysis failed") + ": \(error.localizedDescription)"
+                ServiceContainer.shared.toastManager.show(
+                    "Audio analysis failed: \(error.localizedDescription)",
+                    type: .error
+                )
+            }
         }
     }
 
     private func analyzeAudio() async {
+        // CRITICAL FIX: Validate clip before operation
+        guard !clip.isMissing else {
+            await MainActor.run {
+                analysisResult = "Cannot analyze: Clip file is missing. Use 'Locate File' in Clip Info to relink the file."
+                ServiceContainer.shared.toastManager.show(
+                    "Clip file is missing. Check Clip Info section to relink the file.",
+                    type: .error
+                )
+            }
+            return
+        }
+        
+        isAnalyzingAudio = true
+        defer {
+            Task { @MainActor in
+                isAnalyzingAudio = false
+            }
+        }
+        
         do {
             let classifications = try await ServiceContainer.shared.soundAnalysisService.analyzeAudio(in: clip.url)
             let grouped = Dictionary(grouping: classifications, by: { $0.label })
             let summary = grouped.map { "\($0.key.displayName): \($0.value.count)" }.joined(separator: ", ")
-            analysisResult = String(localized: "audio.analysis.summary", defaultValue: "🎵 Audio summary") + ": \(summary)"
+            await MainActor.run {
+                analysisResult = String(localized: "audio.analysis.summary", defaultValue: "🎵 Audio summary") + ": \(summary)"
+            }
         } catch {
-            analysisResult = String(localized: "audio.analysis.failed", defaultValue: "❌ Audio analysis failed") + ": \(error.localizedDescription)"
+            await MainActor.run {
+                analysisResult = String(localized: "audio.analysis.failed", defaultValue: "❌ Audio analysis failed") + ": \(error.localizedDescription)"
+                ServiceContainer.shared.toastManager.show(
+                    "Audio analysis failed: \(error.localizedDescription)",
+                    type: .error
+                )
+            }
         }
     }
 

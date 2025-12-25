@@ -198,15 +198,30 @@ extension AppState {
       // CRITICAL FIX: If recording, switch to camera FIRST before stopping screen share
       // This ensures recording continues seamlessly
       if recordingState.isRecording {
-        // Switch source to camera - this will properly stop screen recorder and start camera
+        // CRITICAL: Switch source to camera and AWAIT completion
+        // This ensures UI state is updated only after switch completes
         let newSource: RecordingSource = .camera
         AppLogger.recording.info("🔄 AppState: Switching from screen to camera recording")
         recordingState.switchSource(newSource)
         
-        // Wait a moment for the switch to initiate, then update UI state
+        // CRITICAL: Wait for switch to complete (with timeout)
+        // We poll the recording state to see when switch is done
         Task {
-          // Small delay to let switchSource start the transition
-          try? await Task.sleep(nanoseconds: 100_000_000) // 100ms
+          var attempts = 0
+          let maxAttempts = 50 // 5 seconds max wait (50 * 100ms)
+          
+          while attempts < maxAttempts {
+            try? await Task.sleep(nanoseconds: 100_000_000) // 100ms
+            
+            // Check if switch completed by checking if we're on camera source
+            // Note: We can't directly check isSwitching, so we infer from source
+            // If recording is still active and we're not screen sharing, switch likely completed
+            if !recordingState.isRecording || !windowManager.isScreenSharing {
+              break
+            }
+            
+            attempts += 1
+          }
           
           await MainActor.run {
             windowManager.restoreMainWindow()
@@ -279,12 +294,29 @@ extension AppState {
       windowManager.minimizeMainWindow()
       
       // CRITICAL FIX: If recording, switch to screen source AFTER screen share is set up
+      // BULLETPROOF: Handle switch completion and errors
       if recordingState.isRecording {
         let newSource: RecordingSource = .screen
         AppLogger.recording.info("🔄 AppState: Switching from camera to screen recording")
         recordingState.switchSource(newSource)
         
-        ServiceContainer.shared.toastManager.show("🖥️ Switched to Screen Recording")
+        // CRITICAL: Wait for switch to complete (with timeout)
+        Task {
+          var attempts = 0
+          let maxAttempts = 50 // 5 seconds max wait
+          
+          while attempts < maxAttempts {
+            try? await Task.sleep(nanoseconds: 100_000_000) // 100ms
+            
+            // Check if switch completed - if screen recorder is active, switch likely completed
+            // We can't directly check, so we just wait a reasonable time
+            attempts += 1
+          }
+          
+          await MainActor.run {
+            ServiceContainer.shared.toastManager.show("🖥️ Switched to Screen Recording")
+          }
+        }
       }
     }
   }

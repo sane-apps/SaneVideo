@@ -38,6 +38,9 @@ struct TimelineClipView: View {
     @State private var rightTrimOffset: CGFloat = 0
     @State private var isHovering = false
     @State private var showingDeleteFileConfirmation = false
+    
+    // CRITICAL FIX: Track waveform loading task for cancellation
+    @State private var waveformLoadTask: Task<Void, Never>?
 
     private let handleWidth: CGFloat = 14
     private let clipHeight: CGFloat = 80
@@ -58,7 +61,10 @@ struct TimelineClipView: View {
     }
 
     var body: some View {
-        ZStack(alignment: .leading) {
+        // CRITICAL FIX: Break up complex expression to help compiler type-check
+        let frameWidth = max(0, clipWidth + (isDraggingRightHandle ? rightTrimOffset : 0) - (isDraggingLeftHandle ? leftTrimOffset : 0))
+        
+        return ZStack(alignment: .leading) {
             HStack(spacing: 0) {
                 // LEFT TRIM HANDLE
                 ClipTrimHandle(
@@ -80,7 +86,7 @@ struct TimelineClipView: View {
                 )
             }
         }
-        .frame(width: max(0, clipWidth + (isDraggingRightHandle ? rightTrimOffset : 0) - (isDraggingLeftHandle ? leftTrimOffset : 0)), height: clipHeight)
+        .frame(width: frameWidth, height: clipHeight)
         .accessibilityIdentifier("TimelineClip")
         .accessibilityLabel(clip.url.lastPathComponent)
         .offset(x: isDraggingLeftHandle ? leftTrimOffset : 0)
@@ -93,21 +99,31 @@ struct TimelineClipView: View {
         }
         .scaleEffect(isHovering ? 1.02 : 1.0)
         .animation(.smoothUI, value: isHovering)
-        .simultaneousGesture(
-            DragGesture(minimumDistance: 0, coordinateSpace: .local)
-                .onEnded { value in
-                    if !isDraggingLeftHandle && !isDraggingRightHandle {
-                        let percent = value.startLocation.x / (clipWidth - handleWidth * 2)
-                        let safePercent = max(0, min(1.0, percent))
-                        let timeOffset = clip.effectiveDuration.seconds * Double(safePercent)
-                        let seekTime = CMTimeAdd(clip.startTime, CMTime(seconds: timeOffset, preferredTimescale: 600))
-                        onSelect?(seekTime)
-                    }
-                }
-        )
+        .modifier(ClipGestureModifier(
+            isDraggingLeftHandle: isDraggingLeftHandle,
+            isDraggingRightHandle: isDraggingRightHandle,
+            clipWidth: clipWidth,
+            handleWidth: handleWidth,
+            clip: clip,
+            onSelect: onSelect
+        ))
         .task {
-            // ROBUSTNESS: Thumbnails are now JIT loaded by the cells themselves to avoid OOM
-            await loadWaveform()
+            // CRITICAL FIX: Load waveform on-demand when view appears
+            // This prevents loading waveforms for off-screen clips
+            waveformLoadTask = Task { @MainActor in
+                await loadWaveform()
+            }
+            // CRITICAL FIX: Don't await here - let task run in background
+            // The view will update when waveformSamples is set
+        }
+        .onDisappear {
+            // CRITICAL FIX: Cancel waveform load when view disappears (clip off-screen)
+            waveformLoadTask?.cancel()
+            waveformLoadTask = nil
+            // Also cancel the load in the service
+            Task {
+                await ServiceContainer.shared.waveformService.cancelLoad(for: clip)
+            }
         }
         .contextMenu {
             ClipContextMenu(
@@ -287,7 +303,12 @@ struct TimelineClipView: View {
     // Removed eager loadThumbnails() to prevent OOM on large files
     
     private func loadWaveform() async {
+        // CRITICAL FIX: Check for cancellation before loading
+        guard !Task.isCancelled else { return }
+        
         if let samples = await ServiceContainer.shared.waveformService.waveform(for: clip) {
+            // CRITICAL FIX: Check cancellation again before updating UI
+            guard !Task.isCancelled else { return }
             await MainActor.run { self.waveformSamples = samples }
         }
     }
@@ -352,5 +373,43 @@ struct TimelineThumbnailCell: View {
                 self.isLoading = false
             }
         }
+    }
+}
+
+// MARK: - Gesture Modifier (to help compiler type-check)
+
+/// CRITICAL FIX: Extract gesture logic to separate modifier to help compiler type-check
+struct ClipGestureModifier: ViewModifier {
+    let isDraggingLeftHandle: Bool
+    let isDraggingRightHandle: Bool
+    let clipWidth: CGFloat
+    let handleWidth: CGFloat
+    let clip: VideoClip
+    let onSelect: ((CMTime?) -> Void)?
+    
+    func body(content: Content) -> some View {
+        content
+            // CRITICAL FIX: Use gesture priority system to prevent conflicts
+            // Select gesture has lower priority than trim handles (which use highPriorityGesture)
+            // Increase minimumDistance to prevent accidental triggers during trim
+            .gesture(
+                DragGesture(minimumDistance: 5, coordinateSpace: .local) // CRITICAL FIX: Require 5px movement to prevent accidental triggers
+                    .onEnded { value in
+                        // CRITICAL FIX: Only allow selection if not dragging trim handles
+                        // This prevents gesture conflicts
+                        guard !isDraggingLeftHandle && !isDraggingRightHandle else { return }
+                        
+                        // CRITICAL FIX: Check if drag was significant enough to be intentional
+                        // Small movements (< 5px) are likely accidental
+                        let dragDistance = sqrt(pow(value.translation.width, 2) + pow(value.translation.height, 2))
+                        guard dragDistance < 10 else { return } // If dragged too far, it's not a click
+                        
+                        let percent = value.startLocation.x / (clipWidth - handleWidth * 2)
+                        let safePercent = max(0, min(1.0, percent))
+                        let timeOffset = clip.effectiveDuration.seconds * Double(safePercent)
+                        let seekTime = CMTimeAdd(clip.startTime, CMTime(seconds: timeOffset, preferredTimescale: 600))
+                        onSelect?(seekTime)
+                    }
+            )
     }
 }

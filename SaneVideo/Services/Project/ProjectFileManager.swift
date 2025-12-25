@@ -56,6 +56,11 @@ final class ProjectFileManager: Sendable {
             throw error
         }
         
+        // CRITICAL FIX: Validate duration is valid before creating clip
+        guard duration.seconds > 0 else {
+            throw AppError.recordingEngineError("Invalid video duration: \(duration.seconds)s")
+        }
+        
         // 4. Create Bookmark (Off Main Thread)
         // Use a local capture to avoid actor isolation issues
         let bookmarkData = try? await Task.detached(priority: .utility) {
@@ -217,9 +222,11 @@ final class ProjectFileManager: Sendable {
     // MARK: - Project Hydration
 
     /// Resolves bookmarks for all clips in a project, updating URLs if needed
-    func hydrateProject(_ project: VideoProject) -> VideoProject {
+    /// Returns: (updatedProject, needsSave) - needsSave is true if bookmarks were updated
+    func hydrateProject(_ project: VideoProject) -> (VideoProject, Bool) {
         var updatedProject = project
         var updatedTracks: [Track] = []
+        var needsSave = false  // Track if any bookmarks were updated
 
         for var track in project.timeline.tracks {
             var updatedClips: [VideoClip] = []
@@ -230,9 +237,11 @@ final class ProjectFileManager: Sendable {
                         let (resolvedURL, isStale) = try resolveBookmark(data: bookmarkData)
 
                         if isStale {
-                            // Update bookmark if stale
+                            // CRITICAL: Update bookmark if stale
                             if let newBookmark = try? createBookmark(for: resolvedURL) {
                                 clip.bookmarkData = newBookmark
+                                needsSave = true  // Mark that project needs saving
+                                AppLogger.project.info("Updated stale bookmark for \(clip.url.lastPathComponent)")
                             }
                         }
 
@@ -243,12 +252,46 @@ final class ProjectFileManager: Sendable {
                             clip.url = resolvedURL
                         }
                         
-                        // Check existence
+                        // CRITICAL: Check existence (TOCTOU race possible, but we'll re-check when accessing)
+                        // Note: File might be deleted between check and use, but we handle that in playback
                         if !FileManager.default.fileExists(atPath: resolvedURL.path) {
-                            AppLogger.project.warning("File missing at \(resolvedURL.path)")
+                            AppLogger.project.warning("⚠️ File missing at \(resolvedURL.path)")
                             clip.isMissing = true
                         } else {
                             clip.isMissing = false
+                        }
+                        
+                        // CRITICAL FIX: Validate clip properties on load
+                        // Fix invalid properties automatically (synchronous validation)
+                        if clip.duration.seconds <= 0 {
+                            AppLogger.project.warning("⚠️ Clip has invalid duration (\(clip.duration.seconds)s), marking as missing")
+                            clip.isMissing = true
+                            needsSave = true
+                        }
+                        
+                        if clip.startTime.seconds < 0 {
+                            AppLogger.project.warning("⚠️ Clip has negative startTime (\(clip.startTime.seconds)s), fixing to zero")
+                            clip.startTime = .zero
+                            needsSave = true
+                        }
+                        
+                        if clip.trimStart.seconds < 0 {
+                            AppLogger.project.warning("⚠️ Clip has negative trimStart (\(clip.trimStart.seconds)s), fixing to zero")
+                            clip.trimStart = .zero
+                            needsSave = true
+                        }
+                        
+                        if clip.trimEnd.seconds > clip.duration.seconds && clip.duration.seconds > 0 {
+                            AppLogger.project.warning("⚠️ Clip trimEnd (\(clip.trimEnd.seconds)s) exceeds duration (\(clip.duration.seconds)s), fixing")
+                            clip.trimEnd = clip.duration
+                            needsSave = true
+                        }
+                        
+                        if clip.trimStart.seconds >= clip.trimEnd.seconds && clip.duration.seconds > 0 {
+                            AppLogger.project.warning("⚠️ Clip trimStart (\(clip.trimStart.seconds)s) >= trimEnd (\(clip.trimEnd.seconds)s), fixing")
+                            clip.trimStart = .zero
+                            clip.trimEnd = clip.duration
+                            needsSave = true
                         }
                         
                         updatedClips.append(clip)
@@ -276,7 +319,7 @@ final class ProjectFileManager: Sendable {
         }
 
         updatedProject.timeline.tracks = updatedTracks
-        return updatedProject
+        return (updatedProject, needsSave)
     }
 
     // MARK: - Security Scope Session

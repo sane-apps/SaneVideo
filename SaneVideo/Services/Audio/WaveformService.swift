@@ -15,27 +15,79 @@ actor WaveformService {
 
     // In-progress tasks
     private var tasks: [UUID: Task<[Float], Error>] = [:]
+    
+    // CRITICAL FIX: Limit concurrent waveform loads to prevent UI freezes
+    // Use a semaphore-like pattern with a task queue
+    private var activeLoads: Set<UUID> = []
+    private let maxConcurrentLoads = 5 // Limit to 5 concurrent waveform generations
 
     func waveform(for clip: VideoClip) async -> [Float]? {
+        // CRITICAL FIX: Check cache first
         if let cached = cache[clip.id] {
             return cached
         }
 
+        // CRITICAL FIX: Check if task already exists
         if let existingTask = tasks[clip.id] {
             return try? await existingTask.value
         }
 
-        let task = Task {
-            // CRITICAL FIX: Use defer to clean up task even on failure
-            defer { tasks[clip.id] = nil }
+        // CRITICAL FIX: Wait for available slot if at capacity
+        while activeLoads.count >= maxConcurrentLoads {
+            // Wait a bit before checking again
+            try? await Task.sleep(nanoseconds: 50_000_000) // 50ms
+            // Check if task was cancelled
+            if Task.isCancelled {
+                return nil
+            }
+        }
 
+        // CRITICAL FIX: Mark as active load BEFORE creating task
+        // This prevents race condition where multiple tasks could be created
+        activeLoads.insert(clip.id)
+
+        let clipId = clip.id
+        let task = Task<[Float], Error> {
             let samples = try await generateWaveform(for: clip)
-            cache[clip.id] = samples
+            // CRITICAL FIX: Only cache if task wasn't cancelled
+            guard !Task.isCancelled else {
+                return []
+            }
             return samples
         }
 
         tasks[clip.id] = task
-        return try? await task.value
+        
+        // CRITICAL FIX: Handle cancellation and cleanup properly
+        do {
+            let samples = try await task.value
+            // CRITICAL FIX: Cache result and cleanup on success
+            cache[clipId] = samples
+            tasks.removeValue(forKey: clipId)
+            activeLoads.remove(clipId)
+            return samples
+        } catch is CancellationError {
+            // Task was cancelled, cleanup
+            tasks.removeValue(forKey: clipId)
+            activeLoads.remove(clipId)
+            return nil
+        } catch {
+            // Other error, cleanup
+            tasks.removeValue(forKey: clipId)
+            activeLoads.remove(clipId)
+            return nil
+        }
+    }
+    
+    /// CRITICAL FIX: Cancel waveform load for a clip (e.g., when off-screen)
+    func cancelLoad(for clip: VideoClip) {
+        if let task = tasks[clip.id] {
+            task.cancel()
+            tasks.removeValue(forKey: clip.id)
+            activeLoads.remove(clip.id)
+            // CRITICAL FIX: Also remove from cache if it was a partial load
+            // (though typically we'd keep partial results, but for cancellation we clear)
+        }
     }
 
     private func generateWaveform(for clip: VideoClip) async throws -> [Float] {
@@ -110,8 +162,13 @@ actor WaveformService {
 
     /// Clear the waveform cache (called during memory pressure)
     func clearCache() {
+        // CRITICAL FIX: Cancel all in-progress tasks before clearing
+        for task in tasks.values {
+            task.cancel()
+        }
         cache.removeAll()
         tasks.removeAll()
+        activeLoads.removeAll()
         AppLogger.timeline.info("WaveformService: Cache cleared")
     }
 }

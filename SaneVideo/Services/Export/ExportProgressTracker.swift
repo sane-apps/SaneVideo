@@ -50,8 +50,8 @@ class ExportProgressTracker {
     }
 
     deinit {
-        // stopMonitoring() is MainActor-isolated, but deinit is nonisolated
-        // Cancel the task instead
+        // CRITICAL FIX: Cancel task on deallocation
+        // Note: @MainActor class can access MainActor properties in deinit
         monitoringTask?.cancel()
         monitoringTask = nil
     }

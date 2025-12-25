@@ -14,14 +14,21 @@ import SwiftUI
 struct VideoSection: View {
     @Environment(AppState.self) var appState
     let clip: VideoClip
+    @Binding var isOperationInProgress: Bool
 
+    // CRITICAL FIX: Sync state with clip properties
     @State private var speed: Double
     @State private var isAnalyzingCrop = false
     @State private var cropResult: String?
     @State private var selectedAspectRatio: AspectRatioOption = .vertical
+    @State private var cropError: String?
+    
+    // CRITICAL FIX: Debounce slider updates
+    @State private var pendingSpeedUpdate: Task<Void, Never>?
 
-    init(clip: VideoClip) {
+    init(clip: VideoClip, isOperationInProgress: Binding<Bool>) {
         self.clip = clip
+        self._isOperationInProgress = isOperationInProgress
         _speed = State(initialValue: clip.speed)
     }
 
@@ -39,11 +46,26 @@ struct VideoSection: View {
                 Slider(value: $speed, in: 0.25 ... 4.0, step: 0.25)
                     .accessibilityIdentifier("video.speed_slider")
                     .onChange(of: speed) { _, newValue in
-                        appState.projectState.updateClipSpeed(clipId: clip.id, speed: newValue)
+                        // CRITICAL FIX: Debounce slider updates to prevent excessive saves
+                        pendingSpeedUpdate?.cancel()
+                        pendingSpeedUpdate = Task {
+                            // Wait 300ms after user stops dragging
+                            try? await Task.sleep(nanoseconds: 300_000_000)
+                            guard !Task.isCancelled else { return }
+                            await MainActor.run {
+                                appState.projectState.updateClipSpeed(clipId: clip.id, speed: newValue)
+                            }
+                        }
                     }
                 Text(String(format: "%.1fx", speed))
                     .font(.system(size: 11, design: .monospaced))
                     .frame(width: 40)
+            }
+            // CRITICAL FIX: Sync speed when clip changes externally
+            .onChange(of: clip.speed) { _, newSpeed in
+                if abs(speed - newSpeed) > 0.01 { // Only update if significantly different
+                    speed = newSpeed
+                }
             }
             HStack(spacing: 6) {
                 ForEach([0.5, 1.0, 1.5, 2.0], id: \.self) { preset in
@@ -86,7 +108,7 @@ struct VideoSection: View {
                 .buttonStyle(.plain)
                 .hoverScale(1.02)
                 .pressScale()
-                .disabled(appState.projectState.isProcessing)
+                .disabled(appState.projectState.isProcessing || clip.isMissing) // CRITICAL FIX: Disable if clip is missing
                 .accessibilityIdentifier("video.apply_auto_zoom")
                 .smoothAppear()
                 
@@ -96,8 +118,8 @@ struct VideoSection: View {
             // Smart Crop with Aspect Ratio Options
             SubsectionHeader(title: String(localized: "video.section.smart_crop", defaultValue: "Smart Crop"))
 
-            // Aspect Ratio Picker
-            HStack(spacing: 6) {
+            // P1 FIX: Larger aspect ratio buttons
+            HStack(spacing: 8) {
                 ForEach(AspectRatioOption.allCases) { option in
                     AspectRatioButton(
                         option: option,
@@ -106,6 +128,9 @@ struct VideoSection: View {
                         selectedAspectRatio = option
                     }
                     .accessibilityIdentifier("video.aspect_ratio.\(option.id)")
+                    .accessibilityLabel("\(option.localizedLabel) aspect ratio")
+                    .accessibilityHint(option.localizedPlatform)
+                    .focusable()
                 }
             }
 
@@ -137,10 +162,25 @@ struct VideoSection: View {
             .buttonStyle(.plain)
             .hoverScale(1.02)
             .pressScale()
-            .disabled(isAnalyzingCrop)
+            .disabled(isAnalyzingCrop || clip.isMissing) // CRITICAL FIX: Disable if clip is missing
             .accessibilityIdentifier("video.apply_smart_crop")
             .smoothAppear()
 
+            // CRITICAL FIX: Show error if operation failed
+            if let error = cropError {
+                HStack {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundColor(.orange)
+                    Text(error)
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                }
+                .padding(6)
+                .background(Color.orange.opacity(0.1))
+                .cornerRadius(4)
+                .transition(.smoothScale)
+            }
+            
             if let result = cropResult {
                 Text(result)
                     .font(.caption2)
@@ -150,15 +190,51 @@ struct VideoSection: View {
     }
 
     private func applySmartCrop() async {
+        // CRITICAL FIX: Validate clip before operation
+        guard !clip.isMissing else {
+            await MainActor.run {
+                cropError = "Cannot apply crop: Clip file is missing"
+                cropResult = nil
+            }
+            return
+        }
+        
+        // CRITICAL FIX: Check if clip has video track
+        let asset = AVURLAsset(url: clip.url)
+        let tracks = try? await asset.loadTracks(withMediaType: .video)
+        guard let videoTrack = tracks?.first else {
+            await MainActor.run {
+                cropError = "Cannot apply crop: No video track found"
+                cropResult = nil
+            }
+            return
+        }
+        
         isAnalyzingCrop = true
         cropResult = nil
-        defer { isAnalyzingCrop = false }
+        cropError = nil
+        defer { 
+            Task { @MainActor in
+                isAnalyzingCrop = false
+            }
+        }
 
-        await appState.projectState.applySmartCrop(
-            to: clip,
-            targetAspectRatio: selectedAspectRatio.ratio
-        )
-        cropResult = "✅ Applied \(selectedAspectRatio.localizedLabel) crop"
+        do {
+            await appState.projectState.applySmartCrop(
+                to: clip,
+                targetAspectRatio: selectedAspectRatio.ratio
+            )
+            await MainActor.run {
+                cropResult = "✅ Applied \(selectedAspectRatio.localizedLabel) crop"
+                cropError = nil
+            }
+        } catch {
+            await MainActor.run {
+                cropError = "Crop failed: \(error.localizedDescription)"
+                cropResult = nil
+                AppLogger.project.error("Smart crop failed: \(error.localizedDescription)")
+            }
+        }
     }
 }
 
@@ -264,51 +340,78 @@ struct TransformControlsView: View {
                 }
             }
 
-            // Quick Rotation Buttons
+            // P1 FIX: Larger rotation buttons with better visual feedback
             HStack(spacing: 8) {
                 // Rotate 90° Clockwise
                 Button {
                     appState.projectState.rotateClip(clip)
                 } label: {
-                    VStack(spacing: 4) {
+                    VStack(spacing: 6) {
                         Image(systemName: "rotate.right")
-                            .font(.system(size: 16))
+                            .font(.system(size: 18, weight: .medium))
                         Text(String(localized: "video.transform.rotate_cw", defaultValue: "90° CW"))
-                            .font(.caption2)
+                            .font(.caption)
+                            .fontWeight(.medium)
                     }
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 8)
+                    .padding(.vertical, 10)
                 }
                 .buttonStyle(.bordered)
+                .controlSize(.regular) // P1 FIX: Larger control size
+                .disabled(clip.isMissing)
                 .accessibilityIdentifier("video.rotate_cw")
+                .help("Rotate 90° clockwise")
 
                 // Rotate 90° Counter-Clockwise
                 Button {
+                    // CRITICAL FIX: Validate clip before operation
+                    guard !clip.isMissing else {
+                        ServiceContainer.shared.toastManager.show(
+                            "Cannot rotate: Clip file is missing",
+                            type: .error
+                        )
+                        return
+                    }
+                    
                     let targetRotation = clip.rotation.counterClockwise
                     appState.projectState.setClipRotation(clip, to: targetRotation)
                 } label: {
-                    VStack(spacing: 4) {
+                    VStack(spacing: 6) {
                         Image(systemName: "rotate.left")
-                            .font(.system(size: 16))
+                            .font(.system(size: 18, weight: .medium))
                         Text(String(localized: "video.transform.rotate_ccw", defaultValue: "90° CCW"))
-                            .font(.caption2)
+                            .font(.caption)
+                            .fontWeight(.medium)
                     }
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 8)
+                    .padding(.vertical, 10)
                 }
                 .buttonStyle(.bordered)
+                .controlSize(.regular) // P1 FIX: Larger control size
+                .disabled(clip.isMissing)
                 .accessibilityIdentifier("video.rotate_ccw")
+                .help("Rotate 90° counter-clockwise")
             }
 
             // Reset to Original
             if clip.rotation != .none {
                 Button(String(localized: "video.transform.reset", defaultValue: "Reset to Original")) {
+                    // CRITICAL FIX: Validate clip before operation
+                    guard !clip.isMissing else {
+                        ServiceContainer.shared.toastManager.show(
+                            "Cannot reset rotation: Clip file is missing",
+                            type: .error
+                        )
+                        return
+                    }
+                    
                     appState.projectState.setClipRotation(clip, to: .none)
                 }
                 .font(.caption)
                 .buttonStyle(.bordered)
                 .controlSize(.small)
                 .tint(.orange)
+                .disabled(clip.isMissing) // CRITICAL FIX: Disable if clip is missing
                 .accessibilityIdentifier("video.reset_rotation")
             }
         }

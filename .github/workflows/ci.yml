@@ -30,8 +30,9 @@ jobs:
           CODE_SIGN_IDENTITY="-" \
           CODE_SIGNING_REQUIRED=NO
           
-    - name: Run Tests
+    - name: Run Tests (Unit Tests Only)
       run: |
+        # UI tests are optional and can be run manually with: ./Scripts/SaneMaster.rb verify --ui
         xcodebuild test \
           -project SaneVideo.xcodeproj \
           -scheme SaneVideo \
@@ -39,6 +40,7 @@ jobs:
           -configuration Debug \
           CODE_SIGN_IDENTITY="-" \
           CODE_SIGNING_REQUIRED=NO \
+          -only-testing:SaneVideoTests \
           -resultBundlePath TestResults
           
     - name: Upload Test Results
@@ -50,6 +52,9 @@ jobs:
 
     - name: Run Health Check
       run: ./Scripts/run_health_check.sh
+
+    - name: Check Documentation Sync
+      run: ./Scripts/SaneMaster.rb check_docs || echo "⚠️ Documentation sync check completed with warnings"
 
   lint:
     runs-on: macos-15

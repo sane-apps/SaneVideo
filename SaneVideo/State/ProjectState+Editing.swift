@@ -173,9 +173,17 @@ extension ProjectState {
             }
         }
         
+        // Validate text range
+        guard textRange.length > 0 else {
+            AppLogger.project.warning("Empty text range provided")
+            return nil
+        }
+        
         // Find segments that overlap with text range
         guard let startSegment = wordSegments.first(where: { $0.offset <= textRange.location && $0.offset + $0.text.count > textRange.location }),
               let endSegment = wordSegments.first(where: { $0.offset <= textRange.location + textRange.length && $0.offset + $0.text.count >= textRange.location + textRange.length }) else {
+            AppLogger.project.warning("Could not map text range to time range (text range: \(textRange.location)-\(textRange.location + textRange.length))")
+            ServiceContainer.shared.toastManager.show("Could not find time range for text selection", type: .error)
             return nil
         }
         

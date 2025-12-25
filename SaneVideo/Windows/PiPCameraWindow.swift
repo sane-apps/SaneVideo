@@ -18,8 +18,25 @@ class PiPCameraWindow: NSPanel {
     // Child window for controls (Excluded from recording)
     var controlsWindow: PiPControlsWindow?
 
+    // CRITICAL FIX: Handle screen configuration changes
+    @objc private func screenConfigurationChanged() {
+        // Re-snap to corner if window is visible and valid
+        guard isVisible,
+              windowNumber > 0,
+              !isReleasedWhenClosed else { return }
+        
+        // Re-snap to last known corner (default to bottomRight)
+        snapToCorner(.bottomRight)
+        AppLogger.window.info("PiP window re-positioned after screen configuration change")
+    }
+    
     deinit {
         AppLogger.window.debug("PiPCameraWindow deinit")
+        // CRITICAL FIX: Remove observer on deallocation
+        NotificationCenter.default.removeObserver(self)
+        // CRITICAL FIX: Cleanup should happen in close(), but as safety net:
+        // Note: Can't access MainActor properties in nonisolated deinit
+        // Rely on close() being called properly
     }
 
     convenience init() {
@@ -42,6 +59,14 @@ class PiPCameraWindow: NSPanel {
 
         isReleasedWhenClosed = false
         title = "SaneVideo PiP"
+        
+        // CRITICAL FIX: Observe screen configuration changes
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(screenConfigurationChanged),
+            name: NSApplication.didChangeScreenParametersNotification,
+            object: nil
+        )
         
         setupWindow()
         setupPreview()
@@ -301,6 +326,12 @@ class PiPCameraWindow: NSPanel {
             controls.close()
         }
         
+        // CRITICAL FIX: Cleanup preview layer and cancellables before closing
+        previewLayer?.removeFromSuperlayer()
+        previewLayer = nil
+        previewView = nil
+        cancellables.removeAll()
+        
         super.close()
     }
 
@@ -330,7 +361,13 @@ class PiPCameraWindow: NSPanel {
     }
 
     func snapToCorner(_ corner: ScreenCorner) {
-        guard let screen = NSScreen.main else { return }
+        // CRITICAL FIX: Validate screen exists and window is valid
+        guard let screen = NSScreen.main,
+              windowNumber > 0,
+              !isReleasedWhenClosed else {
+            AppLogger.window.warning("Cannot snap window: invalid screen or window state")
+            return
+        }
 
         let margin: CGFloat = 40
         let newOrigin = switch corner {

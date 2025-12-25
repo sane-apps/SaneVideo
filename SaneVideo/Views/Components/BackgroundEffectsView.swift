@@ -12,6 +12,7 @@ import SwiftUI
 struct BackgroundEffectsView: View {
   @Environment(AppState.self) var appState
   let clip: VideoClip
+  @Binding var isOperationInProgress: Bool
 
   @State private var selectedEffect: BackgroundEffect?
   @State private var blurRadius: Float = 20
@@ -19,8 +20,9 @@ struct BackgroundEffectsView: View {
   @State private var selectedImageURL: URL?
   @State private var isPickingImage = false
 
-  init(clip: VideoClip) {
+  init(clip: VideoClip, isOperationInProgress: Binding<Bool>) {
     self.clip = clip
+    self._isOperationInProgress = isOperationInProgress
     _selectedEffect = State(initialValue: clip.backgroundEffect)
     if case .blur(let radius) = clip.backgroundEffect {
       _blurRadius = State(initialValue: radius)
@@ -35,7 +37,7 @@ struct BackgroundEffectsView: View {
       _selectedImageURL = State(initialValue: url)
     }
   }
-
+  
   var body: some View {
     VStack(alignment: .leading, spacing: 10) {
       // Header with toggle
@@ -69,58 +71,62 @@ struct BackgroundEffectsView: View {
       }
 
       if selectedEffect != nil {
-        // Effect Type Picker
-        HStack(spacing: 6) {
-          EffectTypeButton(
-            title: String(localized: "background.effect.blur", defaultValue: "Blur"),
-            icon: "camera.filters",
-            isSelected: isBlur,
-            id: "background.effect.blur",
-            action: {
-              selectedEffect = .blur(radius: blurRadius)
-              saveEffect()
-            }
-          )
+        // P1 FIX: 2x2 grid layout for effect type buttons
+        VStack(spacing: 6) {
+          HStack(spacing: 6) {
+            EffectTypeButton(
+              title: String(localized: "background.effect.blur", defaultValue: "Blur"),
+              icon: "camera.filters",
+              isSelected: isBlur,
+              id: "background.effect.blur",
+              action: {
+                selectedEffect = .blur(radius: blurRadius)
+                saveEffect()
+              }
+            )
 
-          EffectTypeButton(
-            title: String(localized: "background.effect.color", defaultValue: "Color"),
-            icon: "paintpalette",
-            isSelected: isSolidColor,
-            id: "background.effect.color",
-            action: {
-              let components = selectedColor.cgColor?.components ?? [0, 1, 0, 1]
-              selectedEffect = .solidColor(
-                red: CGFloat(components[0]),
-                green: CGFloat(components[1]),
-                blue: CGFloat(components[2]),
-                alpha: 1
-              )
-              saveEffect()
-            }
-          )
+            EffectTypeButton(
+              title: String(localized: "background.effect.color", defaultValue: "Color"),
+              icon: "paintpalette",
+              isSelected: isSolidColor,
+              id: "background.effect.color",
+              action: {
+                let components = selectedColor.cgColor?.components ?? [0, 1, 0, 1]
+                selectedEffect = .solidColor(
+                  red: CGFloat(components[0]),
+                  green: CGFloat(components[1]),
+                  blue: CGFloat(components[2]),
+                  alpha: 1
+                )
+                saveEffect()
+              }
+            )
+          }
+          
+          HStack(spacing: 6) {
+            EffectTypeButton(
+              title: String(localized: "background.effect.chroma", defaultValue: "Chroma"),
+              icon: "circle.dashed.inset.filled",
+              isSelected: isChromaKey,
+              id: "background.effect.chroma",
+              action: {
+                // Default to green screen
+                selectedEffect = .chromaKey(red: 0, green: 1, blue: 0, sensitivity: 0.2)
+                selectedColor = .green
+                saveEffect()
+              }
+            )
 
-          EffectTypeButton(
-            title: String(localized: "background.effect.chroma", defaultValue: "Chroma"),
-            icon: "circle.dashed.inset.filled",
-            isSelected: isChromaKey,
-            id: "background.effect.chroma",
-            action: {
-              // Default to green screen
-              selectedEffect = .chromaKey(red: 0, green: 1, blue: 0, sensitivity: 0.2)
-              selectedColor = .green
-              saveEffect()
-            }
-          )
-
-          EffectTypeButton(
-            title: String(localized: "background.effect.image", defaultValue: "Image"),
-            icon: "photo",
-            isSelected: isImage,
-            id: "background.effect.image",
-            action: {
-              isPickingImage = true
-            }
-          )
+            EffectTypeButton(
+              title: String(localized: "background.effect.image", defaultValue: "Image"),
+              icon: "photo",
+              isSelected: isImage,
+              id: "background.effect.image",
+              action: {
+                isPickingImage = true
+              }
+            )
+          }
         }
 
         // Effect-specific controls
@@ -147,6 +153,25 @@ struct BackgroundEffectsView: View {
         selectedImageURL = url
         selectedEffect = .image(url: url)
         saveEffect()
+      }
+    }
+    // CRITICAL FIX: Sync state when clip changes externally
+    .onChange(of: clip.backgroundEffect) { _, newEffect in
+      if selectedEffect != newEffect {
+        selectedEffect = newEffect
+        // Update related state
+        if case .blur(let radius) = newEffect {
+          blurRadius = radius
+        }
+        if case .solidColor(let r, let g, let b, _) = newEffect {
+          selectedColor = Color(red: r, green: g, blue: b)
+        }
+        if case .chromaKey(let r, let g, let b, _) = newEffect {
+          selectedColor = Color(red: r, green: g, blue: b)
+        }
+        if case .image(let url) = newEffect {
+          selectedImageURL = url
+        }
       }
     }
   }
@@ -331,8 +356,6 @@ struct BackgroundEffectsView: View {
           value: Binding(
             get: { chromaSensitivity },
             set: { newValue in
-              var currentSensitivity = chromaSensitivity
-              currentSensitivity = newValue
               updateChromaKey(sensitivity: newValue)
             }
           ), in: 0.0...1.0

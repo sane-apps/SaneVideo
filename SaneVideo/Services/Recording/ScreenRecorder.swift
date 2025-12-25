@@ -54,7 +54,7 @@ class ScreenRecorder: NSObject, SCContentSharingPickerObserver, SCStreamDelegate
       return
     }
 
-    // Guard against stopping state
+    // CRITICAL: Guard against stopping state
     guard !isStopping else {
       AppLogger.recording.warning("Screen recorder is stopping, cannot start")
       throw NSError(
@@ -66,19 +66,49 @@ class ScreenRecorder: NSObject, SCContentSharingPickerObserver, SCStreamDelegate
 
     self.currentOutputURL = outputURL
 
-    // Stop existing stream if running
+    // CRITICAL: Stop existing stream if running (prevents multiple streams)
     if activeStream != nil {
       AppLogger.recording.warning("Screen recorder already running, stopping first...")
       await stop()
       try await Task.sleep(nanoseconds: 100_000_000)  // 100ms cleanup delay
+      
+      // CRITICAL: Re-check stopping state after cleanup
+      guard !isStopping else {
+        throw NSError(
+          domain: "SaneVideo",
+          code: -101,
+          userInfo: [NSLocalizedDescriptionKey: "Screen recorder is stopping"]
+        )
+      }
+    }
+    
+    // CRITICAL: Check if picker is already active (prevents multiple presentations)
+    let picker = SCContentSharingPicker.shared
+    if picker.isActive {
+      AppLogger.recording.warning("Picker already active, reusing existing selection...")
+      // If we have a baseFilter, reuse it
+      if let existingFilter = baseFilter {
+        await handleContentSelected(filter: existingFilter)
+        return
+      }
+      // Otherwise, wait a moment and check again
+      try await Task.sleep(nanoseconds: 500_000_000) // 500ms
+      if let existingFilter = baseFilter {
+        await handleContentSelected(filter: existingFilter)
+        return
+      }
+      // If still no filter, proceed to present (might be a different picker)
     }
 
     loggedScreenAudioFormat = false
 
-    let picker = SCContentSharingPicker.shared
-
-    // Register as observer
-    picker.add(self)
+    // CRITICAL: Only register if not already registered (prevents duplicate observers)
+    // (picker already declared above)
+    // Check if we're already an observer by checking if picker.isActive and we have baseFilter
+    if !picker.isActive || baseFilter == nil {
+      picker.add(self)
+    }
+    
     picker.isActive = true
 
     // TAHOE FIX: Limit stream count to prevent redundant picker triggers
@@ -94,11 +124,15 @@ class ScreenRecorder: NSObject, SCContentSharingPickerObserver, SCStreamDelegate
 
     AppLogger.recording.info("📺 No existing filter found. Presenting screen picker...")
 
+    // CRITICAL: Check if picker is already showing (prevents multiple presentations)
+    // Note: There's no direct API to check this, so we rely on baseFilter check above
+    // If picker was already presented but user hasn't selected yet, we'll get a callback
+
     // Present the picker with default style (allows windows, displays, apps)
     // User selects content → delegate callback receives SCContentFilter
     var config = SCContentSharingPickerConfiguration()
     config.allowedPickerModes = [
-      .singleWindow, .multipleWindows, .singleApplication, .multipleApplications, .singleDisplay,
+      .singleWindow, .multipleWindows, .singleApplication, .multipleApplications, .singleDisplay
     ]
     picker.configuration = config
     picker.defaultConfiguration = config
@@ -191,13 +225,41 @@ class ScreenRecorder: NSObject, SCContentSharingPickerObserver, SCStreamDelegate
     _ picker: SCContentSharingPicker,
     didCancelFor stream: SCStream?
   ) {
-    AppLogger.recording.info("📺 User cancelled screen picker")
-    // Graceful cancellation - no error needed
+    Task { @MainActor in
+      AppLogger.recording.warning("📺 User cancelled screen picker")
+      
+      // CRITICAL: Notify that picker was cancelled
+      // This allows switch logic to rollback if we were in the middle of a switch
+      if let onStop = self.onStop {
+        let cancelError = NSError(
+          domain: "SaneVideo",
+          code: -102,
+          userInfo: [NSLocalizedDescriptionKey: "User cancelled screen picker"]
+        )
+        onStop(cancelError)
+      }
+      
+      // Clean up state
+      self.activeStream = nil
+      self.baseFilter = nil
+    }
   }
 
   /// Called when picker fails to start
   nonisolated func contentSharingPickerStartDidFailWithError(_ error: Error) {
-    AppLogger.recording.error("📺 Picker failed to start: \(error.localizedDescription)")
+    Task { @MainActor in
+      AppLogger.recording.error("📺 Picker failed to start: \(error.localizedDescription)")
+      
+      // CRITICAL: Notify that picker failed
+      // This allows switch logic to rollback if we were in the middle of a switch
+      if let onStop = self.onStop {
+        onStop(error)
+      }
+      
+      // Clean up state
+      self.activeStream = nil
+      self.baseFilter = nil
+    }
   }
 
   // MARK: - Filter Updates
@@ -444,8 +506,7 @@ extension ScreenRecorder: SCStreamOutput {
       // Log audio format once for debugging
       if !loggedScreenAudioFormat,
         let format = CMSampleBufferGetFormatDescription(sampleBuffer),
-        let asbdPointer = CMAudioFormatDescriptionGetStreamBasicDescription(format)?.pointee
-      {
+        let asbdPointer = CMAudioFormatDescriptionGetStreamBasicDescription(format)?.pointee {
         AppLogger.recording.info(
           "Screen audio format sampleRate=\(asbdPointer.mSampleRate), channels=\(asbdPointer.mChannelsPerFrame), formatID=\(asbdPointer.mFormatID)"
         )

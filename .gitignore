@@ -50,6 +50,11 @@ vendor/
 *.xcresult/
 TranscriptionTest*/
 TestReports/
+
+# Code coverage reports
+fastlane/coverage/
+*.gcda
+*.gcno
 Media/
 TestOutput.xcresult/
 *.o

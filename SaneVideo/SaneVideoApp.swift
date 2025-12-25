@@ -23,7 +23,7 @@ struct SaneVideoApp: App {
         .preferredColorScheme(
           prefs.appTheme == .system ? nil : (prefs.appTheme == .dark ? .dark : .light)
         )
-        .onChange(of: scenePhase) { oldPhase, newPhase in
+        .onChange(of: scenePhase) { _, newPhase in
           if newPhase == .background || newPhase == .inactive {
             appState.saveCurrentState()
           }
@@ -326,14 +326,19 @@ class AppDelegate: NSObject, NSApplicationDelegate {
       ServiceContainer.shared.appState.recordingState.stopRecording { _ in
         // Give it a moment to finish writing
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+          // CRITICAL FIX: Close all windows before termination
+          Task { @MainActor in
+            ServiceContainer.shared.appState.windowManager.cleanupAllWindows()
+          }
           sender.reply(toApplicationShouldTerminate: true)
         }
       }
       return .terminateLater
     }
 
-    // Save state before quitting
+    // CRITICAL FIX: Close all windows before quitting
     Task { @MainActor in
+      ServiceContainer.shared.appState.windowManager.cleanupAllWindows()
       ServiceContainer.shared.appState.saveCurrentState()
     }
     return .terminateNow

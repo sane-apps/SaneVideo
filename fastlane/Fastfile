@@ -104,6 +104,29 @@ platform :mac do
     UI.success("Quality report generated at fastlane/reports/rubocop.html")
   end
 
+  desc "Generate code coverage report"
+  lane :coverage do
+    # Ensure we have test results
+    unless File.exist?("fastlane/test_output/SaneVideo.xcresult")
+      UI.important("⚠️  No test results found. Running tests first...")
+      verify
+    end
+
+    begin
+      xcov(
+        scheme: "SaneVideo",
+        output_directory: "fastlane/coverage",
+        minimum_coverage_percentage: 0.0, # Don't fail on low coverage, just report
+        only_project_targets: true,
+        exclude_targets: ["SaneVideoTests", "SaneVideoUITests"] # Don't include test targets
+      )
+      UI.success("✅ Code coverage report generated at fastlane/coverage/index.html")
+    rescue => ex
+      UI.important("⚠️  Code coverage generation failed: #{ex.message}")
+      UI.important("   This is optional - continuing...")
+    end
+  end
+
   desc "Generate release notes from git commits"
   lane :changelog do
     notes = changelog_from_git_commits(
@@ -131,6 +154,7 @@ platform :mac do
   lane :release do
     verify
     quality
+    coverage # Generate coverage report
     changelog
     sh("bundle exec ./Scripts/SaneMaster.rb check_binary")
     UI.success("Release preparation complete! Ready for distribution.")

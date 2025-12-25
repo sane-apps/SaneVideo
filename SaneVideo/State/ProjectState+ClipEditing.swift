@@ -16,12 +16,12 @@ extension ProjectState {
     func splitClip(_ clip: VideoClip, atTimelineTime globalTime: CMTime) {
         guard var project = currentProject else { return }
 
-        // 0. Concurrency Check
+        // CRITICAL FIX: Prevent concurrent timeline operations
         guard !isProcessing else {
             AppLogger.project.warning("Ignored splitClip request (Processing busy)")
             return
         }
-
+        
         // Phase 2: Check if track is locked
         if isTrackLocked(for: clip) {
             ServiceContainer.shared.toastManager.show("Track is locked", type: .error)
@@ -48,28 +48,17 @@ extension ProjectState {
             return
         }
 
-        // 3. Create two new clips
+        // 3. Create two new clips using copy method to ensure all properties are preserved
         var firstPart = clip
         firstPart.trimEnd = splitAssetTime
 
-        var secondPart = clip
-        // Re-generate ID
-        secondPart = VideoClip(
-            url: clip.url,
-            duration: clip.duration
-        )
-        // Helper copy stats if VideoClip doesn't have clone init
-        secondPart.volume = clip.volume
-        secondPart.speed = clip.speed
-        secondPart.isMuted = clip.isMuted
-        secondPart.rotation = clip.rotation
-        secondPart.captions = clip.captions
-        secondPart.transform = clip.transform // Phase 3: Copy transform
-        // Should we copy effects? Yes.
-        secondPart.effects = clip.effects
-
-        secondPart.trimStart = splitAssetTime
-        secondPart.trimEnd = clip.trimEnd
+        // Use copy method to ensure all properties are preserved (removedRanges, overlays, etc.)
+        var secondPart = clip.copy(trimStart: splitAssetTime, trimEnd: clip.trimEnd)
+        
+        // CRITICAL FIX: Set secondPart.startTime to prevent overlap
+        // Second part should start where first part ends
+        let firstPartEffectiveDuration = firstPart.effectiveDuration
+        secondPart.startTime = CMTimeAdd(clip.startTime, firstPartEffectiveDuration)
 
         // 4. Update track
         var timeline = project.timeline
@@ -91,7 +80,16 @@ extension ProjectState {
         }
 
         if splitDone {
+            // CRITICAL FIX: Recalculate startTimes to ensure consistency
+            // This handles edge cases and ensures no gaps/overlaps
             recalculateStartTimes(in: &timeline)
+            
+            // CRITICAL FIX: Validate timeline state after split
+            if !validateTimelineState(timeline) {
+                AppLogger.project.error("Timeline state invalid after split, rolling back")
+                ServiceContainer.shared.toastManager.show("Split failed: Timeline state invalid", type: .error)
+                return
+            }
 
             project.timeline = timeline
             currentProject = project
@@ -114,10 +112,37 @@ extension ProjectState {
             if let index = track.clips.firstIndex(where: { $0.id == clipId }) {
                 var clip = track.clips[index]
 
-                // Update trim values
-                // Update trim values safely
+                // Update trim values with validation
                 let newStart = trimStart ?? clip.trimStart
                 let newEnd = trimEnd ?? clip.trimEnd
+                
+                // Validate trim range before applying
+                guard newStart < newEnd else {
+                    AppLogger.project.warning("Invalid trim: start (\(newStart.seconds)s) >= end (\(newEnd.seconds)s)")
+                    ServiceContainer.shared.toastManager.show("Invalid trim range", type: .error)
+                    return
+                }
+                
+                guard newStart >= .zero, newEnd <= clip.duration else {
+                    AppLogger.project.warning("Trim range outside clip duration (duration: \(clip.duration.seconds)s)")
+                    ServiceContainer.shared.toastManager.show("Trim range exceeds clip duration", type: .error)
+                    return
+                }
+                
+                // CRITICAL FIX: Validate trim range doesn't conflict with removedRanges
+                let trimRange = CMTimeRange(start: newStart, duration: CMTimeSubtract(newEnd, newStart))
+                for removedRange in clip.removedRanges {
+                    // Check if ranges overlap: (start1 < end2) && (start2 < end1)
+                    let trimEnd = CMTimeAdd(trimRange.start, trimRange.duration)
+                    let removedEnd = CMTimeAdd(removedRange.timeRange.start, removedRange.timeRange.duration)
+                    if trimRange.start < removedEnd && removedRange.timeRange.start < trimEnd {
+                        AppLogger.project.warning("Trim range conflicts with removed range: \(removedRange.timeRange.start.seconds)s-\(removedEnd.seconds)s")
+                        ServiceContainer.shared.toastManager.show("Trim range conflicts with removed section", type: .error)
+                        return
+                    }
+                }
+                
+                // setTrimRange will clamp values, but we've validated above for better error messages
                 clip.setTrimRange(start: newStart, end: newEnd)
 
                 registerUndo("Trim Clip")
@@ -132,6 +157,17 @@ extension ProjectState {
 
         if clipFound {
             recalculateStartTimes(in: &timeline)
+            
+            // CRITICAL FIX: Update timeline duration after trim
+            timeline.updateDuration()
+            
+            // CRITICAL FIX: Validate timeline state after trim
+            if !validateTimelineState(timeline) {
+                AppLogger.project.error("Timeline state invalid after trim, rolling back")
+                ServiceContainer.shared.toastManager.show("Trim failed: Timeline state invalid", type: .error)
+                return
+            }
+            
             project.timeline = timeline
             currentProject = project
             saveProject(project)

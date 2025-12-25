@@ -55,15 +55,17 @@ struct Timeline: Codable, Equatable, Sendable {
     // MARK: - Private Helpers
 
     /// Calculate total duration from tracks (max end time of any clip on any track)
+    /// CRITICAL FIX: Calculate actual end time, not sum of durations (handles gaps)
     private static func calculateDuration(from tracks: [Track]) -> CMTime {
-        // Simplified: Sum of clips in each track (assuming sequential for now per track)
-        // In a real NLE, clips on a track might have gaps.
-        // For Phase 1, we assume each track is a sequence of clips (magnetic-ish) or we sum them.
-        // Let's assume magnetic per track for now (previous behavior).
-        let trackDurations = tracks.map { track in
-            track.clips.reduce(CMTime.zero) { $0 + $1.effectiveDuration }
+        // Calculate actual end time for each track (max of clip.startTime + clip.effectiveDuration)
+        // This handles gaps properly, unlike summing durations
+        let trackEndTimes = tracks.map { track in
+            track.clips.reduce(CMTime.zero) { maxEnd, clip in
+                let clipEnd = CMTimeAdd(clip.startTime, clip.effectiveDuration)
+                return max(maxEnd, clipEnd)
+            }
         }
-        return trackDurations.max() ?? .zero
+        return trackEndTimes.max() ?? .zero
     }
 
     // MARK: - Codable

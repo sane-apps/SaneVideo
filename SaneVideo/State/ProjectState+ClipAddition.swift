@@ -35,6 +35,14 @@ extension ProjectState {
             AppLogger.project.info("Non-native format detected (\(ext)). Requesting optimization...")
             if let optimizedURL = await optimizeMedia(url: url) {
                 targetURL = optimizedURL
+            } else {
+                // CRITICAL: Optimization failed - show error instead of silently using original
+                AppLogger.project.error("Optimization failed for \(ext) format")
+                await MainActor.run {
+                    ServiceContainer.shared.toastManager.show("❌ Failed to optimize \(ext) file. Format may not be supported.", type: .error)
+                }
+                // Continue with original - might work, might not
+                // User has been warned
             }
         }
 
@@ -152,17 +160,42 @@ extension ProjectState {
 
         guard let trackIndex = targetTrackIndex else { return }
         var track = timeline.tracks[trackIndex]
+        
+        // CRITICAL FIX: Warn if track has too many clips (performance issue)
+        if track.clips.count >= 100 {
+            AppLogger.project.warning("Track has \(track.clips.count) clips, consider creating a new track")
+            ServiceContainer.shared.toastManager.show("Track has many clips. Consider creating a new track for better performance.", type: .info)
+        }
 
+        // CRITICAL FIX: Calculate startTime atomically to prevent race conditions
         // Calculate startTime based on cumulative duration of existing clips in this track
         var mutableClip = clip
+        
+        // CRITICAL FIX: Sort clips by startTime to ensure correct calculation
+        // This prevents issues if clips were added out of order
+        let sortedClips = track.clips.sorted { $0.startTime < $1.startTime }
         var cumulativeTime = CMTime.zero
-        for existingClip in track.clips {
+        for existingClip in sortedClips {
             cumulativeTime = CMTimeAdd(cumulativeTime, existingClip.effectiveDuration)
         }
         mutableClip.startTime = cumulativeTime
 
         track.clips.append(mutableClip)
         timeline.tracks[trackIndex] = track
+        
+        // CRITICAL FIX: Recalculate startTimes to ensure consistency
+        // This handles edge cases and ensures no gaps/overlaps
+        recalculateStartTimes(in: &timeline)
+        
+        // CRITICAL FIX: Update timeline duration after addition
+        timeline.updateDuration()
+        
+        // CRITICAL FIX: Validate timeline state after addition
+        if !validateTimelineState(timeline) {
+            AppLogger.project.error("Timeline state invalid after adding clip, rolling back")
+            ServiceContainer.shared.toastManager.show("Failed to add clip: Timeline state invalid", type: .error)
+            return
+        }
 
         project.timeline = timeline
         currentProject = project

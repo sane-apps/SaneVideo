@@ -14,36 +14,74 @@ import SwiftUI
 struct AudioSection: View {
     @Environment(AppState.self) var appState
     let clip: VideoClip
+    @Binding var isOperationInProgress: Bool
 
+    // CRITICAL FIX: Sync state with clip properties
     @State private var volume: Float
-    @State private var isAnalyzing = false
     @State private var analysisResult: String?
+    
+    // P0 FIX: Separate loading states for each operation
+    @State private var isFindingHighlights = false
+    @State private var isAnalyzingAudio = false
+    
+    // CRITICAL FIX: Debounce slider updates
+    @State private var pendingVolumeUpdate: Task<Void, Never>?
 
-    init(clip: VideoClip) {
+    init(clip: VideoClip, isOperationInProgress: Binding<Bool>) {
         self.clip = clip
+        self._isOperationInProgress = isOperationInProgress
         _volume = State(initialValue: clip.volume)
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            // Volume Control
+            // P1 FIX: Enhanced Volume Control with mute button
             SubsectionHeader(title: String(localized: "audio.volume.header", defaultValue: "Volume"))
-            HStack {
-                Image(systemName: volume == 0 ? "speaker.slash.fill" : "speaker.wave.2.fill")
-                    .foregroundColor(volume == 0 ? .red : .secondary)
-                    .font(.caption)
-                    .frame(width: 20)
+            HStack(spacing: 8) {
+                // P1 FIX: Mute button
+                Button {
+                    let newVolume: Float = volume > 0 ? 0 : 1.0
+                    volume = newVolume
+                    appState.projectState.updateClipVolume(clipId: clip.id, volume: newVolume)
+                } label: {
+                    Image(systemName: volume == 0 ? "speaker.slash.fill" : "speaker.wave.2.fill")
+                        .foregroundColor(volume == 0 ? .red : .secondary)
+                        .font(.system(size: 14))
+                        .frame(width: 28, height: 28)
+                        .background(volume == 0 ? Color.red.opacity(0.1) : Color.secondary.opacity(0.1))
+                        .cornerRadius(6)
+                }
+                .buttonStyle(.plain)
+                .help(volume == 0 ? "Unmute" : "Mute")
+                .accessibilityIdentifier("audio.mute_button")
 
+                // P1 FIX: Wider slider
                 Slider(value: $volume, in: 0 ... 1, step: 0.05)
                     .accessibilityIdentifier("audio.volume.slider")
                     .onChange(of: volume) { _, newValue in
-                        appState.projectState.updateClipVolume(clipId: clip.id, volume: newValue)
+                        // CRITICAL FIX: Debounce slider updates to prevent excessive saves
+                        pendingVolumeUpdate?.cancel()
+                        pendingVolumeUpdate = Task {
+                            // Wait 300ms after user stops dragging
+                            try? await Task.sleep(nanoseconds: 300_000_000)
+                            guard !Task.isCancelled else { return }
+                            await MainActor.run {
+                                appState.projectState.updateClipVolume(clipId: clip.id, volume: newValue)
+                            }
+                        }
                     }
 
+                // P1 FIX: Larger percentage display
                 Text(String(format: "%.0f%%", volume * 100))
-                    .font(.system(size: 10, design: .monospaced))
+                    .font(.system(size: 11, design: .monospaced))
                     .foregroundColor(.secondary)
-                    .frame(width: 35)
+                    .frame(width: 40)
+            }
+            // CRITICAL FIX: Sync volume when clip changes externally
+            .onChange(of: clip.volume) { _, newVolume in
+                if abs(volume - newVolume) > 0.01 { // Only update if significantly different
+                    volume = newVolume
+                }
             }
 
             Divider().padding(.vertical, 4)
@@ -51,13 +89,17 @@ struct AudioSection: View {
             // Smart Audio Tools
             SubsectionHeader(title: String(localized: "audio.smart_tools.header", defaultValue: "Smart Tools"))
 
+            // P0 FIX: Separate loading states for each operation
+            @State private var isFindingHighlights = false
+            @State private var isAnalyzingAudio = false
+
             // Find Highlights
             SmartToolButton(
                 title: String(localized: "audio.action.find_highlights.title", defaultValue: "Find Highlights"),
                 subtitle: String(localized: "audio.action.find_highlights.subtitle", defaultValue: "Detect applause & laughter"),
                 icon: "star.fill",
                 color: .yellow,
-                isLoading: isAnalyzing,
+                isLoading: isFindingHighlights, // P0 FIX: Use separate state
                 id: "audio.action.find_highlights"
             ) {
                 Task { await findHighlights() }
@@ -69,7 +111,7 @@ struct AudioSection: View {
                 subtitle: String(localized: "audio.action.analyze_audio.subtitle", defaultValue: "Detect speech, music, silence"),
                 icon: "waveform.badge.magnifyingglass",
                 color: .green,
-                isLoading: false,
+                isLoading: isAnalyzingAudio, // P0 FIX: Use separate state
                 id: "audio.action.analyze_audio"
             ) {
                 Task { await analyzeAudio() }
@@ -95,7 +137,8 @@ struct AudioSection: View {
             // AI Audio Tools
             SubsectionHeader(title: String(localized: "audio.ai_tools.header", defaultValue: "AI Audio"))
 
-            VStack(spacing: 8) {
+            VStack(spacing: 10) {
+                // P1 FIX: Larger toggles with better spacing
                 Toggle(isOn: Binding(
                     get: { clip.isVoiceIsolationEnabled },
                     set: { appState.projectState.updateClipVoiceIsolation(clipId: clip.id, enabled: $0) }
@@ -111,9 +154,14 @@ struct AudioSection: View {
                     } icon: {
                         Image(systemName: "waveform.path.badge.minus")
                             .foregroundColor(.blue)
+                            .font(.system(size: 16)) // P1 FIX: Larger icon
                     }
                 }
                 .toggleStyle(SwitchToggleStyle(tint: .blue))
+                .controlSize(.regular) // P1 FIX: Larger control
+                .accessibilityLabel("Voice Isolation")
+                .accessibilityHint("Remove background noise with Apple ML")
+                .focusable()
 
                 Toggle(isOn: Binding(
                     get: { clip.isGatingEnabled },
@@ -130,9 +178,14 @@ struct AudioSection: View {
                     } icon: {
                         Image(systemName: "door.left.hand.closed")
                             .foregroundColor(.purple)
+                            .font(.system(size: 16)) // P1 FIX: Larger icon
                     }
                 }
                 .toggleStyle(SwitchToggleStyle(tint: .purple))
+                .controlSize(.regular) // P1 FIX: Larger control
+                .accessibilityLabel("AI Gating")
+                .accessibilityHint("Automatically mute non-speech segments")
+                .focusable()
             }
             .padding(.horizontal, 4)
         }

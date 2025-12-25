@@ -98,4 +98,27 @@ struct MagicFixOptions: Codable, Equatable {
         }
         return "Custom configuration"
     }
+    
+    // P0 FIX: Check if options are empty (no operations selected)
+    var isEmpty: Bool {
+        !removeSilence && !removeFillers && !generateCaptions && !enhanceAudio &&
+        !autoEnhance && !findHighlights && !smartCrop && !autoFraming &&
+        !scanForText && !analyzeMood && !magicRemovePeople && !generativeStyle
+    }
+    
+    // P0 FIX: Get human-readable summary of selected options
+    var summary: String {
+        var parts: [String] = []
+        if removeSilence { parts.append("Silence") }
+        if removeFillers { parts.append("Fillers") }
+        if generateCaptions { parts.append("Captions") }
+        if enhanceAudio { parts.append("Audio") }
+        if autoEnhance { parts.append("Color") }
+        if smartCrop { parts.append("Crop") }
+        if autoFraming { parts.append("Frame") }
+        if parts.isEmpty {
+            return "No options selected"
+        }
+        return parts.joined(separator: ", ")
+    }
 }

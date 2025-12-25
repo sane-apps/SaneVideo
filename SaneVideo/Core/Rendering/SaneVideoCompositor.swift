@@ -183,7 +183,7 @@ final class SaneVideoCompositor: NSObject, AVVideoCompositing {
     }
 
     // 4. Render Cursor
-    for (trackID, cursors) in instruction.trackCursorData {
+    for (_, cursors) in instruction.trackCursorData {
       let compositionTime = request.compositionTime.seconds
 
       // Find the cursor metadata active at this composition time
@@ -204,24 +204,18 @@ final class SaneVideoCompositor: NSObject, AVVideoCompositing {
     }
 
     // 5. Render Final
-    // CRITICAL FIX: Wrap rendering in do-catch to handle errors
-    do {
-      guard let buffer = outputPixelBuffer else {
-        renderError = NSError(
-          domain: "SaneVideoCompositor", code: -4,
-          userInfo: [NSLocalizedDescriptionKey: "Output buffer lost during rendering"])
-        return
-      }
-      
-      if let finalImage = currentImage {
-        // Render directly to the output pixel buffer
-        ciContext.render(finalImage, to: buffer)
-      }
-      // defer block will finish the request with the buffer
-    } catch {
-      // CRITICAL FIX: Capture error for defer block to handle
-      renderError = error
+    guard let buffer = outputPixelBuffer else {
+      renderError = NSError(
+        domain: "SaneVideoCompositor", code: -4,
+        userInfo: [NSLocalizedDescriptionKey: "Output buffer lost during rendering"])
+      return
     }
+    
+    if let finalImage = currentImage {
+      // Render directly to the output pixel buffer
+      ciContext.render(finalImage, to: buffer)
+    }
+    // defer block will finish the request with the buffer
   }
 
   // Helper to render a single track layer

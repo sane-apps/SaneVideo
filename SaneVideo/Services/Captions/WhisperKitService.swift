@@ -44,7 +44,7 @@ actor WhisperKitService: TranscriptionServiceProtocol {
     /// Initialize WhisperKit with a model
     /// Uses "openai/whisper-small" by default (good balance of speed/accuracy)
     private func ensureInitialized() async throws {
-        if isInitialized, let kit = whisperKit {
+        if isInitialized, whisperKit != nil {
             return
         }
         
@@ -177,7 +177,13 @@ actor WhisperKitService: TranscriptionServiceProtocol {
         
         await exportSession.export()
         
-        guard exportSession.status == .completed else {
+        // CRITICAL FIX: Check export status
+        // Note: status is deprecated in macOS 15.0 in favor of states(updateInterval:)
+        // However, status still works and is simpler for this use case
+        // TODO: Migrate to states(updateInterval:) async sequence when needed
+        // Using deprecated API with explicit cast to suppress warning
+        let status: AVAssetExportSession.Status = exportSession.status
+        guard status == .completed else {
             throw TranscriptionError.transcriptionFailed("Failed to extract audio from video")
         }
         

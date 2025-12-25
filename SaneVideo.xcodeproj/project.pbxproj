@@ -2027,6 +2027,7 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.sanevideo.SaneVideoUITests;
 				SDKROOT = macosx;
 				TEST_TARGET_NAME = SaneVideo;
@@ -2163,6 +2164,7 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.sanevideo.SaneVideoUITests;
 				SDKROOT = macosx;
 				TEST_TARGET_NAME = SaneVideo;

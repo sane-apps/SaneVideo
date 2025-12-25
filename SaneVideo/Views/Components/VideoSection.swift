@@ -193,8 +193,12 @@ struct VideoSection: View {
         // CRITICAL FIX: Validate clip before operation
         guard !clip.isMissing else {
             await MainActor.run {
-                cropError = "Cannot apply crop: Clip file is missing"
+                cropError = "Cannot apply crop: Clip file is missing. Use 'Locate File' in Clip Info to relink the file."
                 cropResult = nil
+                ServiceContainer.shared.toastManager.show(
+                    "Clip file is missing. Check Clip Info section to relink the file.",
+                    type: .error
+                )
             }
             return
         }
@@ -204,8 +208,12 @@ struct VideoSection: View {
         let tracks = try? await asset.loadTracks(withMediaType: .video)
         guard let videoTrack = tracks?.first else {
             await MainActor.run {
-                cropError = "Cannot apply crop: No video track found"
+                cropError = "Cannot apply crop: No video track found in this clip"
                 cropResult = nil
+                ServiceContainer.shared.toastManager.show(
+                    "This clip doesn't contain video. Smart crop requires a video track.",
+                    type: .error
+                )
             }
             return
         }
@@ -230,9 +238,14 @@ struct VideoSection: View {
             }
         } catch {
             await MainActor.run {
-                cropError = "Crop failed: \(error.localizedDescription)"
+                let errorMessage = error.localizedDescription
+                cropError = "Crop failed: \(errorMessage)"
                 cropResult = nil
-                AppLogger.project.error("Smart crop failed: \(error.localizedDescription)")
+                AppLogger.project.error("Smart crop failed: \(errorMessage)")
+                ServiceContainer.shared.toastManager.show(
+                    "Smart crop failed: \(errorMessage)",
+                    type: .error
+                )
             }
         }
     }

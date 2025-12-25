@@ -131,7 +131,7 @@ struct CaptionsSection: View {
         guard !clip.isMissing else {
             await MainActor.run {
                 ServiceContainer.shared.toastManager.show(
-                    "Cannot generate captions: Clip file is missing",
+                    "Cannot generate captions: Clip file is missing. Use 'Locate File' in Clip Info to relink the file.",
                     type: .error
                 )
             }

@@ -55,9 +55,10 @@ struct EffectsPickerView: View {
             .buttonStyle(.plain)
             .hoverScale(1.02)
             .pressScale()
-            .disabled(clip.isMissing) // CRITICAL FIX: Disable if clip is missing
+            .disabled(clip.isMissing || isOperationInProgress) // CRITICAL FIX: Disable if clip is missing or operation in progress
             .padding(.bottom, 4)
             .accessibilityIdentifier("effects.action.auto_grade")
+            .accessibilityHint(clip.isMissing ? "Clip file is missing. Use 'Locate File' in Clip Info to relink the file." : "Automatically applies color grading to the video")
             .smoothAppear()
 
             // Active effects (if any) - shown at top with sliders
@@ -134,6 +135,15 @@ struct EffectsPickerView: View {
     // MARK: - Actions
 
     private func toggleEffect(_ type: VideoEffectType) {
+        // CRITICAL FIX: Validate clip before toggling effect
+        guard !clip.isMissing else {
+            ServiceContainer.shared.toastManager.show(
+                "Cannot apply effect: Clip file is missing. Use 'Locate File' in Clip Info to relink the file.",
+                type: .error
+            )
+            return
+        }
+        
         if let index = effects.firstIndex(where: { $0.type == type }) {
             // Remove if already active
             effects.remove(at: index)
@@ -160,6 +170,14 @@ struct EffectsPickerView: View {
     }
 
     private func saveEffects() {
+        // CRITICAL FIX: Validate clip before saving effects
+        guard !clip.isMissing else {
+            ServiceContainer.shared.toastManager.show(
+                "Cannot save effects: Clip file is missing. Use 'Locate File' in Clip Info to relink the file.",
+                type: .error
+            )
+            return
+        }
         appState.projectState.updateClipEffects(clipId: clip.id, effects: effects)
     }
 }

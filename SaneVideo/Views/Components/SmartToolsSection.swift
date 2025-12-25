@@ -251,7 +251,7 @@ struct SmartToolsSection: View {
                     // CRITICAL FIX: Validate clip before operation
                     guard !clip.isMissing else {
                         ServiceContainer.shared.toastManager.show(
-                            "Cannot apply Magic Fix: Clip file is missing",
+                            "Cannot apply Magic Fix: Clip file is missing. Use 'Locate File' in Clip Info to relink the file.",
                             type: .error
                         )
                         return

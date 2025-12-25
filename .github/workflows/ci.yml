@@ -25,6 +25,7 @@ jobs:
       with:
         ruby-version: '3.2'
         bundler-cache: true
+        bundler: '2.4'
     
     - name: Install dependencies
       run: |
@@ -71,7 +72,7 @@ jobs:
       with:
         name: test-results
         path: TestResults
-        continue-on-error: true
+        if-no-files-found: warn
 
     - name: Run Health Check
       run: ./Scripts/run_health_check.sh || true

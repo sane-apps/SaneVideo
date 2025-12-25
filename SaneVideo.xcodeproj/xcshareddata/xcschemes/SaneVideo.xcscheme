@@ -39,6 +39,17 @@
          </BuildableReference>
       </MacroExpansion>
       <Testables>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "3B9924517B2D6DC1A779E50B"
+               BuildableName = "SaneVideoTests.xctest"
+               BlueprintName = "SaneVideoTests"
+               ReferencedContainer = "container:SaneVideo.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
       </Testables>
       <CommandLineArguments>
       </CommandLineArguments>

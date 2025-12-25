@@ -1,0 +1,71 @@
+{
+  // ============================================
+  // Cursor-Specific Settings for SaneVideo
+  // ============================================
+  // These settings optimize Cursor's AI features for Swift development
+  
+  // ============================================
+  // AI Chat Settings
+  // ============================================
+  "cursor.chat.model": "gpt-4",
+  "cursor.chat.maxTokens": 8000,
+  "cursor.chat.enableCodeActions": true,
+  "cursor.chat.enableFileCreation": true,
+  "cursor.chat.includeContext": true,
+  "cursor.chat.contextWindow": "large",
+  
+  // ============================================
+  // Code Completion Settings
+  // ============================================
+  "cursor.cpp.enableCodeActions": true,
+  "cursor.cpp.enableInlineCompletion": true,
+  "cursor.cpp.enableSuggestions": true,
+  "cursor.cpp.suggestionDelay": 100,
+  
+  // ============================================
+  // Project-Specific Context
+  // ============================================
+  "cursor.chat.projectContext": [
+    "DEVELOPMENT.md", // Always include SOP
+    ".cursorrules", // Include cursor rules
+    "project.yml" // Include project structure
+  ],
+  
+  // ============================================
+  // File Exclusions for AI Context
+  // ============================================
+  "cursor.chat.excludePatterns": [
+    "**/build/**",
+    "**/DerivedData/**",
+    "**/.derivedData/**",
+    "**/xcuserdata/**",
+    "**/node_modules/**",
+    "**/vendor/**",
+    "**/*.xcuserstate",
+    "**/fastlane/reports/**"
+  ],
+  
+  // ============================================
+  // Auto-Save & Formatting
+  // ============================================
+  "cursor.general.enableAutoSave": true,
+  "cursor.general.autoSaveDelay": 1000,
+  "cursor.general.formatOnSave": true,
+  
+  // ============================================
+  // Code Actions
+  // ============================================
+  "cursor.chat.enableRefactoring": true,
+  "cursor.chat.enableTestGeneration": true,
+  "cursor.chat.enableDocumentation": true,
+  
+  // ============================================
+  // Swift-Specific Optimizations
+  // ============================================
+  "cursor.swift.enableCodeActions": true,
+  "cursor.swift.enableInlineCompletion": true,
+  "cursor.swift.preferSwiftTesting": true, // Prefer Swift Testing over XCTest
+  "cursor.swift.enforceFileSizeLimit": true, // 500 line limit
+  "cursor.swift.maxFileSize": 500
+}
+

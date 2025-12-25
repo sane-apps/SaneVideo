@@ -9,6 +9,7 @@ import AVFoundation
 import AppKit
 import Combine
 import CoreMedia
+import Foundation
 import OSLog
 import ScreenCaptureKit
 
@@ -205,44 +206,69 @@ class RecordingEngine: NSObject, @unchecked Sendable {
       return
     }
 
-    // Use RenderingService shared instance
+    // CRITICAL: Create videoWriter but don't set isRecording until ALL services start successfully
+    // This prevents partial failure states where isRecording=true but no input source
     let renderingService = RenderingService.shared
     self.videoWriter = VideoWriter(renderingService: renderingService)
+    
     do {
       try self.videoWriter?.start(outputURL: url)
     } catch {
       AppLogger.recording.error("Failed to start video writer: \(error)")
+      // CRITICAL: Cleanup on failure
+      self.videoWriter = nil
+      self.outputURL = nil
       await MainActor.run {
         self.onError?(AppError.recordingEngineError("Failed to start recording"))
       }
       return
     }
-    isRecording = true
-    isPaused = false
-    currentSource = initialSource
-    timeCoordinator.reset()
 
+    // CRITICAL: Start disk space monitor BEFORE setting isRecording
     await MainActor.run { self.diskSpaceMonitor.start() }
 
+    // CRITICAL: Start all services BEFORE setting isRecording=true
+    // This ensures we only mark as recording when everything is actually ready
     if initialSource == .camera {
       do {
         try await cameraService.start()
       } catch {
-        await MainActor.run { self.onError?(.cameraSetupFailed(error)) }
+        // CRITICAL: Cleanup on failure - videoWriter was created but camera failed
+        AppLogger.recording.error("Camera start failed, cleaning up videoWriter")
+        await self.videoWriter?.finish()  // Try to finish gracefully
+        self.videoWriter = nil
+        self.outputURL = nil
+        await MainActor.run {
+          self.diskSpaceMonitor.stop()
+          self.onError?(.cameraSetupFailed(error))
+        }
         return
       }
     } else {
       do {
         try await self.screenRecorder.start()
       } catch {
+        // CRITICAL: Cleanup on failure - videoWriter was created but screen recorder failed
+        AppLogger.recording.error("Screen recorder start failed, cleaning up videoWriter")
+        await self.videoWriter?.finish()  // Try to finish gracefully
+        self.videoWriter = nil
+        self.outputURL = nil
         await MainActor.run {
+          self.diskSpaceMonitor.stop()
           self.onError?(.screenCaptureUnavailable)
         }
         return
       }
     }
 
+    // CRITICAL: Start audio service
     await MainActor.run { self.audioService.start() }
+    
+    // CRITICAL: Only NOW set isRecording=true after ALL services started successfully
+    isRecording = true
+    isPaused = false
+    currentSource = initialSource
+    timeCoordinator.reset()
 
     // Start Real-time Sound Analysis
     let format = AVAudioFormat(standardFormatWithSampleRate: 44100, channels: 1)!
@@ -305,15 +331,42 @@ class RecordingEngine: NSObject, @unchecked Sendable {
       return mockURL
     }
 
-    activeSwitchTask?.cancel()
-    activeSwitchTask = nil
+    // CRITICAL: Cancel any active switch operations
+    sourceSwitchTimeoutTask?.cancel()
+    sourceSwitchTimeoutTask = nil
+    
+    // CRITICAL: Clear switch state to prevent hanging
+    if isSwitching {
+      AppLogger.recording.warning("🛑 Stopping recording during active switch. Cancelling switch.")
+      pendingSource = nil
+      isSwitching = false
+      timeCoordinator.startTimeNeedsRecalibration = false
+    }
 
-    // Finalize components
+    // CRITICAL: Stop services first (but don't cleanup until file is saved)
     await screenRecorder.stop()
     soundAnalysisService.stopRealTimeAnalysis()
 
-    let finalURL = await videoWriter?.finish()
+    // CRITICAL: Finish video writer with timeout protection
+    let finalURL: URL?
+    if let writer = videoWriter {
+      do {
+        // Add timeout to finish() to prevent hanging (30 seconds should be plenty)
+        finalURL = try await withTimeout(seconds: 30) {
+          await writer.finish()
+        }
+      } catch {
+        AppLogger.recording.error("⚠️ VideoWriter finish() timed out or failed: \(error.localizedDescription)")
+        // CRITICAL: Even if finish() fails, try to get the file
+        // The file might still be valid even if finish() didn't complete
+        finalURL = outputURL
+        AppLogger.recording.warning("Using outputURL as fallback: \(outputURL?.path ?? "nil")")
+      }
+    } else {
+      finalURL = nil
+    }
 
+    // CRITICAL: Save cursor/click tracking only if we have a valid file
     if let url = finalURL {
       let cursorService = await ServiceContainer.shared.cursorTrackingService
       _ = try? await cursorService.stopTrackingAndSave(to: url)
@@ -321,9 +374,11 @@ class RecordingEngine: NSObject, @unchecked Sendable {
       // Stop click tracking and save
       let clickService = await ServiceContainer.shared.clickTrackingService
       _ = try? await clickService.stopTrackingAndSave(to: url)
+    } else {
+      AppLogger.recording.warning("⚠️ No final URL, skipping cursor/click tracking save")
     }
 
-    // Cleanup
+    // CRITICAL: Cleanup only after we've attempted to save everything
     videoWriter = nil
     outputURL = nil
     timeCoordinator.reset()

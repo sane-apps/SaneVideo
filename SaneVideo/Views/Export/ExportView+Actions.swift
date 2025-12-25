@@ -206,15 +206,76 @@ extension ExportView {
     }
 
     func startExport(uploadToYouTube: Bool = false) {
-        guard let project = appState.currentProject else { return }
+        // CRITICAL FIX: Validate timeline is not empty before export
+        guard let project = appState.currentProject else {
+            ServiceContainer.shared.toastManager.show("No project to export", type: .error)
+            return
+        }
+        
+        let hasClips = project.timeline.tracks.contains { !$0.clips.isEmpty }
+        guard hasClips else {
+            ServiceContainer.shared.toastManager.show("Cannot export empty timeline. Add clips first.", type: .error)
+            return
+        }
 
         let desktopURL = FileManager.default.homeDirectoryForCurrentUser
             .appendingPathComponent("Desktop")
-        let fileName = "\(project.name)_\(Int(Date().timeIntervalSince1970)).mp4"
-        let outputURL = desktopURL.appendingPathComponent(fileName)
+        
+        // CRITICAL FIX: Validate output directory exists and is writable
+        var isDirectory: ObjCBool = false
+        var outputURL: URL
+        if !FileManager.default.fileExists(atPath: desktopURL.path, isDirectory: &isDirectory) || !isDirectory.boolValue {
+            ServiceContainer.shared.toastManager.show("Desktop folder not found. Exporting to Documents instead.", type: .info)
+            let documentsURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+            let fileName = "\(project.name)_\(Int(Date().timeIntervalSince1970)).mp4"
+            outputURL = documentsURL.appendingPathComponent(fileName)
+        } else if !FileManager.default.isWritableFile(atPath: desktopURL.path) {
+            ServiceContainer.shared.toastManager.show("Desktop is not writable. Exporting to Documents instead.", type: .info)
+            let documentsURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+            let fileName = "\(project.name)_\(Int(Date().timeIntervalSince1970)).mp4"
+            outputURL = documentsURL.appendingPathComponent(fileName)
+        } else {
+            let fileName = "\(project.name)_\(Int(Date().timeIntervalSince1970)).mp4"
+            outputURL = desktopURL.appendingPathComponent(fileName)
+        }
 
         // Remove existing file if needed
         try? FileManager.default.removeItem(at: outputURL)
+        
+        // CRITICAL FIX: Start export with validation in Task
+        Task {
+            await startExportWithValidation(project: project, outputURL: outputURL, uploadToYouTube: uploadToYouTube)
+        }
+    }
+    
+    // CRITICAL FIX: Separate function for export with validation
+    private func startExportWithValidation(project: VideoProject, outputURL: URL, uploadToYouTube: Bool) async {
+        // CRITICAL FIX: Check disk space before export
+        do {
+            // Estimate required space: duration (seconds) × bitrate (bits/sec) / 8 = bytes
+            let duration = project.timeline.duration.seconds
+            let videoBitrate = Double(exportSettings.bitrate) // bits per second
+            let audioBitrate = 192_000.0 // 192 kbps
+            let totalBitrate = videoBitrate + audioBitrate
+            let estimatedBytes = Int64((totalBitrate * duration) / 8.0)
+            // Add 20% overhead for container, metadata, etc.
+            let requiredSpace = Int64(Double(estimatedBytes) * 1.2)
+            
+            // Check available space on output volume
+            let outputVolume = outputURL.deletingLastPathComponent()
+            let values = try outputVolume.resourceValues(forKeys: [.volumeAvailableCapacityForImportantUsageKey])
+            if let available = values.volumeAvailableCapacityForImportantUsage {
+                if available < requiredSpace {
+                    let requiredMB = ByteCountFormatter.string(fromByteCount: requiredSpace, countStyle: .file)
+                    let availableMB = ByteCountFormatter.string(fromByteCount: available, countStyle: .file)
+                    ServiceContainer.shared.toastManager.show("Insufficient disk space. Required: \(requiredMB), Available: \(availableMB)", type: .error)
+                    return
+                }
+            }
+        } catch {
+            AppLogger.export.warning("Failed to check disk space: \(error.localizedDescription). Proceeding with export.")
+            // Continue with export if check fails (better than blocking user)
+        }
 
         isExporting = true
         exportProgress = 0

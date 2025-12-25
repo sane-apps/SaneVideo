@@ -39,7 +39,19 @@ extension ProjectState {
         }
 
         if clipFound {
+            // CRITICAL FIX: Recalculate startTimes to ensure consistency
             recalculateStartTimes(in: &timeline)
+            
+            // CRITICAL FIX: Update timeline duration after deletion
+            timeline.updateDuration()
+            
+            // CRITICAL FIX: Validate timeline state after deletion
+            if !validateTimelineState(timeline) {
+                AppLogger.project.error("Timeline state invalid after deletion, rolling back")
+                ServiceContainer.shared.toastManager.show("Delete failed: Timeline state invalid", type: .error)
+                return
+            }
+            
             project.timeline = timeline
             currentProject = project
             saveProject(project)
@@ -51,7 +63,25 @@ extension ProjectState {
 
     /// destructively delete the file from disk (Move to Trash) and remove from project
     func deleteClipFile(_ clip: VideoClip) {
-        // 1. Remove from timeline first
+        // CRITICAL FIX: Mark clip as missing before deletion to prevent operations on missing file
+        guard var project = currentProject else { return }
+        var timeline = project.timeline
+        
+        // Mark clip as missing in timeline
+        for (trackIndex, track) in timeline.tracks.enumerated() {
+            if let clipIndex = track.clips.firstIndex(where: { $0.id == clip.id }) {
+                var mutableTrack = track
+                var mutableClip = track.clips[clipIndex]
+                mutableClip.isMissing = true
+                mutableTrack.clips[clipIndex] = mutableClip
+                timeline.tracks[trackIndex] = mutableTrack
+                project.timeline = timeline
+                currentProject = project
+                break
+            }
+        }
+        
+        // 1. Remove from timeline
         deleteClip(clip)
 
         Task {

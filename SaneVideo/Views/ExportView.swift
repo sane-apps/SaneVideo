@@ -50,6 +50,12 @@ struct ExportView: View {
             .flatMap { $0.clips }
             .contains { !$0.captions.isEmpty }
     }
+    
+    // CRITICAL FIX: Check if timeline is empty
+    private var isTimelineEmpty: Bool {
+        guard let project = appState.currentProject else { return true }
+        return project.timeline.tracks.allSatisfy { $0.clips.isEmpty }
+    }
 
     /*
     private var templateSettings: SaneExportSettings? {
@@ -134,7 +140,7 @@ struct ExportView: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
-                .disabled(isExporting || youtubeService.isUploading)
+                .disabled(isExporting || youtubeService.isUploading || isTimelineEmpty)
                 .accessibilityIdentifier("export.action.primary")
     
                 // YouTube Toggle

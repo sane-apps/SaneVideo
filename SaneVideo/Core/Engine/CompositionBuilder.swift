@@ -24,6 +24,42 @@ enum CompositionBuilder {
         let timeline = project.timeline
         let composition = AVMutableComposition()
 
+        // CRITICAL FIX: Validate all source files exist before composition
+        var missingFiles: [String] = []
+        for track in timeline.tracks {
+            for clip in track.clips {
+                // Check if file exists and is accessible
+                if !FileManager.default.fileExists(atPath: clip.url.path) {
+                    missingFiles.append(clip.url.lastPathComponent)
+                    AppLogger.export.error("❌ Source file missing: \(clip.url.lastPathComponent)")
+                } else {
+                    // Try to access file to ensure it's readable
+                    let isAccessing = clip.url.startAccessingSecurityScopedResource()
+                    defer {
+                        if isAccessing {
+                            clip.url.stopAccessingSecurityScopedResource()
+                        }
+                    }
+                    
+                    // Check if file is readable
+                    if !FileManager.default.isReadableFile(atPath: clip.url.path) {
+                        missingFiles.append(clip.url.lastPathComponent)
+                        AppLogger.export.error("❌ Source file not readable: \(clip.url.lastPathComponent)")
+                    }
+                }
+            }
+        }
+        
+        if !missingFiles.isEmpty {
+            let fileList = missingFiles.prefix(3).joined(separator: ", ")
+            let moreCount = missingFiles.count > 3 ? " and \(missingFiles.count - 3) more" : ""
+            throw AppError.compositionFailed(NSError(
+                domain: "CompositionBuilder",
+                code: -1,
+                userInfo: [NSLocalizedDescriptionKey: "Cannot export: Missing or inaccessible source files: \(fileList)\(moreCount). Please check that all video files are available."]
+            ))
+        }
+
         // MEMORY OPTIMIZATION: Cache assets to avoid loading the same video multiple times
         var assetCache: [URL: AVURLAsset] = [:]
 

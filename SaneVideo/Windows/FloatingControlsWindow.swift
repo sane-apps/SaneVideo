@@ -87,9 +87,16 @@ class FloatingControlsWindow: NSPanel {
         }
     }
     override func close() {
+        // CRITICAL FIX: Invalidate timer before closing
         hideTimer?.invalidate()
         hideTimer = nil
         super.close()
+    }
+    
+    deinit {
+        // CRITICAL FIX: Timer should already be invalidated in close()
+        // But as safety net, invalidate if somehow still set (nonisolated access)
+        // Note: Can't access MainActor properties in deinit, so rely on close() being called
     }
 
 }

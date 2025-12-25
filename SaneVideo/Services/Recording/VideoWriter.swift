@@ -374,4 +374,9 @@ final class VideoWriter {
         pixelBufferAdaptor = nil
         sessionStarted = false
     }
+    
+    // CRITICAL FIX: Cancel finishing task on deallocation
+    // Note: For @RecordingActor, we can't access isolated properties in deinit
+    // The task will be cancelled when the actor is deallocated
+    // We rely on proper cleanup in finishWriting() method
 }

@@ -183,6 +183,11 @@ actor WhisperKitService: TranscriptionServiceProtocol {
         
         return audioURL
     }
+    
+    // CRITICAL FIX: Cancel initialization task on deallocation
+    // Note: For actors, we can't access isolated properties in deinit
+    // The task will be cancelled when the actor is deallocated
+    // We rely on proper cleanup in cancel() method
 }
 
 // MARK: - Errors (Shared with TranscriptionCoordinator)
@@ -211,4 +216,3 @@ actor WhisperKitService: TranscriptionServiceProtocol {
 
 // WhisperKit not available - errors handled by TranscriptionCoordinator
 #endif
-

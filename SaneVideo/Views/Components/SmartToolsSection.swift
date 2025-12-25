@@ -16,6 +16,7 @@ struct SmartToolsSection: View {
     let clip: VideoClip
     
     @Binding var options: MagicFixOptions
+    @Binding var isOperationInProgress: Bool
     
     // We bind to the options from ProjectState parent, but simpler to just access via environment if we want
     // But adhering to pattern: usually sections take bindings or the clip.
@@ -28,23 +29,25 @@ struct SmartToolsSection: View {
                 headerView
                 
                 // MARK: - Action Card logic
-                VStack(spacing: 16) {
-                    // Audio Card
-                    ToolCard(title: "Audio Cleanup", icon: "waveform", color: .blue) {
-                        VStack(spacing: 12) {
-                            InspectorToggle(
-                                title: "Remove Silence",
-                                subtitle: "Cut non-speech gaps",
-                                isOn: $options.removeSilence,
-                                icon: "waveform.slash",
-                                color: .blue,
-                                identifier: "Toggle_RemoveSilence"
-                            )
-                            .help("Automatically cuts segments of the video where no speech is detected (Timeline Edit).")
-                            
-                            if options.removeSilence {
-                                DisclosureGroup {
-                                    VStack(alignment: .leading, spacing: 8) {
+                // P1 FIX: 2-column layout for better space usage
+                VStack(spacing: 12) {
+                    HStack(spacing: 12) {
+                        // Audio Card
+                        ToolCard(title: "Audio Cleanup", icon: "waveform", color: .blue) {
+                            VStack(spacing: 12) {
+                                InspectorToggle(
+                                    title: "Remove Silence",
+                                    subtitle: "Cut non-speech gaps",
+                                    isOn: $options.removeSilence,
+                                    icon: "waveform.slash",
+                                    color: .blue,
+                                    identifier: "Toggle_RemoveSilence"
+                                )
+                                .help("Automatically cuts segments of the video where no speech is detected (Timeline Edit).")
+                                
+                                // P1 FIX: Inline advanced settings (no DisclosureGroup)
+                                if options.removeSilence {
+                                    VStack(alignment: .leading, spacing: 6) {
                                         HStack {
                                             Text("Threshold")
                                                 .font(.caption2)
@@ -53,75 +56,77 @@ struct SmartToolsSection: View {
                                                 .font(.caption2.monospacedDigit())
                                         }
                                         Slider(value: $options.silenceThreshold, in: -60 ... -20, step: 1)
+                                            .controlSize(.small)
                                             .tint(.blue)
                                             .help("Audio levels below this threshold will be considered silence.")
                                     }
                                     .padding(.vertical, 4)
-                                } label: {
-                                    Text("Advanced Settings")
-                                        .font(.caption2)
-                                        .foregroundColor(.secondary)
+                                    .padding(.horizontal, 4)
+                                    .background(Color.blue.opacity(0.05))
+                                    .cornerRadius(4)
                                 }
+                                
+                                InspectorToggle(
+                                    title: "Remove Fillers",
+                                    subtitle: "Cut 'um', 'uh', stutters",
+                                    isOn: $options.removeFillers,
+                                    icon: "bubble.left",
+                                    color: .blue,
+                                    identifier: "Toggle_RemoveFillers"
+                                )
+                                .help("Detects and removes hesitation words like 'um' and 'uh' from the timeline.")
+                                
+                                InspectorToggle(
+                                    title: "Enhance Speech",
+                                    subtitle: "Isolate voice & remove noise",
+                                    isOn: $options.enhanceAudio,
+                                    icon: "mic.fill",
+                                    color: .blue,
+                                    identifier: "Toggle_EnhanceSpeech"
+                                )
+                                .help("Applies EQ, Compression, and AI Voice Isolation to clean up background noise.")
                             }
-                            
-                            InspectorToggle(
-                                title: "Remove Fillers",
-                                subtitle: "Cut 'um', 'uh', stutters",
-                                isOn: $options.removeFillers,
-                                icon: "bubble.left",
-                                color: .blue,
-                                identifier: "Toggle_RemoveFillers"
-                            )
-                            .help("Detects and removes hesitation words like 'um' and 'uh' from the timeline.")
-                            
-                            InspectorToggle(
-                                title: "Enhance Speech",
-                                subtitle: "Isolate voice & remove noise",
-                                isOn: $options.enhanceAudio,
-                                icon: "mic.fill",
-                                color: .blue,
-                                identifier: "Toggle_EnhanceSpeech"
-                            )
-                            .help("Applies EQ, Compression, and AI Voice Isolation to clean up background noise.")
                         }
+                        .frame(maxWidth: .infinity)
+
+                        // Video Card
+                        ToolCard(title: "Video & Framing", icon: "video", color: .purple) {
+                            VStack(spacing: 12) {
+                                InspectorToggle(
+                                    title: "Auto Color",
+                                    subtitle: "Light & color fix",
+                                    isOn: $options.autoEnhance,
+                                    icon: "paintpalette",
+                                    color: .purple,
+                                    identifier: "Toggle_AutoColor"
+                                )
+                                .help("Automatically adjusts brightness, contrast, and saturation.")
+                                
+                                InspectorToggle(
+                                    title: "Smart Crop (9:16)",
+                                    subtitle: "Auto vertical reframe",
+                                    isOn: $options.smartCrop,
+                                    icon: "iphone",
+                                    color: .purple
+                                )
+                                .help("Reframes horizontal video to vertical (9:16) keeping the subject centered.")
+                                
+                                InspectorToggle(
+                                    title: "Auto-Framing",
+                                    subtitle: "Track faces & focus",
+                                    isOn: $options.autoFraming,
+                                    icon: "target",
+                                    color: .purple
+                                )
+                                .help("Keeps the subject centered in the frame even if they move.")
+                            }
+                        }
+                        .frame(maxWidth: .infinity)
                     }
 
-                    // Video Card
-                    ToolCard(title: "Video & Framing", icon: "video", color: .purple) {
-                        VStack(spacing: 12) {
-                            InspectorToggle(
-                                title: "Auto Color",
-                                subtitle: "Light & color fix",
-                                isOn: $options.autoEnhance,
-                                icon: "paintpalette",
-                                color: .purple,
-                                identifier: "Toggle_AutoColor"
-                            )
-                            .help("Automatically adjusts brightness, contrast, and saturation.")
-                            
-                            InspectorToggle(
-                                title: "Smart Crop (9:16)",
-                                subtitle: "Auto vertical reframe",
-                                isOn: $options.smartCrop,
-                                icon: "iphone",
-                                color: .purple
-                            )
-                            .help("Reframes horizontal video to vertical (9:16) keeping the subject centered.")
-                            
-                            InspectorToggle(
-                                title: "Auto-Framing",
-                                subtitle: "Track faces & focus",
-                                isOn: $options.autoFraming,
-                                icon: "target",
-                                color: .purple
-                            )
-                            .help("Keeps the subject centered in the frame even if they move.")
-                        }
-                    }
-
-                    // Generative Card
+                    // Generative Card (full width)
                     ToolCard(title: "Generative AI", icon: "sparkles", color: .orange) {
-                        VStack(spacing: 12) {
+                        HStack(spacing: 12) {
                             InspectorToggle(
                                 title: "Magic Remove",
                                 subtitle: "AI object removal",
@@ -221,15 +226,37 @@ struct SmartToolsSection: View {
     private var magicButton: some View {
         Group {
             if appState.projectState.isProcessing {
-                // OPTIMIZED: Use new LoadingIndicator component
-                LoadingIndicator(
-                    message: appState.projectState.processingStatus,
-                    progress: appState.projectState.processingProgress
-                )
+                // P0 FIX: Enhanced progress indicator with cancel button
+                VStack(spacing: 12) {
+                    LoadingIndicator(
+                        message: appState.projectState.processingStatus,
+                        progress: appState.projectState.processingProgress
+                    )
+                    
+                    // P0 FIX: Cancel button
+                    Button {
+                        appState.projectState.cancelCurrentOperation()
+                    } label: {
+                        Text("Cancel")
+                            .font(.caption)
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                    .accessibilityIdentifier("MagicFixCancelButton")
+                }
                 .transition(.smoothScale)
             } else {
-                // Normal button
+                // P1 FIX: Enhanced button with better visual hierarchy
                 Button {
+                    // CRITICAL FIX: Validate clip before operation
+                    guard !clip.isMissing else {
+                        ServiceContainer.shared.toastManager.show(
+                            "Cannot apply Magic Fix: Clip file is missing",
+                            type: .error
+                        )
+                        return
+                    }
+                    
                     ServiceContainer.shared.hapticsManager.impact()
                     Task {
                         await appState.projectState.performMagicFix(for: clip, options: options)
@@ -238,20 +265,29 @@ struct SmartToolsSection: View {
                     VStack(spacing: 6) {
                         HStack(spacing: 10) {
                             Image(systemName: "wand.and.stars")
-                                .font(.system(size: 16, weight: .bold))
+                                .font(.system(size: 18, weight: .bold))
                             
                             Text("Apply Magic Fix")
-                                .fontWeight(.bold)
+                                .font(.system(size: 15, weight: .bold))
+                        }
+                        
+                        // P0 FIX: Show what will be applied
+                        if !options.isEmpty {
+                            Text(options.summary)
+                                .font(.caption2)
+                                .opacity(0.9)
+                                .lineLimit(2)
                         }
                     }
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 14)
+                    .padding(.vertical, 16)
                     .background(Theme.Colors.accentGradient)
                     .foregroundColor(Theme.Colors.accent.isLight() ? .black : .white)
                     .cornerRadius(12)
-                    .shadow(color: Theme.Colors.accent.opacity(0.4), radius: 8, x: 0, y: 4)
+                    .shadow(color: Theme.Colors.accent.opacity(0.5), radius: 12, x: 0, y: 6)
                 }
                 .buttonStyle(.plain)
+                .disabled(clip.isMissing || isOperationInProgress)
                 .accessibilityIdentifier("MagicFixButton")
                 .accessibilityLabel("Apply Magic Fix")
                 .accessibilityHint("Automatically removes silence, filler words, and enhances your video. Keyboard shortcut: Command Shift M")

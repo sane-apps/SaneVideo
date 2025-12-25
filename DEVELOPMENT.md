@@ -12,7 +12,7 @@
 
 - **OS**: macOS 26.2 (Tahoe). APIs differ from older versions.
 - **Hardware**: Apple Silicon (M1+) ONLY. No Intel support.
-- **Rule**: If unsure about an API, **SEARCH THE WEB**. Do not guess.
+- **Rule**: If unsure about an API, **CHECK THE SDK FIRST** (see SDK verification workflow in Golden Rules), then search the web for context/usage. Do not guess.
 
 ---
 
@@ -27,8 +27,9 @@
    - **NEVER trust web search for API existence or signatures**.
    - **ALWAYS query the SDK directly** before assuming an API exists or is deprecated.
    - The SDK `.swiftinterface` files are the **authoritative source**.
+   - **Use tool**: `./Scripts/SaneMaster.rb verify_api <APIName> [Framework]` to verify APIs.
    - See workflow: `.agent/workflows/sdk-api-verification.md`
-   - Example: `grep "APIName" /Applications/Xcode.app/.../MacOSX26.2.sdk/.../Framework.swiftinterface`
+   - Example: `./Scripts/SaneMaster.rb verify_api faceCaptureQuality Vision`
 7. **FIX THE TOOL (Critical Protocol)**
    - **Trigger**: Persistent errors or repetitive manual work.
    - **Action**: STOP. Fix or upgrade the underlying tool (`SaneMaster.rb`).
@@ -181,11 +182,16 @@ AppLogger.general     // Everything else
 
 #### 1. Quick Verification (Fast, Incremental)
 
-Use this for rapid iteration (Unit Tests only, skips UI tests).
+Use this for rapid iteration. **UI tests are optional and skipped by default** - run them manually when ready.
 
 ```bash
-# Default: Incremental build (Fast, ~5s)
+# Default: Incremental build + Unit Tests only (Fast, ~5s)
+# ⚠️ UI tests are NOT included by default
 ./Scripts/SaneMaster.rb verify
+
+# Include UI tests explicitly (Slower, ~60s+)
+# Run this when you want to test UI workflows
+./Scripts/SaneMaster.rb verify --ui
 
 # Optional: Full Clean Build (Slow, ~30s)
 ./Scripts/SaneMaster.rb verify --clean
@@ -193,7 +199,7 @@ Use this for rapid iteration (Unit Tests only, skips UI tests).
 
 #### 2. Full System Check (Slow, Complete)
 
-Use this before pushing code (Unit + UI Tests).
+Use this before pushing code. **Note**: CI runs unit tests only. UI tests are optional.
 
 ```bash
 bundle exec fastlane verify_full
@@ -223,14 +229,23 @@ Always diagnostics after a run:
 ## 7. Available Tools
 
 1. **SaneMaster.rb** (`./Scripts/SaneMaster.rb`): The master controller.
-    - `verify`: Incremental build + Unit Tests.
+    - `verify`: Incremental build + Unit Tests (fast, default).
+    - `verify --ui`: Build + all tests including UI tests.
     - `verify --clean`: Full clean build + Unit Tests.
-    - `doctor`: Health check.
-    - `console`: **Interactive Ruby REPL** (Pry) for debugging scripts (NEW).
+    - `doctor`: Health check (environment, assets, permissions, XcodeGen sync).
+    - `console`: **Interactive Ruby REPL** (Pry) for debugging scripts.
     - `gen_test <name>`: Generate test files.
+    - `gen_mock [options]`: Generate mocks using Mockolo.
+    - `verify_api <APIName> [Framework]`: Verify API exists in SDK (prevents hallucinations).
+    - `verify_mocks`: Check if mocks are synchronized with protocols.
+    - `check_docs`: Verify documentation matches tool capabilities.
 2. **Ruby Power Tools** (via `bundle exec`):
     - **Lefthook**: **The Enforcer**. Automates `swiftlint` on commit and `verify` on push.
     - **Fastlane**: Release orchestration & CI/CD.
+      - `bundle exec fastlane verify` - Unit tests only (fast)
+      - `bundle exec fastlane verify_full` - All tests including UI
+      - `bundle exec fastlane coverage` - Generate code coverage report
+      - `bundle exec fastlane release` - Full release preparation (includes coverage)
     - **Pry**: `bundle exec pry` for interactive debugging.
     - **RuboCop**: `bundle exec rubocop` for script linting.
     - **Bundler-Audit**: `bundle exec bundle-audit` for security.
@@ -290,6 +305,15 @@ We balance speed and robustness using two tiers of tests. **Use the right tool f
 - **Large Assets**: All Timeline UIs MUST use `LazyHStack` or equivalent JIT loading to support 10h+ videos without OOM.
 - **Command**: `xcodebuild test ... -only-testing:SaneVideoUITests/SaneEditorFeatureTests/testExportPerformance`
 - **Best Practice**: Run before releases. Inspect memory deltas to catch leaks.
+
+### Code Coverage
+
+- **Tool**: xcov (Fastlane plugin)
+- **Generate Report**: `bundle exec fastlane coverage`
+- **Report Location**: `fastlane/coverage/index.html`
+- **Integration**: Automatically included in `bundle exec fastlane release`
+- **Configuration**: Enabled in `project.yml` (`ENABLE_CODE_COVERAGE: YES`)
+- **Best Practice**: Review coverage reports before releases to identify untested code paths
 
 ### Best Practices
 

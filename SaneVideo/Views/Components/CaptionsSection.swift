@@ -14,6 +14,7 @@ import SwiftUI
 struct CaptionsSection: View {
     @Environment(AppState.self) var appState
     let clip: VideoClip
+    @Binding var isOperationInProgress: Bool
 
     @State private var isAnalyzing = false
     @State private var isRefining = false
@@ -76,13 +77,108 @@ struct CaptionsSection: View {
 
     // MARK: - Subviews
 
+    // P1 FIX: Empty state with Generate Captions button
     private var emptyCaptionsHint: some View {
-        HStack(spacing: 6) {
-            Image(systemName: "info.circle")
-                .foregroundColor(.orange)
-            Text(String(localized: "captions.empty_hint", defaultValue: "Use Magic Fix to generate captions"))
-                .font(.caption)
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 6) {
+                Image(systemName: "info.circle")
+                    .foregroundColor(.orange)
+                Text(String(localized: "captions.empty_hint", defaultValue: "No captions yet"))
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            
+            // P1 FIX: Primary action button
+            Button {
+                Task { await generateCaptions() }
+            } label: {
+                HStack {
+                    Image(systemName: "text.bubble.fill")
+                    Text(String(localized: "captions.generate", defaultValue: "Generate Captions"))
+                        .fontWeight(.medium)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 8)
+            }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.regular)
+            .disabled(isOperationInProgress || clip.isMissing || isGeneratingCaptions)
+            .accessibilityIdentifier("captions.generate_button")
+            .overlay {
+                if isGeneratingCaptions {
+                    ProgressView()
+                        .scaleEffect(0.8)
+                }
+            }
+            
+            // P1 FIX: Alternative hint
+            Text(String(localized: "captions.alternative_hint", defaultValue: "Or use Magic Fix for full cleanup"))
+                .font(.caption2)
                 .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+        }
+        .padding(12)
+        .background(Color.orange.opacity(0.05))
+        .cornerRadius(8)
+        .overlay(
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(Color.orange.opacity(0.2), lineWidth: 1)
+        )
+    }
+    
+    // P1 FIX: Generate captions action
+    private func generateCaptions() async {
+        guard !clip.isMissing else {
+            await MainActor.run {
+                ServiceContainer.shared.toastManager.show(
+                    "Cannot generate captions: Clip file is missing",
+                    type: .error
+                )
+            }
+            return
+        }
+        
+        // P0 FIX: Use separate state for caption generation
+        isGeneratingCaptions = true
+        defer {
+            Task { @MainActor in
+                isGeneratingCaptions = false
+            }
+        }
+        
+        do {
+            // P0 FIX: Use TranscriptionCoordinator for caption generation
+            await MainActor.run {
+                analysisResult = "Generating captions... This may take a moment."
+            }
+            
+            // Use the transcription coordinator to generate captions
+            let coordinator = ServiceContainer.shared.transcriptionCoordinator
+            let captions = try await coordinator.generateCaptions(
+                for: clip.url,
+                progressHandler: { current, total, _ in
+                    Task { @MainActor in
+                        let progress = total > 0 ? Double(current) / Double(total) : 0.0
+                        analysisResult = "Generating captions... \(Int(progress * 100))%"
+                    }
+                }
+            )
+            
+            await MainActor.run {
+                appState.projectState.updateCaptions(for: clip, newCaptions: captions)
+                ServiceContainer.shared.toastManager.show(
+                    String(localized: "toast.captions_generated", defaultValue: "Captions generated!"),
+                    type: .success
+                )
+            }
+        } catch {
+            await MainActor.run {
+                ServiceContainer.shared.toastManager.show(
+                    String(localized: "toast.captions_generation_failed", defaultValue: "Failed to generate captions: \(error.localizedDescription)"),
+                    type: .error
+                )
+                AppLogger.project.error("Caption generation failed: \(error.localizedDescription)")
+            }
         }
     }
 
@@ -136,14 +232,16 @@ struct CaptionsSection: View {
     private var styleSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             SubsectionHeader(title: "Style")
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 8) {
-                    ForEach(CaptionStyle.allPresets) { style in
-                        CaptionStylePreview(style: style)
-                            .onTapGesture {
-                                appState.projectState.updateCaptionStyle(style)
-                            }
-                    }
+            // P1 FIX: Grid layout instead of horizontal scroll
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 80), spacing: 8)], spacing: 8) {
+                ForEach(CaptionStyle.allPresets) { style in
+                    CaptionStylePreview(style: style)
+                        .onTapGesture {
+                            appState.projectState.updateCaptionStyle(style)
+                        }
+                        .accessibilityLabel("\(style.name) caption style")
+                        .accessibilityHint("Apply \(style.name) style to captions")
+                        .focusable()
                 }
             }
         }
@@ -190,6 +288,7 @@ struct CaptionsSection: View {
             ) {
                 Task { await analyzeMood() }
             }
+            .disabled(clip.isMissing || clip.captions.isEmpty) // CRITICAL FIX: Disable if clip is missing or no captions
 
             if let result = analysisResult {
                 InformationBox(text: result, color: .orange)
@@ -205,11 +304,12 @@ struct CaptionsSection: View {
                 subtitle: String(localized: "captions.action.scan_text.subtitle", defaultValue: "Find text in video (OCR)"),
                 icon: "doc.text.viewfinder",
                 color: .blue,
-                isLoading: false,
+                isLoading: isAnalyzing, // CRITICAL FIX: Use isAnalyzing state for loading indicator
                 id: "captions.action.scan_text"
             ) {
                 Task { await scanForText() }
             }
+            .disabled(clip.isMissing) // CRITICAL FIX: Disable if clip is missing
 
             DetectedItemsList(items: detectedText, color: .blue)
         }
@@ -218,48 +318,112 @@ struct CaptionsSection: View {
     // MARK: - Actions
 
     private func analyzeMood() async {
-        isAnalyzing = true
-        defer { isAnalyzing = false }
-
-        let captions = clip.captions.map {
-            Caption(text: $0.text, startTime: $0.startTime, endTime: $0.endTime)
+        // CRITICAL FIX: Validate captions exist
+        guard !clip.captions.isEmpty else {
+            await MainActor.run {
+                analysisResult = "No captions to analyze. Generate captions first."
+            }
+            return
         }
-        let sentiment = await ServiceContainer.shared.sentimentAnalysisService.getOverallMood(captions: captions)
-        analysisResult = "\(sentiment.sentiment.emoji) Mood: \(sentiment.sentiment.rawValue) -> Suggested: " +
-            "\(sentiment.suggestedColorGrade.rawValue) color grading"
+        
+        isAnalyzing = true
+        defer { 
+            Task { @MainActor in
+                isAnalyzing = false
+            }
+        }
+
+        do {
+            let captions = clip.captions.map {
+                Caption(text: $0.text, startTime: $0.startTime, endTime: $0.endTime)
+            }
+            let sentiment = await ServiceContainer.shared.sentimentAnalysisService.getOverallMood(captions: captions)
+            await MainActor.run {
+                analysisResult = "\(sentiment.sentiment.emoji) Mood: \(sentiment.sentiment.rawValue) -> Suggested: " +
+                    "\(sentiment.suggestedColorGrade.rawValue) color grading"
+            }
+        } catch {
+            await MainActor.run {
+                analysisResult = "Mood analysis failed: \(error.localizedDescription)"
+                AppLogger.project.error("Mood analysis failed: \(error.localizedDescription)")
+            }
+        }
     }
 
     private func scanForText() async {
+        // CRITICAL FIX: Validate clip before operation
+        guard !clip.isMissing else {
+            await MainActor.run {
+                analysisResult = "Cannot scan text: Clip file is missing"
+                detectedText = []
+            }
+            return
+        }
+        
         isAnalyzing = true
-        defer { isAnalyzing = false }
+        defer { 
+            Task { @MainActor in
+                isAnalyzing = false
+            }
+        }
 
         do {
             let progressTracker = ProgressTracker()
-            let analysisResultBinding = $analysisResult
             let texts = try await ServiceContainer.shared.textRecognitionService.scanVideoForText(
                 videoURL: clip.url
             ) { current, total in
                 if progressTracker.shouldUpdate() {
                     Task { @MainActor in
-                        analysisResultBinding.wrappedValue = "Scanning... \(current)/\(total) frames"
+                        analysisResult = "Scanning... \(current)/\(total) frames"
                     }
                 }
             }
-            if texts.isEmpty {
-                analysisResult = "No text detected in video"
-                detectedText = []
-            } else {
-                analysisResult = "Found \(texts.count) text regions"
-                detectedText = texts.map { $0.text }
+            await MainActor.run {
+                if texts.isEmpty {
+                    analysisResult = "No text detected in video"
+                    detectedText = []
+                } else {
+                    analysisResult = "Found \(texts.count) text regions"
+                    detectedText = texts.map { $0.text }
+                }
             }
         } catch {
-            analysisResult = "OCR failed: \(error.localizedDescription)"
+            await MainActor.run {
+                analysisResult = "OCR failed: \(error.localizedDescription)"
+                detectedText = []
+                AppLogger.project.error("Text scanning failed: \(error.localizedDescription)")
+            }
         }
     }
 
     private func refineCaptions() async {
+        // CRITICAL FIX: Validate clip before operation
+        guard !clip.isMissing else {
+            await MainActor.run {
+                ServiceContainer.shared.toastManager.show(
+                    "Cannot refine captions: Clip file is missing",
+                    type: .error
+                )
+            }
+            return
+        }
+        
+        guard !clip.captions.isEmpty else {
+            await MainActor.run {
+                ServiceContainer.shared.toastManager.show(
+                    "No captions to refine. Generate captions first.",
+                    type: .info
+                )
+            }
+            return
+        }
+        
         isRefining = true
-        defer { isRefining = false }
+        defer { 
+            Task { @MainActor in
+                isRefining = false
+            }
+        }
 
         do {
             // Use dynamic provider selection (prefers on-device, falls back to cloud if available)
@@ -273,6 +437,7 @@ struct CaptionsSection: View {
                 String(localized: "toast.captions_refine_failed", defaultValue: "Refinement failed: \(error.localizedDescription)"),
                 type: .error
             )
+            AppLogger.project.error("Caption refinement failed: \(error.localizedDescription)")
         }
     }
 }

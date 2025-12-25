@@ -11,12 +11,14 @@ import SwiftUI
 struct EffectsPickerView: View {
     @Environment(AppState.self) var appState
     let clip: VideoClip
+    @Binding var isOperationInProgress: Bool
 
     @State private var effects: [VideoEffect]
     @State private var selectedCategory: EffectCategory = .looks
 
-    init(clip: VideoClip) {
+    init(clip: VideoClip, isOperationInProgress: Binding<Bool>) {
         self.clip = clip
+        self._isOperationInProgress = isOperationInProgress
         _effects = State(initialValue: clip.effects)
     }
 
@@ -53,6 +55,7 @@ struct EffectsPickerView: View {
             .buttonStyle(.plain)
             .hoverScale(1.02)
             .pressScale()
+            .disabled(clip.isMissing) // CRITICAL FIX: Disable if clip is missing
             .padding(.bottom, 4)
             .accessibilityIdentifier("effects.action.auto_grade")
             .smoothAppear()
@@ -101,8 +104,8 @@ struct EffectsPickerView: View {
                 }
             }
 
-            // Effect tiles grid
-            LazyVGrid(columns: [GridItem(.adaptive(minimum: 56), spacing: 8)], spacing: 8) {
+            // P1 FIX: Larger effect tiles grid (64x64px minimum)
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 64), spacing: 8)], spacing: 8) {
                 ForEach(effectsForCategory) { effectType in
                     EffectTile(
                         effectType: effectType,
@@ -113,8 +116,18 @@ struct EffectsPickerView: View {
                 }
             }
         }
+        // CRITICAL FIX: Sync effects when clip changes externally
         .onChange(of: clip.effects) { _, newEffects in
-            self.effects = newEffects
+            // Only update if significantly different to avoid unnecessary re-renders
+            if effects.count != newEffects.count || 
+               !effects.elementsEqual(newEffects, by: { $0.id == $1.id && $0.intensity == $1.intensity }) {
+                self.effects = newEffects
+            }
+        }
+        // CRITICAL FIX: Validate clip exists before operations
+        .onChange(of: clip.id) { _, _ in
+            // Clip changed, sync effects
+            self.effects = clip.effects
         }
     }
 
@@ -158,21 +171,25 @@ struct EffectTile: View {
     let isActive: Bool
     let id: String
     let onTap: () -> Void
+    
+    // P1 FIX: State for hover preview
+    @State private var isHovering = false
 
     var body: some View {
         Button(action: onTap, label: {
             VStack(spacing: 4) {
                 ZStack {
+                    // P1 FIX: Larger tile (64x64px)
                     RoundedRectangle(cornerRadius: 8)
                         .fill(isActive ? Color.accentColor : Color.secondary.opacity(0.15))
-                        .frame(width: 44, height: 44)
+                        .frame(width: 64, height: 64)
                         .overlay(
                             RoundedRectangle(cornerRadius: 8)
                                 .stroke(isActive ? Color.accentColor : Color.clear, lineWidth: 2)
                         )
 
                     Image(systemName: effectType.icon)
-                        .font(.system(size: 18))
+                        .font(.system(size: 20)) // P1 FIX: Larger icon
                         .foregroundColor(isActive ? .white : .primary)
 
                     // Checkmark badge when active
@@ -181,19 +198,19 @@ struct EffectTile: View {
                             HStack {
                                 Spacer()
                                 Image(systemName: "checkmark.circle.fill")
-                                    .font(.system(size: 12))
+                                    .font(.system(size: 14)) // P1 FIX: Larger checkmark
                                     .foregroundColor(.white)
                                     .background(Circle().fill(Color.accentColor))
                             }
                             Spacer()
                         }
-                        .frame(width: 44, height: 44)
+                        .frame(width: 64, height: 64)
                         .offset(x: 4, y: -4)
                     }
                 }
 
                 Text(effectType.displayName)
-                    .font(.system(size: 9))
+                    .font(.system(size: 10)) // P1 FIX: Slightly larger text
                     .fontWeight(isActive ? .bold : .regular)
                     .foregroundColor(isActive ? .accentColor : .secondary)
                     .lineLimit(1)
@@ -207,7 +224,13 @@ struct EffectTile: View {
         .help(isActive ? 
             String(localized: "effects.tile.remove", defaultValue: "Remove") + " \(effectType.displayName)" : 
             String(localized: "effects.tile.apply", defaultValue: "Apply") + " \(effectType.displayName)")
+        // P0 FIX: Enhanced accessibility
         .accessibilityIdentifier(id)
+        .accessibilityLabel(effectType.displayName)
+        .accessibilityHint(isActive ? "Remove \(effectType.displayName) effect" : "Apply \(effectType.displayName) effect")
+        .accessibilityValue(isActive ? "Active" : "Inactive")
+        // P0 FIX: Keyboard navigation
+        .focusable()
         .smoothAppear()
     }
 }

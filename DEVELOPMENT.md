@@ -1,11 +1,11 @@
 # SaneVideo Development Guide (SOP)
 
 > **SINGLE SOURCE OF TRUTH** for all Developers and AI Agents.
-> 
+>
 > **SOP = Standard Operating Procedure = This File (DEVELOPMENT.md)**
-> 
+>
 > When you see "SOP", "use our SOP", or "follow the SOP", this is the document.
-> 
+>
 > Read this entirely before touching code.
 
 ## 0. Critical System Context: macOS 26.2 (Tahoe)
@@ -222,20 +222,24 @@ Always diagnostics after a run:
 
 ## 7. Available Tools
 
-1. **SaneMaster.rb**: The master controller.
+1. **SaneMaster.rb** (`./Scripts/SaneMaster.rb`): The master controller.
     - `verify`: Incremental build + Unit Tests.
     - `verify --clean`: Full clean build + Unit Tests.
     - `doctor`: Health check.
-    - `gen_test <name> [options]`: **Generate test file from template** (NEW)
-    - Includes **Permission Monitor** ("God Mode"): Automatically clicks "Allow" on TCC dialogs.
-2. **XcodeBuildMCP**: Use for granular programmatic builds/tests.
-3. **Fastlane**:
-    - `verify`: Unit tests only (Incremental by default).
-    - `verify_full`: Unit + UI tests (runs via SaneMaster for local dev).
+    - `console`: **Interactive Ruby REPL** (Pry) for debugging scripts (NEW).
+    - `gen_test <name>`: Generate test files.
+2. **Ruby Power Tools** (via `bundle exec`):
+    - **Lefthook**: **The Enforcer**. Automates `swiftlint` on commit and `verify` on push.
+    - **Fastlane**: Release orchestration & CI/CD.
+    - **Pry**: `bundle exec pry` for interactive debugging.
+    - **RuboCop**: `bundle exec rubocop` for script linting.
+    - **Bundler-Audit**: `bundle exec bundle-audit` for security.
+3. **XcodeBuildMCP**: Use for granular programmatic builds/tests.
 
 ### Test Generation Tool
 
 **Usage:**
+
 ```bash
 # Generate unit test with Swift Testing framework (default)
 ./Scripts/SaneMaster.rb gen_test MyFeatureTests --target MyFeature
@@ -248,6 +252,7 @@ Always diagnostics after a run:
 ```
 
 **Features:**
+
 - ✅ Generates proper test structure following AAA pattern
 - ✅ Includes timeout configuration
 - ✅ Adds TestEnvironment helper methods
@@ -310,6 +315,7 @@ We balance speed and robustness using two tiers of tests. **Use the right tool f
 ### Historical/Archive Documentation
 
 The following files are historical records and should NOT be used as primary sources:
+
 - `COMPLETED_IMPROVEMENTS.md` - Completed work log
 - `TOOLS_SUMMARY.md` - Superseded by INSTALLED_TOOLS.md
 - `TOOLS_AND_IMPROVEMENTS.md` - Superseded by INSTALLED_TOOLS.md

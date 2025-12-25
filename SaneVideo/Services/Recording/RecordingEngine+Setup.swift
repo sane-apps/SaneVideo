@@ -130,15 +130,40 @@ extension RecordingEngine {
   @MainActor
   private func handleScreenRecorderStopped(error: Error?) {
     Task { @RecordingActor in
-      // Only act if we expect to be recording from screen and aren't already stopping
+      let errorMessage = error?.localizedDescription ?? "User cancelled"
+      AppLogger.recording.warning("🛑 Screen recording stopped externally: \(errorMessage)")
+      
+      // CRITICAL: If we're in the middle of switching TO screen, rollback the switch
+      if isSwitching, pendingSource == .screen {
+        AppLogger.recording.error("🔄 Screen recorder stopped during switch TO screen. Rolling back.")
+        pendingSource = nil
+        currentSource = .camera // Rollback to previous source
+        isSwitching = false
+        timeCoordinator.startTimeNeedsRecalibration = false
+        sourceSwitchTimeoutTask?.cancel()
+        sourceSwitchTimeoutTask = nil
+        
+        await MainActor.run { [weak self] in
+          self?.onError?(AppError.recordingEngineError("Screen recording cancelled during switch"))
+        }
+        return
+      }
+      
+      // CRITICAL: If we're currently recording from screen and not stopping, handle it
       if isRecording, currentSource == .screen, !isStopping {
-        let errorMessage = error?.localizedDescription ?? "User cancelled"
         AppLogger.recording.info("Screen recording stopped externally: \(errorMessage)")
 
         // Nicely ask the app to revert to camera mode.
         await MainActor.run {
           self.onScreenRecordingStoppedExternally?()
         }
+      }
+      
+      // CRITICAL: If we're switching FROM screen to camera, this is expected
+      // (we're stopping screen recorder as part of the switch)
+      if isSwitching, pendingSource == .camera, currentSource == .screen {
+        AppLogger.recording.debug("Screen recorder stopped as part of switch to camera (expected)")
+        // Don't do anything - the switch will complete when camera frames arrive
       }
     }
   }
@@ -160,7 +185,7 @@ extension RecordingEngine {
     let settings: [String: Any] = [
       AVVideoCodecKey: AVVideoCodecType.h264,
       AVVideoWidthKey: 1280,
-      AVVideoHeightKey: 720,
+      AVVideoHeightKey: 720
     ]
 
     let input = AVAssetWriterInput(mediaType: .video, outputSettings: settings)
@@ -202,7 +227,7 @@ extension RecordingEngine {
     let attrs =
       [
         kCVPixelBufferCGImageCompatibilityKey: kCFBooleanTrue,
-        kCVPixelBufferCGBitmapContextCompatibilityKey: kCFBooleanTrue,
+        kCVPixelBufferCGBitmapContextCompatibilityKey: kCFBooleanTrue
       ] as CFDictionary
 
     let status = CVPixelBufferCreate(

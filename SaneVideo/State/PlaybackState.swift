@@ -71,6 +71,13 @@ class PlaybackState {
     private var tokenHolder = TokenHolder()
 
     nonisolated deinit {
+        // CRITICAL FIX: Cancel loading task on deallocation
+        // Note: We can't access actor-isolated properties in nonisolated deinit,
+        // but we can use MainActor.assumeIsolated for cancellation
+        MainActor.assumeIsolated {
+            loadingTask?.cancel()
+            loadingTask = nil
+        }
         // TokenHolder handles cleanup
     }
 
@@ -222,6 +229,10 @@ class PlaybackState {
     }
 
     func unload() {
+        // CRITICAL FIX: Cancel loading task before unloading
+        loadingTask?.cancel()
+        loadingTask = nil
+        
         if let observer = timeObserver {
             player?.removeTimeObserver(observer)
             timeObserver = nil
@@ -243,6 +254,20 @@ class PlaybackState {
     // MARK: - Controls
 
     func play() {
+        // CRITICAL FIX: Validate timeline is not empty before play
+        // Note: loadProject already handles this, but double-check for safety
+        guard let project = ServiceContainer.shared.appState.projectState.currentProject else {
+            AppLogger.playback.warning("Cannot play: No project loaded")
+            ServiceContainer.shared.toastManager.show("No project to play", type: .error)
+            return
+        }
+        
+        let hasClips = project.timeline.tracks.contains { !$0.clips.isEmpty }
+        guard hasClips else {
+            AppLogger.playback.warning("Cannot play: Empty timeline")
+            ServiceContainer.shared.toastManager.show("Cannot play empty timeline. Add clips first.", type: .error)
+            return
+        }
         guard let player = player else { return }
         if player.currentTime() >= duration {
             player.seek(to: .zero)

@@ -7,6 +7,15 @@ pre-commit:
     lint:
       glob: "*.swift"
       run: swiftlint lint --fix {staged_files} && git add {staged_files}
+    file_size_check:
+      glob: "*.swift"
+      run: swiftlint lint --strict {staged_files} | grep -q "file_length.*warning" && (echo "❌ File exceeds 500 lines! Refactor before committing." && exit 1) || exit 0
+    xcodegen_check:
+      glob: "*.swift"
+      run: ./Scripts/SaneMaster.rb check_xcodegen {staged_files}
+    protocol_change_check:
+      glob: "*.swift"
+      run: ./Scripts/SaneMaster.rb check_protocol_changes {staged_files}
     rubocop:
       glob: "*.rb"
       run: bundle exec rubocop -a {staged_files} && git add {staged_files}

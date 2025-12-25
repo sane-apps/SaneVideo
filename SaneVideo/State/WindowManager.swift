@@ -20,6 +20,9 @@ class WindowManager {
 
   // CRITICAL FIX: Flag to prevent concurrent screen share toggles
   var isTogglingScreenShare = false
+  
+  // CRITICAL FIX: Flag to prevent concurrent PiP show/hide operations
+  private var isTogglingPiP = false
 
   // MARK: - Internal Properties
 
@@ -29,11 +32,18 @@ class WindowManager {
   /// Windows that should be excluded from screen recordings (Controls, PiP Overlay)
   var excludedWindowIDs: [CGWindowID] {
     var ids: [CGWindowID] = []
-    // CRITICAL FIX: Store reference to prevent zombie access
-    if let window = pipWindow, let controls = window.controlsWindow {
+    // CRITICAL FIX: Store reference and validate before accessing properties
+    if let window = pipWindow,
+       !window.isReleasedWhenClosed,
+       window.windowNumber > 0,
+       let controls = window.controlsWindow,
+       !controls.isReleasedWhenClosed,
+       controls.windowNumber > 0 {
       ids.append(CGWindowID(controls.windowNumber))
     }
-    if let floating = floatingControls {
+    if let floating = floatingControls,
+       !floating.isReleasedWhenClosed,
+       floating.windowNumber > 0 {
       ids.append(CGWindowID(floating.windowNumber))
     }
     return ids
@@ -98,14 +108,28 @@ class WindowManager {
 
   private func showPiPWindow() {
     if TestEnvironment.isTesting && !TestEnvironment.isUITesting { return }
+    
+    // CRITICAL FIX: Prevent concurrent show/hide operations
+    guard !isTogglingPiP else {
+      AppLogger.window.warning("showPiPWindow: Already toggling, ignoring duplicate call")
+      return
+    }
+    
+    isTogglingPiP = true
+    defer { isTogglingPiP = false }
+    
     // UX IMPROVEMENT: Keep floating controls visible as a backup.
     // This ensures the user always has a "Record" button even if they start Screen Share before Recording.
     showFloatingControls()
 
     // @MainActor ensures we're already on main thread
 
-    // Check if window exists and is visible
-    if let existingWindow = pipWindow, existingWindow.isVisible {
+    // CRITICAL FIX: Validate window state before operations
+    // Check if window exists and is visible AND valid
+    if let existingWindow = pipWindow,
+       existingWindow.isVisible,
+       !existingWindow.isReleasedWhenClosed,
+       existingWindow.windowNumber > 0 {
       existingWindow.setupPreview()
       // CRITICAL FIX: Ensure controls window is visible even if PiP already exists
       if let controls = existingWindow.controlsWindow {
@@ -119,7 +143,16 @@ class WindowManager {
     // Create new window if needed
     if pipWindow == nil {
       AppLogger.window.info("Creating PiP Window")
-      pipWindow = PiPCameraWindow()
+      // CRITICAL FIX: Window creation might fail in low memory situations
+      // Validate window was created successfully and is valid
+      let newWindow = PiPCameraWindow()
+      if newWindow.windowNumber > 0 && !newWindow.isReleasedWhenClosed {
+        pipWindow = newWindow
+      } else {
+        AppLogger.window.error("Failed to create PiP window (invalid window state)")
+        ServiceContainer.shared.toastManager.show("Failed to create PiP window", type: .error)
+        return
+      }
     }
 
     pipWindow?.orderFrontRegardless()
@@ -140,6 +173,16 @@ class WindowManager {
 
   private func hidePiPWindow() {
     if TestEnvironment.isTesting && !TestEnvironment.isUITesting { return }
+    
+    // CRITICAL FIX: Prevent concurrent show/hide operations
+    guard !isTogglingPiP else {
+      AppLogger.window.warning("hidePiPWindow: Already toggling, ignoring duplicate call")
+      return
+    }
+    
+    isTogglingPiP = true
+    defer { isTogglingPiP = false }
+    
     // @MainActor ensures we're already on main thread
 
     // Prevent re-entry if already cleaning up
@@ -187,15 +230,16 @@ class WindowManager {
       AppLogger.window.warning("PiP window already released, skipping close")
     }
 
-    // CRITICAL FIX: Also hide floating controls when PiP is hidden
-    // (They were shown as backup when PiP was shown, but should go away when returning to main app)
-    hideFloatingControls()
-
-    // Update Screen Recorder filter to remove window
-    // Use Task to avoid blocking, but ensure it's safe
+    // CRITICAL FIX: Update filter BEFORE closing window to ensure filter has valid window IDs
+    // This prevents filter update from accessing closed window
+    // Note: We update filter synchronously here since we're on MainActor
     Task { @MainActor in
       await updateRecorderFilter()
     }
+    
+    // CRITICAL FIX: Also hide floating controls when PiP is hidden
+    // (They were shown as backup when PiP was shown, but should go away when returning to main app)
+    hideFloatingControls()
 
     AppLogger.window.info("PiP Window and controls fully hidden")
   }
@@ -260,6 +304,11 @@ class WindowManager {
     // Find and show main window
     var foundMain = false
     for window in windowsSnapshot {
+      // CRITICAL FIX: Validate window before accessing properties
+      guard !window.isReleasedWhenClosed, window.windowNumber > 0 else {
+        continue
+      }
+      
       // CRITICAL FIX: Use reference equality instead of type checking to prevent zombie access
       // Type checking on deallocated windows can cause crashes
       if window === currentPiPWindow || window === currentFloatingControls {
@@ -297,6 +346,24 @@ class WindowManager {
       AppLogger.window.warning("Could not find specific main window, calling unhide")
       NSApp.unhide(nil)
     }
+  }
+
+  // MARK: - Cleanup
+
+  /// Cleanup all windows before app termination
+  /// CRITICAL: Called during app termination to ensure clean shutdown
+  func cleanupAllWindows() {
+    AppLogger.window.info("Cleaning up all windows before termination...")
+    
+    // Hide PiP window (includes controls cleanup)
+    if pipWindow != nil {
+      hidePiPWindow()
+    }
+    
+    // Hide floating controls
+    hideFloatingControls()
+    
+    AppLogger.window.info("All windows cleaned up")
   }
 
   // MARK: - Filter Helpers

@@ -59,6 +59,7 @@ struct PlayerControlBar: View {
                 .pressScale()
                 .animation(.smoothUI, value: playbackState.isPlaying)
                 .keyboardShortcut(.space, modifiers: [])
+                .disabled(projectState.currentProject?.timeline.tracks.allSatisfy { $0.clips.isEmpty } ?? true)
                 .help(String(localized: "player.help.play_pause", defaultValue: "Play/Pause (Space) • J/K/L for shuttle control"))
                 .accessibilityIdentifier("player.toggle_play_pause")
 

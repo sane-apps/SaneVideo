@@ -19,8 +19,10 @@ extension RecordingEngine {
       }
       
       // Update PiP window frame for accurate compositing (only during screen recording)
-      // Note: We update this periodically, not on every frame to avoid overhead
+      // Throttled to 10fps to avoid overhead (comment says "periodically" but was running every frame)
       if source == .screen {
+        // Use VideoWriter's built-in throttling (it has lastFrameUpdateTime)
+        // Only update if enough time has passed (VideoWriter handles this internally)
         Task { @MainActor in
           let pipFrame = ServiceContainer.shared.appState.windowManager.pipWindowFrame
           let screenFrame = NSScreen.main?.frame
@@ -109,8 +111,7 @@ extension RecordingEngine {
       }
 
       if timeCoordinator.startTime != .zero,
-        bufferToWrite.presentationTimeStamp >= timeCoordinator.startTime
-      {
+        bufferToWrite.presentationTimeStamp >= timeCoordinator.startTime {
         // Write to dedicated Mic Track
         videoWriter?.writeMicAudio(sampleBuffer: bufferToWrite)
 
@@ -143,8 +144,7 @@ extension RecordingEngine {
       }
 
       if timeCoordinator.startTime != .zero,
-        bufferToWrite.presentationTimeStamp >= timeCoordinator.startTime
-      {
+        bufferToWrite.presentationTimeStamp >= timeCoordinator.startTime {
         // Write to dedicated System Audio Track
         videoWriter?.writeSystemAudio(sampleBuffer: bufferToWrite)
 

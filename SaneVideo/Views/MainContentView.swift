@@ -33,8 +33,9 @@ struct MainContentView: View {
   var body: some View {
     @Bindable var appState = appState
     @Bindable var errorPresenter = errorPresenter
-    
-    return mainContent
+
+    return
+      mainContent
       .background(.regularMaterial)
       .overlay(alignment: .top) {
         MagicOverlayView()
@@ -42,7 +43,7 @@ struct MainContentView: View {
       .overlay {
         // Quick Access Overlay (post-recording)
         if appState.showQuickAccessOverlay,
-           let url = appState.quickAccessRecordingURL {
+          let url = appState.quickAccessRecordingURL {
           QuickAccessOverlay(
             recordingURL: url,
             thumbnail: appState.quickAccessThumbnail,
@@ -59,7 +60,7 @@ struct MainContentView: View {
               appState.dismissQuickAccessOverlay()
             }
           )
-          .zIndex(1000) // Ensure it's on top
+          .zIndex(1000)  // Ensure it's on top
         }
       }
       // Global Keyboard Shortcuts
@@ -89,10 +90,12 @@ struct MainContentView: View {
         ErrorDisplayView(
           error: error,
           onDismiss: { errorPresenter.dismiss() },
-          onRetry: error.recoverySuggestions.isEmpty ? nil : {
-            errorPresenter.dismiss()
-            // Retry logic would be implemented per error type
-          }
+          onRetry: error.recoverySuggestions.isEmpty
+            ? nil
+            : {
+              errorPresenter.dismiss()
+              // Retry logic would be implemented per error type
+            }
         )
         .frame(width: 500, height: 400)
       }
@@ -117,8 +120,7 @@ struct MainContentView: View {
       }
       .sheet(isPresented: $showGIFSheet) {
         if let project = appState.projectState.currentProject,
-          let firstClip = project.timeline.tracks.first?.clips.first
-        {
+          let firstClip = project.timeline.tracks.first?.clips.first {
           GIFExportSheet(
             videoURL: firstClip.url,
             projectName: project.name,
@@ -170,8 +172,7 @@ struct MainContentView: View {
       }
       .sheet(isPresented: $showThumbnailSheet) {
         if let project = appState.projectState.currentProject,
-          let firstClip = project.timeline.tracks.first?.clips.first
-        {
+          let firstClip = project.timeline.tracks.first?.clips.first {
           ThumbnailPickerSheet(
             videoURL: firstClip.url,
             projectName: project.name,
@@ -207,6 +208,7 @@ struct MainContentView: View {
         }
       }
       .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isDraggingFile)
+      .accessibilityIdentifier("MainWindow")
   }
 
   var mainContent: some View {
@@ -295,19 +297,19 @@ struct MainContentView: View {
         .tint(Theme.Colors.accent)  // Force App Theme Color
         .controlSize(.regular)
         .hoverScale(1.05)
-        .pressScale() // Enhanced press animation
+        .pressScale()  // Enhanced press animation
         .simultaneousGesture(
-            TapGesture().onEnded {
-                ServiceContainer.shared.hapticsManager.impact()
-            }
+          TapGesture().onEnded {
+            ServiceContainer.shared.hapticsManager.impact()
+          }
         )
         .animation(.smoothUI, value: appState.appMode)
         .help("Toggle Record/Edit Mode (Cmd+M)")
         .padding(.vertical, 4)
         .enhancedAccessibility(
-            label: appState.appMode == .recording ? "Switch to Editor" : "Switch to Record",
-            hint: "Toggle between recording and editing modes",
-            traits: .isButton
+          label: appState.appMode == .recording ? "Switch to Editor" : "Switch to Record",
+          hint: "Toggle between recording and editing modes",
+          traits: .isButton
         )
         .keyboardShortcutHint("⌘M")
       }
@@ -352,18 +354,18 @@ struct MainContentView: View {
             .buttonStyle(.borderedProminent)
             .tint(Theme.Colors.accent)  // Force App Theme Color
             .hoverScale(1.05)
-            .pressScale() // Enhanced press animation
+            .pressScale()  // Enhanced press animation
             .simultaneousGesture(
-                TapGesture().onEnded {
-                    ServiceContainer.shared.hapticsManager.impact()
-                }
+              TapGesture().onEnded {
+                ServiceContainer.shared.hapticsManager.impact()
+              }
             )
             .help("Auto-Fix Project (Cmd+Shift+M)")
             .keyboardShortcut("m", modifiers: [.command, .shift])
             .enhancedAccessibility(
-                label: "Magic Fix",
-                hint: "Automatically removes silence, filler words, and enhances your video",
-                traits: .isButton
+              label: "Magic Fix",
+              hint: "Automatically removes silence, filler words, and enhances your video",
+              traits: .isButton
             )
             .keyboardShortcutHint("⌘⇧M")
 
@@ -380,12 +382,13 @@ struct MainContentView: View {
             .buttonStyle(.borderedProminent)
             .tint(Theme.Colors.accent)  // Force App Theme Color
             .hoverScale(1.05)
-            .help("Export Gallery (Cmd+E)")
+            .disabled(appState.currentProject?.timeline.tracks.allSatisfy { $0.clips.isEmpty } ?? true)
+            .help((appState.currentProject?.timeline.tracks.allSatisfy { $0.clips.isEmpty } ?? true) ? "Add clips to timeline first" : "Export Gallery (Cmd+E)")
             .keyboardShortcut("e", modifiers: [.command])
             .enhancedAccessibility(
-                label: "Share",
-                hint: "Export your video project",
-                traits: .isButton
+              label: "Share",
+              hint: (appState.currentProject?.timeline.tracks.allSatisfy { $0.clips.isEmpty } ?? true) ? "Add clips to timeline first" : "Export your video project",
+              traits: .isButton
             )
             .keyboardShortcutHint("⌘E")
           }

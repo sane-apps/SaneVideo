@@ -68,7 +68,6 @@ struct VideoClip: Identifiable, Equatable, Hashable, Codable, Sendable {
     // Runtime State (Not Persisted)
     var isMissing: Bool = false // Tracks if file is offline/missing
 
-
     /// Flattened list of all words from all captions (for filler detection)
     var allWords: [CaptionWord] {
         captions.flatMap { $0.words ?? [] }
@@ -100,6 +99,52 @@ struct VideoClip: Identifiable, Equatable, Hashable, Codable, Sendable {
         self.startTime = startTime
         self.trimStart = trimStart
         self.bookmarkData = bookmarkData
+    }
+    
+    /// Create a copy of this clip with a new ID and optional trim adjustments
+    /// Used when splitting clips to ensure all properties are preserved
+    func copy(newId: UUID? = nil, trimStart: CMTime? = nil, trimEnd: CMTime? = nil) -> VideoClip {
+        // CRITICAL: Use the full initializer that accepts id
+        var copy = VideoClip(
+            id: newId ?? UUID(),
+            url: self.url,
+            duration: self.duration,
+            trimStart: trimStart ?? self.trimStart,
+            trimEnd: trimEnd ?? self.trimEnd,
+            startTime: self.startTime,
+            volume: self.volume,
+            speed: self.speed,
+            isMuted: self.isMuted,
+            captions: self.captions,
+            transition: self.transition,
+            overlays: self.overlays,
+            bookmarkData: self.bookmarkData,
+            showCursorHighlight: self.showCursorHighlight,
+            cursorDataURL: self.cursorDataURL,
+            thumbnailURL: self.thumbnailURL
+        )
+        
+        // Override trimEnd if provided
+        if let trimEnd = trimEnd {
+            copy.trimEnd = trimEnd
+        }
+        
+        // Copy remaining properties that aren't in the initializer
+        copy.rotation = self.rotation
+        copy.opacity = self.opacity
+        copy.effects = self.effects
+        copy.privacyRegions = self.privacyRegions
+        copy.keyframeAnimation = self.keyframeAnimation
+        copy.clickDataURL = self.clickDataURL
+        copy.backgroundEffect = self.backgroundEffect
+        copy.enhancedAudioURL = self.enhancedAudioURL
+        copy.removedRanges = self.removedRanges
+        copy.useSmoothCutForRemovals = self.useSmoothCutForRemovals
+        copy.isVoiceIsolationEnabled = self.isVoiceIsolationEnabled
+        copy.isGatingEnabled = self.isGatingEnabled
+        copy.transform = self.transform
+        
+        return copy
     }
 
     // Internal init for full property setting

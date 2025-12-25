@@ -5,6 +5,7 @@ require 'json'
 require 'fileutils'
 require 'tmpdir'
 require 'optparse'
+require 'set'
 
 # ==============================================================================
 # SaneMaster: Professional Automation Suite for SaneVideo
@@ -12,7 +13,7 @@ require 'optparse'
 # Commands:
 #   diagnose [path] - Run intelligent heuristics on a .xcresult bundle.
 #   doctor          - Check environment, mock assets, and permissions.
-#   verify          - Build and run tests with auto-diagnostics.
+#   verify [--ui]   - Build and run tests (unit tests only by default, --ui for UI tests).
 #   clean           - Safely wipe build cache and test states.
 #   reset           - Wipe TCC privacy permissions (Camera, Mic, Screen).
 #   audit           - Scan project for missing accessibility identifiers.
@@ -66,6 +67,11 @@ class SaneMaster
     when 'gen_assets' then generate_test_assets
     when 'gen_test' then generate_test_file(args)
     when 'gen_mock' then generate_mocks(args)
+    when 'check_xcodegen' then check_xcodegen(args)
+    when 'verify_api' then verify_api(args)
+    when 'verify_mocks' then verify_mocks
+    when 'check_protocol_changes' then check_protocol_changes(args)
+    when 'check_docs' then check_documentation_sync
     when 'console'
       require 'pry'
       # rubocop:disable Lint/Debugger
@@ -545,6 +551,303 @@ class SaneMaster
     puts '  3. Use in tests: let mock = MockCameraService()'
   end
 
+  # --- XcodeGen Verification ---
+
+  def check_xcodegen(files)
+    # This is called from lefthook with staged files
+    return if files.empty?
+
+    project_path = File.expand_path('SaneVideo.xcodeproj', Dir.pwd)
+    unless File.exist?(project_path)
+      puts "❌ Project file not found. Run 'xcodegen generate' first."
+      exit 1
+    end
+
+    require 'xcodeproj'
+    project = Xcodeproj::Project.open(project_path)
+    project_files = Set.new
+
+    # Get all Swift files in project (normalize paths for comparison)
+    project.files.each do |file|
+      next unless file.path&.end_with?('.swift')
+
+      path = file.path
+      # Add both with and without SaneVideo/ prefix for flexible matching
+      project_files.add(path)
+      project_files.add(path.sub(%r{^SaneVideo/}, ''))
+      project_files.add("SaneVideo/#{path}") unless path.start_with?('SaneVideo/')
+    end
+
+    # Only check files that are newly added (not modified)
+    missing_files = []
+    files.each do |file|
+      next unless file.end_with?('.swift')
+      next if file.include?('Test') # Skip test files (they're auto-added)
+
+      # Check if file is actually new (not just modified)
+      is_new = `git diff --cached --diff-filter=A --name-only -- "#{file}" 2>/dev/null`.strip == file
+      next unless is_new
+
+      # Normalize path for comparison
+      normalized = file.start_with?('SaneVideo/') ? file : "SaneVideo/#{file}"
+      path_without_prefix = file.sub(%r{^SaneVideo/}, '')
+
+      # Check if file exists in project (try multiple path variations)
+      unless project_files.include?(file) || project_files.include?(normalized) || project_files.include?(path_without_prefix)
+        missing_files << file
+      end
+    end
+
+    if missing_files.any?
+      puts '❌ New Swift files not in Xcode project:'
+      missing_files.each { |f| puts "   - #{f}" }
+      puts "\n💡 Run: xcodegen generate"
+      exit 1
+    end
+
+    exit 0
+  end
+
+  # --- SDK API Verification Tool ---
+
+  def verify_api(args)
+    if args.empty?
+      puts 'Usage: ./Scripts/SaneMaster.rb verify_api <APIName> [Framework]'
+      puts ''
+      puts 'Examples:'
+      puts '  ./Scripts/SaneMaster.rb verify_api faceCaptureQuality Vision'
+      puts '  ./Scripts/SaneMaster.rb verify_api SCContentSharingPicker ScreenCaptureKit'
+      return
+    end
+
+    api_name = args[0]
+    framework = args[1] || 'auto'
+
+    puts '🔍 --- [ SDK API VERIFICATION ] ---'
+    puts "Searching for: #{api_name}"
+    puts "Framework: #{framework == 'auto' ? 'auto-detect' : framework}"
+    puts ''
+
+    # Find SDK path
+    sdk_base = '/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs'
+    sdks = Dir.glob("#{sdk_base}/MacOSX*.sdk").sort.reverse
+
+    if sdks.empty?
+      puts '❌ No macOS SDK found. Is Xcode installed?'
+      return
+    end
+
+    # Use latest SDK
+    sdk_path = sdks.first
+    sdk_version = File.basename(sdk_path).gsub('MacOSX', '').gsub('.sdk', '')
+    puts "📦 Using SDK: #{sdk_version}"
+    puts ''
+
+    # If framework specified, search there; otherwise search common frameworks
+    frameworks_to_search = if framework == 'auto'
+                             %w[Vision AVFoundation ScreenCaptureKit Foundation AppKit SwiftUI CoreMedia]
+                           else
+                             [framework]
+                           end
+
+    found = false
+    frameworks_to_search.each do |fw|
+      framework_path = "#{sdk_path}/System/Library/Frameworks/#{fw}.framework"
+      next unless File.exist?(framework_path)
+
+      # Find swiftinterface files
+      swiftinterface_files = Dir.glob("#{framework_path}/**/*.swiftinterface")
+      next if swiftinterface_files.empty?
+
+      swiftinterface_files.each do |swift_file|
+        result = `grep -n "#{api_name}" "#{swift_file}" 2>/dev/null`
+        next if result.empty?
+
+        found = true
+        puts "✅ Found in #{fw}:"
+        puts "   File: #{File.basename(swift_file)}"
+        puts ''
+        # Show context (5 lines before and after)
+        lines = result.split("\n").first(3) # Show first 3 matches
+        lines.each do |line|
+          line_num = line.split(':').first
+          context = `sed -n '#{[line_num.to_i - 2, 1].max},#{line_num.to_i + 5}p' "#{swift_file}" 2>/dev/null`
+          puts "   Line #{line_num}:"
+          context.split("\n").each do |ctx_line|
+            if ctx_line.include?(api_name)
+              puts "   >>> #{ctx_line.strip}"
+            else
+              puts "      #{ctx_line.strip}"
+            end
+          end
+          puts ''
+        end
+      end
+    end
+
+    return if found
+
+    puts "❌ API '#{api_name}' not found in SDK"
+    puts ''
+    puts '💡 Tips:'
+    puts '   - Check spelling (case-sensitive)'
+    puts '   - Try searching for partial name: ./Scripts/SaneMaster.rb verify_api "Content" ScreenCaptureKit'
+    puts '   - Framework may be different - try without framework to search all'
+  end
+
+  # --- Mock Synchronization Check ---
+
+  def verify_mocks
+    puts '🎭 --- [ MOCK SYNCHRONIZATION CHECK ] ---'
+
+    # Check if Mockolo is installed
+    unless system('which mockolo > /dev/null 2>&1')
+      puts '❌ Mockolo not found. Install: brew install mockolo'
+      return
+    end
+
+    # Find all @mockable protocols
+    puts '📂 Scanning for @mockable protocols...'
+    protocol_files = `find SaneVideo -name "*.swift" -exec grep -l "@mockable" {} \\;`.strip.split("\n")
+
+    if protocol_files.empty?
+      puts '⚠️  No @mockable protocols found'
+      return
+    end
+
+    puts "   Found #{protocol_files.length} protocol(s) with @mockable"
+    puts ''
+
+    # Check if mocks file exists
+    mocks_file = 'SaneVideoTests/Mocks/Mocks.swift'
+    unless File.exist?(mocks_file)
+      puts "❌ Mocks file not found: #{mocks_file}"
+      puts '   Run: ./Scripts/SaneMaster.rb gen_mock --target Core/Protocols'
+      return
+    end
+
+    # Generate temp mocks and compare
+    puts '🔄 Generating temporary mocks for comparison...'
+    temp_dir = Dir.mktmpdir
+    temp_mocks = File.join(temp_dir, 'Mocks.swift')
+
+    protocol_dir = 'SaneVideo/Core/Protocols'
+    cmd = "mockolo -s #{protocol_dir} -d #{temp_mocks} --enable-args-history --mock-all 2>/dev/null"
+    unless system(cmd)
+      puts '❌ Failed to generate temporary mocks'
+      FileUtils.rm_rf(temp_dir)
+      return
+    end
+
+    # Post-process temp mocks (same as gen_mock)
+    if File.exist?(temp_mocks)
+      content = File.read(temp_mocks)
+      content.gsub!(/^import [A-Za-z]+ [A-Za-z]+.*\n/, '')
+      content.gsub!(/(import Foundation\n)/, "\\1@testable import SaneVideo\n") unless content.include?('@testable import SaneVideo')
+      File.write(temp_mocks, content)
+    end
+
+    # Compare (simple line count and key protocol names)
+    existing_content = File.read(mocks_file)
+    temp_content = File.read(temp_mocks)
+
+    # Extract protocol names from both
+    existing_protocols = existing_content.scan(/class (\w+ProtocolMock)/).flatten
+    temp_protocols = temp_content.scan(/class (\w+ProtocolMock)/).flatten
+
+    missing = temp_protocols - existing_protocols
+    extra = existing_protocols - temp_protocols
+
+    FileUtils.rm_rf(temp_dir)
+
+    if missing.empty? && extra.empty?
+      puts '✅ Mocks are synchronized with protocols'
+    else
+      puts '⚠️  Mocks may be out of sync:'
+      puts "   Missing mocks: #{missing.join(', ')}" if missing.any?
+      puts "   Extra mocks (may be intentional): #{extra.join(', ')}" if extra.any?
+      puts ''
+      puts '💡 Regenerate mocks: ./Scripts/SaneMaster.rb gen_mock --target Core/Protocols'
+    end
+  end
+
+  # --- Protocol Change Detection ---
+
+  def check_protocol_changes(files)
+    # This is called from lefthook with staged files
+    return if files.empty?
+
+    protocol_files = files.select do |file|
+      file.include?('Protocol') && file.end_with?('.swift') && File.exist?(file)
+    end
+
+    return if protocol_files.empty?
+
+    # Check if any protocol files contain @mockable
+    changed_mockable = []
+    protocol_files.each do |file|
+      content = File.read(file)
+      changed_mockable << file if content.include?('@mockable') || content.include?('protocol')
+    end
+
+    return unless changed_mockable.any?
+
+    puts "\n⚠️  Protocol files with @mockable were modified:"
+    changed_mockable.each { |f| puts "   - #{f}" }
+    puts "\n💡 Remember to regenerate mocks:"
+    puts '   ./Scripts/SaneMaster.rb gen_mock --target Core/Protocols'
+    puts '   Or verify mocks are in sync:'
+    puts '   ./Scripts/SaneMaster.rb verify_mocks'
+    puts "\n   (This is a reminder - commit will proceed)"
+  end
+
+  # --- Documentation Sync Check ---
+
+  def check_documentation_sync
+    puts '📚 --- [ DOCUMENTATION SYNC CHECK ] ---'
+
+    issues = []
+
+    # Check if DEVELOPMENT.md mentions all SaneMaster commands
+    dev_doc = File.read('DEVELOPMENT.md')
+    help_output = `./Scripts/SaneMaster.rb 2>&1`
+
+    # Extract commands from help
+    commands_in_help = help_output.scan(/^\s+(\w+)/).flatten.uniq.reject { |c| ['Examples:', 'Commands:'].include?(c) }
+
+    # Check if each command is documented
+    commands_in_help.each do |cmd|
+      # Skip internal/helper commands
+      next if %w[console check_xcodegen check_protocol_changes].include?(cmd)
+
+      issues << "Command '#{cmd}' exists in SaneMaster but not documented in DEVELOPMENT.md" unless dev_doc.include?(cmd) || dev_doc.include?("`#{cmd}`")
+    end
+
+    # Check for outdated command descriptions
+    # Verify command mentions --ui flag
+    issues << "DEVELOPMENT.md doesn't mention --ui flag for verify command" unless dev_doc.include?('verify --ui') || dev_doc.include?('--ui')
+
+    # Check if verify_api is documented
+    unless dev_doc.include?('verify_api') || dev_doc.include?('SDK API verification')
+      issues << 'SDK API verification tool (verify_api) not documented in DEVELOPMENT.md'
+    end
+
+    # Check if verify_mocks is documented
+    unless dev_doc.include?('verify_mocks') || dev_doc.include?('mock synchronization')
+      issues << 'Mock synchronization check (verify_mocks) not documented in DEVELOPMENT.md'
+    end
+
+    if issues.empty?
+      puts '✅ Documentation is in sync with tools'
+    else
+      puts '⚠️  Documentation drift detected:'
+      issues.each { |issue| puts "   - #{issue}" }
+      puts "\n💡 Update DEVELOPMENT.md to reflect current tool capabilities"
+    end
+
+    issues.any?
+  end
+
   # --- Existing methods continue below ---
 
   def print_help
@@ -554,7 +857,7 @@ class SaneMaster
       Commands:
         diagnose [path] [--dump]  - Analyze .xcresult bundle and extract insights
         doctor                     - Health check (environment, assets, permissions)
-        verify [--clean]           - Build + test with auto-diagnostics
+        verify [--clean] [--ui]    - Build + test (unit tests only by default, --ui for UI tests)
         clean [--nuclear]          - Wipe build cache and test states
         reset                      - Reset TCC privacy permissions
         check_permissions          - Show current permission status
@@ -581,14 +884,50 @@ class SaneMaster
   def doctor
     puts '🏥 --- [ SANEMASTER DOCTOR ] ---'
 
-    # Check test assets
+    # Check test assets (enhanced)
     puts "\n📦 Test Assets:"
-    test_video = 'Tests/Assets/test_video.mp4'
+    assets_dir = 'Tests/Assets'
+    test_asset_name = ENV['TEST_ASSET_NAME'] || 'test_video.mp4'
+    test_video = File.join(assets_dir, test_asset_name)
+
     if File.exist?(test_video)
-      size = File.size(test_video) / 1024
-      puts "  ✅ test_video.mp4 exists (#{size}KB)"
+      size = File.size(test_video) / 1024 / 1024.0
+      size_str = size >= 1 ? "#{size.round(1)}MB" : "#{(size * 1024).round}KB"
+      puts "  ✅ #{test_asset_name} exists (#{size_str})"
     else
-      puts '  ⚠️  test_video.mp4 missing. Run: ./Scripts/SaneMaster.rb gen_assets'
+      puts "  ⚠️  #{test_asset_name} missing"
+      puts "     Expected at: #{test_video}"
+      puts '     Run: ./Scripts/SaneMaster.rb gen_assets'
+      puts '     Or set TEST_ASSET_NAME env var for different file'
+    end
+
+    # Check for other common test assets
+    common_assets = %w[test_video.mp4 test_video.mov test_video.m4v test_silence.mp4]
+    found_assets = common_assets.select { |a| File.exist?(File.join(assets_dir, a)) }
+    puts "  📋 Also found: #{found_assets.join(', ')}" if found_assets.any?
+
+    # Check XcodeGen sync
+    puts "\n📁 XcodeGen Sync:"
+    project_path = 'SaneVideo.xcodeproj/project.pbxproj'
+    if File.exist?(project_path)
+      puts '  ✅ Project file exists'
+      # Quick check: count Swift files in project vs on disk
+      begin
+        require 'xcodeproj'
+        project = Xcodeproj::Project.open(project_path)
+        project_swift_count = project.files.count { |f| f.path&.end_with?('.swift') }
+        disk_swift_count = `find SaneVideo -name "*.swift" -not -path "*/Tests/*" | wc -l`.strip.to_i
+        if (project_swift_count - disk_swift_count).abs > 5 # Allow some variance
+          puts "  ⚠️  File count mismatch (project: #{project_swift_count}, disk: ~#{disk_swift_count})"
+          puts '     Run: xcodegen generate'
+        else
+          puts "  ✅ Project appears in sync (#{project_swift_count} Swift files)"
+        end
+      rescue StandardError => e
+        puts "  ⚠️  Could not verify sync: #{e.message}"
+      end
+    else
+      puts '  ❌ Project file missing. Run: xcodegen generate'
     end
 
     # Check permissions
@@ -618,7 +957,8 @@ class SaneMaster
 
   def verify(args)
     clean_first = args.include?('--clean')
-    timeout = args.include?('--timeout') ? args[args.index('--timeout') + 1].to_i : 600 # 10 min default
+    include_ui = args.include?('--ui')
+    timeout = args.include?('--timeout') ? args[args.index('--timeout') + 1].to_i : 480 # 8 min default (balanced safety)
 
     if clean_first
       puts '🧹 Cleaning before verify...'
@@ -628,6 +968,11 @@ class SaneMaster
     puts '🔨 --- [ SANEMASTER VERIFY ] ---'
     puts 'Building and running tests with progress monitoring...'
     puts "⏱️  Timeout: #{timeout}s | Auto-handling permissions: ✅"
+    if include_ui
+      puts '📱 Including UI tests (use --ui flag)'
+    else
+      puts '⚡ Unit tests only (use --ui to include UI tests)'
+    end
     puts ''
 
     # Grant permissions upfront to avoid dialogs
@@ -635,7 +980,7 @@ class SaneMaster
 
     begin
       # Run tests with real-time progress monitoring
-      result = run_tests_with_progress(timeout)
+      result = run_tests_with_progress(timeout_seconds: timeout, include_ui: include_ui)
 
       if result[:success]
         puts "\n✅ Tests passed! (#{result[:tests_run]} tests, #{result[:duration]}s)"
@@ -705,7 +1050,7 @@ class SaneMaster
     puts '✅'
   end
 
-  def run_tests_with_progress(timeout_seconds)
+  def run_tests_with_progress(timeout_seconds:, include_ui: false)
     require 'timeout'
     require 'open3'
 
@@ -716,8 +1061,9 @@ class SaneMaster
     spinner_chars = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏']
     spinner_idx = 0
 
-    # Build command
-    cmd = "xcodebuild test -scheme SaneVideo -destination 'platform=macOS,arch=arm64' 2>&1"
+    # Build command (skip UI tests unless --ui flag)
+    skip_ui = include_ui ? '' : ' -only-testing:SaneVideoTests'
+    cmd = "xcodebuild test -scheme SaneVideo -destination 'platform=macOS,arch=arm64'#{skip_ui} 2>&1"
 
     success = false
     timed_out = false

@@ -189,9 +189,20 @@ struct TimelineTracksView: View {
                 .shadow(color: .red.opacity(0.6), radius: isScrubbing ? 8 : 4)
         }
         .contentShape(Rectangle())
+        // CRITICAL FIX: Only activate scrubbing if drag starts near playhead
+        // This prevents interference with clip selection
         .highPriorityGesture(
-            DragGesture(coordinateSpace: .named("TimelineContent"))
+            DragGesture(minimumDistance: 0, coordinateSpace: .named("TimelineContent"))
                 .onChanged { value in
+                    // CRITICAL FIX: Check if drag started near playhead (within 20px horizontally)
+                    // This prevents scrubbing from interfering with clip selection
+                    let playheadX = (isScrubbing ? scrubTime : appState.playbackState.currentTime).seconds * pixelsPerSecond
+                    let dragStartX = value.startLocation.x
+                    let distanceFromPlayhead = abs(dragStartX - playheadX)
+                    
+                    // Only allow scrubbing if drag started near playhead or if already scrubbing
+                    guard isScrubbing || distanceFromPlayhead < 20 else { return }
+                    
                     if !isScrubbing {
                         withAnimation(.spring(response: 0.2, dampingFraction: 0.6)) {
                             isScrubbing = true

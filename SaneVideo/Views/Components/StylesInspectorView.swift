@@ -17,18 +17,38 @@ struct StylesInspectorView: View {
 
     @AppStorage("inspectorProMode") private var isProMode = false // Default to Simple Mode
     
-    // Collapsible section states
-    @State private var showSmartTools = true
-    @State private var showCaptions = true // Default open for visibility
-    @State private var showVideo = false
-    @State private var showBackground = false
-    @State private var showEffects = false
-    @State private var showAudio = false
-    @State private var showClipInfo = false
+    // CRITICAL FIX: Persist collapsible section states
+    @AppStorage("inspector.showSmartTools") private var showSmartTools = true
+    @AppStorage("inspector.showCaptions") private var showCaptions = true
+    @AppStorage("inspector.showVideo") private var showVideo = false
+    @AppStorage("inspector.showBackground") private var showBackground = false
+    @AppStorage("inspector.showEffects") private var showEffects = false
+    @AppStorage("inspector.showAudio") private var showAudio = false
+    @AppStorage("inspector.showClipInfo") private var showClipInfo = false
+    
+    // CRITICAL FIX: Track if operation is in progress to prevent mode switching
+    @State private var isOperationInProgress = false
+    
+    // CRITICAL FIX: Validate clip exists in current project
+    private var validatedClip: VideoClip? {
+        guard let clip = selectedClip,
+              let project = appState.projectState.currentProject else {
+            return nil
+        }
+        // Verify clip still exists in project
+        for track in project.timeline.tracks {
+            if track.clips.contains(where: { $0.id == clip.id }) {
+                // CRITICAL FIX: Get fresh clip from project to ensure we have latest state
+                return track.clips.first(where: { $0.id == clip.id })
+            }
+        }
+        // Clip not found - auto-deselect
+        return nil
+    }
 
     /// Does this clip have captions? (affects section priority)
     private var hasCaptions: Bool {
-        selectedClip?.captions.isEmpty == false
+        validatedClip?.captions.isEmpty == false
     }
 
     var body: some View {
@@ -39,6 +59,14 @@ struct StylesInspectorView: View {
             HStack {
                 InspectorHeader()
                 Spacer()
+                
+                // CRITICAL FIX: Show mode indicator
+                if isProMode {
+                    Text("Pro")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                        .padding(.trailing, 4)
+                }
                 
                 // Mode Toggle
                 Picker("Mode", selection: $isProMode) {
@@ -51,11 +79,18 @@ struct StylesInspectorView: View {
                 .controlSize(.small)
                 .padding(.trailing, 16)
                 .help("Toggle between Simple (AI) and Pro (Manual) controls")
+                .disabled(isOperationInProgress) // CRITICAL FIX: Prevent mode switch during operations
+                .accessibilityLabel("Inspector Mode")
+                .accessibilityHint("Switch between Simple mode for AI tools and Pro mode for manual controls")
+                .focusable() // P0 FIX: Keyboard navigation
             }
 
-            if let clip = selectedClip {
+            // CRITICAL FIX: Validate clip exists before rendering
+            if let clip = validatedClip {
                 ScrollView {
-                    VStack(spacing: 0) {
+                    // CRITICAL FIX: Use LazyVStack for better performance with many sections
+                    // P0 FIX: Add keyboard navigation support
+                    LazyVStack(spacing: 0) {
                         // ═══════════════════════════════════════════
                         // PRIORITY 0: SMART TOOLS (Magic Fix)
                         // Always Visible
@@ -65,7 +100,7 @@ struct StylesInspectorView: View {
                             icon: "wand.and.stars",
                             isExpanded: $showSmartTools
                         ) {
-                            SmartToolsSection(clip: clip, options: $projectState.magicFixOptions)
+                            SmartToolsSection(clip: clip, options: $projectState.magicFixOptions, isOperationInProgress: $isOperationInProgress)
                         }
                         
                         Divider().padding(.horizontal)
@@ -82,7 +117,7 @@ struct StylesInspectorView: View {
                                 isExpanded: $showCaptions,
                                 badge: hasCaptions ? "\(clip.captions.count)" : nil
                             ) {
-                                CaptionsSection(clip: clip)
+                                CaptionsSection(clip: clip, isOperationInProgress: $isOperationInProgress)
                             }
                             
                             Divider().padding(.horizontal)
@@ -95,7 +130,7 @@ struct StylesInspectorView: View {
                         if isProMode {
                             // PRIORITY 2: VIDEO
                             CollapsibleSection(title: "Video", icon: "film", isExpanded: $showVideo) {
-                                VideoSection(clip: clip)
+                                VideoSection(clip: clip, isOperationInProgress: $isOperationInProgress)
                             }
 
                             Divider().padding(.horizontal)
@@ -107,7 +142,7 @@ struct StylesInspectorView: View {
                                 isExpanded: $showBackground,
                                 badge: clip.backgroundEffect != nil ? "On" : nil
                             ) {
-                                BackgroundEffectsView(clip: clip)
+                                BackgroundEffectsView(clip: clip, isOperationInProgress: $isOperationInProgress)
                             }
 
                             Divider().padding(.horizontal)
@@ -119,14 +154,14 @@ struct StylesInspectorView: View {
                                 isExpanded: $showEffects,
                                 badge: clip.effects.isEmpty ? nil : "\(clip.effects.count)"
                             ) {
-                                EffectsPickerView(clip: clip)
+                                EffectsPickerView(clip: clip, isOperationInProgress: $isOperationInProgress)
                             }
 
                             Divider().padding(.horizontal)
 
                             // PRIORITY 4: AUDIO
                             CollapsibleSection(title: "Audio", icon: "waveform", isExpanded: $showAudio) {
-                                AudioSection(clip: clip)
+                                AudioSection(clip: clip, isOperationInProgress: $isOperationInProgress)
                             }
 
                             Divider().padding(.horizontal)
@@ -187,7 +222,29 @@ struct StylesInspectorView: View {
                 EmptySelectionView()
             }
         }
-        .frame(minWidth: 260, idealWidth: 300, maxWidth: 380)
+        // P1 FIX: Increase Inspector width for better spacing
+        .frame(minWidth: 320, idealWidth: 360, maxWidth: 420)
         .background(.ultraThinMaterial)
+        // CRITICAL FIX: Auto-deselect if clip is deleted
+        .onChange(of: appState.projectState.currentProject?.timeline.tracks) { _, _ in
+            if let clip = selectedClip {
+                if validatedClip == nil {
+                    // Clip was deleted, deselect it
+                    selectedClip = nil
+                    AppLogger.general.info("Inspector: Auto-deselected deleted clip")
+                }
+            }
+        }
+        // CRITICAL FIX: Sync selectedClip if it becomes invalid
+        .onChange(of: selectedClip?.id) { _, newId in
+            if let newId = newId, validatedClip == nil {
+                // Selected clip doesn't exist, deselect
+                selectedClip = nil
+            }
+        }
+        // CRITICAL FIX: Monitor for operations in progress
+        .onChange(of: appState.projectState.isProcessing) { _, isProcessing in
+            isOperationInProgress = isProcessing
+        }
     }
 }

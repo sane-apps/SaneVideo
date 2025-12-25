@@ -50,28 +50,53 @@ final class SaneVideoCompositor: NSObject, AVVideoCompositing {
   }
 
   private func render(_ request: AVAsynchronousVideoCompositionRequest) async {
+    // CRITICAL FIX: Ensure request is always finished, even on error
+    // Use defer to guarantee finish() is called on all paths
+    var outputPixelBuffer: CVPixelBuffer?
+    var renderError: Error?
+    
+    defer {
+      // CRITICAL FIX: Always finish the request, even if error occurred
+      if let error = renderError {
+        request.finish(with: error)
+      } else if let buffer = outputPixelBuffer {
+        request.finish(withComposedVideoFrame: buffer)
+      } else {
+        // Fallback: try to create empty buffer or finish with error
+        if let emptyBuffer = request.renderContext.newPixelBuffer() {
+          request.finish(withComposedVideoFrame: emptyBuffer)
+        } else {
+          request.finish(
+            with: NSError(
+              domain: "SaneVideoCompositor", code: -3,
+              userInfo: [NSLocalizedDescriptionKey: "Failed to finish render request"]))
+        }
+      }
+    }
+    
     guard let instruction = request.videoCompositionInstruction as? SaneVideoCompositionInstruction,
       !instruction.layerInstructions.isEmpty
     else {
       // If instructions are empty (transient state), return an empty buffer or handle gracefully
-      if let outputPixelBuffer = request.renderContext.newPixelBuffer() {
-        request.finish(withComposedVideoFrame: outputPixelBuffer)
+      if let buffer = request.renderContext.newPixelBuffer() {
+        outputPixelBuffer = buffer
+        return
       } else {
-        request.finish(
-          with: NSError(
-            domain: "SaneVideoCompositor", code: -1,
-            userInfo: [NSLocalizedDescriptionKey: "Empty instructions"]))
+        renderError = NSError(
+          domain: "SaneVideoCompositor", code: -1,
+          userInfo: [NSLocalizedDescriptionKey: "Empty instructions"])
+        return
       }
-      return
     }
 
-    guard let outputPixelBuffer = request.renderContext.newPixelBuffer() else {
-      request.finish(
-        with: NSError(
-          domain: "SaneVideoCompositor", code: -2,
-          userInfo: [NSLocalizedDescriptionKey: "Failed to create output buffer"]))
+    guard let buffer = request.renderContext.newPixelBuffer() else {
+      renderError = NSError(
+        domain: "SaneVideoCompositor", code: -2,
+        userInfo: [NSLocalizedDescriptionKey: "Failed to create output buffer"])
       return
     }
+    
+    outputPixelBuffer = buffer
 
     // 2. Composite Layers (Video Tracks)
     var currentImage: CIImage?
@@ -179,12 +204,23 @@ final class SaneVideoCompositor: NSObject, AVVideoCompositing {
     }
 
     // 5. Render Final
-    if let finalImage = currentImage {
-      // Render directly to the output pixel buffer
-      ciContext.render(finalImage, to: outputPixelBuffer)
-      request.finish(withComposedVideoFrame: outputPixelBuffer)
-    } else {
-      request.finish(withComposedVideoFrame: outputPixelBuffer)
+    // CRITICAL FIX: Wrap rendering in do-catch to handle errors
+    do {
+      guard let buffer = outputPixelBuffer else {
+        renderError = NSError(
+          domain: "SaneVideoCompositor", code: -4,
+          userInfo: [NSLocalizedDescriptionKey: "Output buffer lost during rendering"])
+        return
+      }
+      
+      if let finalImage = currentImage {
+        // Render directly to the output pixel buffer
+        ciContext.render(finalImage, to: buffer)
+      }
+      // defer block will finish the request with the buffer
+    } catch {
+      // CRITICAL FIX: Capture error for defer block to handle
+      renderError = error
     }
   }
 

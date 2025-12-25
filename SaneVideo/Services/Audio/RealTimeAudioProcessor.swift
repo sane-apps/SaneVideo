@@ -75,19 +75,26 @@ final class RealTimeAudioProcessor {
         
         self.engine = newEngine
         
-        // Start engine
-        try newEngine.start()
-        
-        // Mute AVPlayer audio (we'll play through engine instead)
-        videoPlayer.volume = 0.0
-        
-        // Schedule and play audio file
-        await newPlayerNode.scheduleFile(file, at: nil)
-        
-        // Sync with video player
-        syncWithVideoPlayer()
-        
-        AppLogger.audio.info("Real-time audio processor setup complete for clip \(clip.id)")
+        // CRITICAL FIX: Use defer to ensure engine is stopped on error
+        do {
+            // Start engine
+            try newEngine.start()
+            
+            // Mute AVPlayer audio (we'll play through engine instead)
+            videoPlayer.volume = 0.0
+            
+            // Schedule and play audio file
+            await newPlayerNode.scheduleFile(file, at: nil)
+            
+            // Sync with video player
+            syncWithVideoPlayer()
+            
+            AppLogger.audio.info("Real-time audio processor setup complete for clip \(clip.id)")
+        } catch {
+            // CRITICAL FIX: Stop engine on error to prevent resource leak
+            newEngine.stop()
+            throw error
+        }
     }
     
     /// Sync audio playback with video player
@@ -174,8 +181,25 @@ final class RealTimeAudioProcessor {
     
     /// Stop and cleanup
     func cleanup() {
-        playerNode?.stop()
-        engine?.stop()
+        // CRITICAL FIX: Detach nodes before stopping engine to prevent memory leaks
+        if let engine = engine {
+            // Detach all nodes before stopping
+            if let playerNode = playerNode {
+                playerNode.stop()
+                engine.detach(playerNode)
+            }
+            if let isolationUnit = isolationUnit {
+                engine.detach(isolationUnit)
+            }
+            if let eqUnit = eqUnit {
+                engine.detach(eqUnit)
+            }
+            if let dynamicsUnit = dynamicsUnit {
+                engine.detach(dynamicsUnit)
+            }
+            engine.stop()
+        }
+        
         engine = nil
         playerNode = nil
         audioFile = nil
@@ -334,4 +358,3 @@ final class RealTimeAudioProcessor {
 }
 
 extension RealTimeAudioProcessor.ClipAudioSettings: Equatable {}
-

@@ -113,10 +113,24 @@ final class SaneAudioEnhancementService {
         let maxFrames: AVAudioFrameCount = 4096
         try engine.enableManualRenderingMode(.offline, format: file.processingFormat, maximumFrameCount: maxFrames)
         
-        try engine.start()
-        // Use async variant to avoid warning
-        await player.scheduleFile(file, at: nil) // Fire and forget for offline render setup
-        player.play()
+        // CRITICAL FIX: Use defer to ensure engine is stopped on error
+        do {
+            try engine.start()
+            // Use async variant to avoid warning
+            await player.scheduleFile(file, at: nil) // Fire and forget for offline render setup
+            player.play()
+        } catch {
+            // CRITICAL FIX: Stop engine on error to prevent resource leak
+            engine.stop()
+            // Detach nodes before stopping
+            engine.detach(player)
+            engine.detach(eq)
+            if let unit = isolationUnit {
+                engine.detach(unit)
+            }
+            engine.detach(dynamics)
+            throw error
+        }
         
         // 7. Render Loop
         // Output format: M4A AAC
@@ -181,6 +195,14 @@ final class SaneAudioEnhancementService {
         
         player.stop()
         engine.stop()
+        
+        // CRITICAL FIX: Detach nodes before stopping engine
+        engine.detach(player)
+        engine.detach(eq)
+        if let unit = isolationUnit {
+            engine.detach(unit)
+        }
+        engine.detach(dynamics)
         
         AppLogger.recording.info("🎙️ AudioEnhancement: Enhanced audio saved to: \(outputURL.path)")
         return outputURL

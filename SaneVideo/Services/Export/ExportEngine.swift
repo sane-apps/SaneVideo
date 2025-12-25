@@ -132,6 +132,9 @@ class ExportEngine: ExportServiceProtocol {
         outputURL: URL,
         progressHandler: @escaping @Sendable (Double) -> Void
     ) async throws -> URL {
+        // CRITICAL FIX: Store outputURL for cleanup on error
+        let exportOutputURL = outputURL
+        
         self.exportSession = exportSession
         progressTracker.startMonitoring(session: exportSession)
 
@@ -142,29 +145,65 @@ class ExportEngine: ExportServiceProtocol {
             }
             .store(in: &exportCancellables)
 
-        // Retry export operation for transient failures
-        do {
-            if #available(macOS 15.0, *) {
-                AppLogger.project.info("🚀 Using modern async export pattern (macOS 15+)")
-                try await exportSession.export(to: outputURL, as: .mp4)
-                return try await handleExportCompletion(outputURL: outputURL, error: nil)
-            } else {
-                AppLogger.project.info("⏳ Using legacy export pattern")
-                await exportSession.export()
-                if exportSession.status == .completed {
-                    return try await handleExportCompletion(outputURL: outputURL, error: nil)
+        // CRITICAL FIX: Retry export operation for transient failures
+        // Note: AVAssetExportSession is not Sendable, so we can't use retryOperation directly
+        // Instead, we'll manually retry once for recoverable errors
+        var lastError: Error?
+        var attempt = 0
+        let maxAttempts = 2
+        
+        while attempt < maxAttempts {
+            attempt += 1
+            do {
+                if #available(macOS 15.0, *) {
+                    AppLogger.project.info("🚀 Using modern async export pattern (macOS 15+)")
+                    try await exportSession.export(to: outputURL, as: .mp4)
                 } else {
-                    return try await handleExportCompletion(outputURL: outputURL, error: exportSession.error ?? ExportError.unknown)
+                    AppLogger.project.info("⏳ Using legacy export pattern")
+                    await exportSession.export()
+                    if exportSession.status != .completed {
+                        throw exportSession.error ?? ExportError.unknown
+                    }
+                }
+                // Success - exit retry loop
+                return try await handleExportCompletion(outputURL: outputURL, error: nil)
+            } catch {
+                lastError = error
+                
+                // Check if error is recoverable and we haven't exhausted attempts
+                if isRecoverableError(error) && attempt < maxAttempts {
+                    AppLogger.export.warning("⚠️ Export failed (attempt \(attempt)/\(maxAttempts)), retrying: \(error.localizedDescription)")
+                    try? await Task.sleep(nanoseconds: 1_000_000_000) // 1 second delay
+                    continue // Retry
+                } else {
+                    // Non-recoverable error or last attempt failed
+                    break // Exit retry loop
                 }
             }
-        } catch {
-            // If export fails, log and rethrow
-            AppLogger.export.error("❌ Export failed: \(error.localizedDescription)")
+        }
+        
+        // All attempts failed - clean up and throw error
+        if let error = lastError {
+            AppLogger.export.error("❌ Export failed after \(maxAttempts) attempts: \(error.localizedDescription)")
+            
+            // CRITICAL FIX: Clean up partial file on failure
+            if FileManager.default.fileExists(atPath: exportOutputURL.path) {
+                do {
+                    try FileManager.default.removeItem(at: exportOutputURL)
+                    AppLogger.export.info("Cleaned up partial export file after failure: \(exportOutputURL.lastPathComponent)")
+                } catch {
+                    AppLogger.export.warning("Failed to clean up partial file: \(error.localizedDescription)")
+                }
+            }
+            
             self.exportSession = nil
             isExporting = false
             progressTracker.stopMonitoring()
             exportCancellables.removeAll()
             throw error
+        } else {
+            // This should never happen, but handle gracefully
+            throw ExportError.unknown
         }
     }
 
@@ -198,6 +237,15 @@ class ExportEngine: ExportServiceProtocol {
         }
         
         if let error = error {
+            // CRITICAL FIX: Clean up partial file on error
+            if FileManager.default.fileExists(atPath: outputURL.path) {
+                do {
+                    try FileManager.default.removeItem(at: outputURL)
+                    AppLogger.export.info("Cleaned up partial export file after error: \(outputURL.lastPathComponent)")
+                } catch {
+                    AppLogger.export.warning("Failed to clean up partial file: \(error.localizedDescription)")
+                }
+            }
             throw error
         } else {
             return outputURL

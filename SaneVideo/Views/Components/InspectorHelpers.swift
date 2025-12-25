@@ -15,11 +15,12 @@ struct CollapsibleSection<Content: View>: View {
     let icon: String
     @Binding var isExpanded: Bool
     var badge: String? // Optional badge (e.g., caption count)
+    var isPrimary: Bool = false // P1 FIX: Mark primary sections
     @ViewBuilder let content: () -> Content
 
     var body: some View {
         VStack(spacing: 0) {
-            // Header (always visible, clickable)
+            // P1 FIX: Enhanced header with visual hierarchy
             Button(action: {
                 withAnimation(.easeInOut(duration: 0.2)) {
                     isExpanded.toggle()
@@ -27,11 +28,11 @@ struct CollapsibleSection<Content: View>: View {
             }, label: {
                 HStack {
                     Image(systemName: icon)
-                        .font(.system(size: 12))
-                        .foregroundColor(.secondary)
+                        .font(.system(size: isPrimary ? 14 : 12, weight: isPrimary ? .bold : .regular))
+                        .foregroundColor(isPrimary ? Theme.Colors.accent : .secondary)
                         .frame(width: 20)
                     Text(title)
-                        .font(.system(size: 12, weight: .semibold))
+                        .font(.system(size: isPrimary ? 13 : 12, weight: isPrimary ? .bold : .semibold))
                         .foregroundColor(.primary)
 
                     // Badge (shows count when applicable)
@@ -50,11 +51,17 @@ struct CollapsibleSection<Content: View>: View {
                         .foregroundColor(.secondary)
                 }
                 .padding(.horizontal, 12)
-                .padding(.vertical, 10)
-                .background(Color.secondary.opacity(0.05))
+                .padding(.vertical, isPrimary ? 12 : 10)
+                .background(isPrimary ? Theme.Colors.accent.opacity(0.05) : Color.secondary.opacity(0.05))
             })
             .buttonStyle(.plain)
+            // P0 FIX: Enhanced accessibility
             .accessibilityIdentifier("\(title)SectionButton")
+            .accessibilityLabel("\(title) section")
+            .accessibilityHint(isExpanded ? "Collapse \(title) section" : "Expand \(title) section")
+            .accessibilityValue(isExpanded ? "Expanded" : "Collapsed")
+            // P0 FIX: Keyboard navigation support
+            .keyboardShortcut(.defaultAction) // Space/Enter to toggle
 
             // Content (collapsible)
             if isExpanded {
@@ -62,6 +69,8 @@ struct CollapsibleSection<Content: View>: View {
                     .padding(.horizontal, 12)
                     .padding(.vertical, 8)
                     .transition(.smoothScale)
+                    // P0 FIX: Focus management for keyboard navigation
+                    .focusable()
             }
         }
     }
@@ -130,7 +139,13 @@ struct SmartToolButton: View {
         .hoverScale(1.02)
         .pressScale()
         .disabled(isLoading)
+        // P0 FIX: Enhanced accessibility
         .accessibilityIdentifier(id)
+        .accessibilityLabel(title)
+        .accessibilityHint(subtitle)
+        .accessibilityValue(isLoading ? "Loading" : "")
+        // P0 FIX: Keyboard navigation
+        .focusable()
         .smoothAppear()
     }
 }
@@ -194,6 +209,8 @@ struct InspectorHeader: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding()
             .background(.ultraThinMaterial)
+            .accessibilityLabel("Inspector panel")
+            .accessibilityHint("View and edit properties of the selected clip")
     }
 }
 
@@ -208,7 +225,7 @@ struct EmptySelectionView: View {
                 .font(.system(size: 40))
                 .foregroundColor(.secondary.opacity(0.3))
             
-            VStack(spacing: 8) {
+            VStack(spacing: 12) {
                 Text("Nothing Selected")
                     .font(.system(size: 14, weight: .bold))
                 
@@ -217,6 +234,28 @@ struct EmptySelectionView: View {
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
                     .lineSpacing(4)
+                
+                // CRITICAL FIX: Add actionable hints
+                VStack(spacing: 6) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "hand.point.up.left.fill")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                        Text("Click a clip in the timeline")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                    }
+                    
+                    HStack(spacing: 4) {
+                        Image(systemName: "keyboard")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                        Text("Or use Cmd+Click to select")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                    }
+                }
+                .padding(.top, 8)
             }
             .padding(.horizontal, 20)
             
@@ -242,5 +281,7 @@ struct InfoRow: View {
                 .truncationMode(.middle)
         }
         .font(.caption)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(label): \(value)")
     }
 }

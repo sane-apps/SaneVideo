@@ -125,14 +125,32 @@ struct ClipInfoSection: View {
         panel.canChooseFiles = true
         panel.allowedContentTypes = [.movie, .video, .mpeg4Movie, .quickTimeMovie]
         panel.message = "Locate missing video file: \(displayName)"
+        panel.prompt = "Relink"
         
         panel.begin { [clip] response in
             if response == .OK, let newURL = panel.url {
+                // P0 FIX: Validate file exists and is readable
+                guard FileManager.default.fileExists(atPath: newURL.path) else {
+                    Task { @MainActor in
+                        ServiceContainer.shared.toastManager.show(
+                            "Selected file does not exist. Please choose a valid video file.",
+                            type: .error
+                        )
+                    }
+                    return
+                }
+                
                 // P0 FIX: Update clip URL in ProjectState
                 Task { @MainActor in
                     // Relink clip to new file location
                     appState.projectState.relinkClip(clip, to: newURL)
+                    ServiceContainer.shared.toastManager.show(
+                        "File relinked successfully",
+                        type: .success
+                    )
                 }
+            } else if response == .cancel {
+                // User cancelled - no action needed
             }
         }
     }

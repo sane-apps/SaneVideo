@@ -8,8 +8,12 @@
   // AI Chat Settings
   // ============================================
   // Note: Model selection is done via Cursor UI (Settings > Models)
-  // Recommended: Claude 3.5 Sonnet (better for coding) or GPT-4o (faster)
-  // Default: GPT-4-Turbo (Cursor's default)
+  // Current Best Models (Dec 2025):
+  //   - Opus 4.5: Best for complex coding, architecture decisions
+  //   - GPT-5.2 Extra High: High quality, good balance
+  //   - GPT-5.2 Extra High Fast: Speed-optimized
+  //   - Auto Mode: Let Cursor pick per task
+  //   - MAX Mode: Enable for maximum capability
   // 
   // These settings control behavior, not model selection:
   "cursor.chat.maxTokens": 8000,

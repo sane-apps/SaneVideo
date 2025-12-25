@@ -1,5 +1,11 @@
 # Test Execution Status
 
+> **Status**: Current Reference  
+> **Related**: See [DEVELOPMENT.md](DEVELOPMENT.md) for main SOP (section 8)  
+> **Last Updated**: 2025-12-25
+
+> **Note**: This is local test status. For CI status, see [CI_TEST_STATUS.md](CI_TEST_STATUS.md). For complete information, see [DEVELOPMENT.md](DEVELOPMENT.md) section 8.
+
 ## Status: ⚠️ Tests Disabled (Temporary)
 
 **Date**: 2025-12-25  

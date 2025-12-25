@@ -101,6 +101,8 @@ struct AudioSection: View {
                 Task { await findHighlights() }
             }
             .disabled(clip.isMissing) // CRITICAL FIX: Disable if clip is missing
+            .help(clip.isMissing ? "Clip file is missing. Use 'Locate File' in Clip Info to relink the file." : "Find highlights (applause, laughter) in audio")
+            .accessibilityHint(clip.isMissing ? "Clip file is missing. Use 'Locate File' in Clip Info to relink the file." : "Find highlights (applause, laughter) in audio")
 
             // Analyze Audio
             SmartToolButton(
@@ -114,6 +116,8 @@ struct AudioSection: View {
                 Task { await analyzeAudio() }
             }
             .disabled(clip.isMissing) // CRITICAL FIX: Disable if clip is missing
+            .help(clip.isMissing ? "Clip file is missing. Use 'Locate File' in Clip Info to relink the file." : "Analyze audio to detect speech, music, and silence")
+            .accessibilityHint(clip.isMissing ? "Clip file is missing. Use 'Locate File' in Clip Info to relink the file." : "Analyze audio to detect speech, music, and silence")
 
             if let result = analysisResult {
                 Text(result)

@@ -1870,11 +1870,15 @@ class SaneMaster
     
     # 1. Build verification
     puts "\n1️⃣  Build Verification..."
-    if system('xcodebuild -project SaneVideo.xcodeproj -scheme SaneVideo -destination "platform=macOS,arch=arm64" build -quiet 2>&1 | grep -q "BUILD SUCCEEDED"')
+    build_output = `xcodebuild -project SaneVideo.xcodeproj -scheme SaneVideo -destination "platform=macOS,arch=arm64" build 2>&1`
+    if build_output.include?('BUILD SUCCEEDED')
       puts '   ✅ Build successful'
       results[:passed] << 'Build'
     else
       puts '   ❌ Build failed'
+      # Show last few lines of build output for context
+      error_lines = build_output.lines.select { |l| l.include?('error:') || l.include?('BUILD FAILED') }.last(3)
+      error_lines.each { |line| puts "      #{line.strip}" } if error_lines.any?
       results[:failed] << 'Build'
       puts '   ⚠️  Skipping remaining checks due to build failure'
       print_summary(results)

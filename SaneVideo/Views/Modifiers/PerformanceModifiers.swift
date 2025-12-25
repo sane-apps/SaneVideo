@@ -25,7 +25,7 @@ struct DebouncedChangeModifier<T: Equatable>: ViewModifier {
     
     func body(content: Content) -> some View {
         content
-            .onChange(of: value) { oldValue, newValue in
+            .onChange(of: value) { _, newValue in
                 task?.cancel()
                 task = Task {
                     try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
@@ -80,7 +80,7 @@ struct EquatableChangeModifier<T: Equatable>: ViewModifier {
     
     func body(content: Content) -> some View {
         content
-            .onChange(of: value) { oldValue, newValue in
+            .onChange(of: value) { _, newValue in
                 if lastValue != newValue {
                     lastValue = newValue
                     action(newValue)
@@ -118,4 +118,3 @@ extension View {
         modifier(EquatableChangeModifier(value: value, action: action))
     }
 }
-

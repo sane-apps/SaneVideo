@@ -101,6 +101,8 @@ targets:
       macOS: 26.2
     sources:
       - SaneVideoTests
+      - path: Tests/Assets
+        namespaced: true
       - path: SaneVideoTests/Mocks
         createIntermediateGroups: true
     dependencies:

@@ -57,7 +57,6 @@ extension ProjectState {
                 updatedClip.addRemovedRange(range)
                 
                 // Remove captions that fall within the removed range
-                let removedDuration = range.duration.seconds
                 updatedClip.captions = updatedClip.captions.compactMap { caption in
                     // If caption is entirely within removed range, remove it
                     if caption.startTime >= range.start && caption.endTime <= range.end {

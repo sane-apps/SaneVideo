@@ -126,7 +126,7 @@ struct EditorLayoutView: View {
                 }
             }
         }
-        .onChange(of: appState.projectState.currentProject) { old, new in
+        .onChange(of: appState.projectState.currentProject) { _, new in
             if let newProfile = new, newProfile.id != lastLoadedProjectId {
                 lastLoadedProjectId = newProfile.id
                 // Restore state when switching projects

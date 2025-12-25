@@ -10,8 +10,27 @@
     "/" : {
 
     },
+    "%@ aspect ratio" : {
+
+    },
+    "%@ caption style" : {
+
+    },
     "%@ MB/s" : {
 
+    },
+    "%@ section" : {
+
+    },
+    "%@: %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@: %2$@"
+          }
+        }
+      }
     },
     "%lld" : {
 
@@ -260,28 +279,6 @@
         }
       }
     },
-    "action.start_recording" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Start Recording"
-          }
-        }
-      }
-    },
-    "action.stop_recording" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Stop Recording"
-          }
-        }
-      }
-    },
     "action.youtube" : {
       "extractionState" : "extracted_with_value",
       "localizations" : {
@@ -293,10 +290,31 @@
         }
       }
     },
-    "Advanced Settings" : {
+    "Active" : {
+
+    },
+    "Add clips to timeline first" : {
+
+    },
+    "AI Gating" : {
 
     },
     "AI-Powered Polish" : {
+
+    },
+    "Analyze audio to detect speech, music, and silence" : {
+
+    },
+    "Analyze mood and get color grading suggestions" : {
+
+    },
+    "Analyzing video for smart crop" : {
+
+    },
+    "Analyzing video for smart crop..." : {
+
+    },
+    "Another operation is in progress" : {
 
     },
     "API Keys" : {
@@ -313,13 +331,28 @@
         }
       }
     },
+    "Apple Speech failed multiple times. WhisperKit may work better for your audio." : {
+
+    },
     "Applies EQ, Compression, and AI Voice Isolation to clean up background noise." : {
 
     },
     "Applies generative filters to give your video a specific look (e.g. 'Vintage', 'Cyberpunk')." : {
 
     },
+    "Apply %@ effect" : {
+
+    },
+    "Apply %@ style to captions" : {
+
+    },
+    "Apply auto-zoom to highlight click events" : {
+
+    },
     "Apply Magic Fix" : {
+
+    },
+    "Apply smart crop to reframe video" : {
 
     },
     "aspect_ratio.1_1" : {
@@ -584,13 +617,25 @@
     "Auto-Fix Project (Cmd+Shift+M)" : {
 
     },
+    "Auto-Grade" : {
+
+    },
     "Automatically adjusts brightness, contrast, and saturation." : {
+
+    },
+    "Automatically applies color grading to the video" : {
 
     },
     "Automatically cuts segments of the video where no speech is detected (Timeline Edit)." : {
 
     },
     "Automatically detects and removes people or distracting objects from the background." : {
+
+    },
+    "Automatically mute non-speech segments" : {
+
+    },
+    "Automatically removes silence, filler words, and enhances your video" : {
 
     },
     "Automatically removes silence, filler words, and enhances your video. Keyboard shortcut: Command Shift M" : {
@@ -643,6 +688,28 @@
         }
       }
     },
+    "background.chroma.key_color" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Key Color"
+          }
+        }
+      }
+    },
+    "background.chroma.sensitivity" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Sensitivity"
+          }
+        }
+      }
+    },
     "background.color.label" : {
       "extractionState" : "extracted_with_value",
       "localizations" : {
@@ -661,6 +728,17 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Blur"
+          }
+        }
+      }
+    },
+    "background.effect.chroma" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Chroma"
           }
         }
       }
@@ -942,6 +1020,9 @@
     "Canceling will stop the current Magic Fix operation. Any progress will be lost." : {
 
     },
+    "Cannot switch modes while an operation is in progress" : {
+
+    },
     "caption.placeholder" : {
       "extractionState" : "extracted_with_value",
       "localizations" : {
@@ -1025,6 +1106,17 @@
         }
       }
     },
+    "captions.alternative_hint" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Or use Magic Fix for full cleanup"
+          }
+        }
+      }
+    },
     "captions.count" : {
       "extractionState" : "extracted_with_value",
       "localizations" : {
@@ -1042,10 +1134,30 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "Use Magic Fix to generate captions"
+            "value" : "No captions yet"
           }
         }
       }
+    },
+    "captions.generate" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Generate Captions"
+          }
+        }
+      }
+    },
+    "Click a clip in the timeline" : {
+
+    },
+    "Clip file is missing. Background effects require the video file." : {
+
+    },
+    "Clip file is missing. Use 'Locate File' in Clip Info to relink the file." : {
+
     },
     "clip.menu.audio" : {
       "extractionState" : "extracted_with_value",
@@ -1273,6 +1385,12 @@
     "Cloud AI:" : {
 
     },
+    "Collapse %@ section" : {
+
+    },
+    "Collapsed" : {
+
+    },
     "common.cancel" : {
       "extractionState" : "extracted_with_value",
       "localizations" : {
@@ -1445,6 +1563,17 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Bright"
+          }
+        }
+      }
+    },
+    "effect.type.chroma_key" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Chroma Key"
           }
         }
       }
@@ -1840,6 +1969,15 @@
     "End: %@" : {
 
     },
+    "Enhances cursor visibility in screen recordings by adding a highlight effect" : {
+
+    },
+    "Expand %@ section" : {
+
+    },
+    "Expanded" : {
+
+    },
     "Export Gallery (Cmd+E)" : {
 
     },
@@ -2129,7 +2267,28 @@
         }
       }
     },
+    "File Missing" : {
+
+    },
+    "Find highlights (applause, laughter) in audio" : {
+
+    },
+    "Generate captions first to analyze mood" : {
+
+    },
+    "Generate captions from audio transcription" : {
+
+    },
     "Generate title & description from transcript" : {
+
+    },
+    "Generating" : {
+
+    },
+    "Generating captions" : {
+
+    },
+    "Generating captions..." : {
 
     },
     "Get Help" : {
@@ -2450,7 +2609,16 @@
         }
       }
     },
+    "Inactive" : {
+
+    },
     "Initializing Screen Share..." : {
+
+    },
+    "Inspector Mode" : {
+
+    },
+    "Inspector panel" : {
 
     },
     "inspector.header.title" : {
@@ -2480,6 +2648,15 @@
 
     },
     "List View" : {
+
+    },
+    "Loading" : {
+
+    },
+    "Locate File" : {
+
+    },
+    "Locate missing file" : {
 
     },
     "logs.action.clear" : {
@@ -2797,6 +2974,9 @@
     "Move Source File to Trash" : {
 
     },
+    "Mute" : {
+
+    },
     "Mute Microphone" : {
 
     },
@@ -2812,10 +2992,22 @@
     "one-time" : {
 
     },
+    "Opens a file picker to locate the missing video file" : {
+
+    },
+    "Operation in progress" : {
+
+    },
+    "Operation in progress..." : {
+
+    },
     "Optimizing" : {
 
     },
     "Optional (your API keys)" : {
+
+    },
+    "Or use Cmd+Click to select" : {
 
     },
     "Pause/Resume" : {
@@ -2946,6 +3138,12 @@
     "Pro Clean-up" : {
 
     },
+    "Pro Mode" : {
+
+    },
+    "Processing" : {
+
+    },
     "REC" : {
 
     },
@@ -3011,6 +3209,12 @@
     "Reframes horizontal video to vertical (9:16) keeping the subject centered." : {
 
     },
+    "Remove %@ effect" : {
+
+    },
+    "Remove background noise with Apple ML" : {
+
+    },
     "Remove from Project (Reference Only)" : {
 
     },
@@ -3020,10 +3224,25 @@
     "Requires captions - generate them first" : {
 
     },
+    "Reset rotation to original orientation" : {
+
+    },
     "Retry" : {
 
     },
     "Rotate 90°" : {
+
+    },
+    "Rotate 90° clockwise" : {
+
+    },
+    "Rotate 90° counter-clockwise" : {
+
+    },
+    "Rotate video 90 degrees clockwise" : {
+
+    },
+    "Rotate video 90 degrees counter-clockwise" : {
 
     },
     "Rotation" : {
@@ -3033,6 +3252,9 @@
 
     },
     "SaneVideo processes all AI features on-device using Apple Intelligence. Your videos never leave your Mac." : {
+
+    },
+    "Scan video for text using OCR" : {
 
     },
     "screen.switch" : {
@@ -3646,6 +3868,17 @@
         }
       }
     },
+    "settings.transcription.header" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Transcription Engine"
+          }
+        }
+      }
+    },
     "settings.youtube.action.clear" : {
       "extractionState" : "extracted_with_value",
       "localizations" : {
@@ -3735,6 +3968,9 @@
       }
     },
     "Share" : {
+
+    },
+    "Show cursor highlight" : {
 
     },
     "Show Details" : {
@@ -3952,6 +4188,9 @@
     "Simple" : {
 
     },
+    "Simple Mode" : {
+
+    },
     "sk-..." : {
 
     },
@@ -3972,7 +4211,13 @@
     "Start: %@" : {
 
     },
+    "Switch" : {
+
+    },
     "Switch back to camera mode" : {
+
+    },
+    "Switch between Simple mode for AI tools and Pro mode for manual controls" : {
 
     },
     "Switch to Pro Mode for manual video, audio, and effect controls." : {
@@ -4510,6 +4755,28 @@
         }
       }
     },
+    "toast.captions_generated" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Captions generated!"
+          }
+        }
+      }
+    },
+    "toast.captions_generation_failed" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Failed to generate captions: %@"
+          }
+        }
+      }
+    },
     "toast.captions_refine_failed" : {
       "extractionState" : "extracted_with_value",
       "localizations" : {
@@ -4762,6 +5029,9 @@
           }
         }
       }
+    },
+    "Toggle background effects" : {
+
     },
     "Toggle between Simple (AI) and Pro (Manual) controls" : {
 
@@ -5102,13 +5372,22 @@
         }
       }
     },
+    "Transcription Engine" : {
+
+    },
     "Try this:" : {
+
+    },
+    "Try WhisperKit for better accuracy" : {
 
     },
     "Turn On Camera" : {
 
     },
     "Undo" : {
+
+    },
+    "Unmute" : {
 
     },
     "Unmute Microphone" : {
@@ -5229,6 +5508,12 @@
           }
         }
       }
+    },
+    "View and edit properties of the selected clip" : {
+
+    },
+    "Voice Isolation" : {
+
     },
     "voiceover.action.generate" : {
       "extractionState" : "extracted_with_value",

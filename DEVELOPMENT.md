@@ -6,7 +6,37 @@
 >
 > When you see "SOP", "use our SOP", or "follow the SOP", this is the document.
 >
-> Read this entirely before touching code.
+> **Read this entirely before touching code.**
+
+---
+
+## 🚀 Quick Start for AI Agents
+
+**New to this project? Start here:**
+
+1. **Read this file** (DEVELOPMENT.md) - It's the single source of truth
+2. **Check current status**: 
+   - Tests are disabled (see section 8)
+   - Use `test_suite --quick` instead of running tests
+3. **Use SaneMaster.rb**: All tools are in `./Scripts/SaneMaster.rb`
+4. **Reference docs**: See section 9 for documentation structure
+
+**Key Commands:**
+```bash
+./Scripts/SaneMaster.rb setup      # Initial setup
+./Scripts/SaneMaster.rb verify     # Build app (tests disabled)
+./Scripts/SaneMaster.rb test_suite --quick  # Comprehensive validation
+```
+
+**Supplementary Documentation:**
+- `TESTING_SUMMARY.md` - Quick testing reference
+- `ALTERNATIVE_TESTING.md` - Detailed alternative testing guide
+- `CI_TEST_STATUS.md` - CI-specific test status
+- `TEST_DISABLED_NOTICE.md` - Local test status
+
+**All other docs are historical/archive - refer to DEVELOPMENT.md first.**
+
+---
 
 ## 0. Critical System Context: macOS 26.2 (Tahoe)
 
@@ -390,7 +420,18 @@ Regression tests are critical for preventing the reintroduction of fixed bugs.
 
 ### Reference Documentation
 
-- **INSTALLED_TOOLS.md**: Development tools inventory (swift-format, swiftlint, etc.)
+**Testing (Current Status)**:
+- **TESTING_SUMMARY.md**: Quick reference for testing status and alternative methods
+- **ALTERNATIVE_TESTING.md**: Detailed guide on alternative testing tools
+- **TEST_DISABLED_NOTICE.md**: Local test status and re-enable instructions
+- **CI_TEST_STATUS.md**: CI-specific test status and limitations
+- **TEST_SUITE_GUIDE.md**: Comprehensive guide for `test_suite` command
+
+**Tools & Research**:
+- **OPEN_SOURCE_TOOLS_FINAL.md**: Open source tools research findings
+- **TOOLS_AUDIT.md**: Tools audit and recommendations
+
+**Architecture** (if exists):
 - **ON_DEVICE_ARCHITECTURE.md**: Details on 100% on-device processing architecture
 - **VISUAL_TESTS_SETUP.md**: UI testing setup and permission automation
 

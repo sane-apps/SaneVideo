@@ -1,5 +1,11 @@
 # Open Source Tools - Final Assessment
 
+> **Status**: Reference  
+> **Related**: See [DEVELOPMENT.md](DEVELOPMENT.md) for main SOP (section 7)  
+> **Last Updated**: 2025-12-25
+
+> **Note**: This documents research findings. For tool usage, see [DEVELOPMENT.md](DEVELOPMENT.md) section 7.
+
 ## Research Results
 
 After comprehensive research, here's what we found:

@@ -6,8 +6,9 @@
 ## 1. Golden Rules (NON-NEGOTIABLE)
 
 1.  **SaneMaster First**: ALWAYS use `./Scripts/SaneMaster.rb` for setup, build, test, and verification.
-    - `verify`: Build + Unit Tests (Fast)
-    - `verify --clean`: Clean Build (Slow)
+    - `verify`: Build app only (tests disabled - see DEVELOPMENT.md)
+    - `verify --clean`: Clean build (tests disabled)
+    - `test_suite --quick`: Comprehensive validation suite (use this instead of tests)
     - `doctor`: Health checks
     - `gen_test`: Generate tests
 2.  **Verify Logs**: After EVERY build/test, run `./Scripts/SaneMaster.rb diagnose --dump` to check for runtime issues.
@@ -26,6 +27,15 @@
 
 ## 3. Testing Strategy
 
+⚠️ **IMPORTANT**: Automated test execution is currently **disabled** (see DEVELOPMENT.md section 8).
+
+**Use Instead**:
+- `./Scripts/SaneMaster.rb test_suite --quick` - Comprehensive validation
+- `./Scripts/SaneMaster.rb validate_test_references` - Test/UI sync
+- `./Scripts/SaneMaster.rb check_deprecations` - API compatibility
+- `./Scripts/SaneMaster.rb dead_code` - Code cleanup
+
+**When Tests Re-enable**:
 1.  **Unit Tests (`SaneVideoTests`)**:
     -   Fast (<1s).
     -   Mock EVERYTHING (Camera, Audio, Permissions).

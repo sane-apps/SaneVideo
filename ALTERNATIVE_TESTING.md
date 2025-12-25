@@ -1,5 +1,11 @@
 # Alternative Testing Methods
 
+> **Status**: Current Reference  
+> **Related**: See [DEVELOPMENT.md](DEVELOPMENT.md) for main SOP (section 8)  
+> **Last Updated**: 2025-12-25
+
+> **Note**: This is a detailed guide. For quick reference, see [TESTING_SUMMARY.md](TESTING_SUMMARY.md). For complete information, see [DEVELOPMENT.md](DEVELOPMENT.md) section 8.
+
 Since automated test execution is currently disabled, use these tools to validate code quality and catch issues.
 
 ## Available Tools

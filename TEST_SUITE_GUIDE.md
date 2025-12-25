@@ -1,5 +1,11 @@
 # Comprehensive Test Suite Guide
 
+> **Status**: Current Reference  
+> **Related**: See [DEVELOPMENT.md](DEVELOPMENT.md) for main SOP (section 7)  
+> **Last Updated**: 2025-12-25
+
+> **Note**: This is a detailed guide for the test suite command. For quick reference, see [TESTING_SUMMARY.md](TESTING_SUMMARY.md). For complete information, see [DEVELOPMENT.md](DEVELOPMENT.md).
+
 ## Overview
 
 The `test_suite` command orchestrates all available validation tools into a unified testing workflow. This provides a comprehensive alternative to automated test execution while tests are disabled.

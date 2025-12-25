@@ -1843,8 +1843,23 @@ class SaneMaster
       puts ''
     end
 
+    # Report other warning categories
+    if performance_warnings.any?
+      puts "\n⚡ Performance Warnings (#{performance_warnings.length}):"
+      performance_warnings.first(5).each { |w| puts "   - #{w}" }
+      puts "   ... (#{performance_warnings.length - 5} more)" if performance_warnings.length > 5
+    end
+    
+    if correctness_warnings.any?
+      puts "\n⚠️  Correctness Warnings (#{correctness_warnings.length}):"
+      correctness_warnings.first(5).each { |w| puts "   - #{w}" }
+      puts "   ... (#{correctness_warnings.length - 5} more)" if correctness_warnings.length > 5
+    end
+
     puts ''
     puts "⚠️  Total: #{deprecation_warnings.length} deprecation warning(s)"
+    puts "⚡ Performance: #{performance_warnings.length} warning(s)" if performance_warnings.any?
+    puts "⚠️  Correctness: #{correctness_warnings.length} warning(s)" if correctness_warnings.any?
     puts '💡 Tip: Review each warning and update to modern APIs when possible'
   end
 

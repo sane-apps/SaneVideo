@@ -56,9 +56,12 @@ struct EffectsPickerView: View {
             .hoverScale(1.02)
             .pressScale()
             .disabled(clip.isMissing || isOperationInProgress) // CRITICAL FIX: Disable if clip is missing or operation in progress
+            .help(clip.isMissing ? "Clip file is missing. Use 'Locate File' in Clip Info to relink the file." : (isOperationInProgress ? "Another operation is in progress" : "Automatically applies color grading to the video"))
             .padding(.bottom, 4)
             .accessibilityIdentifier("effects.action.auto_grade")
-            .accessibilityHint(clip.isMissing ? "Clip file is missing. Use 'Locate File' in Clip Info to relink the file." : "Automatically applies color grading to the video")
+            .accessibilityLabel("Auto-Grade")
+            .accessibilityHint(clip.isMissing ? "Clip file is missing. Use 'Locate File' in Clip Info to relink the file." : (isOperationInProgress ? "Another operation is in progress" : "Automatically applies color grading to the video"))
+            .focusable() // P0 FIX: Keyboard navigation
             .smoothAppear()
 
             // Active effects (if any) - shown at top with sliders

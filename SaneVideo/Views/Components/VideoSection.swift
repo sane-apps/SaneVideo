@@ -109,7 +109,9 @@ struct VideoSection: View {
                 .hoverScale(1.02)
                 .pressScale()
                 .disabled(appState.projectState.isProcessing || clip.isMissing) // CRITICAL FIX: Disable if clip is missing
+                .help(clip.isMissing ? "Clip file is missing. Use 'Locate File' in Clip Info to relink the file." : "Apply auto-zoom to highlight click events")
                 .accessibilityIdentifier("video.apply_auto_zoom")
+                .accessibilityHint(clip.isMissing ? "Clip file is missing. Use 'Locate File' in Clip Info to relink the file." : "Apply auto-zoom to highlight click events")
                 .smoothAppear()
                 
                 Divider().padding(.vertical, 4)
@@ -163,7 +165,9 @@ struct VideoSection: View {
             .hoverScale(1.02)
             .pressScale()
             .disabled(isAnalyzingCrop || clip.isMissing) // CRITICAL FIX: Disable if clip is missing
+            .help(clip.isMissing ? "Clip file is missing. Use 'Locate File' in Clip Info to relink the file." : (isAnalyzingCrop ? "Analyzing video for smart crop..." : "Apply smart crop to reframe video"))
             .accessibilityIdentifier("video.apply_smart_crop")
+            .accessibilityHint(clip.isMissing ? "Clip file is missing. Use 'Locate File' in Clip Info to relink the file." : (isAnalyzingCrop ? "Analyzing video for smart crop" : "Apply smart crop to reframe video"))
             .smoothAppear()
 
             // CRITICAL FIX: Show error if operation failed
@@ -206,7 +210,7 @@ struct VideoSection: View {
         // CRITICAL FIX: Check if clip has video track
         let asset = AVURLAsset(url: clip.url)
         let tracks = try? await asset.loadTracks(withMediaType: .video)
-        guard let videoTrack = tracks?.first else {
+        guard tracks?.first != nil else {
             await MainActor.run {
                 cropError = "Cannot apply crop: No video track found in this clip"
                 cropResult = nil
@@ -227,26 +231,14 @@ struct VideoSection: View {
             }
         }
 
-        do {
-            await appState.projectState.applySmartCrop(
-                to: clip,
-                targetAspectRatio: selectedAspectRatio.ratio
-            )
-            await MainActor.run {
-                cropResult = "✅ Applied \(selectedAspectRatio.localizedLabel) crop"
-                cropError = nil
-            }
-        } catch {
-            await MainActor.run {
-                let errorMessage = error.localizedDescription
-                cropError = "Crop failed: \(errorMessage)"
-                cropResult = nil
-                AppLogger.project.error("Smart crop failed: \(errorMessage)")
-                ServiceContainer.shared.toastManager.show(
-                    "Smart crop failed: \(errorMessage)",
-                    type: .error
-                )
-            }
+        // CRITICAL FIX: applySmartCrop doesn't throw, so no need for do-catch
+        await appState.projectState.applySmartCrop(
+            to: clip,
+            targetAspectRatio: selectedAspectRatio.ratio
+        )
+        await MainActor.run {
+            cropResult = "✅ Applied \(selectedAspectRatio.localizedLabel) crop"
+            cropError = nil
         }
     }
 }
@@ -373,14 +365,15 @@ struct TransformControlsView: View {
                 .controlSize(.regular) // P1 FIX: Larger control size
                 .disabled(clip.isMissing)
                 .accessibilityIdentifier("video.rotate_cw")
-                .help("Rotate 90° clockwise")
+                .help(clip.isMissing ? "Clip file is missing. Use 'Locate File' in Clip Info to relink the file." : "Rotate 90° clockwise")
+                .accessibilityHint(clip.isMissing ? "Clip file is missing. Use 'Locate File' in Clip Info to relink the file." : "Rotate video 90 degrees clockwise")
 
                 // Rotate 90° Counter-Clockwise
                 Button {
                     // CRITICAL FIX: Validate clip before operation
                     guard !clip.isMissing else {
                         ServiceContainer.shared.toastManager.show(
-                            "Cannot rotate: Clip file is missing",
+                            "Cannot rotate: Clip file is missing. Use 'Locate File' in Clip Info to relink the file.",
                             type: .error
                         )
                         return
@@ -403,7 +396,8 @@ struct TransformControlsView: View {
                 .controlSize(.regular) // P1 FIX: Larger control size
                 .disabled(clip.isMissing)
                 .accessibilityIdentifier("video.rotate_ccw")
-                .help("Rotate 90° counter-clockwise")
+                .help(clip.isMissing ? "Clip file is missing. Use 'Locate File' in Clip Info to relink the file." : "Rotate 90° counter-clockwise")
+                .accessibilityHint(clip.isMissing ? "Clip file is missing. Use 'Locate File' in Clip Info to relink the file." : "Rotate video 90 degrees counter-clockwise")
             }
 
             // Reset to Original
@@ -412,7 +406,7 @@ struct TransformControlsView: View {
                     // CRITICAL FIX: Validate clip before operation
                     guard !clip.isMissing else {
                         ServiceContainer.shared.toastManager.show(
-                            "Cannot reset rotation: Clip file is missing",
+                            "Cannot reset rotation: Clip file is missing. Use 'Locate File' in Clip Info to relink the file.",
                             type: .error
                         )
                         return
@@ -425,7 +419,9 @@ struct TransformControlsView: View {
                 .controlSize(.small)
                 .tint(.orange)
                 .disabled(clip.isMissing) // CRITICAL FIX: Disable if clip is missing
+                .help(clip.isMissing ? "Clip file is missing. Use 'Locate File' in Clip Info to relink the file." : "Reset rotation to original orientation")
                 .accessibilityIdentifier("video.reset_rotation")
+                .accessibilityHint(clip.isMissing ? "Clip file is missing. Use 'Locate File' in Clip Info to relink the file." : "Reset rotation to original orientation")
             }
         }
     }

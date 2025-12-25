@@ -139,6 +139,7 @@ struct SmartToolButton: View {
         .hoverScale(1.02)
         .pressScale()
         .disabled(isLoading)
+        .help(isLoading ? "Operation in progress..." : subtitle) // CRITICAL FIX: Help text for disabled state
         // P0 FIX: Enhanced accessibility
         .accessibilityIdentifier(id)
         .accessibilityLabel(title)
@@ -196,6 +197,9 @@ struct AIToolButton: View {
         .hoverScale(1.02)
         .pressScale()
         .accessibilityIdentifier(id)
+        .accessibilityLabel(title)
+        .accessibilityHint(subtitle)
+        .focusable() // P0 FIX: Keyboard navigation
         .smoothAppear()
     }
 }

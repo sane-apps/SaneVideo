@@ -18,6 +18,7 @@ struct CaptionsSection: View {
 
     @State private var isAnalyzing = false
     @State private var isRefining = false
+    @State private var isGeneratingCaptions = false // CRITICAL FIX: Track caption generation state
     @State private var detectedText: [String] = []
     @State private var analysisResult: String?
     @State private var showTranscriptEditor = false
@@ -103,7 +104,10 @@ struct CaptionsSection: View {
             .buttonStyle(.borderedProminent)
             .controlSize(.regular)
             .disabled(isOperationInProgress || clip.isMissing || isGeneratingCaptions)
+            .help(clip.isMissing ? "Clip file is missing. Use 'Locate File' in Clip Info to relink the file." : (isGeneratingCaptions ? "Generating captions..." : (isOperationInProgress ? "Another operation is in progress" : "Generate captions from audio transcription")))
             .accessibilityIdentifier("captions.generate_button")
+            .accessibilityHint(clip.isMissing ? "Clip file is missing. Use 'Locate File' in Clip Info to relink the file." : (isGeneratingCaptions ? "Generating captions" : (isOperationInProgress ? "Another operation is in progress" : "Generate captions from audio transcription")))
+            .accessibilityValue(isGeneratingCaptions ? "Generating" : "")
             .overlay {
                 if isGeneratingCaptions {
                     ProgressView()
@@ -289,6 +293,8 @@ struct CaptionsSection: View {
                 Task { await analyzeMood() }
             }
             .disabled(clip.isMissing || clip.captions.isEmpty) // CRITICAL FIX: Disable if clip is missing or no captions
+            .help(clip.isMissing ? "Clip file is missing. Use 'Locate File' in Clip Info to relink the file." : (clip.captions.isEmpty ? "Generate captions first to analyze mood" : "Analyze mood and get color grading suggestions"))
+            .accessibilityHint(clip.isMissing ? "Clip file is missing. Use 'Locate File' in Clip Info to relink the file." : (clip.captions.isEmpty ? "Generate captions first to analyze mood" : "Analyze mood and get color grading suggestions"))
 
             if let result = analysisResult {
                 InformationBox(text: result, color: .orange)
@@ -310,6 +316,8 @@ struct CaptionsSection: View {
                 Task { await scanForText() }
             }
             .disabled(clip.isMissing) // CRITICAL FIX: Disable if clip is missing
+            .help(clip.isMissing ? "Clip file is missing. Use 'Locate File' in Clip Info to relink the file." : "Scan video for text using OCR")
+            .accessibilityHint(clip.isMissing ? "Clip file is missing. Use 'Locate File' in Clip Info to relink the file." : "Scan video for text using OCR")
 
             DetectedItemsList(items: detectedText, color: .blue)
         }
@@ -333,20 +341,14 @@ struct CaptionsSection: View {
             }
         }
 
-        do {
-            let captions = clip.captions.map {
-                Caption(text: $0.text, startTime: $0.startTime, endTime: $0.endTime)
-            }
-            let sentiment = await ServiceContainer.shared.sentimentAnalysisService.getOverallMood(captions: captions)
-            await MainActor.run {
-                analysisResult = "\(sentiment.sentiment.emoji) Mood: \(sentiment.sentiment.rawValue) -> Suggested: " +
-                    "\(sentiment.suggestedColorGrade.rawValue) color grading"
-            }
-        } catch {
-            await MainActor.run {
-                analysisResult = "Mood analysis failed: \(error.localizedDescription)"
-                AppLogger.project.error("Mood analysis failed: \(error.localizedDescription)")
-            }
+        // CRITICAL FIX: Mood analysis doesn't throw, so no need for do-catch
+        let captions = clip.captions.map {
+            Caption(text: $0.text, startTime: $0.startTime, endTime: $0.endTime)
+        }
+        let sentiment = await ServiceContainer.shared.sentimentAnalysisService.getOverallMood(captions: captions)
+        await MainActor.run {
+            analysisResult = "\(sentiment.sentiment.emoji) Mood: \(sentiment.sentiment.rawValue) -> Suggested: " +
+                "\(sentiment.suggestedColorGrade.rawValue) color grading"
         }
     }
 

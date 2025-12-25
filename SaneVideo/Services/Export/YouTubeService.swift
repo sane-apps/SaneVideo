@@ -39,9 +39,10 @@ class YouTubeService: NSObject {
     private var accessToken: String?
 
     func upload(videoURL: URL, title _: String, description _: String) async throws {
-        let clientID = await Secrets.youTubeClientID()
+        // Try Keychain first, fallback to Secrets.swift for local development
+        let clientID = await ServiceContainer.shared.apiKeyManager.getYouTubeClientID() ?? await Secrets.youTubeClientID()
 
-        guard !clientID.isEmpty, clientID != "YOUR_CLIENT_ID_HERE" else {
+        guard let clientID = clientID, !clientID.isEmpty, clientID != "YOUR_CLIENT_ID_HERE" else {
             throw YouTubeError.missingCredentials
         }
 

@@ -130,6 +130,30 @@ Since automated test execution is currently disabled, use these tools to validat
 
 **When to use**: After adding new tools or commands
 
+### 9. Comprehensive Test Suite ⭐ **NEW**
+
+**Purpose**: Run all validation tools in one command
+
+```bash
+./Scripts/SaneMaster.rb test_suite [--quick] [--full] [--ci]
+```
+
+**What it does**:
+- Orchestrates all validation tools
+- Provides unified reporting
+- Phased execution (fast → medium → slow)
+- Exit codes for CI integration
+
+**Modes**:
+- `--quick`: Fast checks only (~30s)
+- `--full`: All checks including slow ones (~5min)
+- `--ci`: CI-optimized (excludes slow checks)
+
+**When to use**: 
+- Before every commit: `test_suite --quick`
+- Before releases: `test_suite --full`
+- In CI: `test_suite --ci`
+
 ## Recommended Workflow
 
 Before committing code:

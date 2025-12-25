@@ -59,6 +59,7 @@ class SaneMaster
     when 'reset'    then reset_permissions
     when 'check_permissions' then check_permission_status
     when 'audit'    then audit_project
+    when 'validate_test_references', 'validate-tests' then validate_test_references
     when 'setup'    then setup_environment
     when 'lint'     then run_lint
     when 'quality'  then run_quality_report
@@ -72,6 +73,9 @@ class SaneMaster
     when 'verify_mocks' then verify_mocks
     when 'check_protocol_changes' then check_protocol_changes(args)
     when 'check_docs' then check_documentation_sync
+    when 'dead_code', 'find_dead_code' then find_dead_code
+    when 'check_deprecations', 'deprecations' then check_deprecations
+    when 'test_suite', 'suite' then run_test_suite(args)
     when 'console'
       require 'pry'
       # rubocop:disable Lint/Debugger
@@ -850,30 +854,85 @@ class SaneMaster
 
   def print_help
     puts <<~HELP
-      SaneMaster.rb - Professional Automation Suite for SaneVideo
-
+      SaneMaster - Professional Automation Suite for SaneVideo
+      
       Commands:
-        diagnose [path] [--dump]  - Analyze .xcresult bundle and extract insights
-        doctor                     - Health check (environment, assets, permissions)
-        verify [--clean] [--ui]    - Build + test (unit tests only by default, --ui for UI tests)
-        clean [--nuclear]          - Wipe build cache and test states
-        reset                      - Reset TCC privacy permissions
-        check_permissions          - Show current permission status
-        audit                      - Scan for missing accessibility identifiers
-        setup                      - Install dependencies (gems, tools)
-        lint                       - Run SwiftLint
-        quality                    - Generate quality reports
-        check_binary               - Audit production binary
-        restore                    - Fix Xcode/Launch Services issues
-        gen_assets                 - Generate test video/audio assets
-        gen_test <name> [options]  - Generate test file from template (NEW)
-        gen_mock [options]         - Generate mocks using Mockolo (NEW)
-
-      Examples:
-        ./Scripts/SaneMaster.rb verify
-        ./Scripts/SaneMaster.rb diagnose --dump
-        ./Scripts/SaneMaster.rb gen_test MyFeatureTests --target MyFeature
-        ./Scripts/SaneMaster.rb gen_mock --target Services/Camera
+        verify [--ui] [--clean] [--skip-test-validation]
+          Build and run tests (unit tests by default, --ui for UI tests)
+          --skip-test-validation: Skip test reference validation
+        
+        validate_test_references (or validate-tests)
+          Validate that all UI test references match actual UI code
+          Prevents tests from referencing non-existent UI elements
+        
+        diagnose [path] [--dump]
+          Run intelligent heuristics on a .xcresult bundle
+        
+        doctor
+          Check environment, mock assets, and permissions
+        
+        audit
+          Scan project for missing accessibility identifiers
+        
+        clean [--nuclear]
+          Safely wipe build cache and test states
+        
+        reset
+          Wipe TCC privacy permissions (Camera, Mic, Screen)
+        
+        setup
+          Install missing gems and system dependencies
+        
+        lint
+          Run SwiftLint and auto-fix common issues
+        
+        quality
+          Generate Ruby quality reports (HTML)
+        
+        gen_test [options]
+          Generate test file from template
+        
+        gen_mock
+          Generate mocks using Mockolo
+        
+        verify_api <APIName> [Framework]
+          Verify API exists in SDK
+        
+        verify_mocks
+          Verify all mocks are up to date
+        
+        check_xcodegen [files]
+          Check if new Swift files are in Xcode project
+        
+        check_protocol_changes [files]
+          Check for protocol changes that might break mocks
+        
+        check_docs
+          Check documentation is in sync with code
+        
+        dead_code (or find_dead_code)
+          Scan for unused code using Periphery
+        
+        check_deprecations (or deprecations)
+          Scan for deprecated API usage and warnings
+        
+        test_suite (or suite) [--quick] [--full] [--ci]
+          Run comprehensive validation suite (all static analysis tools)
+          --quick: Fast checks only (lint, test references, xcodegen)
+          --full: All checks including slow ones (dead code, deprecations)
+          --ci: CI-optimized (excludes slow checks, includes build)
+        
+        check_binary
+          Audit binary for security issues
+        
+        restore
+          Fix common Xcode/Launch Services issues
+        
+        gen_assets
+          Generate test video assets
+        
+        console
+          Open Pry console for debugging
     HELP
   end
 
@@ -953,7 +1012,47 @@ class SaneMaster
     puts "\n✅ Doctor check complete."
   end
 
+  def test_targets_disabled?
+    # Check if test targets are commented out in project.yml
+    project_yml = File.join(Dir.pwd, 'project.yml')
+    return false unless File.exist?(project_yml)
+    
+    content = File.read(project_yml)
+    # Check if test targets are commented out
+    content.include?('# Temporarily disabled test targets') || 
+    content.include?('# targets:') && content.include?('#   - SaneVideoTests')
+  end
+
   def verify(args)
+    # Check if tests are disabled due to SwiftUICore linker error
+    if test_targets_disabled?
+      puts '⚠️  Test targets are temporarily disabled due to SwiftUICore linker error (Xcode 16/macOS 26.2 bug)'
+      puts '📝 Test files are preserved - they will be re-enabled when Xcode is updated'
+      puts '🔧 To re-enable: Uncomment test targets in project.yml and run xcodegen generate'
+      puts ''
+      puts 'Building main app only (tests skipped)...'
+      puts ''
+      
+      # Just build the app, don't run tests
+      clean_first = args.include?('--clean')
+      if clean_first
+        puts '🧹 Cleaning before build...'
+        clean([])
+      end
+      
+      puts '🔨 Building SaneVideo app...'
+      result = system("xcodebuild -project SaneVideo.xcodeproj -scheme SaneVideo -destination 'platform=macOS,arch=arm64' build")
+      if result
+        puts ''
+        puts '✅ Build succeeded (tests disabled)'
+      else
+        puts ''
+        puts '❌ Build failed'
+        exit 1
+      end
+      return
+    end
+    
     clean_first = args.include?('--clean')
     include_ui = args.include?('--ui')
     timeout = args.include?('--timeout') ? args[args.index('--timeout') + 1].to_i : 480 # 8 min default (balanced safety)
@@ -975,6 +1074,9 @@ class SaneMaster
 
     # Grant permissions upfront to avoid dialogs
     permission_monitor_pid = grant_test_permissions
+
+    # Validate test references before running tests
+    validate_test_references unless args.include?('--skip-test-validation')
 
     begin
       # Run tests with real-time progress monitoring
@@ -1250,6 +1352,201 @@ class SaneMaster
     end
   end
 
+  # ============================================================================
+  # Test Reference Validation
+  # ============================================================================
+  # Validates that all accessibility identifiers referenced in UI tests
+  # actually exist in the UI code. Prevents tests from referencing non-existent
+  # UI elements (like the EditTabButton issue we just fixed).
+  # ============================================================================
+
+  def validate_test_references
+    puts '🔍 --- [ VALIDATE TEST REFERENCES ] ---'
+    puts 'Checking that all test references match UI code...'
+
+    # Extract identifiers from UI code
+    ui_identifiers = extract_ui_identifiers
+    puts "  Found #{ui_identifiers.count} identifiers in UI code"
+
+    # Extract references from test code
+    test_references = extract_test_references
+    puts "  Found #{test_references.count} references in test code"
+
+    # Find mismatches
+    missing_in_ui = test_references - ui_identifiers
+    missing_in_tests = ui_identifiers - test_references
+
+    # Report issues
+    if missing_in_ui.any?
+      puts "\n❌ CRITICAL: Tests reference non-existent identifiers:"
+      missing_in_ui.sort.each do |id|
+        # Find which test file references it
+        files = find_references_in_files(id)
+        files.each do |file|
+          puts "   - '#{id}' referenced in #{file}"
+        end
+      end
+      puts "\n💡 Fix: Remove test references or add identifier to UI code"
+      puts "   Run: grep -r \"#{missing_in_ui.first}\" SaneVideoUITests/"
+      exit 1
+    end
+
+    if missing_in_tests.any?
+      puts "\n⚠️  WARNING: UI has identifiers not tested:"
+      missing_in_tests.sort.each do |id|
+        puts "   - #{id}"
+      end
+      puts "\n💡 Consider: Add tests for these identifiers or remove them from UI"
+    end
+
+    puts "\n✅ All test references are valid!"
+    puts "   UI identifiers: #{ui_identifiers.count}"
+    puts "   Test references: #{test_references.count}"
+    if ui_identifiers.count > 0
+      coverage = (test_references.count.to_f / ui_identifiers.count * 100).round(1)
+      puts "   Coverage: #{coverage}%"
+    end
+  end
+
+  def extract_ui_identifiers
+    identifiers = Set.new
+
+    # First, extract from AccessibilityIdentifiers enum (most reliable)
+    identifiers_file = 'SaneVideo/Core/Testing/AccessibilityIdentifiers.swift'
+    if File.exist?(identifiers_file)
+      content = File.read(identifiers_file)
+      # Pattern: static let identifierName = "IdentifierValue"
+      content.scan(/static let \w+ = ["']([^"']+)["']/) do |match|
+        identifiers << match[0]
+      end
+    end
+
+    # Also find all accessibilityIdentifier("...") in Views (fallback for legacy code)
+    Dir.glob('SaneVideo/**/*.swift').each do |file|
+      next if file.include?('/Tests/') || file.include?('/Mocks/')
+      next if file.include?('AccessibilityIdentifiers.swift') # Skip the enum itself
+      next unless File.exist?(file)
+
+      content = File.read(file)
+
+      # Pattern: .accessibilityIdentifier("SomeIdentifier")
+      content.scan(/\.accessibilityIdentifier\(["']([^"']+)["']\)/) do |match|
+        identifiers << match[0]
+      end
+
+      # Pattern: accessibilityIdentifier("SomeIdentifier")
+      content.scan(/accessibilityIdentifier\(["']([^"']+)["']\)/) do |match|
+        identifiers << match[0]
+      end
+      
+      # Pattern: AccessibilityIdentifiers.identifierName (using the enum)
+      content.scan(/AccessibilityIdentifiers\.(\w+)/) do |match|
+        # Look up the value from the enum file
+        enum_content = File.read(identifiers_file) if File.exist?(identifiers_file)
+        if enum_content
+          enum_content.scan(/static let #{match[0]} = ["']([^"']+)["']/) do |enum_match|
+            identifiers << enum_match[0]
+          end
+        end
+      end
+    end
+
+    identifiers.to_a
+  end
+
+  def extract_test_references
+    identifiers = Set.new
+
+    # System button labels that are not accessibility identifiers
+    system_buttons = %w[Allow OK Ignore Cancel Continue Get Started Next Previous]
+    system_buttons_pattern = Regexp.new("^(#{system_buttons.join('|')})$", Regexp::IGNORECASE)
+
+    # Load AccessibilityIdentifiers enum values for lookup
+    identifiers_file = 'SaneVideo/Core/Testing/AccessibilityIdentifiers.swift'
+    enum_values = {}
+    if File.exist?(identifiers_file)
+      enum_content = File.read(identifiers_file)
+      enum_content.scan(/static let (\w+) = ["']([^"']+)["']/) do |name, value|
+        enum_values[name] = value
+      end
+    end
+
+    # Find all test references in UITests
+    Dir.glob('SaneVideoUITests/**/*.swift').each do |file|
+      next unless File.exist?(file)
+
+      content = File.read(file)
+
+      # Pattern 1: AccessibilityIdentifiers.identifierName (PREFERRED - type-safe)
+      content.scan(/AccessibilityIdentifiers\.(\w+)/) do |match|
+        enum_name = match[0]
+        if enum_values[enum_name]
+          identifiers << enum_values[enum_name]
+        else
+          puts "  ⚠️  Warning: Unknown enum value AccessibilityIdentifiers.#{enum_name} in #{File.basename(file)}"
+        end
+      end
+
+      # Pattern 2: app.buttons["Identifier"], app.textFields["Identifier"], etc.
+      # Matches: app.buttons["RecordButton"], app.windows["MainWindow"], etc.
+      content.scan(/app\.(?:buttons|textFields|sliders|switches|segmentedControls|windows|sheets|dialogs|alerts|otherElements)\["([^"]+)"\]/) do |match|
+        id = match[0]
+        # Skip system buttons (these are labels, not identifiers)
+        next if system_buttons_pattern.match?(id)
+        identifiers << id
+      end
+
+      # Pattern 3: .matching(identifier: "Identifier")
+      # Matches: app.buttons.matching(identifier: "RecordButton")
+      content.scan(/\.matching\(identifier:\s*["']([^"']+)["']\)/) do |match|
+        id = match[0]
+        next if system_buttons_pattern.match?(id)
+        identifiers << id
+      end
+
+      # Pattern 4: Descendants matching
+      # Matches: app.descendants(matching: .any).matching(identifier: "TimelineClip")
+      content.scan(/app\.descendants\(matching:.*?\)\.matching\(identifier:\s*["']([^"']+)["']\)/) do |match|
+        id = match[0]
+        next if system_buttons_pattern.match?(id)
+        identifiers << id
+      end
+
+      # Pattern 5: Query chains (nested)
+      # Matches: app.windows["MainWindow"].buttons["RecordButton"]
+      content.scan(/\.(?:buttons|textFields|sliders|switches|segmentedControls|windows|sheets|dialogs|alerts|otherElements)\["([^"]+)"\]/) do |match|
+        id = match[0]
+        next if system_buttons_pattern.match?(id)
+        identifiers << id
+      end
+
+      # Pattern 6: Windows matching
+      # Matches: app.windows.matching(identifier: "Settings")
+      content.scan(/app\.windows\.matching\(identifier:\s*["']([^"']+)["']\)/) do |match|
+        id = match[0]
+        next if system_buttons_pattern.match?(id)
+        identifiers << id
+      end
+    end
+
+    # Filter out system identifiers and common false positives
+    identifiers.reject do |id|
+      id.start_with?('_XCUI:', 'NS', 'com.apple') ||
+        system_buttons_pattern.match?(id) ||
+        id.match?(/^[A-Z][a-z]+ [A-Z][a-z]+$/) # Simple title case (likely labels)
+    end.to_a
+  end
+
+  def find_references_in_files(identifier)
+    files = []
+    Dir.glob('SaneVideoUITests/**/*.swift').each do |file|
+      next unless File.exist?(file)
+      content = File.read(file)
+      files << File.basename(file) if content.include?(identifier)
+    end
+    files.uniq
+  end
+
   def check_binary
     puts '🛡️ --- [ SANEMASTER BINARY AUDIT ] ---'
 
@@ -1413,6 +1710,142 @@ class SaneMaster
     tmp_logs = Dir.glob('/tmp/*.xcresult')
 
     (dd_logs + fl_logs + tmp_logs).max_by { |f| File.mtime(f) }
+  end
+
+  def find_dead_code
+    puts '🔍 --- [ DEAD CODE DETECTION ] ---'
+    
+    unless system('which periphery > /dev/null 2>&1')
+      puts '❌ Periphery not found. Install with: brew install peripheryapp/periphery/periphery'
+      return
+    end
+
+    puts 'Scanning for unused code...'
+    puts ''
+
+    # Run Periphery with the project scheme
+    project_path = File.join(Dir.pwd, 'SaneVideo.xcodeproj')
+    unless File.exist?(project_path)
+      puts "❌ Project not found at #{project_path}"
+      return
+    end
+
+    # Build arguments for Periphery
+    build_args = [
+      '--project', project_path,
+      '--schemes', 'SaneVideo',
+      '--format', 'xcode'
+    ]
+
+    # Run Periphery scan
+    system('periphery', 'scan', *build_args)
+    
+    exit_code = $?.exitstatus
+    
+    if exit_code == 0
+      puts ''
+      puts '✅ No unused code detected!'
+    else
+      puts ''
+      puts '⚠️  Unused code detected. Review the output above.'
+      puts '💡 Tip: Review each item carefully before removing - some may be used via reflection or tests.'
+    end
+  end
+
+  def check_deprecations
+    puts '🔍 --- [ DEPRECATION WARNINGS CHECK ] ---'
+    puts 'Scanning for deprecated API usage...'
+    puts ''
+
+    project_path = File.join(Dir.pwd, 'SaneVideo.xcodeproj')
+    unless File.exist?(project_path)
+      puts "❌ Project not found at #{project_path}"
+      return
+    end
+
+    # Build and capture ALL warnings (not just errors)
+    puts 'Building to capture deprecation warnings...'
+    puts ''
+
+    # Use clean build to ensure we catch all warnings
+    build_output = `xcodebuild -project #{project_path} -scheme SaneVideo -destination 'platform=macOS,arch=arm64' clean build 2>&1`
+    
+    # Extract deprecation warnings (case-insensitive)
+    deprecation_warnings = build_output.lines.select { |line| 
+      line.downcase.include?('deprecated') || 
+      line.include?('was deprecated') ||
+      line.include?('is deprecated')
+    }.map(&:strip).reject(&:empty?).uniq
+
+    if deprecation_warnings.empty?
+      puts '✅ No deprecation warnings found!'
+      return
+    end
+
+    puts "⚠️  Found #{deprecation_warnings.length} deprecation warning(s):"
+    puts ''
+    
+    # Group by file
+    warnings_by_file = {}
+    deprecation_warnings.each do |warning|
+      # Extract file path from warning (format: /path/to/file.swift:line:column: warning: ...)
+      if warning =~ /^([^:]+\.swift):(\d+):(\d+):\s+warning:\s+(.+)$/
+        file = File.basename($1)
+        line = $2
+        message = $4
+        warnings_by_file[file] ||= []
+        warnings_by_file[file] << { line: line, message: message }
+      elsif warning.include?('warning:') && warning.include?('.swift')
+        # Try alternative format
+        parts = warning.split(':')
+        if parts.length >= 4
+          file = File.basename(parts[0])
+          line = parts[1]
+          message = parts[3..-1].join(':').strip
+          warnings_by_file[file] ||= []
+          warnings_by_file[file] << { line: line, message: message }
+        end
+      else
+        # Fallback for warnings without file info
+        warnings_by_file['[Other]'] ||= []
+        warnings_by_file['[Other]'] << { line: nil, message: warning }
+      end
+    end
+
+    # Display grouped warnings
+    warnings_by_file.each do |file, warnings|
+      puts "📄 #{file}"
+      warnings.each do |w|
+        if w[:line]
+          puts "   Line #{w[:line]}: #{w[:message]}"
+        else
+          puts "   #{w[:message]}"
+        end
+      end
+      puts ''
+    end
+
+    # Check for known fixable deprecations
+    fixable = []
+    deprecation_warnings.each do |warning|
+      if warning.include?('CIColorKernel') && warning.include?('init(source:)')
+        fixable << 'CIColorKernel.init(source:) - Consider using Metal-based CIKernel or suppress with CI_SILENCE_GL_DEPRECATION'
+      elsif warning.include?('onChange(of:perform:)')
+        fixable << 'onChange(of:perform:) - Already fixed (uses new onChange syntax)'
+      elsif warning.include?('AVAssetExportSession.export()')
+        fixable << 'AVAssetExportSession.export() - Documented with TODO, consider migrating to states(updateInterval:)'
+      end
+    end
+
+    if fixable.any?
+      puts '💡 Known deprecations:'
+      fixable.uniq.each { |f| puts "   - #{f}" }
+      puts ''
+    end
+
+    puts ''
+    puts "⚠️  Total: #{deprecation_warnings.length} deprecation warning(s)"
+    puts '💡 Tip: Review each warning and update to modern APIs when possible'
   end
 end
 

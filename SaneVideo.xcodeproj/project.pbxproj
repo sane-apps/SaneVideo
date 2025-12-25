@@ -113,6 +113,7 @@
 		4E44CDDA0266D4CDE7B515E1 /* CompositionBuilderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08D5EA2923ED14BDD558BE5A /* CompositionBuilderTests.swift */; };
 		4E5ED84EB1AD64DCF5512747 /* CameraManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F40AC7645DC3D543EFE8B0FD /* CameraManager.swift */; };
 		4E8AB694FEE46D72D1D84AF5 /* ExportPresetIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA3B29EA0A1CEB569DFED972 /* ExportPresetIntegrationTests.swift */; };
+		4F8F9C83560FF77BB0CFF2D1 /* AccessibilityIdentifiers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F700582E0D4DEFD73769BDC /* AccessibilityIdentifiers.swift */; };
 		5130B05EBB6FA78672963B27 /* BodyPoseService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A06F9EE170FFAD1B58531FCD /* BodyPoseService.swift */; };
 		51D079F95F37F1B91E39351E /* VideoTransition.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5ACB33C5F11E3281E949E9AC /* VideoTransition.swift */; };
 		52BF3849D5D37B217D49F8E1 /* VoiceoverSettingsSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF2C50E6CC1F60B74353ADD2 /* VoiceoverSettingsSheet.swift */; };
@@ -429,6 +430,7 @@
 		3E1A8BE7244EF6E968EA8DED /* ErrorRecovery.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ErrorRecovery.swift; sourceTree = "<group>"; };
 		3E921629C3F4279EBE9BFEA1 /* CursorTrackingServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CursorTrackingServiceTests.swift; sourceTree = "<group>"; };
 		3EA681347EE30001D11940B4 /* SaneVideo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SaneVideo.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		3F700582E0D4DEFD73769BDC /* AccessibilityIdentifiers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityIdentifiers.swift; sourceTree = "<group>"; };
 		405467BE16EC967505153B95 /* Timeline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Timeline.swift; sourceTree = "<group>"; };
 		41F501EF55198608BE8CEAB7 /* StressTestRunner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StressTestRunner.swift; sourceTree = "<group>"; };
 		426421BD035EDC770BDEAEFE /* CameraPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraPreviewView.swift; sourceTree = "<group>"; };
@@ -910,6 +912,7 @@
 				0DF7CE689273412B1364B95C /* Performance */,
 				7416439D37510D407C8B24A0 /* Protocols */,
 				A283F006BCFBF60CEDBF1C79 /* Rendering */,
+				8716DCCADDE9A74459783F02 /* Testing */,
 				0D680021C0C31C39A33ED438 /* Utilities */,
 			);
 			path = Core;
@@ -1119,6 +1122,14 @@
 				A6E6DE2B9407C20D6426B897 /* TranslationService.swift */,
 			);
 			path = AI;
+			sourceTree = "<group>";
+		};
+		8716DCCADDE9A74459783F02 /* Testing */ = {
+			isa = PBXGroup;
+			children = (
+				3F700582E0D4DEFD73769BDC /* AccessibilityIdentifiers.swift */,
+			);
+			path = Testing;
 			sourceTree = "<group>";
 		};
 		8EC22F75265BD4D44CD2348D /* Project */ = {
@@ -1644,6 +1655,7 @@
 				391CCD9971C68DBD0AD4C500 /* AIService.swift in Sources */,
 				E807A1F1E1CB65D41B447A5B /* APIKeyManager.swift in Sources */,
 				F530B941193F67AEDA700623 /* APIKeysSettingsView.swift in Sources */,
+				4F8F9C83560FF77BB0CFF2D1 /* AccessibilityIdentifiers.swift in Sources */,
 				796F9E4C041EF9DB1A95466A /* AccessibilityModifiers.swift in Sources */,
 				7B2A6CA3EF99CF8E50090187 /* AdvancedVideoPlayer.swift in Sources */,
 				C202634843C31973BC7CC5AC /* AnimationModifiers.swift in Sources */,
@@ -1931,6 +1943,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				COMBINE_HIDPI_IMAGES = YES;
+				DEAD_CODE_STRIPPING = NO;
 				INFOPLIST_FILE = SaneVideoTests/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -2007,6 +2020,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				COMBINE_HIDPI_IMAGES = YES;
+				DEAD_CODE_STRIPPING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -2090,6 +2104,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				COMBINE_HIDPI_IMAGES = YES;
+				DEAD_CODE_STRIPPING = NO;
 				INFOPLIST_FILE = SaneVideoTests/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -2118,6 +2133,7 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GCC_GENERATE_TEST_COVERAGE_FILES = YES;
+				GCC_PREPROCESSOR_DEFINITIONS = "CI_SILENCE_GL_DEPRECATION=1";
 				INFOPLIST_FILE = SaneVideo/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -2140,6 +2156,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				COMBINE_HIDPI_IMAGES = YES;
+				DEAD_CODE_STRIPPING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -2168,6 +2185,7 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GCC_GENERATE_TEST_COVERAGE_FILES = YES;
+				GCC_PREPROCESSOR_DEFINITIONS = "CI_SILENCE_GL_DEPRECATION=1";
 				INFOPLIST_FILE = SaneVideo/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

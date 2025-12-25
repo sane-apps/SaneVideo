@@ -1,5 +1,11 @@
 # CI Test Status
 
+> **Status**: Current Reference  
+> **Related**: See [DEVELOPMENT.md](DEVELOPMENT.md) for main SOP (section 8)  
+> **Last Updated**: 2025-12-25
+
+> **Note**: This is CI-specific. For local test status, see [TEST_DISABLED_NOTICE.md](TEST_DISABLED_NOTICE.md). For complete information, see [DEVELOPMENT.md](DEVELOPMENT.md) section 8.
+
 ## Current Status: ⚠️ Tests Disabled in CI
 
 **Date**: 2025-12-25  

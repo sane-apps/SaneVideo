@@ -1,0 +1,16 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "SaneVideo (Debug)",
+      "type": "lldb",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/Debug/SaneVideo.app/Contents/MacOS/SaneVideo",
+      "args": [],
+      "cwd": "${workspaceFolder}",
+      "stopOnEntry": false,
+      "console": "internalConsole",
+      "preLaunchTask": "SaneMaster: Verify"
+    }
+  ]
+}

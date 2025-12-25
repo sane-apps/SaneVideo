@@ -35,9 +35,16 @@ vendor/
 # Gemini/Agentic
 .gemini/
 .claude/
-.cursor/
-.vscode/
 .mcp.json
+
+# IDE - Keep shared settings, ignore user-specific files
+.cursor/settings.json
+.vscode/settings.json
+.vscode/tasks.json
+.vscode/launch.json
+.vscode/extensions.json
+!.cursor/
+!.vscode/
 
 # Large media/test artifacts
 *.mp4

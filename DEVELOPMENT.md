@@ -306,6 +306,20 @@ We balance speed and robustness using two tiers of tests. **Use the right tool f
 - **Command**: `xcodebuild test ... -only-testing:SaneVideoUITests/SaneEditorFeatureTests/testExportPerformance`
 - **Best Practice**: Run before releases. Inspect memory deltas to catch leaks.
 
+### Regression Testing
+
+Regression tests are critical for preventing the reintroduction of fixed bugs.
+
+- **Location**: `SaneVideoTests/Regression/`
+- **Organization**: Tests are grouped by component (e.g., `RecordingRegressionTests.swift`, `PiPRegressionTests.swift`).
+- **When to Add**: Every time a bug is fixed, adding a corresponding regression test is MANDATORY (Golden Rule #5).
+- **What to Test**:
+    1. **Bug Fix Verification**: Explicitly reproduce the failure mode and verify the fix.
+    2. **API Deprecation Checks**: Ensure no deprecated APIs are used (`APIDeprecationTests.swift`).
+    3. **Edge Cases**: Test specific scenarios that caused issues previously.
+- **Naming**: Use descriptive names referencing the bug (e.g., `testSourceSwitchTimestampGap`).
+- **Separation**: Do NOT mix regression tests with feature tests. Keep them in the `Regression/` directory.
+
 ### Code Coverage
 
 - **Tool**: xcov (Fastlane plugin)

@@ -593,9 +593,7 @@ class SaneMaster
       path_without_prefix = file.sub(%r{^SaneVideo/}, '')
 
       # Check if file exists in project (try multiple path variations)
-      unless project_files.include?(file) || project_files.include?(normalized) || project_files.include?(path_without_prefix)
-        missing_files << file
-      end
+      missing_files << file unless project_files.include?(file) || project_files.include?(normalized) || project_files.include?(path_without_prefix)
     end
 
     if missing_files.any?
@@ -914,7 +912,7 @@ class SaneMaster
       # Quick check: count Swift files in project vs on disk
       begin
         require 'xcodeproj'
-        project = Xcodeproj::Project.open(project_path)
+        project = Xcodeproj::Project.open('SaneVideo.xcodeproj')
         project_swift_count = project.files.count { |f| f.path&.end_with?('.swift') }
         disk_swift_count = `find SaneVideo -name "*.swift" -not -path "*/Tests/*" | wc -l`.strip.to_i
         if (project_swift_count - disk_swift_count).abs > 5 # Allow some variance

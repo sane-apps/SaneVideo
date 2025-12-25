@@ -35,6 +35,10 @@ struct StylesInspectorView: View {
               let project = appState.projectState.currentProject else {
             return nil
         }
+        // CRITICAL FIX: Safely access timeline.tracks to prevent crash
+        guard !project.timeline.tracks.isEmpty else {
+            return nil
+        }
         // Verify clip still exists in project
         for track in project.timeline.tracks {
             if track.clips.contains(where: { $0.id == clip.id }) {
@@ -237,16 +241,17 @@ struct StylesInspectorView: View {
         .frame(minWidth: 320, idealWidth: 360, maxWidth: 420)
         .background(.ultraThinMaterial)
         // CRITICAL FIX: Auto-deselect if clip is deleted
-        .onChange(of: appState.projectState.currentProject?.timeline.tracks) { _, _ in
+        .onChange(of: appState.projectState.currentProject?.id) { _, _ in
+            // CRITICAL FIX: Safely check if clip still exists
             if selectedClip != nil, validatedClip == nil {
-                // Clip was deleted, deselect it
+                // Clip was deleted or project changed, deselect it
                 selectedClip = nil
                 AppLogger.general.info("Inspector: Auto-deselected deleted clip")
             }
         }
         // CRITICAL FIX: Sync selectedClip if it becomes invalid
-        .onChange(of: selectedClip?.id) { _, newId in
-            if let newId = newId, validatedClip == nil {
+        .onChange(of: selectedClip?.id) { _, _ in
+            if selectedClip != nil, validatedClip == nil {
                 // Selected clip doesn't exist, deselect
                 selectedClip = nil
             }

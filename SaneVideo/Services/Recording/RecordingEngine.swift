@@ -235,7 +235,7 @@ class RecordingEngine: NSObject, @unchecked Sendable {
       } catch {
         // CRITICAL: Cleanup on failure - videoWriter was created but camera failed
         AppLogger.recording.error("Camera start failed, cleaning up videoWriter")
-        await self.videoWriter?.finish()  // Try to finish gracefully
+        _ = await self.videoWriter?.finish()  // Try to finish gracefully
         self.videoWriter = nil
         self.outputURL = nil
         await MainActor.run {
@@ -250,7 +250,7 @@ class RecordingEngine: NSObject, @unchecked Sendable {
       } catch {
         // CRITICAL: Cleanup on failure - videoWriter was created but screen recorder failed
         AppLogger.recording.error("Screen recorder start failed, cleaning up videoWriter")
-        await self.videoWriter?.finish()  // Try to finish gracefully
+        _ = await self.videoWriter?.finish()  // Try to finish gracefully
         self.videoWriter = nil
         self.outputURL = nil
         await MainActor.run {

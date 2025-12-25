@@ -232,7 +232,7 @@ class ProjectState {
             // CRITICAL: Wait for previous save to complete (if any)
             // This ensures saves happen in order and prevents data loss
             if let previous = previousTask {
-                _ = try? await previous.value
+                _ = await previous.value
             }
             
             // Check if we were cancelled while waiting

@@ -3,17 +3,21 @@
   // Cursor-Specific Settings for SaneVideo
   // ============================================
   // These settings optimize Cursor's AI features for Swift development
-  
+
   // ============================================
   // AI Chat Settings
   // ============================================
-  "cursor.chat.model": "gpt-4",
+  // Note: Model selection is done via Cursor UI (Settings > Models)
+  // Recommended: Claude 3.5 Sonnet (better for coding) or GPT-4o (faster)
+  // Default: GPT-4-Turbo (Cursor's default)
+  // 
+  // These settings control behavior, not model selection:
   "cursor.chat.maxTokens": 8000,
   "cursor.chat.enableCodeActions": true,
   "cursor.chat.enableFileCreation": true,
   "cursor.chat.includeContext": true,
   "cursor.chat.contextWindow": "large",
-  
+
   // ============================================
   // Code Completion Settings
   // ============================================
@@ -21,7 +25,7 @@
   "cursor.cpp.enableInlineCompletion": true,
   "cursor.cpp.enableSuggestions": true,
   "cursor.cpp.suggestionDelay": 100,
-  
+
   // ============================================
   // Project-Specific Context
   // ============================================
@@ -30,7 +34,7 @@
     ".cursorrules", // Include cursor rules
     "project.yml" // Include project structure
   ],
-  
+
   // ============================================
   // File Exclusions for AI Context
   // ============================================
@@ -44,21 +48,21 @@
     "**/*.xcuserstate",
     "**/fastlane/reports/**"
   ],
-  
+
   // ============================================
   // Auto-Save & Formatting
   // ============================================
   "cursor.general.enableAutoSave": true,
   "cursor.general.autoSaveDelay": 1000,
   "cursor.general.formatOnSave": true,
-  
+
   // ============================================
   // Code Actions
   // ============================================
   "cursor.chat.enableRefactoring": true,
   "cursor.chat.enableTestGeneration": true,
   "cursor.chat.enableDocumentation": true,
-  
+
   // ============================================
   // Swift-Specific Optimizations
   // ============================================
@@ -68,4 +72,3 @@
   "cursor.swift.enforceFileSizeLimit": true, // 500 line limit
   "cursor.swift.maxFileSize": 500
 }
-

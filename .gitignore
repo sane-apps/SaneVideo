@@ -59,3 +59,4 @@ Media/
 TestOutput.xcresult/
 *.o
 SaneVideo/Resources/Models/ggml-base.en.bin
+project.yml.ci_backup

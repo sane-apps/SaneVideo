@@ -31,9 +31,9 @@ schemes:
       # Temporarily disabled test targets due to SwiftUICore linker error
       # This is a known Xcode 16/macOS 26.2 bug - test files are preserved
       # Re-enable when Xcode is updated: uncomment the targets below
-      targets: []
-      # targets:
-      #   - SaneVideoTests
+      # targets: []
+      targets:
+        - SaneVideoTests
       #   - SaneVideoUITests
     profile:
       config: Release

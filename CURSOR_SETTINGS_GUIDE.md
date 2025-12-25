@@ -66,9 +66,11 @@ Cursor-specific AI settings:
 - Excludes build artifacts from AI context
 - Optimized for Swift code completion
 - **Model Selection**: Choose your AI model via Cursor Settings > Models
-  - **Recommended**: Claude 3.5 Sonnet (often better for coding tasks)
-  - **Alternative**: GPT-4o (faster, good for quick completions)
-  - **Default**: GPT-4-Turbo (Cursor's default)
+  - **Recommended**: Opus 4.5 (best for complex coding, architecture decisions)
+  - **Fast Alternative**: GPT-5.2 Extra High Fast (speed-optimized)
+  - **High Quality**: GPT-5.2 Extra High (balance of speed and quality)
+  - **Auto Mode**: Let Cursor pick the best model per task
+  - **MAX Mode**: Enable for maximum capability on complex tasks
 
 ## Usage
 

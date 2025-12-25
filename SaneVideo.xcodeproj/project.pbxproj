@@ -204,6 +204,7 @@
 		97CBCA44F4F7EAD75D573E6C /* InspectorHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = D483F636C49C974165C17B4C /* InspectorHelpers.swift */; };
 		9A3E31A1F71AEE4B6580E45F /* CursorRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9320C41AD844F1ACF9475684 /* CursorRenderer.swift */; };
 		9B8D9F529FFC7824912AD7F7 /* VideoEffectGenerators.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B71585E1BB771ED66DFC8CC /* VideoEffectGenerators.swift */; };
+		9BD291F018C23C94932D7648 /* InspectorRegressionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CC9822E7E1361E1FF68AB6A /* InspectorRegressionTests.swift */; };
 		9DB23D37442BB0130811A917 /* HapticsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 432F8F1A2304768337B8CEA9 /* HapticsManager.swift */; };
 		9EB353E045C030F66F744379 /* VisualEditingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5DB95EBDD51A1F246CB8FBC /* VisualEditingTests.swift */; };
 		9F9AE490FEDA546571F4CAD9 /* FloatingControlsWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42D32D7AFEEEA896D051187F /* FloatingControlsWindow.swift */; };
@@ -237,6 +238,7 @@
 		BB01275156AD35190C94CBC3 /* ProjectBrowserView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2317C69D9178FC84478822A2 /* ProjectBrowserView.swift */; };
 		BCE4144C1255D076E488242C /* StateChangePipeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B962D11F86A94D932866A67 /* StateChangePipeline.swift */; };
 		BD25C51B44C2E58868E1668C /* VideoProject+CaptionStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 480728FB25D437F5AA08179E /* VideoProject+CaptionStyle.swift */; };
+		BD3779B8B99DBE69248031C5 /* InspectorRegressionUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C3D1A3764EC04DF658857C2 /* InspectorRegressionUITests.swift */; };
 		BFDD0E3235582EA689991A79 /* CameraState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 304BF0B1E8E01A3ACF4AED0E /* CameraState.swift */; };
 		C04410A977EE77EEEFC6E3DF /* LibraryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1561CBC2129BAA71E34963ED /* LibraryView.swift */; };
 		C121D516A50290A3669C8256 /* PerformanceMetricsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4B9483E7AF0EC2C00A77424 /* PerformanceMetricsService.swift */; };
@@ -353,6 +355,7 @@
 		08D5EA2923ED14BDD558BE5A /* CompositionBuilderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompositionBuilderTests.swift; sourceTree = "<group>"; };
 		0ADFE77AD73F021BCCD97B80 /* VideoClipTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoClipTests.swift; sourceTree = "<group>"; };
 		0B1D4C119B9B4672D409D033 /* VisualRecordingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VisualRecordingTests.swift; sourceTree = "<group>"; };
+		0C3D1A3764EC04DF658857C2 /* InspectorRegressionUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InspectorRegressionUITests.swift; sourceTree = "<group>"; };
 		0D4F3B3EA01F07342A037521 /* VideoWriter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoWriter.swift; sourceTree = "<group>"; };
 		1001397396AC5C9D9A24EAE5 /* CMTime+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CMTime+Extensions.swift"; sourceTree = "<group>"; };
 		1200C35354B58086C0DFA21D /* ExportUIModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportUIModels.swift; sourceTree = "<group>"; };
@@ -505,6 +508,7 @@
 		8A607C0ACB48678113A15204 /* PrivacyBadge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrivacyBadge.swift; sourceTree = "<group>"; };
 		8A9CE8CE7940B01C9380B0CF /* ProjectTemplate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectTemplate.swift; sourceTree = "<group>"; };
 		8C3344AD12FB523F8EA2F78C /* SilenceDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SilenceDetector.swift; sourceTree = "<group>"; };
+		8CC9822E7E1361E1FF68AB6A /* InspectorRegressionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InspectorRegressionTests.swift; sourceTree = "<group>"; };
 		8D86459B2E6490D1318FAFFA /* MagicFixOptions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MagicFixOptions.swift; sourceTree = "<group>"; };
 		8D888C05E3EECCC09946312F /* BackgroundEffectsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundEffectsView.swift; sourceTree = "<group>"; };
 		8E6C06C9A3367269E4EF5D38 /* AppError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppError.swift; sourceTree = "<group>"; };
@@ -1021,6 +1025,7 @@
 				3276D15950BE2F61868CFA23 /* ExportPresetTests.swift */,
 				618B34531C6B384313C7DDCB /* GestureConflictTests.swift */,
 				D858A2B447B81E7833A18842 /* Info.plist */,
+				8CC9822E7E1361E1FF68AB6A /* InspectorRegressionTests.swift */,
 				F96E6FB6D8F52894D8267BBE /* MagicFixTests.swift */,
 				937CA6E1F51CCA85F0CB3C35 /* NewElementsTests.swift */,
 				E4853C302C4E21287C90686C /* PlaybackStateTests.swift */,
@@ -1301,6 +1306,7 @@
 		F6E9EBB59B84FF2D1F0DEF45 /* SaneVideoUITests */ = {
 			isa = PBXGroup;
 			children = (
+				0C3D1A3764EC04DF658857C2 /* InspectorRegressionUITests.swift */,
 				6FF056013913917C55BAC93F /* MagicFixIntegrationTests.swift */,
 				96D95C0446EFBDE8CC72AE4B /* PiPControlsTest.swift */,
 				CF881A8D72BEB72D15DD400F /* SaneAccessibilityTests.swift */,
@@ -1529,6 +1535,7 @@
 				4E8AB694FEE46D72D1D84AF5 /* ExportPresetIntegrationTests.swift in Sources */,
 				DDDE6866146CFD59DDF8DC45 /* ExportPresetTests.swift in Sources */,
 				2A6A88D7842D458973FDC62C /* GestureConflictTests.swift in Sources */,
+				9BD291F018C23C94932D7648 /* InspectorRegressionTests.swift in Sources */,
 				0329650222555734CF10BCA9 /* MagicFixTests.swift in Sources */,
 				FF5B8329C5CCBCCC3206C1BE /* Mocks.swift in Sources */,
 				5D8A5F2AF79A7CDBA47D589C /* NewElementsTests.swift in Sources */,
@@ -1819,6 +1826,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BD3779B8B99DBE69248031C5 /* InspectorRegressionUITests.swift in Sources */,
 				8A27A3726FEA37A9898347A9 /* MagicFixIntegrationTests.swift in Sources */,
 				836F6C15DBC6124FACCD1E11 /* PiPControlsTest.swift in Sources */,
 				6A8834904D255D06BE5FF079 /* SaneAccessibilityTests.swift in Sources */,

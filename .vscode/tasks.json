@@ -1,0 +1,97 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "SaneMaster: Verify",
+      "type": "shell",
+      "command": "./Scripts/SaneMaster.rb verify",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "SaneMaster: Test Suite (Quick)",
+      "type": "shell",
+      "command": "./Scripts/SaneMaster.rb test_suite --quick",
+      "group": "test",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "SaneMaster: Test Suite (Full)",
+      "type": "shell",
+      "command": "./Scripts/SaneMaster.rb test_suite --full",
+      "group": "test",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "SaneMaster: Doctor",
+      "type": "shell",
+      "command": "./Scripts/SaneMaster.rb doctor",
+      "group": "test",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "XcodeGen: Generate",
+      "type": "shell",
+      "command": "xcodegen generate",
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "SwiftLint: Lint",
+      "type": "shell",
+      "command": "./Scripts/SaneMaster.rb lint",
+      "group": "test",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Validate Test References",
+      "type": "shell",
+      "command": "./Scripts/SaneMaster.rb validate_test_references",
+      "group": "test",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Check Deprecations",
+      "type": "shell",
+      "command": "./Scripts/SaneMaster.rb check_deprecations",
+      "group": "test",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "problemMatcher": []
+    }
+  ]
+}
+

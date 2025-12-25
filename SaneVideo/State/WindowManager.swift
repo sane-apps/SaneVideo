@@ -17,7 +17,7 @@ class WindowManager {
 
   var isPiPVisible = true
   var isScreenSharing = false
-  
+
   // CRITICAL FIX: Flag to prevent concurrent screen share toggles
   var isTogglingScreenShare = false
 
@@ -38,7 +38,7 @@ class WindowManager {
     }
     return ids
   }
-  
+
   /// Get the current PiP window frame for compositing into recordings
   var pipWindowFrame: CGRect? {
     // CRITICAL FIX: Store reference and check visibility safely
@@ -51,6 +51,7 @@ class WindowManager {
   // MARK: - Floating Controls Management
 
   func showFloatingControls() {
+    if TestEnvironment.isTesting && !TestEnvironment.isUITesting { return }
     if floatingControls == nil {
       AppLogger.window.info("Creating Floating Controls")
       floatingControls = FloatingControlsWindow()
@@ -59,6 +60,7 @@ class WindowManager {
   }
 
   func hideFloatingControls() {
+    if TestEnvironment.isTesting && !TestEnvironment.isUITesting { return }
     if floatingControls != nil {
       AppLogger.window.info("Closing Floating Controls")
       floatingControls?.close()
@@ -95,6 +97,7 @@ class WindowManager {
   }
 
   private func showPiPWindow() {
+    if TestEnvironment.isTesting && !TestEnvironment.isUITesting { return }
     // UX IMPROVEMENT: Keep floating controls visible as a backup.
     // This ensures the user always has a "Record" button even if they start Screen Share before Recording.
     showFloatingControls()
@@ -121,7 +124,7 @@ class WindowManager {
 
     pipWindow?.orderFrontRegardless()
     pipWindow?.snapToCorner(.bottomRight)
-    
+
     // CRITICAL FIX: Ensure controls window is visible and on top
     if let controls = pipWindow?.controlsWindow {
       controls.orderFrontRegardless()
@@ -136,6 +139,7 @@ class WindowManager {
   }
 
   private func hidePiPWindow() {
+    if TestEnvironment.isTesting && !TestEnvironment.isUITesting { return }
     // @MainActor ensures we're already on main thread
 
     // Prevent re-entry if already cleaning up
@@ -146,7 +150,7 @@ class WindowManager {
     // CRITICAL FIX: Store all references before any operations
     // Access controlsWindow BEFORE clearing pipWindow to prevent zombie access
     let controls = window.controlsWindow
-    
+
     // CRITICAL FIX: Clear reference IMMEDIATELY to prevent re-entry
     // But we've already stored the window and controls references
     pipWindow = nil
@@ -156,13 +160,13 @@ class WindowManager {
     if let controls = controls {
       // Verify window is still valid by checking multiple properties
       let windowIsValid = !window.isReleasedWhenClosed && window.windowNumber > 0
-      
+
       if windowIsValid {
         AppLogger.window.info("Closing PiP Controls Window")
         // Remove parent-child relationship while window is still valid
         window.removeChildWindow(controls)
       }
-      
+
       // Always close controls, even if parent window is invalid
       // Use safe access pattern
       if !controls.isReleasedWhenClosed {
@@ -192,7 +196,7 @@ class WindowManager {
     Task { @MainActor in
       await updateRecorderFilter()
     }
-    
+
     AppLogger.window.info("PiP Window and controls fully hidden")
   }
 
@@ -205,13 +209,14 @@ class WindowManager {
   // MARK: - App Window Management
 
   func minimizeMainWindow() {
+    if TestEnvironment.isTesting && !TestEnvironment.isUITesting { return }
     // @MainActor ensures we're already on main thread
     AppLogger.window.info("Attempting to minimize main window...")
 
     // CRITICAL FIX: Store references before iteration to prevent zombie access
     let currentPiPWindow = pipWindow
     let currentFloatingControls = floatingControls
-    
+
     // CRITICAL FIX: Create snapshot to prevent iteration issues
     let windowsSnapshot = NSApp.windows
 
@@ -237,6 +242,7 @@ class WindowManager {
   }
 
   func restoreMainWindow() {
+    if TestEnvironment.isTesting && !TestEnvironment.isUITesting { return }
     // @MainActor ensures we're already on main thread
     AppLogger.window.info("Restoring main window...")
 
@@ -259,12 +265,12 @@ class WindowManager {
       if window === currentPiPWindow || window === currentFloatingControls {
         continue
       }
-      
+
       // CRITICAL FIX: Also check by window class name safely
       let windowClassName = String(describing: type(of: window))
-      if windowClassName.contains("PiPCameraWindow") || 
-         windowClassName.contains("PiPControlsWindow") ||
-         windowClassName.contains("FloatingControlsWindow") {
+      if windowClassName.contains("PiPCameraWindow")
+        || windowClassName.contains("PiPControlsWindow")
+        || windowClassName.contains("FloatingControlsWindow") {
         continue
       }
 

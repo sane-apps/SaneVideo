@@ -36,13 +36,19 @@ class RecordingState {
   private var recordingEngine: RecordingEngine?
   private var cameraService: CameraServiceProtocol
   private var injectedAudioService: AudioService?
+  private var injectedScreenRecorder: ScreenRecorder?  // Stored for injection
   private var cancellables = Set<AnyCancellable>()
 
   // MARK: - Initialization
 
-  init(cameraService: CameraServiceProtocol? = nil, audioService: AudioService? = nil) {
+  init(
+    cameraService: CameraServiceProtocol? = nil,
+    audioService: AudioService? = nil,
+    screenRecorder: ScreenRecorder? = nil
+  ) {
     self.cameraService = cameraService ?? ServiceContainer.shared.cameraService
     self.injectedAudioService = audioService
+    self.injectedScreenRecorder = screenRecorder
     setupRecordingEngine()
   }
 
@@ -58,7 +64,8 @@ class RecordingState {
   private func setupRecordingEngine() {
     recordingEngine = RecordingEngine(
       cameraService: cameraService,
-      audioService: injectedAudioService ?? ServiceContainer.shared.audioService
+      audioService: injectedAudioService ?? ServiceContainer.shared.audioService,
+      screenRecorder: injectedScreenRecorder  // Use injected instance if available
     )
 
     // Listen for external screen recording stops
@@ -187,7 +194,8 @@ class RecordingState {
   }
 
   func stopRecording(completion: @escaping @Sendable (URL?) -> Void) {
-    AppLogger.recording.debug("🛑 stopRecording called. isPreparing=\(isPreparing), isRecording=\(isRecording)")
+    AppLogger.recording.debug(
+      "🛑 stopRecording called. isPreparing=\(isPreparing), isRecording=\(isRecording)")
 
     if isPreparing {
       AppLogger.recording.debug("🛑 stopRecording cancelled (isPreparing=true)")

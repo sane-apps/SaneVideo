@@ -1019,8 +1019,8 @@ class SaneMaster
         require 'xcodeproj'
         project = Xcodeproj::Project.open('SaneVideo.xcodeproj')
         project_swift_count = project.files.count { |f| f.path&.end_with?('.swift') }
-        disk_swift_count = `find SaneVideo -name "*.swift" -not -path "*/Tests/*" | wc -l`.strip.to_i
-        if (project_swift_count - disk_swift_count).abs > 5 # Allow some variance
+        disk_swift_count = `find . -name "*.swift" -not -path "*/.*" -not -path "*/build/*" -not -path "*/vendor/*" | wc -l`.strip.to_i
+        if (project_swift_count - disk_swift_count).abs > 15 # Allow variance for SPM/Mocks
           puts "  ⚠️  File count mismatch (project: #{project_swift_count}, disk: ~#{disk_swift_count})"
           puts '     Run: xcodegen generate'
         else

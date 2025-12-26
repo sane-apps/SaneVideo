@@ -27,20 +27,23 @@ class WindowManager {
   private var floatingControls: FloatingControlsWindow?
   private var pipWindow: PiPCameraWindow?
 
+  // MARK: - Validation Helpers
+
+  /// Check if a window is valid (not released, has valid window number)
+  private func isWindowValid(_ window: NSWindow?) -> Bool {
+    guard let window = window else { return false }
+    return !window.isReleasedWhenClosed && window.windowNumber > 0
+  }
+
   /// Windows that should be excluded from screen recordings (Controls, PiP Overlay)
   var excludedWindowIDs: [CGWindowID] {
     var ids: [CGWindowID] = []
-    // CRITICAL FIX: Store reference and validate before accessing properties
-    if let window = pipWindow,
-       !window.isReleasedWhenClosed,
-       window.windowNumber > 0 {
+    // Use helper for cleaner validation
+    if isWindowValid(pipWindow), let window = pipWindow {
       ids.append(CGWindowID(window.windowNumber))
     }
     // Note: Controls are now embedded in PiP window, so excluding PiP window ID covers them.
-
-    if let floating = floatingControls,
-       !floating.isReleasedWhenClosed,
-       floating.windowNumber > 0 {
+    if isWindowValid(floatingControls), let floating = floatingControls {
       ids.append(CGWindowID(floating.windowNumber))
     }
     return ids
@@ -48,8 +51,7 @@ class WindowManager {
 
   /// Get the current PiP window frame for compositing into recordings
   var pipWindowFrame: CGRect? {
-    guard let window = pipWindow else { return nil }
-    guard !window.isReleasedWhenClosed, window.isVisible else { return nil }
+    guard isWindowValid(pipWindow), let window = pipWindow, window.isVisible else { return nil }
     return window.frame
   }
 
@@ -108,15 +110,12 @@ class WindowManager {
     }
 
     isTogglingPiP = true
-    defer { isTogglingPiP = false }
 
     // CRITICAL FIX: Validate window state before operations
-    if let existingWindow = pipWindow,
-       existingWindow.isVisible,
-       !existingWindow.isReleasedWhenClosed,
-       existingWindow.windowNumber > 0 {
+    if isWindowValid(pipWindow), let existingWindow = pipWindow, existingWindow.isVisible {
       existingWindow.setupPreview()
       existingWindow.orderFrontRegardless()
+      isTogglingPiP = false
       return
     }
 
@@ -129,18 +128,38 @@ class WindowManager {
       } else {
         AppLogger.window.error("Failed to create PiP window (invalid window state)")
         ServiceContainer.shared.toastManager.show("Failed to create PiP window", type: .error)
+        isTogglingPiP = false
         return
       }
     }
 
-    pipWindow?.orderFrontRegardless()
-    pipWindow?.snapToCorner(.bottomRight)
+    // CRITICAL FIX: Capture window reference BEFORE async work to prevent race
+    guard let window = pipWindow else {
+      isTogglingPiP = false
+      return
+    }
 
-    // Controls are embedded and shown automatically with the window.
-
-    // Update Screen Recorder filter
+    // CRITICAL FIX: Update filter BEFORE showing window
+    // This ensures the PiP is excluded from recording before it becomes visible
     Task { @MainActor in
+      // Update filter first
       await updateRecorderFilter()
+
+      // Small delay to ensure filter is applied
+      try? await Task.sleep(nanoseconds: 50_000_000) // 50ms
+
+      // NOW show the window (using captured reference)
+      // Re-validate window is still valid after async work
+      guard !window.isReleasedWhenClosed, window.windowNumber > 0 else {
+        isTogglingPiP = false
+        return
+      }
+
+      window.orderFrontRegardless()
+      window.snapToCorner(.bottomRight)
+
+      isTogglingPiP = false
+      AppLogger.window.info("PiP Window shown (filter updated first)")
     }
   }
 
@@ -152,33 +171,45 @@ class WindowManager {
       return
     }
 
-    isTogglingPiP = true
-    defer { isTogglingPiP = false }
-
     guard let window = pipWindow else { return }
+
+    // CRITICAL FIX: Set flag but DON'T use defer - we need to keep it set during async close
+    isTogglingPiP = true
 
     AppLogger.window.info("Hiding PiP Window")
 
-    pipWindow = nil
-
-    // Close PiP window itself
-    let windowIsValid = !window.isReleasedWhenClosed && window.windowNumber > 0
-    if windowIsValid {
-      window.orderOut(nil)
-      window.isReleasedWhenClosed = true
-      window.close()
-    } else {
+    // CRITICAL FIX: Check validity BEFORE any operations
+    guard isWindowValid(window) else {
       AppLogger.window.warning("PiP window already released, skipping close")
+      pipWindow = nil
+      isTogglingPiP = false
+      return
     }
 
-    // Update filter
+    // CRITICAL FIX: Nil the reference BEFORE calling close()
+    // This prevents any code from trying to access the window during async close
+    // The window itself won't be deallocated because close() holds a reference
+    pipWindow = nil
+
+    // CRITICAL FIX: Set isReleasedWhenClosed AFTER nilling pipWindow
+    // This ensures the window will be deallocated after close() completes
+    window.isReleasedWhenClosed = true
+
+    // close() now handles the async cleanup properly
+    window.close()
+
+    // Reset toggle flag after a delay (matches the close() async timing)
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+      self?.isTogglingPiP = false
+      AppLogger.window.info("PiP Window fully hidden")
+    }
+
+    // Update filter (can run in parallel with close)
     Task { @MainActor in
       await updateRecorderFilter()
     }
 
     hideFloatingControls()
-
-    AppLogger.window.info("PiP Window fully hidden")
   }
 
   func toggleScreenShare(isRecording: Bool, isCameraActive: Bool) {
@@ -275,8 +306,8 @@ class WindowManager {
   // MARK: - Filter Helpers
 
   private func updateRecorderFilter() async {
-    try? await Task.sleep(nanoseconds: 150_000_000)
-
+    // CRITICAL FIX: Removed 150ms delay - caller now handles timing
+    // The delay was causing PiP to briefly appear in recordings
     if let engine = ServiceContainer.shared.appState.recordingState.engine {
       await engine.screenRecorder.updateContentFilter()
     }

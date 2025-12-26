@@ -107,4 +107,3 @@ actor ProgressHeartbeat {
         }
     }
 }
-

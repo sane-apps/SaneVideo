@@ -9,26 +9,22 @@ import Foundation
 extension ProjectState {
     // MARK: - Captions & Transcription
 
-    func generateCaptions(for clip: VideoClip) async throws -> Int {
+    func generateCaptions(for clip: VideoClip, transactionId: UUID? = nil) async throws -> Int {
         guard currentProject != nil else { return 0 }
 
-        self.isProcessing = true
+        // If no transaction ID provided, create one for this operation
+        // This maintains backward compatibility for single-caption generation
+        let localTransactionId = transactionId ?? beginTransaction()
+        defer { endTransaction(localTransactionId) }
+
         self.processingStatus = "🎤 Transcribing audio..."
         self.processingProgress = 0.0
         ServiceContainer.shared.toastManager.show("🎤 Transcribing audio...")
 
-        defer { 
-            Task { @MainActor in 
-                self.isProcessing = false 
-                self.processingStatus = nil
-                self.processingProgress = 0.0
-            } 
-        }
-
         AppLogger.project.info("🎤 ProjectState: Requesting caption generation for clip \(clip.id)")
         let tracker = ProgressTracker(interval: 3.0)
         let coordinator = ServiceContainer.shared.transcriptionCoordinator
-        
+
         // Check if we should suggest WhisperKit
         if coordinator.shouldSuggestWhisperKit && coordinator.selectedEngine == .apple {
             await MainActor.run {
@@ -38,14 +34,14 @@ extension ProjectState {
                 )
             }
         }
-        
+
         do {
             let captions = try await coordinator.generateCaptions(for: clip.url) { chunk, total, eta in
                 if tracker.shouldUpdate() || chunk == 1 || chunk == total {
                     Task { @MainActor in
                         let percent = Double(chunk) / Double(total)
                         self.processingProgress = percent
-                        
+
                         if chunk == total {
                             self.processingStatus = "🎤 Finishing transcription..."
                             ServiceContainer.shared.toastManager.show("🎤 Finishing transcription...")
@@ -74,9 +70,9 @@ extension ProjectState {
     }
 
     func applyCaptions(to clip: VideoClip, captions: [Caption]) {
-        guard var project = currentProject else { 
+        guard var project = currentProject else {
             AppLogger.project.error("❌ ProjectState: applyCaptions failed - currentProject is nil")
-            return 
+            return
         }
 
         for (tIdx, track) in project.timeline.tracks.enumerated() {

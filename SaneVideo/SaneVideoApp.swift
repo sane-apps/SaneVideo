@@ -321,15 +321,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
   }
 
   func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
-    if ServiceContainer.shared.appState.isRecording {
+    if ServiceContainer.shared.appState.recordingState.isRecording {
       // If recording, try to stop safely first
       ServiceContainer.shared.appState.recordingState.stopRecording { _ in
-        // Give it a moment to finish writing
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-          // CRITICAL FIX: Close all windows before termination
-          Task { @MainActor in
-            ServiceContainer.shared.appState.windowManager.cleanupAllWindows()
-          }
+        // CRITICAL: Await cleanup on MainActor to ensure moov atom is written
+        Task { @MainActor in
+          ServiceContainer.shared.appState.windowManager.cleanupAllWindows()
+          ServiceContainer.shared.appState.saveCurrentState()
           sender.reply(toApplicationShouldTerminate: true)
         }
       }

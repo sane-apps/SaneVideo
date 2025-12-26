@@ -25,12 +25,11 @@ extension AppState {
   func startRecording() {
     AppLogger.recording.info("🔴 AppState: Initiating recording sequence...")
 
-    // 1. Ensure camera is active if we are in camera mode (not screen sharing)
-    // or if camera is enabled. (Skip during tests to avoid popups)
-    // cameraEnabled setter automatically starts camera
+    // 1. Ensure camera is active for recording (Camera mode OR screen sharing PiP)
+    // Skip during tests to avoid popups. cameraEnabled setter automatically starts camera.
     let isTesting = ProcessInfo.processInfo.arguments.contains("-uitesting")
-    if !isTesting && !windowManager.isScreenSharing && !cameraState.isActive {
-      AppLogger.camera.info("📷 AppState: Auto-starting camera for recording")
+    if !isTesting && !cameraState.isActive {
+      AppLogger.camera.info("📷 AppState: Auto-starting camera for recording (PiP support)")
       cameraEnabled = true
     }
 
@@ -117,6 +116,9 @@ extension AppState {
 
       // Bring app to foreground
       self.windowManager.restoreMainWindow()
+
+      // CRITICAL: UX Delight - Audible feedback on success (as requested)
+      ServiceContainer.shared.soundManager.playSuccess()
     }
   }
 
@@ -151,18 +153,24 @@ extension AppState {
 
     Task { @MainActor in
       AppLogger.recording.info("📹 Quick Access: Edit Now selected")
+
+      // CRITICAL FIX: Switch to editing mode IMMEDIATELY for responsiveness
+      // This prevents the "nothing happened" scenario if import takes time
+      self.switchToEditing()
+
+      // Show loading feedback
       ServiceContainer.shared.toastManager.show("📹 Importing recording...")
 
       if self.projectState.currentProject == nil {
         self.projectState.startNewProject()
       }
 
+      // Small delay to allow UI to settle before heavy import work
       try? await Task.sleep(nanoseconds: 100_000_000)
+
       await self.projectState.addVideoToTimeline(url: url)
 
-      self.switchToEditing()
-      try? await Task.sleep(nanoseconds: 200_000_000)
-
+      // Removed second sleep - not needed if we switched mode early
       ServiceContainer.shared.toastManager.show("✅ Ready to edit!")
     }
   }
@@ -204,114 +212,101 @@ extension AppState {
     }
 
     windowManager.isTogglingScreenShare = true
-    defer { windowManager.isTogglingScreenShare = false }
+    // NOTE: Do NOT use defer here - flag is reset inside Task completion to prevent race conditions
 
     let wasScreenSharing = windowManager.isScreenSharing
     NSLog("🖥️ toggleScreenShare: wasScreenSharing=\(wasScreenSharing)")
 
     if wasScreenSharing {
+      // Logic for STOPPING screen share
+
       // CRITICAL FIX: If recording, switch to camera FIRST before stopping screen share
       // This ensures recording continues seamlessly
       if recordingState.isRecording {
         // CRITICAL: Switch source to camera and AWAIT completion
-        // This ensures UI state is updated only after switch completes
         let newSource: RecordingSource = .camera
         AppLogger.recording.info("🔄 AppState: Switching from screen to camera recording")
         recordingState.switchSource(newSource)
 
-        // CRITICAL: Wait for switch to complete (with timeout)
-        // We poll the recording state to see when switch is done
-        Task {
+        Task { @MainActor in
+          // Wait for switch to complete (max 5 seconds)
           var attempts = 0
-          let maxAttempts = 50 // 5 seconds max wait (50 * 100ms)
+          let maxAttempts = 50
 
           while attempts < maxAttempts {
             try? await Task.sleep(nanoseconds: 100_000_000) // 100ms
-
-            // Check if switch completed by checking if we're on camera source
-            // Note: We can't directly check isSwitching, so we infer from source
-            // If recording is still active and we're not screen sharing, switch likely completed
-            if !recordingState.isRecording || !windowManager.isScreenSharing {
-              break
-            }
-
+            if !recordingState.isRecording || !windowManager.isScreenSharing { break }
             attempts += 1
           }
 
-          await MainActor.run {
-            windowManager.restoreMainWindow()
-            windowManager.isScreenSharing = false
-            windowManager.updatePiPState(
-              isCameraActive: cameraState.isActive,
-              isRecording: recordingState.isRecording
-            )
-
-            ServiceContainer.shared.toastManager.show("📷 Switched to Camera Recording")
-          }
-        }
-      } else {
-        // Not recording - just stop screen share and deactivate picker
-        NSLog("🖥️ toggleScreenShare: Not recording, stopping screen share cleanly...")
-        // CRITICAL FIX: Stop stream FIRST, then deactivate picker, then cleanup windows
-        // This prevents crashes from deactivating picker while stream is still active
-        Task { @MainActor in
-          NSLog("🖥️ Step 1: Stopping screen recorder stream...")
-          // Step 1: Stop the screen recorder stream FIRST
-          if let screenRecorder = recordingState.engine?.screenRecorder {
-            AppLogger.recording.info("🛑 AppState: Stopping screen recorder stream...")
-            await screenRecorder.stop()
-            NSLog("🖥️ Step 1: Screen recorder stream stopped")
-            AppLogger.recording.info("✅ Screen recorder stream stopped")
-          } else {
-            NSLog("🖥️ Step 1: No screen recorder to stop")
+          if attempts >= maxAttempts {
+            AppLogger.recording.warning("Source switch timed out after 5s")
           }
 
-          NSLog("🖥️ Step 2: Delay for stream cleanup...")
-          // Step 2: Small delay to ensure stream cleanup completes
-          try? await Task.sleep(nanoseconds: 100_000_000) // 100ms
-
-          NSLog("🖥️ Step 3: Deactivating picker...")
-          // Step 3: Now deactivate picker (safe after stream is stopped)
-          // CRITICAL: Only deactivate picker if NOT in test environment (test environment bypasses picker)
-          if !TestEnvironment.isTesting {
-            let picker = SCContentSharingPicker.shared
-            picker.isActive = false
-            NSLog("🖥️ Step 3: Picker deactivated")
-            AppLogger.recording.info("🛑 AppState: Deactivated screen share picker")
-          } else {
-            NSLog("🖥️ Step 3: Skipping picker (test environment)")
-            AppLogger.recording.info("🧪 [TEST] AppState: Skipping picker deactivation (test environment)")
-          }
-
-          NSLog("🖥️ Step 4: Updating isScreenSharing state...")
-          // Step 4: Update state FIRST so updatePiPState sees the correct value
+          windowManager.restoreMainWindow()
           windowManager.isScreenSharing = false
-
-          NSLog("🖥️ Step 5: Cleanup PiP windows...")
-          // Step 5: Now update PiP (which will hide it because isScreenSharing is false)
           windowManager.updatePiPState(
             isCameraActive: cameraState.isActive,
-            isRecording: false
+            isRecording: recordingState.isRecording
           )
 
-          NSLog("🖥️ Step 5.5: Delay for SwiftUI teardown...")
-          try? await Task.sleep(nanoseconds: 300_000_000) // 300ms
+          windowManager.isTogglingScreenShare = false
+          ServiceContainer.shared.toastManager.show("📷 Switched to Camera Recording")
+        }
+      } else {
+        // Not recording - clean shutdown sequence
+        NSLog("🖥️ toggleScreenShare: Not recording, stopping screen share cleanly...")
 
-          NSLog("🖥️ Step 6: Restoring main window...")
-          // Step 6: Restore main window
-          windowManager.restoreMainWindow()
+        Task { @MainActor in
+          do {
+            // Step 1: Stop the screen recorder stream FIRST
+            NSLog("🖥️ Step 1: Stopping screen recorder stream...")
+            if let screenRecorder = recordingState.engine?.screenRecorder {
+              await screenRecorder.stop()
+              NSLog("🖥️ Step 1: ✅ Screen recorder stream stopped")
+            }
 
-          NSLog("🖥️ ✅ Screen share exit cleanup complete!")
-          AppLogger.recording.info("✅ Screen share exit cleanup complete")
+            // Step 2: Update state IMMEDIATELY after stream stops
+            NSLog("🖥️ Step 2: Updating state...")
+            windowManager.isScreenSharing = false
+
+            // Step 3: Hide PiP window
+            NSLog("🖥️ Step 3: Hiding PiP...")
+            windowManager.updatePiPState(
+              isCameraActive: cameraState.isActive,
+              isRecording: false
+            )
+
+            // Step 4: Wait for window close to complete
+            NSLog("🖥️ Step 4: Waiting for window cleanup...")
+            try? await Task.sleep(nanoseconds: 150_000_000) // 150ms
+
+            // Step 5: Preserve picker state for persistence (Tahoe style)
+            // We do NOT deactivate SCContentSharingPicker here.
+            // Keeping it active allows the OS to remember the previous selection
+            // so the user doesn't have to re-select the window next time.
+            NSLog("🖥️ Step 5: Picker remains active for selection persistence")
+
+            // Step 6: Restore main window
+            NSLog("🖥️ Step 6: Restoring main window...")
+            windowManager.restoreMainWindow()
+
+            // CRITICAL: Always reset toggle flag
+            windowManager.isTogglingScreenShare = false
+            NSLog("🖥️ toggleScreenShare: ✅ Sequence complete")
+
+          } catch {
+             AppLogger.window.error("Error stopping screen share: \(error)")
+             windowManager.isTogglingScreenShare = false
+          }
         }
       }
     } else {
-      // Starting screen share
+      // Logic for STARTING screen share
       NSLog("🖥️ toggleScreenShare: Starting screen share...")
-      windowManager.isScreenSharing = true
 
+      // Start camera for PiP overlay if not active
       var effectiveCameraActive = cameraState.isActive
-      // cameraEnabled didSet automatically starts camera
       if !cameraState.isActive {
         NSLog("🖥️ toggleScreenShare: Auto-starting camera for PiP")
         AppLogger.camera.info("AppState: Auto-starting camera for screen share PiP")
@@ -319,38 +314,28 @@ extension AppState {
         effectiveCameraActive = true
       }
 
-      NSLog("🖥️ toggleScreenShare: Updating PiP state...")
+      // Hide main window BEFORE picker shows to verify cleaner look
+      windowManager.minimizeMainWindow()
+
+      // Update state for new mode
+      windowManager.isScreenSharing = true
+
+      // Show PiP
       windowManager.updatePiPState(
         isCameraActive: effectiveCameraActive,
         isRecording: recordingState.isRecording
       )
-      NSLog("🖥️ toggleScreenShare: Minimizing main window...")
-      windowManager.minimizeMainWindow()
 
-      // CRITICAL FIX: If recording, switch to screen source AFTER screen share is set up
-      // BULLETPROOF: Handle switch completion and errors
-      if recordingState.isRecording {
-        let newSource: RecordingSource = .screen
-        AppLogger.recording.info("🔄 AppState: Switching from camera to screen recording")
-        recordingState.switchSource(newSource)
+      Task { @MainActor in
+        // Small delay to allow window animation
+        try? await Task.sleep(nanoseconds: 200_000_000) // 200ms
 
-        // CRITICAL: Wait for switch to complete (with timeout)
-        Task {
-          var attempts = 0
-          let maxAttempts = 50 // 5 seconds max wait
-
-          while attempts < maxAttempts {
-            try? await Task.sleep(nanoseconds: 100_000_000) // 100ms
-
-            // Check if switch completed - if screen recorder is active, switch likely completed
-            // We can't directly check, so we just wait a reasonable time
-            attempts += 1
-          }
-
-          await MainActor.run {
-            ServiceContainer.shared.toastManager.show("🖥️ Switched to Screen Recording")
-          }
+        if !TestEnvironment.isTesting {
+           SCContentSharingPicker.shared.isActive = true
+           SCContentSharingPicker.shared.present()
         }
+
+        windowManager.isTogglingScreenShare = false
       }
     }
   }

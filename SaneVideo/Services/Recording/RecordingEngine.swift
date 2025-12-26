@@ -249,10 +249,14 @@ class RecordingEngine: NSObject, @unchecked Sendable {
       }
     } else {
       do {
+        // CRITICAL: Ensure camera is active for PiP overlay during screen sharing
+        // We do this BEFORE starting the screen recorder to avoid flicker
+        try await cameraService.start()
+
         try await self.screenRecorder.start()
       } catch {
         // CRITICAL: Cleanup on failure - videoWriter was created but screen recorder failed
-        AppLogger.recording.error("Screen recorder start failed, cleaning up videoWriter")
+        AppLogger.recording.error("Screen recorder (or camera) start failed, cleaning up videoWriter")
         _ = await self.videoWriter?.finish()  // Try to finish gracefully
         self.videoWriter = nil
         self.outputURL = nil
@@ -411,6 +415,12 @@ class RecordingEngine: NSObject, @unchecked Sendable {
 
   func pause() { Task { @RecordingActor in pauseRecording() } }
   func resume() { Task { @RecordingActor in resumeRecording() } }
+
+  @RecordingActor
+  func clearCameraFrame() {
+    AppLogger.recording.info("📷 RecordingActor: clearing camera frame")
+    self.videoWriter?.updateCameraFrame(nil)
+  }
 
   // MARK: - Monitoring
 

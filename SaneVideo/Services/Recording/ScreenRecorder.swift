@@ -30,7 +30,11 @@ class ScreenRecorder: NSObject, SCContentSharingPickerObserver, SCStreamDelegate
 
   /// The original filter selected by the user (usually a display capture)
   /// We keep this to reconstruct the filter when adding/removing exception windows (PiP)
+  /// CRITICAL: This may become stale if display configuration changes
   private var baseFilter: SCContentFilter?
+
+  /// Track when baseFilter was set to detect staleness
+  private var baseFilterTimestamp: Date?
 
   /// Output URL for direct recording
   private var currentOutputURL: URL?
@@ -38,8 +42,28 @@ class ScreenRecorder: NSObject, SCContentSharingPickerObserver, SCStreamDelegate
   /// Callback triggered when the stream stops (e.g. user cancelled via system UI)
   var onStop: ((Error?) -> Void)?
 
-  /// Callback triggered when Presenter Overlay state changes (active/inactive)
   var onPresenterOverlayChanged: ((Bool) -> Void)?
+
+  override init() {
+    super.init()
+    setupDisplayObserver()
+  }
+
+  private func setupDisplayObserver() {
+    NotificationCenter.default.addObserver(
+      self,
+      selector: #selector(handleDisplayChange),
+      name: NSApplication.didChangeScreenParametersNotification,
+      object: nil
+    )
+  }
+
+  @objc private func handleDisplayChange() {
+    AppLogger.recording.info("🖥️ Display parameters changed - refreshing screen filter")
+    Task {
+      await updateContentFilter()
+    }
+  }
 
   // MARK: - Public Interface
 
@@ -119,10 +143,18 @@ class ScreenRecorder: NSObject, SCContentSharingPickerObserver, SCStreamDelegate
 
     // TAHOE PERSISTENCE FIX: Check if we already have a valid selection to reuse.
     // This prevents the picker from popping up every time the user switches between Camera and Screen.
-    if let existingFilter = baseFilter {
+    // CRITICAL FIX: Check for staleness - if filter is older than 5 minutes, get fresh one
+    if let existingFilter = baseFilter,
+       let timestamp = baseFilterTimestamp,
+       Date().timeIntervalSince(timestamp) < 300 { // 5 minutes
       AppLogger.recording.info("📺 Reusing existing screen capture filter...")
       await handleContentSelected(filter: existingFilter)
       return
+    } else if baseFilter != nil {
+      // Filter exists but is stale - clear it
+      AppLogger.recording.info("📺 Existing filter is stale, requesting fresh selection")
+      baseFilter = nil
+      baseFilterTimestamp = nil
     }
 
     AppLogger.recording.info("📺 No existing filter found. Presenting screen picker...")
@@ -360,6 +392,7 @@ class ScreenRecorder: NSObject, SCContentSharingPickerObserver, SCStreamDelegate
     if let stream = activeStream {
       AppLogger.recording.info("🔄 Updating existing stream with new content selection...")
       self.baseFilter = filter
+      self.baseFilterTimestamp = Date()
       do {
         try await stream.updateContentFilter(filter)
         AppLogger.recording.info("✅ Existing stream filter updated successfully")
@@ -416,6 +449,7 @@ class ScreenRecorder: NSObject, SCContentSharingPickerObserver, SCStreamDelegate
 
       // Create stream with user's selected content filter
       self.baseFilter = filter
+      self.baseFilterTimestamp = Date()
 
       let newStream = SCStream(filter: filter, configuration: config, delegate: self)
 

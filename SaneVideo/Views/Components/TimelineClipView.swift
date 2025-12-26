@@ -28,6 +28,7 @@ struct TimelineClipView: View {
     var onPrivacyBlur: (() -> Void)?
     var onFindHighlights: (() -> Void)?
     var onDeleteFile: (() -> Void)?
+    var onRelink: (() -> Void)?
     var onSetTransition: ((TransitionType) -> Void)?
     var onSelect: ((CMTime?) -> Void)?
 
@@ -38,24 +39,24 @@ struct TimelineClipView: View {
     @State private var rightTrimOffset: CGFloat = 0
     @State private var isHovering = false
     @State private var showingDeleteFileConfirmation = false
-    
+
     // CRITICAL FIX: Track waveform loading task for cancellation
     @State private var waveformLoadTask: Task<Void, Never>?
 
     private let handleWidth: CGFloat = 14
     private let clipHeight: CGFloat = 80
     private let snapThreshold: CGFloat = 10
-    
+
     var clipWidth: CGFloat {
         max(60, CGFloat(clip.effectiveDuration.seconds) * pixelsPerSecond)
     }
-    
+
     var computedSamples: [Float]? {
         guard let originalSamples = waveformSamples else { return nil }
         guard !clip.removedRanges.isEmpty else { return originalSamples }
         return ClipWaveformCalculator.computeStitchedSamples(originalSamples: originalSamples, clip: clip)
     }
-    
+
     var stitchMarkers: [Double] {
         ClipWaveformCalculator.computeStitchMarkers(clip: clip)
     }
@@ -63,7 +64,7 @@ struct TimelineClipView: View {
     var body: some View {
         // CRITICAL FIX: Break up complex expression to help compiler type-check
         let frameWidth = max(0, clipWidth + (isDraggingRightHandle ? rightTrimOffset : 0) - (isDraggingLeftHandle ? leftTrimOffset : 0))
-        
+
         return ZStack(alignment: .leading) {
             HStack(spacing: 0) {
                 // LEFT TRIM HANDLE
@@ -73,10 +74,10 @@ struct TimelineClipView: View {
                     onTrimStart: onTrimStart, onTrimEnd: nil,
                     isDragging: $isDraggingLeftHandle, trimOffset: $leftTrimOffset
                 )
-                
+
                 // CLIP CONTENT
                 clipContent
-                
+
                 // RIGHT TRIM HANDLE
                 ClipTrimHandle(
                     isLeft: false, clipHeight: clipHeight, pixelsPerSecond: pixelsPerSecond,
@@ -132,6 +133,7 @@ struct TimelineClipView: View {
                 onRemoveFillers: onRemoveFillers, onGenerateCaptions: onGenerateCaptions,
                 onSmartCrop: onSmartCrop, onAutoFrame: onAutoFrame, onFindGestures: onFindGestures,
                 onPrivacyBlur: onPrivacyBlur, onFindHighlights: onFindHighlights,
+                onRelink: onRelink,
                 onDeleteFile: { showingDeleteFileConfirmation = true },
                 onSetTransition: onSetTransition
             )
@@ -145,9 +147,9 @@ struct TimelineClipView: View {
             Text(String(localized: "timeline.clip.delete_file.message", defaultValue: "This will move the file to the Trash") + ": '\(clip.url.lastPathComponent)'.")
         }
     }
-    
+
     // MARK: - Clip Content
-    
+
     private var clipContent: some View {
         VStack(spacing: 0) {
             if clip.isMissing {
@@ -159,7 +161,7 @@ struct TimelineClipView: View {
                             Rectangle()
                                 .strokeBorder(Color.red, lineWidth: 2)
                         )
-                    
+
                     VStack {
                         Image(systemName: "exclamationmark.triangle.fill")
                             .font(.system(size: 16))
@@ -178,7 +180,7 @@ struct TimelineClipView: View {
                 }
                 .frame(height: clipHeight * 0.55)
                 .clipped()
-                
+
                 // AUDIO TRACK (Bottom ~45%)
                 ZStack(alignment: .bottom) {
                     Rectangle().fill(Color(white: 0.15))
@@ -197,9 +199,9 @@ struct TimelineClipView: View {
         .cornerRadius(4)
         .overlay(alignment: .topTrailing) { hoverButtons }
     }
-    
+
     // MARK: - Components
-    
+
     private var thumbnailStrip: some View {
         // ROBUSTNESS: 10-hour video support
         // We calculate how many thumbnails we need based on width, but we DO NOT load them all.
@@ -209,7 +211,7 @@ struct TimelineClipView: View {
         // Ensure at least 1 thumb
         let thumbCount = max(1, Int(clipWidth / targetThumbWidth))
         let singleThumbWidth = clipWidth / CGFloat(thumbCount)
-        
+
         // PERFORMANCE: LazyHStack with explicit frame to prevent layout thrashing
         return LazyHStack(spacing: 0) {
             ForEach(0..<thumbCount, id: \.self) { index in
@@ -217,7 +219,7 @@ struct TimelineClipView: View {
                 let fraction = Double(index) / Double(max(1, thumbCount))
                 let time = CMTime(seconds: clip.effectiveDuration.seconds * fraction, preferredTimescale: 600)
                 let originalTime = clip.originalTime(forEffectiveTime: time)
-                
+
                 TimelineThumbnailCell(
                     clip: clip,
                     time: originalTime,
@@ -228,7 +230,7 @@ struct TimelineClipView: View {
             }
         }
     }
-    
+
     private var clipLabel: some View {
         VStack(alignment: .leading, spacing: 2) {
             HStack {
@@ -241,7 +243,7 @@ struct TimelineClipView: View {
             Spacer()
         }.padding(4)
     }
-    
+
     private var waveformDisplay: some View {
         Group {
             if let samples = computedSamples {
@@ -253,14 +255,14 @@ struct TimelineClipView: View {
             }
         }
     }
-    
+
     private var stitchMarkerOverlay: some View {
         ForEach(stitchMarkers, id: \.self) { progress in
             Rectangle().fill(Color.orange).frame(width: 1)
                 .offset(x: CGFloat(progress) * max(0, clipWidth - handleWidth * 2))
         }
     }
-    
+
     private var durationLabel: some View {
         HStack {
             Spacer()
@@ -268,7 +270,7 @@ struct TimelineClipView: View {
                 .font(.system(size: 9)).foregroundColor(.white.opacity(0.6)).padding(2)
         }
     }
-    
+
     @ViewBuilder
     private var hoverButtons: some View {
         if isHovering || isSelected {
@@ -283,7 +285,7 @@ struct TimelineClipView: View {
                 .pressScale()
                 .accessibilityIdentifier("timeline.clip.action.split")
                 .help(KeyboardShortcutHelper.helpWithShortcut(String(localized: "timeline.clip.action.split.help", defaultValue: "Split clip at playhead"), key: "b", modifiers: [.command]))
-                
+
                 Button(action: { onDelete?() }, label: {
                     Image(systemName: "trash").font(.system(size: 12)).foregroundColor(.white)
                         .frame(width: 28, height: 28).background(Color.red).clipShape(Circle())
@@ -297,25 +299,24 @@ struct TimelineClipView: View {
             }.padding(8)
         }
     }
-    
+
     // MARK: - Data Loading
-    
+
     // Removed eager loadThumbnails() to prevent OOM on large files
-    
+
     private func loadWaveform() async {
         // CRITICAL FIX: Check for cancellation before loading
         guard !Task.isCancelled else { return }
-        
+
         if let samples = await ServiceContainer.shared.waveformService.waveform(for: clip) {
             // CRITICAL FIX: Check cancellation again before updating UI
             guard !Task.isCancelled else { return }
             await MainActor.run { self.waveformSamples = samples }
         }
     }
-    
+
     private func formatDuration(_ time: CMTime) -> String {
-        let seconds = CMTimeGetSeconds(time)
-        return String(format: "%d:%02d", Int(seconds) / 60, Int(seconds) % 60)
+        TimeUtils.formatDuration(time)
     }
 }
 
@@ -336,10 +337,10 @@ struct TimelineThumbnailCell: View {
     let clip: VideoClip
     let time: CMTime
     let size: CGSize
-    
+
     @State private var image: NSImage?
     @State private var isLoading = false
-    
+
     var body: some View {
         ZStack {
             if let image = image {
@@ -357,7 +358,7 @@ struct TimelineThumbnailCell: View {
             // Note: ServiceContainer handles internal caching of generated results
             guard image == nil && !isLoading else { return }
             isLoading = true
-            
+
             // PERFORMANCE: Use detached task with utility priority for thumbnails
             // This prevents thumbnail loading from blocking UI
             let thumb = await Task.detached(priority: .utility) {
@@ -367,7 +368,7 @@ struct TimelineThumbnailCell: View {
                     size: size
                 )
             }.value
-            
+
             await MainActor.run {
                 self.image = thumb
                 self.isLoading = false
@@ -386,7 +387,7 @@ struct ClipGestureModifier: ViewModifier {
     let handleWidth: CGFloat
     let clip: VideoClip
     let onSelect: ((CMTime?) -> Void)?
-    
+
     func body(content: Content) -> some View {
         content
             // CRITICAL FIX: Use gesture priority system to prevent conflicts
@@ -398,12 +399,12 @@ struct ClipGestureModifier: ViewModifier {
                         // CRITICAL FIX: Only allow selection if not dragging trim handles
                         // This prevents gesture conflicts
                         guard !isDraggingLeftHandle && !isDraggingRightHandle else { return }
-                        
+
                         // CRITICAL FIX: Check if drag was significant enough to be intentional
                         // Small movements (< 5px) are likely accidental
                         let dragDistance = sqrt(pow(value.translation.width, 2) + pow(value.translation.height, 2))
                         guard dragDistance < 10 else { return } // If dragged too far, it's not a click
-                        
+
                         let percent = value.startLocation.x / (clipWidth - handleWidth * 2)
                         let safePercent = max(0, min(1.0, percent))
                         let timeOffset = clip.effectiveDuration.seconds * Double(safePercent)

@@ -43,6 +43,12 @@ extension RecordingEngine {
       pendingSource = source
       timeCoordinator.startTimeNeedsRecalibration = true
 
+      // CRITICAL FIX: Show user feedback immediately
+      await MainActor.run {
+        let sourceName = source == .camera ? "Camera" : "Screen"
+        ServiceContainer.shared.toastManager.show("🔄 Switching to \(sourceName)...")
+      }
+
       // CRITICAL: Create timeout task BEFORE starting switch
       // If switch takes too long, rollback.
       // NOTE: Screen picking requires user interaction, so we allow a much longer timeout (2 mins).
@@ -55,7 +61,8 @@ extension RecordingEngine {
 
         // Only timeout if still switching and pending source hasn't been cleared
         if self.isSwitching, self.pendingSource == source {
-          AppLogger.recording.error("⏱️ Source switch timeout after \(timeoutDuration / 1_000_000_000)s. Rolling back.")
+          let timeoutSecs = timeoutDuration / 1_000_000_000
+          AppLogger.recording.error("⏱️ Source switch timeout after \(timeoutSecs)s. Rolling back.")
 
           // Rollback state
           self.pendingSource = nil
@@ -63,8 +70,9 @@ extension RecordingEngine {
           self.isSwitching = false
           self.timeCoordinator.startTimeNeedsRecalibration = false
 
-          // Notify error
+          // CRITICAL FIX: Show user-friendly feedback
           await MainActor.run { [weak self] in
+            ServiceContainer.shared.toastManager.show("⚠️ Switch timed out, continuing on previous source", type: .error)
             self?.onError?(
               AppError.recordingEngineError("Source switch timed out. Recording may be corrupted."))
           }

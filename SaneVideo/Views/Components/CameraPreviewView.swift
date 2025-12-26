@@ -24,9 +24,20 @@ struct CameraPreviewView: NSViewRepresentable {
         }
     }
 
+    // CRITICAL FIX: Proper cleanup to prevent use-after-free during autorelease
+    static func dismantleNSView(_ nsView: PreviewView, coordinator: ()) {
+        // Disconnect session FIRST to stop frame delivery
+        nsView.previewLayer.session = nil
+        // Then remove the layer from the hierarchy
+        nsView.previewLayer.removeFromSuperlayer()
+    }
+
     // Internal NSView subclass to handle layout automatically
     class PreviewView: NSView {
-        private let previewLayer = AVCaptureVideoPreviewLayer()
+        // CRITICAL FIX: nonisolated(unsafe) allows safe access from deinit
+        // for cleanup. AVCaptureVideoPreviewLayer is not Sendable.
+        // Made fileprivate to allow dismantleNSView to access it
+        nonisolated(unsafe) fileprivate let previewLayer = AVCaptureVideoPreviewLayer()
 
         var session: AVCaptureSession? {
             get { previewLayer.session }
@@ -40,7 +51,7 @@ struct CameraPreviewView: NSViewRepresentable {
                 if previewLayer.session !== newValue {
                     previewLayer.session = newValue
                     AppLogger.camera.debug("CameraPreviewView: Session updated")
-                    
+
                     // CRITICAL FIX: Defer connection configuration with increased delay
                     // to allow frame delivery to stabilize before any modifications.
                     // macOS 26.2 appears to be stricter about queue expectations during first frame.
@@ -52,24 +63,24 @@ struct CameraPreviewView: NSViewRepresentable {
                 }
             }
         }
-        
+
         /// Safely configures the AVCaptureConnection
         private static func safelyConfigureConnection(_ connection: AVCaptureConnection) {
             let version = ProcessInfo.processInfo.operatingSystemVersion
             AppLogger.camera.info("Configuring connection on macOS \(version.majorVersion).\(version.minorVersion)")
-            
+
             // CRITICAL FIX: AVFoundation requires automaticallyAdjustsVideoMirroring to be disabled
             // BEFORE manually setting isVideoMirrored. Failure to do so causes NSInvalidArgumentException.
             if connection.isVideoMirroringSupported {
                 // Step 1: Disable automatic adjustment (MUST come first)
                 connection.automaticallyAdjustsVideoMirroring = false
                 AppLogger.camera.info("Disabled automatic video mirroring adjustment")
-                
+
                 // Step 2: Now safe to set manual mirroring
                 connection.isVideoMirrored = false
                 AppLogger.camera.info("Set video mirrored to false")
             }
-            
+
             if #available(macOS 14.0, *) {
                 if connection.isVideoRotationAngleSupported(0.0) {
                     connection.videoRotationAngle = 0.0
@@ -106,6 +117,13 @@ struct CameraPreviewView: NSViewRepresentable {
                 previewLayer.frame = bounds
                 CATransaction.commit()
             }
+        }
+
+        // CRITICAL FIX: Clean up layer on deallocation to prevent use-after-free
+        // when the session is deallocated while the layer still references it
+        deinit {
+            previewLayer.session = nil
+            previewLayer.removeFromSuperlayer()
         }
     }
 }

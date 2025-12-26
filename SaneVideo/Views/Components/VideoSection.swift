@@ -74,7 +74,7 @@ struct VideoSection: View {
                         appState.projectState.updateClipSpeed(clipId: clip.id, speed: speed)
                     }
                     .buttonStyle(.bordered)
-                    .controlSize(.mini)
+                    .controlSize(.small)
                     .tint(speed == preset ? .accentColor : .secondary)
                     .accessibilityIdentifier("video.speed_preset.\(preset)")
                 }

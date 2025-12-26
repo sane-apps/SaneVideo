@@ -208,7 +208,7 @@ struct MainContentView: View {
         }
       }
       .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isDraggingFile)
-      .accessibilityIdentifier("MainWindow")
+      .accessibilityIdentifier(AccessibilityIdentifiers.mainWindow)
   }
 
   var mainContent: some View {
@@ -306,6 +306,7 @@ struct MainContentView: View {
         .animation(.smoothUI, value: appState.appMode)
         .help("Toggle Record/Edit Mode (Cmd+M)")
         .padding(.vertical, 4)
+        .accessibilityIdentifier(AccessibilityIdentifiers.modeSwitcher)
         .enhancedAccessibility(
           label: appState.appMode == .recording ? "Switch to Editor" : "Switch to Record",
           hint: "Toggle between recording and editing modes",
@@ -385,6 +386,7 @@ struct MainContentView: View {
             .disabled(appState.currentProject?.timeline.tracks.allSatisfy { $0.clips.isEmpty } ?? true)
             .help((appState.currentProject?.timeline.tracks.allSatisfy { $0.clips.isEmpty } ?? true) ? "Add clips to timeline first" : "Export Gallery (Cmd+E)")
             .keyboardShortcut("e", modifiers: [.command])
+            .accessibilityIdentifier(AccessibilityIdentifiers.exportButton)
             .enhancedAccessibility(
               label: "Share",
               hint: (appState.currentProject?.timeline.tracks.allSatisfy { $0.clips.isEmpty } ?? true) ? "Add clips to timeline first" : "Export your video project",

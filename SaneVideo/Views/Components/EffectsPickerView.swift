@@ -288,7 +288,7 @@ struct ActiveEffectRow: View {
             // Slider (if adjustable)
             if !effect.type.isBinary {
                 Slider(value: $intensity, in: effect.type.intensityRange)
-                    .controlSize(.mini)
+                    .controlSize(.small)
                     .accessibilityIdentifier("effects.active.\(effect.type.rawValue).intensity")
                     .onChange(of: intensity) { _, newValue in
                         // Live update while dragging for real-time preview

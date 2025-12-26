@@ -38,7 +38,13 @@ class FloatingControlsWindow: NSPanel {
         collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
 
         // Set content view to SwiftUI
-        let controlsView = RecordingControlsView()
+        let controlsView = SharedRecordingControls(
+            showDevicePickers: false,
+            showGalleryTarget: false,
+            showTimer: true,
+            useGlassBackground: true,
+            buttonSize: .small
+        )
         contentView = NSHostingView(rootView: controlsView
             .environment(ServiceContainer.shared.appState)
         )
@@ -90,13 +96,16 @@ class FloatingControlsWindow: NSPanel {
         // CRITICAL FIX: Invalidate timer before closing
         hideTimer?.invalidate()
         hideTimer = nil
+
+        // CRITICAL FIX: Remove content view's subviews before closing
+        // This ensures SwiftUI hosting view is properly dismantled
+        contentView?.subviews.forEach { $0.removeFromSuperview() }
+
         super.close()
     }
-    
+
     deinit {
-        // CRITICAL FIX: Timer should already be invalidated in close()
-        // But as safety net, invalidate if somehow still set (nonisolated access)
-        // Note: Can't access MainActor properties in deinit, so rely on close() being called
+        // Safety net: rely on close() being called for cleanup
     }
 
 }

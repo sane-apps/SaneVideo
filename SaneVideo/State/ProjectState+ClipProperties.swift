@@ -10,511 +10,529 @@ import Foundation
 import SwiftUI
 
 extension ProjectState {
-    
-    // MARK: - Transform
 
-    func updateClipTransform(_ clip: VideoClip, transform: VideoClip.Transform) {
-        guard !isProcessing else { return }
-        guard var project = currentProject else { return }
+  // MARK: - Transform
 
-        var timeline = project.timeline
-        var clipFound = false
+  func updateClipTransform(_ clip: VideoClip, transform: VideoClip.Transform) {
+    guard !isProcessing else { return }
+    guard var project = currentProject else { return }
 
-        for (trackIndex, track) in timeline.tracks.enumerated() {
-            if let index = track.clips.firstIndex(where: { $0.id == clip.id }) {
-                if track.isLocked { return }
+    var timeline = project.timeline
+    var clipFound = false
 
-                var mutableTrack = track
-                mutableTrack.clips[index].transform = transform
-                timeline.tracks[trackIndex] = mutableTrack
-                clipFound = true
-                break
-            }
-        }
+    for (trackIndex, track) in timeline.tracks.enumerated() {
+      if let index = track.clips.firstIndex(where: { $0.id == clip.id }) {
+        if track.isLocked { return }
 
-        if clipFound {
-            project.timeline = timeline
-            currentProject = project
-            // Note: For high-frequency updates (drag), we might want to debounce saving.
-            // But for safety, we queue it.
-            saveProject(project)
-        }
+        var mutableTrack = track
+        mutableTrack.clips[index].transform = transform
+        timeline.tracks[trackIndex] = mutableTrack
+        clipFound = true
+        break
+      }
     }
 
-    // MARK: - Speed
+    if clipFound {
+      project.timeline = timeline
+      currentProject = project
+      // Note: For high-frequency updates (drag), we might want to debounce saving.
+      // But for safety, we queue it.
+      saveProject(project)
+    }
+  }
 
-    /// Update clip playback speed
-    func updateClipSpeed(clipId: UUID, speed: Double) {
-        guard !isProcessing else { return }
-        guard var project = currentProject else { return }
+  // MARK: - Speed
 
-        var timeline = project.timeline
-        var clipFound = false
+  /// Update clip playback speed
+  func updateClipSpeed(clipId: UUID, speed: Double) {
+    guard !isProcessing else { return }
+    guard var project = currentProject else { return }
 
-        for (trackIndex, track) in timeline.tracks.enumerated() {
-            if let index = track.clips.firstIndex(where: { $0.id == clipId }) {
-                // Check lock
-                if track.isLocked {
-                    ServiceContainer.shared.toastManager.show("Track is locked", type: .error)
-                    return
-                }
+    var timeline = project.timeline
+    var clipFound = false
 
-                registerUndo("Change Speed")
-
-                var mutableTrack = track
-                mutableTrack.clips[index].speed = speed
-                timeline.tracks[trackIndex] = mutableTrack
-                clipFound = true
-                break
-            }
+    for (trackIndex, track) in timeline.tracks.enumerated() {
+      if let index = track.clips.firstIndex(where: { $0.id == clipId }) {
+        // Check lock
+        if track.isLocked {
+          ServiceContainer.shared.toastManager.show("Track is locked", type: .error)
+          return
         }
 
-        if clipFound {
-            recalculateStartTimes(in: &timeline)
-            project.timeline = timeline
-            currentProject = project
-            saveProject(project)
+        registerUndo("Change Speed")
 
-            AppLogger.project.info("Updated clip speed to \(speed)x")
-            ServiceContainer.shared.toastManager.show(String(format: "Speed: %.2fx", speed))
-        }
+        var mutableTrack = track
+        mutableTrack.clips[index].speed = speed
+        timeline.tracks[trackIndex] = mutableTrack
+        clipFound = true
+        break
+      }
     }
 
-    // MARK: - Volume
+    if clipFound {
+      recalculateStartTimes(in: &timeline)
+      project.timeline = timeline
+      currentProject = project
+      saveProject(project)
 
-    /// Update clip volume
-    func updateClipVolume(clipId: UUID, volume: Float) {
-        guard !isProcessing else { return }
-        guard var project = currentProject else { return }
+      AppLogger.project.info("Updated clip speed to \(speed)x")
+      ServiceContainer.shared.toastManager.show(String(format: "Speed: %.2fx", speed))
+    }
+  }
 
-        var timeline = project.timeline
-        var clipFound = false
+  // MARK: - Volume
 
-        for (trackIndex, track) in timeline.tracks.enumerated() {
-            if let index = track.clips.firstIndex(where: { $0.id == clipId }) {
-                // Check lock
-                if track.isLocked {
-                    ServiceContainer.shared.toastManager.show("Track is locked", type: .error)
-                    return
-                }
+  /// Update clip volume
+  func updateClipVolume(clipId: UUID, volume: Float) {
+    guard !isProcessing else { return }
+    guard var project = currentProject else { return }
 
-                registerUndo("Change Volume")
+    var timeline = project.timeline
+    var clipFound = false
 
-                var mutableTrack = track
-                mutableTrack.clips[index].volume = volume
-                timeline.tracks[trackIndex] = mutableTrack
-                clipFound = true
-                break
-            }
+    for (trackIndex, track) in timeline.tracks.enumerated() {
+      if let index = track.clips.firstIndex(where: { $0.id == clipId }) {
+        // Check lock
+        if track.isLocked {
+          ServiceContainer.shared.toastManager.show("Track is locked", type: .error)
+          return
         }
 
-        if clipFound {
-            project.timeline = timeline
-            currentProject = project
-            saveProject(project)
+        registerUndo("Change Volume")
 
-            AppLogger.project.info("Updated clip volume to \(Int(volume * 100))%")
-            
-            // INSTANT PREVIEW: Update real-time audio processor immediately
-            if let clip = getClip(by: clipId) {
-                Task {
-                    do {
-                        try await ServiceContainer.shared.realTimeAudioProcessor.updateEffects(for: clip)
-                    } catch {
-                        AppLogger.audio.warning("Failed to update real-time audio volume: \(error.localizedDescription)")
-                    }
-                }
-            }
-        }
+        var mutableTrack = track
+        mutableTrack.clips[index].volume = volume
+        timeline.tracks[trackIndex] = mutableTrack
+        clipFound = true
+        break
+      }
     }
 
-    // MARK: - Effects
+    if clipFound {
+      project.timeline = timeline
+      currentProject = project
+      saveProject(project)
 
-    /// Update clip effects
-    func updateClipEffects(clipId: UUID, effects: [VideoEffect]) {
-        guard !isProcessing else { return }
-        guard var project = currentProject else { return }
+      AppLogger.project.info("Updated clip volume to \(Int(volume * 100))%")
 
-        var timeline = project.timeline
-        var clipFound = false
-
-        for (trackIndex, track) in timeline.tracks.enumerated() {
-            if let index = track.clips.firstIndex(where: { $0.id == clipId }) {
-                // Check lock
-                if track.isLocked {
-                    ServiceContainer.shared.toastManager.show("Track is locked", type: .error)
-                    return
-                }
-
-                registerUndo("Update Effects")
-
-                var mutableTrack = track
-                mutableTrack.clips[index].effects = effects
-                timeline.tracks[trackIndex] = mutableTrack
-                clipFound = true
-                break
-            }
+      // INSTANT PREVIEW: Update real-time audio processor immediately
+      if let clip = getClip(by: clipId) {
+        Task {
+          do {
+            try await ServiceContainer.shared.realTimeAudioProcessor.updateEffects(for: clip)
+          } catch {
+            AppLogger.audio.warning(
+              "Failed to update real-time audio volume: \(error.localizedDescription)")
+          }
         }
-
-        if clipFound {
-            project.timeline = timeline
-            currentProject = project
-            saveProject(project)
-
-            AppLogger.project.info("Updated clip effects: \(effects.count) effects applied")
-            
-            // INSTANT PREVIEW: Trigger immediate project reload to show effects
-            // This ensures effects appear instantly in video preview
-            // Post notification to trigger reload via UnifiedStateChangeModifier
-            NotificationCenter.default.post(
-                name: NSNotification.Name("ProjectEffectsChanged"),
-                object: project
-            )
-        }
+      }
     }
-    
-    /// Update clip background effect (person segmentation)
-    func updateClipBackgroundEffect(clipId: UUID, effect: BackgroundEffect?) {
-        guard !isProcessing else { return }
-        guard var project = currentProject else { return }
+  }
 
-        var timeline = project.timeline
-        var clipFound = false
+  // MARK: - Effects
 
-        for (trackIndex, track) in timeline.tracks.enumerated() {
-            if let index = track.clips.firstIndex(where: { $0.id == clipId }) {
-                if track.isLocked {
-                    ServiceContainer.shared.toastManager.show("Track is locked", type: .error)
-                    return
-                }
+  /// Update clip effects
+  func updateClipEffects(clipId: UUID, effects: [VideoEffect]) {
+    guard !isProcessing else { return }
+    guard var project = currentProject else { return }
 
-                registerUndo("Update Background")
+    var timeline = project.timeline
+    var clipFound = false
 
-                var mutableTrack = track
-                mutableTrack.clips[index].backgroundEffect = effect
-                timeline.tracks[trackIndex] = mutableTrack
-                clipFound = true
-                break
-            }
+    for (trackIndex, track) in timeline.tracks.enumerated() {
+      if let index = track.clips.firstIndex(where: { $0.id == clipId }) {
+        // Check lock
+        if track.isLocked {
+          ServiceContainer.shared.toastManager.show("Track is locked", type: .error)
+          return
         }
 
-        if clipFound {
-            project.timeline = timeline
-            currentProject = project
-            saveProject(project)
+        registerUndo("Update Effects")
 
-            let effectName = effect?.displayName ?? "None"
-            AppLogger.project.info("Updated clip background effect: \(effectName)")
-            ServiceContainer.shared.toastManager.show("Background: \(effectName)")
-        }
+        var mutableTrack = track
+        mutableTrack.clips[index].effects = effects
+        timeline.tracks[trackIndex] = mutableTrack
+        clipFound = true
+        break
+      }
     }
 
-    /// Apply a single effect to a clip (replaces existing effects of same type)
-    func applyEffect(to clip: VideoClip, effect: VideoEffect) {
-        // Replace any existing effect of the same type, or add new
-        var newEffects = clip.effects.filter { $0.type != effect.type }
-        newEffects.append(effect)
-        updateClipEffects(clipId: clip.id, effects: newEffects)
+    if clipFound {
+      project.timeline = timeline
+      currentProject = project
+      saveProject(project)
+
+      AppLogger.project.info("Updated clip effects: \(effects.count) effects applied")
+
+      // INSTANT PREVIEW: Trigger immediate project reload to show effects
+      // This ensures effects appear instantly in video preview
+      // Post notification to trigger reload via UnifiedStateChangeModifier
+      NotificationCenter.default.post(
+        name: NSNotification.Name("ProjectEffectsChanged"),
+        object: project
+      )
+    }
+  }
+
+  /// Update clip background effect (person segmentation)
+  func updateClipBackgroundEffect(clipId: UUID, effect: BackgroundEffect?) {
+    guard !isProcessing else { return }
+    guard var project = currentProject else { return }
+
+    var timeline = project.timeline
+    var clipFound = false
+
+    for (trackIndex, track) in timeline.tracks.enumerated() {
+      if let index = track.clips.firstIndex(where: { $0.id == clipId }) {
+        if track.isLocked {
+          ServiceContainer.shared.toastManager.show("Track is locked", type: .error)
+          return
+        }
+
+        registerUndo("Update Background")
+
+        var mutableTrack = track
+        mutableTrack.clips[index].backgroundEffect = effect
+        timeline.tracks[trackIndex] = mutableTrack
+        clipFound = true
+        break
+      }
     }
 
-    /// Clear all effects from a clip
-    func clearEffects(from clip: VideoClip) {
-        updateClipEffects(clipId: clip.id, effects: [])
+    if clipFound {
+      project.timeline = timeline
+      currentProject = project
+      saveProject(project)
+
+      let effectName = effect?.displayName ?? "None"
+      AppLogger.project.info("Updated clip background effect: \(effectName)")
+      ServiceContainer.shared.toastManager.show("Background: \(effectName)")
+    }
+  }
+
+  /// Apply a single effect to a clip (replaces existing effects of same type)
+  func applyEffect(to clip: VideoClip, effect: VideoEffect) {
+    // Replace any existing effect of the same type, or add new
+    var newEffects = clip.effects.filter { $0.type != effect.type }
+    newEffects.append(effect)
+    updateClipEffects(clipId: clip.id, effects: newEffects)
+  }
+
+  /// Remove an effect of a specific type from a clip
+  func removeEffect(from clip: VideoClip, type: VideoEffectType) {
+    let newEffects = clip.effects.filter { $0.type != type }
+    // Only update if something changed
+    if newEffects.count != clip.effects.count {
+      updateClipEffects(clipId: clip.id, effects: newEffects)
+    }
+  }
+
+  /// Clear all effects from a clip
+  func clearEffects(from clip: VideoClip) {
+    updateClipEffects(clipId: clip.id, effects: [])
+  }
+
+  // MARK: - Transitions
+
+  /// Set transition for a clip (transition INTO this clip from previous)
+  func setClipTransition(clipId: UUID, transitionType: TransitionType) {
+    guard !isProcessing else { return }
+    guard var project = currentProject else { return }
+
+    var timeline = project.timeline
+    var clipFound = false
+
+    for (trackIndex, track) in timeline.tracks.enumerated() {
+      if let index = track.clips.firstIndex(where: { $0.id == clipId }) {
+        if track.isLocked {
+          ServiceContainer.shared.toastManager.show("Track is locked", type: .error)
+          return
+        }
+
+        registerUndo("Set Transition")
+
+        var mutableTrack = track
+        if transitionType == .none {
+          mutableTrack.clips[index].transition = nil
+        } else {
+          mutableTrack.clips[index].transition = VideoTransition(type: transitionType)
+        }
+        timeline.tracks[trackIndex] = mutableTrack
+        clipFound = true
+        break
+      }
     }
 
-    // MARK: - Transitions
+    if clipFound {
+      project.timeline = timeline
+      currentProject = project
+      saveProject(project)
 
-    /// Set transition for a clip (transition INTO this clip from previous)
-    func setClipTransition(clipId: UUID, transitionType: TransitionType) {
-        guard !isProcessing else { return }
-        guard var project = currentProject else { return }
+      if transitionType == .none {
+        ServiceContainer.shared.toastManager.show("Removed transition")
+      } else {
+        ServiceContainer.shared.toastManager.show("Added \(transitionType.displayName) transition")
+      }
+      AppLogger.project.info("Set transition \(transitionType.rawValue) for clip \(clipId)")
+    }
+  }
 
-        var timeline = project.timeline
-        var clipFound = false
+  // MARK: - Overlay Management
 
-        for (trackIndex, track) in timeline.tracks.enumerated() {
-            if let index = track.clips.firstIndex(where: { $0.id == clipId }) {
-                if track.isLocked {
-                    ServiceContainer.shared.toastManager.show("Track is locked", type: .error)
-                    return
-                }
+  func updateClipOverlay(clipId: UUID, overlay: VideoClip.VideoOverlay) {
+    guard !isProcessing else { return }
+    guard var project = currentProject else { return }
 
-                registerUndo("Set Transition")
+    var timeline = project.timeline
+    var clipFound = false
 
-                var mutableTrack = track
-                if transitionType == .none {
-                    mutableTrack.clips[index].transition = nil
-                } else {
-                    mutableTrack.clips[index].transition = VideoTransition(type: transitionType)
-                }
-                timeline.tracks[trackIndex] = mutableTrack
-                clipFound = true
-                break
-            }
+    for (trackIndex, track) in timeline.tracks.enumerated() {
+      if let index = track.clips.firstIndex(where: { $0.id == clipId }) {
+        if track.isLocked { return }
+
+        var mutableTrack = track
+        var clip = mutableTrack.clips[index]
+
+        if let overlayIndex = clip.overlays.firstIndex(where: { $0.id == overlay.id }) {
+          // Update existing
+          clip.overlays[overlayIndex] = overlay
+        } else {
+          // Add new (safeguard)
+          clip.overlays.append(overlay)
         }
 
-        if clipFound {
-            project.timeline = timeline
-            currentProject = project
-            saveProject(project)
-
-            if transitionType == .none {
-                ServiceContainer.shared.toastManager.show("Removed transition")
-            } else {
-                ServiceContainer.shared.toastManager.show("Added \(transitionType.displayName) transition")
-            }
-            AppLogger.project.info("Set transition \(transitionType.rawValue) for clip \(clipId)")
-        }
+        mutableTrack.clips[index] = clip
+        timeline.tracks[trackIndex] = mutableTrack
+        clipFound = true
+        break
+      }
     }
 
-    // MARK: - Overlay Management
+    if clipFound {
+      project.timeline = timeline
+      currentProject = project
+      // Queue save
+      saveProject(project)
+    }
+  }
 
-    func updateClipOverlay(clipId: UUID, overlay: VideoClip.VideoOverlay) {
-        guard !isProcessing else { return }
-        guard var project = currentProject else { return }
+  // MARK: - Cursor Enhancements
 
-        var timeline = project.timeline
-        var clipFound = false
+  func updateClipCursorHighlight(_ clip: VideoClip, show: Bool) {
+    guard !isProcessing else { return }
+    guard var project = currentProject else { return }
 
-        for (trackIndex, track) in timeline.tracks.enumerated() {
-            if let index = track.clips.firstIndex(where: { $0.id == clipId }) {
-                if track.isLocked { return }
+    var timeline = project.timeline
+    var clipFound = false
 
-                var mutableTrack = track
-                var clip = mutableTrack.clips[index]
-
-                if let overlayIndex = clip.overlays.firstIndex(where: { $0.id == overlay.id }) {
-                    // Update existing
-                    clip.overlays[overlayIndex] = overlay
-                } else {
-                    // Add new (safeguard)
-                    clip.overlays.append(overlay)
-                }
-
-                mutableTrack.clips[index] = clip
-                timeline.tracks[trackIndex] = mutableTrack
-                clipFound = true
-                break
-            }
+    for (trackIndex, track) in timeline.tracks.enumerated() {
+      if let index = track.clips.firstIndex(where: { $0.id == clip.id }) {
+        if track.isLocked {
+          ServiceContainer.shared.toastManager.show("Track is locked", type: .error)
+          return
         }
 
-        if clipFound {
-            project.timeline = timeline
-            currentProject = project
-            // Queue save
-            saveProject(project)
-        }
+        registerUndo("Toggle Cursor Highlight")
+
+        var mutableTrack = track
+        mutableTrack.clips[index].showCursorHighlight = show
+        timeline.tracks[trackIndex] = mutableTrack
+        clipFound = true
+        break
+      }
     }
 
-    // MARK: - Cursor Enhancements
+    if clipFound {
+      project.timeline = timeline
+      currentProject = project
+      saveProject(project)
 
-    func updateClipCursorHighlight(_ clip: VideoClip, show: Bool) {
-        guard !isProcessing else { return }
-        guard var project = currentProject else { return }
+      AppLogger.project.info("Updated clip cursor highlight to \(show)")
+    }
+  }
 
-        var timeline = project.timeline
-        var clipFound = false
+  // MARK: - AI Audio
 
-        for (trackIndex, track) in timeline.tracks.enumerated() {
-            if let index = track.clips.firstIndex(where: { $0.id == clip.id }) {
-                if track.isLocked {
-                    ServiceContainer.shared.toastManager.show("Track is locked", type: .error)
-                    return
-                }
+  func updateClipVoiceIsolation(clipId: UUID, enabled: Bool) {
+    guard !isProcessing else { return }
+    guard var project = currentProject else { return }
 
-                registerUndo("Toggle Cursor Highlight")
+    var timeline = project.timeline
+    var clipFound = false
 
-                var mutableTrack = track
-                mutableTrack.clips[index].showCursorHighlight = show
-                timeline.tracks[trackIndex] = mutableTrack
-                clipFound = true
-                break
-            }
+    for (trackIndex, track) in timeline.tracks.enumerated() {
+      if let index = track.clips.firstIndex(where: { $0.id == clipId }) {
+        if track.isLocked {
+          ServiceContainer.shared.toastManager.show("Track is locked", type: .error)
+          return
         }
 
-        if clipFound {
-            project.timeline = timeline
-            currentProject = project
-            saveProject(project)
+        registerUndo("Toggle Voice Isolation")
 
-            AppLogger.project.info("Updated clip cursor highlight to \(show)")
-        }
+        var mutableTrack = track
+        mutableTrack.clips[index].isVoiceIsolationEnabled = enabled
+        timeline.tracks[trackIndex] = mutableTrack
+        clipFound = true
+        break
+      }
     }
 
-    // MARK: - AI Audio
+    if clipFound {
+      project.timeline = timeline
+      currentProject = project
+      saveProject(project)
 
-    func updateClipVoiceIsolation(clipId: UUID, enabled: Bool) {
-        guard !isProcessing else { return }
-        guard var project = currentProject else { return }
+      AppLogger.project.info("Updated clip voice isolation to \(enabled)")
+      ServiceContainer.shared.toastManager.show("Voice Isolation: \(enabled ? "On" : "Off")")
 
-        var timeline = project.timeline
-        var clipFound = false
-
-        for (trackIndex, track) in timeline.tracks.enumerated() {
-            if let index = track.clips.firstIndex(where: { $0.id == clipId }) {
-                if track.isLocked {
-                    ServiceContainer.shared.toastManager.show("Track is locked", type: .error)
-                    return
-                }
-
-                registerUndo("Toggle Voice Isolation")
-
-                var mutableTrack = track
-                mutableTrack.clips[index].isVoiceIsolationEnabled = enabled
-                timeline.tracks[trackIndex] = mutableTrack
-                clipFound = true
-                break
-            }
+      // INSTANT PREVIEW: Update real-time audio processor immediately
+      if let clip = getClip(by: clipId) {
+        Task {
+          do {
+            try await ServiceContainer.shared.realTimeAudioProcessor.updateEffects(for: clip)
+            AppLogger.audio.info("Real-time audio effects updated instantly")
+          } catch {
+            AppLogger.audio.warning(
+              "Failed to update real-time audio effects: \(error.localizedDescription)")
+          }
         }
+      }
 
-        if clipFound {
-            project.timeline = timeline
-            currentProject = project
-            saveProject(project)
-
-            AppLogger.project.info("Updated clip voice isolation to \(enabled)")
-            ServiceContainer.shared.toastManager.show("Voice Isolation: \(enabled ? "On" : "Off")")
-            
-            // INSTANT PREVIEW: Update real-time audio processor immediately
-            if let clip = getClip(by: clipId) {
-                Task {
-                    do {
-                        try await ServiceContainer.shared.realTimeAudioProcessor.updateEffects(for: clip)
-                        AppLogger.audio.info("Real-time audio effects updated instantly")
-                    } catch {
-                        AppLogger.audio.warning("Failed to update real-time audio effects: \(error.localizedDescription)")
-                    }
-                }
-            }
-            
-            // Trigger background enhancement for export (but preview is instant)
-            if enabled {
-                Task {
-                    await triggerAudioEnhancement(for: clipId)
-                }
-            }
+      // Trigger background enhancement for export (but preview is instant)
+      if enabled {
+        Task {
+          await triggerAudioEnhancement(for: clipId)
         }
+      }
+    }
+  }
+
+  private func triggerAudioEnhancement(for clipId: UUID) async {
+    guard let project = currentProject else { return }
+
+    // Find the clip again in the latest state
+    let timeline = project.timeline
+    var clipToUpdate: VideoClip?
+    var trackIdx: Int = -1
+    for (tIdx, track) in timeline.tracks.enumerated()
+    where track.clips.contains(where: { $0.id == clipId }) {
+      clipToUpdate = track.clips.first { $0.id == clipId }
+      trackIdx = tIdx
+      break
     }
 
-    private func triggerAudioEnhancement(for clipId: UUID) async {
-        guard let project = currentProject else { return }
-        
-        // Find the clip again in the latest state
-        let timeline = project.timeline
-        var clipToUpdate: VideoClip?
-        var trackIdx: Int = -1
-        for (tIdx, track) in timeline.tracks.enumerated() where track.clips.contains(where: { $0.id == clipId }) {
-            clipToUpdate = track.clips.first { $0.id == clipId }
-            trackIdx = tIdx
-            break
+    guard let clip = clipToUpdate, clip.enhancedAudioURL == nil else { return }
+
+    AppLogger.audio.info("Starting background audio enhancement for clip \(clipId)")
+
+    do {
+      let enhancedURL = try await ServiceContainer.shared.audioEnhancementService.enhanceAudio(
+        from: clip.url)
+
+      // Re-fetch project to ensure we don't overwrite other concurrent changes
+      if var latestProject = currentProject {
+        if let latestCIdx = latestProject.timeline.tracks[trackIdx].clips.firstIndex(where: {
+          $0.id == clipId
+        }) {
+          latestProject.timeline.tracks[trackIdx].clips[latestCIdx].enhancedAudioURL = enhancedURL
+          currentProject = latestProject
+          saveProject(latestProject)
+          AppLogger.audio.info("Audio enhancement complete for clip \(clipId)")
+          ServiceContainer.shared.toastManager.show("Voice Isolation Ready", type: .success)
         }
-        
-        guard let clip = clipToUpdate, clip.enhancedAudioURL == nil else { return }
-        
-        AppLogger.audio.info("Starting background audio enhancement for clip \(clipId)")
-        
-        do {
-            let enhancedURL = try await ServiceContainer.shared.audioEnhancementService.enhanceAudio(from: clip.url)
-            
-            // Re-fetch project to ensure we don't overwrite other concurrent changes
-            if var latestProject = currentProject {
-                if let latestCIdx = latestProject.timeline.tracks[trackIdx].clips.firstIndex(where: { $0.id == clipId }) {
-                    latestProject.timeline.tracks[trackIdx].clips[latestCIdx].enhancedAudioURL = enhancedURL
-                    currentProject = latestProject
-                    saveProject(latestProject)
-                    AppLogger.audio.info("Audio enhancement complete for clip \(clipId)")
-                    ServiceContainer.shared.toastManager.show("Voice Isolation Ready", type: .success)
-                }
-            }
-        } catch {
-            AppLogger.audio.error("Audio enhancement failed: \(error.localizedDescription)")
-            ServiceContainer.shared.toastManager.show("Enhancement Failed", type: .error)
+      }
+    } catch {
+      AppLogger.audio.error("Audio enhancement failed: \(error.localizedDescription)")
+      ServiceContainer.shared.toastManager.show("Enhancement Failed", type: .error)
+    }
+  }
+
+  // P0 FIX: Relink clip to new file location
+  func relinkClip(_ clip: VideoClip, to newURL: URL) {
+    guard !isProcessing else { return }
+    guard var project = currentProject else { return }
+
+    var timeline = project.timeline
+    var clipFound = false
+
+    for (trackIndex, track) in timeline.tracks.enumerated() {
+      if let index = track.clips.firstIndex(where: { $0.id == clip.id }) {
+        if track.isLocked { return }
+
+        registerUndo("Relink Clip")
+
+        var mutableTrack = track
+        mutableTrack.clips[index].url = newURL
+        mutableTrack.clips[index].isMissing = false
+
+        // P0 FIX: Create new bookmark for new file location
+        if let bookmarkData = try? ServiceContainer.shared.projectFileManager.createBookmark(
+          for: newURL)
+        {
+          mutableTrack.clips[index].bookmarkData = bookmarkData
         }
+
+        timeline.tracks[trackIndex] = mutableTrack
+        clipFound = true
+        break
+      }
     }
 
-    // P0 FIX: Relink clip to new file location
-    func relinkClip(_ clip: VideoClip, to newURL: URL) {
-        guard !isProcessing else { return }
-        guard var project = currentProject else { return }
-        
-        var timeline = project.timeline
-        var clipFound = false
-        
-        for (trackIndex, track) in timeline.tracks.enumerated() {
-            if let index = track.clips.firstIndex(where: { $0.id == clip.id }) {
-                if track.isLocked { return }
-                
-                registerUndo("Relink Clip")
-                
-                var mutableTrack = track
-                mutableTrack.clips[index].url = newURL
-                mutableTrack.clips[index].isMissing = false
-                
-                // P0 FIX: Create new bookmark for new file location
-                if let bookmarkData = try? ServiceContainer.shared.projectFileManager.createBookmark(for: newURL) {
-                    mutableTrack.clips[index].bookmarkData = bookmarkData
-                }
-                
-                timeline.tracks[trackIndex] = mutableTrack
-                clipFound = true
-                break
-            }
-        }
-        
-        if clipFound {
-            project.timeline = timeline
-            currentProject = project
-            saveProject(project)
-            
-            // P0 FIX: Notify UI of clip update
-            NotificationCenter.default.post(name: .clipUpdated, object: project)
-            ServiceContainer.shared.toastManager.show("Clip relinked to new file", type: .success)
-            AppLogger.project.info("Relinked clip \(clip.id) to \(newURL.lastPathComponent)")
-        }
+    if clipFound {
+      project.timeline = timeline
+      currentProject = project
+      saveProject(project)
+
+      // P0 FIX: Notify UI of clip update
+      NotificationCenter.default.post(name: .clipUpdated, object: project)
+      ServiceContainer.shared.toastManager.show("Clip relinked to new file", type: .success)
+      AppLogger.project.info("Relinked clip \(clip.id) to \(newURL.lastPathComponent)")
     }
-    
-    func updateClipGating(clipId: UUID, enabled: Bool) {
-        guard !isProcessing else { return }
-        guard var project = currentProject else { return }
+  }
 
-        var timeline = project.timeline
-        var clipFound = false
+  func updateClipGating(clipId: UUID, enabled: Bool) {
+    guard !isProcessing else { return }
+    guard var project = currentProject else { return }
 
-        for (trackIndex, track) in timeline.tracks.enumerated() {
-            if let index = track.clips.firstIndex(where: { $0.id == clipId }) {
-                if track.isLocked {
-                    ServiceContainer.shared.toastManager.show("Track is locked", type: .error)
-                    return
-                }
+    var timeline = project.timeline
+    var clipFound = false
 
-                registerUndo("Toggle AI Gating")
-
-                var mutableTrack = track
-                mutableTrack.clips[index].isGatingEnabled = enabled
-                timeline.tracks[trackIndex] = mutableTrack
-                clipFound = true
-                break
-            }
+    for (trackIndex, track) in timeline.tracks.enumerated() {
+      if let index = track.clips.firstIndex(where: { $0.id == clipId }) {
+        if track.isLocked {
+          ServiceContainer.shared.toastManager.show("Track is locked", type: .error)
+          return
         }
 
-        if clipFound {
-            project.timeline = timeline
-            currentProject = project
-            saveProject(project)
+        registerUndo("Toggle AI Gating")
 
-            AppLogger.project.info("Updated clip AI gating to \(enabled)")
-            ServiceContainer.shared.toastManager.show("AI Gating: \(enabled ? "On" : "Off")")
-            
-            // INSTANT PREVIEW: Update real-time audio processor immediately
-            if let clip = getClip(by: clipId) {
-                Task {
-                    do {
-                        try await ServiceContainer.shared.realTimeAudioProcessor.updateEffects(for: clip)
-                    } catch {
-                        AppLogger.audio.warning("Failed to update real-time audio gating: \(error.localizedDescription)")
-                    }
-                }
-            }
-        }
+        var mutableTrack = track
+        mutableTrack.clips[index].isGatingEnabled = enabled
+        timeline.tracks[trackIndex] = mutableTrack
+        clipFound = true
+        break
+      }
     }
+
+    if clipFound {
+      project.timeline = timeline
+      currentProject = project
+      saveProject(project)
+
+      AppLogger.project.info("Updated clip AI gating to \(enabled)")
+      ServiceContainer.shared.toastManager.show("AI Gating: \(enabled ? "On" : "Off")")
+
+      // INSTANT PREVIEW: Update real-time audio processor immediately
+      if let clip = getClip(by: clipId) {
+        Task {
+          do {
+            try await ServiceContainer.shared.realTimeAudioProcessor.updateEffects(for: clip)
+          } catch {
+            AppLogger.audio.warning(
+              "Failed to update real-time audio gating: \(error.localizedDescription)")
+          }
+        }
+      }
+    }
+  }
 }

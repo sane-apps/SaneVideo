@@ -44,9 +44,56 @@ enum Theme {
     }
 
     enum Dimensions {
+        // Corner Radius
         static let cornerRadius: CGFloat = 8
         static let smallCornerRadius: CGFloat = 4
+        static let largeCornerRadius: CGFloat = 12
+        
+        // Spacing System (8pt grid)
+        static let spacingXS: CGFloat = 4
+        static let spacingSM: CGFloat = 8
+        static let spacingMD: CGFloat = 12
+        static let spacingLG: CGFloat = 16
+        static let spacingXL: CGFloat = 20
+        static let spacingXXL: CGFloat = 24
+        
+        // Padding System
+        static let paddingXS: CGFloat = 4
+        static let paddingSM: CGFloat = 8
+        static let paddingMD: CGFloat = 12
+        static let paddingLG: CGFloat = 16
+        static let paddingXL: CGFloat = 20
+        
+        // Legacy (for backward compatibility)
         static let padding: CGFloat = 12
+    }
+    
+    enum Typography {
+        // Font Sizes (consistent scale)
+        static let fontSizeXS: CGFloat = 10
+        static let fontSizeSM: CGFloat = 11
+        static let fontSizeMD: CGFloat = 13
+        static let fontSizeLG: CGFloat = 15
+        static let fontSizeXL: CGFloat = 17
+        static let fontSizeXXL: CGFloat = 20
+        
+        // Icon Sizes
+        static let iconSizeXS: CGFloat = 12
+        static let iconSizeSM: CGFloat = 14
+        static let iconSizeMD: CGFloat = 16
+        static let iconSizeLG: CGFloat = 18
+        static let iconSizeXL: CGFloat = 24
+    }
+    
+    enum Opacity {
+        // Consistent opacity values
+        static let subtle: Double = 0.05
+        static let light: Double = 0.1
+        static let medium: Double = 0.2
+        static let strong: Double = 0.3
+        static let heavy: Double = 0.5
+        static let textSecondary: Double = 0.7
+        static let textTertiary: Double = 0.8
     }
 }
 

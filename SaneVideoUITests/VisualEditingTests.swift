@@ -5,6 +5,7 @@
 //
 
 import XCTest
+@testable import SaneVideo
 
 final class VisualEditingTests: UITestBase {
 
@@ -24,7 +25,7 @@ final class VisualEditingTests: UITestBase {
       XCTAssertTrue(timeline.exists, "Timeline should be visible")
     } else {
       // Check for empty state
-      let emptyState = app.otherElements["TimelineEmptyState"]
+      let emptyState = app.otherElements[AccessibilityIdentifiers.timelineEmptyState]
       XCTAssertTrue(
         emptyState.exists || timeline.exists, "Timeline or empty state should be visible")
     }
@@ -41,8 +42,8 @@ final class VisualEditingTests: UITestBase {
     handleSystemAlerts()
 
     // Check for player controls
-    let playButton = app.buttons.matching(identifier: "PlayButton").firstMatch
-    let pauseButton = app.buttons.matching(identifier: "PauseButton").firstMatch
+    let playButton = app.buttons.matching(identifier: AccessibilityIdentifiers.playButton).firstMatch
+    let pauseButton = app.buttons.matching(identifier: AccessibilityIdentifiers.pauseButton).firstMatch
 
     // At least one should exist
     if playButton.waitForExistence(timeout: 5) || pauseButton.waitForExistence(timeout: 5) {
@@ -60,11 +61,15 @@ final class VisualEditingTests: UITestBase {
 
     handleSystemAlerts()
 
-    // Wait for editor
-    let editTab = app.buttons["EditTabButton"]
-    if editTab.waitForExistence(timeout: 10) {
-      if !editTab.isSelected {
-        editTab.tap()
+    // Wait for editor - Using centralized identifier registry
+    let modeSwitcher = app.buttons[AccessibilityIdentifiers.modeSwitcher]
+    if modeSwitcher.waitForExistence(timeout: 10) {
+      // Check if we need to switch to editing mode
+      // Button label says "Record" when in editing mode, "Editor" when in recording mode
+      let label = modeSwitcher.label
+      if label.contains("Editor") {
+        // Currently in recording mode, tap to switch to editing
+        modeSwitcher.tap()
       }
     }
 
@@ -73,8 +78,8 @@ final class VisualEditingTests: UITestBase {
     handleSystemAlerts()
 
     // Check for export sheet elements
-    let exportButton = app.buttons["ExportButton"]
-    let cancelButton = app.buttons["CancelExportButton"]
+    let exportButton = app.buttons[AccessibilityIdentifiers.exportButton]
+    let cancelButton = app.buttons[AccessibilityIdentifiers.cancelExportButton]
 
     if exportButton.waitForExistence(timeout: 5) || cancelButton.waitForExistence(timeout: 5) {
       XCTAssertTrue(true, "Export sheet elements should be visible")
@@ -93,10 +98,15 @@ final class VisualEditingTests: UITestBase {
 
     handleSystemAlerts()
 
-    let editTab = app.buttons["EditTabButton"]
-    if editTab.waitForExistence(timeout: 10) {
-      if !editTab.isSelected {
-        editTab.tap()
+    // CRITICAL FIX: EditTabButton no longer exists, use ModeSwitcherButton
+    let modeSwitcher = app.buttons[AccessibilityIdentifiers.modeSwitcher]
+    if modeSwitcher.waitForExistence(timeout: 10) {
+      // Check if we need to switch to editing mode
+      // Button label says "Record" when in editing mode, "Editor" when in recording mode
+      let label = modeSwitcher.label
+      if label.contains("Editor") {
+        // Currently in recording mode, tap to switch to editing
+        modeSwitcher.tap()
       }
     }
 
@@ -118,16 +128,21 @@ final class VisualEditingTests: UITestBase {
 
     handleSystemAlerts()
 
-    let editTab = app.buttons["EditTabButton"]
-    if editTab.waitForExistence(timeout: 10) {
-      if !editTab.isSelected {
-        editTab.tap()
+    // CRITICAL FIX: EditTabButton no longer exists, use ModeSwitcherButton
+    let modeSwitcher = app.buttons[AccessibilityIdentifiers.modeSwitcher]
+    if modeSwitcher.waitForExistence(timeout: 10) {
+      // Check if we need to switch to editing mode
+      // Button label says "Record" when in editing mode, "Editor" when in recording mode
+      let label = modeSwitcher.label
+      if label.contains("Editor") {
+        // Currently in recording mode, tap to switch to editing
+        modeSwitcher.tap()
       }
     }
 
     handleSystemAlerts()
 
-    let captionSection = app.otherElements.matching(identifier: "CaptionsSection").firstMatch
+    let captionSection = app.otherElements.matching(identifier: AccessibilityIdentifiers.captionsSection).firstMatch
     if captionSection.waitForExistence(timeout: 5) {
       XCTAssertTrue(captionSection.exists, "Caption section should be visible")
     }
@@ -143,10 +158,15 @@ final class VisualEditingTests: UITestBase {
 
     handleSystemAlerts()
 
-    let editTab = app.buttons["EditTabButton"]
-    if editTab.waitForExistence(timeout: 10) {
-      if !editTab.isSelected {
-        editTab.tap()
+    // CRITICAL FIX: EditTabButton no longer exists, use ModeSwitcherButton
+    let modeSwitcher = app.buttons[AccessibilityIdentifiers.modeSwitcher]
+    if modeSwitcher.waitForExistence(timeout: 10) {
+      // Check if we need to switch to editing mode
+      // Button label says "Record" when in editing mode, "Editor" when in recording mode
+      let label = modeSwitcher.label
+      if label.contains("Editor") {
+        // Currently in recording mode, tap to switch to editing
+        modeSwitcher.tap()
       }
     }
 

@@ -67,3 +67,6 @@ TestOutput.xcresult/
 *.o
 SaneVideo/Resources/Models/ggml-base.en.bin
 project.yml.ci_backup
+
+# Ephemeral reports and analysis (AI-generated, test results, audits)
+reports/

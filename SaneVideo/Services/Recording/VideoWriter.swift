@@ -18,17 +18,17 @@ final class VideoWriter {
     private var pixelBufferAdaptor: AVAssetWriterInputPixelBufferAdaptor?
 
     private let targetSize = CGSize(width: 1920, height: 1080)
-    
+
     private var sessionStarted = false
     private var finishingTask: Task<URL?, Never>?
 
     // Use shared CIContext from RenderingService to prevent VFX corruption
     private let ciContext: CIContext
-    
+
     // PiP Camera Overlay: Latest camera frame for compositing into screen recordings
     private var latestCameraFrame: CVPixelBuffer?
     private let cameraFrameLock = NSLock()
-    
+
     // PiP Window Frame: Current position and size for accurate compositing
     private var pipWindowFrame: CGRect?
     private var screenFrame: CGRect?
@@ -135,18 +135,18 @@ final class VideoWriter {
         defer { cameraFrameLock.unlock() }
         latestCameraFrame = pixelBuffer
     }
-    
+
     /// Update the PiP window frame for accurate compositing position
     /// Throttled to avoid updating on every frame
     func updatePiPFrame(_ frame: CGRect?, screenFrame: CGRect?) {
         let now = CACurrentMediaTime()
         pipFrameLock.lock()
         defer { pipFrameLock.unlock() }
-        
+
         // Throttle updates to avoid overhead
         guard now - lastFrameUpdateTime >= frameUpdateInterval else { return }
         lastFrameUpdateTime = now
-        
+
         // Only update if frame actually changed
         if let newFrame = frame, let oldFrame = pipWindowFrame {
             if abs(newFrame.origin.x - oldFrame.origin.x) < 1.0 &&
@@ -156,20 +156,27 @@ final class VideoWriter {
                 return  // Frame hasn't changed significantly
             }
         }
-        
+
         pipWindowFrame = frame
         self.screenFrame = screenFrame
     }
-    
+
     func writeVideo(sampleBuffer: CMSampleBuffer, presentationTime: CMTime, source: RecordingSource = .camera) {
-        
+
         guard let input = videoInput, input.isReadyForMoreMediaData else { return }
         guard let writer = assetWriter, writer.status == .writing else { return }
         guard let adaptor = pixelBufferAdaptor else {
             AppLogger.recording.error("writeVideo: No pixel buffer adaptor!")
             return
         }
-        
+
+        // CRITICAL FIX: Auto-start session if needed.
+        // This ensures the MOOV atom is written correctly even if explicit startSession call was missed.
+        if !sessionStarted {
+            startSession(at: presentationTime)
+            AppLogger.recording.info("VideoWriter: Auto-started session at \(presentationTime.seconds)")
+        }
+
         autoreleasepool {
             guard let sourcePixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else {
                 AppLogger.recording.warning("writeVideo: No image buffer in sample")
@@ -193,6 +200,8 @@ final class VideoWriter {
             }
 
             let ciImage = CIImage(cvPixelBuffer: sourcePixelBuffer)
+
+            // Calculate scale to fit target 1080p
             let srcWidth = CGFloat(sourceWidth)
             let srcHeight = CGFloat(sourceHeight)
             let scaleX = targetSize.width / srcWidth
@@ -208,58 +217,45 @@ final class VideoWriter {
             // PiP Overlay: Composite camera feed when recording screen
             var finalImage = scaledImage
             if source == .screen {
+                // ... (PiP compositing logic remains same as original)
                 cameraFrameLock.lock()
                 let cameraFrame = latestCameraFrame
                 cameraFrameLock.unlock()
-                
+
                 pipFrameLock.lock()
                 let pipFrame = pipWindowFrame
                 let screenFrame = self.screenFrame
                 pipFrameLock.unlock()
-                
+
                 if let cameraBuffer = cameraFrame, let pipFrame = pipFrame, let screenFrame = screenFrame {
                     let cameraImage = CIImage(cvPixelBuffer: cameraBuffer)
                     let cameraWidth = CGFloat(CVPixelBufferGetWidth(cameraBuffer))
                     let cameraHeight = CGFloat(CVPixelBufferGetHeight(cameraBuffer))
-                    
-                    // Convert window frame from screen coordinates to recording coordinates
-                    // Screen coordinates: Cocoa (origin at bottom-left, in points)
-                    // Recording coordinates: CoreImage (origin at top-left, in pixels at targetSize)
-                    
+
                     let pipWidth = pipFrame.width
                     let pipHeight = pipFrame.height
-                    
-                    // Calculate scale factor from screen size to recording size
+
                     let scaleX = targetSize.width / screenFrame.width
                     let scaleY = targetSize.height / screenFrame.height
-                    
-                    // Convert X: relative to screen, scale to recording resolution
+
                     let screenRelativeX = pipFrame.origin.x - screenFrame.origin.x
                     let recordingX = screenRelativeX * scaleX
-                    
-                    // Convert Y: Cocoa (bottom=0) to CoreImage (top=0), then scale
-                    // Cocoa Y is measured from bottom of screen
-                    // CoreImage Y is measured from top of screen
-                    let cocoaY = pipFrame.origin.y - screenFrame.origin.y  // Relative to screen bottom
-                    let topRelativeY = screenFrame.height - cocoaY - pipHeight  // Distance from top
+
+                    let cocoaY = pipFrame.origin.y - screenFrame.origin.y
+                    let topRelativeY = screenFrame.height - cocoaY - pipHeight
                     let recordingY = topRelativeY * scaleY
-                    
-                    // Scale PiP size to recording resolution
+
                     let recordingPipWidth = pipWidth * scaleX
                     let recordingPipHeight = pipHeight * scaleY
-                    
-                    // Scale camera image to match PiP window size in recording coordinates
+
                     let cameraScaleX = recordingPipWidth / cameraWidth
                     let cameraScaleY = recordingPipHeight / cameraHeight
                     let scaledCamera = cameraImage.transformed(by: CGAffineTransform(scaleX: cameraScaleX, y: cameraScaleY))
-                    
-                    // Position at the actual window location in recording coordinates
+
                     let positionedCamera = scaledCamera.transformed(by: CGAffineTransform(translationX: recordingX, y: recordingY))
-                    
-                    // Composite: camera over screen
+
                     finalImage = positionedCamera.composited(over: scaledImage)
                 } else if let cameraBuffer = cameraFrame {
-                    // Fallback: use fixed position if PiP frame unavailable
                     let cameraImage = CIImage(cvPixelBuffer: cameraBuffer)
                     let cameraWidth = CGFloat(CVPixelBufferGetWidth(cameraBuffer))
                     let pipWidth = targetSize.width * 0.2
@@ -316,16 +312,16 @@ final class VideoWriter {
         // Yes. We need to lock around the CREATE check too.
         // We can do that with a closure based helper or just use the actor pattern which is cleaner.
         // But sticking to the plan:
-        
+
         let task = getOrStartFinishingTask()
         return await task.value
     }
-    
+
     private func getOrStartFinishingTask() -> Task<URL?, Never> {
         if let existing = finishingTask {
             return existing
         }
-        
+
         let task = Task {
              return await self.performFinish()
         }
@@ -374,7 +370,7 @@ final class VideoWriter {
         pixelBufferAdaptor = nil
         sessionStarted = false
     }
-    
+
     // CRITICAL FIX: Cancel finishing task on deallocation
     // Note: For @RecordingActor, we can't access isolated properties in deinit
     // The task will be cancelled when the actor is deallocated

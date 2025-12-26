@@ -91,7 +91,7 @@ struct BackgroundEffectsView: View {
           )
         )
         .toggleStyle(.switch)
-        .controlSize(.mini)
+        .controlSize(.small)
         .disabled(clip.isMissing) // CRITICAL FIX: Disable if clip is missing
         .accessibilityIdentifier("background.toggle")
         .accessibilityHint(clip.isMissing ? "Clip file is missing. Use 'Locate File' in Clip Info to relink the file." : "Toggle background effects")
@@ -291,7 +291,7 @@ struct BackgroundEffectsView: View {
             saveEffect()
           }
           .buttonStyle(.bordered)
-          .controlSize(.mini)
+          .controlSize(.small)
           .tint(Int(blurRadius) == preset.0 ? .accentColor : nil)
           .accessibilityIdentifier("background.blur_preset.\(preset.0)")
         }

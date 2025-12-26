@@ -6,6 +6,7 @@
 //
 
 import XCTest
+@testable import SaneVideo
 
 final class SanePerformanceTests: XCTestCase {
 
@@ -27,7 +28,7 @@ final class SanePerformanceTests: XCTestCase {
              print("Startup + Interaction time: \(duration)s")
         } else {
              // Fallback for empty state if scrolling isn't available
-             XCTAssertTrue(app.otherElements["TimelineEmptyState"].exists)
+             XCTAssertTrue(app.otherElements[AccessibilityIdentifiers.timelineEmptyState].exists)
         }
     }
 }

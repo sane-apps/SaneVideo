@@ -70,15 +70,11 @@ class PlaybackState {
 
     private var tokenHolder = TokenHolder()
 
-    nonisolated deinit {
-        // CRITICAL FIX: Cancel loading task on deallocation
-        // Note: We can't access actor-isolated properties in nonisolated deinit,
-        // but we can use MainActor.assumeIsolated for cancellation
-        MainActor.assumeIsolated {
-            loadingTask?.cancel()
-            loadingTask = nil
-        }
-        // TokenHolder handles cleanup
+    // CRITICAL FIX: Cancel loading task on deallocation
+    // Task.cancel() is thread-safe, so we can call it from any thread in deinit
+    // TokenHolder handles observer cleanup via its own deinit
+    deinit {
+        loadingTask?.cancel()
     }
 
     private func setupAudioSession() {
@@ -108,7 +104,8 @@ class PlaybackState {
     private var lastLoadedClipsHash: Int = 0
 
     // CRITICAL FIX: Track loading task for cancellation on rapid reload
-    private var loadingTask: Task<Void, Never>?
+    // nonisolated(unsafe) required for deinit access from any thread
+    nonisolated(unsafe) private var loadingTask: Task<Void, Never>?
 
     /// Reset playback state - call when switching projects
     func reset() {
@@ -232,7 +229,7 @@ class PlaybackState {
         // CRITICAL FIX: Cancel loading task before unloading
         loadingTask?.cancel()
         loadingTask = nil
-        
+
         if let observer = timeObserver {
             player?.removeTimeObserver(observer)
             timeObserver = nil
@@ -261,7 +258,7 @@ class PlaybackState {
             ServiceContainer.shared.toastManager.show("No project to play", type: .error)
             return
         }
-        
+
         let hasClips = project.timeline.tracks.contains { !$0.clips.isEmpty }
         guard hasClips else {
             AppLogger.playback.warning("Cannot play: Empty timeline")

@@ -1,7 +1,9 @@
+import AVFoundation
 import Combine
 import CoreMedia
 import Foundation
 @preconcurrency import ScreenCaptureKit
+import SwiftUI
 
 /// Modern screen recorder using SCContentSharingPicker (macOS 14+)
 /// This eliminates manual permission handling and provides native macOS UI
@@ -47,7 +49,8 @@ class ScreenRecorder: NSObject, SCContentSharingPickerObserver, SCStreamDelegate
     // CRITICAL FIX: Bypass picker in ALL test environments (unit tests AND UI tests)
     // SCContentSharingPicker crashes in unit test environment
     if TestEnvironment.isTesting {
-      AppLogger.recording.info("🧪 [TEST] ScreenRecorder: Bypassing system picker (test environment)")
+      AppLogger.recording.info(
+        "🧪 [TEST] ScreenRecorder: Bypassing system picker (test environment)")
       self.currentOutputURL = outputURL
       // In a real scenario, handleContentSelected would be called by the picker.
       // Here we just stay in a "ready" state for RecordingEngine to "record" samples.
@@ -71,7 +74,7 @@ class ScreenRecorder: NSObject, SCContentSharingPickerObserver, SCStreamDelegate
       AppLogger.recording.warning("Screen recorder already running, stopping first...")
       await stop()
       try await Task.sleep(nanoseconds: 100_000_000)  // 100ms cleanup delay
-      
+
       // CRITICAL: Re-check stopping state after cleanup
       guard !isStopping else {
         throw NSError(
@@ -81,7 +84,7 @@ class ScreenRecorder: NSObject, SCContentSharingPickerObserver, SCStreamDelegate
         )
       }
     }
-    
+
     // CRITICAL: Check if picker is already active (prevents multiple presentations)
     let picker = SCContentSharingPicker.shared
     if picker.isActive {
@@ -92,7 +95,7 @@ class ScreenRecorder: NSObject, SCContentSharingPickerObserver, SCStreamDelegate
         return
       }
       // Otherwise, wait a moment and check again
-      try await Task.sleep(nanoseconds: 500_000_000) // 500ms
+      try await Task.sleep(nanoseconds: 500_000_000)  // 500ms
       if let existingFilter = baseFilter {
         await handleContentSelected(filter: existingFilter)
         return
@@ -108,7 +111,7 @@ class ScreenRecorder: NSObject, SCContentSharingPickerObserver, SCStreamDelegate
     if !picker.isActive || baseFilter == nil {
       picker.add(self)
     }
-    
+
     picker.isActive = true
 
     // TAHOE FIX: Limit stream count to prevent redundant picker triggers
@@ -150,7 +153,7 @@ class ScreenRecorder: NSObject, SCContentSharingPickerObserver, SCStreamDelegate
       activeStream = nil
       return
     }
-    
+
     guard activeStream != nil else { return }
     guard !isStopping else {
       AppLogger.recording.warning("Already stopping, skipping")
@@ -162,16 +165,27 @@ class ScreenRecorder: NSObject, SCContentSharingPickerObserver, SCStreamDelegate
 
     // Stop the active stream
     if let stream = activeStream {
+      AppLogger.recording.info("🛑 ScreenRecorder: Initiating stream stop sequence...")
+
+      // 1. If we have a recording output, handle it
+      if let output = recordingOutput {
+        AppLogger.recording.info("🎥 ScreenRecorder: Stopping recording output...")
+        // SCRecordingOutput is stopped when the stream is stopped or can be removed
+        // For safety, we can try to remove it if possible, but stopCapture is the main one.
+      }
+
+      // 2. Stop capture and wait for completion
       do {
         try await stream.stopCapture()
-        AppLogger.recording.info("Screen Recorder Stopped")
+        AppLogger.recording.info("✅ ScreenRecorder: SCStream.stopCapture() completed")
       } catch {
-        AppLogger.recording.warning(
-          "Screen Recorder stop error (non-fatal): \(error.localizedDescription)")
+        AppLogger.recording.warning("⚠️ ScreenRecorder: stopCapture error: \(error.localizedDescription)")
       }
     }
 
+    // 3. Clear references after stop completes
     activeStream = nil
+    recordingOutput = nil
 
     // TAHOE FIX: Do NOT deactivate picker or remove observer here.
     // Keeping picker.isActive = true preserves the selection persistence in the system UI.
@@ -183,11 +197,12 @@ class ScreenRecorder: NSObject, SCContentSharingPickerObserver, SCStreamDelegate
   func teardown() {
     // CRITICAL FIX: In test environment, skip picker operations to avoid crashes
     if TestEnvironment.isTesting {
-      AppLogger.recording.info("🧪 [TEST] ScreenRecorder: teardown() called in test environment (no-op)")
+      AppLogger.recording.info(
+        "🧪 [TEST] ScreenRecorder: teardown() called in test environment (no-op)")
       activeStream = nil
       return
     }
-    
+
     let picker = SCContentSharingPicker.shared
     picker.isActive = false
     picker.remove(self)
@@ -227,7 +242,7 @@ class ScreenRecorder: NSObject, SCContentSharingPickerObserver, SCStreamDelegate
   ) {
     Task { @MainActor in
       AppLogger.recording.warning("📺 User cancelled screen picker")
-      
+
       // CRITICAL: Notify that picker was cancelled
       // This allows switch logic to rollback if we were in the middle of a switch
       if let onStop = self.onStop {
@@ -238,7 +253,7 @@ class ScreenRecorder: NSObject, SCContentSharingPickerObserver, SCStreamDelegate
         )
         onStop(cancelError)
       }
-      
+
       // Clean up state
       self.activeStream = nil
       self.baseFilter = nil
@@ -249,13 +264,13 @@ class ScreenRecorder: NSObject, SCContentSharingPickerObserver, SCStreamDelegate
   nonisolated func contentSharingPickerStartDidFailWithError(_ error: Error) {
     Task { @MainActor in
       AppLogger.recording.error("📺 Picker failed to start: \(error.localizedDescription)")
-      
+
       // CRITICAL: Notify that picker failed
       // This allows switch logic to rollback if we were in the middle of a switch
       if let onStop = self.onStop {
         onStop(error)
       }
-      
+
       // Clean up state
       self.activeStream = nil
       self.baseFilter = nil
@@ -294,6 +309,14 @@ class ScreenRecorder: NSObject, SCContentSharingPickerObserver, SCStreamDelegate
       return base
     }
 
+    // Check user preference for app exclusion
+    // If user wants to record the app (exclude = false), we return the base filter unmodified
+    // (which includes everything on the display)
+    if !ServiceContainer.shared.userPreferences.excludeAppFromRecording {
+      AppLogger.recording.info("🎥 App inclusion enabled. NOT applying exclusion filter.")
+      return base
+    }
+
     // TAHOE FIX: Use currentProcess to reliably find our own windows without full screen recording TCC
     do {
       let shareableContent = try await SCShareableContent.currentProcess
@@ -308,42 +331,20 @@ class ScreenRecorder: NSObject, SCContentSharingPickerObserver, SCStreamDelegate
       }
 
       // Find ALL our app's windows
-      let appWindows = shareableContent.windows
+      _ = shareableContent.windows
 
       // LOG ALL WINDOWS FOR DEBUGGING
-      for w in appWindows {
-        AppLogger.recording.info(
-          "🔲 [Window Audit] ID: \(w.windowID), Title: '\(w.title ?? "nil")', Frame: \(w.frame)")
-      }
+      // CRITICAL FIX: To avoid "Double Camera" effect, we must NOT include the PiP window
+      // in the screen capture stream. The VideoWriter composites the camera overlay manually.
+      // By returning a filter that excludes the application, we automatically exclude the PiP window.
 
-      // Filter for our special windows
-      // CRITICAL: We ONLY want to EXCEPT the PiP Camera Window.
-      let overlayWindows = appWindows.filter { window in
-        let title = window.title?.lowercased() ?? ""
-        return title.contains("pip") && !title.contains("control")
-      }
+      // We purposefully do NOT filter for "pip" windows to add them back in.
 
-      if !overlayWindows.isEmpty {
-        let names = overlayWindows.map { "\($0.title ?? "NoTitle") (ID: \($0.windowID))" }
-          .joined(separator: ", ")
-        AppLogger.recording.info(
-          "📺 [Filter Rebuild] Found \(overlayWindows.count) overlay windows to EXCEPT: \(names)"
-        )
-
-        return SCContentFilter(
-          display: display,
-          excludingApplications: shareableContent.applications,  // Exclude our app's main windows
-          exceptingWindows: overlayWindows
-        )
-      } else {
-        AppLogger.recording.warning(
-          "⚠️ No PiP window found in shareableContent.windows - it will be invisible!")
-        return SCContentFilter(
-          display: display,
-          excludingApplications: shareableContent.applications,
-          exceptingWindows: []
-        )
-      }
+      return SCContentFilter(
+        display: display,
+        excludingApplications: shareableContent.applications,  // Exclude ALL app windows (Main + PiP)
+        exceptingWindows: [] // Do not except any windows -> PiP remains excluded
+      )
     } catch {
       AppLogger.recording.warning("⚠️ Filter rebuild failed: \(error.localizedDescription)")
     }
@@ -549,7 +550,9 @@ extension ScreenRecorder {
         picker.isActive = false
         picker.remove(self)
       } else {
-        AppLogger.recording.info("🧪 [TEST] ScreenRecorder: Skipping picker deactivation in error handler (test environment)")
+        AppLogger.recording.info(
+          "🧪 [TEST] ScreenRecorder: Skipping picker deactivation in error handler (test environment)"
+        )
       }
 
       // Note: RecordingEngine will detect the stream stopped via sample buffer interruption

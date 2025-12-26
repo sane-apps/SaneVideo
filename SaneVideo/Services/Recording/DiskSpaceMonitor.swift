@@ -3,7 +3,9 @@ import Foundation
 @MainActor
 final class DiskSpaceMonitor {
     private let minDiskSpace: Int64 = 500 * 1024 * 1024 // 500MB
-    private var monitoringTask: Task<Void, Never>?
+    /// nonisolated(unsafe) allows safe cancellation from deinit on any thread
+    /// (Task.cancel() is thread-safe)
+    nonisolated(unsafe) private var monitoringTask: Task<Void, Never>?
 
     /// Callback triggered when disk space is critically low or check fails.
     /// Called on a background queue.
@@ -19,7 +21,7 @@ final class DiskSpaceMonitor {
             while !Task.isCancelled {
                 guard let self = self else { return }
                 self.check()
-                
+
                 // Wait 10 seconds
                 try? await Task.sleep(nanoseconds: 10_000_000_000)
             }

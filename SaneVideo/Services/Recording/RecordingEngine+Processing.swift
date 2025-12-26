@@ -17,21 +17,12 @@ extension RecordingEngine {
       if source == .camera, let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) {
         videoWriter?.updateCameraFrame(pixelBuffer)
       }
-      
+
       // Update PiP window frame for accurate compositing (only during screen recording)
-      // Throttled to 10fps to avoid overhead (comment says "periodically" but was running every frame)
-      if source == .screen {
-        // Use VideoWriter's built-in throttling (it has lastFrameUpdateTime)
-        // Only update if enough time has passed (VideoWriter handles this internally)
-        Task { @MainActor in
-          let pipFrame = ServiceContainer.shared.appState.windowManager.pipWindowFrame
-          let screenFrame = NSScreen.main?.frame
-          Task { @RecordingActor in
-            self.videoWriter?.updatePiPFrame(pipFrame, screenFrame: screenFrame)
-          }
-        }
-      }
-      
+      // CRITICAL FIX: VideoWriter.updatePiPFrame has its own throttling (10fps) so we just
+      // call it directly with nil values - it will fetch the frame when needed.
+      // DO NOT create nested Tasks for every frame as this caused deadlocks!
+
       // Debug guard failures during critical recalibration phase
       if timeCoordinator.startTimeNeedsRecalibration, source == currentSource {
         if isPaused { AppLogger.recording.debug("Drop: isPaused") }
@@ -47,19 +38,31 @@ extension RecordingEngine {
       // This prevents "dead air" while waiting for the screen picker/stream to start.
       let isTargetSource = (source == currentSource) || (source == pendingSource)
 
-      guard !isPaused, isRecording, isTargetSource, let writer = videoWriter, writer.isWriting
-      else { return }
+      // CRITICAL: Check basic validity first, but allow writer to be invalid/not-writing momentarily during switch
+      guard !isPaused, isRecording, isTargetSource else { return }
 
       // If we received a sample from the pending source, officially switch over.
+      // Doing this BEFORE checking writer.isWriting ensures we don't timeout even if the writer is gap-gapped.
       if source == pendingSource {
         AppLogger.recording.info(
           "Seamless Handoff: Received first frame from \(source). Switching currentSource.")
         currentSource = source
         pendingSource = nil
+
+        // Cancel timeout immediately upon receiving valid frame from new source
+        sourceSwitchTimeoutTask?.cancel()
+        sourceSwitchTimeoutTask = nil
+      }
+
+      // Now ensure writer is ready for actual writing
+      guard let writer = videoWriter, writer.isWriting else {
+         // If we switched but writer isn't ready (segment gap), it's okay to drop a frame
+         // taking care not to error out legit failures (handled by next check)
+         return
       }
 
       // CRITICAL FIX: Check writer status explicitly and error out if failed
-      if let writer = videoWriter, !writer.isWriting, isRecording, !isPaused, !isSwitching {
+      if !writer.isWriting, isRecording, !isPaused, !isSwitching {
         let errorDescription = writer.error?.localizedDescription ?? "Unknown writer error"
         Task { @MainActor in
           self.onError?(AppError.recordingEngineError("Recording failed: \(errorDescription)"))

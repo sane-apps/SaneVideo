@@ -28,10 +28,11 @@ class ProjectState {
     var isLoadingProjects = true
 
     private var currentScopeSession: ProjectFileManager.SecurityScopeSession?
-    
+
     /// Current processing task for cancellation support
-    var currentProcessingTask: Task<Void, Error>?
-    
+    // nonisolated(unsafe) required for deinit access from any thread
+    nonisolated(unsafe) var currentProcessingTask: Task<Void, Error>?
+
     // P0 FIX: Cancel current operation
     func cancelCurrentOperation() {
         currentProcessingTask?.cancel()
@@ -44,13 +45,14 @@ class ProjectState {
     }
 
     // MARK: - Smart Features State
-    
+
     var magicFixOptions = MagicFixOptions()
 
     // MARK: - Save Debounce
 
     /// Debounce save operations to avoid duplicate saves from rapid changes
-    private var pendingSaveTask: Task<Void, Never>?
+    // nonisolated(unsafe) required for deinit access from any thread
+    nonisolated(unsafe) private var pendingSaveTask: Task<Void, Never>?
     private var lastSaveTime: Date = .distantPast
 
     // MARK: - Undo Manager (SwiftUI's built-in)
@@ -81,20 +83,20 @@ class ProjectState {
         var timeline = project.timeline
         recalculateStartTimes(in: &timeline)
         timeline.updateDuration()
-        
+
         // CRITICAL FIX: Validate timeline state after undo/redo
         if !validateTimelineState(timeline) {
             AppLogger.project.error("Timeline state invalid after undo/redo, attempting to fix")
             // Attempt to fix by recalculating
             recalculateStartTimes(in: &timeline)
             timeline.updateDuration()
-            
+
             if !validateTimelineState(timeline) {
                 AppLogger.project.error("Failed to fix timeline state after undo/redo")
                 ServiceContainer.shared.toastManager.show("Timeline state invalid after undo/redo", type: .error)
             }
         }
-        
+
         var updatedProject = project
         updatedProject.timeline = timeline
 
@@ -142,12 +144,12 @@ class ProjectState {
 
     init(projectStore: ProjectStoreProtocol? = nil) {
         self.projectStore = projectStore ?? ServiceContainer.shared.projectStore
-        
+
         // Skip auto-loading in UI tests to prevent race conditions with bootstrap
-        let isTesting = UserDefaults.standard.bool(forKey: "ui_testing") || 
+        let isTesting = UserDefaults.standard.bool(forKey: "ui_testing") ||
                         UserDefaults.standard.bool(forKey: "open_editor") ||
                         ProcessInfo.processInfo.arguments.contains("-ui_testing")
-        
+
         if !isTesting {
             Task {
                 await loadProjects()
@@ -178,7 +180,7 @@ class ProjectState {
 
     func loadProjects() async {
         // Prevent loading during UI tests to avoid race conditions and file access issues
-        let isTesting = UserDefaults.standard.bool(forKey: "ui_testing") || 
+        let isTesting = UserDefaults.standard.bool(forKey: "ui_testing") ||
                         UserDefaults.standard.bool(forKey: "open_editor") ||
                         UserDefaults.standard.string(forKey: "UI_TESTING") != nil ||
                         ProcessInfo.processInfo.environment["UI_TESTING"] != nil ||
@@ -186,7 +188,7 @@ class ProjectState {
                         ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil ||
                         ProcessInfo.processInfo.arguments.contains("-ui_testing") ||
                         ProcessInfo.processInfo.arguments.contains("-open_editor")
-        
+
         if isTesting {
             AppLogger.project.info("🧪 ProjectState: Skipping loadProjects (UI Test Environment)")
             isLoadingProjects = false
@@ -222,7 +224,7 @@ class ProjectState {
         // CRITICAL: Wait for previous save to complete before starting new one
         // This prevents race conditions where last save might complete after new one
         let previousTask = pendingSaveTask
-        
+
         // If last save was very recent, debounce with a small delay
         let now = Date()
         let timeSinceLastSave = now.timeIntervalSince(lastSaveTime)
@@ -234,10 +236,10 @@ class ProjectState {
             if let previous = previousTask {
                 _ = await previous.value
             }
-            
+
             // Check if we were cancelled while waiting
             guard !Task.isCancelled else { return }
-            
+
             if shouldDebounce {
                 try? await Task.sleep(for: .milliseconds(100))
                 guard !Task.isCancelled else { return }
@@ -309,7 +311,7 @@ class ProjectState {
         AppLogger.project.info("Renamed project from '\(oldName)' to '\(newName)'")
         ServiceContainer.shared.toastManager.show("Project Renamed")
     }
-    
+
     func deleteProject(_ project: VideoProject) {
         // CRITICAL: Check if project is currently active before deleting
         // This prevents deleting the project the user is actively working on
@@ -354,15 +356,15 @@ class ProjectState {
     func recalculateStartTimes(in timeline: inout Timeline) {
         // Only close gaps if Magnetic Timeline is enabled
         @AppStorage("magneticTimeline") var magneticTimeline = true
-        
+
         // Recalculate for ALL tracks
         for (trackIndex, track) in timeline.tracks.enumerated() {
             var mutableTrack = track
-            
+
             // CRITICAL FIX: Sort clips by startTime before recalculating
             // This ensures correct order even if clips were added out of order
             mutableTrack.clips.sort { $0.startTime < $1.startTime }
-            
+
             if magneticTimeline {
                 // Close gaps: sequential clips with no spacing
                 var cumulativeTime = CMTime.zero
@@ -377,7 +379,7 @@ class ProjectState {
                     let prevClip = mutableTrack.clips[clipIndex - 1]
                     let prevEnd = CMTimeAdd(prevClip.startTime, prevClip.effectiveDuration)
                     let currentClip = mutableTrack.clips[clipIndex]
-                    
+
                     // If current clip starts before previous ends, fix overlap
                     if currentClip.startTime < prevEnd {
                         mutableTrack.clips[clipIndex].startTime = prevEnd
@@ -387,11 +389,11 @@ class ProjectState {
             }
             timeline.tracks[trackIndex] = mutableTrack
         }
-        
+
         // CRITICAL FIX: Update timeline duration after recalculating startTimes
         timeline.updateDuration()
     }
-    
+
     /// CRITICAL FIX: Validate timeline state for consistency
     /// Checks for overlaps, invalid startTimes, duplicate IDs, etc.
     func validateTimelineState(_ timeline: Timeline) -> Bool {
@@ -404,25 +406,25 @@ class ProjectState {
                     return false
                 }
                 seenIDs.insert(clip.id)
-                
+
                 // Validate clip properties
                 if clip.startTime.seconds < 0 {
                     AppLogger.project.error("Clip has negative startTime: \(clip.id)")
                     return false
                 }
-                
+
                 if clip.effectiveDuration.seconds <= 0 {
                     AppLogger.project.error("Clip has zero or negative duration: \(clip.id)")
                     return false
                 }
-                
+
                 // Check for overlaps within same track
                 let sortedClips = track.clips.sorted { $0.startTime < $1.startTime }
                 for i in 1 ..< sortedClips.count {
                     let prevClip = sortedClips[i - 1]
                     let currentClip = sortedClips[i]
                     let prevEnd = CMTimeAdd(prevClip.startTime, prevClip.effectiveDuration)
-                    
+
                     if currentClip.startTime < prevEnd {
                         AppLogger.project.error("Clips overlap in track: \(prevClip.id) and \(currentClip.id)")
                         return false
@@ -430,22 +432,15 @@ class ProjectState {
                 }
             }
         }
-        
+
         return true
     }
-    
+
     // CRITICAL FIX: Cleanup method to cancel all tasks before deallocation
-    // This should be called explicitly, but also provides safety in deinit
-    nonisolated deinit {
-        // CRITICAL FIX: Cancel tasks on deallocation
-        // Note: We can't access actor-isolated properties in nonisolated deinit,
-        // but we can use MainActor.assumeIsolated for cancellation
-        MainActor.assumeIsolated {
-            currentProcessingTask?.cancel()
-            currentProcessingTask = nil
-            pendingSaveTask?.cancel()
-            pendingSaveTask = nil
-        }
+    // Task.cancel() is thread-safe, so we can call it from any thread in deinit
+    deinit {
+        currentProcessingTask?.cancel()
+        pendingSaveTask?.cancel()
     }
 
     func showImportPicker() {
@@ -472,18 +467,18 @@ class ProjectState {
             existingSession.stop()
             currentScopeSession = nil
         }
-        
+
         if let project = project {
             // Hydrate project to resolve stale bookmarks before ensuring access
             let (hydratedProject, needsSave) = ServiceContainer.shared.projectFileManager.hydrateProject(project)
             currentProject = hydratedProject
-            
+
             // CRITICAL: Save project if bookmarks were updated during hydration
             if needsSave {
                 AppLogger.project.info("Bookmarks updated during hydration, saving project...")
                 saveProject(hydratedProject)
             }
-            
+
             currentScopeSession = ServiceContainer.shared.projectFileManager.enterSecurityScope(for: hydratedProject)
         } else {
             currentProject = nil
@@ -498,7 +493,7 @@ extension Notification.Name {
     /// Posted when a clip is added to the timeline
     /// Object: VideoProject that was updated
     static let clipAddedToTimeline = Notification.Name("clipAddedToTimeline")
-    
+
     /// P0 FIX: Posted when a clip is updated (e.g., relinked to new file)
     /// Object: VideoProject that was updated
     static let clipUpdated = Notification.Name("clipUpdated")

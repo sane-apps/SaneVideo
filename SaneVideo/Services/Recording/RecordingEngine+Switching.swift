@@ -44,14 +44,18 @@ extension RecordingEngine {
       timeCoordinator.startTimeNeedsRecalibration = true
 
       // CRITICAL: Create timeout task BEFORE starting switch
-      // If switch takes > 10 seconds, rollback
+      // If switch takes too long, rollback.
+      // NOTE: Screen picking requires user interaction, so we allow a much longer timeout (2 mins).
+      // Camera switching should be near-instant (10s is plenty).
+      let timeoutDuration: UInt64 = (source == .screen) ? 120_000_000_000 : 10_000_000_000
+
       sourceSwitchTimeoutTask = Task { @RecordingActor [weak self] in
-        try? await Task.sleep(nanoseconds: 10_000_000_000)  // 10 seconds
+        try? await Task.sleep(nanoseconds: timeoutDuration)
         guard let self = self else { return }
 
         // Only timeout if still switching and pending source hasn't been cleared
         if self.isSwitching, self.pendingSource == source {
-          AppLogger.recording.error("⏱️ Source switch timeout after 10s. Rolling back.")
+          AppLogger.recording.error("⏱️ Source switch timeout after \(timeoutDuration / 1_000_000_000)s. Rolling back.")
 
           // Rollback state
           self.pendingSource = nil

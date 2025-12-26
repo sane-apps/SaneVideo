@@ -3,6 +3,10 @@
 //  SaneVideo
 //
 //  Centralized logging with os.Logger
+//
+//  NOTE: macOS Unified Logging filters debug/info logs by default.
+//  To see logs: Run from Xcode, use `log stream`, or enable file logging.
+//  File logging is enabled in DEBUG builds and writes to ~/Library/Logs/SaneVideo/
 
 import Foundation
 import OSLog
@@ -17,39 +21,35 @@ struct SaneLogger: Sendable {
         self.category = category
     }
 
+    // CRITICAL FIX: Don't create Tasks in logging methods.
+    // Tasks can outlive objects and cause use-after-free crashes.
+    // File logging is the primary mechanism; onLog callback is deprecated.
+
     nonisolated func info(_ message: String) {
         internalLogger.info("\(message, privacy: .public)")
-        Task { @MainActor in
-            AppLogger.onLog?(message, .info, category)
-        }
+        AppLogger.writeToFile("[\(category)] INFO: \(message)")
     }
 
     nonisolated func debug(_ message: String) {
         internalLogger.debug("\(message, privacy: .public)")
-        Task { @MainActor in
-            AppLogger.onLog?(message, .debug, category)
-        }
+        #if DEBUG
+        AppLogger.writeToFile("[\(category)] DEBUG: \(message)")
+        #endif
     }
 
     nonisolated func warning(_ message: String) {
         internalLogger.warning("\(message, privacy: .public)")
-        Task { @MainActor in
-            AppLogger.onLog?(message, .warning, category)
-        }
+        AppLogger.writeToFile("[\(category)] WARNING: \(message)")
     }
 
     nonisolated func error(_ message: String) {
         internalLogger.error("\(message, privacy: .public)")
-        Task { @MainActor in
-            AppLogger.onLog?(message, .error, category)
-        }
+        AppLogger.writeToFile("[\(category)] ERROR: \(message)")
     }
 
     nonisolated func fault(_ message: String) {
         internalLogger.fault("\(message, privacy: .public)")
-        Task { @MainActor in
-            AppLogger.onLog?(message, .fault, category)
-        }
+        AppLogger.writeToFile("[\(category)] FAULT: \(message)")
     }
 }
 
@@ -87,6 +87,104 @@ enum AppLogger {
             category.error(appError.errorDescription ?? "Unknown error")
         } else {
             category.error(error.localizedDescription)
+        }
+    }
+
+    // MARK: - File Logging (Workaround for macOS Unified Logging filtering)
+
+    /// File logging directory - ~/Library/Logs/SaneVideo/
+    private static let logDirectory: URL? = {
+        guard let libraryDir = FileManager.default.urls(for: .libraryDirectory, in: .userDomainMask).first else {
+            return nil
+        }
+        return libraryDir.appendingPathComponent("Logs/SaneVideo")
+    }()
+
+    /// Current log file path - rotates daily
+    private static var currentLogFile: URL? {
+        guard let logDir = logDirectory else { return nil }
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd"
+        let filename = "SaneVideo-\(dateFormatter.string(from: Date())).log"
+        return logDir.appendingPathComponent(filename)
+    }
+
+    /// Thread-safe file writing lock
+    private static let fileLock = NSLock()
+
+    /// Enable/disable file logging (enabled by default in DEBUG)
+    #if DEBUG
+    nonisolated(unsafe) static var fileLoggingEnabled = true
+    #else
+    nonisolated(unsafe) static var fileLoggingEnabled = false
+    #endif
+
+    /// Write a log message to file (thread-safe)
+    nonisolated static func writeToFile(_ message: String) {
+        guard fileLoggingEnabled else { return }
+
+        fileLock.lock()
+        defer { fileLock.unlock() }
+
+        guard let logDir = logDirectory, let logFile = currentLogFile else {
+            NSLog("📝 AppLogger: logDirectory or currentLogFile is nil")
+            return
+        }
+
+        // Ensure directory exists
+        do {
+            try FileManager.default.createDirectory(at: logDir, withIntermediateDirectories: true)
+        } catch {
+            NSLog("📝 AppLogger: Failed to create log directory: \(error)")
+        }
+
+        // Format: [2025-12-25 16:30:45] message
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
+        let timestamp = dateFormatter.string(from: Date())
+        let logLine = "[\(timestamp)] \(message)\n"
+
+        // Append to file
+        if let data = logLine.data(using: .utf8) {
+            if FileManager.default.fileExists(atPath: logFile.path) {
+                if let handle = try? FileHandle(forWritingTo: logFile) {
+                    _ = try? handle.seekToEnd()
+                    try? handle.write(contentsOf: data)
+                    try? handle.close()
+                }
+            } else {
+                do {
+                    try data.write(to: logFile)
+                    NSLog("📝 AppLogger: Created log file at \(logFile.path)")
+                } catch {
+                    NSLog("📝 AppLogger: Failed to create log file: \(error)")
+                }
+            }
+        }
+    }
+
+    /// Get path to today's log file (for SaneMaster.rb)
+    static func todaysLogPath() -> String? {
+        currentLogFile?.path
+    }
+
+    /// Clean up old log files (keep last 7 days)
+    static func cleanupOldLogs() {
+        guard let logDir = logDirectory else { return }
+
+        let fileManager = FileManager.default
+        guard let files = try? fileManager.contentsOfDirectory(at: logDir, includingPropertiesForKeys: [.creationDateKey]) else {
+            return
+        }
+
+        let cutoffDate = Calendar.current.date(byAdding: .day, value: -7, to: Date()) ?? Date()
+
+        for file in files {
+            if let attrs = try? fileManager.attributesOfItem(atPath: file.path),
+               let creationDate = attrs[.creationDate] as? Date,
+               creationDate < cutoffDate {
+                try? fileManager.removeItem(at: file)
+            }
         }
     }
 }

@@ -43,7 +43,7 @@ class ExportServiceProtocolMock: ExportServiceProtocol {
         if let cancelExportHandler = cancelExportHandler {
             cancelExportHandler()
         }
-        
+
     }
 }
 
@@ -91,7 +91,7 @@ final class ProjectStoreProtocolMock: ProjectStoreProtocol, @unchecked Sendable 
         if let saveProjectHandler = saveProjectHandler {
             try await saveProjectHandler(project)
         }
-        
+
     }
 
     private let deleteProjectState = MockoloMutex(MockoloHandlerState<VideoProject, @Sendable (VideoProject) async throws -> ()>())
@@ -115,7 +115,7 @@ final class ProjectStoreProtocolMock: ProjectStoreProtocol, @unchecked Sendable 
         if let deleteProjectHandler = deleteProjectHandler {
             try await deleteProjectHandler(project)
         }
-        
+
     }
 
     private let recentProjectsState = MockoloMutex(MockoloHandlerState<Int, @Sendable (Int) async throws -> [VideoProject]>())
@@ -202,19 +202,8 @@ final class CameraServiceProtocolMock: CameraServiceProtocol, @unchecked Sendabl
 
     // CRITICAL: Must be nonisolated(unsafe) to allow access from RecordingEngine's @RecordingActor context
     // PassthroughSubject is thread-safe internally, so this is safe
-    nonisolated(unsafe) private var _sampleBufferSubjectStorage: PassthroughSubject<CMSampleBuffer, Never>?
-    nonisolated var sampleBufferSubject: PassthroughSubject<CMSampleBuffer, Never> {
-        get { 
-            // Lazy initialization without MainActor isolation
-            if _sampleBufferSubjectStorage == nil {
-                _sampleBufferSubjectStorage = PassthroughSubject<CMSampleBuffer, Never>()
-            }
-            return _sampleBufferSubjectStorage!
-        }
-        set { 
-            _sampleBufferSubjectStorage = newValue
-        }
-    }
+    // Initialized directly to avoid race condition in lazy initialization
+    nonisolated(unsafe) private(set) var sampleBufferSubject = PassthroughSubject<CMSampleBuffer, Never>()
 
     private let startState = MockoloMutex(MockoloHandlerState<Never, @Sendable () async throws -> ()>())
     var startCallCount: Int {
@@ -232,7 +221,7 @@ final class CameraServiceProtocolMock: CameraServiceProtocol, @unchecked Sendabl
         if let startHandler = startHandler {
             try await startHandler()
         }
-        
+
     }
 
     private let stopState = MockoloMutex(MockoloHandlerState<Never, @Sendable () -> ()>())
@@ -251,7 +240,7 @@ final class CameraServiceProtocolMock: CameraServiceProtocol, @unchecked Sendabl
         if let stopHandler = stopHandler {
             stopHandler()
         }
-        
+
     }
 
     private let toggleState = MockoloMutex(MockoloHandlerState<Never, @Sendable () -> ()>())
@@ -270,7 +259,7 @@ final class CameraServiceProtocolMock: CameraServiceProtocol, @unchecked Sendabl
         if let toggleHandler = toggleHandler {
             toggleHandler()
         }
-        
+
     }
 
     private let requestPermissionAgainState = MockoloMutex(MockoloHandlerState<Never, @Sendable () -> ()>())
@@ -289,7 +278,7 @@ final class CameraServiceProtocolMock: CameraServiceProtocol, @unchecked Sendabl
         if let requestPermissionAgainHandler = requestPermissionAgainHandler {
             requestPermissionAgainHandler()
         }
-        
+
     }
 
     private let restartSessionState = MockoloMutex(MockoloHandlerState<Never, @Sendable () -> ()>())
@@ -308,7 +297,7 @@ final class CameraServiceProtocolMock: CameraServiceProtocol, @unchecked Sendabl
         if let restartSessionHandler = restartSessionHandler {
             restartSessionHandler()
         }
-        
+
     }
 }
 
@@ -353,4 +342,3 @@ fileprivate struct MockoloHandlerState<Arg, Handler> {
     var handler: Handler? = nil
     var callCount: Int = 0
 }
-

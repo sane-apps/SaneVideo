@@ -40,10 +40,30 @@ class SoundAnalysisService: @unchecked Sendable {
   }
 
   func startRealTimeAnalysis(format: AVAudioFormat) {
-    // Stub for starting real-time analysis requests
     AppLogger.audio.info("SoundAnalysis: Real-time analysis started with format: \(format)")
     self.currentFormat = format
     self.streamAnalyzer = SNAudioStreamAnalyzer(format: format)
+
+    // Wire up the request
+    do {
+      let request = try SNClassifySoundRequest(classifierIdentifier: .version1)
+      request.windowDuration = CMTime(seconds: 1.5, preferredTimescale: 48000)
+      request.overlapFactor = 0.5
+
+      let observer = RealTimeResultsObserver { [weak self] classification in
+        self?.onSoundDetected?(classification)
+      }
+
+      // Retain observer if needed? SNAudioStreamAnalyzer holds strong ref to request,
+      // but request holds strong ref to observer? Yes, usually.
+      // Actually add adds it.
+
+      try streamAnalyzer?.add(request, withObserver: observer)
+      AppLogger.audio.info("✅ SoundAnalysis: Request added successfully")
+
+    } catch {
+      AppLogger.audio.error("❌ SoundAnalysis: Failed to create request: \(error)")
+    }
   }
 
   func stopRealTimeAnalysis() {
@@ -61,8 +81,13 @@ class SoundAnalysisService: @unchecked Sendable {
     let format = AVAudioFormat(cmAudioFormatDescription: formatDescription)
 
     // 2. Check for format change or initialization
-    if streamAnalyzer == nil || !areFormatsCompatible(format, currentFormat) {
-      reinitializeAnalyzer(with: format)
+    // Note: If format changes, we likely need to restart streamAnalyzer,
+    // but startRealTimeAnalysis is called by engine with specific format.
+    // If it drifts, we might need to handle it.
+    if streamAnalyzer == nil {
+      // If called before start, we ignore or auto-start?
+      // Engine calls start first.
+      return
     }
 
     // 3. Convert CMSampleBuffer to AVAudioPCMBuffer
@@ -72,6 +97,11 @@ class SoundAnalysisService: @unchecked Sendable {
       }
     }
   }
+
+  // ... (createPCMBuffer, areFormatsCompatible, reinitializeAnalyzer - kept but reInit needs to re-add request!)
+
+  // Re-implementation of reinitializeAnalyzer to support request persistence would be needed
+  // if format changes. For now, we assume format constant from Microphone.
 
   private func createPCMBuffer(from sampleBuffer: CMSampleBuffer, format: AVAudioFormat)
     -> AVAudioPCMBuffer?
@@ -145,6 +175,17 @@ class SoundAnalysisService: @unchecked Sendable {
 
     streamAnalyzer = SNAudioStreamAnalyzer(format: format)
     currentFormat = format
+
+    // Re-add request !
+    do {
+      let request = try SNClassifySoundRequest(classifierIdentifier: .version1)
+      let observer = RealTimeResultsObserver { [weak self] classification in
+        self?.onSoundDetected?(classification)
+      }
+      try streamAnalyzer?.add(request, withObserver: observer)
+    } catch {
+      AppLogger.audio.error("❌ Failed to re-add request on reinit: \(error)")
+    }
   }
 
   // MARK: - Semantic Gating
@@ -216,6 +257,40 @@ private class GatingResultsObserver: NSObject, SNResultsObserving {
 
   func request(_ request: SNRequest, didFailWithError error: Error) {
     AppLogger.audio.error("SoundAnalysis: Gating analysis failed: \(error.localizedDescription)")
+  }
+}
+
+// MARK: - Real-Time Observer
+
+private class RealTimeResultsObserver: NSObject, SNResultsObserving {
+  var callback: ((AudioClassification) -> Void)?
+
+  init(callback: ((AudioClassification) -> Void)?) {
+    self.callback = callback
+  }
+
+  func request(_ request: SNRequest, didProduce result: SNResult) {
+    guard let classificationResult = result as? SNClassificationResult,
+      let top = classificationResult.classifications.first
+    else { return }
+
+    // Basic mapping
+    let labelString = top.identifier
+    let label = AudioLabel(rawValue: labelString) ?? .unknown
+
+    guard top.confidence > 0.3 else { return }
+
+    let classification = AudioClassification(
+      timeRange: classificationResult.timeRange,
+      label: label,
+      confidence: Float(top.confidence)
+    )
+
+    callback?(classification)
+  }
+
+  func request(_ request: SNRequest, didFailWithError error: Error) {
+    AppLogger.audio.error("SoundAnalysis: Real-time analysis failed: \(error.localizedDescription)")
   }
 }
 

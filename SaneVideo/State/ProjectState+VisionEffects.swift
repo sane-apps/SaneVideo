@@ -14,16 +14,14 @@ extension ProjectState {
   // MARK: - Auto-Framing (Face Tracking)
 
   /// Apply auto-framing using dynamic keyframes to track faces
-  func applyAutoFraming(to clip: VideoClip, padding: CGFloat = 0.3) async {
-    guard !isProcessing else { return }
-    isProcessing = true
+  func applyAutoFraming(to clip: VideoClip, padding: CGFloat = 0.3, transactionId: UUID? = nil) async {
+    let localTransactionId = transactionId ?? beginTransaction()
+    defer { endTransaction(localTransactionId) }
+
+    guard !shouldBlockOperation(transactionId: localTransactionId) else { return }
 
     await MainActor.run {
       ServiceContainer.shared.toastManager.show("🎯 Tracking faces in video...")
-    }
-
-    defer {
-      Task { @MainActor in self.isProcessing = false }
     }
 
     do {
@@ -99,15 +97,22 @@ extension ProjectState {
   }
 
   /// Apply auto-framing using pre-computed analysis (Unified Pipeline)
-  func applyAutoFramingFromAnalysis(clip: VideoClip, analysis: [CMTime: CGRect]) async {
-    guard !isProcessing else { return }
-    isProcessing = true
+  func applyAutoFramingFromAnalysis(clip: VideoClip, analysis: [CMTime: CGRect], transactionId: UUID? = nil) async {
+    // If a transactionId is provided, skip the isProcessing check (we're already in a transaction)
+    if transactionId == nil {
+      guard !isProcessing else { return }
+      isProcessing = true
+    }
 
     await MainActor.run {
       ServiceContainer.shared.toastManager.show("🎯 Applying Auto-Frame (Unified)...")
     }
 
-    defer { Task { @MainActor in self.isProcessing = false } }
+    defer {
+      if transactionId == nil {
+        Task { @MainActor in self.isProcessing = false }
+      }
+    }
 
     if analysis.isEmpty {
       await MainActor.run {
@@ -150,16 +155,14 @@ extension ProjectState {
   }
 
   /// Apply smart crop with dynamic tracking (9:16 Target)
-  func applySmartCrop(to clip: VideoClip, targetAspectRatio: CGFloat = 9.0 / 16.0) async {
-    guard !isProcessing else { return }
-    isProcessing = true
+  func applySmartCrop(to clip: VideoClip, targetAspectRatio: CGFloat = 9.0 / 16.0, transactionId: UUID? = nil) async {
+    let localTransactionId = transactionId ?? beginTransaction()
+    defer { endTransaction(localTransactionId) }
+
+    guard !shouldBlockOperation(transactionId: localTransactionId) else { return }
 
     await MainActor.run {
       ServiceContainer.shared.toastManager.show("🎨 Analyzing attention flow...")
-    }
-
-    defer {
-      Task { @MainActor in self.isProcessing = false }
     }
 
     do {
@@ -250,15 +253,15 @@ extension ProjectState {
   }
 
   /// Apply smart crop using pre-computed analysis (Unified Pipeline)
-  func applySmartCropFromAnalysis(clip: VideoClip, analysis: [CMTime: SaliencyResult]) async {
-    guard !isProcessing else { return }
-    isProcessing = true
+  func applySmartCropFromAnalysis(clip: VideoClip, analysis: [CMTime: SaliencyResult], transactionId: UUID? = nil) async {
+    let localTransactionId = transactionId ?? beginTransaction()
+    defer { endTransaction(localTransactionId) }
+
+    guard !shouldBlockOperation(transactionId: localTransactionId) else { return }
 
     await MainActor.run {
       ServiceContainer.shared.toastManager.show("🎨 Applying Smart 9:16 Crop (Unified)...")
     }
-
-    defer { Task { @MainActor in self.isProcessing = false } }
 
     if analysis.isEmpty {
       await MainActor.run {

@@ -239,15 +239,20 @@ final class CameraManager: NSObject, CameraServiceProtocol {
 
     guard let session = session else { return }
 
-    Task {
-      _isStoppingSession = true
-      defer { _isStoppingSession = false }
+    // CRITICAL FIX: Set flag BEFORE Task, clear AFTER async work completes
+    _isStoppingSession = true
 
+    Task {
       if session.isRunning {
         await Task.detached(priority: .userInitiated) {
           session.stopRunning()
         }.value
         AppLogger.camera.info("Session stopped")
+      }
+
+      // CRITICAL: Only clear flag after stopRunning completes
+      await MainActor.run {
+        self._isStoppingSession = false
       }
     }
   }

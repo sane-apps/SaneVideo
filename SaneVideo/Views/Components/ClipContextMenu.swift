@@ -11,7 +11,7 @@ import AppKit
 /// Context menu for TimelineClipView
 struct ClipContextMenu: View {
     let clip: VideoClip
-    
+
     var onSplit: (() -> Void)?
     var onDelete: (() -> Void)?
     var onRemoveSilence: (() -> Void)?
@@ -22,9 +22,10 @@ struct ClipContextMenu: View {
     var onFindGestures: (() -> Void)?
     var onPrivacyBlur: (() -> Void)?
     var onFindHighlights: (() -> Void)?
+    var onRelink: (() -> Void)?
     var onDeleteFile: (() -> Void)?
     var onSetTransition: ((TransitionType) -> Void)?
-    
+
     var body: some View {
         Group {
             Button(action: { onSplit?() }, label: {
@@ -36,9 +37,9 @@ struct ClipContextMenu: View {
                 Label(String(localized: "clip.menu.delete", defaultValue: "Delete"), systemImage: "trash")
             })
             .accessibilityIdentifier("clip.menu.delete")
-            
+
             Divider()
-            
+
             // MARK: - Audio Submenu
             Menu {
                 Button(action: { onRemoveSilence?() }, label: {
@@ -62,7 +63,7 @@ struct ClipContextMenu: View {
             } label: {
                 Label(String(localized: "clip.menu.audio", defaultValue: "Audio"), systemImage: "waveform")
             }
-            
+
             // MARK: - Vision Submenu
             Menu {
                 smartCropSubmenu
@@ -92,22 +93,27 @@ struct ClipContextMenu: View {
             } label: {
                 Label(String(localized: "clip.menu.vision", defaultValue: "Vision"), systemImage: "eye")
             }
-            
+
             // MARK: - Captions
             Button(action: { onGenerateCaptions?() }, label: {
                 Label(String(localized: "clip.menu.generate_captions", defaultValue: "Generate Captions"), systemImage: "captions.bubble")
             })
             .accessibilityIdentifier("clip.menu.generate_captions")
-            
+
             Divider()
-            
+
             transitionMenu
-            
+
             Divider()
             Button(String(localized: "clip.menu.finder", defaultValue: "Show in Finder")) {
                 NSWorkspace.shared.activateFileViewerSelecting([clip.url])
             }
             .accessibilityIdentifier("clip.menu.finder")
+
+            Button(action: { onRelink?() }, label: {
+                Label(String(localized: "clip.menu.relink", defaultValue: "Relink Clip..."), systemImage: "link.badge.plus")
+            })
+            .accessibilityIdentifier("clip.menu.relink")
 
             Divider()
             Button(role: .destructive, action: { onDeleteFile?() }, label: {
@@ -116,7 +122,7 @@ struct ClipContextMenu: View {
             .accessibilityIdentifier("clip.menu.delete_disk")
         }
     }
-    
+
     private var smartCropSubmenu: some View {
         Menu {
             Button(action: {
@@ -155,7 +161,7 @@ struct ClipContextMenu: View {
             Label(String(localized: "clip.menu.smart_crop", defaultValue: "Smart Crop"), systemImage: "crop.rotate")
         }
     }
-    
+
     private var transitionMenu: some View {
         Menu {
             ForEach(TransitionType.allCases) { transitionType in

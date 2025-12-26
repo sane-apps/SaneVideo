@@ -12,7 +12,7 @@ final class SoundManager {
     // 1113 = Begin Recording (standard on macOS)
     // 1114 = End Recording
     // 1117 = Modern Beep for Error/Warning
-    
+
     private let startSoundID: SystemSoundID = 1113
     private let stopSoundID: SystemSoundID = 1114
     private let errorSoundID: SystemSoundID = 1053
@@ -28,5 +28,13 @@ final class SoundManager {
     nonisolated func playError() {
         // Play system alert sound
         AudioServicesPlaySystemSound(errorSoundID)
+    }
+
+    nonisolated func playSuccess() {
+        // Use NSSound for higher volume control and distinctive "done" chime
+        if let sound = NSSound(named: "Glass") {
+            sound.volume = 1.0
+            sound.play()
+        }
     }
 }

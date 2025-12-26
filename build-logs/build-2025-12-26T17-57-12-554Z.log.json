@@ -1,0 +1,5 @@
+[
+  "/usr/bin/xcodebuild",
+  "/Users/sj/SaneVideo/SaneVideo/Windows/FloatingControlsWindow.swift:134:17: error: using 'super' in a closure where 'self' is explicitly captured is not yet supported",
+  "** BUILD FAILED **"
+]

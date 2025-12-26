@@ -37,13 +37,21 @@ class FloatingControlsWindow: NSPanel {
         hidesOnDeactivate = false
         collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
 
-        // Set content view to SwiftUI
+        // CRITICAL FIX: Prevent controls from appearing in screen share picker
+        if #available(macOS 15.0, *) {
+            self.sharingType = .none
+        } else {
+            self.sharingType = .none
+        }
+
+        // Floating controls use .medium size for better visibility
+        // when user is screen sharing and app is minimized
         let controlsView = SharedRecordingControls(
             showDevicePickers: false,
             showGalleryTarget: false,
             showTimer: true,
             useGlassBackground: true,
-            buttonSize: .small
+            buttonSize: .medium  // Uses unified size (52pt buttons, 73pt record)
         )
         contentView = NSHostingView(rootView: controlsView
             .environment(ServiceContainer.shared.appState)
@@ -86,21 +94,52 @@ class FloatingControlsWindow: NSPanel {
 
     private func resetHideTimer() {
         hideTimer?.invalidate()
+        // CRITICAL FIX: Create timer on main run loop explicitly
+        // This ensures timer fires reliably on main thread
         hideTimer = Timer.scheduledTimer(withTimeInterval: 3.0, repeats: false) { [weak self] _ in
-            Task { @MainActor in
-                self?.hideControls()
-            }
+            // Already on main thread from Timer on main RunLoop
+            self?.hideControls()
+        }
+        // Ensure timer is added to common run loop modes (for scrolling, etc.)
+        if let timer = hideTimer {
+            RunLoop.main.add(timer, forMode: .common)
         }
     }
     override func close() {
-        // CRITICAL FIX: Invalidate timer before closing
+        // CRITICAL FIX: Prevent _NSWindowTransformAnimation crash
+        // Same fix as PiPCameraWindow - properly sequence the close
+
+        // 1. Invalidate timer to stop any pending callbacks
         hideTimer?.invalidate()
         hideTimer = nil
 
-        // CRITICAL FIX: Remove content view's subviews before closing
-        // This ensures SwiftUI hosting view is properly dismantled
-        contentView?.subviews.forEach { $0.removeFromSuperview() }
+        // 2. Disable animations and cleanup synchronously
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
 
+        // Hide window immediately
+        alphaValue = 0
+
+        // 3. Remove subviews
+        contentView?.subviews.forEach { subview in
+            subview.isHidden = true
+            subview.removeFromSuperview()
+        }
+
+        CATransaction.commit()
+
+        // 4. Order out
+        orderOut(nil)
+
+        // 5. Delay then close (call super synchronously after delay)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+            // Use performSelector to call super.close() without capturing self in closure
+            self.performSuperClose()
+        }
+    }
+
+    // Helper to call super.close() - avoids closure capture issue
+    private func performSuperClose() {
         super.close()
     }
 

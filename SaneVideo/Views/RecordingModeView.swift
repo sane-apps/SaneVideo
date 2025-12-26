@@ -13,10 +13,10 @@ struct RecordingModeView: View {
 
     var body: some View {
         GeometryReader { geo in
-            // Dynamic Size Calculations
+            // Dynamic Size Calculations - uses unified IconCircleButton.Size system
             let buttonScale = min(max(geo.size.width / 1000, 0.6), 1.2)
-            let baseButtonSize: CGFloat = 48 * buttonScale
-            let recordButtonSize: CGFloat = 72 * buttonScale
+            // Use .medium as base (52pt) and scale from there
+            let scaledButtonSize: CGFloat = IconCircleButton.Size.medium.diameter * buttonScale
 
             ZStack {
                 // 1. Main Preview Area (Full Screen)
@@ -98,18 +98,33 @@ struct RecordingModeView: View {
                     .allowsHitTesting(false)
                 }
 
-                // 2. Bottom Control Bar
+                // REC Timer Badge - Top Left (out of the way)
+                if appState.isRecording {
+                    VStack {
+                        HStack {
+                            RecBadgeTimer(
+                                isRecording: appState.isRecording,
+                                timeString: formatDuration(appState.recordingDuration)
+                            )
+                            .padding(.leading, Theme.Dimensions.paddingLG)
+                            .padding(.top, Theme.Dimensions.paddingLG)
+                            Spacer()
+                        }
+                        Spacer()
+                    }
+                }
+
+                // 2. Bottom Control Bar (no timer - moved to top)
                 VStack {
                     Spacer()
                     SharedRecordingControls(
                         showDevicePickers: true,
                         showGalleryTarget: true,
-                        showTimer: true,
+                        showTimer: false,  // Timer moved to top-left
                         useGlassBackground: false,
-                        buttonSize: .custom(baseButtonSize),
-                        recordButtonSize: recordButtonSize
+                        buttonSize: .custom(scaledButtonSize)
                     )
-                    .padding(.bottom, 40 * buttonScale)
+                    .padding(.bottom, Theme.Dimensions.spacingXXL * buttonScale)
                 }
 
                 // Countdown Overlay
@@ -134,5 +149,9 @@ struct RecordingModeView: View {
                 }
             }
         }
+    }
+
+    private func formatDuration(_ duration: TimeInterval) -> String {
+        TimeUtils.formatDuration(duration)
     }
 }

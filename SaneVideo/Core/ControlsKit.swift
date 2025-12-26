@@ -1,25 +1,45 @@
 import SwiftUI
 
-// Note: RecordButton was removed - all code now uses UnifiedRecordButton
-// See: PIP_CONTROLS_CONSOLIDATION.md for details
+// MARK: - Unified Control Button System
+// All recording controls use this single button style for visual consistency.
+// Sizes are designed to work across PiP (compact) and Main Window (full) contexts.
 
 public struct IconCircleButton: View {
     public enum Size: Equatable {
-        case small, medium, custom(CGFloat)
+        /// Compact size for PiP overlay (40pt) - fits in small spaces
+        case small
+        /// Standard size for main window controls (52pt)
+        case medium
+        /// Large size for primary actions (64pt)
+        case large
+        /// Custom size with proportional icon scaling
+        case custom(CGFloat)
 
         public var diameter: CGFloat {
             switch self {
-            case .small: return 44
-            case .medium: return 64
+            case .small: return 40   // Compact for PiP
+            case .medium: return 52  // Standard controls
+            case .large: return 64   // Primary actions
             case .custom(let val): return val
             }
         }
 
         public var iconSize: CGFloat {
             switch self {
-            case .small: return 18
-            case .medium: return 24
-            case .custom(let val): return val * 0.375
+            case .small: return 16
+            case .medium: return 20
+            case .large: return 24
+            case .custom(let val): return val * 0.4
+            }
+        }
+
+        /// Spacing between buttons at this size
+        public var spacing: CGFloat {
+            switch self {
+            case .small: return Theme.Dimensions.spacingSM   // 8pt
+            case .medium: return Theme.Dimensions.spacingMD  // 12pt
+            case .large: return Theme.Dimensions.spacingLG   // 16pt
+            case .custom(let val): return val * 0.2
             }
         }
     }
@@ -77,10 +97,19 @@ public struct IconCircleButtonStyle: ButtonStyle {
     public init(size: IconCircleButton.Size, isActive: Bool, activeColor: Color? = nil) {
         self.size = size
         self.isActive = isActive
-        self.activeColor = activeColor ?? .accentColor
+        self.activeColor = activeColor ?? Theme.Colors.accent
     }
 
     private var dim: CGFloat { size.diameter }
+
+    // Consistent opacity values across all button states
+    private var fillOpacity: Double {
+        isActive ? Theme.Opacity.heavy : Theme.Opacity.medium  // 0.5 : 0.2
+    }
+
+    private var borderOpacity: Double {
+        isActive ? 0.7 : Theme.Opacity.strong  // 0.7 : 0.3
+    }
 
     public func makeBody(configuration: Configuration) -> some View {
         configuration.label
@@ -88,23 +117,26 @@ public struct IconCircleButtonStyle: ButtonStyle {
             .contentShape(Circle())
             .background(
                 ZStack {
-                    if isActive {
-                        Circle()
-                            .fill(activeColor.opacity(0.5))
-                    } else {
-                        Circle()
-                            .fill(activeColor.opacity(0.25)) // Increased from 0.15 to make it look "yellow" not "grey"
-                    }
+                    // Glass background
+                    Circle()
+                        .fill(activeColor.opacity(fillOpacity))
 
+                    // Border ring
                     Circle()
                         .strokeBorder(
-                            isActive ? activeColor.opacity(0.6) : activeColor.opacity(0.3),
+                            activeColor.opacity(borderOpacity),
                             lineWidth: isActive ? 2 : 1
                         )
                 }
             )
-            .shadow(color: isActive ? activeColor.opacity(0.4) : Color.clear, radius: 8, x: 0, y: 0)
-            .scaleEffect(isHovering ? (configuration.isPressed ? 1.0 : 1.1) : (configuration.isPressed ? 0.95 : 1.0))
+            // Glow effect when active
+            .shadow(color: isActive ? activeColor.opacity(0.5) : .clear, radius: 10, x: 0, y: 0)
+            // Subtle drop shadow for depth
+            .shadow(color: .black.opacity(0.2), radius: 2, x: 0, y: 1)
+            // Hover and press animations
+            .scaleEffect(isHovering ? (configuration.isPressed ? 1.0 : 1.08) : (configuration.isPressed ? 0.94 : 1.0))
+            .animation(.easeOut(duration: 0.15), value: isHovering)
+            .animation(.easeOut(duration: 0.1), value: configuration.isPressed)
             .onHover { hovering in
                 isHovering = hovering
                 if hovering {

@@ -10,18 +10,18 @@ import Foundation
 import SwiftUI
 
 extension ProjectState {
-    
+
     // MARK: - Splitting
 
-    func splitClip(_ clip: VideoClip, atTimelineTime globalTime: CMTime) {
+    func splitClip(_ clip: VideoClip, atTimelineTime globalTime: CMTime, transactionId: UUID? = nil) {
         guard var project = currentProject else { return }
 
         // CRITICAL FIX: Prevent concurrent timeline operations
-        guard !isProcessing else {
+        guard !shouldBlockOperation(transactionId: transactionId) else {
             AppLogger.project.warning("Ignored splitClip request (Processing busy)")
             return
         }
-        
+
         // Phase 2: Check if track is locked
         if isTrackLocked(for: clip) {
             ServiceContainer.shared.toastManager.show("Track is locked", type: .error)
@@ -54,7 +54,7 @@ extension ProjectState {
 
         // Use copy method to ensure all properties are preserved (removedRanges, overlays, etc.)
         var secondPart = clip.copy(trimStart: splitAssetTime, trimEnd: clip.trimEnd)
-        
+
         // CRITICAL FIX: Set secondPart.startTime to prevent overlap
         // Second part should start where first part ends
         let firstPartEffectiveDuration = firstPart.effectiveDuration
@@ -83,7 +83,7 @@ extension ProjectState {
             // CRITICAL FIX: Recalculate startTimes to ensure consistency
             // This handles edge cases and ensures no gaps/overlaps
             recalculateStartTimes(in: &timeline)
-            
+
             // CRITICAL FIX: Validate timeline state after split
             if !validateTimelineState(timeline) {
                 AppLogger.project.error("Timeline state invalid after split, rolling back")
@@ -101,8 +101,8 @@ extension ProjectState {
 
     // MARK: - Trimming
 
-    func updateClipTrim(clipId: UUID, trimStart: CMTime?, trimEnd: CMTime?, startTime _: CMTime? = nil) {
-        guard !isProcessing else { return }
+    func updateClipTrim(clipId: UUID, trimStart: CMTime?, trimEnd: CMTime?, startTime _: CMTime? = nil, transactionId: UUID? = nil) {
+        guard !shouldBlockOperation(transactionId: transactionId) else { return }
         guard var project = currentProject else { return }
 
         var timeline = project.timeline
@@ -115,20 +115,20 @@ extension ProjectState {
                 // Update trim values with validation
                 let newStart = trimStart ?? clip.trimStart
                 let newEnd = trimEnd ?? clip.trimEnd
-                
+
                 // Validate trim range before applying
                 guard newStart < newEnd else {
                     AppLogger.project.warning("Invalid trim: start (\(newStart.seconds)s) >= end (\(newEnd.seconds)s)")
                     ServiceContainer.shared.toastManager.show("Invalid trim range", type: .error)
                     return
                 }
-                
+
                 guard newStart >= .zero, newEnd <= clip.duration else {
                     AppLogger.project.warning("Trim range outside clip duration (duration: \(clip.duration.seconds)s)")
                     ServiceContainer.shared.toastManager.show("Trim range exceeds clip duration", type: .error)
                     return
                 }
-                
+
                 // CRITICAL FIX: Validate trim range doesn't conflict with removedRanges
                 let trimRange = CMTimeRange(start: newStart, duration: CMTimeSubtract(newEnd, newStart))
                 for removedRange in clip.removedRanges {
@@ -141,7 +141,7 @@ extension ProjectState {
                         return
                     }
                 }
-                
+
                 // setTrimRange will clamp values, but we've validated above for better error messages
                 clip.setTrimRange(start: newStart, end: newEnd)
 
@@ -157,17 +157,17 @@ extension ProjectState {
 
         if clipFound {
             recalculateStartTimes(in: &timeline)
-            
+
             // CRITICAL FIX: Update timeline duration after trim
             timeline.updateDuration()
-            
+
             // CRITICAL FIX: Validate timeline state after trim
             if !validateTimelineState(timeline) {
                 AppLogger.project.error("Timeline state invalid after trim, rolling back")
                 ServiceContainer.shared.toastManager.show("Trim failed: Timeline state invalid", type: .error)
                 return
             }
-            
+
             project.timeline = timeline
             currentProject = project
             saveProject(project)
@@ -179,8 +179,8 @@ extension ProjectState {
     // MARK: - Rotation
 
     /// Rotate clip clockwise by 90 degrees
-    func rotateClip(_ clip: VideoClip) {
-        guard !isProcessing else { return }
+    func rotateClip(_ clip: VideoClip, transactionId: UUID? = nil) {
+        guard !shouldBlockOperation(transactionId: transactionId) else { return }
         guard var project = currentProject else { return }
 
         var timeline = project.timeline
@@ -214,8 +214,8 @@ extension ProjectState {
     }
 
     /// Set clip rotation to a specific angle
-    func setClipRotation(_ clip: VideoClip, to rotation: VideoClip.Rotation) {
-        guard !isProcessing else { return }
+    func setClipRotation(_ clip: VideoClip, to rotation: VideoClip.Rotation, transactionId: UUID? = nil) {
+        guard !shouldBlockOperation(transactionId: transactionId) else { return }
         guard var project = currentProject else { return }
 
         // Skip if already at target rotation

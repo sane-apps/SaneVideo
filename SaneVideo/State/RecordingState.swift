@@ -14,16 +14,19 @@ class RecordingState {
 
   var isRecording = false {
     didSet {
+      guard isRecording != oldValue else { return }
       NSLog("🎬 RecordingState: isRecording changed from \(oldValue) to \(isRecording)")
       NotificationCenter.default.post(
         name: NSNotification.Name("RecordingStateChanged"),
         object: nil,
         userInfo: ["isRecording": isRecording]
       )
+      onRecordingStateChanged?(isRecording)
     }
   }
   var isPaused = false
   var isPreparing = false  // True during countdown (camera on, not yet recording)
+  private var isStopping = false  // CRITICAL FIX: Prevent double-stop calls
   var isMicActive = true
   var isPresenterOverlayActive = false
   var recordingDuration: TimeInterval = 0
@@ -36,6 +39,8 @@ class RecordingState {
   // nonisolated(unsafe) required for deinit access from any thread
   // Compiler warning "has no effect" is incorrect - deinit IS nonisolated
   nonisolated(unsafe) private var countdownTask: Task<Void, Never>?
+  // CRITICAL FIX: Track the starting task to prevent race conditions during rapid start/stop
+  @ObservationIgnored nonisolated(unsafe) private var startingTask: Task<Void, Never>?
   private var recordingEngine: RecordingEngine?
   private var cameraService: CameraServiceProtocol
   private var injectedAudioService: AudioService?
@@ -58,6 +63,7 @@ class RecordingState {
   // Callbacks for AppState coordination
   var onRequestScreenShareStop: (() -> Void)?
   var onPresenterOverlayChanged: ((Bool) -> Void)?
+  var onRecordingStateChanged: ((Bool) -> Void)?
 
   // CRITICAL FIX: Ensure proper cleanup of timer and tasks
   // Task.cancel() is thread-safe, so we can call it from any thread in deinit
@@ -252,9 +258,10 @@ class RecordingState {
     }
 
     let initialSource: RecordingSource = isScreenSharing ? .screen : .camera
+    self.isRecording = true // Set optimistically but handle failure
 
     // CRITICAL: Start engine and only set isRecording if it succeeds
-    Task {
+    startingTask = Task {
       await recordingEngine?.startRecording(initialSource: initialSource)
 
       // CRITICAL: Check if engine actually started (isRecording will be set by engine)
@@ -262,23 +269,34 @@ class RecordingState {
       await MainActor.run { [weak self] in
         guard let self = self else { return }
 
-        // Check if engine is actually recording
-        // Note: We can't directly check engine.isRecording from here, so we rely on
-        // the engine setting it. If start failed, engine will call onError which
-        // will stop recording, so we'll clean up then.
-        // For now, we set isRecording here optimistically, but the error handler
-        // will clean up if start actually failed.
-        self.isRecording = true
-
+        // Start success feedback
         ServiceContainer.shared.soundManager.playStartRecording()
         ServiceContainer.shared.hapticsManager.success()
+        self.startingTask = nil
       }
     }
   }
 
   func stopRecording(completion: @escaping @Sendable (URL?) -> Void) {
     AppLogger.recording.debug(
-      "🛑 stopRecording called. isPreparing=\(isPreparing), isRecording=\(isRecording)")
+      "🛑 stopRecording called. isPreparing=\(isPreparing), isRecording=\(isRecording), isStopping=\(isStopping)")
+
+    // CRITICAL FIX: If we are still starting, we must wait or cancel
+    if let task = startingTask {
+      AppLogger.recording.warning(
+        "🎬 User hit stop while recording was still starting. Waiting for start to complete...")
+      Task { @MainActor in
+        _ = await task.result
+        self.stopRecording(completion: completion)
+      }
+      return
+    }
+
+    // CRITICAL FIX: Prevent double-stop calls
+    guard !isStopping else {
+      AppLogger.recording.debug("🛑 stopRecording ignored (already stopping)")
+      return
+    }
 
     if isPreparing {
       AppLogger.recording.debug("🛑 stopRecording cancelled (isPreparing=true)")
@@ -291,22 +309,36 @@ class RecordingState {
       completion(nil)
       return
     }
-    isRecording = false
+
+    // CRITICAL FIX: Set stopping flag IMMEDIATELY to prevent concurrent calls
+    isStopping = true
+
+    // Clear other state flags
     isPreparing = false
     isPaused = false
+
+    // Stop timer immediately (we don't want duration to keep counting)
     recordingTimer?.invalidate()
     recordingTimer = nil
     countdownTask?.cancel()
     countdownTask = nil
 
+    // Play feedback immediately
     ServiceContainer.shared.soundManager.playStopRecording()
     ServiceContainer.shared.hapticsManager.impact()
 
+    // CRITICAL FIX: Stop engine FIRST, then update state in completion
     Task {
       AppLogger.recording.debug("🛑 Calling engine.stopRecording()")
       let url = await recordingEngine?.stopRecording()
       AppLogger.recording.debug("🛑 Engine returned url=\(url?.path ?? "nil")")
-      await MainActor.run { completion(url) }
+
+      // CRITICAL: Only update state AFTER engine completes
+      await MainActor.run {
+        self.isRecording = false
+        self.isStopping = false
+        completion(url)
+      }
     }
   }
 

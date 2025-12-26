@@ -8,6 +8,7 @@
 //
 
 import XCTest
+@testable import SaneVideo
 
 final class SaneSmartFeaturesVisualTests: XCTestCase {
     
@@ -25,7 +26,7 @@ final class SaneSmartFeaturesVisualTests: XCTestCase {
     // MARK: - Helper Methods
     
     func ensureEditorState() {
-        let splitButton = app.buttons["SplitClipButton"]
+        let splitButton = app.buttons[AccessibilityIdentifiers.splitClipButton]
         if !splitButton.waitForExistence(timeout: 10) {
             XCTFail("Editor did not load - cannot proceed with visual tests")
         }
@@ -33,7 +34,7 @@ final class SaneSmartFeaturesVisualTests: XCTestCase {
     
     func openInspector() {
         // Open inspector panel if not already open
-        let inspectorToggle = app.buttons["InspectorToggle"]
+        let inspectorToggle = app.buttons[AccessibilityIdentifiers.inspectorToggle]
         if inspectorToggle.waitForExistence(timeout: 5) {
             // Check if inspector is visible by looking for Smart Tools section
             let smartTools = app.otherElements.matching(identifier: "Row_RemoveSilence").firstMatch
@@ -61,14 +62,14 @@ final class SaneSmartFeaturesVisualTests: XCTestCase {
         openInspector()
         
         // 1. Verify Magic Fix button exists in toolbar
-        let magicButton = app.buttons["MagicFixButton"]
+        let magicButton = app.buttons[AccessibilityIdentifiers.magicFixButton]
         XCTAssertTrue(magicButton.waitForExistence(timeout: 10), "Magic Fix button should be visible in toolbar")
         
         // Capture screenshot of Magic Fix button
         add(captureScreenshot(name: "01_MagicFixButton_Toolbar"))
         
         // 2. Verify Smart Tools section in inspector
-        let removeSilenceRow = app.otherElements["Row_RemoveSilence"]
+        let removeSilenceRow = app.otherElements[AccessibilityIdentifiers.rowRemoveSilence]
         XCTAssertTrue(removeSilenceRow.waitForExistence(timeout: 5), "Smart Tools section should be visible")
         
         // Capture screenshot of Smart Tools section
@@ -76,10 +77,10 @@ final class SaneSmartFeaturesVisualTests: XCTestCase {
         
         // 3. Verify all toggle switches are present
         let toggles = [
-            "Toggle_RemoveSilence",
-            "Toggle_RemoveFillers",
-            "Toggle_EnhanceSpeech",
-            "Toggle_AutoColor"
+            AccessibilityIdentifiers.toggleRemoveSilence,
+            AccessibilityIdentifiers.toggleRemoveFillers,
+            AccessibilityIdentifiers.toggleEnhanceSpeech,
+            AccessibilityIdentifiers.toggleAutoColor
         ]
         
         for toggleId in toggles {
@@ -96,7 +97,7 @@ final class SaneSmartFeaturesVisualTests: XCTestCase {
         openInspector()
         
         // 1. Find and tap presets menu
-        let presetsMenu = app.buttons["PresetsMenu"]
+        let presetsMenu = app.buttons[AccessibilityIdentifiers.presetsMenu]
         XCTAssertTrue(presetsMenu.waitForExistence(timeout: 5), "Presets menu should exist")
         
         add(captureScreenshot(name: "04_PresetsMenu_Before"))
@@ -107,9 +108,9 @@ final class SaneSmartFeaturesVisualTests: XCTestCase {
         Thread.sleep(forTimeInterval: 0.5)
         
         // 2. Verify preset options exist
-        let minimalPreset = app.menuItems["Preset_Minimal"]
-        let proCleanPreset = app.menuItems["Preset_ProClean"]
-        let socialMediaPreset = app.menuItems["Preset_SocialMedia"]
+        let minimalPreset = app.menuItems[AccessibilityIdentifiers.presetMinimal]
+        let proCleanPreset = app.menuItems[AccessibilityIdentifiers.presetProClean]
+        let socialMediaPreset = app.menuItems[AccessibilityIdentifiers.presetSocialMedia]
         
         XCTAssertTrue(minimalPreset.exists || app.menuItems["Minimal Fix"].exists, "Minimal preset should exist")
         XCTAssertTrue(proCleanPreset.exists || app.menuItems["Pro Clean-up"].exists, "Pro Clean preset should exist")
@@ -127,7 +128,7 @@ final class SaneSmartFeaturesVisualTests: XCTestCase {
         openInspector()
         
         // 1. Verify Magic Fix button is ready
-        let magicButton = app.buttons["MagicFixButton"]
+        let magicButton = app.buttons[AccessibilityIdentifiers.magicFixButton]
         XCTAssertTrue(magicButton.waitForExistence(timeout: 10), "Magic Fix button should exist")
         
         add(captureScreenshot(name: "06_MagicFixButton_BeforeProcessing"))
@@ -206,7 +207,7 @@ final class SaneSmartFeaturesVisualTests: XCTestCase {
         openInspector()
         
         // 1. Apply Minimal preset
-        let presetsMenu = app.buttons["PresetsMenu"]
+        let presetsMenu = app.buttons[AccessibilityIdentifiers.presetsMenu]
         if presetsMenu.waitForExistence(timeout: 5) {
             presetsMenu.tap()
             Thread.sleep(forTimeInterval: 0.5)
@@ -282,7 +283,7 @@ final class SaneSmartFeaturesVisualTests: XCTestCase {
         }
         
         // 2. Apply Magic Fix to see visual changes
-        let magicButton = app.buttons["MagicFixButton"]
+        let magicButton = app.buttons[AccessibilityIdentifiers.magicFixButton]
         if magicButton.waitForExistence(timeout: 5) {
             add(captureScreenshot(name: "18_BeforeMagicFix"))
             magicButton.tap()

@@ -87,7 +87,7 @@ struct TimelineClipView: View {
             }
         }
         .frame(width: frameWidth, height: clipHeight)
-        .accessibilityIdentifier("TimelineClip")
+        .accessibilityIdentifier(AccessibilityIdentifiers.timelineClip)
         .accessibilityLabel(clip.url.lastPathComponent)
         .offset(x: isDraggingLeftHandle ? leftTrimOffset : 0)
         .background(isSelected ? Color.accentColor : Color.secondary.opacity(0.3))
@@ -361,7 +361,7 @@ struct TimelineThumbnailCell: View {
             // PERFORMANCE: Use detached task with utility priority for thumbnails
             // This prevents thumbnail loading from blocking UI
             let thumb = await Task.detached(priority: .utility) {
-                await ServiceContainer.shared.timelineThumbnailService.thumbnail(
+                await ServiceContainer.shared.thumbnailService.thumbnail(
                     for: clip,
                     time: time,
                     size: size

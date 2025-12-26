@@ -85,8 +85,8 @@ extension ProjectState {
         defer { Task { @MainActor in self.isProcessing = false } }
         
         do {
-            let service = ServiceContainer.shared.smartThumbnailService
-            let newThumbnailURL = try await service.generateSmartThumbnail(for: clip.url)
+            let service = ServiceContainer.shared.thumbnailService
+            let newThumbnailURL = try await service.generateSmartThumbnail(for: clip.url, strategy: .faceQuality)
             
             await MainActor.run {
                 guard var project = currentProject else { return }

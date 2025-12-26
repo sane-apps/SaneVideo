@@ -35,4 +35,10 @@ struct AdvancedVideoPlayer: NSViewRepresentable {
             nsView.player = player
         }
     }
+
+    // CRITICAL FIX: Disconnect player when view is torn down to prevent use-after-free
+    // The AVPlayerView can outlive the AVPlayer, causing crashes during autorelease
+    static func dismantleNSView(_ nsView: AVPlayerView, coordinator: ()) {
+        nsView.player = nil
+    }
 }

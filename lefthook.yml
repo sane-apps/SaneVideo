@@ -16,6 +16,12 @@ pre-commit:
     protocol_change_check:
       glob: "*.swift"
       run: ./Scripts/SaneMaster.rb check_protocol_changes {staged_files}
+    test_reference_validation:
+      glob: "*.swift"
+      run: ./Scripts/SaneMaster.rb validate_test_references
+    deprecation_check:
+      glob: "*.swift"
+      run: ./Scripts/SaneMaster.rb check_deprecations || true
     rubocop:
       glob: "*.rb"
       run: bundle exec rubocop -a {staged_files} && git add {staged_files}

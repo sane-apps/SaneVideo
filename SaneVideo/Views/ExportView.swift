@@ -188,7 +188,7 @@ struct ExportView: View {
                     Button(String(localized: "export.option.voiceover", defaultValue: "Generate Voiceover"), action: generateVoiceover)
                 } label: {
                     Label(String(localized: "action.more_options", defaultValue: "More Options"), systemImage: "ellipsis.circle")
-                        .accessibilityIdentifier("MoreOptionsButton")
+                        .accessibilityIdentifier(AccessibilityIdentifiers.moreOptionsButton)
                 }
                 .menuStyle(.borderlessButton)
                 .frame(width: 120)
@@ -199,14 +199,14 @@ struct ExportView: View {
                     if isExporting { exportEngine.cancelExport() }
                     dismiss()
                 }
-                .accessibilityIdentifier("CancelExportButton") // Changed from "CloseExportButton" to "CancelExportButton"
+                .accessibilityIdentifier(AccessibilityIdentifiers.cancelExportButton) // Changed from "CloseExportButton" to "CancelExportButton"
                 .keyboardShortcut(.cancelAction)
                 .controlSize(.regular)
             }
         }
         .padding(32)
         .frame(width: 520)
-        .accessibilityIdentifier("Export Sheet")
+        .accessibilityIdentifier(AccessibilityIdentifiers.exportSheet)
         .onAppear {
             AppLogger.general.info("ExportView: appeared. isExporting: \(isExporting), isUploading: \(youtubeService.isUploading)")
             /*

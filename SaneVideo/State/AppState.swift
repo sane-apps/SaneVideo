@@ -34,8 +34,19 @@ class AppState {
 
   // MARK: - Recording Settings
 
-  var cameraEnabled = false  // Toggle for camera overlay
-  var microphoneEnabled = true  // Toggle for microphone input
+  /// User's intent for camera state - setting this automatically starts/stops camera
+  /// Use cameraState.isActive to check if camera is actually running
+  var cameraEnabled = false {
+    didSet {
+      guard cameraEnabled != oldValue else { return }
+      if cameraEnabled {
+        cameraState.startCamera()
+      } else {
+        cameraState.stopCamera()
+      }
+    }
+  }
+  // microphoneEnabled removed - use isMicActive proxy (delegates to RecordingState.isMicActive)
 
   // MARK: - Error Handling
 
@@ -231,9 +242,9 @@ class AppState {
     appMode = .recording
 
     // Camera operations happen AFTER mode switch
+    // cameraEnabled setter automatically starts camera
     if !windowManager.isScreenSharing {
       cameraEnabled = true
-      cameraState.startCamera()
     }
 
     // Start Audio for Metering
@@ -245,9 +256,9 @@ class AppState {
     appMode = .editing
 
     // Camera cleanup happens AFTER mode switch
+    // cameraEnabled setter automatically stops camera
     if !recordingState.isRecording {
       cameraEnabled = false
-      cameraState.stopCamera()
       audioService.stop()
     }
   }

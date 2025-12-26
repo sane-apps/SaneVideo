@@ -14,6 +14,7 @@ class RecordingState {
 
   var isRecording = false {
     didSet {
+      NSLog("🎬 RecordingState: isRecording changed from \(oldValue) to \(isRecording)")
       NotificationCenter.default.post(
         name: NSNotification.Name("RecordingStateChanged"),
         object: nil,
@@ -32,7 +33,9 @@ class RecordingState {
   // MARK: - Internal Properties
 
   private var recordingTimer: Timer?
-  private var countdownTask: Task<Void, Never>?  // Store countdown timer so it can be cancelled
+  // nonisolated(unsafe) required for deinit access from any thread
+  // Compiler warning "has no effect" is incorrect - deinit IS nonisolated
+  nonisolated(unsafe) private var countdownTask: Task<Void, Never>?
   private var recordingEngine: RecordingEngine?
   private var cameraService: CameraServiceProtocol
   private var injectedAudioService: AudioService?
@@ -57,14 +60,9 @@ class RecordingState {
   var onPresenterOverlayChanged: ((Bool) -> Void)?
 
   // CRITICAL FIX: Ensure proper cleanup of timer and tasks
-  nonisolated deinit {
-    // CRITICAL FIX: Cancel tasks on deallocation
-    // Note: We can't access actor-isolated properties in nonisolated deinit,
-    // but we can use MainActor.assumeIsolated for cancellation
-    MainActor.assumeIsolated {
-      countdownTask?.cancel()
-      countdownTask = nil
-    }
+  // Task.cancel() is thread-safe, so we can call it from any thread in deinit
+  deinit {
+    countdownTask?.cancel()
   }
 
   private func setupRecordingEngine() {
@@ -95,8 +93,19 @@ class RecordingState {
           self.isRecording = false
         }
 
-        // Stop recording cleanup
-        self?.stopRecording { _ in }
+        // CRITICAL FIX: Don't stop recording for source switch timeouts
+        // The switch will rollback, but recording should continue on the previous source
+        let errorMessage = error.localizedDescription
+        let isSourceSwitchTimeout = errorMessage.contains("Source switch timed out") ||
+                                     errorMessage.contains("switch timed out")
+
+        if !isSourceSwitchTimeout {
+          // Stop recording for all other errors
+          self?.stopRecording { _ in }
+        } else {
+          // For source switch timeouts, just show error but keep recording
+          AppLogger.recording.warning("Source switch timeout - continuing recording on previous source")
+        }
 
         // Switch directly on the strongly-typed AppError
         switch error {
@@ -148,8 +157,12 @@ class RecordingState {
   // MARK: - Recording Control
 
   func startRecording(isScreenSharing: Bool) {
-    guard !isRecording, !isPreparing else { return }
-    
+    NSLog("🎬 RecordingState.startRecording called. isRecording=\(isRecording), isPreparing=\(isPreparing)")
+    guard !isRecording, !isPreparing else {
+      NSLog("🎬 RecordingState.startRecording BAILED: already recording or preparing")
+      return
+    }
+
     // CRITICAL FIX: Verify permissions before starting recording
     // This handles cases where permissions were revoked while app was in background
     let permissionManager = ServiceContainer.shared.permissionManager
@@ -158,7 +171,7 @@ class RecordingState {
       requiresMicrophone: true,
       requiresScreenRecording: isScreenSharing
     )
-    
+
     if !hasPermissions {
       AppLogger.recording.error("❌ Cannot start recording: Missing required permissions")
       ServiceContainer.shared.toastManager.show("Missing required permissions. Please check Settings.", type: .error)
@@ -172,7 +185,7 @@ class RecordingState {
       }
       return
     }
-    
+
     if let engine = recordingEngine {
       do { try engine.diskSpaceMonitor.verifyDiskSpace() } catch {
         ServiceContainer.shared.errorPresenter.present(error)
@@ -184,6 +197,7 @@ class RecordingState {
   }
 
   private func startCountdown(isScreenSharing: Bool) {
+    NSLog("🎬 RecordingState.startCountdown called. shouldSkipCountdown=\(shouldSkipCountdown)")
     if shouldSkipCountdown {
       countdownValue = 0
       self.actuallyStartRecording(isScreenSharing: isScreenSharing)
@@ -191,14 +205,17 @@ class RecordingState {
     }
 
     countdownValue = 3
+    NSLog("🎬 RecordingState: Countdown starting at 3...")
     countdownTask?.cancel()
     countdownTask = Task { @MainActor in
       while countdownValue > 0 {
+        NSLog("🎬 RecordingState: Countdown = \(self.countdownValue)")
         try? await Task.sleep(nanoseconds: 1_000_000_000)
         if Task.isCancelled { return }
         countdownValue -= 1
       }
       if Task.isCancelled { return }
+      NSLog("🎬 RecordingState: Countdown complete!")
       self.countdownTask = nil
       self.actuallyStartRecording(isScreenSharing: isScreenSharing)
     }
@@ -212,12 +229,15 @@ class RecordingState {
   }
 
   private func actuallyStartRecording(isScreenSharing: Bool) {
-    // CRITICAL: Double-check state before starting (prevents race with stop during countdown)
-    guard !isRecording, !isPreparing else {
-      AppLogger.recording.warning("actuallyStartRecording called but already recording or preparing")
+    NSLog("🎬 RecordingState.actuallyStartRecording called! isScreenSharing=\(isScreenSharing)")
+    // CRITICAL: Only check isRecording - we ARE expected to have isPreparing=true here
+    // isPreparing will be set to false below
+    guard !isRecording else {
+      NSLog("🎬 RecordingState.actuallyStartRecording BAILED: already recording")
+      AppLogger.recording.warning("actuallyStartRecording called but already recording")
       return
     }
-    
+
     isPreparing = false
     isPaused = false
     recordingDuration = 0
@@ -232,16 +252,16 @@ class RecordingState {
     }
 
     let initialSource: RecordingSource = isScreenSharing ? .screen : .camera
-    
+
     // CRITICAL: Start engine and only set isRecording if it succeeds
     Task {
       await recordingEngine?.startRecording(initialSource: initialSource)
-      
+
       // CRITICAL: Check if engine actually started (isRecording will be set by engine)
       // If start failed, cleanup timer
       await MainActor.run { [weak self] in
         guard let self = self else { return }
-        
+
         // Check if engine is actually recording
         // Note: We can't directly check engine.isRecording from here, so we rely on
         // the engine setting it. If start failed, engine will call onError which
@@ -249,7 +269,7 @@ class RecordingState {
         // For now, we set isRecording here optimistically, but the error handler
         // will clean up if start actually failed.
         self.isRecording = true
-        
+
         ServiceContainer.shared.soundManager.playStartRecording()
         ServiceContainer.shared.hapticsManager.success()
       }

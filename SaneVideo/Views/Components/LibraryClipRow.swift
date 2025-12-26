@@ -90,7 +90,7 @@ struct LibraryClipRow: View {
         .smoothAppear()
         .accessibilityIdentifier("sidebar.clip_row.\(clip.id)")
         .task {
-            thumbnail = await ServiceContainer.shared.timelineThumbnailService.thumbnail(
+            thumbnail = await ServiceContainer.shared.thumbnailService.thumbnail(
                 for: clip,
                 time: .zero,
                 size: CGSize(width: 120, height: 68)

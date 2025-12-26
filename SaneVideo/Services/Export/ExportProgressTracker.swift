@@ -11,7 +11,9 @@ import Combine
 @MainActor
 class ExportProgressTracker {
     let progressSubject = PassthroughSubject<Double, Never>()
-    private var monitoringTask: Task<Void, Never>?
+    /// nonisolated(unsafe) allows safe cancellation from deinit on any thread
+    /// (Task.cancel() is thread-safe)
+    nonisolated(unsafe) private var monitoringTask: Task<Void, Never>?
 
     func startMonitoring(session: AVAssetExportSession) {
         stopMonitoring()
@@ -50,9 +52,7 @@ class ExportProgressTracker {
     }
 
     deinit {
-        // CRITICAL FIX: Cancel task on deallocation
-        // Note: @MainActor class can access MainActor properties in deinit
+        // Task.cancel() is thread-safe, so we can call it from any thread in deinit
         monitoringTask?.cancel()
-        monitoringTask = nil
     }
 }

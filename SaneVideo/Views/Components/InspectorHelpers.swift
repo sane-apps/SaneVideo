@@ -26,33 +26,33 @@ struct CollapsibleSection<Content: View>: View {
                     isExpanded.toggle()
                 }
             }, label: {
-                HStack {
+                HStack(spacing: Theme.Dimensions.spacingSM) {
                     Image(systemName: icon)
-                        .font(.system(size: isPrimary ? 14 : 12, weight: isPrimary ? .bold : .regular))
+                        .font(.system(size: isPrimary ? Theme.Typography.iconSizeSM : Theme.Typography.iconSizeXS, weight: isPrimary ? .bold : .regular))
                         .foregroundColor(isPrimary ? Theme.Colors.accent : .secondary)
-                        .frame(width: 20)
+                        .frame(width: isPrimary ? 22 : 20)
                     Text(title)
-                        .font(.system(size: isPrimary ? 13 : 12, weight: isPrimary ? .bold : .semibold))
+                        .font(.system(size: isPrimary ? Theme.Typography.fontSizeMD : Theme.Typography.fontSizeSM, weight: isPrimary ? .bold : .semibold))
                         .foregroundColor(.primary)
 
                     // Badge (shows count when applicable)
                     if let badge = badge {
                         Text(badge)
-                            .font(.system(size: 9, weight: .bold))
+                            .font(.system(size: Theme.Typography.fontSizeXS, weight: .bold))
                             .foregroundColor(.white)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
+                            .padding(.horizontal, Theme.Dimensions.spacingSM)
+                            .padding(.vertical, Theme.Dimensions.spacingXS)
                             .background(Capsule().fill(Theme.Colors.accent))
                     }
 
                     Spacer()
                     Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
-                        .font(.system(size: 10, weight: .semibold))
+                        .font(.system(size: Theme.Typography.fontSizeXS, weight: .semibold))
                         .foregroundColor(.secondary)
                 }
-                .padding(.horizontal, 12)
-                .padding(.vertical, isPrimary ? 12 : 10)
-                .background(isPrimary ? Theme.Colors.accent.opacity(0.05) : Color.secondary.opacity(0.05))
+                .padding(.horizontal, Theme.Dimensions.paddingMD)
+                .padding(.vertical, isPrimary ? Theme.Dimensions.paddingMD : Theme.Dimensions.paddingSM)
+                .background(isPrimary ? Theme.Colors.accent.opacity(Theme.Opacity.subtle) : Color.secondary.opacity(Theme.Opacity.subtle))
             })
             .buttonStyle(.plain)
             // P0 FIX: Enhanced accessibility
@@ -66,8 +66,8 @@ struct CollapsibleSection<Content: View>: View {
             // Content (collapsible)
             if isExpanded {
                 content()
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
+                    .padding(.horizontal, Theme.Dimensions.paddingMD)
+                    .padding(.vertical, Theme.Dimensions.paddingSM)
                     .transition(.smoothScale)
                     // P0 FIX: Focus management for keyboard navigation
                     .focusable()
@@ -83,7 +83,7 @@ struct SubsectionHeader: View {
 
     var body: some View {
         Text(title.uppercased())
-            .font(.system(size: 10, weight: .semibold))
+            .font(.system(size: Theme.Typography.fontSizeXS, weight: .semibold))
             .foregroundColor(.secondary)
             .tracking(0.5)
     }
@@ -102,18 +102,18 @@ struct SmartToolButton: View {
 
     var body: some View {
         Button(action: action, label: {
-            HStack(spacing: 8) {
+            HStack(spacing: Theme.Dimensions.spacingSM) {
                 Image(systemName: icon)
-                    .font(.system(size: 12))
+                    .font(.system(size: Theme.Typography.iconSizeXS))
                     .foregroundColor(color)
                     .frame(width: 20)
 
-                VStack(alignment: .leading, spacing: 1) {
+                VStack(alignment: .leading, spacing: Theme.Dimensions.spacingXS) {
                     Text(title)
-                        .font(.caption.bold())
+                        .font(.system(size: Theme.Typography.fontSizeSM, weight: .bold))
                         .foregroundColor(.primary)
                     Text(subtitle)
-                        .font(.system(size: 9))
+                        .font(.system(size: Theme.Typography.fontSizeXS))
                         .foregroundColor(.secondary)
                 }
 
@@ -123,16 +123,16 @@ struct SmartToolButton: View {
                     ProgressView().scaleEffect(0.6)
                 } else {
                     Image(systemName: "chevron.right")
-                        .font(.caption2)
+                        .font(.system(size: Theme.Typography.fontSizeXS))
                         .foregroundStyle(.tertiary)
                 }
             }
-            .padding(8)
-            .background(color.opacity(0.1))
-            .cornerRadius(6)
+            .padding(Theme.Dimensions.paddingSM)
+            .background(color.opacity(Theme.Opacity.light))
+            .cornerRadius(Theme.Dimensions.smallCornerRadius)
             .overlay(
-                RoundedRectangle(cornerRadius: 6)
-                    .stroke(color.opacity(0.3), lineWidth: 1)
+                RoundedRectangle(cornerRadius: Theme.Dimensions.smallCornerRadius)
+                    .stroke(color.opacity(Theme.Opacity.strong), lineWidth: 1)
             )
         })
         .buttonStyle(.plain)
@@ -163,34 +163,34 @@ struct AIToolButton: View {
 
     var body: some View {
         Button(action: action, label: {
-            HStack(spacing: 10) {
+            HStack(spacing: Theme.Dimensions.spacingMD) {
                 Image(systemName: icon)
-                    .font(.system(size: 14))
+                    .font(.system(size: Theme.Typography.iconSizeSM))
                     .foregroundColor(color)
                     .frame(width: 24)
 
-                VStack(alignment: .leading, spacing: 1) {
+                VStack(alignment: .leading, spacing: Theme.Dimensions.spacingXS) {
                     Text(title)
-                        .font(.caption.bold())
+                        .font(.system(size: Theme.Typography.fontSizeSM, weight: .bold))
                         .foregroundColor(.primary)
                     Text(subtitle)
-                        .font(.system(size: 9))
+                        .font(.system(size: Theme.Typography.fontSizeXS))
                         .foregroundColor(.secondary)
                 }
 
                 Spacer()
 
                 Image(systemName: "chevron.right")
-                    .font(.caption2)
+                    .font(.system(size: Theme.Typography.fontSizeXS))
                     .foregroundStyle(.tertiary)
             }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 8)
-            .background(color.opacity(0.1))
-            .cornerRadius(8)
+            .padding(.horizontal, Theme.Dimensions.paddingMD)
+            .padding(.vertical, Theme.Dimensions.paddingSM)
+            .background(color.opacity(Theme.Opacity.light))
+            .cornerRadius(Theme.Dimensions.cornerRadius)
             .overlay(
-                RoundedRectangle(cornerRadius: 8)
-                    .stroke(color.opacity(0.3), lineWidth: 1)
+                RoundedRectangle(cornerRadius: Theme.Dimensions.cornerRadius)
+                    .stroke(color.opacity(Theme.Opacity.strong), lineWidth: 1)
             )
         })
         .buttonStyle(.plain)

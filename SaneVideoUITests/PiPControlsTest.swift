@@ -8,6 +8,7 @@
 //
 
 import XCTest
+@testable import SaneVideo
 
 final class PiPControlsTest: XCTestCase {
     
@@ -53,15 +54,15 @@ final class PiPControlsTest: XCTestCase {
     // MARK: - Helper Methods
     
     func waitForAppReady(timeout: TimeInterval = 15) -> Bool {
-        let recordButton = app.buttons.matching(identifier: "recording.start").firstMatch
+        let recordButton = app.buttons[AccessibilityIdentifiers.recordButton]
         if recordButton.waitForExistence(timeout: timeout) {
             return true
         }
         
         // Also check for onboarding or other states
-        let continueButton = app.buttons["ContinueButton"]
-        if continueButton.exists {
-            continueButton.tap()
+        let getStartedButton = app.buttons[AccessibilityIdentifiers.onboardingGetStarted]
+        if getStartedButton.exists {
+            getStartedButton.tap()
             return waitForAppReady(timeout: timeout - 5)
         }
         
@@ -96,8 +97,9 @@ final class PiPControlsTest: XCTestCase {
         
         // 2. Verify PiP window exists
         // Look for PiP window by accessibility identifier or title
-        let pipWindow = app.windows.matching(identifier: "PiPCameraWindow").firstMatch
-        let pipWindowByTitle = app.windows["SaneVideo PiP"]
+        let pipWindow = app.windows.matching(identifier: AccessibilityIdentifiers.pipCameraWindow).firstMatch
+        // Use accessibility identifier instead of window title
+        let pipWindowByTitle = app.windows[AccessibilityIdentifiers.pipCameraWindow]
         
         let pipExists = pipWindow.exists || pipWindowByTitle.exists
         
@@ -113,11 +115,11 @@ final class PiPControlsTest: XCTestCase {
         
         // 3. Verify controls window exists as separate window
         // The controls window should have accessibility identifier "PiPControlsWindow"
-        let controlsWindow = app.windows.matching(identifier: "PiPControlsWindow").firstMatch
+        let controlsWindow = app.windows.matching(identifier: AccessibilityIdentifiers.pipControlsWindow).firstMatch
         
         // Also check for controls by looking for control buttons within the PiP context
-        let micButton = app.buttons.matching(identifier: "MicToggle").firstMatch
-        let recordButton = app.buttons.matching(identifier: "recording.start").firstMatch
+        let micButton = app.buttons.matching(identifier: AccessibilityIdentifiers.micToggle).firstMatch
+        let recordButton = app.buttons[AccessibilityIdentifiers.recordButton]
         
         // Controls should be accessible either as a separate window or as buttons
         let controlsExist = controlsWindow.exists || 
@@ -163,14 +165,14 @@ final class PiPControlsTest: XCTestCase {
         sleep(3)
         
         // Verify PiP is visible
-        let pipWindow = app.windows["SaneVideo PiP"]
+        let pipWindow = app.windows[AccessibilityIdentifiers.pipCameraWindow]
         guard pipWindow.waitForExistence(timeout: 5) else {
             XCTFail("PiP window should be visible")
             return
         }
         
         // Test mic toggle
-        let micButton = app.buttons.matching(identifier: "MicToggle").firstMatch
+        let micButton = app.buttons.matching(identifier: AccessibilityIdentifiers.micToggle).firstMatch
         if micButton.waitForExistence(timeout: 3) {
             let initialState = micButton.value as? String ?? ""
             micButton.tap()
@@ -180,7 +182,7 @@ final class PiPControlsTest: XCTestCase {
         }
         
         // Test record button (if visible)
-        let recordButton = app.buttons.matching(identifier: "recording.start").firstMatch
+        let recordButton = app.buttons[AccessibilityIdentifiers.recordButton]
         if recordButton.waitForExistence(timeout: 3) && recordButton.isHittable {
             // Just verify it's accessible, don't actually start recording in this test
             XCTAssertTrue(recordButton.isHittable, "Record button should be accessible in PiP")
@@ -212,7 +214,7 @@ final class PiPControlsTest: XCTestCase {
         sleep(3)
         
         // Verify controls window exists
-        let controlsWindow = app.windows.matching(identifier: "PiPControlsWindow").firstMatch
+        let controlsWindow = app.windows.matching(identifier: AccessibilityIdentifiers.pipControlsWindow).firstMatch
         let controlsExist = controlsWindow.exists || 
                            app.buttons.matching(identifier: "MicToggle").firstMatch.exists
         

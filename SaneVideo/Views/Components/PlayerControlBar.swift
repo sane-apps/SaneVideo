@@ -114,6 +114,12 @@ struct PlayerControlBar: View {
             nsView.material = material
             nsView.blendingMode = blendingMode
         }
+        
+        // CRITICAL FIX: Proper cleanup to prevent use-after-free during autorelease
+        static func dismantleNSView(_ nsView: NSVisualEffectView, coordinator: ()) {
+            nsView.state = .inactive
+            nsView.removeFromSuperview()
+        }
     }
 
     private func timecodeString(from time: CMTime) -> String {

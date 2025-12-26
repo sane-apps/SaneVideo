@@ -6,6 +6,7 @@
 //
 
 import XCTest
+@testable import SaneVideo
 
 final class MagicFixIntegrationTests: XCTestCase {
     
@@ -28,15 +29,21 @@ final class MagicFixIntegrationTests: XCTestCase {
     // MARK: - Helper Methods
     
     private func ensureEditorReady() -> Bool {
-        let editTab = app.buttons["EditTabButton"]
-        guard editTab.waitForExistence(timeout: 15) else { return false }
-        
-        if !editTab.isSelected {
-            editTab.tap()
+        // Using centralized identifier registry
+        let modeSwitcher = app.buttons[AccessibilityIdentifiers.modeSwitcher]
+        guard modeSwitcher.waitForExistence(timeout: 15) else { return false }
+        // Ensure we're in editing mode (button label says "Record" when in editing mode)
+        let label = modeSwitcher.label
+        if label.contains("Editor") {
+          // Currently in recording mode, switch to editing
+          modeSwitcher.tap()
+          sleep(1) // Wait for mode switch
         }
         
+        // Mode switcher already handled above
+        
         // Wait for inspector
-        let inspectorToggle = app.buttons["InspectorToggle"]
+        let inspectorToggle = app.buttons[AccessibilityIdentifiers.inspectorToggle]
         guard inspectorToggle.waitForExistence(timeout: 5) else { return false }
         
         if !inspectorToggle.isSelected {
@@ -56,7 +63,7 @@ final class MagicFixIntegrationTests: XCTestCase {
         }
         
         // Find Magic Fix button
-        let magicFixButton = app.buttons["ApplyMagicFixButton"]
+        let magicFixButton = app.buttons[AccessibilityIdentifiers.magicFixButton]
         guard magicFixButton.waitForExistence(timeout: 10) else {
             XCTSkip("Magic Fix button not available")
             return
@@ -66,7 +73,7 @@ final class MagicFixIntegrationTests: XCTestCase {
         magicFixButton.tap()
         
         // Verify processing starts
-        let processingOverlay = app.otherElements["MagicProgressOverlay"]
+        let processingOverlay = app.otherElements[AccessibilityIdentifiers.magicProgressOverlay]
         XCTAssertTrue(processingOverlay.waitForExistence(timeout: 5), "Processing overlay should appear")
         
         // Wait for completion (with timeout)
@@ -91,7 +98,7 @@ final class MagicFixIntegrationTests: XCTestCase {
         }
         
         // Open presets menu
-        let presetsMenu = app.buttons["PresetsMenu"]
+        let presetsMenu = app.buttons[AccessibilityIdentifiers.presetsMenu]
         guard presetsMenu.waitForExistence(timeout: 10) else {
             XCTSkip("Presets menu not available")
             return
@@ -100,7 +107,7 @@ final class MagicFixIntegrationTests: XCTestCase {
         presetsMenu.tap()
         
         // Select Minimal preset
-        let minimalPreset = app.buttons["Preset_Minimal"]
+        let minimalPreset = app.buttons[AccessibilityIdentifiers.presetMinimal]
         guard minimalPreset.waitForExistence(timeout: 2) else {
             XCTFail("Minimal preset not found")
             return
@@ -109,7 +116,7 @@ final class MagicFixIntegrationTests: XCTestCase {
         minimalPreset.tap()
         
         // Apply Magic Fix
-        let magicFixButton = app.buttons["ApplyMagicFixButton"]
+        let magicFixButton = app.buttons[AccessibilityIdentifiers.magicFixButton]
         guard magicFixButton.waitForExistence(timeout: 5) else {
             XCTFail("Magic Fix button not found")
             return
@@ -118,7 +125,7 @@ final class MagicFixIntegrationTests: XCTestCase {
         magicFixButton.tap()
         
         // Verify processing starts
-        let processingOverlay = app.otherElements["MagicProgressOverlay"]
+        let processingOverlay = app.otherElements[AccessibilityIdentifiers.magicProgressOverlay]
         XCTAssertTrue(processingOverlay.waitForExistence(timeout: 5), "Processing should start")
     }
     
@@ -129,7 +136,7 @@ final class MagicFixIntegrationTests: XCTestCase {
             return
         }
         
-        let presetsMenu = app.buttons["PresetsMenu"]
+        let presetsMenu = app.buttons[AccessibilityIdentifiers.presetsMenu]
         guard presetsMenu.waitForExistence(timeout: 10) else {
             XCTSkip("Presets menu not available")
             return
@@ -137,7 +144,7 @@ final class MagicFixIntegrationTests: XCTestCase {
         
         presetsMenu.tap()
         
-        let proCleanPreset = app.buttons["Preset_ProClean"]
+        let proCleanPreset = app.buttons[AccessibilityIdentifiers.presetProClean]
         guard proCleanPreset.waitForExistence(timeout: 2) else {
             XCTFail("Pro Clean preset not found")
             return
@@ -146,7 +153,7 @@ final class MagicFixIntegrationTests: XCTestCase {
         proCleanPreset.tap()
         
         // Verify preset was applied (check toggle states)
-        let enhanceSpeechToggle = app.switches["Toggle_EnhanceSpeech"]
+        let enhanceSpeechToggle = app.switches[AccessibilityIdentifiers.toggleEnhanceSpeech]
         if enhanceSpeechToggle.exists {
             // Pro Clean should enable enhance speech
             let value = enhanceSpeechToggle.value as? String
@@ -162,7 +169,7 @@ final class MagicFixIntegrationTests: XCTestCase {
             return
         }
         
-        let magicFixButton = app.buttons["ApplyMagicFixButton"]
+        let magicFixButton = app.buttons[AccessibilityIdentifiers.magicFixButton]
         guard magicFixButton.waitForExistence(timeout: 10) else {
             XCTSkip("Magic Fix button not available")
             return
@@ -172,7 +179,7 @@ final class MagicFixIntegrationTests: XCTestCase {
         magicFixButton.tap()
         
         // Wait for processing to start
-        let processingOverlay = app.otherElements["MagicProgressOverlay"]
+        let processingOverlay = app.otherElements[AccessibilityIdentifiers.magicProgressOverlay]
         guard processingOverlay.waitForExistence(timeout: 5) else {
             XCTSkip("Processing did not start")
             return
@@ -192,7 +199,7 @@ final class MagicFixIntegrationTests: XCTestCase {
         }
         
         // Toggle specific options
-        let removeSilenceToggle = app.switches["Toggle_RemoveSilence"]
+        let removeSilenceToggle = app.switches[AccessibilityIdentifiers.toggleRemoveSilence]
         if removeSilenceToggle.waitForExistence(timeout: 5) {
             // Toggle it on if off
             if removeSilenceToggle.value as? String == "0" {
@@ -201,7 +208,7 @@ final class MagicFixIntegrationTests: XCTestCase {
             XCTAssertTrue(removeSilenceToggle.value as? String == "1", "Remove Silence should be enabled")
         }
         
-        let enhanceSpeechToggle = app.switches["Toggle_EnhanceSpeech"]
+        let enhanceSpeechToggle = app.switches[AccessibilityIdentifiers.toggleEnhanceSpeech]
         if enhanceSpeechToggle.waitForExistence(timeout: 5) {
             if enhanceSpeechToggle.value as? String == "0" {
                 enhanceSpeechToggle.tap()
@@ -210,7 +217,7 @@ final class MagicFixIntegrationTests: XCTestCase {
         }
         
         // Apply Magic Fix
-        let magicFixButton = app.buttons["ApplyMagicFixButton"]
+        let magicFixButton = app.buttons[AccessibilityIdentifiers.magicFixButton]
         guard magicFixButton.waitForExistence(timeout: 5) else {
             XCTFail("Magic Fix button not found")
             return
@@ -219,7 +226,7 @@ final class MagicFixIntegrationTests: XCTestCase {
         magicFixButton.tap()
         
         // Verify processing starts
-        let processingOverlay = app.otherElements["MagicProgressOverlay"]
+        let processingOverlay = app.otherElements[AccessibilityIdentifiers.magicProgressOverlay]
         XCTAssertTrue(processingOverlay.waitForExistence(timeout: 5), "Processing should start with custom options")
     }
 }

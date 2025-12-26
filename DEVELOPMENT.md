@@ -15,13 +15,14 @@
 **New to this project? Start here:**
 
 1. **Read this file** (DEVELOPMENT.md) - It's the single source of truth
-2. **Check current status**: 
+2. **Check current status**:
    - Tests are disabled (see section 8)
    - Use `test_suite --quick` instead of running tests
 3. **Use SaneMaster.rb**: All tools are in `./Scripts/SaneMaster.rb`
 4. **Reference docs**: See section 9 for documentation structure
 
 **Key Commands:**
+
 ```bash
 ./Scripts/SaneMaster.rb setup      # Initial setup
 ./Scripts/SaneMaster.rb verify     # Build app (tests disabled)
@@ -29,6 +30,7 @@
 ```
 
 **Supplementary Documentation:**
+
 - `TESTING_SUMMARY.md` - Quick testing reference
 - `ALTERNATIVE_TESTING.md` - Detailed alternative testing guide
 - `CI_TEST_STATUS.md` - CI-specific test status
@@ -60,12 +62,12 @@
    - **Use tool**: `./Scripts/SaneMaster.rb verify_api <APIName> [Framework]` to verify APIs.
    - See workflow: `.agent/workflows/sdk-api-verification.md`
    - Example: `./Scripts/SaneMaster.rb verify_api faceCaptureQuality Vision`
-7. **FIX THE TOOL (Critical Protocol)**
+7. **TWO-FIX RULE (CRITICAL)**: If you fail twice in a row, **STOP GUESSING**. Look up the SDK (rule 6) or web search for documentation. Never attempt a third guess.
+8. **WEB SEARCH IS SECONDARY**: Only use web search for understanding *why* or *how* after verifying with SDK.
+9. **FIX THE TOOL, NOT THE SYMPTOM**:
    - **Trigger**: Persistent errors or repetitive manual work.
    - **Action**: STOP. Fix or upgrade the underlying tool (`SaneMaster.rb`).
-   - **Constraint**: If you don't get something right twice in a row, check the SDK then the web for help.
-8. **WEB SEARCH IS SECONDARY**: Only use web search for understanding *why* or *how* after verifying with SDK.
-9. **MISSING TOOL = UPGRADE SANEMASTER**: Do not create separate scripts. Upgrade the central `SaneMaster.rb`.
+10. **MISSING TOOL = UPGRADE SANEMASTER**: Do not create separate scripts. Upgrade the central `SaneMaster.rb`.
 
 ---
 
@@ -253,11 +255,130 @@ Always diagnostics after a run:
 - **"Signal 9" Crash**: Check `SaneVideo.entitlements` for App Sandbox.
 - **Phantom Errors**: Run `./Scripts/SaneMaster.rb clean --nuclear`.
 - **Permissions Black Screen**: Run `tccutil reset Camera`.
-- **Test Execution Disabled**: 
+- **Test Execution Disabled**:
   - **Local**: SwiftUICore linker error (Xcode 16/macOS 26.2 bug) - see `TEST_DISABLED_NOTICE.md`
   - **CI**: Deployment target mismatch (CI runners have macOS 26.0.1, app requires 26.2) - see `CI_TEST_STATUS.md`
   - **Workaround**: Use alternative testing methods (static analysis, API verification, manual testing)
   - **To re-enable**: See `TEST_DISABLED_NOTICE.md` for local, `CI_TEST_STATUS.md` for CI
+
+### Crash/Log Analysis SOP (MANDATORY for Debugging)
+
+**When to use this**: After ANY crash, freeze, or unexpected behavior. Run this **before** attempting fixes.
+
+#### Step 0: The "Nuclear" Relaunch (CRITICAL)
+
+If the app is malfunctioning or crashing, do NOT just re-launch it. Old zombie processes can pollute logs and hold resources.
+
+1. **KILL**: `killall -9 SaneVideo`
+2. **LAUNCH**: `./Scripts/SaneMaster.rb launch`
+3. **LOGS**: Immediately run `log show --predicate 'process == "SaneVideo"' --last 1m` or stream with `log stream`.
+
+#### Step 1: Collect Crash Reports
+
+```bash
+# List all SaneVideo crash reports
+ls -la ~/Library/Logs/DiagnosticReports/ | grep -i sane
+
+# Analyze crash type distribution (PATTERN DETECTION)
+for f in ~/Library/Logs/DiagnosticReports/SaneVideo-*.ips; do
+  grep -o '"type":"[^"]*"' "$f" | head -1
+done | sort | uniq -c | sort -rn
+
+# Get crash signatures (top 4 frames) to identify patterns
+for f in ~/Library/Logs/DiagnosticReports/SaneVideo-*.ips; do
+  python3 -c "
+import json
+import sys
+
+lines = open('$f').read().split('\n')
+for i, line in enumerate(lines):
+    if line.strip() == '{':
+        json_start = i
+        break
+try:
+    data = json.loads('\n'.join(lines[json_start:]))
+    for t in data.get('threads', []):
+        if t.get('triggered'):
+            sig = ' -> '.join([f.get('symbol', '?')[:40] for f in t.get('frames', [])[:4]])
+            print(sig)
+            break
+except: pass
+" 2>/dev/null
+done | sort | uniq -c | sort -rn | head -10
+```
+
+#### Step 2: Analyze Specific Crash
+
+```bash
+# Detailed analysis of most recent crash
+CRASH=$(ls -t ~/Library/Logs/DiagnosticReports/SaneVideo-*.ips | head -1)
+python3 -c "
+import json
+lines = open('$CRASH').read().split('\n')
+for i, line in enumerate(lines):
+    if line.strip() == '{':
+        json_start = i
+        break
+data = json.loads('\n'.join(lines[json_start:]))
+print('Exception:', data.get('exception', {}))
+print()
+for t in data.get('threads', []):
+    if t.get('triggered'):
+        print('Queue:', t.get('queue', 'unknown'))
+        for i, f in enumerate(t.get('frames', [])[:15]):
+            sym = f.get('symbol', '?')
+            src = f.get('sourceFile', '')
+            line = f.get('sourceLine', '')
+            print(f'  {i}: {sym}')
+            if src: print(f'      {src}:{line}')
+        break
+"
+```
+
+#### Step 3: Check Application Logs
+
+**File-based logs** (recommended - always available):
+
+```bash
+# Show today's logs
+./Scripts/SaneMaster.rb logs
+
+# Show last 100 lines
+./Scripts/SaneMaster.rb logs --tail 100
+
+# Follow logs live (like tail -f)
+./Scripts/SaneMaster.rb logs --follow
+```
+
+Log files are stored at: `~/Library/Logs/SaneVideo/SaneVideo-YYYY-MM-DD.log`
+
+**System unified logs** (only available when streaming):
+
+```bash
+# Stream live (only works while app is running)
+log stream --predicate 'subsystem == "com.sanevideo.SaneVideo"' --level debug
+
+# NOTE: macOS filters debug/info logs by default - they're NOT persisted to disk!
+# Use file-based logging above for reliable log capture.
+```
+
+#### Common Crash Patterns & Fixes
+
+| Pattern | Crash Signature | Root Cause | Fix |
+|---------|-----------------|------------|-----|
+| **Actor Isolation** | `MainActor.assumeIsolated → dispatch_assert_queue_fail` | Calling MainActor code from background thread | Remove `MainActor.assumeIsolated` from `deinit`, use `nonisolated(unsafe)` for Tasks |
+| **Object Deallocated** | `objc_opt_class → swift_getObjectType → isMainExecutor → SIGSEGV at 0x1e` | Timer/Publisher accessing deallocated view | Use `TimelineView` instead of `Timer.publish()`, add `isActive` guards |
+| **Test Cleanup** | `objc_release → XCTMemoryChecker` | Test objects not properly cleaned up | Ensure async tasks complete before test ends |
+| **Race Condition** | `objc_release → SIGSEGV` at random addresses | Concurrent access to non-thread-safe property | Use `nonisolated(unsafe)` with direct initialization (not lazy) |
+| **Nested Tasks** | Freeze at `_isSameExecutor` | Excessive actor hopping creating deadlock | Remove nested `Task { @MainActor in Task { @OtherActor in } }` patterns |
+
+#### Key Warning Signs
+
+- **Address 0x0-0x1000**: NULL pointer dereference (object deallocated)
+- **faultingThread: 0**: Main thread crash (UI/state issue)
+- **faultingThread: N > 0**: Background thread crash (concurrency issue)
+- **EXC_BREAKPOINT (SIGTRAP)**: Swift assertion failed or `assumeIsolated` violation
+- **EXC_BAD_ACCESS (SIGSEGV)**: Memory corruption or use-after-free
 
 ---
 
@@ -323,10 +444,12 @@ Always diagnostics after a run:
 ## 8. Testing Strategy (Current Status)
 
 > **⚠️ IMPORTANT**: Automated test execution is currently **disabled** due to environmental limitations:
+>
 > - **Local**: Tests disabled due to SwiftUICore linker error (Xcode 16/macOS 26.2 bug)
 > - **CI**: Tests disabled due to deployment target mismatch (CI runners have macOS 26.0.1, app requires 26.2)
-> 
+>
 > **What Still Works**:
+>
 > - ✅ Build verification (`./Scripts/SaneMaster.rb verify` builds app only)
 > - ✅ Static analysis tools (see "Alternative Testing Methods" below)
 > - ✅ Test code is preserved and will be re-enabled when environment supports it
@@ -361,6 +484,7 @@ Always diagnostics after a run:
 Since automated test execution is disabled, use these tools for code validation:
 
 1. **Static Analysis**:
+
    ```bash
    ./Scripts/SaneMaster.rb validate_test_references  # Verify UI test references match code
    ./Scripts/SaneMaster.rb check_deprecations         # Find deprecated API usage
@@ -369,11 +493,13 @@ Since automated test execution is disabled, use these tools for code validation:
    ```
 
 2. **API Verification**:
+
    ```bash
    ./Scripts/SaneMaster.rb verify_api <APIName> [Framework]  # Verify APIs exist in SDK
    ```
 
 3. **Build Verification**:
+
    ```bash
    ./Scripts/SaneMaster.rb verify  # Builds app (tests skipped automatically)
    ```
@@ -421,6 +547,7 @@ Regression tests are critical for preventing the reintroduction of fixed bugs.
 ### Reference Documentation
 
 **Testing (Current Status)**:
+
 - **TESTING_SUMMARY.md**: Quick reference for testing status and alternative methods
 - **ALTERNATIVE_TESTING.md**: Detailed guide on alternative testing tools
 - **TEST_DISABLED_NOTICE.md**: Local test status and re-enable instructions
@@ -428,10 +555,12 @@ Regression tests are critical for preventing the reintroduction of fixed bugs.
 - **TEST_SUITE_GUIDE.md**: Comprehensive guide for `test_suite` command
 
 **Tools & Research**:
+
 - **OPEN_SOURCE_TOOLS_FINAL.md**: Open source tools research findings
 - **TOOLS_AUDIT.md**: Tools audit and recommendations
 
 **Architecture** (if exists):
+
 - **ON_DEVICE_ARCHITECTURE.md**: Details on 100% on-device processing architecture
 - **VISUAL_TESTS_SETUP.md**: UI testing setup and permission automation
 

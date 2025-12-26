@@ -10,11 +10,11 @@ import Foundation
 import SwiftUI
 
 extension ProjectState {
-    
+
     // MARK: - Removal
 
-    func deleteClip(_ clip: VideoClip) {
-        guard !isProcessing else { return }
+    func deleteClip(_ clip: VideoClip, transactionId: UUID? = nil) {
+        guard !shouldBlockOperation(transactionId: transactionId) else { return }
         guard var project = currentProject else { return }
 
         // Phase 2: Check if track is locked
@@ -41,17 +41,17 @@ extension ProjectState {
         if clipFound {
             // CRITICAL FIX: Recalculate startTimes to ensure consistency
             recalculateStartTimes(in: &timeline)
-            
+
             // CRITICAL FIX: Update timeline duration after deletion
             timeline.updateDuration()
-            
+
             // CRITICAL FIX: Validate timeline state after deletion
             if !validateTimelineState(timeline) {
                 AppLogger.project.error("Timeline state invalid after deletion, rolling back")
                 ServiceContainer.shared.toastManager.show("Delete failed: Timeline state invalid", type: .error)
                 return
             }
-            
+
             project.timeline = timeline
             currentProject = project
             saveProject(project)
@@ -66,7 +66,7 @@ extension ProjectState {
         // CRITICAL FIX: Mark clip as missing before deletion to prevent operations on missing file
         guard var project = currentProject else { return }
         var timeline = project.timeline
-        
+
         // Mark clip as missing in timeline
         for (trackIndex, track) in timeline.tracks.enumerated() {
             if let clipIndex = track.clips.firstIndex(where: { $0.id == clip.id }) {
@@ -80,7 +80,7 @@ extension ProjectState {
                 break
             }
         }
-        
+
         // 1. Remove from timeline
         deleteClip(clip)
 

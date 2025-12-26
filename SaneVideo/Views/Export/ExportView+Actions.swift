@@ -24,7 +24,7 @@ extension ExportView {
 
         // Capture services before Task (Swift 6 safety)
         let thumbnailService = ServiceContainer.shared.thumbnailService
-        
+
         Task {
             do {
                 let image = try await thumbnailService.generateBestThumbnail(for: firstClip.url)
@@ -56,7 +56,7 @@ extension ExportView {
         let outputURL = desktopURL.appendingPathComponent(fileName)
 
         let pdfService = ServiceContainer.shared.pdfService
-        
+
         Task {
             do {
                 try await pdfService.generateStudyGuide(for: project, outputURL: outputURL)
@@ -211,7 +211,7 @@ extension ExportView {
             ServiceContainer.shared.toastManager.show("No project to export", type: .error)
             return
         }
-        
+
         let hasClips = project.timeline.tracks.contains { !$0.clips.isEmpty }
         guard hasClips else {
             ServiceContainer.shared.toastManager.show("Cannot export empty timeline. Add clips first.", type: .error)
@@ -220,7 +220,7 @@ extension ExportView {
 
         let desktopURL = FileManager.default.homeDirectoryForCurrentUser
             .appendingPathComponent("Desktop")
-        
+
         // CRITICAL FIX: Validate output directory exists and is writable
         var isDirectory: ObjCBool = false
         var outputURL: URL
@@ -241,13 +241,13 @@ extension ExportView {
 
         // Remove existing file if needed
         try? FileManager.default.removeItem(at: outputURL)
-        
+
         // CRITICAL FIX: Start export with validation in Task
         Task {
             await startExportWithValidation(project: project, outputURL: outputURL, uploadToYouTube: uploadToYouTube)
         }
     }
-    
+
     // CRITICAL FIX: Separate function for export with validation
     private func startExportWithValidation(project: VideoProject, outputURL: URL, uploadToYouTube: Bool) async {
         // CRITICAL FIX: Check disk space before export
@@ -260,7 +260,7 @@ extension ExportView {
             let estimatedBytes = Int64((totalBitrate * duration) / 8.0)
             // Add 20% overhead for container, metadata, etc.
             let requiredSpace = Int64(Double(estimatedBytes) * 1.2)
-            
+
             // Check available space on output volume
             let outputVolume = outputURL.deletingLastPathComponent()
             let values = try outputVolume.resourceValues(forKeys: [.volumeAvailableCapacityForImportantUsageKey])
@@ -292,10 +292,10 @@ extension ExportView {
                         }
                     }
                 )
-                
+
                 self.isExporting = false
                 AppLogger.export.info("Export success: \(outputURL)")
-                
+
                 if uploadToYouTube {
                     await self.performYouTubeUpload(fileURL: outputURL)
                 } else {
@@ -328,7 +328,7 @@ extension ExportView {
 
     // MARK: - Batch Export
 
-    /// Exports multiple selected clips individually
+    /// Exports multiple selected clips individually (parallelized via BatchCoordinator)
     func startBatchExport() {
         let clips = selectedClips
         guard !clips.isEmpty else { return }
@@ -345,51 +345,64 @@ extension ExportView {
         exportProgress = 0
 
         Task {
-            var successCount = 0
-            var failedCount = 0
             let totalClips = clips.count
-            var exportedURLs: [URL] = []
+            let timestamp = Int(Date().timeIntervalSince1970)
 
-            for (index, clip) in clips.enumerated() {
-                let fileName = "\(projectName)_\(clip.url.deletingPathExtension().lastPathComponent)_\(Int(Date().timeIntervalSince1970)).mp4"
-                let outputURL = desktopURL.appendingPathComponent(fileName)
+            // Use BatchCoordinator for parallel export (I/O bound, so use 2 workers)
+            let results = await BatchCoordinator.execute(
+                items: clips,
+                config: .ioBound, // 2 concurrent workers for I/O-bound operations
+                operation: { clip, index in
+                    let fileName = "\(projectName)_\(clip.url.deletingPathExtension().lastPathComponent)_\(timestamp).mp4"
+                    let outputURL = desktopURL.appendingPathComponent(fileName)
 
-                // Remove existing file if needed
-                try? FileManager.default.removeItem(at: outputURL)
+                    // Remove existing file if needed
+                    try? FileManager.default.removeItem(at: outputURL)
 
-                // Create a temporary project with just this clip
-                var tempProject = VideoProject()
-                tempProject.name = "\(projectName)_\(clip.url.deletingPathExtension().lastPathComponent)"
+                    // Create a temporary project with just this clip
+                    var tempProject = VideoProject()
+                    tempProject.name = "\(projectName)_\(clip.url.deletingPathExtension().lastPathComponent)"
 
-                // Add clip to first track
-                let track = Track(name: "Export Track", type: .video, clips: [clip], zIndex: 0)
-                tempProject.timeline.tracks.append(track)
+                    // Add clip to first track
+                    let track = Track(name: "Export Track", type: .video, clips: [clip], zIndex: 0)
+                    tempProject.timeline.tracks.append(track)
 
-                // Export using async (Swift 6 compliant)
-                do {
+                    // Export using async (Swift 6 compliant)
                     _ = try await engine.export(
                         project: tempProject,
                         settings: settings,
                         outputURL: outputURL,
-                        progressHandler: { progress in
-                            // Update overall progress: (index + progress) / total
-                            let overallProgress = (Double(index) + progress) / Double(totalClips)
+                        progressHandler: { clipProgress in
+                            // Update overall progress: (index + clipProgress) / total
+                            let overallProgress = (Double(index) + clipProgress) / Double(totalClips)
                             Task { @MainActor in
                                 self.exportProgress = overallProgress
                             }
                         }
                     )
-                    exportedURLs.append(outputURL)
-                    successCount += 1
-                } catch {
-                    failedCount += 1
-                    AppLogger.export.error("Batch export failed for clip \(clip.url.lastPathComponent): \(error)")
+                },
+                progressHandler: { completed, total in
+                    Task { @MainActor in
+                        // Overall progress based on completed items
+                        self.exportProgress = Double(completed) / Double(total)
+                    }
                 }
-            }
+            )
 
             // Update UI on main actor
             isExporting = false
             exportProgress = 1.0
+
+            let successCount = results.filter { $0.success }.count
+            let failedCount = results.filter { !$0.success }.count
+
+            // Collect exported URLs from successful results
+            var exportedURLs: [URL] = []
+            for (index, result) in results.enumerated() where result.success {
+                let fileName = "\(projectName)_\(clips[index].url.deletingPathExtension().lastPathComponent)_\(timestamp).mp4"
+                let outputURL = desktopURL.appendingPathComponent(fileName)
+                exportedURLs.append(outputURL)
+            }
 
             if successCount > 0 {
                 // Show exported files in Finder
@@ -431,7 +444,7 @@ extension ExportView {
                         }
                     }
                 )
-                
+
                 self.isExporting = false
                 let url = outputURL
                 ServiceContainer.shared.shareLinkService.shareFile(at: url, from: nil)

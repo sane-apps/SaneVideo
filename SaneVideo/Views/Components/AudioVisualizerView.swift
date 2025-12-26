@@ -2,24 +2,23 @@ import Combine
 import SwiftUI
 
 /// Audio level indicator displayed as a subtle animated ring around the mic button
+/// Uses Theme colors for visual consistency across the app
 struct AudioVisualizerView: View {
     var audioLevelPublisher: AnyPublisher<Float, Never>
     var size: CGFloat = 70
-    var colors: [Color] = [
-        Color(red: 0.4, green: 0.9, blue: 1.0), // Cyan
-        Color(red: 0.3, green: 0.7, blue: 1.0), // Light blue
-        Color(red: 0.5, green: 0.8, blue: 0.9) // Aqua
-    ]
 
-    // Dynamic color based on audio level (VU Meter Logic)
+    // Industry standard VU meter colors:
+    // Green = normal/safe, Yellow = loud/hot, Red = clipping
     private var meteringColors: [Color] {
-        if audioLevel > 0.9 { // Higher threshold for peak clipping
-            return [.red, Color(red: 1.0, green: 0.3, blue: 0.3)] // Red (Clipping)
-        } else if audioLevel > 0.7 { // Higher threshold for yellow (loud)
-            return [.yellow, .orange] // Yellow (Loud)
+        if audioLevel > 0.85 {
+            // RED: Clipping / Too loud - danger zone
+            return [Color(red: 1.0, green: 0.2, blue: 0.2), Color(red: 0.9, green: 0.1, blue: 0.1)]
+        } else if audioLevel > 0.6 {
+            // YELLOW/ORANGE: Getting loud - caution
+            return [Color(red: 1.0, green: 0.8, blue: 0.0), Color(red: 1.0, green: 0.6, blue: 0.0)]
         } else {
-            // Reverted to green for "Ideal" level feedback as per user request
-            return [.green, Color.green.opacity(0.8)]
+            // GREEN: Normal level - safe
+            return [Color(red: 0.2, green: 0.9, blue: 0.3), Color(red: 0.1, green: 0.8, blue: 0.2)]
         }
     }
 
@@ -27,6 +26,7 @@ struct AudioVisualizerView: View {
     @State private var rotation: Double = 0
     @State private var pulse: CGFloat = 1.0
     @State private var isActive = false
+    @State private var cancellable: AnyCancellable?
 
     var body: some View {
         // CRASH FIX: Using TimelineView to avoid Timer.publish() lifecycle issues.
@@ -74,14 +74,23 @@ struct AudioVisualizerView: View {
             withAnimation(.linear(duration: 4).repeatForever(autoreverses: false)) {
                 rotation = 360
             }
+
+            // CRASH FIX: Store cancellable explicitly so we can cancel on disappear
+            // Using weak self pattern to prevent retain cycles
+            cancellable = audioLevelPublisher
+                .receive(on: DispatchQueue.main)
+                .sink { [self] level in
+                    guard isActive else { return }
+                    audioLevel = level
+                    pulse = 1.0 + CGFloat(level) * 0.05
+                }
         }
         .onDisappear {
+            // CRASH FIX: Cancel subscription BEFORE marking inactive
+            // This prevents any pending callbacks from firing
+            cancellable?.cancel()
+            cancellable = nil
             isActive = false
-        }
-        .onReceive(audioLevelPublisher.receive(on: DispatchQueue.main)) { level in
-            guard isActive else { return }
-            audioLevel = level
-            pulse = 1.0 + CGFloat(level) * 0.05
         }
     }
 }

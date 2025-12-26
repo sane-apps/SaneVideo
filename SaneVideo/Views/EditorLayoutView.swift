@@ -38,7 +38,7 @@ struct EditorLayoutView: View {
                             .transition(.move(edge: .leading).combined(with: .opacity))
                             .animation(.spring(response: 0.4, dampingFraction: 0.8), value: isSidebarCollapsed)
                     }
-                    
+
                     CollapseButton(isCollapsed: $isSidebarCollapsed, edge: .leading)
                         .accessibilityIdentifier(AccessibilityIdentifiers.sidebarToggle)
                         .offset(x: 8)
@@ -52,7 +52,7 @@ struct EditorLayoutView: View {
                         // ... existing backdrop code ...
                         Color(nsColor: .windowBackgroundColor)
                             .ignoresSafeArea()
-                        
+
                         // Subtle grid pattern
                         GridPattern()
                             .stroke(Color.white.opacity(0.04), lineWidth: 0.5)
@@ -60,7 +60,7 @@ struct EditorLayoutView: View {
                         if let player = appState.playbackState.player {
                             VStack(spacing: 0) {
                                 Spacer()
-                                
+
                                 // Video Window with Heavy Professional Shadow
                                 AdvancedVideoPlayer(player: player)
                                     .overlay {
@@ -73,9 +73,9 @@ struct EditorLayoutView: View {
                                         RoundedRectangle(cornerRadius: 12)
                                             .stroke(Color.white.opacity(0.1), lineWidth: 1)
                                     }
-                                
+
                                 Spacer()
-                                
+
                                 PlayerControlBar(
                                     playbackState: appState.playbackState,
                                     projectState: appState.projectState
@@ -148,25 +148,15 @@ struct EditorLayoutView: View {
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("TriggerMagicFixAll"))) { _ in
-            // Batch Magic Fix for all clips
+            // Batch Magic Fix for all clips (parallelized via BatchCoordinator)
             Task {
-                guard let project = appState.projectState.currentProject else { return }
-                for track in project.timeline.tracks {
-                    for clip in track.clips {
-                        await appState.projectState.performMagicFix(for: clip, options: appState.projectState.magicFixOptions)
-                    }
-                }
+                _ = await appState.projectState.performMagicFixAll(options: appState.projectState.magicFixOptions)
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("GenerateAllCaptions"))) { _ in
-            // Batch generate captions for all clips
+            // Batch generate captions for all clips (parallelized via BatchCoordinator)
             Task {
-                guard let project = appState.projectState.currentProject else { return }
-                for track in project.timeline.tracks {
-                    for clip in track.clips {
-                        _ = try? await appState.projectState.generateCaptions(for: clip)
-                    }
-                }
+                _ = await appState.projectState.generateCaptionsAll()
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("CleanAllAudio"))) { _ in
@@ -311,7 +301,7 @@ struct EditorLayoutView: View {
                         // Use the mapping helper to account for trimStart and removedRanges
                         let timelineOffset = CMTimeSubtract(time, trackClip.startTime)
                         let mediaTime = trackClip.originalTime(forEffectiveTime: timelineOffset)
-                        
+
                         if let caption = trackClip.captions.first(where: { caption in
                             mediaTime >= caption.startTime && mediaTime < caption.endTime
                         }) {
@@ -326,7 +316,7 @@ struct EditorLayoutView: View {
         // For selected clip: use the mapping helper
         let timelineOffset = CMTimeSubtract(time, clip.startTime)
         let mediaTime = clip.originalTime(forEffectiveTime: timelineOffset)
-        
+
         if let caption = clip.captions.first(where: { caption in
             mediaTime >= caption.startTime && mediaTime < caption.endTime
         }) {
@@ -345,7 +335,7 @@ struct EditorLayoutView: View {
             VStack(spacing: 12) {
                 Text("Let's Make Some Magic")
                     .font(.system(size: 28, weight: .bold))
-                
+
                 Text(String(localized: "editor.empty.subtitle", defaultValue: "Drop a video here or record to see the magic."))
                     .font(.system(size: 15))
                     .foregroundColor(.secondary)
@@ -375,17 +365,17 @@ struct GridPattern: Shape {
     func path(in rect: CGRect) -> Path {
         var path = Path()
         let step: CGFloat = 40
-        
+
         for x in stride(from: 0, through: rect.width, by: step) {
             path.move(to: CGPoint(x: x, y: 0))
             path.addLine(to: CGPoint(x: x, y: rect.height))
         }
-        
+
         for y in stride(from: 0, through: rect.height, by: step) {
             path.move(to: CGPoint(x: 0, y: y))
             path.addLine(to: CGPoint(x: rect.width, y: y))
         }
-        
+
         return path
     }
 }

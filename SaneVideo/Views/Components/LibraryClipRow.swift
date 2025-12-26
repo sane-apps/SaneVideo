@@ -99,9 +99,6 @@ struct LibraryClipRow: View {
     }
 
     private func formatDuration(_ time: CMTime) -> String {
-        let seconds = CMTimeGetSeconds(time)
-        let mins = Int(seconds) / 60
-        let secs = Int(seconds) % 60
-        return String(format: "%d:%02d", mins, secs)
+        TimeUtils.formatDuration(time)
     }
 }

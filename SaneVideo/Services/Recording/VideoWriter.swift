@@ -34,7 +34,7 @@ final class VideoWriter {
     private var screenFrame: CGRect?
     private var lastFrameUpdateTime: CFTimeInterval = 0
     private let pipFrameLock = NSLock()
-    private let frameUpdateInterval: CFTimeInterval = 0.1  // Update every 100ms (10fps for position tracking)
+    private let frameUpdateInterval: CFTimeInterval = 0.033  // Update every 33ms (30fps for smooth position tracking)
 
     var isWriting: Bool {
         return assetWriter?.status == .writing
@@ -369,6 +369,11 @@ final class VideoWriter {
         systemAudioInput = nil
         pixelBufferAdaptor = nil
         sessionStarted = false
+
+        // CRITICAL FIX: Clear the latest camera frame to free high-resolution pixel buffer
+        cameraFrameLock.lock()
+        latestCameraFrame = nil
+        cameraFrameLock.unlock()
     }
 
     // CRITICAL FIX: Cancel finishing task on deallocation

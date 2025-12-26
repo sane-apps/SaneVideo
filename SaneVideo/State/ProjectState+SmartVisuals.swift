@@ -10,18 +10,20 @@ import SwiftUI
 extension ProjectState {
     // MARK: - Smart Color Grading
 
-    func applySmartColorGrade(to clip: VideoClip) async {
-        guard !isProcessing else { return }
-        isProcessing = true
-        defer { Task { @MainActor in self.isProcessing = false } }
+    func applySmartColorGrade(to clip: VideoClip, transactionId: UUID? = nil) async {
+        // If no transaction ID provided, create one for this operation
+        let localTransactionId = transactionId ?? beginTransaction()
+        defer { endTransaction(localTransactionId) }
+
+        guard !shouldBlockOperation(transactionId: localTransactionId) else { return }
 
         if clip.captions.isEmpty {
             await MainActor.run { ServiceContainer.shared.toastManager.show("No captions found. Generating...") }
-            do { 
-                _ = try await generateCaptions(for: clip) 
-            } catch { 
+            do {
+                _ = try await generateCaptions(for: clip)
+            } catch {
                 AppLogger.project.error("Smart Grade aborted: Caption generation failed")
-                return 
+                return
             }
         }
 
@@ -47,14 +49,14 @@ extension ProjectState {
 
     // MARK: - Generative Visuals
 
-    func applyMagicRemove(to clip: VideoClip) async {
+    func applyMagicRemove(to clip: VideoClip, transactionId: UUID? = nil) async {
         do {
             _ = ServiceContainer.shared.personSegmentationService
             AppLogger.vision.info("🪄 ProjectState: Applying Magic Remove to clip \(clip.id)")
-            
+
             // Logic: Use PersonSegmentationService to find masks, then GenerativeVisionService to fill.
             try await Task.sleep(nanoseconds: 1_500_000_000)
-            
+
             await MainActor.run {
                 ServiceContainer.shared.toastManager.show("✅ Magic Remove applied (AI People Extraction)")
             }
@@ -63,11 +65,11 @@ extension ProjectState {
         }
     }
 
-    func applyCinematicStyle(to clip: VideoClip) async {
+    func applyCinematicStyle(to clip: VideoClip, transactionId: UUID? = nil) async {
         do {
             AppLogger.vision.info("🪄 ProjectState: Applying Cinematic Style (Generative)")
             try await Task.sleep(nanoseconds: 1_000_000_000)
-            
+
             await MainActor.run {
                 ServiceContainer.shared.toastManager.show("✅ Cinematic Style applied")
             }
@@ -78,28 +80,32 @@ extension ProjectState {
 
     // MARK: - Smart Thumbnails
 
-    func regenerateSmartThumbnail(for clip: VideoClip) async {
-        guard !isProcessing, currentProject != nil else { return }
-        isProcessing = true
+    func regenerateSmartThumbnail(for clip: VideoClip, transactionId: UUID? = nil) async {
+        guard currentProject != nil else { return }
+
+        // If no transaction ID provided, create one for this operation
+        let localTransactionId = transactionId ?? beginTransaction()
+        defer { endTransaction(localTransactionId) }
+
+        guard !shouldBlockOperation(transactionId: localTransactionId) else { return }
         await MainActor.run { ServiceContainer.shared.toastManager.show("🖼️ Finding best thumbnail...") }
-        defer { Task { @MainActor in self.isProcessing = false } }
-        
+
         do {
             let service = ServiceContainer.shared.thumbnailService
             let newThumbnailURL = try await service.generateSmartThumbnail(for: clip.url, strategy: .faceQuality)
-            
+
             await MainActor.run {
                 guard var project = currentProject else { return }
                 for (tIdx, track) in project.timeline.tracks.enumerated() {
                     if let cIdx = track.clips.firstIndex(where: { $0.id == clip.id }) {
                         var updatedClip = track.clips[cIdx]
                         updatedClip.thumbnailURL = newThumbnailURL
-                        
+
                         registerUndo("Update Thumbnail")
                         project.timeline.tracks[tIdx].clips[cIdx] = updatedClip
                         currentProject = project
                         saveProject(project)
-                        
+
                         ServiceContainer.shared.toastManager.show("🖼️ Thumbnail updated!")
                         return
                     }

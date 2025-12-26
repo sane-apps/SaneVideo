@@ -9,6 +9,7 @@
 import AppKit
 import AVFoundation
 import SwiftUI
+import UniformTypeIdentifiers
 
 // MARK: - Timeline Tracks View
 
@@ -68,18 +69,18 @@ struct TimelineTracksView: View {
         // This prevents eager loading of all 500+ clips in a complex project.
         // We assume clips are sorted by startTime.
         let sortedClips = track.clips.sorted { $0.startTime < $1.startTime }
-        
+
         return LazyHStack(alignment: .top, spacing: 0) {
             ForEach(Array(sortedClips.enumerated()), id: \.element.id) { index, clip in
                 // Calculate spacer from previous clip end (or 0)
                 let previousEnd = index == 0 ? CMTime.zero : sortedClips[index - 1].startTime + sortedClips[index - 1].effectiveDuration
                 let gap = max(0, clip.startTime.seconds - previousEnd.seconds)
                 let gapWidth = gap * pixelsPerSecond
-                
+
                 if gapWidth > 0 {
                     Rectangle().fill(Color.clear).frame(width: gapWidth)
                 }
-                
+
                 let isClipSelected = appState.selectedClipIds.contains(clip.id) || selectedClip?.id == clip.id
 
                 TimelineClipView(
@@ -119,6 +120,19 @@ struct TimelineTracksView: View {
                     onDeleteFile: {
                         appState.projectState.deleteClipFile(clip)
                     },
+                    onRelink: {
+                        let panel = NSOpenPanel()
+                        panel.title = String(localized: "dialog.relink.title", defaultValue: "Relink Clip")
+                        panel.message = String(localized: "dialog.relink.message", defaultValue: "Select the new location for: ") + clip.url.lastPathComponent
+                        panel.allowedContentTypes = [.video, .quickTimeMovie, .mpeg4Movie]
+                        panel.allowsMultipleSelection = false
+                        panel.canChooseDirectories = false
+                        panel.canChooseFiles = true
+
+                        if panel.runModal() == .OK, let url = panel.url {
+                            appState.projectState.relinkClip(clip, to: url)
+                        }
+                    },
                     onSetTransition: { transitionType in
                         appState.projectState.setClipTransition(clipId: clip.id, transitionType: transitionType)
                     },
@@ -134,7 +148,7 @@ struct TimelineTracksView: View {
                     }
                 )
             }
-            
+
             // Trailing spacer to fill timeline duration if needed
             if let lastClip = sortedClips.last {
                 let duration = max(60, appState.projectState.currentProject?.timeline.duration.seconds ?? 60)
@@ -160,7 +174,7 @@ struct TimelineTracksView: View {
                 .fill(Color.red.opacity(0.3))
                 .frame(width: 4)
                 .blur(radius: 2)
-            
+
             // Main line
             Rectangle()
                 .fill(Color.red)
@@ -179,7 +193,7 @@ struct TimelineTracksView: View {
                 .frame(width: 16, height: 16)
                 .blur(radius: 2)
                 .offset(y: 2)
-            
+
             // Sharp circle
             Circle()
                 .fill(Color.red)
@@ -199,10 +213,10 @@ struct TimelineTracksView: View {
                     let playheadX = (isScrubbing ? scrubTime : appState.playbackState.currentTime).seconds * pixelsPerSecond
                     let dragStartX = value.startLocation.x
                     let distanceFromPlayhead = abs(dragStartX - playheadX)
-                    
+
                     // Only allow scrubbing if drag started near playhead or if already scrubbing
                     guard isScrubbing || distanceFromPlayhead < 20 else { return }
-                    
+
                     if !isScrubbing {
                         withAnimation(.spring(response: 0.2, dampingFraction: 0.6)) {
                             isScrubbing = true

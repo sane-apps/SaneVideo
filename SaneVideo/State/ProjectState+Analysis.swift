@@ -13,9 +13,11 @@ extension ProjectState {
   // MARK: - Gesture Detection (BodyPose)
 
   /// Find gestures in clip and add markers
-  func findGestures(in clip: VideoClip) async {
-    guard !isProcessing else { return }
-    isProcessing = true
+  func findGestures(in clip: VideoClip, transactionId: UUID? = nil) async {
+    let localTransactionId = transactionId ?? beginTransaction()
+    defer { endTransaction(localTransactionId) }
+
+    guard !shouldBlockOperation(transactionId: localTransactionId) else { return }
 
     await MainActor.run {
       ServiceContainer.shared.toastManager.show("🙋 Scanning for gestures...")
@@ -71,9 +73,11 @@ extension ProjectState {
   // MARK: - Privacy Blur (Text Recognition)
 
   /// Apply privacy blur to detected text regions
-  func applyPrivacyBlur(to clip: VideoClip) async {
-    guard !isProcessing else { return }
-    isProcessing = true
+  func applyPrivacyBlur(to clip: VideoClip, transactionId: UUID? = nil) async {
+    let localTransactionId = transactionId ?? beginTransaction()
+    defer { endTransaction(localTransactionId) }
+
+    guard !shouldBlockOperation(transactionId: localTransactionId) else { return }
 
     await MainActor.run {
       ServiceContainer.shared.toastManager.show("🔒 Detecting sensitive text...")
@@ -154,9 +158,11 @@ extension ProjectState {
   // MARK: - Audio Analysis (SoundAnalysis)
 
   /// Find highlights (applause, laughter) in clip audio
-  func findHighlights(in clip: VideoClip) async {
-    guard !isProcessing else { return }
-    isProcessing = true
+  func findHighlights(in clip: VideoClip, transactionId: UUID? = nil) async {
+    let localTransactionId = transactionId ?? beginTransaction()
+    defer { endTransaction(localTransactionId) }
+
+    guard !shouldBlockOperation(transactionId: localTransactionId) else { return }
 
     await MainActor.run {
       ServiceContainer.shared.toastManager.show("🎉 Scanning audio for highlights...")
@@ -209,8 +215,9 @@ extension ProjectState {
   }
 
   /// Helper to update clip privacy regions
-  func updateClipPrivacyRegions(clipId: UUID, regions: [PrivacyRegion]) {
+  func updateClipPrivacyRegions(clipId: UUID, regions: [PrivacyRegion], transactionId: UUID? = nil) {
     guard var project = currentProject else { return }
+    guard !shouldBlockOperation(transactionId: transactionId) else { return }
 
     for (tIdx, track) in project.timeline.tracks.enumerated() {
       if let cIdx = track.clips.firstIndex(where: { $0.id == clipId }) {

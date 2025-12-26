@@ -1273,6 +1273,17 @@
         }
       }
     },
+    "clip.menu.relink" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Relink Clip..."
+          }
+        }
+      }
+    },
     "clip.menu.remove_fillers" : {
       "extractionState" : "extracted_with_value",
       "localizations" : {
@@ -1453,6 +1464,28 @@
     },
     "Detects and removes hesitation words like 'um' and 'uh' from the timeline." : {
 
+    },
+    "dialog.relink.message" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Select the new location for: "
+          }
+        }
+      }
+    },
+    "dialog.relink.title" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Relink Clip"
+          }
+        }
+      }
     },
     "Dismiss" : {
 
@@ -3031,53 +3064,6 @@
     "Or use Cmd+Click to select" : {
 
     },
-    "Pause/Resume" : {
-
-    },
-    "pip.help.mic.mute" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Mute Microphone"
-          }
-        }
-      }
-    },
-    "pip.help.mic.unmute" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Unmute Microphone"
-          }
-        }
-      }
-    },
-    "pip.help.pause" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Pause"
-          }
-        }
-      }
-    },
-    "pip.help.resume" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Resume"
-          }
-        }
-      }
-    },
     "player.help.play_pause" : {
       "extractionState" : "extracted_with_value",
       "localizations" : {
@@ -3135,13 +3121,7 @@
     "REC" : {
 
     },
-    "Recent" : {
-
-    },
     "Record" : {
-
-    },
-    "Record your screen" : {
 
     },
     "Recording" : {
@@ -3151,6 +3131,9 @@
 
     },
     "Recording Configuration" : {
+
+    },
+    "Recording Screen" : {
 
     },
     "recording.pause" : {
@@ -4212,9 +4195,6 @@
 
     },
     "Switch" : {
-
-    },
-    "Switch back to camera mode" : {
 
     },
     "Switch between Simple mode for AI tools and Pro mode for manual controls" : {
@@ -5775,6 +5755,9 @@
 
     },
     "When enabled, the SaneVideo window will not appear in screen recordings." : {
+
+    },
+    "Window minimized to prevent visual feedback" : {
 
     },
     "Word Level" : {

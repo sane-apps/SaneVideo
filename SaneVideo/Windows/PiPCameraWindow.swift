@@ -43,11 +43,15 @@ class PiPCameraWindow: NSPanel {
 
     convenience init() {
         let screen = NSScreen.main?.frame ?? .zero
+        // Default size: 320x240 video + 60pt for controls = 320x300
+        // Position in bottom-right corner with padding
+        let pipWidth: CGFloat = 320
+        let pipHeight: CGFloat = 280  // 16:9 video + controls
         let initialFrame = NSRect(
-            x: screen.maxX - 400, // defaults
+            x: screen.maxX - pipWidth - 20,
             y: 40,
-            width: 360, // Increased from 320 to fit controls + resize handle
-            height: 240
+            width: pipWidth,
+            height: pipHeight
         )
 
         // Call designated initializer on self (inherited)
@@ -83,35 +87,36 @@ class PiPCameraWindow: NSPanel {
         // Remove existing if any
         controlsHostingView?.removeFromSuperview()
 
-        // CRITICAL: We pass the AppState environment so controls work
+        // PiP uses .small button size (40pt) for compact display
+        // Record button auto-scales to 56pt (40 * 1.4)
         let controlsView = SharedRecordingControls(
             showDevicePickers: false,
             showGalleryTarget: false,
             showTimer: false,
             useGlassBackground: true,
-            buttonSize: .small,
-            recordButtonSize: 44
+            buttonSize: .small  // Uses unified size system (40pt buttons, 56pt record)
         )
         .environment(ServiceContainer.shared.appState)
 
         let hosting = NSHostingView(rootView: AnyView(controlsView))
         hosting.translatesAutoresizingMaskIntoConstraints = false
-        // Allow clicks on buttons, but pass background clicks to window for moving
-        // NSHostingView background is clear by default in this context?
-        // We set layer check just in case.
 
         contentView.addSubview(hosting)
         controlsHostingView = hosting
 
+        // Use Theme.Dimensions for consistent spacing
+        let bottomPadding = Theme.Dimensions.paddingLG  // 16pt
+        let sidePadding = Theme.Dimensions.paddingXL    // 20pt (for resize handle clearance)
+
         NSLayoutConstraint.activate([
-            // Position at bottom center
+            // Position at bottom center with proper margins
             hosting.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
-            hosting.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -16),
+            hosting.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -bottomPadding),
             // Ensure width fits content
-            hosting.widthAnchor.constraint(greaterThanOrEqualToConstant: 200),
-            hosting.heightAnchor.constraint(greaterThanOrEqualToConstant: 60),
-            // Ensure it doesn't overlap resize handle (bottom right)
-            hosting.trailingAnchor.constraint(lessThanOrEqualTo: contentView.trailingAnchor, constant: -40)
+            hosting.widthAnchor.constraint(greaterThanOrEqualToConstant: 180),
+            hosting.heightAnchor.constraint(greaterThanOrEqualToConstant: 52),
+            // Keep clear of resize handle (bottom right)
+            hosting.trailingAnchor.constraint(lessThanOrEqualTo: contentView.trailingAnchor, constant: -sidePadding * 2)
         ])
     }
 
@@ -126,15 +131,19 @@ class PiPCameraWindow: NSPanel {
         isOpaque = false
         backgroundColor = .clear
         hasShadow = true
-        // CRITICAL FIX: Disable built-in background moving as it can intercept button clicks
-        isMovableByWindowBackground = false
+        // Enable dragging by window background (video area)
+        // Buttons have their own hit testing so they still work
+        isMovableByWindowBackground = true
         collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
 
-        // Fix: Enable PiP window in screen capture.
+        // CRITICAL FIX: Prevent PiP from appearing in screen share picker
+        // We use .none so the window cannot be captured at all
+        // The camera is composited separately by VideoWriter
         if #available(macOS 15.0, *) {
-            self.sharingType = .readOnly
+            self.sharingType = .none
         } else {
-            self.sharingType = .readWrite
+            // Pre-macOS 15, use level to avoid capture
+            self.sharingType = .none
         }
 
         // Ensure no title bar or border
@@ -161,14 +170,17 @@ class PiPCameraWindow: NSPanel {
         // This ensures it can be layered on top of the video preview
         let resizeHandle = ResizeHandleView(window: self)
         resizeHandle.translatesAutoresizingMaskIntoConstraints = false
-        contentView.addSubview(resizeHandle) // Add to contentView
+        contentView.addSubview(resizeHandle)
+
+        // Use consistent spacing from Theme
+        let handlePadding = Theme.Dimensions.paddingXS  // 4pt
+        let handleSize: CGFloat = 36  // Comfortable touch target
 
         NSLayoutConstraint.activate([
-            resizeHandle.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -4),
-            resizeHandle.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -4),
-
-            resizeHandle.widthAnchor.constraint(equalToConstant: 40), // Larger, easier to grab
-            resizeHandle.heightAnchor.constraint(equalToConstant: 40)
+            resizeHandle.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -handlePadding),
+            resizeHandle.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -handlePadding),
+            resizeHandle.widthAnchor.constraint(equalToConstant: handleSize),
+            resizeHandle.heightAnchor.constraint(equalToConstant: handleSize)
         ])
     }
 
@@ -337,28 +349,25 @@ class PiPCameraWindow: NSPanel {
              contentView.addSubview(containerView)
         }
 
-        // CRITICAL FIX: Ensure Resize Handle stays on top of video
-        // Find the resizing handle and bring it to front
-        if let resizeHandle = contentView.subviews.first(where: { $0 is ResizeHandleView }) {
-            // Re-add to bring to front of subview array
-            resizeHandle.removeFromSuperview()
-            contentView.addSubview(resizeHandle)
-        }
-
-        // CRITICAL FIX: Ensure Controls stay on top of video
-        if let controls = controlsHostingView {
-            controls.removeFromSuperview()
-            contentView.addSubview(controls) // Add last = Top
-            // Activate constraints again? No, constraints remain valid if view is same?
-            // Actually removing from superview breaks constraints usually if they reference superview.
-            // We need to re-activate constraints if we remove/add.
-            // Better strategy: Use `positioned: .above` when adding video layer?
-            // Video layer should be strictly below controls.
-            // Let's just re-embed controls logic or re-constrain.
-            // Simplest: `embedControls()` calls `removeFromSuperview` and re-adds and re-constraints.
-            // So we can just call `embedControls()` here again to be safe and ensure Z-order.
-            embedControls()
-        }
+        // CRITICAL FIX: Use z-ordering without removing/re-adding views
+        // Removing views breaks constraints and causes use-after-free crashes
+        // Instead, use sortSubviews to reorder the z-index
+        contentView.sortSubviews({ (view1, view2, _) -> ComparisonResult in
+            // Order: visualEffect < containerView < resizeHandle < controls
+            let order: [String: Int] = [
+                "NSVisualEffectView": 0,
+                "NSView": 1,  // containerView for video
+                "ResizeHandleView": 2,
+                "NSHostingView": 3  // controls on top
+            ]
+            let type1 = String(describing: type(of: view1))
+            let type2 = String(describing: type(of: view2))
+            let priority1 = order.first(where: { type1.contains($0.key) })?.value ?? 1
+            let priority2 = order.first(where: { type2.contains($0.key) })?.value ?? 1
+            if priority1 < priority2 { return .orderedAscending }
+            if priority1 > priority2 { return .orderedDescending }
+            return .orderedSame
+        }, context: nil)
 
         previewView = containerView
         previewLayer = newLayer
@@ -381,20 +390,47 @@ class PiPCameraWindow: NSPanel {
     }
 
     override func close() {
-        // CRITICAL FIX: Cleanup preview layer and cancellables before closing
-        // Disconnect session BEFORE removing layer to prevent use-after-free
+        // CRITICAL FIX: Prevent _NSWindowTransformAnimation crash
+        // The crash occurs because NSWindow animations are still running when dealloc happens.
+        // Solution: Disable animations, cleanup synchronously, then close.
+
+        // 1. Cancel all Combine subscriptions to stop async callbacks
+        cancellables.removeAll()
+
+        // 2. Disconnect camera session FIRST (prevents AVFoundation callbacks)
         previewLayer?.session = nil
+
+        // 3. Disable animations and cleanup synchronously
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+
+        // Hide window immediately
+        alphaValue = 0
+
+        // 4. Remove layers and views
         previewLayer?.removeFromSuperlayer()
         previewLayer = nil
-        previewView?.removeFromSuperview()
-        previewView = nil
 
-        // CRITICAL FIX: Explicitly remove controls hosting view to invalidate SwiftUI subscriptions
+        controlsHostingView?.isHidden = true
         controlsHostingView?.removeFromSuperview()
         controlsHostingView = nil
 
-        cancellables.removeAll()
+        previewView?.removeFromSuperview()
+        previewView = nil
 
+        CATransaction.commit()
+
+        // 5. Order out (removes from screen, stops window server animations)
+        orderOut(nil)
+
+        // 6. Small delay to let window server finish cleanup, then close
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+            self.performSuperClose()
+        }
+    }
+
+    // Helper to call super.close() - avoids closure capture issue with super
+    private func performSuperClose() {
         super.close()
     }
 

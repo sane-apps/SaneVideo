@@ -106,6 +106,17 @@ extension RecordingEngine {
       }
     }
 
+    // 5. Camera Status (Clear frame on stop to prevent PiP "freezing")
+    Task { [weak self] in
+      guard let self = self else { return }
+      for await isActive in await cameraService.isActivePublisher.values {
+        if !isActive {
+          AppLogger.recording.info("📷 Camera stopped - clearing frame in VideoWriter")
+          await self.clearCameraFrame()
+        }
+      }
+    }
+
     // CRITICAL FIX: Setup bindings synchronously to prevent race condition
     // where onStop is nil when user cancels screen picker immediately after starting
     // RecordingEngine is @MainActor, so we can call these directly
@@ -131,41 +142,39 @@ extension RecordingEngine {
   @MainActor
   private func handleScreenRecorderStopped(error: Error?) {
     Task { @RecordingActor in
-      let errorMessage = error?.localizedDescription ?? "User cancelled"
-      AppLogger.recording.warning("🛑 Screen recording stopped externally: \(errorMessage)")
-      
+      let errorMessage = error?.localizedDescription ?? "User cancelled or stopped externally"
+      AppLogger.recording.info("🛑 Screen recording stream stopped: \(errorMessage)")
+
       // CRITICAL: If we're in the middle of switching TO screen, rollback the switch
       if isSwitching, pendingSource == .screen {
-        AppLogger.recording.error("🔄 Screen recorder stopped during switch TO screen. Rolling back.")
+        AppLogger.recording.error("🔄 Screen recorder stopped/cancelled during switch TO screen. Rolling back.")
         pendingSource = nil
         currentSource = .camera // Rollback to previous source
         isSwitching = false
         timeCoordinator.startTimeNeedsRecalibration = false
         sourceSwitchTimeoutTask?.cancel()
         sourceSwitchTimeoutTask = nil
-        
+
         await MainActor.run { [weak self] in
-          self?.onError?(AppError.recordingEngineError("Screen recording cancelled during switch"))
+          self?.onError?(AppError.recordingEngineError("Screen sharing was cancelled"))
         }
         return
       }
-      
-      // CRITICAL: If we're currently recording from screen and not stopping, handle it
-      if isRecording, currentSource == .screen, !isStopping {
-        AppLogger.recording.info("Screen recording stopped externally: \(errorMessage)")
 
-        // Nicely ask the app to revert to camera mode.
+      // CRITICAL: Notify caller that screen sharing has ended (intentional or otherwise)
+      // This ensures AppState/WindowManager can restore the main window and update UI state.
+      // We do this if we were either recording from screen OR just using it for preview.
+      let wasScreenSharing = currentSource == .screen || pendingSource == .screen
+      if wasScreenSharing {
+        AppLogger.recording.info("Notifying system that screen share ended externally.")
         await MainActor.run {
           self.onScreenRecordingStoppedExternally?()
         }
       }
-      
-      // CRITICAL: If we're switching FROM screen to camera, this is expected
-      // (we're stopping screen recorder as part of the switch)
-      if isSwitching, pendingSource == .camera, currentSource == .screen {
-        AppLogger.recording.debug("Screen recorder stopped as part of switch to camera (expected)")
-        // Don't do anything - the switch will complete when camera frames arrive
-      }
+
+      // Cleanup
+      if pendingSource == .screen { pendingSource = nil }
+      if isSwitching && currentSource == .screen { isSwitching = false }
     }
   }
 

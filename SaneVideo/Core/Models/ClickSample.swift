@@ -22,4 +22,3 @@ public struct ClickSample: Codable, Sendable, Equatable {
         self.button = button
     }
 }
-

@@ -195,6 +195,17 @@ class AppState {
         )
       }
     }
+
+    // 3. Listen for Recording State changes (Automatic PiP Update)
+    recordingState.onRecordingStateChanged = { [weak self] _ in
+      guard let self = self else { return }
+      Task { @MainActor in
+        self.windowManager.updatePiPState(
+          isCameraActive: self.cameraState.isActive,
+          isRecording: self.recordingState.isRecording
+        )
+      }
+    }
   }
 
   private func setupErrorHandling() {

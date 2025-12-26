@@ -22,7 +22,7 @@ struct TimelineEmptyStateView: View {
         .background(Color(white: 0.08))
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Empty Timeline. Drop video clips here to start.")
-        .accessibilityIdentifier("TimelineEmptyState")
+        .accessibilityIdentifier(AccessibilityIdentifiers.timelineEmptyState)
     }
 }
 

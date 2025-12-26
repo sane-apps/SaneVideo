@@ -7,6 +7,7 @@
 //
 
 import XCTest
+@testable import SaneVideo
 
 class UITestBase: XCTestCase {
 
@@ -85,7 +86,7 @@ class UITestBase: XCTestCase {
     // Wait for main window or ANY identifying element
     // Check for window existence, but also check for app state
     let window =
-      app.windows["MainWindow"].exists ? app.windows["MainWindow"] : app.windows.firstMatch
+      app.windows[AccessibilityIdentifiers.mainWindow].exists ? app.windows[AccessibilityIdentifiers.mainWindow] : app.windows.firstMatch
     let exists = window.waitForExistence(timeout: timeout)
 
     if !exists {

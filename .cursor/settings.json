@@ -14,7 +14,7 @@
   //   - GPT-5.2 Extra High Fast: Speed-optimized
   //   - Auto Mode: Let Cursor pick per task
   //   - MAX Mode: Enable for maximum capability
-  // 
+  //
   // These settings control behavior, not model selection:
   "cursor.chat.maxTokens": 8000,
   "cursor.chat.enableCodeActions": true,

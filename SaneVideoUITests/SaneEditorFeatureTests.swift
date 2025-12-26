@@ -1,4 +1,5 @@
 import XCTest
+@testable import SaneVideo
 
 final class SaneEditorFeatureTests: XCTestCase {
     
@@ -14,7 +15,7 @@ final class SaneEditorFeatureTests: XCTestCase {
         // 1. Wait for stability
         _ = app.windows.firstMatch.waitForExistence(timeout: 5)
         
-        let emptyState = app.otherElements["TimelineEmptyState"]
+        let emptyState = app.otherElements[AccessibilityIdentifiers.timelineEmptyState]
         let timelineClip = app.descendants(matching: .any).matching(identifier: "TimelineClip").firstMatch
         
         if timelineClip.exists {
@@ -44,14 +45,14 @@ final class SaneEditorFeatureTests: XCTestCase {
         ensureEditorState(app: app)
         
         // 1. Wait for Editor to Load
-        let splitButton = app.buttons["SplitClipButton"]
+        let splitButton = app.buttons[AccessibilityIdentifiers.splitClipButton]
         
         if !splitButton.waitForExistence(timeout: 10) {
              print("⚠️ Skipping testTimelineInteraction: Editor did not load (Empty State persistence)")
              return 
         }
         
-        let deleteButton = app.buttons["DeleteClipButton"]
+        let deleteButton = app.buttons[AccessibilityIdentifiers.deleteClipButton]
         XCTAssertTrue(deleteButton.exists, "Delete button should be visible")
         
         // 2. Perform Split via Shortcut (Cmd+B)
@@ -65,7 +66,8 @@ final class SaneEditorFeatureTests: XCTestCase {
         // 4. Delete Clip
         if deleteButton.isEnabled {
             deleteButton.tap()
-            XCTAssertTrue(app.buttons["EditTabButton"].exists, "App should remain in Editor mode after delete")
+            // Using centralized identifier registry
+            XCTAssertTrue(app.buttons[AccessibilityIdentifiers.modeSwitcher].exists, "App should remain in Editor mode after delete")
         }
     }
     
@@ -77,7 +79,7 @@ final class SaneEditorFeatureTests: XCTestCase {
         app.launch()
         app.activate()
         
-        let inspectorToggle = app.buttons["InspectorToggle"]
+        let inspectorToggle = app.buttons[AccessibilityIdentifiers.inspectorToggle]
         XCTAssertTrue(inspectorToggle.waitForExistence(timeout: 10), "Inspector toggle should act")
         
         // 1. Toggle Inspector via Shortcut
@@ -90,7 +92,7 @@ final class SaneEditorFeatureTests: XCTestCase {
         // or just use shortcut again.
         app.typeKey("i", modifierFlags: [.command, .option])
         
-        let sidebarToggle = app.buttons["SidebarToggle"]
+        let sidebarToggle = app.buttons[AccessibilityIdentifiers.sidebarToggle]
         XCTAssertTrue(sidebarToggle.waitForExistence(timeout: 5), "Sidebar toggle should exist")
         
         // 2. Toggle Sidebar via Shortcut
@@ -107,11 +109,15 @@ final class SaneEditorFeatureTests: XCTestCase {
         app.launch()
         app.activate()
         
-        // 1. Ensure we are in Editing Mode
-        let editTab = app.buttons["EditTabButton"]
-        XCTAssertTrue(editTab.waitForExistence(timeout: 10))
-        if !editTab.isSelected {
-            editTab.tap()
+        // 1. Ensure we are in Editing Mode - Using centralized identifier registry
+        let modeSwitcher = app.buttons[AccessibilityIdentifiers.modeSwitcher]
+        XCTAssertTrue(modeSwitcher.waitForExistence(timeout: 10))
+        // Check if we need to switch to editing mode
+        let label = modeSwitcher.label
+        if label.contains("Editor") {
+          // Currently in recording mode, switch to editing
+          modeSwitcher.tap()
+          sleep(1) // Wait for mode switch
         }
         
         ensureEditorState(app: app)
@@ -121,7 +127,7 @@ final class SaneEditorFeatureTests: XCTestCase {
         
         // 3. Verify Sheet Appearance
         // We wait for the "More Options" button or the "Cancel" button to confirm sheet is open
-        let moreOptions = app.buttons["MoreOptionsButton"]
+        let moreOptions = app.buttons[AccessibilityIdentifiers.moreOptionsButton]
         if !moreOptions.waitForExistence(timeout: 10) {
             print("⚠️ Export sheet failed to appear via Shortcut Cmd+E. Deep Hierarchy Dump:")
             print("--- WINDOWS ---")
@@ -142,9 +148,9 @@ final class SaneEditorFeatureTests: XCTestCase {
         
         // Primary Interactivity Check
         // Try to find the cancel button specifically in the sheet if global search is ambiguous
-        let cancelButton = app.buttons["CancelExportButton"]
+        let cancelButton = app.buttons[AccessibilityIdentifiers.cancelExportButton]
         if !cancelButton.exists {
-             let sheetCancel = app.sheets.firstMatch.buttons["CancelExportButton"]
+             let sheetCancel = app.sheets.firstMatch.buttons[AccessibilityIdentifiers.cancelExportButton]
              if sheetCancel.exists {
                  sheetCancel.tap()
                  return
@@ -168,7 +174,7 @@ final class SaneEditorFeatureTests: XCTestCase {
         ensureEditorState(app: app)
         
         // 1. Wait for Magic Fix button
-        let magicButton = app.buttons["MagicFixButton"]
+        let magicButton = app.buttons[AccessibilityIdentifiers.magicFixButton]
         if !magicButton.waitForExistence(timeout: 10) {
              print("⚠️ Skipping testTranscriptionOfLongVideo: Magic Fix unavailable")
              return
@@ -193,14 +199,14 @@ final class SaneEditorFeatureTests: XCTestCase {
         ensureEditorState(app: app)
 
         // Wait for Editor to load
-        let magicFixButton = app.buttons["MagicFixButton"]
+        let magicFixButton = app.buttons[AccessibilityIdentifiers.magicFixButton]
         if !magicFixButton.waitForExistence(timeout: 10) {
             print("⚠️ Skipping testMagicFixModes: Magic button unavailable")
             return
         }
         
         // 1. Open Presets Menu (Handling various UI implementations)
-        var presetsMenu = app.buttons["PresetsMenu"]
+        var presetsMenu = app.buttons[AccessibilityIdentifiers.presetsMenu]
         if !presetsMenu.exists {
              presetsMenu = app.descendants(matching: .any).matching(identifier: "PresetsMenu").firstMatch
         }
@@ -250,7 +256,7 @@ final class SaneEditorFeatureTests: XCTestCase {
         measure(metrics: metrics, options: options) {
             // 1. Wait for Project Load (or Empty State)
             let clip = app.descendants(matching: .any).matching(identifier: "TimelineClip").firstMatch
-            let emptyState = app.otherElements["TimelineEmptyState"]
+            let emptyState = app.otherElements[AccessibilityIdentifiers.timelineEmptyState]
             
             if !clip.waitForExistence(timeout: 10) {
                  if emptyState.exists {
@@ -260,9 +266,16 @@ final class SaneEditorFeatureTests: XCTestCase {
             }
 
             // Ensure we are in Editing Mode (Critical for ExportButton visibility)
-            let editTab = app.buttons["EditTabButton"]
-            if editTab.exists && !editTab.isSelected {
-                editTab.tap()
+            // Using centralized identifier registry
+            let modeSwitcher = app.buttons[AccessibilityIdentifiers.modeSwitcher]
+            if modeSwitcher.exists {
+              // Check if we need to switch to editing mode
+              let label = modeSwitcher.label
+              if label.contains("Editor") {
+                // Currently in recording mode, switch to editing
+                modeSwitcher.tap()
+                sleep(1) // Wait for mode switch
+              }
             }
 
             // 2. Open Export Sheet (Shortcut Priority)

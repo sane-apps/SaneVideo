@@ -175,16 +175,20 @@ actor WhisperKitService: TranscriptionServiceProtocol {
         exportSession.outputURL = audioURL
         exportSession.outputFileType = .m4a
         
-        await exportSession.export()
-        
-        // CRITICAL FIX: Check export status
-        // Note: status is deprecated in macOS 15.0 in favor of states(updateInterval:)
-        // However, status still works and is simpler for this use case
-        // TODO: Migrate to states(updateInterval:) async sequence when needed
-        // Using deprecated API with explicit cast to suppress warning
-        let status: AVAssetExportSession.Status = exportSession.status
-        guard status == .completed else {
-            throw TranscriptionError.transcriptionFailed("Failed to extract audio from video")
+        // Use modern async export API (macOS 15+)
+        if #available(macOS 15.0, *) {
+            do {
+                try await exportSession.export(to: audioURL, as: .m4a)
+            } catch {
+                throw TranscriptionError.transcriptionFailed("Failed to extract audio from video: \(error.localizedDescription)")
+            }
+        } else {
+            // Fallback for older macOS (shouldn't happen as we target macOS 26.2)
+            await exportSession.export()
+            let status: AVAssetExportSession.Status = exportSession.status
+            guard status == .completed else {
+                throw TranscriptionError.transcriptionFailed("Failed to extract audio from video")
+            }
         }
         
         return audioURL

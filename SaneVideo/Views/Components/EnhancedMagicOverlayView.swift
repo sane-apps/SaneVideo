@@ -71,6 +71,7 @@ struct EnhancedMagicOverlayView: View {
             .cornerRadius(16)
             .shadow(radius: 20)
             .transition(.scale.combined(with: .opacity))
+            .accessibilityIdentifier(AccessibilityIdentifiers.magicProgressOverlay)
             .alert("Cancel Magic Fix?", isPresented: $showCancelConfirmation) {
                 Button("Continue Processing", role: .cancel) {}
                 Button("Cancel", role: .destructive) {

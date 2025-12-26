@@ -173,7 +173,12 @@ final class CameraManager: NSObject, CameraServiceProtocol {
     }
 
     _isSettingUpSession = true
-    let newSession = await setupSession()
+
+    // Fetch prefs on MainActor before entering nonisolated context
+    let resolution = ServiceContainer.shared.userPreferences.recordingResolution
+    let fps = ServiceContainer.shared.userPreferences.recordingFPS
+
+    let newSession = await setupSession(resolution: resolution, fps: fps)
     _isSettingUpSession = false
 
     guard let session = newSession else {
@@ -277,7 +282,10 @@ final class CameraManager: NSObject, CameraServiceProtocol {
 
   // MARK: - Session Management
 
-  nonisolated private func setupSession() async -> AVCaptureSession? {
+  nonisolated private func setupSession(
+    resolution: SaneExportSettings.ExportResolution,
+    fps: Double
+  ) async -> AVCaptureSession? {
     AppLogger.camera.info("Setting up capture session...")
     let session = AVCaptureSession()
     session.beginConfiguration()
@@ -357,6 +365,12 @@ final class CameraManager: NSObject, CameraServiceProtocol {
     // Workaround for Portrait Effects crash on macOS 26.
     var bestSafeFormat: AVCaptureDevice.Format?
 
+    let targetResolution = resolution
+    let targetFPS = fps
+
+    AppLogger.camera.info(
+      "🎯 Looking for format: \(targetResolution.displayName) @ \(Int(targetFPS))fps")
+
     let safeFormats = camera.formats.filter { format in
       if #available(macOS 12.0, *) {
         return !format.isPortraitEffectSupported
@@ -364,17 +378,30 @@ final class CameraManager: NSObject, CameraServiceProtocol {
       return true
     }
 
+    // Sort to find the CLOSEST match to target resolution and FPS
     let sortedSafeFormats = safeFormats.sorted { (f1, f2) -> Bool in
       let dim1 = CMVideoFormatDescriptionGetDimensions(f1.formatDescription)
       let dim2 = CMVideoFormatDescriptionGetDimensions(f2.formatDescription)
       let res1 = Int(dim1.width) * Int(dim1.height)
       let res2 = Int(dim2.width) * Int(dim2.height)
 
-      if res1 != res2 { return res1 > res2 }
+      let targetRes = Int(targetResolution.size.width) * Int(targetResolution.size.height)
+
+      // Calculate delta from target (smaller delta is better)
+      let delta1 = abs(res1 - targetRes)
+      let delta2 = abs(res2 - targetRes)
+
+      if delta1 != delta2 { return delta1 < delta2 }  // Closer to target resolution wins
 
       let maxFps1 = f1.videoSupportedFrameRateRanges.map { $0.maxFrameRate }.max() ?? 0
       let maxFps2 = f2.videoSupportedFrameRateRanges.map { $0.maxFrameRate }.max() ?? 0
-      return maxFps1 > maxFps2
+
+      // If resolutions are equal closeness, check FPS
+      // We want at least targetFPS
+      if maxFps1 >= targetFPS && maxFps2 < targetFPS { return true }
+      if maxFps2 >= targetFPS && maxFps1 < targetFPS { return false }
+
+      return maxFps1 > maxFps2  // Otherwise higher is better
     }
 
     bestSafeFormat = sortedSafeFormats.first
@@ -383,9 +410,17 @@ final class CameraManager: NSObject, CameraServiceProtocol {
       try camera.lockForConfiguration()
       if let safeFormat = bestSafeFormat {
         camera.activeFormat = safeFormat
+
+        // Configure Frame Rate
+        let fpsInt = Int32(targetFPS)
+        let duration = CMTime(value: 1, timescale: fpsInt)
+        camera.activeVideoMinFrameDuration = duration
+        camera.activeVideoMaxFrameDuration = duration
+
         let dims = CMVideoFormatDescriptionGetDimensions(safeFormat.formatDescription)
         AppLogger.camera.info(
-          "✅ Selected SAFE format: \(dims.width)x\(dims.height) (No Portrait Support)")
+          "✅ Selected SAFE format: \(dims.width)x\(dims.height) @ \(targetFPS)fps (No Portrait Support)"
+        )
       } else {
         AppLogger.camera.warning(
           "⚠️ No specific 'safe' format found. Falling back to standard presets.")
@@ -414,6 +449,7 @@ final class CameraManager: NSObject, CameraServiceProtocol {
       kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA
     ]
     videoOutput.setSampleBufferDelegate(framePublisher, queue: .global(qos: .userInteractive))
+    videoOutput.alwaysDiscardsLateVideoFrames = true
 
     if session.canAddOutput(videoOutput) {
       session.addOutput(videoOutput)

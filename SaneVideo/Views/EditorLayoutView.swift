@@ -40,7 +40,7 @@ struct EditorLayoutView: View {
                     }
                     
                     CollapseButton(isCollapsed: $isSidebarCollapsed, edge: .leading)
-                        .accessibilityIdentifier("SidebarToggle")
+                        .accessibilityIdentifier(AccessibilityIdentifiers.sidebarToggle)
                         .offset(x: 8)
                         .zIndex(1)
                 }
@@ -102,7 +102,7 @@ struct EditorLayoutView: View {
                 // RIGHT: Inspector (Collapsible)
                 ZStack(alignment: .leading) {
                     CollapseButton(isCollapsed: $isInspectorCollapsed, edge: .trailing)
-                        .accessibilityIdentifier("InspectorToggle")
+                        .accessibilityIdentifier(AccessibilityIdentifiers.inspectorToggle)
                         .offset(x: -8)
                         .zIndex(1)
 

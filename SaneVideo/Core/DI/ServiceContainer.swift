@@ -25,7 +25,8 @@ final class ServiceContainer {
     let projectStore: ProjectStoreProtocol
     let exportService: ExportServiceProtocol
 
-    let thumbnailService: ThumbnailGeneratorService
+    /// Unified thumbnail service (consolidated from ThumbnailGeneratorService + SmartThumbnailService)
+    let thumbnailService: ThumbnailService
     let silenceDetector: SilenceDetector
     var audioService: AudioService
     let permissionManager: PermissionManager
@@ -77,7 +78,7 @@ final class ServiceContainer {
     let saliencyService: SaliencyService
     let textRecognitionService: TextRecognitionService
     let generativeVisionService: GenerativeVisionService
-    let smartThumbnailService: SmartThumbnailService
+    // smartThumbnailService consolidated into thumbnailService
     
     // MARK: - Project/Timeline Services
     
@@ -85,7 +86,7 @@ final class ServiceContainer {
     let timelineEngine: TimelineEngine
     let cursorTrackingService: CursorTrackingService
     let clickTrackingService: ClickTrackingService
-    let timelineThumbnailService: ThumbnailService
+    // timelineThumbnailService consolidated into thumbnailService
     let renderingService: RenderingService
     
     // MARK: - Utility Services
@@ -124,7 +125,7 @@ final class ServiceContainer {
         self.projectStore = ProjectStore()
         self.exportService = ExportEngine()
 
-        self.thumbnailService = ThumbnailGeneratorService()
+        self.thumbnailService = ThumbnailService()
         self.silenceDetector = SilenceDetector()
         self.permissionManager = PermissionManager()
         self.audioService = AudioService(permissionManager: self.permissionManager)
@@ -162,7 +163,7 @@ final class ServiceContainer {
         self.timelineEngine = TimelineEngine()
         self.cursorTrackingService = CursorTrackingService()
         self.clickTrackingService = ClickTrackingService()
-        self.timelineThumbnailService = ThumbnailService()
+        // timelineThumbnailService now consolidated into thumbnailService
         
         let renderingService = RenderingService.shared
         self.renderingService = renderingService
@@ -174,7 +175,7 @@ final class ServiceContainer {
         self.saliencyService = SaliencyService()
         self.textRecognitionService = TextRecognitionService()
         self.generativeVisionService = GenerativeVisionService(ciContext: renderingService.ciContext)
-        self.smartThumbnailService = SmartThumbnailService()
+        // smartThumbnailService now consolidated into thumbnailService
         
         // Utility Services  
         self.logManager = LogManager()

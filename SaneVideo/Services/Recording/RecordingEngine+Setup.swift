@@ -106,10 +106,11 @@ extension RecordingEngine {
       }
     }
 
-    Task { @MainActor [weak self] in
-      self?.setupScreenRecorderBinding()
-      self?.setupScreenRecorderOverlayBinding()
-    }
+    // CRITICAL FIX: Setup bindings synchronously to prevent race condition
+    // where onStop is nil when user cancels screen picker immediately after starting
+    // RecordingEngine is @MainActor, so we can call these directly
+    setupScreenRecorderBinding()
+    setupScreenRecorderOverlayBinding()
   }
 
   @MainActor

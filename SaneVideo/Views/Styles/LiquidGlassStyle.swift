@@ -155,4 +155,10 @@ struct VisualEffectView: NSViewRepresentable {
         nsView.blendingMode = blendingMode
         nsView.state = state
     }
+    
+    // CRITICAL FIX: Proper cleanup to prevent use-after-free during autorelease
+    static func dismantleNSView(_ nsView: NSVisualEffectView, coordinator: ()) {
+        nsView.state = .inactive
+        nsView.removeFromSuperview()
+    }
 }

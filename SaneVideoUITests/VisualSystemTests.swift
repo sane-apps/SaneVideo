@@ -5,6 +5,7 @@
 //
 
 import XCTest
+@testable import SaneVideo
 
 final class VisualSystemTests: UITestBase {
 
@@ -55,7 +56,7 @@ final class VisualSystemTests: UITestBase {
     app.typeKey(",", modifierFlags: .command)
     handleSystemAlerts()
 
-    let settingsWindow = app.windows.matching(identifier: "Settings").firstMatch
+    let settingsWindow = app.windows.matching(identifier: AccessibilityIdentifiers.settingsWindow).firstMatch
     if settingsWindow.waitForExistence(timeout: 5) {
       XCTAssertTrue(settingsWindow.exists, "Settings window should be visible")
     }

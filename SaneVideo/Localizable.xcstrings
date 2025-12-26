@@ -56,7 +56,22 @@
     "• %@" : {
 
     },
+    "4K UHD" : {
+
+    },
+    "30 fps" : {
+
+    },
+    "60 fps" : {
+
+    },
     "100% On-Device" : {
+
+    },
+    "720p HD" : {
+
+    },
+    "1080p HD" : {
 
     },
     "action.auto_generate" : {
@@ -620,7 +635,7 @@
     "Auto-Grade" : {
 
     },
-    "Automatically adjusts brightness, contrast, and saturation." : {
+    "Automatically adjusts brightness, contrast, and saturation (Instant Preview)." : {
 
     },
     "Automatically applies color grading to the video" : {
@@ -1972,6 +1987,9 @@
     "Enhances cursor visibility in screen recordings by adding a highlight effect" : {
 
     },
+    "Exclude SaneVideo from Recording" : {
+
+    },
     "Expand %@ section" : {
 
     },
@@ -2271,6 +2289,9 @@
 
     },
     "Find highlights (applause, laughter) in audio" : {
+
+    },
+    "Frame Rate" : {
 
     },
     "Generate captions first to analyze mood" : {
@@ -3046,28 +3067,6 @@
         }
       }
     },
-    "pip.help.recording.start" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Start Recording"
-          }
-        }
-      }
-    },
-    "pip.help.recording.stop" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Stop Recording"
-          }
-        }
-      }
-    },
     "pip.help.resume" : {
       "extractionState" : "extracted_with_value",
       "localizations" : {
@@ -3075,17 +3074,6 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Resume"
-          }
-        }
-      }
-    },
-    "pip.help.return" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Stop Sharing & Return to App"
           }
         }
       }
@@ -3156,7 +3144,13 @@
     "Record your screen" : {
 
     },
+    "Recording" : {
+
+    },
     "Recording Complete" : {
+
+    },
+    "Recording Configuration" : {
 
     },
     "recording.pause" : {
@@ -3227,6 +3221,9 @@
     "Reset rotation to original orientation" : {
 
     },
+    "Resolution" : {
+
+    },
     "Retry" : {
 
     },
@@ -3255,6 +3252,9 @@
 
     },
     "Scan video for text using OCR" : {
+
+    },
+    "Screen Recording" : {
 
     },
     "screen.switch" : {
@@ -4230,6 +4230,9 @@
 
     },
     "Text Editor" : {
+
+    },
+    "These settings apply to camera recordings. Screen recording resolution is determined by the screen source." : {
 
     },
     "This may take a few minutes..." : {
@@ -5769,6 +5772,9 @@
       }
     },
     "What would you like to do?" : {
+
+    },
+    "When enabled, the SaneVideo window will not appear in screen recordings." : {
 
     },
     "Word Level" : {

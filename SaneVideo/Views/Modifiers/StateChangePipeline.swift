@@ -67,16 +67,13 @@ class StateChangeCoordinator {
 }
 
 /// ViewModifier that handles unified state changes
+/// CRITICAL FIX: Use onReceive instead of .task + .sink to avoid closure lifecycle issues
 struct UnifiedStateChangeModifier: ViewModifier {
     @Environment(AppState.self) var appState
     @State private var coordinator = StateChangeCoordinator()
-    @State private var cancellables = Set<AnyCancellable>()
     
     func body(content: Content) -> some View {
         content
-            .task {
-                setupStateChangeHandlers()
-            }
             .onChange(of: appState.projectState.currentProject?.id) { _, newId in
                 coordinator.notifyProjectIdChanged(newId, project: appState.projectState.currentProject)
             }
@@ -98,20 +95,14 @@ struct UnifiedStateChangeModifier: ViewModifier {
                     appState.playbackState.loadProject(project, forceReload: true)
                 }
             }
-    }
-    
-    private func setupStateChangeHandlers() {
-        coordinator.projectChanges
-            .sink { change in
+            // CRITICAL FIX: Use onReceive which is properly managed by SwiftUI lifecycle
+            // instead of .task + .sink which can create closures that outlive the view
+            .onReceive(coordinator.projectChanges) { change in
                 handleProjectChange(change)
             }
-            .store(in: &cancellables)
-        
-        coordinator.clipAdded
-            .sink { project in
+            .onReceive(coordinator.clipAdded) { project in
                 handleClipAdded(project)
             }
-            .store(in: &cancellables)
     }
     
     private func handleProjectChange(_ change: StateChangeCoordinator.ProjectChange) {

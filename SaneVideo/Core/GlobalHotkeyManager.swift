@@ -9,6 +9,10 @@ class GlobalHotkeyManager {
 
     private var eventHandlers: [UInt32: () -> Void] = [:]
     private var eventHandler: EventHandlerRef?
+    
+    // CRITICAL FIX: Store the retained pointer so we can release it in deinit
+    // Using passUnretained was causing potential use-after-free crashes
+    private var retainedSelf: Unmanaged<GlobalHotkeyManager>?
 
     init() {}
 
@@ -23,7 +27,10 @@ class GlobalHotkeyManager {
     private func setupHotkeys() {
         var eventType = EventTypeSpec(eventClass: OSType(kEventClassKeyboard), eventKind: UInt32(kEventHotKeyPressed))
         
-        let selfPointer = UnsafeMutableRawPointer(Unmanaged.passUnretained(self).toOpaque())
+        // CRITICAL FIX: Use passRetained to ensure the object stays alive
+        // while the event handler is registered. We'll release in deinit.
+        retainedSelf = Unmanaged.passRetained(self)
+        let selfPointer = retainedSelf!.toOpaque()
 
         let status = InstallEventHandler(GetApplicationEventTarget(), { _, event, userData -> OSStatus in
             var hotkeyID = EventHotKeyID()
@@ -39,6 +46,7 @@ class GlobalHotkeyManager {
 
             if error == noErr {
                 if let userData = userData {
+                    // Use takeUnretainedValue since we're not transferring ownership here
                     let manager = Unmanaged<GlobalHotkeyManager>.fromOpaque(userData).takeUnretainedValue()
                     manager.handleEvent(id: hotkeyID.id)
                 }

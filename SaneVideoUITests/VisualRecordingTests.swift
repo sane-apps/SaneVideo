@@ -5,6 +5,7 @@
 //
 
 import XCTest
+@testable import SaneVideo
 
 final class VisualRecordingTests: UITestBase {
 
@@ -17,7 +18,7 @@ final class VisualRecordingTests: UITestBase {
     handleSystemAlerts()
 
     // Check for recording button
-    let recordButton = app.buttons["RecordButton"]
+    let recordButton = app.buttons[AccessibilityIdentifiers.recordButton]
     if recordButton.waitForExistence(timeout: 5) {
       XCTAssertTrue(recordButton.exists, "Record button should be visible")
     } else {
@@ -33,10 +34,11 @@ final class VisualRecordingTests: UITestBase {
 
     handleSystemAlerts()
 
-    // Check for recording controls
-    let controls = app.otherElements.matching(identifier: "RecordingControls")
-    if controls.count > 0 {
-      XCTAssertTrue(controls.firstMatch.exists, "Recording controls should be visible")
+    // Check for recording controls - using individual control identifiers instead
+    // RecordingControls identifier doesn't exist, check individual controls
+    let recordButton = app.buttons[AccessibilityIdentifiers.recordButton]
+    if recordButton.exists {
+      XCTAssertTrue(recordButton.exists, "Record button should be visible")
     }
   }
 

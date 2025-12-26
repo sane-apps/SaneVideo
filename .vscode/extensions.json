@@ -3,32 +3,32 @@
     // Swift Language Support
     "sswg.swift-lang",
     "vscode.swift-format",
-    
+
     // SwiftLint (if available)
     "shinnn.swiftlint",
-    
+
     // Git & Version Control
     "eamodio.gitlens",
     "mhutchie.git-graph",
-    
+
     // YAML Support (for project.yml, lefthook.yml)
     "redhat.vscode-yaml",
-    
+
     // Ruby Support (for SaneMaster.rb, Fastlane)
     "rebornix.ruby",
     "wingrunr21.vscode-ruby",
-    
+
     // Markdown Support (for documentation)
     "yzhang.markdown-all-in-one",
     "davidanson.vscode-markdownlint",
-    
+
     // File Management
     "alefragnani.project-manager",
-    
+
     // Code Quality
     "usernamehw.errorlens",
     "streetsidesoftware.code-spell-checker",
-    
+
     // Productivity
     "formulahendry.auto-rename-tag",
     "christian-kohler.path-intellisense",
@@ -40,4 +40,3 @@
     "ms-python.python" // Not a Python project
   ]
 }
-

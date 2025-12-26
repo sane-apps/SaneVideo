@@ -67,7 +67,7 @@ final class MemoryManager {
     func clearCaches(aggressive: Bool = false) {
         Task {
             // Clear thumbnail and waveform caches
-            await ServiceContainer.shared.timelineThumbnailService.clearCache()
+            await ServiceContainer.shared.thumbnailService.clearCache()
             if aggressive {
                 await ServiceContainer.shared.waveformService.clearCache()
             }

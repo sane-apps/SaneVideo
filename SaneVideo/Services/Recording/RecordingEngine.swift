@@ -55,14 +55,17 @@ class RecordingEngine: NSObject, @unchecked Sendable {
   @RecordingActor let timeCoordinator = RecordingTimeCoordinator()
 
   // CRITICAL FIX: Track source switch to detect if new source fails silently
-  @RecordingActor var sourceSwitchTimeoutTask: Task<Void, Never>?
+  // nonisolated(unsafe) allows safe cancellation from deinit on any thread
+  nonisolated(unsafe) var sourceSwitchTimeoutTask: Task<Void, Never>?
 
   // Subscriptions
   var cancellables = Set<AnyCancellable>()
 
   // Task Lifecycle Management (for cancellation on deinit)
-  @RecordingActor var activeRecordingTask: Task<Void, Never>?
-  @RecordingActor var activeSwitchTask: Task<Void, Never>?
+  // nonisolated(unsafe) allows safe cancellation from deinit on any thread
+  // (Task.cancel() is thread-safe)
+  nonisolated(unsafe) var activeRecordingTask: Task<Void, Never>?
+  nonisolated(unsafe) var activeSwitchTask: Task<Void, Never>?
 
   // Preview layer for Screen Recording
   let screenPreviewLayer = AVSampleBufferDisplayLayer()
@@ -210,7 +213,7 @@ class RecordingEngine: NSObject, @unchecked Sendable {
     // This prevents partial failure states where isRecording=true but no input source
     let renderingService = RenderingService.shared
     self.videoWriter = VideoWriter(renderingService: renderingService)
-    
+
     do {
       try self.videoWriter?.start(outputURL: url)
     } catch {
@@ -263,7 +266,7 @@ class RecordingEngine: NSObject, @unchecked Sendable {
 
     // CRITICAL: Start audio service
     await MainActor.run { self.audioService.start() }
-    
+
     // CRITICAL: Only NOW set isRecording=true after ALL services started successfully
     isRecording = true
     isPaused = false
@@ -334,7 +337,7 @@ class RecordingEngine: NSObject, @unchecked Sendable {
     // CRITICAL: Cancel any active switch operations
     sourceSwitchTimeoutTask?.cancel()
     sourceSwitchTimeoutTask = nil
-    
+
     // CRITICAL: Clear switch state to prevent hanging
     if isSwitching {
       AppLogger.recording.warning("🛑 Stopping recording during active switch. Cancelling switch.")

@@ -988,6 +988,17 @@ class SaneMaster
   def doctor
     puts '🏥 --- [ SANEMASTER DOCTOR ] ---'
 
+    # Check disk space
+    puts "\n💾 Disk Space:"
+    disk_info = `df -h . 2>/dev/null`.lines.last&.split || []
+    if disk_info.length >= 4
+      available = disk_info[3]
+      puts "  ✅ Available: #{available}"
+      if available.include?('G') && available.to_f < 10
+        puts "  ⚠️  Low disk space! Export/build may fail"
+      end
+    end
+
     # Check test assets (enhanced)
     puts "\n📦 Test Assets:"
     assets_dir = 'Tests/Assets'
@@ -1054,6 +1065,37 @@ class SaneMaster
       puts "  ✅ #{xcode_version}"
     else
       puts '  ❌ Xcode not found'
+    end
+
+    # Check SwiftLint
+    puts "\n🎨 Code Quality Tools:"
+    if system('which swiftlint > /dev/null 2>&1')
+      version = `swiftlint version 2>&1`.strip
+      puts "  ✅ SwiftLint #{version}"
+    else
+      puts '  ⚠️  SwiftLint not found. Install: brew install swiftlint'
+    end
+
+    # Check for stuck processes
+    puts "\n🔄 Stuck Processes:"
+    stuck = `pgrep -f 'xcodebuild test|xctest|testmanagerd' 2>/dev/null`.strip
+    if stuck.empty?
+      puts '  ✅ No stuck test processes'
+    else
+      puts "  ⚠️  Found stuck processes: #{stuck.split.join(', ')}"
+      puts "     Run: killall -9 xcodebuild xctest"
+    end
+
+    # Check DerivedData size
+    puts "\n📁 DerivedData:"
+    dd_path = File.expand_path('~/Library/Developer/Xcode/DerivedData/SaneVideo-*')
+    dd_dirs = Dir.glob(dd_path)
+    if dd_dirs.any?
+      total_size = dd_dirs.map { |d| `du -sh "#{d}" 2>/dev/null`.split.first }.join(', ')
+      puts "  📦 Size: #{total_size}"
+      puts "     Clean with: ./Scripts/SaneMaster.rb clean --nuclear"
+    else
+      puts '  ✅ No DerivedData cache'
     end
 
     puts "\n✅ Doctor check complete."

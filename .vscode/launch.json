@@ -11,6 +11,13 @@
       "stopOnEntry": false,
       "console": "internalConsole",
       "preLaunchTask": "SaneMaster: Verify"
+    },
+    {
+      "name": "SaneVideo (Attach)",
+      "type": "lldb",
+      "request": "attach",
+      "program": "${workspaceFolder}/build/Debug/SaneVideo.app/Contents/MacOS/SaneVideo",
+      "waitFor": true
     }
   ]
 }

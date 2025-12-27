@@ -10,27 +10,31 @@ import Foundation
 import SwiftUI
 
 extension ProjectState {
-    
+
     // MARK: - Video Import
-    
+
     func addVideoToTimeline(url: URL) async {
+        NSLog("📹 addVideoToTimeline called with: \(url.lastPathComponent)")
+
         // Debounce: Prevent duplicate imports from SwiftUI fileImporter bug
         let now = Date()
         if let lastURL = lastImportedURL, let lastTime = lastImportTime,
            lastURL == url, now.timeIntervalSince(lastTime) < 2.0 {
+            NSLog("📹 DEBOUNCE: Ignoring duplicate import of \(url.lastPathComponent)")
             AppLogger.project.warning("Ignoring duplicate import of \(url.lastPathComponent)")
             return
         }
         lastImportedURL = url
         lastImportTime = now
 
+        NSLog("📹 Attempting to import video from: \(url.path)")
         AppLogger.project.info("Attempting to import video from: \(url.path)")
-        
+
         // 1. Check if we should optimize (Pro Format Support)
         let nativeExtensions = ["mp4", "mov", "m4v"]
         let ext = url.pathExtension.lowercased()
         var targetURL = url
-        
+
         if !nativeExtensions.contains(ext) {
             AppLogger.project.info("Non-native format detected (\(ext)). Requesting optimization...")
             if let optimizedURL = await optimizeMedia(url: url) {
@@ -50,15 +54,15 @@ extension ProjectState {
             // Robust Import: Retry logic for fresh recordings where moov atom might be settling
             var clip: VideoClip!
             var lastError: Error?
-            
-            for attempt in 1...3 {
+
+            for attempt in 1...5 {
                 do {
                     clip = try await ServiceContainer.shared.projectFileManager.loadClip(from: targetURL)
                     break // Success
                 } catch {
                     lastError = error
-                    
-                    // 2. Pro Fallback: If native load fails, try one last time with optimization 
+
+                    // 2. Pro Fallback: If native load fails, try one last time with optimization
                     // (Handle cases where extension is .mp4 but contents are weird)
                     if attempt == 1 && (error as NSError).domain == AVFoundationErrorDomain {
                         AppLogger.project.warning("Native load failed. Attempting emergency optimization...")
@@ -67,14 +71,18 @@ extension ProjectState {
                             continue // Retry with optimized URL
                         }
                     }
-                    
+
                     AppLogger.project.warning("Attempt \(attempt) to load clip failed: \(error.localizedDescription)")
-                    if attempt < 3 {
-                        try? await Task.sleep(nanoseconds: 500_000_000) // 0.5s delay
+                    if attempt < 5 {
+                        // CRITICAL FIX: Longer delays for fresh recordings
+                        // First attempt: 1s (file might still be finalizing)
+                        // Subsequent attempts: exponential backoff (1s, 2s, 4s)
+                        let delay = UInt64(pow(2.0, Double(attempt - 1)) * 1_000_000_000) // 1s, 2s, 4s, 8s
+                        try? await Task.sleep(nanoseconds: delay)
                     }
                 }
             }
-            
+
             if var resultClip = clip {
                 // Attach click data if available (for auto-zoom feature)
                 // Click data is saved alongside the video file with .clicks.json extension
@@ -83,16 +91,18 @@ extension ProjectState {
                     resultClip.clickDataURL = clickDataURL
                     AppLogger.project.info("Attached click data for auto-zoom: \(clickDataURL.lastPathComponent)")
                 }
-                
+
                 // Attach cursor data if available (for cursor highlighting)
                 let cursorDataURL = targetURL.deletingPathExtension().appendingPathExtension("json")
                 if FileManager.default.fileExists(atPath: cursorDataURL.path) {
                     resultClip.cursorDataURL = cursorDataURL
                     AppLogger.project.info("Attached cursor data: \(cursorDataURL.lastPathComponent)")
                 }
-                
+
+                NSLog("📹 Successfully loaded clip. Duration: \(resultClip.duration.seconds)s. Adding to timeline...")
                 AppLogger.project.info("Successfully loaded clip. Duration: \(resultClip.duration.seconds)s. Adding to timeline...")
                 addClip(resultClip)
+                NSLog("📹 Clip added to project!")
                 AppLogger.project.info("Clip added.")
             } else if let error = lastError {
                 throw error
@@ -112,20 +122,20 @@ extension ProjectState {
             AppLogger.project.error("FFmpeg not available for optimization.")
             return nil
         }
-        
+
         let optimizedDir = FileManager.default.currentDirectoryPath + "/Media/Optimized"
         let timestamp = Int(Date().timeIntervalSince1970)
         let outputURL = URL(fileURLWithPath: optimizedDir).appendingPathComponent("optimized_\(timestamp)_\(url.deletingPathExtension().lastPathComponent).mp4")
-        
+
         await MainActor.run {
             self.isProcessing = true
             ServiceContainer.shared.toastManager.show("Optimizing Media for Editor...")
         }
-        
-        defer { 
+
+        defer {
             Task { @MainActor in self.isProcessing = false }
         }
-        
+
         do {
             AppLogger.project.info("Transcoding \(url.lastPathComponent) to \(outputURL.lastPathComponent)...")
             try await ffmpeg.convert(inputURL: url, outputURL: outputURL, codec: .h264, preset: .fast)
@@ -136,7 +146,7 @@ extension ProjectState {
             return nil
         }
     }
-    
+
     // MARK: - Generic Clip Addition
 
     func addClip(_ clip: VideoClip) {
@@ -160,7 +170,7 @@ extension ProjectState {
 
         guard let trackIndex = targetTrackIndex else { return }
         var track = timeline.tracks[trackIndex]
-        
+
         // CRITICAL FIX: Warn if track has too many clips (performance issue)
         if track.clips.count >= 100 {
             AppLogger.project.warning("Track has \(track.clips.count) clips, consider creating a new track")
@@ -170,7 +180,7 @@ extension ProjectState {
         // CRITICAL FIX: Calculate startTime atomically to prevent race conditions
         // Calculate startTime based on cumulative duration of existing clips in this track
         var mutableClip = clip
-        
+
         // CRITICAL FIX: Sort clips by startTime to ensure correct calculation
         // This prevents issues if clips were added out of order
         let sortedClips = track.clips.sorted { $0.startTime < $1.startTime }
@@ -182,14 +192,14 @@ extension ProjectState {
 
         track.clips.append(mutableClip)
         timeline.tracks[trackIndex] = track
-        
+
         // CRITICAL FIX: Recalculate startTimes to ensure consistency
         // This handles edge cases and ensures no gaps/overlaps
         recalculateStartTimes(in: &timeline)
-        
+
         // CRITICAL FIX: Update timeline duration after addition
         timeline.updateDuration()
-        
+
         // CRITICAL FIX: Validate timeline state after addition
         if !validateTimelineState(timeline) {
             AppLogger.project.error("Timeline state invalid after adding clip, rolling back")

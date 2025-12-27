@@ -44,6 +44,9 @@ class ScreenRecorder: NSObject, SCContentSharingPickerObserver, SCStreamDelegate
 
   var onPresenterOverlayChanged: ((Bool) -> Void)?
 
+  /// Callback triggered when user selects content in the picker
+  var onContentSelected: (() -> Void)?
+
   override init() {
     super.init()
     setupDisplayObserver()
@@ -169,6 +172,16 @@ class ScreenRecorder: NSObject, SCContentSharingPickerObserver, SCStreamDelegate
     config.allowedPickerModes = [
       .singleWindow, .multipleWindows, .singleApplication, .multipleApplications, .singleDisplay
     ]
+
+    // CRITICAL FIX: Exclude PiP and Controls windows from picker
+    // This prevents our own windows from appearing as options to share
+    let excludedIDs = ServiceContainer.shared.appState.windowManager.excludedWindowIDs
+    if !excludedIDs.isEmpty {
+      // Convert CGWindowID (UInt32) to Int for SCContentSharingPickerConfiguration
+      config.excludedWindowIDs = excludedIDs.map { Int($0) }
+      AppLogger.recording.info("📺 Excluding \(excludedIDs.count) windows from picker: \(excludedIDs)")
+    }
+
     picker.configuration = config
     picker.defaultConfiguration = config
 
@@ -256,6 +269,10 @@ class ScreenRecorder: NSObject, SCContentSharingPickerObserver, SCStreamDelegate
 
     Task { @MainActor in
       AppLogger.recording.info("📺 User selected content, starting capture...")
+
+      // CRITICAL: Notify that content was selected BEFORE starting capture
+      // This allows PiP to be shown now that picker enumeration is complete
+      self.onContentSelected?()
 
       // TAHOE FIX: Associate configuration with the stream for persistence
       if let stream = unsafeStream {

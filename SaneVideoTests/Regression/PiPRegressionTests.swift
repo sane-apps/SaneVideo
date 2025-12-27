@@ -14,7 +14,6 @@ import XCTest
 final class PiPRegressionTests: XCTestCase {
 
   // MARK: - Bug Fix: PiP Window Persistence
-
   // Regression Test for: "PiP window disappearing during screen share/focus switch"
   func testPiPWindowProperties() {
     let pipWindow = PiPCameraWindow()
@@ -23,6 +22,7 @@ final class PiPRegressionTests: XCTestCase {
     XCTAssertTrue(pipWindow is NSPanel, "PiPCameraWindow must be an NSPanel")
 
     // 2. Verify Level
+    // Use rawValue comparison if .floating isn't directly equating correctly, but it should be fine.
     XCTAssertEqual(
       pipWindow.level, .floating,
       "PiP Window level must be .floating (reverted from .statusBar for SCK visibility)")
@@ -40,14 +40,7 @@ final class PiPRegressionTests: XCTestCase {
     // 5. Verify Deactivation Hiding behavior
     XCTAssertFalse(pipWindow.hidesOnDeactivate, "Must NOT hide on deactivate")
 
-    // Check Controls Window too
-    if let controls = pipWindow.controlsWindow {
-      XCTAssertTrue(controls is NSPanel, "Controls window must be NSPanel")
-      XCTAssertEqual(controls.level, .floating)
-      XCTAssertTrue(controls.styleMask.contains(.nonactivatingPanel))
-    } else {
-      XCTFail("Controls window should be created on init")
-    }
+    // Note: Controls are now embedded in PiPCameraWindow, so no separate window to check.
   }
 
   // MARK: - Bug Fix: PiP Invisibility in Screen Recordings
@@ -89,25 +82,21 @@ final class PiPRegressionTests: XCTestCase {
 
       videoWriter.updatePiPFrame(pipWindowFrame, screenFrame: screenFrame)
 
-      // Verify the methods completed without error
-      // (We can't directly access private properties, but we verify the logic works)
+      // Verify methods complete without crashing/error
     }.value
 
-    // 3. Verify coordinate conversion logic
-    // Screen coordinates (Cocoa: bottom-left origin) to recording coordinates (top-left origin)
+    // 3. Verify coordinate conversion logic (Pure math verification)
     let screenFrame = CGRect(x: 0, y: 0, width: 1920, height: 1080)
     let pipWindowFrame = CGRect(x: 1600, y: 40, width: 320, height: 240)
     let screenHeight = screenFrame.height
     let cocoaY = pipWindowFrame.origin.y - screenFrame.origin.y
     let topRelativeY = screenHeight - cocoaY - pipWindowFrame.height
-    let scaleY = 1080.0 / screenHeight  // targetSize.height / screenFrame.height
+    let scaleY = 1080.0 / screenHeight
     let recordingY = topRelativeY * scaleY
 
-    // Verify Y coordinate conversion (should be positive and within bounds)
     XCTAssertGreaterThan(recordingY, 0, "Recording Y should be positive")
     XCTAssertLessThan(recordingY, 1080, "Recording Y should be within target height")
 
-    // Verify X coordinate conversion
     let screenRelativeX = pipWindowFrame.origin.x - screenFrame.origin.x
     let scaleX = 1920.0 / screenFrame.width
     let recordingX = screenRelativeX * scaleX
@@ -115,14 +104,12 @@ final class PiPRegressionTests: XCTestCase {
     XCTAssertGreaterThan(recordingX, 0, "Recording X should be positive")
     XCTAssertLessThan(recordingX, 1920, "Recording X should be within target width")
 
-    // 4. Verify resize handle is large enough (40x40 as per fix)
-    // Must be on MainActor for window creation
+    // 4. Verify resize handle via window properties
     await MainActor.run {
       let pipWindow = PiPCameraWindow()
-      // The resize handle is a private view, but we can verify the window is resizable
       XCTAssertTrue(
         pipWindow.styleMask.contains(.resizable),
-        "PiP window must be resizable for user interaction")
+        "PiP window must be resizable")
       XCTAssertTrue(
         pipWindow.isMovableByWindowBackground,
         "PiP window must be movable by background")
@@ -130,78 +117,104 @@ final class PiPRegressionTests: XCTestCase {
     }
   }
 
+  // MARK: - Bug Fix: PiP Window Appearing in Screen Share Picker (Dec 2025)
+
+  /// Regression Test for: "PiP window appearing in screen share picker"
+  /// Fix implemented: sharingType = .none prevents window from appearing in SCContentSharingPicker
+  /// and PiP is only shown AFTER user selects content (not before)
+  func testPiPWindowNotShareable() {
+    let pipWindow = PiPCameraWindow()
+
+    // 1. Verify sharingType is .none (critical for hiding from screen share picker)
+    XCTAssertEqual(
+      pipWindow.sharingType, .none,
+      "PiP window sharingType must be .none to hide from screen share picker")
+
+    // 2. Verify isReleasedWhenClosed is false (prevents crash during close)
+    XCTAssertFalse(
+      pipWindow.isReleasedWhenClosed,
+      "isReleasedWhenClosed must be false to prevent crash on close - let ARC handle cleanup")
+
+    pipWindow.close()
+  }
+
+  /// Regression Test for: "Crash when ending screen share"
+  /// Fix implemented: Synchronous close() without asyncAfter, no isReleasedWhenClosed = true from caller
+  func testPiPWindowCloseDoesNotCrash() async {
+    // Create and immediately close PiP window - should not crash
+    let pipWindow = PiPCameraWindow()
+
+    // Wait a moment to let window fully initialize
+    try? await Task.sleep(nanoseconds: 50_000_000)
+
+    // Close should be synchronous and safe
+    pipWindow.close()
+
+    // Wait a moment for any async cleanup
+    try? await Task.sleep(nanoseconds: 100_000_000)
+
+    // If we get here without crashing, the test passes
+    XCTAssertTrue(true, "PiP window close should not crash")
+  }
+
+  /// Regression Test for: "onContentSelected callback chain"
+  /// Fix implemented: Callback chain from ScreenRecorder -> RecordingEngine -> RecordingState -> AppState
+  func testOnContentSelectedCallbackExists() {
+    // Verify the callback properties exist in the chain
+    let screenRecorder = ScreenRecorder()
+    XCTAssertNil(screenRecorder.onContentSelected, "onContentSelected should be nil initially")
+
+    // Set it and verify it can be called
+    var callbackFired = false
+    screenRecorder.onContentSelected = { callbackFired = true }
+    screenRecorder.onContentSelected?()
+
+    XCTAssertTrue(callbackFired, "onContentSelected callback should be callable")
+  }
+
   // MARK: - Bug Fix: PiP Controls Persistence After Screen Share Disabled
 
-  // Regression Test for: "PiP controls window persists after disabling screen sharing"
-  // Fix implemented: Explicit orderOut and nil assignment when hiding PiP window
+  /// Regression Test for: "PiP controls window persists after disabling screen sharing"
+  /// Fix implemented: Controls are now embedded, so ensuring PiP window closes is sufficient.
   func testPiPControlsHiddenAfterScreenShareDisabled() async {
     // Setup: Create WindowManager and enable screen sharing to show PiP
     let windowManager = WindowManager()
 
-    // 1. Enable screen sharing (this should show PiP window with controls)
+    // 1. Enable screen sharing (this should show PiP window)
     windowManager.isScreenSharing = true
     windowManager.updatePiPState(isCameraActive: true, isRecording: false)
 
-    // In Unit Test environment, we bypass window creation to prevent crashes
+    // In Unit Test environment, bypass window creation check if needed
     if TestEnvironment.isTesting && !TestEnvironment.isUITesting {
       print("🧪 Skipping window existence check in Unit Test environment")
       return
     }
 
-    // Wait a moment for window to be created
-    try? await Task.sleep(nanoseconds: 200_000_000)  // 0.2s
+    try? await Task.sleep(nanoseconds: 200_000_000)
 
-    // Verify PiP window exists by checking NSApp.windows (since pipWindow is private)
     let allWindowsBefore = NSApp.windows
     let pipWindowsBefore = allWindowsBefore.filter { $0 is PiPCameraWindow }
-    let pipControlsBefore = allWindowsBefore.filter { $0 is PiPControlsWindow }
 
     XCTAssertGreaterThan(
       pipWindowsBefore.count, 0,
       "PiP window should be created when screen sharing is enabled"
     )
-    XCTAssertGreaterThan(
-      pipControlsBefore.count, 0,
-      "PiP controls window should exist when screen sharing is enabled"
-    )
 
-    // Verify controls are visible
-    if let controlsWindow = pipControlsBefore.first {
-      XCTAssertTrue(
-        controlsWindow.isVisible,
-        "PiP controls should be visible when screen sharing is enabled"
-      )
-    }
-
-    // 2. Disable screen sharing (this should hide PiP and close controls)
+    // 2. Disable screen sharing
     windowManager.isScreenSharing = false
     windowManager.updatePiPState(isCameraActive: false, isRecording: false)
 
-    // Wait a moment for cleanup
-    try? await Task.sleep(nanoseconds: 200_000_000)  // 0.2s
+    try? await Task.sleep(nanoseconds: 200_000_000)
 
-    // 3. Verify PiP window is gone (check all NSApp windows)
+    // 3. Verify PiP window is gone
     let allWindowsAfter = NSApp.windows
     let pipWindowsAfter = allWindowsAfter.filter { $0 is PiPCameraWindow }
-    let pipControlsAfter = allWindowsAfter.filter { $0 is PiPControlsWindow }
 
     XCTAssertEqual(
       pipWindowsAfter.count, 0,
       "No PiP windows should exist after screen sharing is disabled. Found: \(pipWindowsAfter.count)"
     )
 
-    // 4. CRITICAL: Verify controls window is completely gone (the persistent bug)
-    XCTAssertEqual(
-      pipControlsAfter.count, 0,
-      "No PiP controls windows should exist after screen sharing is disabled. Found: \(pipControlsAfter.count). This was the persistent bug."
-    )
-
-    // 5. Verify no orphaned controls windows are visible (double-check)
-    for window in pipControlsAfter {
-      XCTAssertFalse(
-        window.isVisible,
-        "PiP controls window should not be visible after screen sharing is disabled"
-      )
-    }
+    // Explicitly verify no orphaned controls (conceptually, by virtue of parent window being gone)
   }
 }

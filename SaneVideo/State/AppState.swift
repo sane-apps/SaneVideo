@@ -206,6 +206,17 @@ class AppState {
         )
       }
     }
+
+    // 4. Listen for Content Selection (Show PiP after picker selection)
+    // This prevents PiP from appearing in the picker's window list
+    recordingState.onContentSelected = { [weak self] in
+      guard let self = self else { return }
+      NSLog("🖥️ Content selected - NOW showing PiP window")
+      self.windowManager.updatePiPState(
+        isCameraActive: self.cameraState.isActive,
+        isRecording: self.recordingState.isRecording
+      )
+    }
   }
 
   private func setupErrorHandling() {

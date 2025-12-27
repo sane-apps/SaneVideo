@@ -120,16 +120,24 @@ class ExportEngine: ExportServiceProtocol {
     // 2. Setup Reader
     let reader = try AVAssetReader(asset: composition)
 
+    // CRITICAL: Guard against empty video tracks - crashes with "videoTracks count >= 1" assertion
+    let videoTracks = composition.tracks(withMediaType: .video)
+    guard !videoTracks.isEmpty else {
+      throw ExportError.invalidProject("Project has no video clips to export")
+    }
+
     // Video Output
     let videoSettings: [String: Any] = [
       kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA,
       kCVPixelBufferIOSurfacePropertiesKey as String: [:]  // Essential for performance
     ]
     let readerVideoOutput = AVAssetReaderVideoCompositionOutput(
-      videoTracks: composition.tracks(withMediaType: .video),
+      videoTracks: videoTracks,
       videoSettings: videoSettings
     )
-    readerVideoOutput.videoComposition = videoComposition
+    if let vc = videoComposition {
+        readerVideoOutput.videoComposition = vc
+    }
     readerVideoOutput.alwaysCopiesSampleData = false
 
     if reader.canAdd(readerVideoOutput) {

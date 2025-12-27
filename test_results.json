@@ -1,0 +1,4074 @@
+{
+  "_type" : {
+    "_name" : "ActionsInvocationRecord"
+  },
+  "actions" : {
+    "_type" : {
+      "_name" : "Array"
+    },
+    "_values" : [
+      {
+        "_type" : {
+          "_name" : "ActionRecord"
+        },
+        "actionResult" : {
+          "_type" : {
+            "_name" : "ActionResult"
+          },
+          "coverage" : {
+            "_type" : {
+              "_name" : "CodeCoverageInfo"
+            }
+          },
+          "diagnosticsRef" : {
+            "_type" : {
+              "_name" : "Reference"
+            },
+            "id" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "0~JbY3p3m8IYlF6CC47H3n2B9e6QFAiIi8CEgOS7v_9Fk7Ihz-3EaPwHSXxJOjpeW7QU4iXJ3M8Yh_J3-kFQeYeg=="
+            }
+          },
+          "issues" : {
+            "_type" : {
+              "_name" : "ResultIssueSummaries"
+            },
+            "errorSummaries" : {
+              "_type" : {
+                "_name" : "Array"
+              },
+              "_values" : [
+                {
+                  "_type" : {
+                    "_name" : "IssueSummary"
+                  },
+                  "issueType" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Uncategorized"
+                  },
+                  "message" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "SaneVideoUITests-Runner (67085) encountered an error (Failed to load the test bundle. (Underlying Error: The bundle “SaneVideoUITests” couldn’t be loaded. The bundle couldn’t be loaded. Try reinstalling the bundle. dlopen(\/Users\/sj\/Library\/Developer\/Xcode\/DerivedData\/SaneVideo-earhevoqwfzlcscgrlqxftjqjxps\/Build\/Products\/Debug\/SaneVideoUITests-Runner.app\/Contents\/PlugIns\/SaneVideoUITests.xctest\/Contents\/MacOS\/SaneVideoUITests, 0x0109): tried: '\/Users\/sj\/Library\/Developer\/Xcode\/DerivedData\/SaneVideo-earhevoqwfzlcscgrlqxftjqjxps\/Build\/Products\/Debug\/SaneVideoUITests' (no such file), '\/Applications\/Xcode.app\/Contents\/Developer\/Platforms\/MacOSX.platform\/Developer\/usr\/lib\/SaneVideoUITests' (no such file), '\/Users\/sj\/Library\/Developer\/Xcode\/DerivedData\/SaneVideo-earhevoqwfzlcscgrlqxftjqjxps\/Build\/Products\/Debug\/SaneVideoUITests' (no such file), '\/Applications\/Xcode.app\/Contents\/Developer\/Platforms\/MacOSX.platform\/Developer\/usr\/lib\/SaneVideoUITests' (no such file), '\/Users\/sj\/Library\/Developer\/Xcode\/DerivedData\/SaneVideo-earhevoqwfzlcscgrlqxftjqjxps\/Build\/Products\/Debug\/SaneVideoUITests-Runner.app\/Contents\/PlugIns\/SaneVideoUITests.xctest\/Contents\/MacOS\/SaneVideoUITests' (code signature in <8F7C6DE8-A732-38E3-9A6C-B60B60363D16> '\/Users\/sj\/Library\/Developer\/Xcode\/DerivedData\/SaneVideo-earhevoqwfzlcscgrlqxftjqjxps\/Build\/Products\/Debug\/SaneVideoUITests-Runner.app\/Contents\/PlugIns\/SaneVideoUITests.xctest\/Contents\/MacOS\/SaneVideoUITests' not valid for use in process: mapping process and mapped file (non-platform) have different Team IDs), '\/System\/Volumes\/Preboot\/Cryptexes\/OS\/Users\/sj\/Library\/Developer\/Xcode\/DerivedData\/SaneVideo-earhevoqwfzlcscgrlqxftjqjxps\/Build\/Products\/Debug\/SaneVideoUITests-Runner.app\/Contents\/PlugIns\/SaneVideoUITests.xctest\/Contents\/MacOS\/SaneVideoUITests' (no such file), '\/Users\/sj\/Library\/Developer\/Xcode\/DerivedData\/SaneVideo-earhevoqwfzlcscgrlqxftjqjxps\/Build\/Products\/Debug\/SaneVideoUITests-Runner.app\/Contents\/PlugIns\/SaneVideoUITests.xctest\/Contents\/MacOS\/SaneVideoUITests' (code signature in <8F7C6DE8-A732-38E3-9A6C-B60B60363D16> '\/Users\/sj\/Library\/Developer\/Xcode\/DerivedData\/SaneVideo-earhevoqwfzlcscgrlqxftjqjxps\/Build\/Products\/Debug\/SaneVideoUITests-Runner.app\/Contents\/PlugIns\/SaneVideoUITests.xctest\/Contents\/MacOS\/SaneVideoUITests' not valid for use in process: mapping process and mapped file (non-platform) have different Team IDs)))"
+                  }
+                }
+              ]
+            },
+            "testFailureSummaries" : {
+              "_type" : {
+                "_name" : "Array"
+              },
+              "_values" : [
+                {
+                  "_type" : {
+                    "_name" : "TestFailureIssueSummary",
+                    "_supertype" : {
+                      "_name" : "IssueSummary"
+                    }
+                  },
+                  "documentLocationInCreatingWorkspace" : {
+                    "_type" : {
+                      "_name" : "DocumentLocation"
+                    },
+                    "concreteTypeName" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "DVTTextDocumentLocation"
+                    },
+                    "url" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideoTests\/Regression\/APIDeprecationTests.swift#EndingLineNumber=47&StartingLineNumber=47"
+                    }
+                  },
+                  "issueType" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Uncategorized"
+                  },
+                  "message" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "XCTAssertTrue failed - Found deprecated API usages:\nThumbnailService.swift: Uses deprecated faceCaptureQuality without documentation"
+                  },
+                  "testCaseName" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "APIDeprecationTests.testNoDeprecatedFaceCaptureQualityAPI()"
+                  }
+                },
+                {
+                  "_type" : {
+                    "_name" : "TestFailureIssueSummary",
+                    "_supertype" : {
+                      "_name" : "IssueSummary"
+                    }
+                  },
+                  "documentLocationInCreatingWorkspace" : {
+                    "_type" : {
+                      "_name" : "DocumentLocation"
+                    },
+                    "concreteTypeName" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "DVTTextDocumentLocation"
+                    },
+                    "url" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideoTests\/Regression\/InspectorRegressionTests.swift#EndingLineNumber=204&StartingLineNumber=204"
+                    }
+                  },
+                  "issueType" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Uncategorized"
+                  },
+                  "message" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "XCTAssertTrue failed - Identifier should follow naming convention: MagicFixButton"
+                  },
+                  "testCaseName" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "InspectorRegressionTests.testAccessibilityLabels()"
+                  }
+                },
+                {
+                  "_type" : {
+                    "_name" : "TestFailureIssueSummary",
+                    "_supertype" : {
+                      "_name" : "IssueSummary"
+                    }
+                  },
+                  "documentLocationInCreatingWorkspace" : {
+                    "_type" : {
+                      "_name" : "DocumentLocation"
+                    },
+                    "concreteTypeName" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "DVTTextDocumentLocation"
+                    },
+                    "url" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideoTests\/Regression\/InspectorRegressionTests.swift#EndingLineNumber=243&StartingLineNumber=243"
+                    }
+                  },
+                  "issueType" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Uncategorized"
+                  },
+                  "message" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "XCTAssertEqual failed: (\"0.7\") is not equal to (\"0.8\") - Volume should be set to last value"
+                  },
+                  "testCaseName" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "InspectorRegressionTests.testSliderDebouncing()"
+                  }
+                },
+                {
+                  "_type" : {
+                    "_name" : "TestFailureIssueSummary",
+                    "_supertype" : {
+                      "_name" : "IssueSummary"
+                    }
+                  },
+                  "documentLocationInCreatingWorkspace" : {
+                    "_type" : {
+                      "_name" : "DocumentLocation"
+                    },
+                    "concreteTypeName" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "DVTTextDocumentLocation"
+                    },
+                    "url" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideoTests\/CompositionBuilderTests.swift#EndingLineNumber=99&StartingLineNumber=99"
+                    }
+                  },
+                  "issueType" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Uncategorized"
+                  },
+                  "message" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Caught error: .compositionFailed(Error Domain=CompositionBuilder Code=-1 \"Cannot export: Missing or inaccessible source files: file.mov. Please check that all video files are available.\" UserInfo={NSLocalizedDescription=Cannot export: Missing or inaccessible source files: file.mov. Please check that all video files are available.})"
+                  },
+                  "testCaseName" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "CompositionBuilderTests.buildCompositionWithInvalidURL()"
+                  }
+                },
+                {
+                  "_type" : {
+                    "_name" : "TestFailureIssueSummary",
+                    "_supertype" : {
+                      "_name" : "IssueSummary"
+                    }
+                  },
+                  "documentLocationInCreatingWorkspace" : {
+                    "_type" : {
+                      "_name" : "DocumentLocation"
+                    },
+                    "concreteTypeName" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "DVTTextDocumentLocation"
+                    },
+                    "url" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideoTests\/ComprehensiveFeatureTests.swift#EndingLineNumber=62&StartingLineNumber=62"
+                    }
+                  },
+                  "issueType" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Uncategorized"
+                  },
+                  "message" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Expectation failed: (stopped → false) || (!recordingState.isRecording → false)"
+                  },
+                  "testCaseName" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "ComprehensiveFeatureTests.testRecordingStop()"
+                  }
+                }
+              ]
+            }
+          },
+          "logRef" : {
+            "_type" : {
+              "_name" : "Reference"
+            },
+            "id" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "0~xuh3nXlwbSvbmsTPFd0Y5a43CToZLaqChhAl50RuirbRGgNn0GEOfr632yzHnpIHHPuP0fPvL7ZyhNxp_B3yNw=="
+            },
+            "targetType" : {
+              "_type" : {
+                "_name" : "TypeDefinition"
+              },
+              "name" : {
+                "_type" : {
+                  "_name" : "String"
+                },
+                "_value" : "ActivityLogSection"
+              }
+            }
+          },
+          "metrics" : {
+            "_type" : {
+              "_name" : "ResultMetrics"
+            },
+            "errorCount" : {
+              "_type" : {
+                "_name" : "Int"
+              },
+              "_value" : "1"
+            }
+          },
+          "resultName" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "action"
+          },
+          "status" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "failed"
+          },
+          "testsRef" : {
+            "_type" : {
+              "_name" : "Reference"
+            },
+            "id" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "0~xWTgt1J6_O5aPCwAn4ARQgxAVVdHmVgz5VtsJUTEC6MfGcz9JUw7kMWHjLSSCFfnB6_1kisKOpDWxr2JESyvlg=="
+            },
+            "targetType" : {
+              "_type" : {
+                "_name" : "TypeDefinition"
+              },
+              "name" : {
+                "_type" : {
+                  "_name" : "String"
+                },
+                "_value" : "ActionTestPlanRunSummaries"
+              }
+            }
+          }
+        },
+        "buildResult" : {
+          "_type" : {
+            "_name" : "ActionResult"
+          },
+          "coverage" : {
+            "_type" : {
+              "_name" : "CodeCoverageInfo"
+            }
+          },
+          "issues" : {
+            "_type" : {
+              "_name" : "ResultIssueSummaries"
+            },
+            "warningSummaries" : {
+              "_type" : {
+                "_name" : "Array"
+              },
+              "_values" : [
+                {
+                  "_type" : {
+                    "_name" : "IssueSummary"
+                  },
+                  "documentLocationInCreatingWorkspace" : {
+                    "_type" : {
+                      "_name" : "DocumentLocation"
+                    },
+                    "concreteTypeName" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "DVTTextDocumentLocation"
+                    },
+                    "url" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/State\/ProjectState.swift#EndingColumnNumber=4&EndingLineNumber=67&StartingColumnNumber=4&StartingLineNumber=67&Timestamp=788471583.5025949"
+                    }
+                  },
+                  "issueType" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Warning"
+                  },
+                  "message" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Orphaned Doc Comment Violation: A doc comment should be attached to a declaration (orphaned_doc_comment)"
+                  }
+                },
+                {
+                  "_type" : {
+                    "_name" : "IssueSummary"
+                  },
+                  "documentLocationInCreatingWorkspace" : {
+                    "_type" : {
+                      "_name" : "DocumentLocation"
+                    },
+                    "concreteTypeName" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "DVTTextDocumentLocation"
+                    },
+                    "url" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/State\/ProjectState.swift#EndingColumnNumber=4&EndingLineNumber=86&StartingColumnNumber=4&StartingLineNumber=86&Timestamp=788471583.5025949"
+                    }
+                  },
+                  "issueType" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Warning"
+                  },
+                  "message" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Orphaned Doc Comment Violation: A doc comment should be attached to a declaration (orphaned_doc_comment)"
+                  }
+                },
+                {
+                  "_type" : {
+                    "_name" : "IssueSummary"
+                  },
+                  "documentLocationInCreatingWorkspace" : {
+                    "_type" : {
+                      "_name" : "DocumentLocation"
+                    },
+                    "concreteTypeName" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "DVTTextDocumentLocation"
+                    },
+                    "url" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/State\/ProjectState+Relinking.swift#EndingColumnNumber=16&EndingLineNumber=34&StartingColumnNumber=16&StartingLineNumber=34&Timestamp=788471583.5025949"
+                    }
+                  },
+                  "issueType" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Warning"
+                  },
+                  "message" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Opening Brace Spacing Violation: Opening braces should be preceded by a single space and on the same line as the declaration (opening_brace)"
+                  }
+                },
+                {
+                  "_type" : {
+                    "_name" : "IssueSummary"
+                  },
+                  "documentLocationInCreatingWorkspace" : {
+                    "_type" : {
+                      "_name" : "DocumentLocation"
+                    },
+                    "concreteTypeName" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "DVTTextDocumentLocation"
+                    },
+                    "url" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Views\/Settings\/PrivacySettingsView.swift#EndingColumnNumber=0&EndingLineNumber=64&StartingColumnNumber=0&StartingLineNumber=64&Timestamp=788471583.5025949"
+                    }
+                  },
+                  "issueType" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Warning"
+                  },
+                  "message" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Trailing Newline Violation: Files should have a single trailing newline (trailing_newline)"
+                  }
+                },
+                {
+                  "_type" : {
+                    "_name" : "IssueSummary"
+                  },
+                  "documentLocationInCreatingWorkspace" : {
+                    "_type" : {
+                      "_name" : "DocumentLocation"
+                    },
+                    "concreteTypeName" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "DVTTextDocumentLocation"
+                    },
+                    "url" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Views\/SettingsView.swift#EndingColumnNumber=12&EndingLineNumber=151&StartingColumnNumber=12&StartingLineNumber=151&Timestamp=788471583.5025949"
+                    }
+                  },
+                  "issueType" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Warning"
+                  },
+                  "message" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Opening Brace Spacing Violation: Opening braces should be preceded by a single space and on the same line as the declaration (opening_brace)"
+                  }
+                },
+                {
+                  "_type" : {
+                    "_name" : "IssueSummary"
+                  },
+                  "documentLocationInCreatingWorkspace" : {
+                    "_type" : {
+                      "_name" : "DocumentLocation"
+                    },
+                    "concreteTypeName" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "DVTTextDocumentLocation"
+                    },
+                    "url" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Views\/Modifiers\/AccessibilityModifiers.swift#EndingColumnNumber=0&EndingLineNumber=91&StartingColumnNumber=0&StartingLineNumber=91&Timestamp=788471583.5025949"
+                    }
+                  },
+                  "issueType" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Warning"
+                  },
+                  "message" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Trailing Newline Violation: Files should have a single trailing newline (trailing_newline)"
+                  }
+                },
+                {
+                  "_type" : {
+                    "_name" : "IssueSummary"
+                  },
+                  "documentLocationInCreatingWorkspace" : {
+                    "_type" : {
+                      "_name" : "DocumentLocation"
+                    },
+                    "concreteTypeName" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "DVTTextDocumentLocation"
+                    },
+                    "url" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Views\/Modifiers\/AnimationModifiers.swift#EndingColumnNumber=0&EndingLineNumber=166&StartingColumnNumber=0&StartingLineNumber=166&Timestamp=788471583.5025949"
+                    }
+                  },
+                  "issueType" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Warning"
+                  },
+                  "message" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Trailing Newline Violation: Files should have a single trailing newline (trailing_newline)"
+                  }
+                },
+                {
+                  "_type" : {
+                    "_name" : "IssueSummary"
+                  },
+                  "documentLocationInCreatingWorkspace" : {
+                    "_type" : {
+                      "_name" : "DocumentLocation"
+                    },
+                    "concreteTypeName" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "DVTTextDocumentLocation"
+                    },
+                    "url" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Views\/Modifiers\/MainContentViewModifiers.swift#EndingColumnNumber=0&EndingLineNumber=37&StartingColumnNumber=0&StartingLineNumber=37&Timestamp=788471583.5025949"
+                    }
+                  },
+                  "issueType" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Warning"
+                  },
+                  "message" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Trailing Newline Violation: Files should have a single trailing newline (trailing_newline)"
+                  }
+                },
+                {
+                  "_type" : {
+                    "_name" : "IssueSummary"
+                  },
+                  "documentLocationInCreatingWorkspace" : {
+                    "_type" : {
+                      "_name" : "DocumentLocation"
+                    },
+                    "concreteTypeName" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "DVTTextDocumentLocation"
+                    },
+                    "url" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Views\/Modifiers\/StateChangePipeline.swift#EndingColumnNumber=0&EndingLineNumber=135&StartingColumnNumber=0&StartingLineNumber=135&Timestamp=788471583.5025949"
+                    }
+                  },
+                  "issueType" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Warning"
+                  },
+                  "message" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Trailing Newline Violation: Files should have a single trailing newline (trailing_newline)"
+                  }
+                },
+                {
+                  "_type" : {
+                    "_name" : "IssueSummary"
+                  },
+                  "documentLocationInCreatingWorkspace" : {
+                    "_type" : {
+                      "_name" : "DocumentLocation"
+                    },
+                    "concreteTypeName" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "DVTTextDocumentLocation"
+                    },
+                    "url" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Views\/Modifiers\/LoadingStateModifier.swift#EndingColumnNumber=0&EndingLineNumber=119&StartingColumnNumber=0&StartingLineNumber=119&Timestamp=788471583.5025949"
+                    }
+                  },
+                  "issueType" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Warning"
+                  },
+                  "message" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Trailing Newline Violation: Files should have a single trailing newline (trailing_newline)"
+                  }
+                },
+                {
+                  "_type" : {
+                    "_name" : "IssueSummary"
+                  },
+                  "documentLocationInCreatingWorkspace" : {
+                    "_type" : {
+                      "_name" : "DocumentLocation"
+                    },
+                    "concreteTypeName" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "DVTTextDocumentLocation"
+                    },
+                    "url" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Views\/Components\/SmartToolsSection.swift#EndingColumnNumber=0&EndingLineNumber=570&StartingColumnNumber=0&StartingLineNumber=570&Timestamp=788471583.5025949"
+                    }
+                  },
+                  "issueType" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Warning"
+                  },
+                  "message" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "File Length Violation: File should contain 500 lines or less: currently contains 571 (file_length)"
+                  }
+                },
+                {
+                  "_type" : {
+                    "_name" : "IssueSummary"
+                  },
+                  "documentLocationInCreatingWorkspace" : {
+                    "_type" : {
+                      "_name" : "DocumentLocation"
+                    },
+                    "concreteTypeName" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "DVTTextDocumentLocation"
+                    },
+                    "url" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Views\/Components\/EnhancedMagicOverlayView.swift#EndingColumnNumber=0&EndingLineNumber=93&StartingColumnNumber=0&StartingLineNumber=93&Timestamp=788471583.5025949"
+                    }
+                  },
+                  "issueType" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Warning"
+                  },
+                  "message" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Trailing Newline Violation: Files should have a single trailing newline (trailing_newline)"
+                  }
+                },
+                {
+                  "_type" : {
+                    "_name" : "IssueSummary"
+                  },
+                  "documentLocationInCreatingWorkspace" : {
+                    "_type" : {
+                      "_name" : "DocumentLocation"
+                    },
+                    "concreteTypeName" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "DVTTextDocumentLocation"
+                    },
+                    "url" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Views\/Components\/ExportProgressView.swift#EndingColumnNumber=0&EndingLineNumber=60&StartingColumnNumber=0&StartingLineNumber=60&Timestamp=788471583.5025949"
+                    }
+                  },
+                  "issueType" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Warning"
+                  },
+                  "message" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Trailing Newline Violation: Files should have a single trailing newline (trailing_newline)"
+                  }
+                },
+                {
+                  "_type" : {
+                    "_name" : "IssueSummary"
+                  },
+                  "documentLocationInCreatingWorkspace" : {
+                    "_type" : {
+                      "_name" : "DocumentLocation"
+                    },
+                    "concreteTypeName" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "DVTTextDocumentLocation"
+                    },
+                    "url" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Views\/Components\/PrivacyBadge.swift#EndingColumnNumber=0&EndingLineNumber=63&StartingColumnNumber=0&StartingLineNumber=63&Timestamp=788471583.5025949"
+                    }
+                  },
+                  "issueType" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Warning"
+                  },
+                  "message" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Trailing Newline Violation: Files should have a single trailing newline (trailing_newline)"
+                  }
+                },
+                {
+                  "_type" : {
+                    "_name" : "IssueSummary"
+                  },
+                  "documentLocationInCreatingWorkspace" : {
+                    "_type" : {
+                      "_name" : "DocumentLocation"
+                    },
+                    "concreteTypeName" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "DVTTextDocumentLocation"
+                    },
+                    "url" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Views\/Components\/PricingBadge.swift#EndingColumnNumber=0&EndingLineNumber=90&StartingColumnNumber=0&StartingLineNumber=90&Timestamp=788471583.5025949"
+                    }
+                  },
+                  "issueType" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Warning"
+                  },
+                  "message" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Trailing Newline Violation: Files should have a single trailing newline (trailing_newline)"
+                  }
+                },
+                {
+                  "_type" : {
+                    "_name" : "IssueSummary"
+                  },
+                  "documentLocationInCreatingWorkspace" : {
+                    "_type" : {
+                      "_name" : "DocumentLocation"
+                    },
+                    "concreteTypeName" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "DVTTextDocumentLocation"
+                    },
+                    "url" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Views\/Components\/StylesInspectorView.swift#EndingColumnNumber=12&EndingLineNumber=43&StartingColumnNumber=12&StartingLineNumber=43&Timestamp=788471583.5025949"
+                    }
+                  },
+                  "issueType" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Warning"
+                  },
+                  "message" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Prefer For-Where Violation: `where` clauses are preferred over a single `if` inside a `for` (for_where)"
+                  }
+                },
+                {
+                  "_type" : {
+                    "_name" : "IssueSummary"
+                  },
+                  "documentLocationInCreatingWorkspace" : {
+                    "_type" : {
+                      "_name" : "DocumentLocation"
+                    },
+                    "concreteTypeName" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "DVTTextDocumentLocation"
+                    },
+                    "url" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Views\/Components\/TranscriptionEnginePicker.swift#EndingColumnNumber=0&EndingLineNumber=81&StartingColumnNumber=0&StartingLineNumber=81&Timestamp=788471583.5025949"
+                    }
+                  },
+                  "issueType" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Warning"
+                  },
+                  "message" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Trailing Newline Violation: Files should have a single trailing newline (trailing_newline)"
+                  }
+                },
+                {
+                  "_type" : {
+                    "_name" : "IssueSummary"
+                  },
+                  "documentLocationInCreatingWorkspace" : {
+                    "_type" : {
+                      "_name" : "DocumentLocation"
+                    },
+                    "concreteTypeName" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "DVTTextDocumentLocation"
+                    },
+                    "url" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Views\/Components\/EnhancedLoadingIndicator.swift#EndingColumnNumber=8&EndingLineNumber=12&StartingColumnNumber=8&StartingLineNumber=12&Timestamp=788471583.5025949"
+                    }
+                  },
+                  "issueType" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Warning"
+                  },
+                  "message" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Implicit Optional Initialization Violation: Optional should be implicitly initialized without nil (implicit_optional_initialization)"
+                  }
+                },
+                {
+                  "_type" : {
+                    "_name" : "IssueSummary"
+                  },
+                  "documentLocationInCreatingWorkspace" : {
+                    "_type" : {
+                      "_name" : "DocumentLocation"
+                    },
+                    "concreteTypeName" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "DVTTextDocumentLocation"
+                    },
+                    "url" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Views\/Components\/EnhancedLoadingIndicator.swift#EndingColumnNumber=8&EndingLineNumber=13&StartingColumnNumber=8&StartingLineNumber=13&Timestamp=788471583.5025949"
+                    }
+                  },
+                  "issueType" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Warning"
+                  },
+                  "message" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Implicit Optional Initialization Violation: Optional should be implicitly initialized without nil (implicit_optional_initialization)"
+                  }
+                },
+                {
+                  "_type" : {
+                    "_name" : "IssueSummary"
+                  },
+                  "documentLocationInCreatingWorkspace" : {
+                    "_type" : {
+                      "_name" : "DocumentLocation"
+                    },
+                    "concreteTypeName" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "DVTTextDocumentLocation"
+                    },
+                    "url" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Views\/Components\/EnhancedLoadingIndicator.swift#EndingColumnNumber=8&EndingLineNumber=14&StartingColumnNumber=8&StartingLineNumber=14&Timestamp=788471583.5025949"
+                    }
+                  },
+                  "issueType" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Warning"
+                  },
+                  "message" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Implicit Optional Initialization Violation: Optional should be implicitly initialized without nil (implicit_optional_initialization)"
+                  }
+                },
+                {
+                  "_type" : {
+                    "_name" : "IssueSummary"
+                  },
+                  "documentLocationInCreatingWorkspace" : {
+                    "_type" : {
+                      "_name" : "DocumentLocation"
+                    },
+                    "concreteTypeName" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "DVTTextDocumentLocation"
+                    },
+                    "url" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Views\/Components\/EnhancedLoadingIndicator.swift#EndingColumnNumber=0&EndingLineNumber=70&StartingColumnNumber=0&StartingLineNumber=70&Timestamp=788471583.5025949"
+                    }
+                  },
+                  "issueType" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Warning"
+                  },
+                  "message" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Trailing Newline Violation: Files should have a single trailing newline (trailing_newline)"
+                  }
+                },
+                {
+                  "_type" : {
+                    "_name" : "IssueSummary"
+                  },
+                  "documentLocationInCreatingWorkspace" : {
+                    "_type" : {
+                      "_name" : "DocumentLocation"
+                    },
+                    "concreteTypeName" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "DVTTextDocumentLocation"
+                    },
+                    "url" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Views\/Components\/ThermalStatusIndicator.swift#EndingColumnNumber=0&EndingLineNumber=124&StartingColumnNumber=0&StartingLineNumber=124&Timestamp=788471583.5025949"
+                    }
+                  },
+                  "issueType" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Warning"
+                  },
+                  "message" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Trailing Newline Violation: Files should have a single trailing newline (trailing_newline)"
+                  }
+                },
+                {
+                  "_type" : {
+                    "_name" : "IssueSummary"
+                  },
+                  "documentLocationInCreatingWorkspace" : {
+                    "_type" : {
+                      "_name" : "DocumentLocation"
+                    },
+                    "concreteTypeName" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "DVTTextDocumentLocation"
+                    },
+                    "url" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Views\/Components\/TranscriptTimelineView.swift#EndingColumnNumber=0&EndingLineNumber=380&StartingColumnNumber=0&StartingLineNumber=380&Timestamp=788471583.5025949"
+                    }
+                  },
+                  "issueType" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Warning"
+                  },
+                  "message" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Trailing Newline Violation: Files should have a single trailing newline (trailing_newline)"
+                  }
+                },
+                {
+                  "_type" : {
+                    "_name" : "IssueSummary"
+                  },
+                  "documentLocationInCreatingWorkspace" : {
+                    "_type" : {
+                      "_name" : "DocumentLocation"
+                    },
+                    "concreteTypeName" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "DVTTextDocumentLocation"
+                    },
+                    "url" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Views\/Components\/ErrorDisplayView.swift#EndingColumnNumber=0&EndingLineNumber=176&StartingColumnNumber=0&StartingLineNumber=176&Timestamp=788471583.5025949"
+                    }
+                  },
+                  "issueType" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Warning"
+                  },
+                  "message" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Trailing Newline Violation: Files should have a single trailing newline (trailing_newline)"
+                  }
+                },
+                {
+                  "_type" : {
+                    "_name" : "IssueSummary"
+                  },
+                  "documentLocationInCreatingWorkspace" : {
+                    "_type" : {
+                      "_name" : "DocumentLocation"
+                    },
+                    "concreteTypeName" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "DVTTextDocumentLocation"
+                    },
+                    "url" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Views\/Components\/QuickAccessOverlay.swift#EndingColumnNumber=11&EndingLineNumber=186&StartingColumnNumber=11&StartingLineNumber=186&Timestamp=788471583.5025949"
+                    }
+                  },
+                  "issueType" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Warning"
+                  },
+                  "message" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Multiple Closures with Trailing Closure Violation: Trailing closure syntax should not be used when passing more than one closure argument (multiple_closures_with_trailing_closure)"
+                  }
+                },
+                {
+                  "_type" : {
+                    "_name" : "IssueSummary"
+                  },
+                  "documentLocationInCreatingWorkspace" : {
+                    "_type" : {
+                      "_name" : "DocumentLocation"
+                    },
+                    "concreteTypeName" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "DVTTextDocumentLocation"
+                    },
+                    "url" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Views\/Components\/QuickAccessOverlay.swift#EndingColumnNumber=0&EndingLineNumber=241&StartingColumnNumber=0&StartingLineNumber=241&Timestamp=788471583.5025949"
+                    }
+                  },
+                  "issueType" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Warning"
+                  },
+                  "message" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Trailing Newline Violation: Files should have a single trailing newline (trailing_newline)"
+                  }
+                },
+                {
+                  "_type" : {
+                    "_name" : "IssueSummary"
+                  },
+                  "documentLocationInCreatingWorkspace" : {
+                    "_type" : {
+                      "_name" : "DocumentLocation"
+                    },
+                    "concreteTypeName" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "DVTTextDocumentLocation"
+                    },
+                    "url" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Views\/MainContentView.swift#EndingColumnNumber=8&EndingLineNumber=117&StartingColumnNumber=8&StartingLineNumber=117&Timestamp=788471583.5025949"
+                    }
+                  },
+                  "issueType" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Warning"
+                  },
+                  "message" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Closure Parameter Position Violation: Closure parameters should be on the same line as opening brace (closure_parameter_position)"
+                  }
+                },
+                {
+                  "_type" : {
+                    "_name" : "IssueSummary"
+                  },
+                  "documentLocationInCreatingWorkspace" : {
+                    "_type" : {
+                      "_name" : "DocumentLocation"
+                    },
+                    "concreteTypeName" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "DVTTextDocumentLocation"
+                    },
+                    "url" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Views\/Onboarding\/FirstLaunchView.swift#EndingColumnNumber=0&EndingLineNumber=143&StartingColumnNumber=0&StartingLineNumber=143&Timestamp=788471583.5025949"
+                    }
+                  },
+                  "issueType" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Warning"
+                  },
+                  "message" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Trailing Newline Violation: Files should have a single trailing newline (trailing_newline)"
+                  }
+                },
+                {
+                  "_type" : {
+                    "_name" : "IssueSummary"
+                  },
+                  "documentLocationInCreatingWorkspace" : {
+                    "_type" : {
+                      "_name" : "DocumentLocation"
+                    },
+                    "concreteTypeName" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "DVTTextDocumentLocation"
+                    },
+                    "url" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Services\/Captions\/TranscriptionCoordinator.swift#EndingColumnNumber=0&EndingLineNumber=147&StartingColumnNumber=0&StartingLineNumber=147&Timestamp=788471583.5025949"
+                    }
+                  },
+                  "issueType" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Warning"
+                  },
+                  "message" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Trailing Newline Violation: Files should have a single trailing newline (trailing_newline)"
+                  }
+                },
+                {
+                  "_type" : {
+                    "_name" : "IssueSummary"
+                  },
+                  "documentLocationInCreatingWorkspace" : {
+                    "_type" : {
+                      "_name" : "DocumentLocation"
+                    },
+                    "concreteTypeName" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "DVTTextDocumentLocation"
+                    },
+                    "url" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Services\/Recording\/ScreenRecorder.swift#EndingColumnNumber=0&EndingLineNumber=611&StartingColumnNumber=0&StartingLineNumber=611&Timestamp=788471583.5025949"
+                    }
+                  },
+                  "issueType" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Warning"
+                  },
+                  "message" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "File Length Violation: File should contain 500 lines or less: currently contains 612 (file_length)"
+                  }
+                },
+                {
+                  "_type" : {
+                    "_name" : "IssueSummary"
+                  },
+                  "documentLocationInCreatingWorkspace" : {
+                    "_type" : {
+                      "_name" : "DocumentLocation"
+                    },
+                    "concreteTypeName" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "DVTTextDocumentLocation"
+                    },
+                    "url" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Services\/Captions\/TranscriptionError.swift#EndingColumnNumber=0&EndingLineNumber=29&StartingColumnNumber=0&StartingLineNumber=29&Timestamp=788471583.5025949"
+                    }
+                  },
+                  "issueType" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Warning"
+                  },
+                  "message" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Trailing Newline Violation: Files should have a single trailing newline (trailing_newline)"
+                  }
+                },
+                {
+                  "_type" : {
+                    "_name" : "IssueSummary"
+                  },
+                  "documentLocationInCreatingWorkspace" : {
+                    "_type" : {
+                      "_name" : "DocumentLocation"
+                    },
+                    "concreteTypeName" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "DVTTextDocumentLocation"
+                    },
+                    "url" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Services\/Captions\/TranscriptionServiceProtocol.swift#EndingColumnNumber=0&EndingLineNumber=63&StartingColumnNumber=0&StartingLineNumber=63&Timestamp=788471583.5025949"
+                    }
+                  },
+                  "issueType" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Warning"
+                  },
+                  "message" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Trailing Newline Violation: Files should have a single trailing newline (trailing_newline)"
+                  }
+                },
+                {
+                  "_type" : {
+                    "_name" : "IssueSummary"
+                  },
+                  "documentLocationInCreatingWorkspace" : {
+                    "_type" : {
+                      "_name" : "DocumentLocation"
+                    },
+                    "concreteTypeName" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "DVTTextDocumentLocation"
+                    },
+                    "url" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Services\/Vision\/FaceTrackingService.swift#EndingColumnNumber=2&EndingLineNumber=143&StartingColumnNumber=2&StartingLineNumber=143&Timestamp=788471583.5025949"
+                    }
+                  },
+                  "issueType" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Warning"
+                  },
+                  "message" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Opening Brace Spacing Violation: Opening braces should be preceded by a single space and on the same line as the declaration (opening_brace)"
+                  }
+                },
+                {
+                  "_type" : {
+                    "_name" : "IssueSummary"
+                  },
+                  "documentLocationInCreatingWorkspace" : {
+                    "_type" : {
+                      "_name" : "DocumentLocation"
+                    },
+                    "concreteTypeName" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "DVTTextDocumentLocation"
+                    },
+                    "url" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Services\/Vision\/FaceTrackingService.swift#EndingColumnNumber=8&EndingLineNumber=196&StartingColumnNumber=8&StartingLineNumber=196&Timestamp=788471583.5025949"
+                    }
+                  },
+                  "issueType" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Warning"
+                  },
+                  "message" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Opening Brace Spacing Violation: Opening braces should be preceded by a single space and on the same line as the declaration (opening_brace)"
+                  }
+                },
+                {
+                  "_type" : {
+                    "_name" : "IssueSummary"
+                  },
+                  "documentLocationInCreatingWorkspace" : {
+                    "_type" : {
+                      "_name" : "DocumentLocation"
+                    },
+                    "concreteTypeName" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "DVTTextDocumentLocation"
+                    },
+                    "url" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Services\/Audio\/SoundAnalysisService.swift#EndingColumnNumber=2&EndingLineNumber=107&StartingColumnNumber=2&StartingLineNumber=107&Timestamp=788471583.5025949"
+                    }
+                  },
+                  "issueType" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Warning"
+                  },
+                  "message" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Opening Brace Spacing Violation: Opening braces should be preceded by a single space and on the same line as the declaration (opening_brace)"
+                  }
+                },
+                {
+                  "_type" : {
+                    "_name" : "IssueSummary"
+                  },
+                  "documentLocationInCreatingWorkspace" : {
+                    "_type" : {
+                      "_name" : "DocumentLocation"
+                    },
+                    "concreteTypeName" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "DVTTextDocumentLocation"
+                    },
+                    "url" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Services\/Audio\/SoundAnalysisService.swift#EndingColumnNumber=2&EndingLineNumber=166&StartingColumnNumber=2&StartingLineNumber=166&Timestamp=788471583.5025949"
+                    }
+                  },
+                  "issueType" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Warning"
+                  },
+                  "message" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Opening Brace Spacing Violation: Opening braces should be preceded by a single space and on the same line as the declaration (opening_brace)"
+                  }
+                },
+                {
+                  "_type" : {
+                    "_name" : "IssueSummary"
+                  },
+                  "documentLocationInCreatingWorkspace" : {
+                    "_type" : {
+                      "_name" : "DocumentLocation"
+                    },
+                    "concreteTypeName" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "DVTTextDocumentLocation"
+                    },
+                    "url" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Services\/Recording\/ClickTrackingService.swift#EndingColumnNumber=0&EndingLineNumber=122&StartingColumnNumber=0&StartingLineNumber=122&Timestamp=788471583.5025949"
+                    }
+                  },
+                  "issueType" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Warning"
+                  },
+                  "message" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Trailing Newline Violation: Files should have a single trailing newline (trailing_newline)"
+                  }
+                },
+                {
+                  "_type" : {
+                    "_name" : "IssueSummary"
+                  },
+                  "documentLocationInCreatingWorkspace" : {
+                    "_type" : {
+                      "_name" : "DocumentLocation"
+                    },
+                    "concreteTypeName" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "DVTTextDocumentLocation"
+                    },
+                    "url" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Services\/Recording\/RecordingEngine+Setup.swift#EndingColumnNumber=8&EndingLineNumber=112&StartingColumnNumber=8&StartingLineNumber=112&Timestamp=788471583.5025949"
+                    }
+                  },
+                  "issueType" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Warning"
+                  },
+                  "message" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Prefer For-Where Violation: `where` clauses are preferred over a single `if` inside a `for` (for_where)"
+                  }
+                },
+                {
+                  "_type" : {
+                    "_name" : "IssueSummary"
+                  },
+                  "documentLocationInCreatingWorkspace" : {
+                    "_type" : {
+                      "_name" : "DocumentLocation"
+                    },
+                    "concreteTypeName" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "DVTTextDocumentLocation"
+                    },
+                    "url" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Services\/Vision\/VisionOrchestrator.swift#EndingColumnNumber=10&EndingLineNumber=245&StartingColumnNumber=10&StartingLineNumber=245&Timestamp=788471583.5025949"
+                    }
+                  },
+                  "issueType" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Warning"
+                  },
+                  "message" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Opening Brace Spacing Violation: Opening braces should be preceded by a single space and on the same line as the declaration (opening_brace)"
+                  }
+                },
+                {
+                  "_type" : {
+                    "_name" : "IssueSummary"
+                  },
+                  "documentLocationInCreatingWorkspace" : {
+                    "_type" : {
+                      "_name" : "DocumentLocation"
+                    },
+                    "concreteTypeName" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "DVTTextDocumentLocation"
+                    },
+                    "url" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Services\/Vision\/VisionOrchestrator.swift#EndingColumnNumber=61&EndingLineNumber=53&StartingColumnNumber=61&StartingLineNumber=53&Timestamp=788471583.5025949"
+                    }
+                  },
+                  "issueType" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Warning"
+                  },
+                  "message" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Trailing Comma Violation: Collection literals should not have trailing commas (trailing_comma)"
+                  }
+                },
+                {
+                  "_type" : {
+                    "_name" : "IssueSummary"
+                  },
+                  "documentLocationInCreatingWorkspace" : {
+                    "_type" : {
+                      "_name" : "DocumentLocation"
+                    },
+                    "concreteTypeName" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "DVTTextDocumentLocation"
+                    },
+                    "url" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Services\/Vision\/VisionOrchestrator.swift#EndingColumnNumber=36&EndingLineNumber=66&StartingColumnNumber=36&StartingLineNumber=66&Timestamp=788471583.5025949"
+                    }
+                  },
+                  "issueType" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Warning"
+                  },
+                  "message" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Trailing Comma Violation: Collection literals should not have trailing commas (trailing_comma)"
+                  }
+                },
+                {
+                  "_type" : {
+                    "_name" : "IssueSummary"
+                  },
+                  "documentLocationInCreatingWorkspace" : {
+                    "_type" : {
+                      "_name" : "DocumentLocation"
+                    },
+                    "concreteTypeName" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "DVTTextDocumentLocation"
+                    },
+                    "url" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Services\/Diagnostics\/SystemHealthService.swift#EndingColumnNumber=0&EndingLineNumber=143&StartingColumnNumber=0&StartingLineNumber=143&Timestamp=788471583.5025949"
+                    }
+                  },
+                  "issueType" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Warning"
+                  },
+                  "message" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Trailing Newline Violation: Files should have a single trailing newline (trailing_newline)"
+                  }
+                },
+                {
+                  "_type" : {
+                    "_name" : "IssueSummary"
+                  },
+                  "documentLocationInCreatingWorkspace" : {
+                    "_type" : {
+                      "_name" : "DocumentLocation"
+                    },
+                    "concreteTypeName" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "DVTTextDocumentLocation"
+                    },
+                    "url" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Services\/AI\/AIService+DynamicProvider.swift#EndingColumnNumber=0&EndingLineNumber=102&StartingColumnNumber=0&StartingLineNumber=102&Timestamp=788471583.5025949"
+                    }
+                  },
+                  "issueType" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Warning"
+                  },
+                  "message" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Trailing Newline Violation: Files should have a single trailing newline (trailing_newline)"
+                  }
+                },
+                {
+                  "_type" : {
+                    "_name" : "IssueSummary"
+                  },
+                  "documentLocationInCreatingWorkspace" : {
+                    "_type" : {
+                      "_name" : "DocumentLocation"
+                    },
+                    "concreteTypeName" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "DVTTextDocumentLocation"
+                    },
+                    "url" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Services\/Export\/ExportSpeedTracker.swift#EndingColumnNumber=0&EndingLineNumber=104&StartingColumnNumber=0&StartingLineNumber=104&Timestamp=788471583.5025949"
+                    }
+                  },
+                  "issueType" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Warning"
+                  },
+                  "message" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Trailing Newline Violation: Files should have a single trailing newline (trailing_newline)"
+                  }
+                },
+                {
+                  "_type" : {
+                    "_name" : "IssueSummary"
+                  },
+                  "documentLocationInCreatingWorkspace" : {
+                    "_type" : {
+                      "_name" : "DocumentLocation"
+                    },
+                    "concreteTypeName" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "DVTTextDocumentLocation"
+                    },
+                    "url" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Services\/Rendering\/MetalOptimization.swift#EndingColumnNumber=0&EndingLineNumber=143&StartingColumnNumber=0&StartingLineNumber=143&Timestamp=788471583.5025949"
+                    }
+                  },
+                  "issueType" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Warning"
+                  },
+                  "message" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Trailing Newline Violation: Files should have a single trailing newline (trailing_newline)"
+                  }
+                },
+                {
+                  "_type" : {
+                    "_name" : "IssueSummary"
+                  },
+                  "documentLocationInCreatingWorkspace" : {
+                    "_type" : {
+                      "_name" : "DocumentLocation"
+                    },
+                    "concreteTypeName" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "DVTTextDocumentLocation"
+                    },
+                    "url" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideoUITests\/PiPControlsTest.swift#EndingColumnNumber=12&EndingLineNumber=91&StartingColumnNumber=12&StartingLineNumber=91&Timestamp=788471583.5025949"
+                    }
+                  },
+                  "issueType" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "No-usage"
+                  },
+                  "message" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Result of 'XCTSkip' initializer is unused"
+                  }
+                },
+                {
+                  "_type" : {
+                    "_name" : "IssueSummary"
+                  },
+                  "documentLocationInCreatingWorkspace" : {
+                    "_type" : {
+                      "_name" : "DocumentLocation"
+                    },
+                    "concreteTypeName" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "DVTTextDocumentLocation"
+                    },
+                    "url" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideoUITests\/PiPControlsTest.swift#EndingColumnNumber=12&EndingLineNumber=127&StartingColumnNumber=12&StartingLineNumber=127&Timestamp=788471583.5025949"
+                    }
+                  },
+                  "issueType" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "No-usage"
+                  },
+                  "message" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Result of 'XCTSkip' initializer is unused"
+                  }
+                },
+                {
+                  "_type" : {
+                    "_name" : "IssueSummary"
+                  },
+                  "documentLocationInCreatingWorkspace" : {
+                    "_type" : {
+                      "_name" : "DocumentLocation"
+                    },
+                    "concreteTypeName" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "DVTTextDocumentLocation"
+                    },
+                    "url" : {
+                      "_type" : {
+                        "_name" : "String"
+                      },
+                      "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideoUITests\/PiPControlsTest.swift#EndingColumnNumber=12&EndingLineNumber=176&StartingColumnNumber=12&StartingLineNumber=176&Timestamp=788471583.5025949"
+                    }
+                  },
+                  "issueType" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "No-usage"
+                  },
+                  "message" : {
+                    "_type" : {
+                      "_name" : "String"
+                    },
+                    "_value" : "Result of 'XCTSkip' initializer is unused"
+                  }
+                }
+              ]
+            }
+          },
+          "logRef" : {
+            "_type" : {
+              "_name" : "Reference"
+            },
+            "id" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "0~u4XNjfL3bnnX9OX6rj2fbABKYpnaWkRHtSj2dgVUUiDFd7cue8a-g2bEfK37f4MgnLxT8MbMjh6v3Hi0bUR6MA=="
+            },
+            "targetType" : {
+              "_type" : {
+                "_name" : "TypeDefinition"
+              },
+              "name" : {
+                "_type" : {
+                  "_name" : "String"
+                },
+                "_value" : "ActivityLogSection"
+              }
+            }
+          },
+          "metrics" : {
+            "_type" : {
+              "_name" : "ResultMetrics"
+            },
+            "warningCount" : {
+              "_type" : {
+                "_name" : "Int"
+              },
+              "_value" : "48"
+            }
+          },
+          "resultName" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "build"
+          },
+          "status" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "succeeded"
+          }
+        },
+        "endedTime" : {
+          "_type" : {
+            "_name" : "Date"
+          },
+          "_value" : "2025-12-26T14:53:31.905-0500"
+        },
+        "runDestination" : {
+          "_type" : {
+            "_name" : "ActionRunDestinationRecord"
+          },
+          "displayName" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "My Mac"
+          },
+          "localComputerRecord" : {
+            "_type" : {
+              "_name" : "ActionDeviceRecord"
+            },
+            "busSpeedInMHz" : {
+              "_type" : {
+                "_name" : "Int"
+              },
+              "_value" : "0"
+            },
+            "cpuCount" : {
+              "_type" : {
+                "_name" : "Int"
+              },
+              "_value" : "1"
+            },
+            "cpuKind" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "Apple M4"
+            },
+            "cpuSpeedInMHz" : {
+              "_type" : {
+                "_name" : "Int"
+              },
+              "_value" : "0"
+            },
+            "identifier" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "00008132-001645E636E3801C"
+            },
+            "isConcreteDevice" : {
+              "_type" : {
+                "_name" : "Bool"
+              },
+              "_value" : "true"
+            },
+            "logicalCPUCoresPerPackage" : {
+              "_type" : {
+                "_name" : "Int"
+              },
+              "_value" : "10"
+            },
+            "modelCode" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "Mac16,12"
+            },
+            "modelName" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "MacBook Air"
+            },
+            "modelUTI" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "com.apple.macbookair-13-2025"
+            },
+            "name" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "My Mac"
+            },
+            "nativeArchitecture" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "arm64e"
+            },
+            "operatingSystemVersion" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "26.2"
+            },
+            "operatingSystemVersionWithBuildNumber" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "26.2 (25C56)"
+            },
+            "physicalCPUCoresPerPackage" : {
+              "_type" : {
+                "_name" : "Int"
+              },
+              "_value" : "10"
+            },
+            "platformRecord" : {
+              "_type" : {
+                "_name" : "ActionPlatformRecord"
+              },
+              "identifier" : {
+                "_type" : {
+                  "_name" : "String"
+                },
+                "_value" : "com.apple.platform.macosx"
+              },
+              "userDescription" : {
+                "_type" : {
+                  "_name" : "String"
+                },
+                "_value" : "macOS"
+              }
+            },
+            "ramSizeInMegabytes" : {
+              "_type" : {
+                "_name" : "Int"
+              },
+              "_value" : "16384"
+            }
+          },
+          "targetArchitecture" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "arm64"
+          },
+          "targetDeviceRecord" : {
+            "_type" : {
+              "_name" : "ActionDeviceRecord"
+            },
+            "busSpeedInMHz" : {
+              "_type" : {
+                "_name" : "Int"
+              },
+              "_value" : "0"
+            },
+            "cpuCount" : {
+              "_type" : {
+                "_name" : "Int"
+              },
+              "_value" : "1"
+            },
+            "cpuKind" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "Apple M4"
+            },
+            "cpuSpeedInMHz" : {
+              "_type" : {
+                "_name" : "Int"
+              },
+              "_value" : "0"
+            },
+            "identifier" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "00008132-001645E636E3801C"
+            },
+            "isConcreteDevice" : {
+              "_type" : {
+                "_name" : "Bool"
+              },
+              "_value" : "true"
+            },
+            "logicalCPUCoresPerPackage" : {
+              "_type" : {
+                "_name" : "Int"
+              },
+              "_value" : "10"
+            },
+            "modelCode" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "Mac16,12"
+            },
+            "modelName" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "MacBook Air"
+            },
+            "modelUTI" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "com.apple.macbookair-13-2025"
+            },
+            "name" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "My Mac"
+            },
+            "nativeArchitecture" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "arm64e"
+            },
+            "operatingSystemVersion" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "26.2"
+            },
+            "operatingSystemVersionWithBuildNumber" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "26.2 (25C56)"
+            },
+            "physicalCPUCoresPerPackage" : {
+              "_type" : {
+                "_name" : "Int"
+              },
+              "_value" : "10"
+            },
+            "platformRecord" : {
+              "_type" : {
+                "_name" : "ActionPlatformRecord"
+              },
+              "identifier" : {
+                "_type" : {
+                  "_name" : "String"
+                },
+                "_value" : "com.apple.platform.macosx"
+              },
+              "userDescription" : {
+                "_type" : {
+                  "_name" : "String"
+                },
+                "_value" : "macOS"
+              }
+            },
+            "ramSizeInMegabytes" : {
+              "_type" : {
+                "_name" : "Int"
+              },
+              "_value" : "16384"
+            }
+          },
+          "targetSDKRecord" : {
+            "_type" : {
+              "_name" : "ActionSDKRecord"
+            },
+            "identifier" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "macosx26.2"
+            },
+            "name" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "macOS 26.2"
+            },
+            "operatingSystemVersion" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "26.2"
+            }
+          }
+        },
+        "schemeCommandName" : {
+          "_type" : {
+            "_name" : "String"
+          },
+          "_value" : "Test"
+        },
+        "schemeTaskName" : {
+          "_type" : {
+            "_name" : "String"
+          },
+          "_value" : "BuildAndAction"
+        },
+        "startedTime" : {
+          "_type" : {
+            "_name" : "Date"
+          },
+          "_value" : "2025-12-26T14:53:02.605-0500"
+        },
+        "testPlanName" : {
+          "_type" : {
+            "_name" : "String"
+          },
+          "_value" : "SaneVideo"
+        },
+        "title" : {
+          "_type" : {
+            "_name" : "String"
+          },
+          "_value" : "Testing project SaneVideo with scheme SaneVideo"
+        }
+      }
+    ]
+  },
+  "issues" : {
+    "_type" : {
+      "_name" : "ResultIssueSummaries"
+    },
+    "errorSummaries" : {
+      "_type" : {
+        "_name" : "Array"
+      },
+      "_values" : [
+        {
+          "_type" : {
+            "_name" : "IssueSummary"
+          },
+          "issueType" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Uncategorized"
+          },
+          "message" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "SaneVideoUITests-Runner (67085) encountered an error (Failed to load the test bundle. (Underlying Error: The bundle “SaneVideoUITests” couldn’t be loaded. The bundle couldn’t be loaded. Try reinstalling the bundle. dlopen(\/Users\/sj\/Library\/Developer\/Xcode\/DerivedData\/SaneVideo-earhevoqwfzlcscgrlqxftjqjxps\/Build\/Products\/Debug\/SaneVideoUITests-Runner.app\/Contents\/PlugIns\/SaneVideoUITests.xctest\/Contents\/MacOS\/SaneVideoUITests, 0x0109): tried: '\/Users\/sj\/Library\/Developer\/Xcode\/DerivedData\/SaneVideo-earhevoqwfzlcscgrlqxftjqjxps\/Build\/Products\/Debug\/SaneVideoUITests' (no such file), '\/Applications\/Xcode.app\/Contents\/Developer\/Platforms\/MacOSX.platform\/Developer\/usr\/lib\/SaneVideoUITests' (no such file), '\/Users\/sj\/Library\/Developer\/Xcode\/DerivedData\/SaneVideo-earhevoqwfzlcscgrlqxftjqjxps\/Build\/Products\/Debug\/SaneVideoUITests' (no such file), '\/Applications\/Xcode.app\/Contents\/Developer\/Platforms\/MacOSX.platform\/Developer\/usr\/lib\/SaneVideoUITests' (no such file), '\/Users\/sj\/Library\/Developer\/Xcode\/DerivedData\/SaneVideo-earhevoqwfzlcscgrlqxftjqjxps\/Build\/Products\/Debug\/SaneVideoUITests-Runner.app\/Contents\/PlugIns\/SaneVideoUITests.xctest\/Contents\/MacOS\/SaneVideoUITests' (code signature in <8F7C6DE8-A732-38E3-9A6C-B60B60363D16> '\/Users\/sj\/Library\/Developer\/Xcode\/DerivedData\/SaneVideo-earhevoqwfzlcscgrlqxftjqjxps\/Build\/Products\/Debug\/SaneVideoUITests-Runner.app\/Contents\/PlugIns\/SaneVideoUITests.xctest\/Contents\/MacOS\/SaneVideoUITests' not valid for use in process: mapping process and mapped file (non-platform) have different Team IDs), '\/System\/Volumes\/Preboot\/Cryptexes\/OS\/Users\/sj\/Library\/Developer\/Xcode\/DerivedData\/SaneVideo-earhevoqwfzlcscgrlqxftjqjxps\/Build\/Products\/Debug\/SaneVideoUITests-Runner.app\/Contents\/PlugIns\/SaneVideoUITests.xctest\/Contents\/MacOS\/SaneVideoUITests' (no such file), '\/Users\/sj\/Library\/Developer\/Xcode\/DerivedData\/SaneVideo-earhevoqwfzlcscgrlqxftjqjxps\/Build\/Products\/Debug\/SaneVideoUITests-Runner.app\/Contents\/PlugIns\/SaneVideoUITests.xctest\/Contents\/MacOS\/SaneVideoUITests' (code signature in <8F7C6DE8-A732-38E3-9A6C-B60B60363D16> '\/Users\/sj\/Library\/Developer\/Xcode\/DerivedData\/SaneVideo-earhevoqwfzlcscgrlqxftjqjxps\/Build\/Products\/Debug\/SaneVideoUITests-Runner.app\/Contents\/PlugIns\/SaneVideoUITests.xctest\/Contents\/MacOS\/SaneVideoUITests' not valid for use in process: mapping process and mapped file (non-platform) have different Team IDs)))"
+          }
+        }
+      ]
+    },
+    "warningSummaries" : {
+      "_type" : {
+        "_name" : "Array"
+      },
+      "_values" : [
+        {
+          "_type" : {
+            "_name" : "IssueSummary"
+          },
+          "documentLocationInCreatingWorkspace" : {
+            "_type" : {
+              "_name" : "DocumentLocation"
+            },
+            "concreteTypeName" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "DVTTextDocumentLocation"
+            },
+            "url" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/State\/ProjectState.swift#EndingColumnNumber=4&EndingLineNumber=67&StartingColumnNumber=4&StartingLineNumber=67&Timestamp=788471583.5025949"
+            }
+          },
+          "issueType" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Warning"
+          },
+          "message" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Orphaned Doc Comment Violation: A doc comment should be attached to a declaration (orphaned_doc_comment)"
+          }
+        },
+        {
+          "_type" : {
+            "_name" : "IssueSummary"
+          },
+          "documentLocationInCreatingWorkspace" : {
+            "_type" : {
+              "_name" : "DocumentLocation"
+            },
+            "concreteTypeName" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "DVTTextDocumentLocation"
+            },
+            "url" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/State\/ProjectState.swift#EndingColumnNumber=4&EndingLineNumber=86&StartingColumnNumber=4&StartingLineNumber=86&Timestamp=788471583.5025949"
+            }
+          },
+          "issueType" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Warning"
+          },
+          "message" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Orphaned Doc Comment Violation: A doc comment should be attached to a declaration (orphaned_doc_comment)"
+          }
+        },
+        {
+          "_type" : {
+            "_name" : "IssueSummary"
+          },
+          "documentLocationInCreatingWorkspace" : {
+            "_type" : {
+              "_name" : "DocumentLocation"
+            },
+            "concreteTypeName" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "DVTTextDocumentLocation"
+            },
+            "url" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/State\/ProjectState+Relinking.swift#EndingColumnNumber=16&EndingLineNumber=34&StartingColumnNumber=16&StartingLineNumber=34&Timestamp=788471583.5025949"
+            }
+          },
+          "issueType" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Warning"
+          },
+          "message" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Opening Brace Spacing Violation: Opening braces should be preceded by a single space and on the same line as the declaration (opening_brace)"
+          }
+        },
+        {
+          "_type" : {
+            "_name" : "IssueSummary"
+          },
+          "documentLocationInCreatingWorkspace" : {
+            "_type" : {
+              "_name" : "DocumentLocation"
+            },
+            "concreteTypeName" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "DVTTextDocumentLocation"
+            },
+            "url" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Views\/Settings\/PrivacySettingsView.swift#EndingColumnNumber=0&EndingLineNumber=64&StartingColumnNumber=0&StartingLineNumber=64&Timestamp=788471583.5025949"
+            }
+          },
+          "issueType" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Warning"
+          },
+          "message" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Trailing Newline Violation: Files should have a single trailing newline (trailing_newline)"
+          }
+        },
+        {
+          "_type" : {
+            "_name" : "IssueSummary"
+          },
+          "documentLocationInCreatingWorkspace" : {
+            "_type" : {
+              "_name" : "DocumentLocation"
+            },
+            "concreteTypeName" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "DVTTextDocumentLocation"
+            },
+            "url" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Views\/SettingsView.swift#EndingColumnNumber=12&EndingLineNumber=151&StartingColumnNumber=12&StartingLineNumber=151&Timestamp=788471583.5025949"
+            }
+          },
+          "issueType" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Warning"
+          },
+          "message" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Opening Brace Spacing Violation: Opening braces should be preceded by a single space and on the same line as the declaration (opening_brace)"
+          }
+        },
+        {
+          "_type" : {
+            "_name" : "IssueSummary"
+          },
+          "documentLocationInCreatingWorkspace" : {
+            "_type" : {
+              "_name" : "DocumentLocation"
+            },
+            "concreteTypeName" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "DVTTextDocumentLocation"
+            },
+            "url" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Views\/Modifiers\/AccessibilityModifiers.swift#EndingColumnNumber=0&EndingLineNumber=91&StartingColumnNumber=0&StartingLineNumber=91&Timestamp=788471583.5025949"
+            }
+          },
+          "issueType" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Warning"
+          },
+          "message" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Trailing Newline Violation: Files should have a single trailing newline (trailing_newline)"
+          }
+        },
+        {
+          "_type" : {
+            "_name" : "IssueSummary"
+          },
+          "documentLocationInCreatingWorkspace" : {
+            "_type" : {
+              "_name" : "DocumentLocation"
+            },
+            "concreteTypeName" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "DVTTextDocumentLocation"
+            },
+            "url" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Views\/Modifiers\/AnimationModifiers.swift#EndingColumnNumber=0&EndingLineNumber=166&StartingColumnNumber=0&StartingLineNumber=166&Timestamp=788471583.5025949"
+            }
+          },
+          "issueType" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Warning"
+          },
+          "message" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Trailing Newline Violation: Files should have a single trailing newline (trailing_newline)"
+          }
+        },
+        {
+          "_type" : {
+            "_name" : "IssueSummary"
+          },
+          "documentLocationInCreatingWorkspace" : {
+            "_type" : {
+              "_name" : "DocumentLocation"
+            },
+            "concreteTypeName" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "DVTTextDocumentLocation"
+            },
+            "url" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Views\/Modifiers\/MainContentViewModifiers.swift#EndingColumnNumber=0&EndingLineNumber=37&StartingColumnNumber=0&StartingLineNumber=37&Timestamp=788471583.5025949"
+            }
+          },
+          "issueType" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Warning"
+          },
+          "message" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Trailing Newline Violation: Files should have a single trailing newline (trailing_newline)"
+          }
+        },
+        {
+          "_type" : {
+            "_name" : "IssueSummary"
+          },
+          "documentLocationInCreatingWorkspace" : {
+            "_type" : {
+              "_name" : "DocumentLocation"
+            },
+            "concreteTypeName" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "DVTTextDocumentLocation"
+            },
+            "url" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Views\/Modifiers\/StateChangePipeline.swift#EndingColumnNumber=0&EndingLineNumber=135&StartingColumnNumber=0&StartingLineNumber=135&Timestamp=788471583.5025949"
+            }
+          },
+          "issueType" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Warning"
+          },
+          "message" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Trailing Newline Violation: Files should have a single trailing newline (trailing_newline)"
+          }
+        },
+        {
+          "_type" : {
+            "_name" : "IssueSummary"
+          },
+          "documentLocationInCreatingWorkspace" : {
+            "_type" : {
+              "_name" : "DocumentLocation"
+            },
+            "concreteTypeName" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "DVTTextDocumentLocation"
+            },
+            "url" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Views\/Modifiers\/LoadingStateModifier.swift#EndingColumnNumber=0&EndingLineNumber=119&StartingColumnNumber=0&StartingLineNumber=119&Timestamp=788471583.5025949"
+            }
+          },
+          "issueType" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Warning"
+          },
+          "message" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Trailing Newline Violation: Files should have a single trailing newline (trailing_newline)"
+          }
+        },
+        {
+          "_type" : {
+            "_name" : "IssueSummary"
+          },
+          "documentLocationInCreatingWorkspace" : {
+            "_type" : {
+              "_name" : "DocumentLocation"
+            },
+            "concreteTypeName" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "DVTTextDocumentLocation"
+            },
+            "url" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Views\/Components\/SmartToolsSection.swift#EndingColumnNumber=0&EndingLineNumber=570&StartingColumnNumber=0&StartingLineNumber=570&Timestamp=788471583.5025949"
+            }
+          },
+          "issueType" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Warning"
+          },
+          "message" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "File Length Violation: File should contain 500 lines or less: currently contains 571 (file_length)"
+          }
+        },
+        {
+          "_type" : {
+            "_name" : "IssueSummary"
+          },
+          "documentLocationInCreatingWorkspace" : {
+            "_type" : {
+              "_name" : "DocumentLocation"
+            },
+            "concreteTypeName" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "DVTTextDocumentLocation"
+            },
+            "url" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Views\/Components\/EnhancedMagicOverlayView.swift#EndingColumnNumber=0&EndingLineNumber=93&StartingColumnNumber=0&StartingLineNumber=93&Timestamp=788471583.5025949"
+            }
+          },
+          "issueType" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Warning"
+          },
+          "message" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Trailing Newline Violation: Files should have a single trailing newline (trailing_newline)"
+          }
+        },
+        {
+          "_type" : {
+            "_name" : "IssueSummary"
+          },
+          "documentLocationInCreatingWorkspace" : {
+            "_type" : {
+              "_name" : "DocumentLocation"
+            },
+            "concreteTypeName" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "DVTTextDocumentLocation"
+            },
+            "url" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Views\/Components\/ExportProgressView.swift#EndingColumnNumber=0&EndingLineNumber=60&StartingColumnNumber=0&StartingLineNumber=60&Timestamp=788471583.5025949"
+            }
+          },
+          "issueType" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Warning"
+          },
+          "message" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Trailing Newline Violation: Files should have a single trailing newline (trailing_newline)"
+          }
+        },
+        {
+          "_type" : {
+            "_name" : "IssueSummary"
+          },
+          "documentLocationInCreatingWorkspace" : {
+            "_type" : {
+              "_name" : "DocumentLocation"
+            },
+            "concreteTypeName" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "DVTTextDocumentLocation"
+            },
+            "url" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Views\/Components\/PrivacyBadge.swift#EndingColumnNumber=0&EndingLineNumber=63&StartingColumnNumber=0&StartingLineNumber=63&Timestamp=788471583.5025949"
+            }
+          },
+          "issueType" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Warning"
+          },
+          "message" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Trailing Newline Violation: Files should have a single trailing newline (trailing_newline)"
+          }
+        },
+        {
+          "_type" : {
+            "_name" : "IssueSummary"
+          },
+          "documentLocationInCreatingWorkspace" : {
+            "_type" : {
+              "_name" : "DocumentLocation"
+            },
+            "concreteTypeName" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "DVTTextDocumentLocation"
+            },
+            "url" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Views\/Components\/PricingBadge.swift#EndingColumnNumber=0&EndingLineNumber=90&StartingColumnNumber=0&StartingLineNumber=90&Timestamp=788471583.5025949"
+            }
+          },
+          "issueType" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Warning"
+          },
+          "message" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Trailing Newline Violation: Files should have a single trailing newline (trailing_newline)"
+          }
+        },
+        {
+          "_type" : {
+            "_name" : "IssueSummary"
+          },
+          "documentLocationInCreatingWorkspace" : {
+            "_type" : {
+              "_name" : "DocumentLocation"
+            },
+            "concreteTypeName" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "DVTTextDocumentLocation"
+            },
+            "url" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Views\/Components\/StylesInspectorView.swift#EndingColumnNumber=12&EndingLineNumber=43&StartingColumnNumber=12&StartingLineNumber=43&Timestamp=788471583.5025949"
+            }
+          },
+          "issueType" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Warning"
+          },
+          "message" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Prefer For-Where Violation: `where` clauses are preferred over a single `if` inside a `for` (for_where)"
+          }
+        },
+        {
+          "_type" : {
+            "_name" : "IssueSummary"
+          },
+          "documentLocationInCreatingWorkspace" : {
+            "_type" : {
+              "_name" : "DocumentLocation"
+            },
+            "concreteTypeName" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "DVTTextDocumentLocation"
+            },
+            "url" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Views\/Components\/TranscriptionEnginePicker.swift#EndingColumnNumber=0&EndingLineNumber=81&StartingColumnNumber=0&StartingLineNumber=81&Timestamp=788471583.5025949"
+            }
+          },
+          "issueType" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Warning"
+          },
+          "message" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Trailing Newline Violation: Files should have a single trailing newline (trailing_newline)"
+          }
+        },
+        {
+          "_type" : {
+            "_name" : "IssueSummary"
+          },
+          "documentLocationInCreatingWorkspace" : {
+            "_type" : {
+              "_name" : "DocumentLocation"
+            },
+            "concreteTypeName" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "DVTTextDocumentLocation"
+            },
+            "url" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Views\/Components\/EnhancedLoadingIndicator.swift#EndingColumnNumber=8&EndingLineNumber=12&StartingColumnNumber=8&StartingLineNumber=12&Timestamp=788471583.5025949"
+            }
+          },
+          "issueType" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Warning"
+          },
+          "message" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Implicit Optional Initialization Violation: Optional should be implicitly initialized without nil (implicit_optional_initialization)"
+          }
+        },
+        {
+          "_type" : {
+            "_name" : "IssueSummary"
+          },
+          "documentLocationInCreatingWorkspace" : {
+            "_type" : {
+              "_name" : "DocumentLocation"
+            },
+            "concreteTypeName" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "DVTTextDocumentLocation"
+            },
+            "url" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Views\/Components\/EnhancedLoadingIndicator.swift#EndingColumnNumber=8&EndingLineNumber=13&StartingColumnNumber=8&StartingLineNumber=13&Timestamp=788471583.5025949"
+            }
+          },
+          "issueType" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Warning"
+          },
+          "message" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Implicit Optional Initialization Violation: Optional should be implicitly initialized without nil (implicit_optional_initialization)"
+          }
+        },
+        {
+          "_type" : {
+            "_name" : "IssueSummary"
+          },
+          "documentLocationInCreatingWorkspace" : {
+            "_type" : {
+              "_name" : "DocumentLocation"
+            },
+            "concreteTypeName" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "DVTTextDocumentLocation"
+            },
+            "url" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Views\/Components\/EnhancedLoadingIndicator.swift#EndingColumnNumber=8&EndingLineNumber=14&StartingColumnNumber=8&StartingLineNumber=14&Timestamp=788471583.5025949"
+            }
+          },
+          "issueType" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Warning"
+          },
+          "message" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Implicit Optional Initialization Violation: Optional should be implicitly initialized without nil (implicit_optional_initialization)"
+          }
+        },
+        {
+          "_type" : {
+            "_name" : "IssueSummary"
+          },
+          "documentLocationInCreatingWorkspace" : {
+            "_type" : {
+              "_name" : "DocumentLocation"
+            },
+            "concreteTypeName" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "DVTTextDocumentLocation"
+            },
+            "url" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Views\/Components\/EnhancedLoadingIndicator.swift#EndingColumnNumber=0&EndingLineNumber=70&StartingColumnNumber=0&StartingLineNumber=70&Timestamp=788471583.5025949"
+            }
+          },
+          "issueType" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Warning"
+          },
+          "message" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Trailing Newline Violation: Files should have a single trailing newline (trailing_newline)"
+          }
+        },
+        {
+          "_type" : {
+            "_name" : "IssueSummary"
+          },
+          "documentLocationInCreatingWorkspace" : {
+            "_type" : {
+              "_name" : "DocumentLocation"
+            },
+            "concreteTypeName" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "DVTTextDocumentLocation"
+            },
+            "url" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Views\/Components\/ThermalStatusIndicator.swift#EndingColumnNumber=0&EndingLineNumber=124&StartingColumnNumber=0&StartingLineNumber=124&Timestamp=788471583.5025949"
+            }
+          },
+          "issueType" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Warning"
+          },
+          "message" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Trailing Newline Violation: Files should have a single trailing newline (trailing_newline)"
+          }
+        },
+        {
+          "_type" : {
+            "_name" : "IssueSummary"
+          },
+          "documentLocationInCreatingWorkspace" : {
+            "_type" : {
+              "_name" : "DocumentLocation"
+            },
+            "concreteTypeName" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "DVTTextDocumentLocation"
+            },
+            "url" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Views\/Components\/TranscriptTimelineView.swift#EndingColumnNumber=0&EndingLineNumber=380&StartingColumnNumber=0&StartingLineNumber=380&Timestamp=788471583.5025949"
+            }
+          },
+          "issueType" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Warning"
+          },
+          "message" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Trailing Newline Violation: Files should have a single trailing newline (trailing_newline)"
+          }
+        },
+        {
+          "_type" : {
+            "_name" : "IssueSummary"
+          },
+          "documentLocationInCreatingWorkspace" : {
+            "_type" : {
+              "_name" : "DocumentLocation"
+            },
+            "concreteTypeName" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "DVTTextDocumentLocation"
+            },
+            "url" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Views\/Components\/ErrorDisplayView.swift#EndingColumnNumber=0&EndingLineNumber=176&StartingColumnNumber=0&StartingLineNumber=176&Timestamp=788471583.5025949"
+            }
+          },
+          "issueType" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Warning"
+          },
+          "message" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Trailing Newline Violation: Files should have a single trailing newline (trailing_newline)"
+          }
+        },
+        {
+          "_type" : {
+            "_name" : "IssueSummary"
+          },
+          "documentLocationInCreatingWorkspace" : {
+            "_type" : {
+              "_name" : "DocumentLocation"
+            },
+            "concreteTypeName" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "DVTTextDocumentLocation"
+            },
+            "url" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Views\/Components\/QuickAccessOverlay.swift#EndingColumnNumber=11&EndingLineNumber=186&StartingColumnNumber=11&StartingLineNumber=186&Timestamp=788471583.5025949"
+            }
+          },
+          "issueType" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Warning"
+          },
+          "message" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Multiple Closures with Trailing Closure Violation: Trailing closure syntax should not be used when passing more than one closure argument (multiple_closures_with_trailing_closure)"
+          }
+        },
+        {
+          "_type" : {
+            "_name" : "IssueSummary"
+          },
+          "documentLocationInCreatingWorkspace" : {
+            "_type" : {
+              "_name" : "DocumentLocation"
+            },
+            "concreteTypeName" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "DVTTextDocumentLocation"
+            },
+            "url" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Views\/Components\/QuickAccessOverlay.swift#EndingColumnNumber=0&EndingLineNumber=241&StartingColumnNumber=0&StartingLineNumber=241&Timestamp=788471583.5025949"
+            }
+          },
+          "issueType" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Warning"
+          },
+          "message" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Trailing Newline Violation: Files should have a single trailing newline (trailing_newline)"
+          }
+        },
+        {
+          "_type" : {
+            "_name" : "IssueSummary"
+          },
+          "documentLocationInCreatingWorkspace" : {
+            "_type" : {
+              "_name" : "DocumentLocation"
+            },
+            "concreteTypeName" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "DVTTextDocumentLocation"
+            },
+            "url" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Views\/MainContentView.swift#EndingColumnNumber=8&EndingLineNumber=117&StartingColumnNumber=8&StartingLineNumber=117&Timestamp=788471583.5025949"
+            }
+          },
+          "issueType" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Warning"
+          },
+          "message" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Closure Parameter Position Violation: Closure parameters should be on the same line as opening brace (closure_parameter_position)"
+          }
+        },
+        {
+          "_type" : {
+            "_name" : "IssueSummary"
+          },
+          "documentLocationInCreatingWorkspace" : {
+            "_type" : {
+              "_name" : "DocumentLocation"
+            },
+            "concreteTypeName" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "DVTTextDocumentLocation"
+            },
+            "url" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Views\/Onboarding\/FirstLaunchView.swift#EndingColumnNumber=0&EndingLineNumber=143&StartingColumnNumber=0&StartingLineNumber=143&Timestamp=788471583.5025949"
+            }
+          },
+          "issueType" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Warning"
+          },
+          "message" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Trailing Newline Violation: Files should have a single trailing newline (trailing_newline)"
+          }
+        },
+        {
+          "_type" : {
+            "_name" : "IssueSummary"
+          },
+          "documentLocationInCreatingWorkspace" : {
+            "_type" : {
+              "_name" : "DocumentLocation"
+            },
+            "concreteTypeName" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "DVTTextDocumentLocation"
+            },
+            "url" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Services\/Captions\/TranscriptionCoordinator.swift#EndingColumnNumber=0&EndingLineNumber=147&StartingColumnNumber=0&StartingLineNumber=147&Timestamp=788471583.5025949"
+            }
+          },
+          "issueType" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Warning"
+          },
+          "message" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Trailing Newline Violation: Files should have a single trailing newline (trailing_newline)"
+          }
+        },
+        {
+          "_type" : {
+            "_name" : "IssueSummary"
+          },
+          "documentLocationInCreatingWorkspace" : {
+            "_type" : {
+              "_name" : "DocumentLocation"
+            },
+            "concreteTypeName" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "DVTTextDocumentLocation"
+            },
+            "url" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Services\/Recording\/ScreenRecorder.swift#EndingColumnNumber=0&EndingLineNumber=611&StartingColumnNumber=0&StartingLineNumber=611&Timestamp=788471583.5025949"
+            }
+          },
+          "issueType" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Warning"
+          },
+          "message" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "File Length Violation: File should contain 500 lines or less: currently contains 612 (file_length)"
+          }
+        },
+        {
+          "_type" : {
+            "_name" : "IssueSummary"
+          },
+          "documentLocationInCreatingWorkspace" : {
+            "_type" : {
+              "_name" : "DocumentLocation"
+            },
+            "concreteTypeName" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "DVTTextDocumentLocation"
+            },
+            "url" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Services\/Captions\/TranscriptionError.swift#EndingColumnNumber=0&EndingLineNumber=29&StartingColumnNumber=0&StartingLineNumber=29&Timestamp=788471583.5025949"
+            }
+          },
+          "issueType" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Warning"
+          },
+          "message" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Trailing Newline Violation: Files should have a single trailing newline (trailing_newline)"
+          }
+        },
+        {
+          "_type" : {
+            "_name" : "IssueSummary"
+          },
+          "documentLocationInCreatingWorkspace" : {
+            "_type" : {
+              "_name" : "DocumentLocation"
+            },
+            "concreteTypeName" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "DVTTextDocumentLocation"
+            },
+            "url" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Services\/Captions\/TranscriptionServiceProtocol.swift#EndingColumnNumber=0&EndingLineNumber=63&StartingColumnNumber=0&StartingLineNumber=63&Timestamp=788471583.5025949"
+            }
+          },
+          "issueType" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Warning"
+          },
+          "message" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Trailing Newline Violation: Files should have a single trailing newline (trailing_newline)"
+          }
+        },
+        {
+          "_type" : {
+            "_name" : "IssueSummary"
+          },
+          "documentLocationInCreatingWorkspace" : {
+            "_type" : {
+              "_name" : "DocumentLocation"
+            },
+            "concreteTypeName" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "DVTTextDocumentLocation"
+            },
+            "url" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Services\/Vision\/FaceTrackingService.swift#EndingColumnNumber=2&EndingLineNumber=143&StartingColumnNumber=2&StartingLineNumber=143&Timestamp=788471583.5025949"
+            }
+          },
+          "issueType" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Warning"
+          },
+          "message" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Opening Brace Spacing Violation: Opening braces should be preceded by a single space and on the same line as the declaration (opening_brace)"
+          }
+        },
+        {
+          "_type" : {
+            "_name" : "IssueSummary"
+          },
+          "documentLocationInCreatingWorkspace" : {
+            "_type" : {
+              "_name" : "DocumentLocation"
+            },
+            "concreteTypeName" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "DVTTextDocumentLocation"
+            },
+            "url" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Services\/Vision\/FaceTrackingService.swift#EndingColumnNumber=8&EndingLineNumber=196&StartingColumnNumber=8&StartingLineNumber=196&Timestamp=788471583.5025949"
+            }
+          },
+          "issueType" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Warning"
+          },
+          "message" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Opening Brace Spacing Violation: Opening braces should be preceded by a single space and on the same line as the declaration (opening_brace)"
+          }
+        },
+        {
+          "_type" : {
+            "_name" : "IssueSummary"
+          },
+          "documentLocationInCreatingWorkspace" : {
+            "_type" : {
+              "_name" : "DocumentLocation"
+            },
+            "concreteTypeName" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "DVTTextDocumentLocation"
+            },
+            "url" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Services\/Audio\/SoundAnalysisService.swift#EndingColumnNumber=2&EndingLineNumber=107&StartingColumnNumber=2&StartingLineNumber=107&Timestamp=788471583.5025949"
+            }
+          },
+          "issueType" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Warning"
+          },
+          "message" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Opening Brace Spacing Violation: Opening braces should be preceded by a single space and on the same line as the declaration (opening_brace)"
+          }
+        },
+        {
+          "_type" : {
+            "_name" : "IssueSummary"
+          },
+          "documentLocationInCreatingWorkspace" : {
+            "_type" : {
+              "_name" : "DocumentLocation"
+            },
+            "concreteTypeName" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "DVTTextDocumentLocation"
+            },
+            "url" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Services\/Audio\/SoundAnalysisService.swift#EndingColumnNumber=2&EndingLineNumber=166&StartingColumnNumber=2&StartingLineNumber=166&Timestamp=788471583.5025949"
+            }
+          },
+          "issueType" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Warning"
+          },
+          "message" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Opening Brace Spacing Violation: Opening braces should be preceded by a single space and on the same line as the declaration (opening_brace)"
+          }
+        },
+        {
+          "_type" : {
+            "_name" : "IssueSummary"
+          },
+          "documentLocationInCreatingWorkspace" : {
+            "_type" : {
+              "_name" : "DocumentLocation"
+            },
+            "concreteTypeName" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "DVTTextDocumentLocation"
+            },
+            "url" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Services\/Recording\/ClickTrackingService.swift#EndingColumnNumber=0&EndingLineNumber=122&StartingColumnNumber=0&StartingLineNumber=122&Timestamp=788471583.5025949"
+            }
+          },
+          "issueType" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Warning"
+          },
+          "message" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Trailing Newline Violation: Files should have a single trailing newline (trailing_newline)"
+          }
+        },
+        {
+          "_type" : {
+            "_name" : "IssueSummary"
+          },
+          "documentLocationInCreatingWorkspace" : {
+            "_type" : {
+              "_name" : "DocumentLocation"
+            },
+            "concreteTypeName" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "DVTTextDocumentLocation"
+            },
+            "url" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Services\/Recording\/RecordingEngine+Setup.swift#EndingColumnNumber=8&EndingLineNumber=112&StartingColumnNumber=8&StartingLineNumber=112&Timestamp=788471583.5025949"
+            }
+          },
+          "issueType" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Warning"
+          },
+          "message" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Prefer For-Where Violation: `where` clauses are preferred over a single `if` inside a `for` (for_where)"
+          }
+        },
+        {
+          "_type" : {
+            "_name" : "IssueSummary"
+          },
+          "documentLocationInCreatingWorkspace" : {
+            "_type" : {
+              "_name" : "DocumentLocation"
+            },
+            "concreteTypeName" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "DVTTextDocumentLocation"
+            },
+            "url" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Services\/Vision\/VisionOrchestrator.swift#EndingColumnNumber=10&EndingLineNumber=245&StartingColumnNumber=10&StartingLineNumber=245&Timestamp=788471583.5025949"
+            }
+          },
+          "issueType" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Warning"
+          },
+          "message" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Opening Brace Spacing Violation: Opening braces should be preceded by a single space and on the same line as the declaration (opening_brace)"
+          }
+        },
+        {
+          "_type" : {
+            "_name" : "IssueSummary"
+          },
+          "documentLocationInCreatingWorkspace" : {
+            "_type" : {
+              "_name" : "DocumentLocation"
+            },
+            "concreteTypeName" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "DVTTextDocumentLocation"
+            },
+            "url" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Services\/Vision\/VisionOrchestrator.swift#EndingColumnNumber=61&EndingLineNumber=53&StartingColumnNumber=61&StartingLineNumber=53&Timestamp=788471583.5025949"
+            }
+          },
+          "issueType" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Warning"
+          },
+          "message" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Trailing Comma Violation: Collection literals should not have trailing commas (trailing_comma)"
+          }
+        },
+        {
+          "_type" : {
+            "_name" : "IssueSummary"
+          },
+          "documentLocationInCreatingWorkspace" : {
+            "_type" : {
+              "_name" : "DocumentLocation"
+            },
+            "concreteTypeName" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "DVTTextDocumentLocation"
+            },
+            "url" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Services\/Vision\/VisionOrchestrator.swift#EndingColumnNumber=36&EndingLineNumber=66&StartingColumnNumber=36&StartingLineNumber=66&Timestamp=788471583.5025949"
+            }
+          },
+          "issueType" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Warning"
+          },
+          "message" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Trailing Comma Violation: Collection literals should not have trailing commas (trailing_comma)"
+          }
+        },
+        {
+          "_type" : {
+            "_name" : "IssueSummary"
+          },
+          "documentLocationInCreatingWorkspace" : {
+            "_type" : {
+              "_name" : "DocumentLocation"
+            },
+            "concreteTypeName" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "DVTTextDocumentLocation"
+            },
+            "url" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Services\/Diagnostics\/SystemHealthService.swift#EndingColumnNumber=0&EndingLineNumber=143&StartingColumnNumber=0&StartingLineNumber=143&Timestamp=788471583.5025949"
+            }
+          },
+          "issueType" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Warning"
+          },
+          "message" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Trailing Newline Violation: Files should have a single trailing newline (trailing_newline)"
+          }
+        },
+        {
+          "_type" : {
+            "_name" : "IssueSummary"
+          },
+          "documentLocationInCreatingWorkspace" : {
+            "_type" : {
+              "_name" : "DocumentLocation"
+            },
+            "concreteTypeName" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "DVTTextDocumentLocation"
+            },
+            "url" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Services\/AI\/AIService+DynamicProvider.swift#EndingColumnNumber=0&EndingLineNumber=102&StartingColumnNumber=0&StartingLineNumber=102&Timestamp=788471583.5025949"
+            }
+          },
+          "issueType" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Warning"
+          },
+          "message" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Trailing Newline Violation: Files should have a single trailing newline (trailing_newline)"
+          }
+        },
+        {
+          "_type" : {
+            "_name" : "IssueSummary"
+          },
+          "documentLocationInCreatingWorkspace" : {
+            "_type" : {
+              "_name" : "DocumentLocation"
+            },
+            "concreteTypeName" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "DVTTextDocumentLocation"
+            },
+            "url" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Services\/Export\/ExportSpeedTracker.swift#EndingColumnNumber=0&EndingLineNumber=104&StartingColumnNumber=0&StartingLineNumber=104&Timestamp=788471583.5025949"
+            }
+          },
+          "issueType" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Warning"
+          },
+          "message" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Trailing Newline Violation: Files should have a single trailing newline (trailing_newline)"
+          }
+        },
+        {
+          "_type" : {
+            "_name" : "IssueSummary"
+          },
+          "documentLocationInCreatingWorkspace" : {
+            "_type" : {
+              "_name" : "DocumentLocation"
+            },
+            "concreteTypeName" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "DVTTextDocumentLocation"
+            },
+            "url" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideo\/Services\/Rendering\/MetalOptimization.swift#EndingColumnNumber=0&EndingLineNumber=143&StartingColumnNumber=0&StartingLineNumber=143&Timestamp=788471583.5025949"
+            }
+          },
+          "issueType" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Warning"
+          },
+          "message" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Trailing Newline Violation: Files should have a single trailing newline (trailing_newline)"
+          }
+        },
+        {
+          "_type" : {
+            "_name" : "IssueSummary"
+          },
+          "documentLocationInCreatingWorkspace" : {
+            "_type" : {
+              "_name" : "DocumentLocation"
+            },
+            "concreteTypeName" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "DVTTextDocumentLocation"
+            },
+            "url" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideoUITests\/PiPControlsTest.swift#EndingColumnNumber=12&EndingLineNumber=91&StartingColumnNumber=12&StartingLineNumber=91&Timestamp=788471583.5025949"
+            }
+          },
+          "issueType" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "No-usage"
+          },
+          "message" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Result of 'XCTSkip' initializer is unused"
+          }
+        },
+        {
+          "_type" : {
+            "_name" : "IssueSummary"
+          },
+          "documentLocationInCreatingWorkspace" : {
+            "_type" : {
+              "_name" : "DocumentLocation"
+            },
+            "concreteTypeName" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "DVTTextDocumentLocation"
+            },
+            "url" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideoUITests\/PiPControlsTest.swift#EndingColumnNumber=12&EndingLineNumber=127&StartingColumnNumber=12&StartingLineNumber=127&Timestamp=788471583.5025949"
+            }
+          },
+          "issueType" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "No-usage"
+          },
+          "message" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Result of 'XCTSkip' initializer is unused"
+          }
+        },
+        {
+          "_type" : {
+            "_name" : "IssueSummary"
+          },
+          "documentLocationInCreatingWorkspace" : {
+            "_type" : {
+              "_name" : "DocumentLocation"
+            },
+            "concreteTypeName" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "DVTTextDocumentLocation"
+            },
+            "url" : {
+              "_type" : {
+                "_name" : "String"
+              },
+              "_value" : "file:\/\/\/Users\/sj\/SaneVideo\/SaneVideoUITests\/PiPControlsTest.swift#EndingColumnNumber=12&EndingLineNumber=176&StartingColumnNumber=12&StartingLineNumber=176&Timestamp=788471583.5025949"
+            }
+          },
+          "issueType" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "No-usage"
+          },
+          "message" : {
+            "_type" : {
+              "_name" : "String"
+            },
+            "_value" : "Result of 'XCTSkip' initializer is unused"
+          }
+        }
+      ]
+    }
+  },
+  "metadataRef" : {
+    "_type" : {
+      "_name" : "Reference"
+    },
+    "id" : {
+      "_type" : {
+        "_name" : "String"
+      },
+      "_value" : "0~HEcCCFYTbkux1Z7J3gV3nM3LP9ju8FhMe3BAUhTXPxQ4YPJRLn6_RRgohsBL006eMSbfthZBJPykeTSadcUdgQ=="
+    },
+    "targetType" : {
+      "_type" : {
+        "_name" : "TypeDefinition"
+      },
+      "name" : {
+        "_type" : {
+          "_name" : "String"
+        },
+        "_value" : "ActionsInvocationMetadata"
+      }
+    }
+  },
+  "metrics" : {
+    "_type" : {
+      "_name" : "ResultMetrics"
+    },
+    "errorCount" : {
+      "_type" : {
+        "_name" : "Int"
+      },
+      "_value" : "1"
+    },
+    "warningCount" : {
+      "_type" : {
+        "_name" : "Int"
+      },
+      "_value" : "48"
+    }
+  }
+}

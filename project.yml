@@ -50,7 +50,7 @@ schemes:
     build:
       targets:
         SaneVideo: all
-        # SaneVideoTests: [test]  # Temporarily disabled due to SwiftUICore linker error in Xcode 16/macOS 26.2
+        SaneVideoTests: [test]
     frameworks:
       - framework: AVFoundation
       - framework: CoreMedia
@@ -59,13 +59,9 @@ schemes:
       - framework: FoundationModels
       - framework: VideoToolbox
     test:
-      # Temporarily disabled test targets due to SwiftUICore linker error
-      # This is a known Xcode 16/macOS 26.2 bug - test files are preserved
-      # Re-enable when Xcode is updated: uncomment the targets below
-      # targets: []
       targets:
         - SaneVideoTests
-      #   - SaneVideoUITests
+        - SaneVideoUITests
     profile:
       config: Release
     run:
@@ -137,7 +133,7 @@ targets:
     platform: macOS
     bundleId: com.sanevideo.SaneVideoTests
     deploymentTarget:
-      macOS: 26.0
+      macOS: 26.2
     sources:
       - SaneVideoTests
       - path: Tests/Assets
@@ -147,6 +143,9 @@ targets:
     settings:
       # Disable dead code stripping for test target to prevent linker errors
       DEAD_CODE_STRIPPING: NO
+      CODE_SIGN_IDENTITY: "-"
+      CODE_SIGN_STYLE: Manual
+      ENABLE_HARDENED_RUNTIME: NO
     dependencies:
       - target: SaneVideo
   SaneVideoUITests:
@@ -154,14 +153,18 @@ targets:
     platform: macOS
     bundleId: com.sanevideo.SaneVideoUITests
     deploymentTarget:
-      macOS: 26.0
+      macOS: 26.2
     sources:
       - SaneVideoUITests
+      - SaneVideo/Core/Testing/AccessibilityIdentifiers.swift
     settings:
       GENERATE_INFOPLIST_FILE: YES
       # Disable dead code stripping for test target to prevent linker errors
       DEAD_CODE_STRIPPING: NO
       # Explicitly set deployment target to override global
-      MACOSX_DEPLOYMENT_TARGET: 26.0
+      MACOSX_DEPLOYMENT_TARGET: 26.2
+      CODE_SIGN_IDENTITY: "-"
+      CODE_SIGN_STYLE: Manual
+      ENABLE_HARDENED_RUNTIME: NO
     dependencies:
       - target: SaneVideo

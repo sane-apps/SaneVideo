@@ -16,8 +16,9 @@
 
 1. **Read this file** (DEVELOPMENT.md) - It's the single source of truth
 2. **Check current status**:
-   - Tests are disabled (see section 8)
-   - Use `test_suite --quick` instead of running tests
+   - Tests are working! (see section 8)
+   - Unit tests run by default with `verify`
+   - Visual tests are excluded (manual testing only)
 3. **Use SaneMaster.rb**: All tools are in `./Scripts/SaneMaster.rb`
 4. **Reference docs**: See section 9 for documentation structure
 
@@ -54,7 +55,7 @@
 2. **VERIFY LOGS ALWAYS**: Run `./Scripts/SaneMaster.rb diagnose --dump` after every build/test to see runtime logs (e.g. `ProjectStore initialized at...`).
 3. **FILE CREATION = XCODEGEN**: If you create a new file, run `xcodegen generate` immediately.
 4. **MAX FILE SIZE = 500 LINES**: Absolute limit per Swift file. Enforced by automation.
-5. **SAFETY FIRST**: Every bug fix **MUST** have a regression test.
+5. **SAFETY FIRST**: Every bug fix **MUST** have a regression test. Create tests as you go using `./Scripts/SaneMaster.rb gen_test`.
 6. **SDK IS THE SOURCE OF TRUTH (CRITICAL)**:
    - **NEVER trust web search for API existence or signatures**.
    - **ALWAYS query the SDK directly** before assuming an API exists or is deprecated.
@@ -68,6 +69,12 @@
    - **Trigger**: Persistent errors or repetitive manual work.
    - **Action**: STOP. Fix or upgrade the underlying tool (`SaneMaster.rb`).
 10. **MISSING TOOL = UPGRADE SANEMASTER**: Do not create separate scripts. Upgrade the central `SaneMaster.rb`.
+11. **AUTOMATIC BUILD & LAUNCH WITH LOGGING (CRITICAL)**: After making code changes, you **MUST**:
+    - Build the app: `./Scripts/SaneMaster.rb verify`
+    - Kill any running instances: `killall -9 SaneVideo`
+    - Launch with live logging: `./Scripts/SaneMaster.rb launch` followed by `./Scripts/SaneMaster.rb logs --follow` in background
+    - This enables real-time debugging and verification that changes work as expected
+    - **Rationale**: Old instances can hold stale state, and live logs are essential for debugging user-reported issues
 
 ---
 
@@ -217,12 +224,10 @@ AppLogger.general     // Everything else
 Use this for rapid iteration. **UI tests are optional and skipped by default** - run them manually when ready.
 
 ```bash
-# Default: Build only (tests disabled due to environment limitations)
-# ⚠️ Tests are currently disabled - see TEST_DISABLED_NOTICE.md
+# Default: Build + run unit tests (fast, ~1s)
 ./Scripts/SaneMaster.rb verify
 
-# Note: Test execution is currently disabled
-# Use alternative testing methods (see "Alternative Testing Methods" section)
+# Include functional UI tests (excludes visual tests - manual only)
 ./Scripts/SaneMaster.rb verify --ui
 
 # Optional: Full Clean Build (Slow, ~30s)
@@ -231,7 +236,7 @@ Use this for rapid iteration. **UI tests are optional and skipped by default** -
 
 #### 2. Full System Check (Slow, Complete)
 
-Use this before pushing code. **Note**: Tests are currently disabled in both local and CI environments. Use static analysis tools instead (see "Alternative Testing Methods").
+Use this before pushing code. **Note**: Visual tests are excluded from automated runs (manual testing only).
 
 ```bash
 bundle exec fastlane verify_full
@@ -255,11 +260,7 @@ Always diagnostics after a run:
 - **"Signal 9" Crash**: Check `SaneVideo.entitlements` for App Sandbox.
 - **Phantom Errors**: Run `./Scripts/SaneMaster.rb clean --nuclear`.
 - **Permissions Black Screen**: Run `tccutil reset Camera`.
-- **Test Execution Disabled**:
-  - **Local**: SwiftUICore linker error (Xcode 16/macOS 26.2 bug) - see `TEST_DISABLED_NOTICE.md`
-  - **CI**: Deployment target mismatch (CI runners have macOS 26.0.1, app requires 26.2) - see `CI_TEST_STATUS.md`
-  - **Workaround**: Use alternative testing methods (static analysis, API verification, manual testing)
-  - **To re-enable**: See `TEST_DISABLED_NOTICE.md` for local, `CI_TEST_STATUS.md` for CI
+- **Test Execution**: Tests are working! Unit tests and functional UI tests run automatically. Visual tests are excluded (manual testing only).
 
 ### Crash/Log Analysis SOP (MANDATORY for Debugging)
 
@@ -385,9 +386,9 @@ log stream --predicate 'subsystem == "com.sanevideo.SaneVideo"' --level debug
 ## 7. Available Tools
 
 1. **SaneMaster.rb** (`./Scripts/SaneMaster.rb`): The master controller.
-    - `verify`: Build app only (tests automatically skipped when disabled).
-    - `verify --clean`: Full clean build (tests skipped).
-    - **Note**: Test execution is currently disabled - use alternative testing methods.
+    - `verify`: Build app + run unit tests (default).
+    - `verify --clean`: Full clean build + run unit tests.
+    - `verify --ui`: Build + run unit tests + functional UI tests (excludes visual tests).
     - `doctor`: Health check (environment, assets, permissions, XcodeGen sync).
     - `console`: **Interactive Ruby REPL** (Pry) for debugging scripts.
     - `gen_test <name>`: Generate test files.
@@ -443,32 +444,37 @@ log stream --predicate 'subsystem == "com.sanevideo.SaneVideo"' --level debug
 
 ## 8. Testing Strategy (Current Status)
 
-> **⚠️ IMPORTANT**: Automated test execution is currently **disabled** due to environmental limitations:
+> **✅ Tests are now working!** Apple fixed the SwiftUICore linker error that was preventing test execution.
 >
-> - **Local**: Tests disabled due to SwiftUICore linker error (Xcode 16/macOS 26.2 bug)
-> - **CI**: Tests disabled due to deployment target mismatch (CI runners have macOS 26.0.1, app requires 26.2)
+> **Current Status**:
 >
-> **What Still Works**:
+> - ✅ **Unit Tests**: Working (`SaneVideoTests`)
+> - ✅ **Code-based UI Tests**: Working (functional tests in `SaneVideoUITests`)
+> - ⚠️ **Visual Tests**: Skipped by default (manual testing only - see below)
 >
-> - ✅ Build verification (`./Scripts/SaneMaster.rb verify` builds app only)
-> - ✅ Static analysis tools (see "Alternative Testing Methods" below)
-> - ✅ Test code is preserved and will be re-enabled when environment supports it
+> **Visual Tests** (excluded from automated runs):
+> - `SaneSmartFeaturesVisualTests` - Visual verification of Magic Fix UI
+> - `VisualEditingTests` - Visual verification of editor UI
+> - `VisualRecordingTests` - Visual verification of recording UI
 >
-> **See**: `TEST_DISABLED_NOTICE.md` and `CI_TEST_STATUS.md` for details.
+> These require manual visual inspection and are not suitable for automated CI/CD.
 
-### Tier 1: Unit Tests (Fast, <1s) - ⚠️ Currently Disabled
+### Tier 1: Unit Tests (Fast, <1s) - ✅ Active
 
 - **Target**: `SaneVideoTests`
 - **Scope**: Isolated logic, regex parsing, state machines, math algorithms.
 - **Data**: Mocked services, small buffers. **NO** file I/O or app launching.
 - **Goal**: Verify logic instantly.
+- **Run**: `./Scripts/SaneMaster.rb verify` (runs unit tests by default)
 
-### Tier 2: Integration/UI Tests (Real-World, 10s-60s) - ⚠️ Currently Disabled
+### Tier 2: Integration/UI Tests (Real-World, 10s-60s) - ✅ Active (Code Tests Only)
 
-- **Target**: `SaneVideoUITests`
+- **Target**: `SaneVideoUITests` (excluding visual test classes)
 - **Scope**: End-to-end user flows, AVFoundation pipeline, CoreML execution.
 - **Data**: Real assets (`Tests/Assets/test_video.mp4` or `test_silence.mp4`).
 - **Goal**: Verify system stability and functional output.
+- **Excluded**: Visual test classes (see above) - these require manual inspection
+- **Run**: `./Scripts/SaneMaster.rb verify --ui` (includes functional UI tests, excludes visual tests)
 
 ### Tier 3: Performance & Robustness
 
@@ -479,9 +485,9 @@ log stream --predicate 'subsystem == "com.sanevideo.SaneVideo"' --level debug
 - **Command**: `xcodebuild test ... -only-testing:SaneVideoUITests/SaneEditorFeatureTests/testExportPerformance`
 - **Best Practice**: Run before releases. Inspect memory deltas to catch leaks.
 
-### Alternative Testing Methods (Available Now)
+### Additional Testing Tools
 
-Since automated test execution is disabled, use these tools for code validation:
+Use these tools for comprehensive code validation:
 
 1. **Static Analysis**:
 
@@ -498,15 +504,16 @@ Since automated test execution is disabled, use these tools for code validation:
    ./Scripts/SaneMaster.rb verify_api <APIName> [Framework]  # Verify APIs exist in SDK
    ```
 
-3. **Build Verification**:
+3. **Test Execution**:
 
    ```bash
-   ./Scripts/SaneMaster.rb verify  # Builds app (tests skipped automatically)
+   ./Scripts/SaneMaster.rb verify           # Build + run unit tests (default)
+   ./Scripts/SaneMaster.rb verify --ui      # Build + run unit + functional UI tests (excludes visual tests)
    ```
 
-4. **Manual Testing**: Run the app and test features manually until automated tests are re-enabled.
+4. **Manual Visual Testing**: Visual tests (`SaneSmartFeaturesVisualTests`, `VisualEditingTests`, `VisualRecordingTests`) require manual inspection and are not automated.
 
-### Regression Testing (When Tests Re-enabled)
+### Regression Testing (MANDATORY)
 
 Regression tests are critical for preventing the reintroduction of fixed bugs.
 
@@ -519,6 +526,7 @@ Regression tests are critical for preventing the reintroduction of fixed bugs.
     3. **Edge Cases**: Test specific scenarios that caused issues previously.
 - **Naming**: Use descriptive names referencing the bug (e.g., `testSourceSwitchTimestampGap`).
 - **Separation**: Do NOT mix regression tests with feature tests. Keep them in the `Regression/` directory.
+- **Test Creation**: Use `./Scripts/SaneMaster.rb gen_test` to generate new tests as you fix bugs or add features.
 
 ### Code Coverage
 
@@ -533,6 +541,7 @@ Regression tests are critical for preventing the reintroduction of fixed bugs.
 
 - **Expectations over Polling**: Use `expectation(for: predicate, evaluatedWith: object)` instead of `while` loops with `sleep`.
 - **Assets**: Use `SaneMaster.rb gen_assets` to create lightweight test media. Use `TestEnvironment` to load heavy media only when necessary.
+- **Log Output**: When running manual `xcodebuild` commands, always redirect output to a file (e.g., `> test_output.txt 2>&1`) to prevent terminal buffer overflows and "freezes" during extensive logging.
 
 ---
 
@@ -589,6 +598,25 @@ The following files are historical records and should NOT be used as primary sou
 2. **Check AI_AGENT_QUICK_START.md** - Quick reference (but this file is authoritative)
 3. **Use SaneMaster.rb** - Don't run raw xcodebuild commands
 4. **Always dump logs** - Critical for debugging
+
+### Mandatory Workflow After Code Changes
+
+**CRITICAL**: After making any code changes, you **MUST** follow this workflow:
+
+1. **Build the app**: `./Scripts/SaneMaster.rb verify`
+2. **Kill old instances**: `killall -9 SaneVideo` (prevents stale state and zombie processes)
+3. **Launch with logging**:
+   - `./Scripts/SaneMaster.rb launch` (launches the app)
+   - `./Scripts/SaneMaster.rb logs --follow` (monitors logs in real-time)
+4. **Monitor logs**: Watch for errors, warnings, and the specific behavior you're debugging
+
+**Why this matters**:
+- Old instances can hold stale state and interfere with testing
+- Live logs are essential for debugging user-reported issues
+- This workflow enables real-time collaboration with the user
+- You can see exactly what happens when the user tests the changes
+
+**Exception**: Skip this workflow if the build fails - fix build errors first.
 
 ### Documentation Priority
 

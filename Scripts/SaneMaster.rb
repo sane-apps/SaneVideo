@@ -1208,46 +1208,57 @@ class SaneMaster
     spinner_idx = 0
 
     # Build command (skip UI tests unless --ui flag)
-    skip_ui = include_ui ? '' : ' -only-testing:SaneVideoTests'
-    cmd = "xcodebuild test -scheme SaneVideo -destination 'platform=macOS,arch=arm64'#{skip_ui} 2>&1"
+    # When including UI tests, exclude visual test classes (manual testing only)
+    if include_ui
+      # Exclude visual test classes - they require manual inspection
+      skip_visual = ' -skip-testing:SaneVideoUITests/SaneSmartFeaturesVisualTests -skip-testing:SaneVideoUITests/VisualEditingTests -skip-testing:SaneVideoUITests/VisualRecordingTests'
+      cmd = "xcodebuild test -scheme SaneVideo -destination 'platform=macOS,arch=arm64'#{skip_visual} 2>&1"
+    else
+      cmd = "xcodebuild test -scheme SaneVideo -destination 'platform=macOS,arch=arm64' -only-testing:SaneVideoTests 2>&1"
+    end
 
     success = false
     timed_out = false
 
     begin
-      Timeout.timeout(timeout_seconds) do
-        Open3.popen2e(cmd) do |stdin, stdout_err, wait_thr|
-          stdin.close
+      File.open('test_output.txt', 'w') do |log_file|
+        puts '   📝 Full logs: test_output.txt'
 
-          stdout_err.each_line do |line|
-            line = line.chomp
+        Timeout.timeout(timeout_seconds) do
+          Open3.popen2e(cmd) do |stdin, stdout_err, wait_thr|
+            stdin.close
 
-            # Parse test progress
-            case line
-            when /Test Case.*'(.+)'/
-              current_test = ::Regexp.last_match(1)
-              tests_run += 1
-              elapsed = (Time.now - start_time).to_i
-              print "\r#{spinner_chars[spinner_idx % spinner_chars.length]} Running: #{current_test} (#{tests_run} tests, #{elapsed}s)    "
-              spinner_idx += 1
-              last_update = Time.now
-            when /Test Suite.*passed|Test Suite.*failed/, /BUILD (SUCCEEDED|FAILED)/, /error:|warning:|❌|✅/
-              # Important messages that deserve a new line
-              print "\r"
-              puts "   #{line}"
-            when /Testing|Building/
-              # Status updates
-              if Time.now - last_update > 2 # Update every 2 seconds
-                print "\r#{spinner_chars[spinner_idx % spinner_chars.length]} #{line}    "
+            stdout_err.each_line do |line|
+              line = line.chomp
+              log_file.puts(line) # Mirror to file
+
+              # Parse test progress
+              case line
+              when /Test Case.*'(.+)'/
+                current_test = ::Regexp.last_match(1)
+                tests_run += 1
+                elapsed = (Time.now - start_time).to_i
+                print "\r#{spinner_chars[spinner_idx % spinner_chars.length]} Running: #{current_test} (#{tests_run} tests, #{elapsed}s)    "
                 spinner_idx += 1
                 last_update = Time.now
+              when /Test Suite.*passed|Test Suite.*failed/, /BUILD (SUCCEEDED|FAILED)/, /error:|warning:|❌|✅/
+                # Important messages that deserve a new line
+                print "\r"
+                puts "   #{line}"
+              when /Testing|Building/
+                # Status updates
+                if Time.now - last_update > 2 # Update every 2 seconds
+                  print "\r#{spinner_chars[spinner_idx % spinner_chars.length]} #{line}    "
+                  spinner_idx += 1
+                  last_update = Time.now
+                end
               end
+
+              # NOTE: Permission dialogs are handled by grant_permissions.applescript running in background
             end
 
-            # NOTE: Permission dialogs are handled by grant_permissions.applescript running in background
+            success = wait_thr.value.success?
           end
-
-          success = wait_thr.value.success?
         end
       end
     rescue Timeout::Error
@@ -1296,10 +1307,12 @@ class SaneMaster
       system('rm -rf .derivedData')
       system('rm -rf fastlane/test_output')
       system('rm -rf /tmp/SaneVideo*')
+      system('rm -f test_output.txt')
       puts '✅ Nuclear clean complete.'
     else
       puts 'Standard clean...'
       system('xcodebuild clean -scheme SaneVideo 2>&1 > /dev/null')
+      system('rm -f test_output.txt')
       puts '✅ Clean complete.'
     end
   end
@@ -1645,12 +1658,19 @@ class SaneMaster
 
     puts "📦 Analyzing result: #{xcresult}"
 
-    # 2. Export diagnostics
+    # 2. Export diagnostics (use new xcresulttool API)
     export_path = File.join(@diagnostics_dir, "diagnostics_#{Time.now.strftime('%Y%m%d_%H%M%S')}")
     FileUtils.mkdir_p(export_path)
 
-    export_cmd = "xcrun xcresulttool export --type directory --path '#{xcresult}' --output-path '#{export_path}' 2>&1"
+    # Try new API first, fall back to legacy if needed
+    export_cmd = "xcrun xcresulttool export diagnostics --path '#{xcresult}' --output-path '#{export_path}' 2>&1"
     export_result = `#{export_cmd}`
+
+    # Fall back to legacy API if new one fails
+    if export_result.include?('error') || export_result.include?('Error')
+      export_cmd = "xcrun xcresulttool export --legacy --type directory --path '#{xcresult}' --output-path '#{export_path}' 2>&1"
+      export_result = `#{export_cmd}`
+    end
 
     if export_result.include?('error') || export_result.include?('Error')
       puts "  Cannot read xcresult: #{export_result.lines.first}"
@@ -1750,12 +1770,13 @@ class SaneMaster
   end
 
   def find_latest_xcresult
-    # Priority: 1. DerivedData logs (Agent workflow), 2. Fastlane output, 3. Tmp directory
+    # Priority: 1. System DerivedData (xcodebuild default), 2. Local DerivedData, 3. Fastlane output, 4. Tmp directory
+    system_dd_logs = Dir.glob(File.expand_path('~/Library/Developer/Xcode/DerivedData/SaneVideo-*/Logs/Test/*.xcresult'))
     dd_logs = Dir.glob('.derivedData/Logs/Test/*.xcresult')
     fl_logs = Dir.glob('fastlane/test_output/*.xcresult')
     tmp_logs = Dir.glob('/tmp/*.xcresult')
 
-    (dd_logs + fl_logs + tmp_logs).max_by { |f| File.mtime(f) }
+    (system_dd_logs + dd_logs + fl_logs + tmp_logs).max_by { |f| File.mtime(f) }
   end
 
   def find_dead_code

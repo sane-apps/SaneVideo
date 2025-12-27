@@ -541,8 +541,8 @@ Regression tests are critical for preventing the reintroduction of fixed bugs.
 
 - **Expectations over Polling**: Use `expectation(for: predicate, evaluatedWith: object)` instead of `while` loops with `sleep`.
 - **Assets**: Use `SaneMaster.rb gen_assets` to create lightweight test media. Use `TestEnvironment` to load heavy media only when necessary.
-- **Log Output**: When running manual `xcodebuild` commands, always redirect output to a file (e.g., `> test_output.txt 2>&1`) to prevent terminal buffer overflows and "freezes" during extensive logging.
-- **Test Hygiene**: Delete these temporary output files after analysis. Do not commit them. Add `*.txt` to `.contentignore` or similar if needed (already ignored by `.gitignore` ideally). Periodically review and prune `Regression/` tests if they become redundant with main Feature tests.
+- **Log Output**: `SaneMaster.rb` automatically mirrors raw test logs to `test_output.txt` to prevent terminal freezes.
+- **Test Hygiene**: `test_output.txt` is automatically removed by `./Scripts/SaneMaster.rb clean`. If running manual `xcodebuild`, please redirect output manually (`> output.txt 2>&1`) and clean up afterwards.
 
 ---
 

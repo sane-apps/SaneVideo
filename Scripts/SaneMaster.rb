@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
+require 'English'
 require 'json'
 require 'fileutils'
 require 'tmpdir'
@@ -90,7 +91,7 @@ class SaneMaster
     when 'clean'    then clean(args)
     when 'reset'    then reset_permissions
     when 'check_permissions' then check_permission_status
-    when 'audit'    then audit_project
+    when 'audit' then audit_project
     when 'validate_test_references', 'validate-tests' then validate_test_references
     when 'setup'    then setup_environment
     when 'lint'     then run_lint
@@ -1066,7 +1067,7 @@ class SaneMaster
     content = File.read(project_yml)
     # Check if test targets are commented out
     content.include?('# Temporarily disabled test targets') ||
-    content.include?('# targets:') && content.include?('#   - SaneVideoTests')
+      (content.include?('# targets:') && content.include?('#   - SaneVideoTests'))
   end
 
   def verify(args)
@@ -1088,11 +1089,10 @@ class SaneMaster
 
       puts '🔨 Building SaneVideo app...'
       result = system("xcodebuild -project SaneVideo.xcodeproj -scheme SaneVideo -destination 'platform=macOS,arch=arm64' build")
+      puts ''
       if result
-        puts ''
         puts '✅ Build succeeded (tests disabled)'
       else
-        puts ''
         puts '❌ Build failed'
         exit 1
       end
@@ -1199,24 +1199,46 @@ class SaneMaster
   def run_tests_with_progress(timeout_seconds:, include_ui: false)
     require 'timeout'
     require 'open3'
+    require 'ostruct'
 
-    start_time = Time.now
-    tests_run = 0
-    current_test = nil
-    last_update = Time.now
-    spinner_chars = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏']
-    spinner_idx = 0
+    cmd = build_test_command(include_ui)
 
-    # Build command (skip UI tests unless --ui flag)
-    # When including UI tests, exclude visual test classes (manual testing only)
+    # State object to track progress across callbacks
+    state = OpenStruct.new(
+      start_time: Time.now,
+      tests_run: 0,
+      current_test: nil,
+      last_update: Time.now,
+      spinner_chars: ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'],
+      spinner_idx: 0
+    )
+
+    result = execute_with_logging(cmd, timeout_seconds) do |line|
+      handle_progress_update(line, state)
+    end
+
+    print "\r" # Clear spinner
+    cleanup_test_processes # Ensure clean state
+
+    {
+      success: result[:success],
+      tests_run: state.tests_run,
+      duration: (Time.now - state.start_time).to_i,
+      timeout: result[:timeout]
+    }
+  end
+
+  def build_test_command(include_ui)
     if include_ui
       # Exclude visual test classes - they require manual inspection
       skip_visual = ' -skip-testing:SaneVideoUITests/SaneSmartFeaturesVisualTests -skip-testing:SaneVideoUITests/VisualEditingTests -skip-testing:SaneVideoUITests/VisualRecordingTests'
-      cmd = "xcodebuild test -scheme SaneVideo -destination 'platform=macOS,arch=arm64'#{skip_visual} 2>&1"
+      "xcodebuild test -scheme SaneVideo -destination 'platform=macOS,arch=arm64'#{skip_visual} 2>&1"
     else
-      cmd = "xcodebuild test -scheme SaneVideo -destination 'platform=macOS,arch=arm64' -only-testing:SaneVideoTests 2>&1"
+      "xcodebuild test -scheme SaneVideo -destination 'platform=macOS,arch=arm64' -only-testing:SaneVideoTests 2>&1"
     end
+  end
 
+  def execute_with_logging(cmd, timeout_seconds)
     success = false
     timed_out = false
 
@@ -1230,31 +1252,8 @@ class SaneMaster
 
             stdout_err.each_line do |line|
               line = line.chomp
-              log_file.puts(line) # Mirror to file
-
-              # Parse test progress
-              case line
-              when /Test Case.*'(.+)'/
-                current_test = ::Regexp.last_match(1)
-                tests_run += 1
-                elapsed = (Time.now - start_time).to_i
-                print "\r#{spinner_chars[spinner_idx % spinner_chars.length]} Running: #{current_test} (#{tests_run} tests, #{elapsed}s)    "
-                spinner_idx += 1
-                last_update = Time.now
-              when /Test Suite.*passed|Test Suite.*failed/, /BUILD (SUCCEEDED|FAILED)/, /error:|warning:|❌|✅/
-                # Important messages that deserve a new line
-                print "\r"
-                puts "   #{line}"
-              when /Testing|Building/
-                # Status updates
-                if Time.now - last_update > 2 # Update every 2 seconds
-                  print "\r#{spinner_chars[spinner_idx % spinner_chars.length]} #{line}    "
-                  spinner_idx += 1
-                  last_update = Time.now
-                end
-              end
-
-              # NOTE: Permission dialogs are handled by grant_permissions.applescript running in background
+              log_file.puts(line)
+              yield(line) if block_given?
             end
 
             success = wait_thr.value.success?
@@ -1263,37 +1262,46 @@ class SaneMaster
       end
     rescue Timeout::Error
       timed_out = true
-      puts "\n\n⏱️  TIMEOUT: Test run exceeded #{timeout_seconds}s"
-      puts '   This usually means a test is stuck or waiting for user input'
-      puts '   Check for permission dialogs or infinite loops'
-      puts "   Tip: Use './Scripts/monitor_tests.sh' for more detailed monitoring"
-
-      # Force kill on timeout
-      system("pkill -9 -f 'xcodebuild test' 2>/dev/null")
-      system('killall -9 xcodebuild 2>/dev/null')
-      system('killall -9 SaneVideo 2>/dev/null')
-      system("pkill -9 -f 'SaneVideo.*test' 2>/dev/null")
-      system("pkill -9 -f 'grant_permissions' 2>/dev/null")
-      system('killall -9 SaneVideo 2>/dev/null')
-      system("pkill -9 -f 'SaneVideo.*test' 2>/dev/null")
+      handle_timeout(timeout_seconds)
     end
 
-    duration = (Time.now - start_time).to_i
-    print "\r" # Clear spinner
+    { success: success && !timed_out, timeout: timed_out }
+  end
 
-    # Ensure process is fully terminated
-    sleep(0.5)
+  def handle_progress_update(line, state)
+    # Parse test progress
+    case line
+    when /Test Case.*'(.+)'/
+      state.current_test = ::Regexp.last_match(1)
+      state.tests_run += 1
+      elapsed = (Time.now - state.start_time).to_i
+      print "\r#{state.spinner_chars[state.spinner_idx % state.spinner_chars.length]} Running: #{state.current_test} (#{state.tests_run} tests, #{elapsed}s)    "
+      state.spinner_idx += 1
+      state.last_update = Time.now
+    when /Test Suite.*passed|Test Suite.*failed/, /BUILD (SUCCEEDED|FAILED)/, /error:|warning:|❌|✅/
+      print "\r"
+      puts "   #{line}"
+    when /Testing|Building/
+      if Time.now - state.last_update > 2
+        print "\r#{state.spinner_chars[state.spinner_idx % state.spinner_chars.length]} #{line}    "
+        state.spinner_idx += 1
+        state.last_update = Time.now
+      end
+    end
+  end
+
+  def handle_timeout(timeout_seconds)
+    puts "\n\n⏱️  TIMEOUT: Test run exceeded #{timeout_seconds}s"
+    puts '   This usually means a test is stuck or waiting for user input'
+    puts '   Check for permission dialogs or infinite loops'
+    puts "   Tip: Use './Scripts/monitor_tests.sh' for more detailed monitoring"
+
+    # Force kill on timeout
     system("pkill -9 -f 'xcodebuild test' 2>/dev/null")
+    system('killall -9 xcodebuild 2>/dev/null')
     system('killall -9 SaneVideo 2>/dev/null')
     system("pkill -9 -f 'SaneVideo.*test' 2>/dev/null")
     system("pkill -9 -f 'grant_permissions' 2>/dev/null")
-
-    {
-      success: success && !timed_out,
-      tests_run: tests_run,
-      duration: duration,
-      timeout: timed_out
-    }
   end
 
   def clean(args)
@@ -1461,10 +1469,10 @@ class SaneMaster
     puts "\n✅ All test references are valid!"
     puts "   UI identifiers: #{ui_identifiers.count}"
     puts "   Test references: #{test_references.count}"
-    if ui_identifiers.count > 0
-      coverage = (test_references.count.to_f / ui_identifiers.count * 100).round(1)
-      puts "   Coverage: #{coverage}%"
-    end
+    return unless ui_identifiers.count.positive?
+
+    coverage = (test_references.count.to_f / ui_identifiers.count * 100).round(1)
+    puts "   Coverage: #{coverage}%"
   end
 
   def extract_ui_identifiers
@@ -1502,10 +1510,8 @@ class SaneMaster
       content.scan(/AccessibilityIdentifiers\.(\w+)/) do |match|
         # Look up the value from the enum file
         enum_content = File.read(identifiers_file) if File.exist?(identifiers_file)
-        if enum_content
-          enum_content.scan(/static let #{match[0]} = ["']([^"']+)["']/) do |enum_match|
-            identifiers << enum_match[0]
-          end
+        enum_content&.scan(/static let #{match[0]} = ["']([^"']+)["']/) do |enum_match|
+          identifiers << enum_match[0]
         end
       end
     end
@@ -1552,6 +1558,7 @@ class SaneMaster
         id = match[0]
         # Skip system buttons (these are labels, not identifiers)
         next if system_buttons_pattern.match?(id)
+
         identifiers << id
       end
 
@@ -1560,6 +1567,7 @@ class SaneMaster
       content.scan(/\.matching\(identifier:\s*["']([^"']+)["']\)/) do |match|
         id = match[0]
         next if system_buttons_pattern.match?(id)
+
         identifiers << id
       end
 
@@ -1568,6 +1576,7 @@ class SaneMaster
       content.scan(/app\.descendants\(matching:.*?\)\.matching\(identifier:\s*["']([^"']+)["']\)/) do |match|
         id = match[0]
         next if system_buttons_pattern.match?(id)
+
         identifiers << id
       end
 
@@ -1576,6 +1585,7 @@ class SaneMaster
       content.scan(/\.(?:buttons|textFields|sliders|switches|segmentedControls|windows|sheets|dialogs|alerts|otherElements)\["([^"]+)"\]/) do |match|
         id = match[0]
         next if system_buttons_pattern.match?(id)
+
         identifiers << id
       end
 
@@ -1584,6 +1594,7 @@ class SaneMaster
       content.scan(/app\.windows\.matching\(identifier:\s*["']([^"']+)["']\)/) do |match|
         id = match[0]
         next if system_buttons_pattern.match?(id)
+
         identifiers << id
       end
     end
@@ -1600,6 +1611,7 @@ class SaneMaster
     files = []
     Dir.glob('SaneVideoUITests/**/*.swift').each do |file|
       next unless File.exist?(file)
+
       content = File.read(file)
       files << File.basename(file) if content.include?(identifier)
     end
@@ -1807,13 +1819,12 @@ class SaneMaster
     # Run Periphery scan
     system('periphery', 'scan', *build_args)
 
-    exit_code = $?.exitstatus
+    exit_code = $CHILD_STATUS.exitstatus
 
-    if exit_code == 0
-      puts ''
+    puts ''
+    if exit_code.zero?
       puts '✅ No unused code detected!'
     else
-      puts ''
       puts '⚠️  Unused code detected. Review the output above.'
       puts '💡 Tip: Review each item carefully before removing - some may be used via reflection or tests.'
     end
@@ -1838,11 +1849,11 @@ class SaneMaster
     build_output = `xcodebuild -project #{project_path} -scheme SaneVideo -destination 'platform=macOS,arch=arm64' clean build 2>&1`
 
     # Extract deprecation warnings (case-insensitive)
-    deprecation_warnings = build_output.lines.select { |line|
+    deprecation_warnings = build_output.lines.select do |line|
       line.downcase.include?('deprecated') ||
-      line.include?('was deprecated') ||
-      line.include?('is deprecated')
-    }.map(&:strip).reject(&:empty?).uniq
+        line.include?('was deprecated') ||
+        line.include?('is deprecated')
+    end.map(&:strip).reject(&:empty?).uniq
 
     if deprecation_warnings.empty?
       puts '✅ No deprecation warnings found!'
@@ -1857,9 +1868,9 @@ class SaneMaster
     deprecation_warnings.each do |warning|
       # Extract file path from warning (format: /path/to/file.swift:line:column: warning: ...)
       if warning =~ /^([^:]+\.swift):(\d+):(\d+):\s+warning:\s+(.+)$/
-        file = File.basename($1)
-        line = $2
-        message = $4
+        file = File.basename(::Regexp.last_match(1))
+        line = ::Regexp.last_match(2)
+        message = ::Regexp.last_match(4)
         warnings_by_file[file] ||= []
         warnings_by_file[file] << { line: line, message: message }
       elsif warning.include?('warning:') && warning.include?('.swift')
@@ -1868,7 +1879,7 @@ class SaneMaster
         if parts.length >= 4
           file = File.basename(parts[0])
           line = parts[1]
-          message = parts[3..-1].join(':').strip
+          message = parts[3..].join(':').strip
           warnings_by_file[file] ||= []
           warnings_by_file[file] << { line: line, message: message }
         end
@@ -1990,7 +2001,7 @@ class SaneMaster
     # 3. Linting
     puts "\n3️⃣  Code Linting..."
     lint_output = `./Scripts/SaneMaster.rb lint 2>&1`
-    if lint_output.include?('✅') || $?.success?
+    if lint_output.include?('✅') || $CHILD_STATUS.success?
       puts '   ✅ Linting passed'
       results[:passed] << 'Lint'
     else
@@ -2001,7 +2012,7 @@ class SaneMaster
     # 4. Test reference validation
     puts "\n4️⃣  Test Reference Validation..."
     test_ref_output = `./Scripts/SaneMaster.rb validate_test_references 2>&1`
-    if test_ref_output.include?('✅') && $?.success?
+    if test_ref_output.include?('✅') && $CHILD_STATUS.success?
       puts '   ✅ All test references valid'
       results[:passed] << 'Test References'
     else
@@ -2021,14 +2032,17 @@ class SaneMaster
     end
 
     # Phase 2: Medium checks (unless quick mode)
-    unless quick_mode
+    if quick_mode
+      results[:skipped] << 'Mocks'
+      results[:skipped] << 'Deprecations'
+    else
       puts "\n📋 Phase 2: Medium Validation Checks"
       puts '─' * 50
 
       # 6. Mock verification
       puts "\n6️⃣  Mock Synchronization..."
       mock_output = `./Scripts/SaneMaster.rb verify_mocks 2>&1`
-      if mock_output.include?('✅') || $?.success?
+      if mock_output.include?('✅') || $CHILD_STATUS.success?
         puts '   ✅ Mocks in sync'
         results[:passed] << 'Mocks'
       else
@@ -2051,9 +2065,6 @@ class SaneMaster
         puts "\n7️⃣  Deprecation Check... (skipped, use --full to include)"
         results[:skipped] << 'Deprecations'
       end
-    else
-      results[:skipped] << 'Mocks'
-      results[:skipped] << 'Deprecations'
     end
 
     # Phase 3: Slow checks (only in full mode)
@@ -2064,7 +2075,7 @@ class SaneMaster
       # 8. Dead code detection
       puts "\n8️⃣  Dead Code Detection..."
       dead_code_output = `./Scripts/SaneMaster.rb dead_code 2>&1`
-      if dead_code_output.include?('✅') || $?.success?
+      if dead_code_output.include?('✅') || $CHILD_STATUS.success?
         puts '   ✅ No dead code detected'
         results[:passed] << 'Dead Code'
       else
@@ -2082,16 +2093,16 @@ class SaneMaster
     if results[:failed].any?
       exit 1
     elsif results[:warnings].any? && ci_mode
-      exit 0  # Warnings don't fail CI
+      exit 0 # Warnings don't fail CI
     else
       exit 0
     end
   end
 
   def print_summary(results)
-    puts "\n" + "=" * 50
-    puts "📊 TEST SUITE SUMMARY"
-    puts "=" * 50
+    puts "\n#{'=' * 50}"
+    puts '📊 TEST SUITE SUMMARY'
+    puts '=' * 50
 
     if results[:passed].any?
       puts "\n✅ PASSED (#{results[:passed].count}):"
@@ -2150,7 +2161,7 @@ class SaneMaster
       # Only last 24 hours
       cutoff = Time.now - (24 * 60 * 60)
       crash_files = crash_files.select { |f| File.mtime(f) > cutoff }
-      puts "📅 Showing crashes from last 24 hours only"
+      puts '📅 Showing crashes from last 24 hours only'
     end
 
     puts "📊 Found #{crash_files.count} crash report(s)"
@@ -2159,46 +2170,44 @@ class SaneMaster
     # Collect crash data
     crash_data = []
     crash_files.first(50).each do |file|
-      begin
-        content = File.read(file)
-        # Find JSON start
-        json_start = content.index("\n{")
-        next unless json_start
+      content = File.read(file)
+      # Find JSON start
+      json_start = content.index("\n{")
+      next unless json_start
 
-        json_data = JSON.parse(content[json_start..-1])
-        exception = json_data['exception'] || {}
+      json_data = JSON.parse(content[json_start..])
+      exception = json_data['exception'] || {}
 
-        # Find faulting thread
-        threads = json_data['threads'] || []
-        faulting_thread = threads.find { |t| t['triggered'] }
+      # Find faulting thread
+      threads = json_data['threads'] || []
+      faulting_thread = threads.find { |t| t['triggered'] }
 
-        if faulting_thread
-          frames = faulting_thread['frames'] || []
-          signature = frames.first(4).map { |f| (f['symbol'] || '?')[0..35] }.join(' -> ')
-          queue = faulting_thread['queue'] || 'unknown'
+      if faulting_thread
+        frames = faulting_thread['frames'] || []
+        signature = frames.first(4).map { |f| (f['symbol'] || '?')[0..35] }.join(' -> ')
+        queue = faulting_thread['queue'] || 'unknown'
 
-          # Get SaneVideo-specific frame
-          app_frame = frames.first(15).find do |f|
-            src = f['sourceFile'] || ''
-            sym = f['symbol'] || ''
-            src.include?('SaneVideo') || sym.include?('SaneVideo')
-          end
-
-          crash_data << {
-            file: File.basename(file),
-            time: File.mtime(file),
-            type: exception['type'] || 'Unknown',
-            signal: exception['signal'] || 'Unknown',
-            subtype: exception['subtype'],
-            signature: signature,
-            queue: queue,
-            app_frame: app_frame ? "#{app_frame['symbol']} (#{File.basename(app_frame['sourceFile'] || 'unknown')}:#{app_frame['sourceLine']})" : nil,
-            thread_index: json_data['faultingThread'] || 0
-          }
+        # Get SaneVideo-specific frame
+        app_frame = frames.first(15).find do |f|
+          src = f['sourceFile'] || ''
+          sym = f['symbol'] || ''
+          src.include?('SaneVideo') || sym.include?('SaneVideo')
         end
-      rescue JSON::ParserError, StandardError => e
-        # Skip unparseable files
+
+        crash_data << {
+          file: File.basename(file),
+          time: File.mtime(file),
+          type: exception['type'] || 'Unknown',
+          signal: exception['signal'] || 'Unknown',
+          subtype: exception['subtype'],
+          signature: signature,
+          queue: queue,
+          app_frame: app_frame ? "#{app_frame['symbol']} (#{File.basename(app_frame['sourceFile'] || 'unknown')}:#{app_frame['sourceLine']})" : nil,
+          thread_index: json_data['faultingThread'] || 0
+        }
       end
+    rescue StandardError => _e
+      # Skip unparseable files
     end
 
     # Analyze patterns
@@ -2216,7 +2225,7 @@ class SaneMaster
     thread_counts = crash_data.group_by { |c| c[:thread_index] }.transform_values(&:count)
     thread_counts.sort_by { |_, count| -count }.each do |thread, count|
       pct = (count.to_f / crash_data.count * 100).round(1)
-      label = thread == 0 ? 'Main Thread' : "Thread #{thread}"
+      label = thread.zero? ? 'Main Thread' : "Thread #{thread}"
       puts "  #{label}: #{count} (#{pct}%)"
     end
     puts ''
@@ -2253,7 +2262,8 @@ class SaneMaster
     }
 
     known_patterns.each do |pattern, count|
-      next if count == 0
+      next if count.zero?
+
       pct = (count.to_f / crash_data.count * 100).round(1)
       puts "  #{pattern}: #{count} (#{pct}%)"
     end
@@ -2273,8 +2283,8 @@ class SaneMaster
         puts ''
       end
     else
-      puts "💡 Tip: Use --details (-d) for individual crash details"
-      puts "💡 Tip: Use --recent (-r) for last 24 hours only"
+      puts '💡 Tip: Use --details (-d) for individual crash details'
+      puts '💡 Tip: Use --recent (-r) for last 24 hours only'
     end
 
     # Summary
@@ -2284,15 +2294,13 @@ class SaneMaster
     puts "  Oldest: #{crash_data.last[:time].strftime('%Y-%m-%d %H:%M')}" if crash_data.any?
     puts "  Newest: #{crash_data.first[:time].strftime('%Y-%m-%d %H:%M')}" if crash_data.any?
 
-    main_thread_crashes = crash_data.count { |c| c[:thread_index] == 0 }
-    if main_thread_crashes > crash_data.count * 0.5
-      puts "  ⚠️  #{main_thread_crashes}/#{crash_data.count} crashes on Main Thread - check UI/state code"
-    end
+    main_thread_crashes = crash_data.count { |c| (c[:thread_index]).zero? }
+    puts "  ⚠️  #{main_thread_crashes}/#{crash_data.count} crashes on Main Thread - check UI/state code" if main_thread_crashes > crash_data.count * 0.5
 
     test_crashes = crash_data.count { |c| c[:signature].include?('XCT') }
-    if test_crashes > 0
-      puts "  ℹ️  #{test_crashes} crash(es) in test cleanup - review async test handling"
-    end
+    return unless test_crashes.positive?
+
+    puts "  ℹ️  #{test_crashes} crash(es) in test cleanup - review async test handling"
   end
 
   def show_app_logs(args)
@@ -2311,25 +2319,23 @@ class SaneMaster
     show_exported = args.include?('--exported') || args.include?('-e')
 
     args.each_with_index do |arg, i|
-      if arg == '--tail' && args[i + 1]
-        tail_count = args[i + 1].to_i
-      end
+      tail_count = args[i + 1].to_i if arg == '--tail' && args[i + 1]
     end
 
     # Check for exported debug log (from app's "Export to File" button)
     if File.exist?(downloads_log)
       mtime = File.mtime(downloads_log)
       size = File.size(downloads_log) / 1024.0
-      puts "📥 Exported debug log: ~/Downloads/SaneVideo_Debug.log"
+      puts '📥 Exported debug log: ~/Downloads/SaneVideo_Debug.log'
       puts "   Last updated: #{mtime.strftime('%Y-%m-%d %H:%M:%S')} (#{size.round(1)}KB)"
-      puts "   Use --exported (-e) to view this file"
+      puts '   Use --exported (-e) to view this file'
       puts ''
     end
 
     # If user wants exported log
     if show_exported
       if File.exist?(downloads_log)
-        puts "📖 Showing exported log: ~/Downloads/SaneVideo_Debug.log"
+        puts '📖 Showing exported log: ~/Downloads/SaneVideo_Debug.log'
         puts '─' * 60
         lines = File.readlines(downloads_log)
         if lines.length > tail_count
@@ -2339,22 +2345,21 @@ class SaneMaster
         else
           puts lines.join
         end
-        return
       else
-        puts "❌ No exported log found at ~/Downloads/SaneVideo_Debug.log"
+        puts '❌ No exported log found at ~/Downloads/SaneVideo_Debug.log'
         puts "   Open the app's Log View and click 'Export to File' to create one."
-        return
       end
+      return
     end
 
     # Check for file-based logs
     log_files = Dir.exist?(log_dir) ? Dir.glob(File.join(log_dir, 'SaneVideo-*.log')).sort.reverse : []
 
     if log_files.empty?
-      puts "📁 File-based logs: Not yet created"
+      puts '📁 File-based logs: Not yet created'
       puts ''
-      puts "File-based logging was just added. After rebuilding and running the app,"
-      puts "logs will appear at: ~/Library/Logs/SaneVideo/"
+      puts 'File-based logging was just added. After rebuilding and running the app,'
+      puts 'logs will appear at: ~/Library/Logs/SaneVideo/'
       puts ''
 
       # Fall back to exported log if available
@@ -2364,16 +2369,16 @@ class SaneMaster
         lines = File.readlines(downloads_log)
         puts lines.last([tail_count, lines.length].min).join
       else
-        puts "To generate logs:"
-        puts "  1. Rebuild the app: ./Scripts/SaneMaster.rb verify"
-        puts "  2. Run the app and use features"
-        puts "  3. Run this command again"
+        puts 'To generate logs:'
+        puts '  1. Rebuild the app: ./Scripts/SaneMaster.rb verify'
+        puts '  2. Run the app and use features'
+        puts '  3. Run this command again'
       end
       return
     end
 
     puts "📁 Log directory: #{log_dir}"
-    puts "📄 Available logs:"
+    puts '📄 Available logs:'
     log_files.first(5).each do |f|
       size = File.size(f) / 1024.0
       size_str = size >= 1 ? "#{size.round(1)}KB" : "#{(size * 1024).round}B"
@@ -2387,7 +2392,7 @@ class SaneMaster
     target_file = File.exist?(log_file) ? log_file : log_files.first
 
     unless target_file && File.exist?(target_file)
-      puts "❌ No log file to display"
+      puts '❌ No log file to display'
       return
     end
 
@@ -2395,7 +2400,7 @@ class SaneMaster
     puts '─' * 60
 
     if follow_mode
-      puts "Following log file (Ctrl+C to stop)..."
+      puts 'Following log file (Ctrl+C to stop)...'
       puts ''
       exec("tail -f '#{target_file}'")
     else

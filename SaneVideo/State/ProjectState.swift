@@ -65,9 +65,9 @@ class ProjectState {
 
     private var currentScopeSession: ProjectFileManager.SecurityScopeSession?
 
+    // nonisolated(unsafe) required for deinit access
     /// Current processing task for cancellation support
-    // nonisolated(unsafe) required for deinit access from any thread
-    nonisolated(unsafe) var currentProcessingTask: Task<Void, Error>?
+    @ObservationIgnored nonisolated(unsafe) var currentProcessingTask: Task<Void, Error>?
 
     // P0 FIX: Cancel current operation
     func cancelCurrentOperation() {
@@ -84,9 +84,9 @@ class ProjectState {
 
     // MARK: - Save Debounce
 
+    // nonisolated(unsafe) required for deinit access
     /// Debounce save operations to avoid duplicate saves from rapid changes
-    // nonisolated(unsafe) required for deinit access from any thread
-    nonisolated(unsafe) private var pendingSaveTask: Task<Void, Never>?
+    @ObservationIgnored nonisolated(unsafe) private var pendingSaveTask: Task<Void, Never>?
     private var lastSaveTime: Date = .distantPast
 
     // MARK: - Undo Manager (SwiftUI's built-in)

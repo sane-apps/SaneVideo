@@ -122,4 +122,3 @@ struct CompactThermalIndicator: View {
         }
     }
 }
-

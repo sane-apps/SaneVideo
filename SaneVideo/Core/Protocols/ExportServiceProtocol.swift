@@ -9,7 +9,7 @@ import Foundation
 
 /// @mockable
 @MainActor
-protocol ExportServiceProtocol {
+protocol ExportServiceProtocol: Sendable {
     var progress: Double { get }
     var isExporting: Bool { get }
 

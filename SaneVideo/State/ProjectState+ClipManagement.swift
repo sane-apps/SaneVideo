@@ -1,0 +1,770 @@
+//
+//  ProjectState+ClipManagement.swift
+//  SaneVideo
+//
+//  Consolidated from ClipAddition, ClipEditing, ClipRemoval, ClipProperties
+//
+
+import AppKit
+import AVFoundation
+import CoreMedia
+import Foundation
+import SwiftUI
+
+extension ProjectState {
+
+  // MARK: - Video Import
+
+  func addVideoToTimeline(url: URL) async {
+    NSLog("addVideoToTimeline called with: \(url.lastPathComponent)")
+
+    let now = Date()
+    if let lastURL = lastImportedURL, let lastTime = lastImportTime,
+       lastURL == url, now.timeIntervalSince(lastTime) < 2.0 {
+      NSLog("DEBOUNCE: Ignoring duplicate import of \(url.lastPathComponent)")
+      AppLogger.project.warning("Ignoring duplicate import of \(url.lastPathComponent)")
+      return
+    }
+    lastImportedURL = url
+    lastImportTime = now
+
+    NSLog("Attempting to import video from: \(url.path)")
+    AppLogger.project.info("Attempting to import video from: \(url.path)")
+
+    let nativeExtensions = ["mp4", "mov", "m4v"]
+    let ext = url.pathExtension.lowercased()
+    var targetURL = url
+
+    if !nativeExtensions.contains(ext) {
+      AppLogger.project.info("Non-native format detected (\(ext)). Requesting optimization...")
+      if let optimizedURL = await optimizeMedia(url: url) {
+        targetURL = optimizedURL
+      } else {
+        AppLogger.project.error("Optimization failed for \(ext) format")
+        await MainActor.run {
+          ServiceContainer.shared.toastManager.show("Failed to optimize \(ext) file. Format may not be supported.", type: .error)
+        }
+      }
+    }
+
+    do {
+      var clip: VideoClip!
+      var lastError: Error?
+
+      for attempt in 1...5 {
+        do {
+          clip = try await ServiceContainer.shared.projectFileManager.loadClip(from: targetURL)
+          break
+        } catch {
+          lastError = error
+
+          if attempt == 1 && (error as NSError).domain == AVFoundationErrorDomain {
+            AppLogger.project.warning("Native load failed. Attempting emergency optimization...")
+            if let optimizedURL = await optimizeMedia(url: targetURL) {
+              targetURL = optimizedURL
+              continue
+            }
+          }
+
+          AppLogger.project.warning("Attempt \(attempt) to load clip failed: \(error.localizedDescription)")
+          if attempt < 5 {
+            let delay = UInt64(pow(2.0, Double(attempt - 1)) * 1_000_000_000)
+            try? await Task.sleep(nanoseconds: delay)
+          }
+        }
+      }
+
+      if var resultClip = clip {
+        let clickDataURL = targetURL.deletingPathExtension().appendingPathExtension("clicks.json")
+        if FileManager.default.fileExists(atPath: clickDataURL.path) {
+          resultClip.clickDataURL = clickDataURL
+          AppLogger.project.info("Attached click data for auto-zoom: \(clickDataURL.lastPathComponent)")
+        }
+
+        let cursorDataURL = targetURL.deletingPathExtension().appendingPathExtension("json")
+        if FileManager.default.fileExists(atPath: cursorDataURL.path) {
+          resultClip.cursorDataURL = cursorDataURL
+          AppLogger.project.info("Attached cursor data: \(cursorDataURL.lastPathComponent)")
+        }
+
+        NSLog("Successfully loaded clip. Duration: \(resultClip.duration.seconds)s. Adding to timeline...")
+        AppLogger.project.info("Successfully loaded clip. Duration: \(resultClip.duration.seconds)s. Adding to timeline...")
+        addClip(resultClip)
+        NSLog("Clip added to project!")
+        AppLogger.project.info("Clip added.")
+      } else if let error = lastError {
+        throw error
+      }
+    } catch {
+      AppLogger.project.error("Failed to load video clip: \(error)")
+      let message = (error as NSError).domain == AVFoundationErrorDomain ? "Video format not supported or file damaged." : error.localizedDescription
+      ServiceContainer.shared.toastManager.show("Import failed: \(message)", type: .error)
+    }
+  }
+
+  private func optimizeMedia(url: URL) async -> URL? {
+    let ffmpeg = ServiceContainer.shared.ffmpegService
+    guard await ffmpeg.isAvailable else {
+      AppLogger.project.error("FFmpeg not available for optimization.")
+      return nil
+    }
+
+    let optimizedDir = FileManager.default.currentDirectoryPath + "/Media/Optimized"
+    let timestamp = Int(Date().timeIntervalSince1970)
+    let outputURL = URL(fileURLWithPath: optimizedDir).appendingPathComponent("optimized_\(timestamp)_\(url.deletingPathExtension().lastPathComponent).mp4")
+
+    await MainActor.run {
+      self.isProcessing = true
+      ServiceContainer.shared.toastManager.show("Optimizing Media for Editor...")
+    }
+
+    defer {
+      Task { @MainActor in self.isProcessing = false }
+    }
+
+    do {
+      AppLogger.project.info("Transcoding \(url.lastPathComponent) to \(outputURL.lastPathComponent)...")
+      try await ffmpeg.convert(inputURL: url, outputURL: outputURL, codec: .h264, preset: .fast)
+      AppLogger.project.info("Optimization complete: \(outputURL.path)")
+      return outputURL
+    } catch {
+      AppLogger.project.error("Optimization failed: \(error.localizedDescription)")
+      return nil
+    }
+  }
+
+  // MARK: - Generic Clip Addition
+
+  func addClip(_ clip: VideoClip) {
+    guard var project = currentProject else {
+      startNewProject()
+      addClip(clip)
+      return
+    }
+
+    var timeline = project.timeline
+
+    registerUndo("Add Clip")
+
+    var targetTrackIndex = timeline.tracks.firstIndex { $0.type == .video }
+    if targetTrackIndex == nil {
+      let newTrack = Track(name: "", type: .video, zIndex: 0)
+      timeline.addTrack(newTrack)
+      targetTrackIndex = timeline.tracks.count - 1
+    }
+
+    guard let trackIndex = targetTrackIndex else { return }
+    var track = timeline.tracks[trackIndex]
+
+    if track.clips.count >= 100 {
+      AppLogger.project.warning("Track has \(track.clips.count) clips, consider creating a new track")
+      ServiceContainer.shared.toastManager.show("Track has many clips. Consider creating a new track for better performance.", type: .info)
+    }
+
+    var mutableClip = clip
+
+    let sortedClips = track.clips.sorted { $0.startTime < $1.startTime }
+    var cumulativeTime = CMTime.zero
+    for existingClip in sortedClips {
+      cumulativeTime = CMTimeAdd(cumulativeTime, existingClip.effectiveDuration)
+    }
+    mutableClip.startTime = cumulativeTime
+
+    track.clips.append(mutableClip)
+    timeline.tracks[trackIndex] = track
+
+    recalculateStartTimes(in: &timeline)
+    timeline.updateDuration()
+
+    if !validateTimelineState(timeline) {
+      AppLogger.project.error("Timeline state invalid after adding clip, rolling back")
+      ServiceContainer.shared.toastManager.show("Failed to add clip: Timeline state invalid", type: .error)
+      return
+    }
+
+    project.timeline = timeline
+    currentProject = project
+    recentlyAddedClip = mutableClip
+    saveProject(project)
+
+    AppLogger.project.info("Added clip \(clip.id) to track '\(track.name)' at \(cumulativeTime.seconds)s")
+    ServiceContainer.shared.toastManager.show("Added Clip")
+
+    NotificationCenter.default.post(name: .clipAddedToTimeline, object: project)
+  }
+
+  func addAudioToTimeline(url: URL) async {
+    let now = Date()
+    if let lastURL = lastImportedURL, let lastTime = lastImportTime,
+       lastURL == url, now.timeIntervalSince(lastTime) < 2.0 {
+      AppLogger.project.warning("Ignoring duplicate import of \(url.lastPathComponent)")
+      return
+    }
+    lastImportedURL = url
+    lastImportTime = now
+
+    AppLogger.project.info("Attempting to import audio from: \(url.path)")
+
+    do {
+      let clip = try await ServiceContainer.shared.projectFileManager.loadClip(from: url)
+      AppLogger.project.info("Successfully loaded audio clip. Duration: \(clip.duration.seconds)s. Adding to timeline...")
+
+      guard var project = currentProject else {
+        startNewProject()
+        await addAudioToTimeline(url: url)
+        return
+      }
+
+      var timeline = project.timeline
+      registerUndo("Add Audio")
+
+      var targetTrackIndex = timeline.tracks.firstIndex { $0.type == .audio }
+      if targetTrackIndex == nil {
+        let existingCount = timeline.tracks.filter { $0.type == .audio }.count
+        let newTrack = Track(name: "Audio \(existingCount + 1)", type: .audio, zIndex: timeline.tracks.count)
+        timeline.addTrack(newTrack)
+        targetTrackIndex = timeline.tracks.count - 1
+      }
+
+      guard let trackIndex = targetTrackIndex else {
+        ServiceContainer.shared.toastManager.show("Failed to create audio track", type: .error)
+        return
+      }
+
+      var track = timeline.tracks[trackIndex]
+
+      var mutableClip = clip
+      var cumulativeTime = CMTime.zero
+      for existingClip in track.clips {
+        cumulativeTime = CMTimeAdd(cumulativeTime, existingClip.effectiveDuration)
+      }
+      mutableClip.startTime = cumulativeTime
+
+      track.clips.append(mutableClip)
+      timeline.tracks[trackIndex] = track
+
+      project.timeline = timeline
+      currentProject = project
+      saveProject(project)
+
+      AppLogger.project.info("Added audio clip \(clip.id) to track '\(track.name)' at \(cumulativeTime.seconds)s")
+      ServiceContainer.shared.toastManager.show("Added Audio: \(url.lastPathComponent)")
+    } catch {
+      AppLogger.project.error("Failed to load audio clip: \(error)")
+      ServiceContainer.shared.toastManager.show("Audio import failed: \(error.localizedDescription)", type: .error)
+    }
+  }
+
+  // MARK: - Splitting
+
+  func splitClip(_ clip: VideoClip, atTimelineTime globalTime: CMTime, transactionId: UUID? = nil) {
+    guard var project = currentProject else { return }
+
+    guard !shouldBlockOperation(transactionId: transactionId) else {
+      AppLogger.project.warning("Ignored splitClip request (Processing busy)")
+      return
+    }
+
+    if isTrackLocked(for: clip) {
+      ServiceContainer.shared.toastManager.show("Track is locked", type: .error)
+      return
+    }
+
+    guard globalTime > clip.startTime, globalTime < (clip.startTime + clip.effectiveDuration) else {
+      AppLogger.project.warning("Split time \(globalTime.seconds)s is outside clip range")
+      return
+    }
+
+    let localOffset = CMTimeSubtract(globalTime, clip.startTime)
+    let splitAssetTime = CMTimeAdd(clip.trimStart, localOffset)
+
+    guard splitAssetTime > clip.trimStart, splitAssetTime < clip.trimEnd else {
+      AppLogger.project.warning("Calculated split time \(splitAssetTime.seconds)s invalid for clip bounds")
+      return
+    }
+
+    var firstPart = clip
+    firstPart.trimEnd = splitAssetTime
+
+    var secondPart = clip.copy(trimStart: splitAssetTime, trimEnd: clip.trimEnd)
+
+    let firstPartEffectiveDuration = firstPart.effectiveDuration
+    secondPart.startTime = CMTimeAdd(clip.startTime, firstPartEffectiveDuration)
+
+    var timeline = project.timeline
+
+    var splitDone = false
+    for (trackIndex, track) in timeline.tracks.enumerated() {
+      if let index = track.clips.firstIndex(where: { $0.id == clip.id }) {
+        registerUndo("Split Clip")
+
+        var mutableTrack = track
+        mutableTrack.clips[index] = firstPart
+        mutableTrack.clips.insert(secondPart, at: index + 1)
+        timeline.tracks[trackIndex] = mutableTrack
+
+        splitDone = true
+        break
+      }
+    }
+
+    if splitDone {
+      recalculateStartTimes(in: &timeline)
+
+      if !validateTimelineState(timeline) {
+        AppLogger.project.error("Timeline state invalid after split, rolling back")
+        ServiceContainer.shared.toastManager.show("Split failed: Timeline state invalid", type: .error)
+        return
+      }
+
+      project.timeline = timeline
+      currentProject = project
+      saveProject(project)
+      AppLogger.project.info("Split clip \(clip.id) at timeline \(globalTime.seconds)s (Asset: \(splitAssetTime.seconds)s)")
+      ServiceContainer.shared.toastManager.show("Split Clip")
+    }
+  }
+
+  // MARK: - Trimming
+
+  func updateClipTrim(clipId: UUID, trimStart: CMTime?, trimEnd: CMTime?, startTime _: CMTime? = nil, transactionId: UUID? = nil) {
+    guard !shouldBlockOperation(transactionId: transactionId) else { return }
+    guard var project = currentProject else { return }
+
+    var timeline = project.timeline
+    var clipFound = false
+
+    for (trackIndex, track) in timeline.tracks.enumerated() {
+      if let index = track.clips.firstIndex(where: { $0.id == clipId }) {
+        var clip = track.clips[index]
+
+        let newStart = trimStart ?? clip.trimStart
+        let newEnd = trimEnd ?? clip.trimEnd
+
+        guard newStart < newEnd else {
+          AppLogger.project.warning("Invalid trim: start (\(newStart.seconds)s) >= end (\(newEnd.seconds)s)")
+          ServiceContainer.shared.toastManager.show("Invalid trim range", type: .error)
+          return
+        }
+
+        guard newStart >= .zero, newEnd <= clip.duration else {
+          AppLogger.project.warning("Trim range outside clip duration (duration: \(clip.duration.seconds)s)")
+          ServiceContainer.shared.toastManager.show("Trim range exceeds clip duration", type: .error)
+          return
+        }
+
+        let trimRange = CMTimeRange(start: newStart, duration: CMTimeSubtract(newEnd, newStart))
+        for removedRange in clip.removedRanges {
+          let trimEndTime = CMTimeAdd(trimRange.start, trimRange.duration)
+          let removedEnd = CMTimeAdd(removedRange.timeRange.start, removedRange.timeRange.duration)
+          if trimRange.start < removedEnd && removedRange.timeRange.start < trimEndTime {
+            AppLogger.project.warning("Trim range conflicts with removed range: \(removedRange.timeRange.start.seconds)s-\(removedEnd.seconds)s")
+            ServiceContainer.shared.toastManager.show("Trim range conflicts with removed section", type: .error)
+            return
+          }
+        }
+
+        clip.setTrimRange(start: newStart, end: newEnd)
+
+        registerUndo("Trim Clip")
+
+        var mutableTrack = track
+        mutableTrack.clips[index] = clip
+        timeline.tracks[trackIndex] = mutableTrack
+        clipFound = true
+        break
+      }
+    }
+
+    if clipFound {
+      recalculateStartTimes(in: &timeline)
+      timeline.updateDuration()
+
+      if !validateTimelineState(timeline) {
+        AppLogger.project.error("Timeline state invalid after trim, rolling back")
+        ServiceContainer.shared.toastManager.show("Trim failed: Timeline state invalid", type: .error)
+        return
+      }
+
+      project.timeline = timeline
+      currentProject = project
+      saveProject(project)
+      AppLogger.project.info("Updated trim for clip \(clipId)")
+      ServiceContainer.shared.toastManager.show("Trimmed Clip")
+    }
+  }
+
+  // MARK: - Rotation
+
+  func rotateClip(_ clip: VideoClip, transactionId: UUID? = nil) {
+    guard !shouldBlockOperation(transactionId: transactionId) else { return }
+    guard var project = currentProject else { return }
+
+    var timeline = project.timeline
+    var clipFound = false
+    var newRotationName = ""
+
+    for (trackIndex, track) in timeline.tracks.enumerated() {
+      if let index = track.clips.firstIndex(where: { $0.id == clip.id }) {
+        registerUndo("Rotate Clip")
+
+        var mutableTrack = track
+        var mutableClip = track.clips[index]
+        mutableClip.rotateClockwise()
+        newRotationName = mutableClip.rotation.displayName
+
+        mutableTrack.clips[index] = mutableClip
+        timeline.tracks[trackIndex] = mutableTrack
+        clipFound = true
+        break
+      }
+    }
+
+    if clipFound {
+      project.timeline = timeline
+      currentProject = project
+      saveProject(project)
+
+      AppLogger.project.info("Rotated clip \(clip.id) to \(newRotationName)")
+      ServiceContainer.shared.toastManager.show("Rotated \(newRotationName)")
+    }
+  }
+
+  func setClipRotation(_ clip: VideoClip, to rotation: VideoClip.Rotation, transactionId: UUID? = nil) {
+    guard !shouldBlockOperation(transactionId: transactionId) else { return }
+    guard var project = currentProject else { return }
+
+    guard clip.rotation != rotation else { return }
+
+    var timeline = project.timeline
+    var clipFound = false
+
+    for (trackIndex, track) in timeline.tracks.enumerated() {
+      if let index = track.clips.firstIndex(where: { $0.id == clip.id }) {
+        registerUndo("Set Rotation")
+
+        var mutableTrack = track
+        var mutableClip = track.clips[index]
+        mutableClip.rotation = rotation
+
+        mutableTrack.clips[index] = mutableClip
+        timeline.tracks[trackIndex] = mutableTrack
+        clipFound = true
+        break
+      }
+    }
+
+    if clipFound {
+      project.timeline = timeline
+      currentProject = project
+      saveProject(project)
+
+      AppLogger.project.info("Set clip \(clip.id) rotation to \(rotation.displayName)")
+      ServiceContainer.shared.toastManager.show("Rotated \(rotation.displayName)")
+    }
+  }
+
+  // MARK: - Removal
+
+  func deleteClip(_ clip: VideoClip, transactionId: UUID? = nil) {
+    guard !shouldBlockOperation(transactionId: transactionId) else { return }
+    guard var project = currentProject else { return }
+
+    if isTrackLocked(for: clip) {
+      ServiceContainer.shared.toastManager.show("Track is locked", type: .error)
+      return
+    }
+
+    registerUndo("Delete Clip")
+
+    var timeline = project.timeline
+    var clipFound = false
+
+    for (trackIndex, track) in timeline.tracks.enumerated()
+    where track.clips.contains(where: { $0.id == clip.id }) {
+      var mutableTrack = track
+      mutableTrack.clips.removeAll { $0.id == clip.id }
+      timeline.tracks[trackIndex] = mutableTrack
+      clipFound = true
+      break
+    }
+
+    if clipFound {
+      recalculateStartTimes(in: &timeline)
+      timeline.updateDuration()
+
+      if !validateTimelineState(timeline) {
+        AppLogger.project.error("Timeline state invalid after deletion, rolling back")
+        ServiceContainer.shared.toastManager.show("Delete failed: Timeline state invalid", type: .error)
+        return
+      }
+
+      project.timeline = timeline
+      currentProject = project
+      saveProject(project)
+
+      AppLogger.project.info("Removed clip from timeline: \(clip.url.lastPathComponent)")
+      ServiceContainer.shared.toastManager.show("Deleted Clip")
+    }
+  }
+
+  func deleteClipFile(_ clip: VideoClip) {
+    guard var project = currentProject else { return }
+    var timeline = project.timeline
+
+    for (trackIndex, track) in timeline.tracks.enumerated() {
+      if let clipIndex = track.clips.firstIndex(where: { $0.id == clip.id }) {
+        var mutableTrack = track
+        var mutableClip = track.clips[clipIndex]
+        mutableClip.isMissing = true
+        mutableTrack.clips[clipIndex] = mutableClip
+        timeline.tracks[trackIndex] = mutableTrack
+        project.timeline = timeline
+        currentProject = project
+        break
+      }
+    }
+
+    deleteClip(clip)
+
+    Task {
+      do {
+        try await ServiceContainer.shared.projectFileManager.deleteFile(at: clip.url)
+        AppLogger.project.info("Moved file to Trash: \(clip.url.lastPathComponent)")
+      } catch {
+        AppLogger.project.error("Failed to move file to Trash: \(error)")
+        await MainActor.run {
+          ServiceContainer.shared.errorPresenter.present(AppError.unknown(error))
+        }
+      }
+    }
+  }
+
+  // MARK: - Transform
+
+  func updateClipTransform(_ clip: VideoClip, transform: VideoClip.Transform, transactionId: UUID? = nil) {
+    guard !shouldBlockOperation(transactionId: transactionId) else { return }
+    guard var project = currentProject else { return }
+
+    var timeline = project.timeline
+    var clipFound = false
+
+    for (trackIndex, track) in timeline.tracks.enumerated() {
+      if let index = track.clips.firstIndex(where: { $0.id == clip.id }) {
+        if track.isLocked { return }
+
+        var mutableTrack = track
+        mutableTrack.clips[index].transform = transform
+        timeline.tracks[trackIndex] = mutableTrack
+        clipFound = true
+        break
+      }
+    }
+
+    if clipFound {
+      project.timeline = timeline
+      currentProject = project
+      saveProject(project)
+    }
+  }
+
+  // MARK: - Speed
+
+  func updateClipSpeed(clipId: UUID, speed: Double, transactionId: UUID? = nil) {
+    guard !shouldBlockOperation(transactionId: transactionId) else { return }
+    guard var project = currentProject else { return }
+
+    var timeline = project.timeline
+    var clipFound = false
+
+    for (trackIndex, track) in timeline.tracks.enumerated() {
+      if let index = track.clips.firstIndex(where: { $0.id == clipId }) {
+        if track.isLocked {
+          ServiceContainer.shared.toastManager.show("Track is locked", type: .error)
+          return
+        }
+
+        registerUndo("Change Speed")
+
+        var mutableTrack = track
+        mutableTrack.clips[index].speed = speed
+        timeline.tracks[trackIndex] = mutableTrack
+        clipFound = true
+        break
+      }
+    }
+
+    if clipFound {
+      recalculateStartTimes(in: &timeline)
+      project.timeline = timeline
+      currentProject = project
+      saveProject(project)
+
+      AppLogger.project.info("Updated clip speed to \(speed)x")
+      ServiceContainer.shared.toastManager.show(String(format: "Speed: %.2fx", speed))
+    }
+  }
+
+  // MARK: - Effects
+
+  func updateClipEffects(clipId: UUID, effects: [VideoEffect], transactionId: UUID? = nil) {
+    guard !shouldBlockOperation(transactionId: transactionId) else { return }
+    guard var project = currentProject else { return }
+
+    var timeline = project.timeline
+    var clipFound = false
+
+    for (trackIndex, track) in timeline.tracks.enumerated() {
+      if let index = track.clips.firstIndex(where: { $0.id == clipId }) {
+        if track.isLocked {
+          ServiceContainer.shared.toastManager.show("Track is locked", type: .error)
+          return
+        }
+
+        registerUndo("Update Effects")
+
+        var mutableTrack = track
+        mutableTrack.clips[index].effects = effects
+        timeline.tracks[trackIndex] = mutableTrack
+        clipFound = true
+        break
+      }
+    }
+
+    if clipFound {
+      project.timeline = timeline
+      currentProject = project
+      saveProject(project)
+
+      AppLogger.project.info("Updated clip effects: \(effects.count) effects applied")
+
+      NotificationCenter.default.post(
+        name: NSNotification.Name("ProjectEffectsChanged"),
+        object: project
+      )
+    }
+  }
+
+  func updateClipBackgroundEffect(clipId: UUID, effect: BackgroundEffect?, transactionId: UUID? = nil) {
+    guard !shouldBlockOperation(transactionId: transactionId) else { return }
+    guard var project = currentProject else { return }
+
+    var timeline = project.timeline
+    var clipFound = false
+
+    for (trackIndex, track) in timeline.tracks.enumerated() {
+      if let index = track.clips.firstIndex(where: { $0.id == clipId }) {
+        if track.isLocked {
+          ServiceContainer.shared.toastManager.show("Track is locked", type: .error)
+          return
+        }
+
+        registerUndo("Update Background")
+
+        var mutableTrack = track
+        mutableTrack.clips[index].backgroundEffect = effect
+        timeline.tracks[trackIndex] = mutableTrack
+        clipFound = true
+        break
+      }
+    }
+
+    if clipFound {
+      project.timeline = timeline
+      currentProject = project
+      saveProject(project)
+
+      let effectName = effect?.displayName ?? "None"
+      AppLogger.project.info("Updated clip background effect: \(effectName)")
+      ServiceContainer.shared.toastManager.show("Background: \(effectName)")
+    }
+  }
+
+  func applyEffect(to clip: VideoClip, effect: VideoEffect, transactionId: UUID? = nil) {
+    var newEffects = clip.effects.filter { $0.type != effect.type }
+    newEffects.append(effect)
+    updateClipEffects(clipId: clip.id, effects: newEffects, transactionId: transactionId)
+  }
+
+  func removeEffect(from clip: VideoClip, type: VideoEffectType, transactionId: UUID? = nil) {
+    let newEffects = clip.effects.filter { $0.type != type }
+    if newEffects.count != clip.effects.count {
+      updateClipEffects(clipId: clip.id, effects: newEffects, transactionId: transactionId)
+    }
+  }
+
+  func clearEffects(from clip: VideoClip, transactionId: UUID? = nil) {
+    updateClipEffects(clipId: clip.id, effects: [], transactionId: transactionId)
+  }
+
+  // MARK: - Overlay Management
+
+  func updateClipOverlay(clipId: UUID, overlay: VideoClip.VideoOverlay, transactionId: UUID? = nil) {
+    guard !shouldBlockOperation(transactionId: transactionId) else { return }
+    guard var project = currentProject else { return }
+
+    var timeline = project.timeline
+    var clipFound = false
+
+    for (trackIndex, track) in timeline.tracks.enumerated() {
+      if let index = track.clips.firstIndex(where: { $0.id == clipId }) {
+        if track.isLocked { return }
+
+        var mutableTrack = track
+        var clip = mutableTrack.clips[index]
+
+        if let overlayIndex = clip.overlays.firstIndex(where: { $0.id == overlay.id }) {
+          clip.overlays[overlayIndex] = overlay
+        } else {
+          clip.overlays.append(overlay)
+        }
+
+        mutableTrack.clips[index] = clip
+        timeline.tracks[trackIndex] = mutableTrack
+        clipFound = true
+        break
+      }
+    }
+
+    if clipFound {
+      project.timeline = timeline
+      currentProject = project
+      saveProject(project)
+    }
+  }
+
+  // MARK: - Cursor Enhancements
+
+  func updateClipCursorHighlight(_ clip: VideoClip, show: Bool, transactionId: UUID? = nil) {
+    guard !shouldBlockOperation(transactionId: transactionId) else { return }
+    guard var project = currentProject else { return }
+
+    var timeline = project.timeline
+    var clipFound = false
+
+    for (trackIndex, track) in timeline.tracks.enumerated() {
+      if let index = track.clips.firstIndex(where: { $0.id == clip.id }) {
+        if track.isLocked {
+          ServiceContainer.shared.toastManager.show("Track is locked", type: .error)
+          return
+        }
+
+        registerUndo("Toggle Cursor Highlight")
+
+        var mutableTrack = track
+        mutableTrack.clips[index].showCursorHighlight = show
+        timeline.tracks[trackIndex] = mutableTrack
+        clipFound = true
+        break
+      }
+    }
+
+    if clipFound {
+      project.timeline = timeline
+      currentProject = project
+      saveProject(project)
+
+      AppLogger.project.info("Updated clip cursor highlight to \(show)")
+    }
+  }
+}

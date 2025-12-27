@@ -141,4 +141,3 @@ struct OnboardingStepView: View {
         }
     }
 }
-

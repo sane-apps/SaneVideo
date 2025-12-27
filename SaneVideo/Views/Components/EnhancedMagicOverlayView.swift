@@ -91,4 +91,3 @@ struct EnhancedMagicOverlayView: View {
         }
     }
 }
-

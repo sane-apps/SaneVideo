@@ -140,8 +140,7 @@ actor FaceTrackingService {
 
   /// Track a face across frames (for smooth following)
   func trackFace(in image: CIImage, previousObservation: VNFaceObservation?) async throws
-    -> VNFaceObservation?
-  {
+    -> VNFaceObservation? {
     if let previous = previousObservation {
       // Continue tracking existing face
       let trackRequest = VNTrackObjectRequest(detectedObjectObservation: previous)
@@ -193,8 +192,7 @@ actor FaceTrackingService {
         let ciImage = CIImage(cgImage: cgImage)
 
         // Track or Detect
-        if let observation = try await trackFace(in: ciImage, previousObservation: lastObservation)
-        {
+        if let observation = try await trackFace(in: ciImage, previousObservation: lastObservation) {
           lastObservation = observation
           results[actualTime] = observation.boundingBox
         } else {

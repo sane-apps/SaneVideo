@@ -114,8 +114,7 @@ struct MainContentView: View {
         LogView()
       }
       // Menu command handlers for export features
-      .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ExportAsGIF"))) {
-        _ in
+      .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ExportAsGIF"))) { _ in
         showGIFSheet = true
       }
       .sheet(isPresented: $showGIFSheet) {

@@ -61,4 +61,3 @@ enum TranscriptionEngine: String, CaseIterable, Identifiable, Codable {
     /// Default engine (Apple Speech)
     static let `default` = TranscriptionEngine.apple
 }
-

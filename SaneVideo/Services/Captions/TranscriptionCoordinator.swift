@@ -145,4 +145,3 @@ class TranscriptionCoordinator {
 }
 
 // Errors defined in TranscriptionError.swift
-

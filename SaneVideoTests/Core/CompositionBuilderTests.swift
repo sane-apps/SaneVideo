@@ -97,9 +97,10 @@ struct CompositionBuilderTests {
         project.updateTimeline(timeline)
 
         // Should throw an error because source file is missing
+        let projectToTest = project // Capture immutable copy
         await #expect(throws: AppError.self) {
             try await withTimeout(seconds: 5.0) {
-                _ = try await CompositionBuilder.build(from: project)
+                _ = try await CompositionBuilder.build(from: projectToTest)
             }
         }
     }

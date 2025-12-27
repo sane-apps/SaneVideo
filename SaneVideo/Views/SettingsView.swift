@@ -148,8 +148,7 @@ struct GeneralSettingsView: View {
           Button("Configure API Keys") {
             // Open API keys settings
             if let url = URL(
-              string: "x-apple.systempreferences:com.apple.preference.security?Privacy")
-            {
+              string: "x-apple.systempreferences:com.apple.preference.security?Privacy") {
               NSWorkspace.shared.open(url)
             }
           }

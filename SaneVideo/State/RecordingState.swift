@@ -27,6 +27,8 @@ class RecordingState {
   var isPaused = false
   var isPreparing = false  // True during countdown (camera on, not yet recording)
   private var isStopping = false  // CRITICAL FIX: Prevent double-stop calls
+  @MainActor private var isPendingStop = false // CRITICAL FIX: Handle stop during initialization
+  private var pendingStopCompletion: ((URL?) -> Void)? // CRITICAL FIX: Hold completion for pending stops
   var isMicActive = true
   var isPresenterOverlayActive = false
   var recordingDuration: TimeInterval = 0
@@ -58,12 +60,16 @@ class RecordingState {
     self.injectedAudioService = audioService
     self.injectedScreenRecorder = screenRecorder
     setupRecordingEngine()
+
+    // VERIFICATION LOG: Confirm this code is running
+    AppLogger.recording.info("✅ RecordingState initialized [VERSION_FIXED_V1]")
   }
 
   // Callbacks for AppState coordination
   var onRequestScreenShareStop: (() -> Void)?
   var onPresenterOverlayChanged: ((Bool) -> Void)?
   var onRecordingStateChanged: ((Bool) -> Void)?
+  var onContentSelected: (() -> Void)?
 
   // CRITICAL FIX: Ensure proper cleanup of timer and tasks
   // Task.cancel() is thread-safe, so we can call it from any thread in deinit
@@ -158,12 +164,20 @@ class RecordingState {
         self?.onPresenterOverlayChanged?(isActive)
       }
     }
+
+    // Listen for content selection (user picked something in picker)
+    recordingEngine?.onContentSelected = { [weak self] in
+      Task { @MainActor [weak self] in
+        AppLogger.recording.info("State: Content selected in picker")
+        self?.onContentSelected?()
+      }
+    }
   }
 
   // MARK: - Recording Control
 
   func startRecording(isScreenSharing: Bool) {
-    NSLog("🎬 RecordingState.startRecording called. isRecording=\(isRecording), isPreparing=\(isPreparing)")
+    NSLog("🎬 RecordingState.startRecording called. isRecording=\(isRecording), isPreparing=\(isPreparing), isScreenSharing=\(isScreenSharing)")
     guard !isRecording, !isPreparing else {
       NSLog("🎬 RecordingState.startRecording BAILED: already recording or preparing")
       return
@@ -172,6 +186,8 @@ class RecordingState {
     // CRITICAL FIX: Verify permissions before starting recording
     // This handles cases where permissions were revoked while app was in background
     let permissionManager = ServiceContainer.shared.permissionManager
+    NSLog("🎬 Permission check: camera=\(permissionManager.cameraStatus), mic=\(permissionManager.microphoneStatus), screen=\(permissionManager.screenRecordingStatus)")
+
     let hasPermissions = permissionManager.verifyPermissionsForRecording(
       requiresCamera: !isScreenSharing, // Camera not needed for screen sharing
       requiresMicrophone: true,
@@ -179,6 +195,7 @@ class RecordingState {
     )
 
     if !hasPermissions {
+      NSLog("🎬 ❌ Permission check FAILED! Cannot start recording.")
       AppLogger.recording.error("❌ Cannot start recording: Missing required permissions")
       ServiceContainer.shared.toastManager.show("Missing required permissions. Please check Settings.", type: .error)
       // Open appropriate settings based on what's missing
@@ -192,12 +209,16 @@ class RecordingState {
       return
     }
 
+    NSLog("🎬 ✅ Permission check PASSED")
+
     if let engine = recordingEngine {
       do { try engine.diskSpaceMonitor.verifyDiskSpace() } catch {
+        NSLog("🎬 ❌ Disk space check FAILED")
         ServiceContainer.shared.errorPresenter.present(error)
         return
       }
     }
+    NSLog("🎬 Setting isPreparing=true, calling startCountdown")
     isPreparing = true
     startCountdown(isScreenSharing: isScreenSharing)
   }
@@ -266,13 +287,29 @@ class RecordingState {
 
       // CRITICAL: Check if engine actually started (isRecording will be set by engine)
       // If start failed, cleanup timer
+      // CRITICAL: Check if engine actually started (isRecording will be set by engine)
+      // If start failed, cleanup timer
       await MainActor.run { [weak self] in
         guard let self = self else { return }
+
+        // Always clear the task when done
+        self.startingTask = nil
 
         // Start success feedback
         ServiceContainer.shared.soundManager.playStartRecording()
         ServiceContainer.shared.hapticsManager.success()
-        self.startingTask = nil
+
+   // CRITICAL FIX: If a stop was requested during start, execute it now
+        if self.isPendingStop {
+          AppLogger.recording.info("🎬 Initialized stop request detected. Stopping now.")
+          self.isPendingStop = false
+          self.stopRecording { url in
+            Task { @MainActor in
+                self.pendingStopCompletion?(url)
+                self.pendingStopCompletion = nil
+            }
+          }
+        }
       }
     }
   }
@@ -282,19 +319,21 @@ class RecordingState {
       "🛑 stopRecording called. isPreparing=\(isPreparing), isRecording=\(isRecording), isStopping=\(isStopping)")
 
     // CRITICAL FIX: If we are still starting, we must wait or cancel
-    if let task = startingTask {
+    if startingTask != nil {
       AppLogger.recording.warning(
-        "🎬 User hit stop while recording was still starting. Waiting for start to complete...")
-      Task { @MainActor in
-        _ = await task.result
-        self.stopRecording(completion: completion)
-      }
+        "🎬 User hit stop while recording was still starting. Queueing stop... [VERSION_FIXED_V1]")
+      isPendingStop = true
+
+      // CRITICAL: Queue the completion handler to be called when the pending stop executes
+      // We overwrite any previous pending completion - last writer wins
+      self.pendingStopCompletion = completion
       return
     }
 
     // CRITICAL FIX: Prevent double-stop calls
     guard !isStopping else {
       AppLogger.recording.debug("🛑 stopRecording ignored (already stopping)")
+      completion(nil) // Call completion even if ignored, to unblock caller
       return
     }
 

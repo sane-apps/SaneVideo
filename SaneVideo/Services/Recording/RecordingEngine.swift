@@ -24,6 +24,9 @@ class RecordingEngine: NSObject, @unchecked Sendable {
   // Callback to notify when screen recording is stopped externally (e.g. via system menu)
   @MainActor var onScreenRecordingStoppedExternally: (() -> Void)?
 
+  // Callback to notify when user selects content in picker (PiP can now be shown)
+  @MainActor var onContentSelected: (() -> Void)?
+
   // Audio Level Publisher (Forwarded from AudioService)
   var audioLevelSubject: PassthroughSubject<Float, Never> {
     audioService.audioLevelSubject

@@ -107,7 +107,7 @@ class FloatingControlsWindow: NSPanel {
     }
     override func close() {
         // CRITICAL FIX: Prevent _NSWindowTransformAnimation crash
-        // Same fix as PiPCameraWindow - properly sequence the close
+        // Same fix as PiPCameraWindow - synchronous close with disabled animations
 
         // 1. Invalidate timer to stop any pending callbacks
         hideTimer?.invalidate()
@@ -131,15 +131,8 @@ class FloatingControlsWindow: NSPanel {
         // 4. Order out
         orderOut(nil)
 
-        // 5. Delay then close (call super synchronously after delay)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-            // Use performSelector to call super.close() without capturing self in closure
-            self.performSuperClose()
-        }
-    }
-
-    // Helper to call super.close() - avoids closure capture issue
-    private func performSuperClose() {
+        // 5. Close synchronously - animations are disabled so this should be safe
+        // CRITICAL: Do NOT use asyncAfter - it causes race conditions with isReleasedWhenClosed
         super.close()
     }
 

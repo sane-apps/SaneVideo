@@ -137,6 +137,11 @@ extension RecordingEngine {
       // Forward to AppState via closure callback on MainActor
       self?.onPresenterOverlayChanged?(active)
     }
+
+    // Forward content selection callback to AppState
+    screenRecorder.onContentSelected = { [weak self] in
+      self?.onContentSelected?()
+    }
   }
 
   @MainActor
@@ -204,12 +209,14 @@ extension RecordingEngine {
     guard writer.canAdd(input) else { return }
     writer.add(input)
 
+    // CRITICAL: Create adaptor BEFORE startWriting() to avoid crash:
+    // "Cannot create a new pixel buffer adaptor with an asset writer input that has already started writing"
+    let adaptor = AVAssetWriterInputPixelBufferAdaptor(
+      assetWriterInput: input, sourcePixelBufferAttributes: nil)
+
     guard writer.startWriting() else { return }
 
     writer.startSession(atSourceTime: .zero)
-
-    let adaptor = AVAssetWriterInputPixelBufferAdaptor(
-      assetWriterInput: input, sourcePixelBufferAttributes: nil)
 
     // Wait for input
     while !input.isReadyForMoreMediaData {

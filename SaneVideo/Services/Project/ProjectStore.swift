@@ -17,7 +17,7 @@ final class ProjectStore: ProjectStoreProtocol {
             projectsDirectory = rootDirectory
         } else {
             // Check for Test Mode / Editor Mode via UserDefaults (which we confirmed works)
-            let isTesting = UserDefaults.standard.bool(forKey: "ui_testing") || 
+            let isTesting = UserDefaults.standard.bool(forKey: "ui_testing") ||
                             UserDefaults.standard.bool(forKey: "open_editor") ||
                             ProcessInfo.processInfo.environment["UI_TESTING"] != nil ||
                             ProcessInfo.processInfo.environment["OPEN_EDITOR"] != nil ||
@@ -26,11 +26,12 @@ final class ProjectStore: ProjectStoreProtocol {
                             ProcessInfo.processInfo.arguments.contains("-open_editor")
 
             if isTesting {
-                // Use a dedicated temporary directory for tests to avoid loading user data
-                AppLogger.project.info("🧪 ProjectStore: Using temporary directory for tests")
-                projectsDirectory = FileManager.default.temporaryDirectory.appendingPathComponent("SaneVideo_Test_Projects")
-                // Ensure it's clean
-                try? FileManager.default.removeItem(at: projectsDirectory)
+                // Use a dedicated, isolated temporary directory for EACH instance during tests
+                // This prevents race conditions where one test wipes the directory while another writes
+                AppLogger.project.info("🧪 ProjectStore: Using isolated temporary directory for test instance")
+                projectsDirectory = FileManager.default.temporaryDirectory
+                    .appendingPathComponent("SaneVideo_Test_Projects")
+                    .appendingPathComponent(UUID().uuidString)
             } else {
                 // Projects directory in user's Movies folder
                 if let moviesDir = FileManager.default.urls(for: .moviesDirectory, in: .userDomainMask).first {
@@ -67,11 +68,11 @@ final class ProjectStore: ProjectStoreProtocol {
                 AppLogger.project.debug("♻️ ProjectStore: Reusing existing load task")
                 return existing
             }
-            
+
             // Capture necessary values to avoid capturing `self` strongly if possible,
             // or rely on self being Sendable.
             let directory = projectsDirectory
-            
+
             let newTask = Task<[VideoProject], Error> {
                 NSLog("🕵️‍♀️ ProjectStore: loadProjects started loading from disk")
                 let fileManager = FileManager.default
@@ -97,7 +98,7 @@ final class ProjectStore: ProjectStoreProtocol {
                     do {
                         // Load file data
                         let data = try Data(contentsOf: fileURL)
-                        
+
                         // CRITICAL: Check if file is empty or too small (likely corrupted)
                         guard data.count > 10 else {
                             AppLogger.project.warning("⚠️ Project file appears corrupted (too small): \(fileURL.lastPathComponent)")
@@ -158,18 +159,18 @@ final class ProjectStore: ProjectStoreProtocol {
                 }
                 return projects
             }
-            
+
             state = newTask
             return newTask
         }
-        
+
         do {
             let projects = try await task.value
-            
+
             loadState.withLock { state in
                 if state == task { state = nil }
             }
-            
+
             return projects
         } catch {
             loadState.withLock { state in
@@ -193,11 +194,11 @@ final class ProjectStore: ProjectStoreProtocol {
             // CRITICAL: Create backup before overwrite to prevent data loss
             let backupURL = fileURL.appendingPathExtension("backup")
             let fileManager = FileManager.default
-            
+
             try await Task.detached(priority: .utility) {
                 let activity = ProcessInfo.processInfo.beginActivity(options: [.userInitiated, .suddenTerminationDisabled], reason: "Save Project")
                 defer { ProcessInfo.processInfo.endActivity(activity) }
-                
+
                 // CRITICAL: Create backup if file exists
                 if fileManager.fileExists(atPath: fileURL.path) {
                     do {
@@ -208,10 +209,10 @@ final class ProjectStore: ProjectStoreProtocol {
                         // Continue with save even if backup fails
                     }
                 }
-                
+
                 // CRITICAL: Atomic write with verification
                 try data.write(to: fileURL, options: Data.WritingOptions.atomic)
-                
+
                 // CRITICAL: Verify file was written correctly
                 guard fileManager.fileExists(atPath: fileURL.path) else {
                     // Restore backup if write failed
@@ -221,7 +222,7 @@ final class ProjectStore: ProjectStoreProtocol {
                     }
                     throw AppError.projectSaveFailed(NSError(domain: "ProjectStore", code: -1, userInfo: [NSLocalizedDescriptionKey: "File write verification failed"]))
                 }
-                
+
                 // CRITICAL: Verify file is readable (not corrupted)
                 do {
                     let verifyData = try Data(contentsOf: fileURL)
@@ -237,13 +238,13 @@ final class ProjectStore: ProjectStoreProtocol {
                     }
                     throw AppError.projectSaveFailed(error)
                 }
-                
+
                 // CRITICAL: Clean up backup after successful save
                 // Keep last backup for recovery, but remove older ones
                 try? fileManager.removeItem(at: backupURL)
             }.value
         }
-        
+
         AppLogger.project.info("Saved project: \(project.name)")
     }
 
@@ -265,13 +266,13 @@ final class ProjectStore: ProjectStoreProtocol {
 
             do {
                 try fileManager.removeItem(at: fileURL)
-                
+
                 // CRITICAL: Also delete backup if it exists
                 let backupURL = fileURL.appendingPathExtension("backup")
                 if fileManager.fileExists(atPath: backupURL.path) {
                     try? fileManager.removeItem(at: backupURL)
                 }
-                
+
                 await MainActor.run {
                     AppLogger.project.info("Deleted project: \(project.name)")
                 }

@@ -29,45 +29,38 @@ struct AudioVisualizerView: View {
     @State private var cancellable: AnyCancellable?
 
     var body: some View {
-        // CRASH FIX: Using TimelineView to avoid Timer.publish() lifecycle issues.
-        // The previous implementation used Timer.publish().autoconnect() which
-        // caused SIGSEGV crashes when the view was removed while the timer was active.
-        // The timer's subscription could outlive the view, leading to accessing
-        // deallocated memory during MainActor isolation checks.
-        TimelineView(.periodic(from: .now, by: 0.1)) { _ in
-            ZStack {
-                // Outer glow based on audio level
-                Circle()
-                    .stroke(
-                        AngularGradient(
-                            gradient: Gradient(colors: meteringColors),
-                            center: .center,
-                            startAngle: .degrees(rotation),
-                            endAngle: .degrees(rotation + 360)
-                        ),
-                        lineWidth: 3 + CGFloat(audioLevel) * 4
-                    )
-                    .frame(width: size * pulse, height: size * pulse)
-                    .opacity(0.6 + Double(audioLevel) * 0.4)
-                    .blur(radius: 2)
+        ZStack {
+            // Outer glow based on audio level
+            Circle()
+                .stroke(
+                    AngularGradient(
+                        gradient: Gradient(colors: meteringColors),
+                        center: .center,
+                        startAngle: .degrees(rotation),
+                        endAngle: .degrees(rotation + 360)
+                    ),
+                    lineWidth: 3 + CGFloat(audioLevel) * 4
+                )
+                .frame(width: size * pulse, height: size * pulse)
+                .opacity(0.6 + Double(audioLevel) * 0.4)
+                .blur(radius: 2)
 
-                // Sharp ring
-                Circle()
-                    .stroke(
-                        AngularGradient(
-                            gradient: Gradient(colors: meteringColors),
-                            center: .center,
-                            startAngle: .degrees(rotation),
-                            endAngle: .degrees(rotation + 360)
-                        ),
-                        lineWidth: 2 + CGFloat(audioLevel) * 2
-                    )
-                    .frame(width: size, height: size)
-                    .opacity(0.8)
-            }
-            .animation(.linear(duration: 0.1), value: audioLevel)
-            .animation(.easeInOut(duration: 0.1), value: pulse)
+            // Sharp ring
+            Circle()
+                .stroke(
+                    AngularGradient(
+                        gradient: Gradient(colors: meteringColors),
+                        center: .center,
+                        startAngle: .degrees(rotation),
+                        endAngle: .degrees(rotation + 360)
+                    ),
+                    lineWidth: 2 + CGFloat(audioLevel) * 2
+                )
+                .frame(width: size, height: size)
+                .opacity(0.8)
         }
+        .animation(.linear(duration: 0.1), value: audioLevel)
+        .animation(.easeInOut(duration: 0.1), value: pulse)
         .onAppear {
             isActive = true
             // Slow rotation animation

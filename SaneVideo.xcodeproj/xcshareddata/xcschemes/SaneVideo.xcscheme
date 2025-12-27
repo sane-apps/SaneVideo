@@ -21,6 +21,20 @@
                ReferencedContainer = "container:SaneVideo.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "3B9924517B2D6DC1A779E50B"
+               BuildableName = "SaneVideoTests.xctest"
+               BlueprintName = "SaneVideoTests"
+               ReferencedContainer = "container:SaneVideo.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
       </BuildActionEntries>
    </BuildAction>
    <TestAction
@@ -47,6 +61,17 @@
                BlueprintIdentifier = "3B9924517B2D6DC1A779E50B"
                BuildableName = "SaneVideoTests.xctest"
                BlueprintName = "SaneVideoTests"
+               ReferencedContainer = "container:SaneVideo.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "16A9A36395F6387107022391"
+               BuildableName = "SaneVideoUITests.xctest"
+               BlueprintName = "SaneVideoUITests"
                ReferencedContainer = "container:SaneVideo.xcodeproj">
             </BuildableReference>
          </TestableReference>

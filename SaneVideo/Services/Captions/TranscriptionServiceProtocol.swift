@@ -45,19 +45,19 @@ enum TranscriptionEngine: String, CaseIterable, Identifiable, Codable {
     var description: String {
         switch self {
         case .apple:
-            return "Fast, native transcription (recommended for most content)"
+            return "Fast, native transcription using macOS built-in speech recognition"
         case .whisperKit:
-            return "Higher accuracy for accents, technical terms, and noisy audio"
+            return "Highest accuracy for accents, non-English, technical jargon, and noisy audio (~1.5GB download)"
         }
     }
-    
+
     var icon: String {
         switch self {
         case .apple: return "waveform"
         case .whisperKit: return "brain.head.profile"
         }
     }
-    
-    /// Default engine (Apple Speech)
-    static let `default` = TranscriptionEngine.apple
+
+    /// Default engine - WhisperKit for best accuracy
+    static let `default` = TranscriptionEngine.whisperKit
 }

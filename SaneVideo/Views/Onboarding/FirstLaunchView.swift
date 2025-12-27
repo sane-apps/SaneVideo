@@ -6,12 +6,16 @@
 //
 
 import SwiftUI
+import WhisperKit
 
 /// First launch onboarding view
 struct FirstLaunchView: View {
     @Environment(\.dismiss) var dismiss
     @State private var currentStep = 0
-    
+    @State private var isDownloadingWhisperKit = false
+    @State private var whisperKitDownloadComplete = false
+    @State private var whisperKitSkipped = false
+
     private let steps = [
         OnboardingStep(
             icon: "video.fill",
@@ -36,6 +40,12 @@ struct FirstLaunchView: View {
             title: "Optimized for Apple Silicon",
             description: "Built exclusively for M1+ Macs. Fast exports, smooth editing, and thermal intelligence.",
             color: .orange
+        ),
+        OnboardingStep(
+            icon: "text.bubble.fill",
+            title: "Auto-Captions with AI",
+            description: "Generate highly accurate captions in 99 languages. Perfect for technical jargon, accents, and background noise. Download now (~1.5GB) or use Apple's built-in transcription (ready now).",
+            color: .cyan
         )
     ]
     
@@ -72,23 +82,51 @@ struct FirstLaunchView: View {
                         }
                     }
                     .buttonStyle(.bordered)
+                    .disabled(isDownloadingWhisperKit)
                 }
-                
+
                 Spacer()
-                
-                if currentStep < steps.count - 1 {
+
+                // Last step (WhisperKit) has special handling
+                if currentStep == steps.count - 1 {
+                    if isDownloadingWhisperKit {
+                        HStack(spacing: 12) {
+                            ProgressView()
+                                .scaleEffect(0.8)
+                            Text("Downloading AI model...")
+                                .foregroundColor(.secondary)
+                        }
+                    } else if whisperKitDownloadComplete {
+                        Button("Get Started") {
+                            completeOnboarding()
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .controlSize(.large)
+                    } else {
+                        HStack(spacing: 12) {
+                            Button("Skip for Now") {
+                                whisperKitSkipped = true
+                                ServiceContainer.shared.userPreferences.transcriptionEngine = .apple
+                                completeOnboarding()
+                            }
+                            .buttonStyle(.bordered)
+
+                            Button("Download AI Model") {
+                                Task {
+                                    await downloadWhisperKitModel()
+                                }
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .controlSize(.large)
+                        }
+                    }
+                } else {
                     Button("Next") {
                         withAnimation(.smoothUI) {
                             currentStep += 1
                         }
                     }
                     .buttonStyle(.borderedProminent)
-                } else {
-                    Button("Get Started") {
-                        completeOnboarding()
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.large)
                 }
             }
             .padding(.horizontal, 40)
@@ -97,7 +135,31 @@ struct FirstLaunchView: View {
         .frame(width: 600, height: 600)
         .background(.ultraThinMaterial)
     }
-    
+
+    private func downloadWhisperKitModel() async {
+        isDownloadingWhisperKit = true
+
+        do {
+            // Initialize WhisperKit which triggers model download
+            // Using large-v3 for best accuracy with technical jargon
+            let config = WhisperKitConfig()
+            config.model = "openai_whisper-large-v3"
+            config.verbose = false
+            config.prewarm = true
+
+            AppLogger.project.info("🎤 Onboarding: Starting WhisperKit large-v3 model download (~1.5GB)...")
+            let _ = try await WhisperKit(config)
+            AppLogger.project.info("✅ Onboarding: WhisperKit model download complete")
+            whisperKitDownloadComplete = true
+        } catch {
+            AppLogger.project.error("❌ Onboarding: WhisperKit download failed: \(error.localizedDescription)")
+            // Still complete - user can retry from settings
+            whisperKitDownloadComplete = true
+        }
+
+        isDownloadingWhisperKit = false
+    }
+
     private func completeOnboarding() {
         UserDefaults.standard.set(true, forKey: "hasCompletedOnboarding")
         dismiss()

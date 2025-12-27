@@ -54,12 +54,12 @@ actor WhisperKitService: TranscriptionServiceProtocol {
         // Start new initialization
         let task = Task {
             do {
-                AppLogger.project.info("🎤 WhisperKit: Initializing model (first time may download ~500MB)...")
+                AppLogger.project.info("🎤 WhisperKit: Initializing model (first time may download ~1.5GB)...")
 
                 let config = WhisperKitConfig()
-                // Explicitly request the medium model using the correct identifier format
-                // Based on Models.swift defaults (e.g. openai_whisper-base)
-                config.model = "openai_whisper-medium"
+                // Use large-v3 for best accuracy with technical jargon, accents, and non-English
+                // This is the most accurate Whisper model available (10-20% better than large-v2)
+                config.model = "openai_whisper-large-v3"
                 config.computeOptions = ModelComputeOptions()
                 config.verbose = true // Enable verbose logging to debug issues
                 config.logLevel = .debug

@@ -1101,7 +1101,7 @@ class SaneMaster
 
     clean_first = args.include?('--clean')
     include_ui = args.include?('--ui')
-    timeout = args.include?('--timeout') ? args[args.index('--timeout') + 1].to_i : 480 # 8 min default (balanced safety)
+    timeout = args.include?('--timeout') ? args[args.index('--timeout') + 1].to_i : 180 # 3 min default (prevents stuck tests)
 
     if clean_first
       puts '🧹 Cleaning before verify...'
@@ -1298,12 +1298,22 @@ class SaneMaster
     puts '   Check for permission dialogs or infinite loops'
     puts "   Tip: Use './Scripts/monitor_tests.sh' for more detailed monitoring"
 
-    # Force kill on timeout
-    system("pkill -9 -f 'xcodebuild test' 2>/dev/null")
-    system('killall -9 xcodebuild 2>/dev/null')
-    system('killall -9 SaneVideo 2>/dev/null')
-    system("pkill -9 -f 'SaneVideo.*test' 2>/dev/null")
-    system("pkill -9 -f 'grant_permissions' 2>/dev/null")
+    # Force kill on timeout - be very aggressive
+    puts '🔪 Force killing all test processes...'
+
+    # Kill in multiple waves to ensure cleanup
+    3.times do |attempt|
+      system("pkill -9 -f 'xcodebuild test' 2>/dev/null")
+      system('killall -9 xcodebuild 2>/dev/null')
+      system('killall -9 SaneVideo 2>/dev/null')
+      system("pkill -9 -f 'SaneVideo' 2>/dev/null")
+      system("pkill -9 -f 'xctest' 2>/dev/null")
+      system("pkill -9 -f 'testmanagerd' 2>/dev/null")
+      system("pkill -9 -f 'grant_permissions' 2>/dev/null")
+      sleep(0.5) if attempt < 2
+    end
+
+    puts '✅ Processes killed'
   end
 
   def clean(args)

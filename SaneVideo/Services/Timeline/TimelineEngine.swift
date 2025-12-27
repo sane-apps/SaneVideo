@@ -38,7 +38,9 @@ class TimelineEngine {
         let result = try await CompositionBuilder.build(from: project)
 
         let playerItem = AVPlayerItem(asset: result.composition)
-        playerItem.videoComposition = result.videoComposition
+        if let vc = result.videoComposition {
+            playerItem.videoComposition = vc
+        }
         playerItem.audioMix = result.audioMix
 
         AppLogger.playback.debug("Created player item with multi-track composition")

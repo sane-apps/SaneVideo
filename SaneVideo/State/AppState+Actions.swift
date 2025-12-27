@@ -147,12 +147,16 @@ extension AppState {
 
   /// Handle Quick Access Overlay actions
   func handleQuickAccessEdit() {
-    guard let url = quickAccessRecordingURL else { return }
+    guard let url = quickAccessRecordingURL else {
+      NSLog("📹 handleQuickAccessEdit: No URL available!")
+      return
+    }
 
+    NSLog("📹 handleQuickAccessEdit: URL = \(url.path)")
     showQuickAccessOverlay = false
 
     Task { @MainActor in
-      AppLogger.recording.info("📹 Quick Access: Edit Now selected")
+      NSLog("📹 Quick Access: Edit Now selected for \(url.lastPathComponent)")
 
       // CRITICAL FIX: Switch to editing mode IMMEDIATELY for responsiveness
       // This prevents the "nothing happened" scenario if import takes time
@@ -165,8 +169,13 @@ extension AppState {
         self.projectState.startNewProject()
       }
 
-      // Small delay to allow UI to settle before heavy import work
-      try? await Task.sleep(nanoseconds: 100_000_000)
+      // CRITICAL FIX: Wait longer for video file to be fully written and finalized
+      // Video files need time for:
+      // 1. Disk flush to complete
+      // 2. Moov atom to be finalized (moved to front of file)
+      // 3. File system metadata to be updated
+      // The retry logic in addVideoToTimeline will handle any remaining issues
+      try? await Task.sleep(nanoseconds: 500_000_000) // 500ms initial delay
 
       await self.projectState.addVideoToTimeline(url: url)
 
@@ -306,33 +315,50 @@ extension AppState {
       NSLog("🖥️ toggleScreenShare: Starting screen share...")
 
       // Start camera for PiP overlay if not active
-      var effectiveCameraActive = cameraState.isActive
       if !cameraState.isActive {
         NSLog("🖥️ toggleScreenShare: Auto-starting camera for PiP")
         AppLogger.camera.info("AppState: Auto-starting camera for screen share PiP")
         cameraEnabled = true
-        effectiveCameraActive = true
       }
 
-      // Hide main window BEFORE picker shows to verify cleaner look
+      // Hide main window BEFORE picker shows for cleaner look
       windowManager.minimizeMainWindow()
 
       // Update state for new mode
       windowManager.isScreenSharing = true
 
-      // Show PiP
-      windowManager.updatePiPState(
-        isCameraActive: effectiveCameraActive,
-        isRecording: recordingState.isRecording
-      )
+      // CRITICAL FIX: Do NOT show PiP here - it will appear in the picker!
+      // PiP is shown via onContentSelected callback AFTER user selects content
+      NSLog("🖥️ toggleScreenShare: Deferring PiP display until after content selection")
 
       Task { @MainActor in
-        // Small delay to allow window animation
-        try? await Task.sleep(nanoseconds: 200_000_000) // 200ms
+        // Small delay to let UI settle
+        try? await Task.sleep(nanoseconds: 100_000_000) // 100ms
 
         if !TestEnvironment.isTesting {
-           SCContentSharingPicker.shared.isActive = true
-           SCContentSharingPicker.shared.present()
+           let picker = SCContentSharingPicker.shared
+
+           // CRITICAL: Deactivate picker first to reset any cached state
+           picker.isActive = false
+
+           // CRITICAL FIX: Register ScreenRecorder as observer BEFORE presenting picker
+           // This ensures onContentSelected fires when user makes a selection
+           if let screenRecorder = self.recordingState.engine?.screenRecorder {
+             picker.add(screenRecorder)
+             NSLog("🖥️ ScreenRecorder registered as picker observer")
+           }
+
+           // Configure picker with allowed modes
+           var config = SCContentSharingPickerConfiguration()
+           config.allowedPickerModes = [
+             .singleWindow, .multipleWindows, .singleApplication, .multipleApplications, .singleDisplay
+           ]
+
+           picker.configuration = config
+           picker.defaultConfiguration = config
+           picker.isActive = true
+           picker.present()
+           NSLog("🖥️ Picker presented (PiP not yet shown)")
         }
 
         windowManager.isTogglingScreenShare = false

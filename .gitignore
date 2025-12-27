@@ -1,6 +1,7 @@
 # Build logs
 build_log*.txt
 build_output*.txt
+test_output*.txt
 *.log
 
 # Secrets (Secrets.swift is now committed - uses Keychain/APIKeyManager, no hardcoded secrets)

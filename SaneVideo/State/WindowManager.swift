@@ -173,7 +173,6 @@ class WindowManager {
 
     guard let window = pipWindow else { return }
 
-    // CRITICAL FIX: Set flag but DON'T use defer - we need to keep it set during async close
     isTogglingPiP = true
 
     AppLogger.window.info("Hiding PiP Window")
@@ -186,25 +185,23 @@ class WindowManager {
       return
     }
 
-    // CRITICAL FIX: Nil the reference BEFORE calling close()
-    // This prevents any code from trying to access the window during async close
-    // The window itself won't be deallocated because close() holds a reference
+    // Nil the reference BEFORE calling close()
+    // ARC will deallocate the window when close() completes and no other refs exist
     pipWindow = nil
 
-    // CRITICAL FIX: Set isReleasedWhenClosed AFTER nilling pipWindow
-    // This ensures the window will be deallocated after close() completes
-    window.isReleasedWhenClosed = true
+    // CRITICAL FIX: Do NOT set isReleasedWhenClosed = true here
+    // Setting it causes the window to be released immediately during close(),
+    // which can crash if the window server is still accessing it.
+    // Instead, let ARC handle cleanup naturally.
 
-    // close() now handles the async cleanup properly
+    // close() is synchronous - handles its own cleanup
     window.close()
 
-    // Reset toggle flag after a delay (matches the close() async timing)
-    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
-      self?.isTogglingPiP = false
-      AppLogger.window.info("PiP Window fully hidden")
-    }
+    // Reset toggle flag immediately since close() is synchronous
+    isTogglingPiP = false
+    AppLogger.window.info("PiP Window fully hidden")
 
-    // Update filter (can run in parallel with close)
+    // Update filter
     Task { @MainActor in
       await updateRecorderFilter()
     }

@@ -52,9 +52,11 @@ struct RecordingStateTests {
     #expect(recordingState.isPreparing)
 
     await withCheckedContinuation { continuation in
-      recordingState.stopRecording { url in
-        #expect(url == nil)
-        continuation.resume()
+      Task { @MainActor in
+        recordingState.stopRecording { url in
+          #expect(url == nil)
+          continuation.resume()
+        }
       }
     }
 
@@ -71,8 +73,10 @@ struct RecordingStateTests {
     #expect(!recordingState.isRecording)
 
     await withCheckedContinuation { continuation in
-      recordingState.stopRecording { _ in
-        continuation.resume()
+      Task { @MainActor in
+        recordingState.stopRecording { _ in
+          continuation.resume()
+        }
       }
     }
 

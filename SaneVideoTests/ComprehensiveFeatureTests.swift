@@ -55,12 +55,21 @@ struct ComprehensiveFeatureTests {
     await Task.yield()
 
     var stopped = false
-    recordingState.stopRecording { _ in
-      stopped = true
+
+    // Use withTimeout to prevent hanging if stopRecording deadlocks
+    try await withTimeout(seconds: 5.0) {
+      await withCheckedContinuation { continuation in
+        Task { @MainActor in
+          recordingState.stopRecording { _ in
+            stopped = true
+            continuation.resume()
+          }
+        }
+      }
     }
 
-    await Task.yield()
-    #expect(stopped || !recordingState.isRecording)
+    #expect(stopped)
+    #expect(!recordingState.isRecording)
   }
 
   @Test("Recording: Countdown timer works")

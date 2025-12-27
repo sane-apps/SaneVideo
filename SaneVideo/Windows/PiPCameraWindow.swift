@@ -126,7 +126,12 @@ class PiPCameraWindow: NSPanel {
     }
 
     private func setupWindow() {
-        level = .floating // Reverted to .floating to ensure visibility in ScreenCaptureKit
+        // CRITICAL FIX: Use floating level for PiP overlay
+        // The key fix is sharingType = .none which hides from picker AND capture
+        // Combined with our new flow: PiP is only shown AFTER picker selection,
+        // so it won't be in the picker's window list anyway
+        level = .floating
+
         hidesOnDeactivate = false // CRITICAL: Keeps window visible when switching apps
         isOpaque = false
         backgroundColor = .clear
@@ -139,12 +144,7 @@ class PiPCameraWindow: NSPanel {
         // CRITICAL FIX: Prevent PiP from appearing in screen share picker
         // We use .none so the window cannot be captured at all
         // The camera is composited separately by VideoWriter
-        if #available(macOS 15.0, *) {
-            self.sharingType = .none
-        } else {
-            // Pre-macOS 15, use level to avoid capture
-            self.sharingType = .none
-        }
+        self.sharingType = .none
 
         // Ensure no title bar or border
         titleVisibility = .hidden
@@ -392,7 +392,7 @@ class PiPCameraWindow: NSPanel {
     override func close() {
         // CRITICAL FIX: Prevent _NSWindowTransformAnimation crash
         // The crash occurs because NSWindow animations are still running when dealloc happens.
-        // Solution: Disable animations, cleanup synchronously, then close.
+        // Solution: Disable animations, cleanup synchronously, then close synchronously.
 
         // 1. Cancel all Combine subscriptions to stop async callbacks
         cancellables.removeAll()
@@ -423,14 +423,8 @@ class PiPCameraWindow: NSPanel {
         // 5. Order out (removes from screen, stops window server animations)
         orderOut(nil)
 
-        // 6. Small delay to let window server finish cleanup, then close
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-            self.performSuperClose()
-        }
-    }
-
-    // Helper to call super.close() - avoids closure capture issue with super
-    private func performSuperClose() {
+        // 6. Close synchronously - animations are disabled so this should be safe
+        // CRITICAL: Do NOT use asyncAfter - it causes race conditions with isReleasedWhenClosed
         super.close()
     }
 

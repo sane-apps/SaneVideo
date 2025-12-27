@@ -1204,13 +1204,14 @@ class SaneMaster
     cmd = build_test_command(include_ui)
 
     # State object to track progress across callbacks
-    state = OpenStruct.new(
-      start_time: Time.now,
-      tests_run: 0,
-      current_test: nil,
-      last_update: Time.now,
-      spinner_chars: ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'],
-      spinner_idx: 0
+    ProgressState = Struct.new(:start_time, :tests_run, :current_test, :last_update, :spinner_chars, :spinner_idx)
+    state = ProgressState.new(
+      Time.now,
+      0,
+      nil,
+      Time.now,
+      ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'],
+      0
     )
 
     result = execute_with_logging(cmd, timeout_seconds) do |line|
@@ -1231,7 +1232,9 @@ class SaneMaster
   def build_test_command(include_ui)
     if include_ui
       # Exclude visual test classes - they require manual inspection
-      skip_visual = ' -skip-testing:SaneVideoUITests/SaneSmartFeaturesVisualTests -skip-testing:SaneVideoUITests/VisualEditingTests -skip-testing:SaneVideoUITests/VisualRecordingTests'
+      skip_visual = ' -skip-testing:SaneVideoUITests/SaneSmartFeaturesVisualTests' \
+                    ' -skip-testing:SaneVideoUITests/VisualEditingTests' \
+                    ' -skip-testing:SaneVideoUITests/VisualRecordingTests'
       "xcodebuild test -scheme SaneVideo -destination 'platform=macOS,arch=arm64'#{skip_visual} 2>&1"
     else
       "xcodebuild test -scheme SaneVideo -destination 'platform=macOS,arch=arm64' -only-testing:SaneVideoTests 2>&1"

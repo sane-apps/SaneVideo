@@ -14,7 +14,7 @@ enum CompositionBuilder {
 
     struct CompositionResult {
         let composition: AVMutableComposition
-        let videoComposition: AVVideoComposition
+        let videoComposition: AVVideoComposition?
         let audioMix: AVAudioMix
     }
 
@@ -22,6 +22,23 @@ enum CompositionBuilder {
     @MainActor
     static func build(from project: VideoProject) async throws -> CompositionResult {
         let timeline = project.timeline
+
+        // CRITICAL: Early validation for empty timeline to prevent Signal 10 crash
+        // AVAssetReaderVideoCompositionOutput crashes with "[videoTracks count] >= 1" assertion
+        // We must check if there are any enabled video tracks with content
+        let hasVideoContent = timeline.tracks.contains { track in
+            (track.type == .video || track.type == .overlay) && !track.clips.isEmpty
+        }
+
+        guard hasVideoContent else {
+            // CRITICAL FIX: Throw specific error rather than letting it crash later
+            throw AppError.compositionFailed(NSError(
+                domain: "CompositionBuilder",
+                code: -1,
+                userInfo: [NSLocalizedDescriptionKey: "Cannot build composition: Project has no video content. Please add video clips to the timeline."]
+            ))
+        }
+
         let composition = AVMutableComposition()
 
         // CRITICAL FIX: Validate all source files exist before composition
@@ -40,7 +57,7 @@ enum CompositionBuilder {
                             clip.url.stopAccessingSecurityScopedResource()
                         }
                     }
-                    
+
                     // Check if file is readable
                     if !FileManager.default.isReadableFile(atPath: clip.url.path) {
                         missingFiles.append(clip.url.lastPathComponent)
@@ -49,7 +66,7 @@ enum CompositionBuilder {
                 }
             }
         }
-        
+
         if !missingFiles.isEmpty {
             let fileList = missingFiles.prefix(3).joined(separator: ", ")
             let moreCount = missingFiles.count > 3 ? " and \(missingFiles.count - 3) more" : ""
@@ -64,7 +81,7 @@ enum CompositionBuilder {
         var assetCache: [URL: AVURLAsset] = [:]
 
         let renderSize = CGSize(width: 1920, height: 1080)
-        
+
         // 1. Sort tracks by z-index
         let sortedTracks = timeline.tracks.sorted { $0.zIndex > $1.zIndex } // Top z-index first
         let visualTimelineTracks = sortedTracks.filter { $0.type == .video || $0.type == .overlay }
@@ -83,7 +100,7 @@ enum CompositionBuilder {
 
         // 4. Build Audio Tracks using AudioTrackBuilder
         var audioMixParams: [AVMutableAudioMixInputParameters] = []
-        
+
         // 4a. Visual tracks audio (A/B roll)
         let visualAudioParams = try await AudioTrackBuilder.buildVisualAudio(
             from: visualTimelineTracks,
@@ -91,7 +108,7 @@ enum CompositionBuilder {
             assetCache: &assetCache
         )
         audioMixParams.append(contentsOf: visualAudioParams)
-        
+
         // 4b. Dedicated audio tracks
         let dedicatedAudioParams = try await AudioTrackBuilder.buildDedicatedAudio(
             from: audioTimelineTracks,
@@ -110,8 +127,21 @@ enum CompositionBuilder {
         config.customVideoCompositorClass = SaneVideoCompositor.self
 
         let totalDuration = timeline.duration
+        var videoComposition: AVVideoComposition?
 
         if totalDuration > .zero, !videoResult.compositionVideoTracks.isEmpty {
+
+            // CRITICAL CHECK: Ensure we have actual video content
+            // Creating a video composition with empty tracks can cause Signal 10
+            guard !videoResult.compositionVideoTracks.isEmpty else {
+                 AppLogger.export.warning("⚠️ No video tracks in composition - skipping video composition generation")
+                 return CompositionResult(
+                     composition: composition,
+                     videoComposition: nil,
+                     audioMix: audioMix
+                 )
+            }
+
             let timeRange = CMTimeRange(start: .zero, duration: totalDuration)
 
             // Create SaneVideoCompositionInstruction
@@ -129,9 +159,8 @@ enum CompositionBuilder {
             )
 
             config.instructions = [saneInstruction]
+            videoComposition = AVVideoComposition(configuration: config)
         }
-
-        let videoComposition = AVVideoComposition(configuration: config)
 
         return CompositionResult(
             composition: composition,

@@ -174,4 +174,3 @@ struct ErrorDisplayView: View {
 }
 
 // ErrorDisplayView uses AppError extensions defined in AppError.swift
-

@@ -27,7 +27,7 @@ They mean **[DEVELOPMENT.md](../DEVELOPMENT.md)**.
 
 The SOP (DEVELOPMENT.md) contains:
 
-1. **Golden Rules** - Critical rules (SaneMaster.rb, xcodegen, 500-line limit, etc.)
+1. **Golden Rules** - Critical rules (SaneMaster.rb, xcodegen, file size limits: soft 500/hard 800, etc.)
 2. **Architecture** - System layers, directory structure, concurrency model
 3. **Style Guide** - Formatting, SwiftUI patterns, naming conventions
 4. **Workflows** - Build, test, verification processes

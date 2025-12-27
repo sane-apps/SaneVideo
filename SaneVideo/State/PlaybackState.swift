@@ -105,7 +105,7 @@ class PlaybackState {
 
     // CRITICAL FIX: Track loading task for cancellation on rapid reload
     // nonisolated(unsafe) required for deinit access from any thread
-    nonisolated(unsafe) private var loadingTask: Task<Void, Never>?
+    @ObservationIgnored nonisolated(unsafe) private var loadingTask: Task<Void, Never>?
 
     /// Reset playback state - call when switching projects
     func reset() {

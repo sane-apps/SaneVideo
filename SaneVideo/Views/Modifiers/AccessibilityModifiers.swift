@@ -89,4 +89,3 @@ extension View {
         modifier(KeyboardNavigationModifier(shortcut: shortcut))
     }
 }
-

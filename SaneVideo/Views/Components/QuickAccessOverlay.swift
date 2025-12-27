@@ -18,12 +18,12 @@ struct QuickAccessOverlay: View {
     let onSave: () -> Void
     let onShare: () -> Void
     let onDismiss: () -> Void
-    
+
     @State private var isVisible = false
     @State private var isHoveringEdit = false
     @State private var isHoveringSave = false
     @State private var isHoveringShare = false
-    
+
     var body: some View {
         ZStack {
             // Backdrop
@@ -32,7 +32,7 @@ struct QuickAccessOverlay: View {
                 .onTapGesture {
                     dismissWithAnimation()
                 }
-            
+
             // Main Overlay Card
             VStack(spacing: 24) {
                 // Header
@@ -41,17 +41,17 @@ struct QuickAccessOverlay: View {
                         .font(.system(size: 48))
                         .foregroundStyle(.green.gradient)
                         .symbolEffect(.bounce, value: isVisible)
-                    
+
                     Text("Recording Complete")
                         .font(.system(size: 24, weight: .bold))
                         .foregroundStyle(.primary)
-                    
+
                     Text("What would you like to do?")
                         .font(.system(size: 14))
                         .foregroundStyle(.secondary)
                 }
                 .padding(.top, 32)
-                
+
                 // Thumbnail Preview
                 if let thumbnail = thumbnail {
                     Image(nsImage: thumbnail)
@@ -66,7 +66,7 @@ struct QuickAccessOverlay: View {
                         .shadow(color: .black.opacity(0.3), radius: 20, y: 10)
                         .smoothAppear()
                 }
-                
+
                 // Action Buttons
                 HStack(spacing: 16) {
                     // Edit Now (Primary)
@@ -83,7 +83,7 @@ struct QuickAccessOverlay: View {
                         }
                     }
                     .accessibilityIdentifier("quick_access.edit")
-                    
+
                     // Save for Later
                     QuickAccessButton(
                         icon: "square.and.arrow.down",
@@ -98,7 +98,7 @@ struct QuickAccessOverlay: View {
                         }
                     }
                     .accessibilityIdentifier("quick_access.save")
-                    
+
                     // Share
                     QuickAccessButton(
                         icon: "square.and.arrow.up",
@@ -123,7 +123,7 @@ struct QuickAccessOverlay: View {
                 ZStack {
                     VisualEffectView(material: .hudWindow, blendingMode: .withinWindow)
                         .opacity(0.95)
-                    
+
                     // Premium edge lighting
                     RoundedRectangle(cornerRadius: 24)
                         .stroke(
@@ -156,12 +156,12 @@ struct QuickAccessOverlay: View {
             }
         }
     }
-    
+
     private func dismissWithAnimation(completion: (() -> Void)? = nil) {
         withAnimation(.smoothUI) {
             isVisible = false
         }
-        
+
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
             onDismiss()
             completion?()
@@ -178,13 +178,11 @@ struct QuickAccessButton: View {
     let isPrimary: Bool
     @Binding var isHovering: Bool
     let action: () -> Void
-    
+
     @State private var isPressed = false
-    
+
     var body: some View {
-        Button(action: {
-            action()
-        }) {
+        Button(action: action) {
             VStack(spacing: 12) {
                 Image(systemName: icon)
                     .font(.system(size: 32, weight: .medium))
@@ -203,12 +201,12 @@ struct QuickAccessButton: View {
                     }
                     .scaleEffect(isHovering ? 1.1 : 1.0)
                     .scaleEffect(isPressed ? 0.95 : 1.0)
-                
+
                 VStack(spacing: 4) {
                     Text(title)
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundStyle(.primary)
-                    
+
                     Text(subtitle)
                         .font(.system(size: 12))
                         .foregroundStyle(.secondary)
@@ -239,4 +237,3 @@ struct QuickAccessButton: View {
         .smoothAppear()
     }
 }
-

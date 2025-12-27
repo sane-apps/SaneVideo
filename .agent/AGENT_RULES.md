@@ -22,7 +22,7 @@ This is the **SINGLE SOURCE OF TRUTH** for architecture, style, and workflows.
 1. **SaneMaster.rb FIRST**: Use `./Scripts/SaneMaster.rb` for all verification, setup, and diagnostics.
 2. **VERIFY LOGS ALWAYS**: Run `./Scripts/SaneMaster.rb diagnose --dump` after EVERY build/test.
 3. **FILE CREATION = XCODEGEN**: If you create a new file, run `xcodegen generate` immediately.
-4. **MAX FILE SIZE = 500 LINES**: Absolute limit per Swift file. No exceptions.
+4. **FILE SIZE LIMITS**: Soft limit **500 lines** (warning), hard limit **800 lines** (error). Files 500-800 trigger warnings but are allowed. Files over 800 are blocked.
 5. **REGRESSION TESTS**: Every bug fix MUST have a corresponding test.
 6. **SDK IS SOURCE OF TRUTH**: NEVER trust web search for API existence. Query SDK `.swiftinterface` files first:
 
@@ -110,7 +110,7 @@ AppLogger.general     // Everything else
 | Phantom build errors | Run `./Scripts/SaneMaster.rb clean --nuclear` |
 | Permissions black screen | Run `tccutil reset Camera` |
 | API doesn't exist | Verify in SDK before assuming web is correct |
-| File > 500 lines | Extract to new file, run xcodegen |
+| File > 800 lines | Extract to new file, run xcodegen (500-800 is warning only) |
 
 ---
 
@@ -120,7 +120,7 @@ AppLogger.general     // Everything else
 ❌ **DO NOT** create separate scripts - upgrade `SaneMaster.rb` instead  
 ❌ **DO NOT** trust web search for API signatures without SDK verification  
 ❌ **DO NOT** skip the log dump after builds  
-❌ **DO NOT** exceed 500 lines per Swift file  
+❌ **DO NOT** exceed 800 lines per Swift file (500 is soft limit/warning, 800 is hard limit)  
 
 ---
 

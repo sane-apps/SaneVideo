@@ -117,4 +117,3 @@ extension View {
         modifier(InlineLoadingModifier(isLoading: isLoading, message: message, progress: progress))
     }
 }
-

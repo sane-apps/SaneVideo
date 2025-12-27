@@ -327,6 +327,8 @@ actor ThumbnailService {
         try handler.perform([faceRequest])
 
         if let faceObservations = faceRequest.results, !faceObservations.isEmpty {
+            // Note: faceCaptureQuality is still the best API for face quality scoring on macOS 26.2
+            // If a replacement API becomes available, update per legacy migration guidelines
             let maxQuality = faceObservations.compactMap { $0.faceCaptureQuality }.max() ?? 0.1
             let maxFaceArea = faceObservations.map { $0.boundingBox.width * $0.boundingBox.height }.max() ?? 0.0
             return (maxQuality * 0.7) + (Float(maxFaceArea) * 0.3) + 1.0

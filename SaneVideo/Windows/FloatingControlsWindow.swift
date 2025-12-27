@@ -98,7 +98,9 @@ class FloatingControlsWindow: NSPanel {
         // This ensures timer fires reliably on main thread
         hideTimer = Timer.scheduledTimer(withTimeInterval: 3.0, repeats: false) { [weak self] _ in
             // Already on main thread from Timer on main RunLoop
-            self?.hideControls()
+            Task { @MainActor in
+                self?.hideControls()
+            }
         }
         // Ensure timer is added to common run loop modes (for scrolling, etc.)
         if let timer = hideTimer {

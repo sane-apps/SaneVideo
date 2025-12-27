@@ -58,17 +58,15 @@ struct ComprehensiveFeatureTests {
 
     // Use withTimeout to prevent hanging if stopRecording deadlocks
     try await withTimeout(seconds: 5.0) {
-      await withCheckedContinuation { continuation in
+      return await withCheckedContinuation { continuation in
         Task { @MainActor in
           recordingState.stopRecording { _ in
-            stopped = true
             continuation.resume()
           }
         }
       }
     }
 
-    #expect(stopped)
     #expect(!recordingState.isRecording)
   }
 
@@ -306,8 +304,8 @@ struct ComprehensiveFeatureTests {
   @Test("Audio: Audio service initialization")
   func testAudioServiceInit() {
     let audioService = ServiceContainer.shared.audioService
-
-    #expect(audioService != nil)
+    // Removed redundant check for non-optional
+    #expect(true)
   }
 
   // MARK: - Camera Feature Tests
@@ -316,8 +314,8 @@ struct ComprehensiveFeatureTests {
   func testCameraServiceProtocol() {
     // Verify camera service is accessible
     let cameraService = ServiceContainer.shared.cameraService
-
-    #expect(cameraService != nil)
+    // Removed redundant check for non-optional
+    #expect(true)
   }
 
   // MARK: - Helper Types

@@ -267,7 +267,6 @@ extension AppState {
         NSLog("🖥️ toggleScreenShare: Not recording, stopping screen share cleanly...")
 
         Task { @MainActor in
-          do {
             // Step 1: Stop the screen recorder stream FIRST
             NSLog("🖥️ Step 1: Stopping screen recorder stream...")
             if let screenRecorder = recordingState.engine?.screenRecorder {
@@ -303,11 +302,6 @@ extension AppState {
             // CRITICAL: Always reset toggle flag
             windowManager.isTogglingScreenShare = false
             NSLog("🖥️ toggleScreenShare: ✅ Sequence complete")
-
-          } catch {
-             AppLogger.window.error("Error stopping screen share: \(error)")
-             windowManager.isTogglingScreenShare = false
-          }
         }
       }
     } else {

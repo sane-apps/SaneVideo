@@ -100,4 +100,3 @@ extension AIService {
         return try await provider.refineCaptions(captions: captions, prompt: prompt)
     }
 }
-

@@ -1,8 +1,37 @@
 import XCTest
 @testable import SaneVideo
 import CoreMedia
+import AVFoundation
 
 final class SaneAudioServiceTests: XCTestCase {
+
+    // MARK: - Voice Isolation Tests (consolidated from VoiceIsolationServiceTests)
+
+    @MainActor
+    func testVoiceIsolationInitialization() async {
+        let voiceIsolationService = VoiceIsolationService()
+        await voiceIsolationService.prepareIsolationUnit()
+
+        XCTAssertTrue(voiceIsolationService.isReady, "VoiceIsolationService should be ready after initialization")
+        XCTAssertNotNil(voiceIsolationService.getAudioUnit(), "Audio Unit should not be nil")
+
+        let unit = voiceIsolationService.getAudioUnit()
+        XCTAssertEqual(unit?.auAudioUnit.componentDescription.componentSubType, kAudioUnitSubType_AUSoundIsolation)
+    }
+
+    @MainActor
+    func testVoiceIsolationIntensityParameter() async {
+        let voiceIsolationService = VoiceIsolationService()
+        await voiceIsolationService.prepareIsolationUnit()
+        XCTAssertTrue(voiceIsolationService.isReady)
+
+        // This just verifies the call doesn't crash, as parameter setting is deep in AU
+        voiceIsolationService.setIntensity(0.5)
+        voiceIsolationService.setIntensity(1.0)
+        voiceIsolationService.setIntensity(0.0)
+    }
+
+    // MARK: - Time Formatting Tests
 
     func testTimeFormattingLogic() {
         // Tier 1: Fast, Isolated Logic Test

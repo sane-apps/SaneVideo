@@ -104,8 +104,7 @@ class SoundAnalysisService: @unchecked Sendable {
   // if format changes. For now, we assume format constant from Microphone.
 
   private func createPCMBuffer(from sampleBuffer: CMSampleBuffer, format: AVAudioFormat)
-    -> AVAudioPCMBuffer?
-  {
+    -> AVAudioPCMBuffer? {
     let numSamples = CMSampleBufferGetNumSamples(sampleBuffer)
     guard
       let pcmBuffer = AVAudioPCMBuffer(
@@ -163,8 +162,7 @@ class SoundAnalysisService: @unchecked Sendable {
   }
 
   private func areFormatsCompatible(_ newFormat: AVAudioFormat, _ currentFormat: AVAudioFormat?)
-    -> Bool
-  {
+    -> Bool {
     guard let current = currentFormat else { return false }
     return newFormat.sampleRate == current.sampleRate
       && newFormat.channelCount == current.channelCount

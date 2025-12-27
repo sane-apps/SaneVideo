@@ -51,7 +51,7 @@ actor VisionOrchestrator {
       let attrs =
         [
           kCVPixelBufferCGImageCompatibilityKey: true,
-          kCVPixelBufferCGBitmapContextCompatibilityKey: true,
+          kCVPixelBufferCGBitmapContextCompatibilityKey: true
         ] as CFDictionary
 
       let status = CVPixelBufferCreate(
@@ -64,7 +64,7 @@ actor VisionOrchestrator {
           try handler.perform([
             VNDetectFaceRectanglesRequest(),
             VNGenerateAttentionBasedSaliencyImageRequest(),
-            VNRecognizeTextRequest(),
+            VNRecognizeTextRequest()
           ])
           AppLogger.vision.info("👁️ VisionOrchestrator: Warmup Complete (ANE Ready)")
         } catch {
@@ -242,8 +242,7 @@ actor VisionOrchestrator {
 
           // Saliency
           if let sReq = saliencyReq, let results = sReq.results?.first,
-            let salientObj = results.salientObjects?.first
-          {
+            let salientObj = results.salientObjects?.first {
             let rect = salientObj.boundingBox
             let res = SaliencyResult(
               attentionPoint: CGPoint(x: rect.midX, y: 1.0 - rect.midY),  // Flip Y? Vision is bottom-left.

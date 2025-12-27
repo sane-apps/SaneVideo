@@ -10,9 +10,9 @@ import SwiftUI
 struct EnhancedLoadingIndicator: View {
     let message: String
     let progress: Double
-    var speedMBps: Double? = nil
-    var timeRemaining: TimeInterval? = nil
-    var currentOperation: String? = nil
+    var speedMBps: Double?
+    var timeRemaining: TimeInterval?
+    var currentOperation: String?
     
     var body: some View {
         VStack(spacing: 12) {
@@ -68,4 +68,3 @@ struct EnhancedLoadingIndicator: View {
         }
     }
 }
-

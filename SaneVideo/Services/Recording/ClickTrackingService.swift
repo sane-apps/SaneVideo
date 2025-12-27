@@ -120,4 +120,3 @@ actor ClickTrackingService {
         return clicks
     }
 }
-

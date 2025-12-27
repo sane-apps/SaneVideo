@@ -38,9 +38,8 @@ class RecordingState {
   // MARK: - Internal Properties
 
   private var recordingTimer: Timer?
-  // nonisolated(unsafe) required for deinit access from any thread
-  // Compiler warning "has no effect" is incorrect - deinit IS nonisolated
-  nonisolated(unsafe) private var countdownTask: Task<Void, Never>?
+  // nonisolated(unsafe) required for deinit access
+  @ObservationIgnored nonisolated(unsafe) private var countdownTask: Task<Void, Never>?
   // CRITICAL FIX: Track the starting task to prevent race conditions during rapid start/stop
   @ObservationIgnored nonisolated(unsafe) private var startingTask: Task<Void, Never>?
   private var recordingEngine: RecordingEngine?

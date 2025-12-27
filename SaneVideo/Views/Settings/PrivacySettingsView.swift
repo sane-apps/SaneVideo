@@ -62,4 +62,3 @@ struct PrivacySettingsView: View {
         .padding()
     }
 }
-

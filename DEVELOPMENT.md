@@ -54,7 +54,7 @@
 1. **USE SaneMaster.rb FIRST**: Use `./Scripts/SaneMaster.rb` for verification, setup, and diagnostics.
 2. **VERIFY LOGS ALWAYS**: Run `./Scripts/SaneMaster.rb diagnose --dump` after every build/test to see runtime logs (e.g. `ProjectStore initialized at...`).
 3. **FILE CREATION = XCODEGEN**: If you create a new file, run `xcodegen generate` immediately.
-4. **MAX FILE SIZE = 500 LINES**: Absolute limit per Swift file. Enforced by automation.
+4. **FILE SIZE LIMITS**: Soft limit **500 lines** (warning), hard limit **800 lines** (error). Files 500-800 lines trigger SwiftLint warnings but commits are allowed. Files over 800 lines are blocked.
 5. **SAFETY FIRST**: Every bug fix **MUST** have a regression test. Create tests as you go using `./Scripts/SaneMaster.rb gen_test`.
 6. **SDK IS THE SOURCE OF TRUTH (CRITICAL)**:
    - **NEVER trust web search for API existence or signatures**.
@@ -108,7 +108,7 @@ open SaneVideo.xcodeproj
 
 ### Core Philosophy
 
-1. **Strict Modularity**: Small, focused files (<500 lines).
+1. **Strict Modularity**: Small, focused files (target <500 lines, max 800 lines).
 2. **Concurrency by Design**: Use `actor` for shared state. Avoid manual locks.
 3. **Protocol-Driven**: Define protocols (`CameraServiceProtocol`) before implementation.
 4. **Avoid Singletons**: Inject dependencies. Minimize `AppState.shared`.

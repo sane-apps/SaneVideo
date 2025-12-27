@@ -88,4 +88,3 @@ struct ValuePropositionView: View {
         .cornerRadius(Theme.Dimensions.cornerRadius)
     }
 }
-

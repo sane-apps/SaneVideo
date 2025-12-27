@@ -16,7 +16,7 @@ struct StylesInspectorView: View {
     @Binding var selectedClip: VideoClip?
 
     @AppStorage("inspectorProMode") private var isProMode = false // Default to Simple Mode
-    
+
     // CRITICAL FIX: Persist collapsible section states
     @AppStorage("inspector.showSmartTools") private var showSmartTools = true
     @AppStorage("inspector.showCaptions") private var showCaptions = true
@@ -25,10 +25,10 @@ struct StylesInspectorView: View {
     @AppStorage("inspector.showEffects") private var showEffects = false
     @AppStorage("inspector.showAudio") private var showAudio = false
     @AppStorage("inspector.showClipInfo") private var showClipInfo = false
-    
+
     // CRITICAL FIX: Track if operation is in progress to prevent mode switching
     @State private var isOperationInProgress = false
-    
+
     // CRITICAL FIX: Validate clip exists in current project
     private var validatedClip: VideoClip? {
         guard let clip = selectedClip,
@@ -40,11 +40,9 @@ struct StylesInspectorView: View {
             return nil
         }
         // Verify clip still exists in project
-        for track in project.timeline.tracks {
-            if track.clips.contains(where: { $0.id == clip.id }) {
-                // CRITICAL FIX: Get fresh clip from project to ensure we have latest state
-                return track.clips.first(where: { $0.id == clip.id })
-            }
+        for track in project.timeline.tracks where track.clips.contains(where: { $0.id == clip.id }) {
+            // CRITICAL FIX: Get fresh clip from project to ensure we have latest state
+            return track.clips.first(where: { $0.id == clip.id })
         }
         // Clip not found - auto-deselect
         return nil
@@ -57,13 +55,13 @@ struct StylesInspectorView: View {
 
     var body: some View {
         @Bindable var projectState = appState.projectState
-        
+
         VStack(spacing: 0) {
             // Header with Pro Mode Toggle
             HStack {
                 InspectorHeader()
                 Spacer()
-                
+
                 // CRITICAL FIX: Show mode indicator
                 if isProMode {
                     Text("Pro")
@@ -71,7 +69,7 @@ struct StylesInspectorView: View {
                         .foregroundColor(.secondary)
                         .padding(.trailing, 4)
                 }
-                
+
                 // Mode Toggle
                 Picker("Mode", selection: $isProMode) {
                     Text("Simple").tag(false)
@@ -107,7 +105,7 @@ struct StylesInspectorView: View {
                         ) {
                             SmartToolsSection(clip: clip, options: $projectState.magicFixOptions, isOperationInProgress: $isOperationInProgress)
                         }
-                        
+
                         Divider().padding(.horizontal)
 
                         // ═══════════════════════════════════════════
@@ -124,14 +122,14 @@ struct StylesInspectorView: View {
                             ) {
                                 CaptionsSection(clip: clip, isOperationInProgress: $isOperationInProgress)
                             }
-                            
+
                             Divider().padding(.horizontal)
                         }
 
                         // ═══════════════════════════════════════════
                         // ADVANCED SECTIONS (Pro Mode Only)
                         // ═══════════════════════════════════════════
-                        
+
                         if isProMode {
                             // PRIORITY 2: VIDEO
                             CollapsibleSection(title: "Video", icon: "film", isExpanded: $showVideo) {
@@ -179,7 +177,7 @@ struct StylesInspectorView: View {
                             // Simple Mode: Basic Adjustments
                             CollapsibleSection(
                                 title: "Adjustments",
-                                icon: "slider.horizontal.3", 
+                                icon: "slider.horizontal.3",
                                 isExpanded: .constant(true)
                             ) {
                                 HStack {
@@ -211,7 +209,7 @@ struct StylesInspectorView: View {
                                 .padding(.horizontal, 12)
                                 .padding(.vertical, 8)
                             }
-                            
+
                             Divider().padding(.horizontal)
 
                             // Simple Mode Footer

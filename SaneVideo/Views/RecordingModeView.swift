@@ -23,7 +23,7 @@ struct RecordingModeView: View {
                 Color.black.ignoresSafeArea()
 
                 if appState.isScreenSharing {
-                    if let screenLayer = appState.screenPreviewLayer {
+                    if appState.screenPreviewLayer != nil {
                         // CRITICAL FIX: Prevent infinite visual feedback loop
                         // Instead of showing the live screen (which recursively captures itself),
                         // show a static "Recording in Progress" placeholder.

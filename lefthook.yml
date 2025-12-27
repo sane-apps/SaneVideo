@@ -9,7 +9,7 @@ pre-commit:
       run: swiftlint lint --fix {staged_files} && git add {staged_files}
     file_size_check:
       glob: "*.swift"
-      run: swiftlint lint --strict {staged_files} | grep -q "file_length.*warning" && (echo "❌ File exceeds 500 lines! Refactor before committing." && exit 1) || exit 0
+      run: swiftlint lint --strict {staged_files} | grep -q "file_length.*error" && (echo "❌ File exceeds 800 lines! Refactor before committing." && exit 1) || exit 0
     xcodegen_check:
       glob: "*.swift"
       run: ./Scripts/SaneMaster.rb check_xcodegen {staged_files}

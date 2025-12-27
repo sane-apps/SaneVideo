@@ -1203,15 +1203,14 @@ class SaneMaster
 
     cmd = build_test_command(include_ui)
 
-    # State object to track progress across callbacks
-    ProgressState = Struct.new(:start_time, :tests_run, :current_test, :last_update, :spinner_chars, :spinner_idx)
-    state = ProgressState.new(
-      Time.now,
-      0,
-      nil,
-      Time.now,
-      ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'],
-      0
+    # State object to track progress across callbacks (use OpenStruct to avoid dynamic constant assignment)
+    state = OpenStruct.new(
+      start_time: Time.now,
+      tests_run: 0,
+      current_test: nil,
+      last_update: Time.now,
+      spinner_chars: ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'],
+      spinner_idx: 0
     )
 
     result = execute_with_logging(cmd, timeout_seconds) do |line|

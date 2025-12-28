@@ -64,7 +64,9 @@
    - **NEVER trust web search for API existence or signatures**.
    - **ALWAYS query the SDK directly** before assuming an API exists or is deprecated.
    - The SDK `.swiftinterface` files are the **authoritative source**.
-   - **Use tool**: `./Scripts/SaneMaster.rb verify_api <APIName> [Framework]` to verify APIs.
+   - **Verification flow**:
+     1. `./Scripts/SaneMaster.rb verify_api <APIName> [Framework]` — Verify API exists in SDK
+     2. `apple-docs` MCP server — Get usage examples, related APIs, WWDC context
    - See workflow: `.agent/workflows/sdk-api-verification.md`
    - Example: `./Scripts/SaneMaster.rb verify_api faceCaptureQuality Vision`
 7. **TWO-FIX RULE (CRITICAL)**: If you fail twice in a row, **STOP GUESSING**. Look up the SDK (rule 6) or web search for documentation. Never attempt a third guess.
@@ -425,6 +427,8 @@ log stream --predicate 'subsystem == "com.sanevideo.SaneVideo"' --level debug
     - **swift-lsp@claude-plugins-official**: ✅ Enabled - Provides Swift code intelligence (completion, go-to-definition, diagnostics)
     - **code-review@claude-plugins-official**: Automated PR review with 4 parallel agents (install: `/plugin install code-review@claude-plugins-official`)
     - **security-guidance@claude-plugins-official**: Security vulnerability alerts during editing (install: `/plugin install security-guidance@claude-plugins-official`)
+5. **MCP Servers** (configured in `.mcp.json`):
+    - **apple-docs**: ✅ Enabled - Apple Developer Documentation & WWDC transcripts (1,260+ sessions, 2012-2025). Use for API examples, related APIs, and understanding "why" behind APIs.
 
 ### Test Generation Tool
 

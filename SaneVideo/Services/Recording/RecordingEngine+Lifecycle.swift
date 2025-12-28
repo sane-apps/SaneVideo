@@ -45,8 +45,7 @@ extension RecordingEngine {
     let center = NSWorkspace.shared.notificationCenter
     center.addObserver(
       self, selector: #selector(handleSleep), name: NSWorkspace.willSleepNotification, object: nil)
-    center.addObserver(
-      self, selector: #selector(handleWake), name: NSWorkspace.didWakeNotification, object: nil)
+    // Note: handleWake was removed as it was empty - system wakes automatically resume
   }
 
   @MainActor

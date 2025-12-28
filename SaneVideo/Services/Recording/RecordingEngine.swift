@@ -77,7 +77,10 @@ class RecordingEngine: NSObject, @unchecked Sendable {
   nonisolated(unsafe) var activeSwitchTask: Task<Void, Never>?
 
   // Preview layer for Screen Recording
-  let screenPreviewLayer = AVSampleBufferDisplayLayer()
+  // CRITICAL FIX: Must NOT use inline initialization - AVSampleBufferDisplayLayer
+  // requires MainActor/main thread. Inline initializers run during allocation
+  // before Swift can enforce @MainActor isolation.
+  var screenPreviewLayer: AVSampleBufferDisplayLayer!
 
   override init() {
     let container = ServiceContainer.shared
@@ -87,6 +90,7 @@ class RecordingEngine: NSObject, @unchecked Sendable {
     screenRecorder = ScreenRecorder()
 
     super.init()
+    screenPreviewLayer = AVSampleBufferDisplayLayer()
     screenPreviewLayer.videoGravity = .resizeAspectFill
 
     setupSubscriptions()
@@ -109,6 +113,7 @@ class RecordingEngine: NSObject, @unchecked Sendable {
     self.screenRecorder = screenRecorder ?? ScreenRecorder()
 
     super.init()
+    screenPreviewLayer = AVSampleBufferDisplayLayer()
     screenPreviewLayer.videoGravity = .resizeAspectFill
 
     setupSubscriptions()

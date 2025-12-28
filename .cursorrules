@@ -1,53 +1,375 @@
 # SaneVideo Cursor Rules
 
-> **CRITICAL**: You act as a Senior iOS/macOS Engineer.
-> **SINGLE SOURCE OF TRUTH**: `DEVELOPMENT.md`. Read it before starting any complex task.
+> **For SaneVideo**: `DEVELOPMENT.md` is the authoritative SOP. This file is a complete quick-reference.
+>
+> **Environment**: macOS 26.2 (Tahoe) · Apple Silicon only · Warp terminal · SwiftUI + Actors
 
-## 1. Golden Rules (NON-NEGOTIABLE)
+---
 
-1.  **SaneMaster First**: ALWAYS use `./Scripts/SaneMaster.rb` for setup, build, test, and verification.
-    - `verify`: Build app only (tests disabled - see DEVELOPMENT.md)
-    - `verify --clean`: Clean build (tests disabled)
-    - `test_suite --quick`: Comprehensive validation suite (use this instead of tests)
-    - `doctor`: Health checks
-    - `gen_test`: Generate tests
-2.  **Verify Logs**: After EVERY build/test, run `./Scripts/SaneMaster.rb diagnose --dump` to check for runtime issues.
-3.  **File Creation**: If you create a file, you MUST run `xcodegen generate`.
-4.  **Size Limit**: NO Swift file may exceed 500 lines. Refactor immediately if it does.
-5.  **SDK Truth**: DO NOT verify APIs via web search. Check the SDK `.swiftinterface` files first.
-    - Run: `grep "APIName" /Applications/Xcode.app/...`
-6.  **Clean Slate**: Do not rely on your internal training data for project specifics (window names, view hierarchies). Use `grep`/`find` to discover the actual codebase state.
-7.  **Lefthook Enforcer**: Commits are gated by `swiftlint` and `rubocop`. Run `bundle exec lefthook run pre-commit` to verify before committing.
+## THE 12 GOLDEN RULES
 
-## 2. Architecture
+1. **USE SaneMaster.rb FIRST**
+   - Use `./Scripts/SaneMaster.rb` for ALL verification, setup, and diagnostics
+   - Never run raw `xcodebuild` commands
 
--   **Pattern**: `User Action` -> `AppState` -> `Service` (Actor) -> `Model` -> `UI`
--   **Concurrency**: usage `actor` for services. `@MainActor` for UI/State. Avoid `DispatchQueue` locks.
--   **Logging**: Use `AppLogger` categories (e.g. `AppLogger.camera.debug(...)`).
+2. **VERIFY LOGS ALWAYS**
+   - Run `./Scripts/SaneMaster.rb diagnose --dump` after every build/test
+   - Critical runtime events (e.g., "ProjectStore initialized at...") are swallowed by Xcode/MCP — you MUST see them
 
-## 3. Testing Strategy
+3. **FILE CREATION = XCODEGEN**
+   - If you create a new file, run `xcodegen generate` immediately
+   - NEVER edit `project.pbxproj` manually
 
-⚠️ **IMPORTANT**: Automated test execution is currently **disabled** (see DEVELOPMENT.md section 8).
+4. **FILE SIZE LIMITS**
+   | Lines | Status |
+   |-------|--------|
+   | <500 | Good |
+   | 500-800 | Warning (SwiftLint nags, commits allowed) |
+   | >800 | **BLOCKED** — must split file |
 
-**Use Instead**:
-- `./Scripts/SaneMaster.rb test_suite --quick` - Comprehensive validation
-- `./Scripts/SaneMaster.rb validate_test_references` - Test/UI sync
-- `./Scripts/SaneMaster.rb check_deprecations` - API compatibility
-- `./Scripts/SaneMaster.rb dead_code` - Code cleanup
+5. **REGRESSION TESTS MANDATORY**
+   - Every bug fix MUST have a corresponding test
+   - Use `./Scripts/SaneMaster.rb gen_test` to create tests
 
-**When Tests Re-enable**:
-1.  **Unit Tests (`SaneVideoTests`)**:
-    -   Fast (<1s).
-    -   Mock EVERYTHING (Camera, Audio, Permissions).
-    -   NO file I/O or window creation.
-    -   Use `TestEnvironment.isTesting`.
-2.  **UI Tests (`SaneVideoUITests`)**:
-    -   Real flows.
-    -   Use `TestEnvironment.isUITesting`.
-    -   Bypass permissions via `SaneMaster.rb` automation or mocks.
+6. **SDK IS THE SOURCE OF TRUTH (CRITICAL)**
+   - **NEVER** trust web search for API existence or signatures
+   - **ALWAYS** query the SDK directly before assuming an API exists
+   - Use: `./Scripts/SaneMaster.rb verify_api <APIName> [Framework]`
+   - Example: `./Scripts/SaneMaster.rb verify_api faceCaptureQuality Vision`
 
-## 4. Common Fixes
+7. **TWO-FIX RULE (CRITICAL)**
+   - If you fail twice in a row, **STOP GUESSING**
+   - Look up the SDK (rule 6) or web search for documentation
+   - Never attempt a third guess
 
--   **"Signal 9"**: Check entitlements (App Sandbox).
--   **Permission Dialogs**: Ensure `TestEnvironment` mocks are active.
--   **Xcode Weirdness**: `./Scripts/SaneMaster.rb clean --nuclear`.
+8. **WEB SEARCH IS SECONDARY**
+   - Only use web search for understanding *why* or *how* after verifying with SDK
+
+9. **FIX THE TOOL, NOT THE SYMPTOM**
+   - Trigger: Persistent errors or repetitive manual work
+   - Action: STOP. Fix or upgrade `SaneMaster.rb` itself
+
+10. **MISSING TOOL = UPGRADE SANEMASTER**
+    - Do not create separate scripts
+    - Upgrade the central `SaneMaster.rb`
+
+11. **AUTOMATIC BUILD & LAUNCH WITH LOGGING (CRITICAL)**
+    - After making code changes, you MUST follow the workflow below
+    - Rationale: Old instances hold stale state; live logs are essential for debugging
+
+12. **CLEAN SLATE — DON'T TRUST TRAINING DATA**
+    - Do NOT rely on internal training data for project specifics (window names, view hierarchies, API signatures)
+    - Use `grep`/`find` to discover the actual codebase state
+    - The codebase changes; your training data is stale
+
+---
+
+## MANDATORY WORKFLOWS
+
+### After Every Code Change
+
+```bash
+./Scripts/SaneMaster.rb verify    # Build + unit tests
+killall -9 SaneVideo              # Kill zombie processes (prevents stale state)
+./Scripts/SaneMaster.rb launch    # Start fresh instance
+./Scripts/SaneMaster.rb logs --follow  # Watch live logs
+```
+
+**Why this matters:**
+- Old instances can hold stale state and interfere with testing
+- Live logs are essential for debugging user-reported issues
+- You can see exactly what happens when the user tests changes
+
+**Exception**: Skip if build fails — fix build errors first.
+
+---
+
+### When User Says "Test Mode"
+
+Run this immediately:
+```bash
+./Scripts/SaneMaster.rb test_mode   # or just: ./Scripts/SaneMaster.rb tm
+```
+
+This command automatically:
+1. Kills existing SaneVideo processes
+2. Shows recent screenshots from `Screenshots/` folder (with timestamps)
+3. Shows recent crash reports from `~/Library/Logs/DiagnosticReports/`
+4. Builds the app
+5. Launches the app
+6. Shows debug log status
+
+**Monitor ALL these diagnostic resources:**
+
+| Resource | Location |
+|----------|----------|
+| Debug log | `~/Movies/SaneVideo/SaneVideo_Debug.log` (overwrites each launch) |
+| Screenshots | `Screenshots/` in project root |
+| Crash reports | `~/Library/Logs/DiagnosticReports/SaneVideo-*.ips` |
+| Hang/spin reports | `~/Library/Logs/DiagnosticReports/SaneVideo-*.spin` or `*.hang` |
+| Xcode test results | `~/Library/Developer/Xcode/DerivedData/SaneVideo-*/Logs/Test/*.xcresult` |
+| System console | `log show --predicate 'process == "SaneVideo"' --last 5m` |
+| MetricKit reports | Logged via `CrashReporter` in app (see `AppLogger.general`) |
+
+**IMPORTANT**: When user says "logs" or "check logs", they mean ALL diagnostic resources above — not just the debug log file.
+
+**Cross-reference timestamps**: Match screenshot filenames (timestamps) with:
+- Log entries (timestamp in log file)
+- Crash report timestamps (file modification time)
+
+**After each fix**: Re-run `test_mode` to rebuild, relaunch, and verify the fix works.
+
+---
+
+### Post-Fix Checklist (MANDATORY)
+
+After fixing ANY bug, you MUST complete this checklist:
+
+- [ ] **Regression test added?** — Every bug fix MUST have a test that would have caught it
+  ```bash
+  ./Scripts/SaneMaster.rb gen_test RegressionTests --target <Component>
+  ```
+
+- [ ] **Similar bugs checked?** — Search for the same pattern elsewhere in codebase
+  ```bash
+  # Example: if you fixed a timeout race condition, search for other timeouts
+  grep -r "Task.*sleep" SaneVideo/
+  ```
+
+- [ ] **Changes committed?** — Don't lose work! Commit after each fix
+  ```bash
+  git add -A && git commit -m "Fix: <description>"
+  ```
+
+- [ ] **Plain English explanation?** — Can you explain what broke and why in simple terms?
+
+- [ ] **Technical debt tracked?** — Any TODOs or FIXMEs added? Track them:
+  ```bash
+  grep -rn "TODO\|FIXME" SaneVideo/ | head -20
+  ```
+
+**Why this matters:**
+- Regression tests prevent the same bug from coming back
+- Similar bugs often exist nearby (copy-paste, same pattern)
+- Uncommitted work can be lost
+- The user should always understand what was fixed
+- TODOs get forgotten if not tracked
+
+**Follow-up commands:**
+```bash
+./Scripts/SaneMaster.rb logs --follow  # Watch logs live
+./Scripts/SaneMaster.rb crashes        # Analyze crash patterns
+open Screenshots/                       # View screenshots
+```
+
+---
+
+## COMMANDS REFERENCE
+
+### Daily Use
+```bash
+./Scripts/SaneMaster.rb verify           # Build + unit tests (DEFAULT)
+./Scripts/SaneMaster.rb verify --ui      # Build + unit + functional UI tests (excludes visual tests)
+./Scripts/SaneMaster.rb verify --clean   # Full clean build + unit tests
+./Scripts/SaneMaster.rb logs --follow    # Live log stream
+./Scripts/SaneMaster.rb logs --tail 100  # Last 100 lines
+./Scripts/SaneMaster.rb doctor           # Health check (environment, assets, permissions)
+```
+
+### Debugging
+```bash
+./Scripts/SaneMaster.rb test_mode        # Interactive debug (kill→screenshots→crashes→build→launch→logs)
+./Scripts/SaneMaster.rb tm               # Shorthand for test_mode
+./Scripts/SaneMaster.rb diagnose --dump  # Dump runtime logs
+./Scripts/SaneMaster.rb crashes          # Analyze crash patterns
+./Scripts/SaneMaster.rb clean --nuclear  # Full clean (fixes phantom errors)
+```
+
+### API Verification (CRITICAL — prevents hallucinations)
+```bash
+./Scripts/SaneMaster.rb verify_api <APIName> [Framework]
+# Example: ./Scripts/SaneMaster.rb verify_api faceCaptureQuality Vision
+```
+
+### Testing
+```bash
+./Scripts/SaneMaster.rb gen_test <name> --target <Component>  # Generate unit test
+./Scripts/SaneMaster.rb gen_test <name> --type ui             # Generate UI test
+./Scripts/SaneMaster.rb gen_test <name> --async               # Generate async test
+./Scripts/SaneMaster.rb validate_test_references              # Verify UI test references match code
+bundle exec fastlane coverage                                  # Generate code coverage report
+```
+
+### Static Analysis
+```bash
+./Scripts/SaneMaster.rb lint              # Code style and quality
+./Scripts/SaneMaster.rb check_deprecations # Find deprecated API usage
+./Scripts/SaneMaster.rb dead_code         # Find unused code (Periphery)
+./Scripts/SaneMaster.rb verify_mocks      # Check mocks match protocols
+./Scripts/SaneMaster.rb check_docs        # Verify docs match tool capabilities
+```
+
+### Validation Suites
+```bash
+./Scripts/SaneMaster.rb test_suite --quick  # Fast: build, lint, test refs, xcodegen
+./Scripts/SaneMaster.rb test_suite --full   # All checks including dead code, deprecations
+./Scripts/SaneMaster.rb test_suite --ci     # CI-optimized
+bundle exec fastlane verify_full            # Full CI verification (before pushing)
+```
+
+### Project Setup
+```bash
+./Scripts/SaneMaster.rb setup    # Initial setup (dependencies, environment)
+xcodegen generate                # Regenerate Xcode project (after new files)
+./Scripts/SaneMaster.rb gen_assets  # Generate test assets
+./Scripts/SaneMaster.rb gen_mock    # Generate mocks (Mockolo)
+```
+
+### Ruby Power Tools
+```bash
+bundle exec lefthook run pre-commit  # Run pre-commit hooks manually
+bundle exec fastlane verify          # Unit tests only (fast)
+bundle exec fastlane release         # Full release preparation
+bundle exec pry                      # Interactive Ruby REPL
+bundle exec rubocop                  # Script linting
+bundle exec bundle-audit             # Security audit
+```
+
+---
+
+## ARCHITECTURE QUICK REFERENCE
+
+### Directory Structure
+```
+SaneVideo/
+├── Core/           # Foundation: Models, Protocols, Utilities, DI, Extensions
+│   ├── AppError.swift     # Unified error handling
+│   └── AppLogger.swift    # Centralized logging
+├── Services/       # Business logic (20+ services)
+│   ├── AI/         # OpenAI, Gemini, Apple Intelligence
+│   ├── Audio/      # Processing, waveforms, voice isolation
+│   ├── Camera/     # CameraManager
+│   ├── Captions/   # Caption generation
+│   ├── Export/     # ExportEngine
+│   ├── Project/    # ProjectStore (persistence)
+│   ├── Recording/  # RecordingEngine
+│   ├── SmartFeatures/  # Magic Fix
+│   ├── Thumbnails/ # Smart thumbnails
+│   ├── Timeline/   # Timeline operations
+│   └── Vision/     # Face tracking, segmentation, saliency
+├── State/          # App state management
+│   ├── AppState.swift
+│   ├── ProjectState.swift + extensions
+│   ├── RecordingState.swift
+│   ├── PlaybackState.swift
+│   └── CameraState.swift
+├── Views/          # SwiftUI views, Components, Sheets
+└── Windows/        # Custom windows (FloatingControls, PiP)
+```
+
+### Concurrency Model
+- **@MainActor**: AppState, all ObservableObjects, UI updates
+- **Actors**: For shared state in services
+- **async/await**: Prefer over completion handlers
+- **Background queues**: AVFoundation operations, file I/O
+
+### Logging Categories
+```swift
+AppLogger.camera      // AVCapture operations
+AppLogger.recording   // Recording lifecycle
+AppLogger.export      // Export operations
+AppLogger.timeline    // Timeline edits
+AppLogger.project     // Persistence
+AppLogger.uiLog       // UI events
+AppLogger.general     // Everything else
+```
+
+---
+
+## STYLE GUIDE
+
+### Formatting
+- **Line Length**: 120 chars max
+- **Indent**: 4 spaces
+- **Linting**: Enforced by `swiftlint`
+
+### SwiftUI
+- Use trailing closure syntax: `.background { Color.blue }`
+- Extract complex views if body > 50 lines
+- Use `@Observable` (Swift 5.9+) for state objects
+- Use `Task { await ... }` instead of `DispatchQueue`
+
+### Naming
+- **Services**: `CameraManager`, `AudioService`
+- **Views**: `VideoPlayerView`, `SettingsButton`
+- **Actions**: `loadVideo()`, `saveProject()` (verbs)
+
+### Error Handling
+- Use `AppError` enum — never throw raw `NSError` or strings
+- Handle errors at call site or propagate explicitly
+
+---
+
+## TROUBLESHOOTING
+
+### Common Issues
+
+| Problem | Solution |
+|---------|----------|
+| Ghost Beeps / No Launch | Run `xcodegen generate` |
+| "Signal 9" Crash | Check `SaneVideo.entitlements` for App Sandbox |
+| Phantom Errors | Run `./Scripts/SaneMaster.rb clean --nuclear` |
+| Permissions Black Screen | Run `tccutil reset Camera` |
+
+### Common Crash Patterns
+
+| Pattern | Crash Signature | Root Cause | Fix |
+|---------|-----------------|------------|-----|
+| Actor Isolation | `MainActor.assumeIsolated → dispatch_assert_queue_fail` | Calling MainActor code from background | Remove `assumeIsolated` from `deinit`, use `nonisolated(unsafe)` |
+| Object Deallocated | `objc_opt_class → swift_getObjectType → SIGSEGV at 0x1e` | Timer/Publisher accessing deallocated view | Use `TimelineView` instead of `Timer.publish()`, add `isActive` guards |
+| Race Condition | `objc_release → SIGSEGV` at random addresses | Concurrent access to non-thread-safe property | Use `nonisolated(unsafe)` with direct initialization |
+| Nested Tasks | Freeze at `_isSameExecutor` | Excessive actor hopping | Remove nested `Task { @MainActor in Task { @OtherActor in } }` |
+
+### Key Warning Signs
+- **Address 0x0-0x1000**: NULL pointer dereference (object deallocated)
+- **faultingThread: 0**: Main thread crash (UI/state issue)
+- **faultingThread: N > 0**: Background thread crash (concurrency issue)
+- **EXC_BREAKPOINT (SIGTRAP)**: Swift assertion failed or `assumeIsolated` violation
+- **EXC_BAD_ACCESS (SIGSEGV)**: Memory corruption or use-after-free
+
+---
+
+## TESTING STRATEGY
+
+### Test Tiers
+
+| Tier | Target | Scope | Speed | Command |
+|------|--------|-------|-------|---------|
+| Unit | `SaneVideoTests` | Isolated logic, no I/O | <1s | `verify` |
+| Integration/UI | `SaneVideoUITests` | End-to-end flows, real assets | 10-60s | `verify --ui` |
+| Visual | Manual only | UI appearance verification | N/A | Manual inspection |
+| Performance | `testExportPerformance` | Export speed, memory | Varies | Before releases |
+
+### Visual Tests (Excluded from automated runs)
+- `SaneSmartFeaturesVisualTests`
+- `VisualEditingTests`
+- `VisualRecordingTests`
+
+These require manual visual inspection.
+
+### TestEnvironment Helpers
+- `TestEnvironment.isTesting` — Check if running in unit test context
+- `TestEnvironment.isUITesting` — Check if running in UI test context
+- Use these to mock permissions, bypass dialogs, and isolate tests
+
+### Regression Testing
+- **Location**: `SaneVideoTests/Regression/`
+- **When to add**: Every bug fix (MANDATORY — Golden Rule #5)
+- **Naming**: Descriptive names referencing the bug (e.g., `testSourceSwitchTimestampGap`)
+- **Separation**: Do NOT mix with feature tests
+
+### Code Coverage
+```bash
+bundle exec fastlane coverage        # Generate report
+open fastlane/coverage/index.html    # View report
+```

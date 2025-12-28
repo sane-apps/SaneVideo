@@ -19,8 +19,12 @@ actor WhisperKitService: TranscriptionServiceProtocol {
 
     // MARK: - Properties
 
-    // WhisperKit is not Sendable, so we use nonisolated(unsafe) to allow access from actor
-    // This is safe because we only access it from within this actor's methods
+    // WhisperKit is not Sendable, so we need nonisolated(unsafe) for actor storage.
+    // The actor's own isolation ensures we only access this from one context at a time.
+    // Using nonisolated(unsafe) is safe here because:
+    // 1. All access is through actor-isolated async methods
+    // 2. The actor serializes all calls automatically
+    // 3. We never expose the WhisperKit instance outside this actor
     nonisolated(unsafe) private var whisperKit: WhisperKit?
     private var isInitialized = false
     private var initializationTask: Task<Void, Error>?

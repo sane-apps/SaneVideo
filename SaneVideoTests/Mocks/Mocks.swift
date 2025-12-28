@@ -5,12 +5,18 @@
 
 
 import AVFoundation
+import AppKit
 import Combine
+import CoreImage
 import Foundation
 @testable import SaneVideo
+import Vision
+
+// Disambiguate RecognizedText from Vision framework's VNRecognizedText
+typealias RecognizedText = SaneVideo.RecognizedText
 
 
-class ExportServiceProtocolMock: ExportServiceProtocol {
+final class ExportServiceProtocolMock: ExportServiceProtocol, @unchecked Sendable {
     init() { }
     init(progress: Double = 0.0, isExporting: Bool = false) {
         self.progress = progress
@@ -24,26 +30,47 @@ class ExportServiceProtocolMock: ExportServiceProtocol {
 
     var isExporting: Bool = false
 
-    private(set) var exportCallCount = 0
-    var exportArgValues = [(project: VideoProject, settings: SaneExportSettings, outputURL: URL)]()
-    var exportHandler: ((VideoProject, SaneExportSettings, URL, @escaping @Sendable (Double) -> Void) async throws -> URL)?
+    private let exportState = MockoloMutex(MockoloHandlerState<(project: VideoProject, settings: SaneExportSettings, outputURL: URL), @Sendable (VideoProject, SaneExportSettings, URL, @escaping @Sendable (Double) -> Void) async throws -> URL>())
+    var exportCallCount: Int {
+        return exportState.withLock(\.callCount)
+    }
+    var exportArgValues: [(project: VideoProject, settings: SaneExportSettings, outputURL: URL)] {
+        return exportState.withLock(\.argValues).map(\.value)
+    }
+    var exportHandler: (@Sendable (VideoProject, SaneExportSettings, URL, @escaping @Sendable (Double) -> Void) async throws -> URL)? {
+        get { exportState.withLock(\.handler) }
+        set { exportState.withLock { $0.handler = newValue } }
+    }
     func export(project: VideoProject, settings: SaneExportSettings, outputURL: URL, progressHandler: @escaping @Sendable (Double) -> Void) async throws -> URL {
-        exportCallCount += 1
-        exportArgValues.append((project, settings, outputURL))
+        warnIfNotSendable(project, settings, outputURL)
+        let exportHandler = exportState.withLock { state in
+            state.callCount += 1
+            state.argValues.append(.init((project, settings, outputURL)))
+            return state.handler
+        }
         if let exportHandler = exportHandler {
             return try await exportHandler(project, settings, outputURL, progressHandler)
         }
         return URL(fileURLWithPath: "")
     }
 
-    private(set) var cancelExportCallCount = 0
-    var cancelExportHandler: (() -> ())?
+    private let cancelExportState = MockoloMutex(MockoloHandlerState<Never, @Sendable () -> ()>())
+    var cancelExportCallCount: Int {
+        return cancelExportState.withLock(\.callCount)
+    }
+    var cancelExportHandler: (@Sendable () -> ())? {
+        get { cancelExportState.withLock(\.handler) }
+        set { cancelExportState.withLock { $0.handler = newValue } }
+    }
     func cancelExport() {
-        cancelExportCallCount += 1
+        let cancelExportHandler = cancelExportState.withLock { state in
+            state.callCount += 1
+            return state.handler
+        }
         if let cancelExportHandler = cancelExportHandler {
             cancelExportHandler()
         }
-
+        
     }
 }
 
@@ -91,7 +118,7 @@ final class ProjectStoreProtocolMock: ProjectStoreProtocol, @unchecked Sendable 
         if let saveProjectHandler = saveProjectHandler {
             try await saveProjectHandler(project)
         }
-
+        
     }
 
     private let deleteProjectState = MockoloMutex(MockoloHandlerState<VideoProject, @Sendable (VideoProject) async throws -> ()>())
@@ -115,7 +142,7 @@ final class ProjectStoreProtocolMock: ProjectStoreProtocol, @unchecked Sendable 
         if let deleteProjectHandler = deleteProjectHandler {
             try await deleteProjectHandler(project)
         }
-
+        
     }
 
     private let recentProjectsState = MockoloMutex(MockoloHandlerState<Int, @Sendable (Int) async throws -> [VideoProject]>())
@@ -200,10 +227,22 @@ final class CameraServiceProtocolMock: CameraServiceProtocol, @unchecked Sendabl
     private(set) var sessionPublisherSubject = PassthroughSubject<AVCaptureSession?, Never>()
 
 
-    // CRITICAL: Must be nonisolated(unsafe) to allow access from RecordingEngine's @RecordingActor context
-    // PassthroughSubject is thread-safe internally, so this is safe
-    // Initialized directly to avoid race condition in lazy initialization
-    nonisolated(unsafe) private(set) var sampleBufferSubject = PassthroughSubject<CMSampleBuffer, Never>()
+    private var _sampleBufferSubjectStorage: PassthroughSubject<CMSampleBuffer, Never>!
+    nonisolated var sampleBufferSubject: PassthroughSubject<CMSampleBuffer, Never> {
+        get { 
+            return MainActor.assumeIsolated {
+                if _sampleBufferSubjectStorage == nil {
+                    _sampleBufferSubjectStorage = PassthroughSubject<CMSampleBuffer, Never>()
+                }
+                return _sampleBufferSubjectStorage 
+            }
+        }
+        set { 
+            MainActor.assumeIsolated {
+                _sampleBufferSubjectStorage = newValue
+            }
+        }
+    }
 
     private let startState = MockoloMutex(MockoloHandlerState<Never, @Sendable () async throws -> ()>())
     var startCallCount: Int {
@@ -221,7 +260,7 @@ final class CameraServiceProtocolMock: CameraServiceProtocol, @unchecked Sendabl
         if let startHandler = startHandler {
             try await startHandler()
         }
-
+        
     }
 
     private let stopState = MockoloMutex(MockoloHandlerState<Never, @Sendable () -> ()>())
@@ -240,7 +279,7 @@ final class CameraServiceProtocolMock: CameraServiceProtocol, @unchecked Sendabl
         if let stopHandler = stopHandler {
             stopHandler()
         }
-
+        
     }
 
     private let toggleState = MockoloMutex(MockoloHandlerState<Never, @Sendable () -> ()>())
@@ -259,7 +298,7 @@ final class CameraServiceProtocolMock: CameraServiceProtocol, @unchecked Sendabl
         if let toggleHandler = toggleHandler {
             toggleHandler()
         }
-
+        
     }
 
     private let requestPermissionAgainState = MockoloMutex(MockoloHandlerState<Never, @Sendable () -> ()>())
@@ -278,7 +317,7 @@ final class CameraServiceProtocolMock: CameraServiceProtocol, @unchecked Sendabl
         if let requestPermissionAgainHandler = requestPermissionAgainHandler {
             requestPermissionAgainHandler()
         }
-
+        
     }
 
     private let restartSessionState = MockoloMutex(MockoloHandlerState<Never, @Sendable () -> ()>())
@@ -297,7 +336,531 @@ final class CameraServiceProtocolMock: CameraServiceProtocol, @unchecked Sendabl
         if let restartSessionHandler = restartSessionHandler {
             restartSessionHandler()
         }
+        
+    }
+}
 
+final class FaceTrackingServiceProtocolMock: FaceTrackingServiceProtocol, @unchecked Sendable {
+    init() { }
+
+
+    private let detectFacesState = MockoloMutex(MockoloHandlerState<CIImage, @Sendable (CIImage) async throws -> [CGRect]>())
+    var detectFacesCallCount: Int {
+        return detectFacesState.withLock(\.callCount)
+    }
+    var detectFacesArgValues: [CIImage] {
+        return detectFacesState.withLock(\.argValues).map(\.value)
+    }
+    var detectFacesHandler: (@Sendable (CIImage) async throws -> [CGRect])? {
+        get { detectFacesState.withLock(\.handler) }
+        set { detectFacesState.withLock { $0.handler = newValue } }
+    }
+    func detectFaces(in image: CIImage) async throws -> [CGRect] {
+        warnIfNotSendable(image)
+        let detectFacesHandler = detectFacesState.withLock { state in
+            state.callCount += 1
+            state.argValues.append(.init((image)))
+            return state.handler
+        }
+        if let detectFacesHandler = detectFacesHandler {
+            return try await detectFacesHandler(image)
+        }
+        return [CGRect]()
+    }
+
+    private let detectFacesWithLandmarksState = MockoloMutex(MockoloHandlerState<CIImage, @Sendable (CIImage) async throws -> [FaceDetection]>())
+    var detectFacesWithLandmarksCallCount: Int {
+        return detectFacesWithLandmarksState.withLock(\.callCount)
+    }
+    var detectFacesWithLandmarksArgValues: [CIImage] {
+        return detectFacesWithLandmarksState.withLock(\.argValues).map(\.value)
+    }
+    var detectFacesWithLandmarksHandler: (@Sendable (CIImage) async throws -> [FaceDetection])? {
+        get { detectFacesWithLandmarksState.withLock(\.handler) }
+        set { detectFacesWithLandmarksState.withLock { $0.handler = newValue } }
+    }
+    func detectFacesWithLandmarks(in image: CIImage) async throws -> [FaceDetection] {
+        warnIfNotSendable(image)
+        let detectFacesWithLandmarksHandler = detectFacesWithLandmarksState.withLock { state in
+            state.callCount += 1
+            state.argValues.append(.init((image)))
+            return state.handler
+        }
+        if let detectFacesWithLandmarksHandler = detectFacesWithLandmarksHandler {
+            return try await detectFacesWithLandmarksHandler(image)
+        }
+        return [FaceDetection]()
+    }
+
+    private let calculateAutoFrameRectState = MockoloMutex(MockoloHandlerState<(faces: [CGRect], imageSize: CGSize, targetAspectRatio: CGFloat, padding: CGFloat), @Sendable ([CGRect], CGSize, CGFloat, CGFloat) -> CGRect>())
+    var calculateAutoFrameRectCallCount: Int {
+        return calculateAutoFrameRectState.withLock(\.callCount)
+    }
+    var calculateAutoFrameRectArgValues: [(faces: [CGRect], imageSize: CGSize, targetAspectRatio: CGFloat, padding: CGFloat)] {
+        return calculateAutoFrameRectState.withLock(\.argValues).map(\.value)
+    }
+    var calculateAutoFrameRectHandler: (@Sendable ([CGRect], CGSize, CGFloat, CGFloat) -> CGRect)? {
+        get { calculateAutoFrameRectState.withLock(\.handler) }
+        set { calculateAutoFrameRectState.withLock { $0.handler = newValue } }
+    }
+    func calculateAutoFrameRect(faces: [CGRect], imageSize: CGSize, targetAspectRatio: CGFloat, padding: CGFloat) -> CGRect {
+        warnIfNotSendable(faces, imageSize, targetAspectRatio, padding)
+        let calculateAutoFrameRectHandler = calculateAutoFrameRectState.withLock { state in
+            state.callCount += 1
+            state.argValues.append(.init((faces, imageSize, targetAspectRatio, padding)))
+            return state.handler
+        }
+        if let calculateAutoFrameRectHandler = calculateAutoFrameRectHandler {
+            return calculateAutoFrameRectHandler(faces, imageSize, targetAspectRatio, padding)
+        }
+        return .zero
+    }
+
+    private let analyzeVideoState = MockoloMutex(MockoloHandlerState<(videoURL: URL, sampleInterval: TimeInterval), @Sendable (URL, TimeInterval) async throws -> [CMTime: CGRect]>())
+    var analyzeVideoCallCount: Int {
+        return analyzeVideoState.withLock(\.callCount)
+    }
+    var analyzeVideoArgValues: [(videoURL: URL, sampleInterval: TimeInterval)] {
+        return analyzeVideoState.withLock(\.argValues).map(\.value)
+    }
+    var analyzeVideoHandler: (@Sendable (URL, TimeInterval) async throws -> [CMTime: CGRect])? {
+        get { analyzeVideoState.withLock(\.handler) }
+        set { analyzeVideoState.withLock { $0.handler = newValue } }
+    }
+    func analyzeVideo(videoURL: URL, sampleInterval: TimeInterval) async throws -> [CMTime: CGRect] {
+        warnIfNotSendable(videoURL, sampleInterval)
+        let analyzeVideoHandler = analyzeVideoState.withLock { state in
+            state.callCount += 1
+            state.argValues.append(.init((videoURL, sampleInterval)))
+            return state.handler
+        }
+        if let analyzeVideoHandler = analyzeVideoHandler {
+            return try await analyzeVideoHandler(videoURL, sampleInterval)
+        }
+        return [CMTime: CGRect]()
+    }
+}
+
+final class SaliencyServiceProtocolMock: SaliencyServiceProtocol, @unchecked Sendable {
+    init() { }
+
+
+    private let detectAttentionState = MockoloMutex(MockoloHandlerState<CIImage, @Sendable (CIImage) async throws -> SaliencyResult>())
+    var detectAttentionCallCount: Int {
+        return detectAttentionState.withLock(\.callCount)
+    }
+    var detectAttentionArgValues: [CIImage] {
+        return detectAttentionState.withLock(\.argValues).map(\.value)
+    }
+    var detectAttentionHandler: (@Sendable (CIImage) async throws -> SaliencyResult)? {
+        get { detectAttentionState.withLock(\.handler) }
+        set { detectAttentionState.withLock { $0.handler = newValue } }
+    }
+    func detectAttention(in image: CIImage) async throws -> SaliencyResult {
+        warnIfNotSendable(image)
+        let detectAttentionHandler = detectAttentionState.withLock { state in
+            state.callCount += 1
+            state.argValues.append(.init((image)))
+            return state.handler
+        }
+        if let detectAttentionHandler = detectAttentionHandler {
+            return try await detectAttentionHandler(image)
+        }
+        fatalError("detectAttentionHandler returns can't have a default value thus its handler must be set")
+    }
+
+    private let detectObjectsState = MockoloMutex(MockoloHandlerState<CIImage, @Sendable (CIImage) async throws -> [CGRect]>())
+    var detectObjectsCallCount: Int {
+        return detectObjectsState.withLock(\.callCount)
+    }
+    var detectObjectsArgValues: [CIImage] {
+        return detectObjectsState.withLock(\.argValues).map(\.value)
+    }
+    var detectObjectsHandler: (@Sendable (CIImage) async throws -> [CGRect])? {
+        get { detectObjectsState.withLock(\.handler) }
+        set { detectObjectsState.withLock { $0.handler = newValue } }
+    }
+    func detectObjects(in image: CIImage) async throws -> [CGRect] {
+        warnIfNotSendable(image)
+        let detectObjectsHandler = detectObjectsState.withLock { state in
+            state.callCount += 1
+            state.argValues.append(.init((image)))
+            return state.handler
+        }
+        if let detectObjectsHandler = detectObjectsHandler {
+            return try await detectObjectsHandler(image)
+        }
+        return [CGRect]()
+    }
+
+    private let calculateSmartCropState = MockoloMutex(MockoloHandlerState<(image: CIImage, targetAspectRatio: CGFloat, padding: CGFloat), @Sendable (CIImage, CGFloat, CGFloat) async throws -> CGRect>())
+    var calculateSmartCropCallCount: Int {
+        return calculateSmartCropState.withLock(\.callCount)
+    }
+    var calculateSmartCropArgValues: [(image: CIImage, targetAspectRatio: CGFloat, padding: CGFloat)] {
+        return calculateSmartCropState.withLock(\.argValues).map(\.value)
+    }
+    var calculateSmartCropHandler: (@Sendable (CIImage, CGFloat, CGFloat) async throws -> CGRect)? {
+        get { calculateSmartCropState.withLock(\.handler) }
+        set { calculateSmartCropState.withLock { $0.handler = newValue } }
+    }
+    func calculateSmartCrop(for image: CIImage, targetAspectRatio: CGFloat, padding: CGFloat) async throws -> CGRect {
+        warnIfNotSendable(image, targetAspectRatio, padding)
+        let calculateSmartCropHandler = calculateSmartCropState.withLock { state in
+            state.callCount += 1
+            state.argValues.append(.init((image, targetAspectRatio, padding)))
+            return state.handler
+        }
+        if let calculateSmartCropHandler = calculateSmartCropHandler {
+            return try await calculateSmartCropHandler(image, targetAspectRatio, padding)
+        }
+        return .zero
+    }
+
+    private let analyzeVideoForReframeState = MockoloMutex(MockoloHandlerState<(videoURL: URL, sampleInterval: TimeInterval), @Sendable (URL, TimeInterval, (@Sendable (Int, Int) -> Void)?) async throws -> [CMTime: SaliencyResult]>())
+    var analyzeVideoForReframeCallCount: Int {
+        return analyzeVideoForReframeState.withLock(\.callCount)
+    }
+    var analyzeVideoForReframeArgValues: [(videoURL: URL, sampleInterval: TimeInterval)] {
+        return analyzeVideoForReframeState.withLock(\.argValues).map(\.value)
+    }
+    var analyzeVideoForReframeHandler: (@Sendable (URL, TimeInterval, (@Sendable (Int, Int) -> Void)?) async throws -> [CMTime: SaliencyResult])? {
+        get { analyzeVideoForReframeState.withLock(\.handler) }
+        set { analyzeVideoForReframeState.withLock { $0.handler = newValue } }
+    }
+    func analyzeVideoForReframe(videoURL: URL, sampleInterval: TimeInterval, progressHandler: (@Sendable (Int, Int) -> Void)?) async throws -> [CMTime: SaliencyResult] {
+        warnIfNotSendable(videoURL, sampleInterval)
+        let analyzeVideoForReframeHandler = analyzeVideoForReframeState.withLock { state in
+            state.callCount += 1
+            state.argValues.append(.init((videoURL, sampleInterval)))
+            return state.handler
+        }
+        if let analyzeVideoForReframeHandler = analyzeVideoForReframeHandler {
+            return try await analyzeVideoForReframeHandler(videoURL, sampleInterval, progressHandler)
+        }
+        return [CMTime: SaliencyResult]()
+    }
+}
+
+final class PersonSegmentationServiceProtocolMock: PersonSegmentationServiceProtocol, @unchecked Sendable {
+    init() { }
+
+
+    private let generateMaskState = MockoloMutex(MockoloHandlerState<(image: CIImage, quality: VNGeneratePersonSegmentationRequest.QualityLevel, reuseRequest: Bool), @Sendable (CIImage, VNGeneratePersonSegmentationRequest.QualityLevel, Bool) async throws -> CIImage>())
+    var generateMaskCallCount: Int {
+        return generateMaskState.withLock(\.callCount)
+    }
+    var generateMaskArgValues: [(image: CIImage, quality: VNGeneratePersonSegmentationRequest.QualityLevel, reuseRequest: Bool)] {
+        return generateMaskState.withLock(\.argValues).map(\.value)
+    }
+    var generateMaskHandler: (@Sendable (CIImage, VNGeneratePersonSegmentationRequest.QualityLevel, Bool) async throws -> CIImage)? {
+        get { generateMaskState.withLock(\.handler) }
+        set { generateMaskState.withLock { $0.handler = newValue } }
+    }
+    func generateMask(for image: CIImage, quality: VNGeneratePersonSegmentationRequest.QualityLevel, reuseRequest: Bool) async throws -> CIImage {
+        warnIfNotSendable(image, quality, reuseRequest)
+        let generateMaskHandler = generateMaskState.withLock { state in
+            state.callCount += 1
+            state.argValues.append(.init((image, quality, reuseRequest)))
+            return state.handler
+        }
+        if let generateMaskHandler = generateMaskHandler {
+            return try await generateMaskHandler(image, quality, reuseRequest)
+        }
+        fatalError("generateMaskHandler returns can't have a default value thus its handler must be set")
+    }
+
+    private let clearCacheState = MockoloMutex(MockoloHandlerState<Never, @Sendable () async -> ()>())
+    var clearCacheCallCount: Int {
+        return clearCacheState.withLock(\.callCount)
+    }
+    var clearCacheHandler: (@Sendable () async -> ())? {
+        get { clearCacheState.withLock(\.handler) }
+        set { clearCacheState.withLock { $0.handler = newValue } }
+    }
+    func clearCache() async {
+        let clearCacheHandler = clearCacheState.withLock { state in
+            state.callCount += 1
+            return state.handler
+        }
+        if let clearCacheHandler = clearCacheHandler {
+            await clearCacheHandler()
+        }
+        
+    }
+
+    private let applyBackgroundBlurState = MockoloMutex(MockoloHandlerState<(image: CIImage, blurRadius: Float, reuseRequest: Bool), @Sendable (CIImage, Float, Bool) async throws -> CIImage>())
+    var applyBackgroundBlurCallCount: Int {
+        return applyBackgroundBlurState.withLock(\.callCount)
+    }
+    var applyBackgroundBlurArgValues: [(image: CIImage, blurRadius: Float, reuseRequest: Bool)] {
+        return applyBackgroundBlurState.withLock(\.argValues).map(\.value)
+    }
+    var applyBackgroundBlurHandler: (@Sendable (CIImage, Float, Bool) async throws -> CIImage)? {
+        get { applyBackgroundBlurState.withLock(\.handler) }
+        set { applyBackgroundBlurState.withLock { $0.handler = newValue } }
+    }
+    func applyBackgroundBlur(to image: CIImage, blurRadius: Float, reuseRequest: Bool) async throws -> CIImage {
+        warnIfNotSendable(image, blurRadius, reuseRequest)
+        let applyBackgroundBlurHandler = applyBackgroundBlurState.withLock { state in
+            state.callCount += 1
+            state.argValues.append(.init((image, blurRadius, reuseRequest)))
+            return state.handler
+        }
+        if let applyBackgroundBlurHandler = applyBackgroundBlurHandler {
+            return try await applyBackgroundBlurHandler(image, blurRadius, reuseRequest)
+        }
+        fatalError("applyBackgroundBlurHandler returns can't have a default value thus its handler must be set")
+    }
+
+    private let replaceBackgroundState = MockoloMutex(MockoloHandlerState<(image: CIImage, color: NSColor, reuseRequest: Bool), @Sendable (CIImage, NSColor, Bool) async throws -> CIImage>())
+    var replaceBackgroundCallCount: Int {
+        return replaceBackgroundState.withLock(\.callCount)
+    }
+    var replaceBackgroundArgValues: [(image: CIImage, color: NSColor, reuseRequest: Bool)] {
+        return replaceBackgroundState.withLock(\.argValues).map(\.value)
+    }
+    var replaceBackgroundHandler: (@Sendable (CIImage, NSColor, Bool) async throws -> CIImage)? {
+        get { replaceBackgroundState.withLock(\.handler) }
+        set { replaceBackgroundState.withLock { $0.handler = newValue } }
+    }
+    func replaceBackground(in image: CIImage, with color: NSColor, reuseRequest: Bool) async throws -> CIImage {
+        warnIfNotSendable(image, color, reuseRequest)
+        let replaceBackgroundHandler = replaceBackgroundState.withLock { state in
+            state.callCount += 1
+            state.argValues.append(.init((image, color, reuseRequest)))
+            return state.handler
+        }
+        if let replaceBackgroundHandler = replaceBackgroundHandler {
+            return try await replaceBackgroundHandler(image, color, reuseRequest)
+        }
+        fatalError("replaceBackgroundHandler returns can't have a default value thus its handler must be set")
+    }
+
+    private let replaceBackgroundInState = MockoloMutex(MockoloHandlerState<(image: CIImage, backgroundImage: CIImage, reuseRequest: Bool), @Sendable (CIImage, CIImage, Bool) async throws -> CIImage>())
+    var replaceBackgroundInCallCount: Int {
+        return replaceBackgroundInState.withLock(\.callCount)
+    }
+    var replaceBackgroundInArgValues: [(image: CIImage, backgroundImage: CIImage, reuseRequest: Bool)] {
+        return replaceBackgroundInState.withLock(\.argValues).map(\.value)
+    }
+    var replaceBackgroundInHandler: (@Sendable (CIImage, CIImage, Bool) async throws -> CIImage)? {
+        get { replaceBackgroundInState.withLock(\.handler) }
+        set { replaceBackgroundInState.withLock { $0.handler = newValue } }
+    }
+    func replaceBackground(in image: CIImage, with backgroundImage: CIImage, reuseRequest: Bool) async throws -> CIImage {
+        warnIfNotSendable(image, backgroundImage, reuseRequest)
+        let replaceBackgroundInHandler = replaceBackgroundInState.withLock { state in
+            state.callCount += 1
+            state.argValues.append(.init((image, backgroundImage, reuseRequest)))
+            return state.handler
+        }
+        if let replaceBackgroundInHandler = replaceBackgroundInHandler {
+            return try await replaceBackgroundInHandler(image, backgroundImage, reuseRequest)
+        }
+        fatalError("replaceBackgroundInHandler returns can't have a default value thus its handler must be set")
+    }
+}
+
+final class TextRecognitionServiceProtocolMock: TextRecognitionServiceProtocol, @unchecked Sendable {
+    init() { }
+
+
+    private let recognizeTextState = MockoloMutex(MockoloHandlerState<(image: CIImage, time: CMTime), @Sendable (CIImage, CMTime) async throws -> [RecognizedText]>())
+    var recognizeTextCallCount: Int {
+        return recognizeTextState.withLock(\.callCount)
+    }
+    var recognizeTextArgValues: [(image: CIImage, time: CMTime)] {
+        return recognizeTextState.withLock(\.argValues).map(\.value)
+    }
+    var recognizeTextHandler: (@Sendable (CIImage, CMTime) async throws -> [RecognizedText])? {
+        get { recognizeTextState.withLock(\.handler) }
+        set { recognizeTextState.withLock { $0.handler = newValue } }
+    }
+    func recognizeText(in image: CIImage, at time: CMTime) async throws -> [RecognizedText] {
+        warnIfNotSendable(image, time)
+        let recognizeTextHandler = recognizeTextState.withLock { state in
+            state.callCount += 1
+            state.argValues.append(.init((image, time)))
+            return state.handler
+        }
+        if let recognizeTextHandler = recognizeTextHandler {
+            return try await recognizeTextHandler(image, time)
+        }
+        return [RecognizedText]()
+    }
+
+    private let scanVideoForTextState = MockoloMutex(MockoloHandlerState<(videoURL: URL, sampleInterval: TimeInterval), @Sendable (URL, TimeInterval, (@Sendable (Int, Int) -> Void)?) async throws -> [RecognizedText]>())
+    var scanVideoForTextCallCount: Int {
+        return scanVideoForTextState.withLock(\.callCount)
+    }
+    var scanVideoForTextArgValues: [(videoURL: URL, sampleInterval: TimeInterval)] {
+        return scanVideoForTextState.withLock(\.argValues).map(\.value)
+    }
+    var scanVideoForTextHandler: (@Sendable (URL, TimeInterval, (@Sendable (Int, Int) -> Void)?) async throws -> [RecognizedText])? {
+        get { scanVideoForTextState.withLock(\.handler) }
+        set { scanVideoForTextState.withLock { $0.handler = newValue } }
+    }
+    func scanVideoForText(videoURL: URL, sampleInterval: TimeInterval, progressHandler: (@Sendable (Int, Int) -> Void)?) async throws -> [RecognizedText] {
+        warnIfNotSendable(videoURL, sampleInterval)
+        let scanVideoForTextHandler = scanVideoForTextState.withLock { state in
+            state.callCount += 1
+            state.argValues.append(.init((videoURL, sampleInterval)))
+            return state.handler
+        }
+        if let scanVideoForTextHandler = scanVideoForTextHandler {
+            return try await scanVideoForTextHandler(videoURL, sampleInterval, progressHandler)
+        }
+        return [RecognizedText]()
+    }
+
+    private let findSensitiveTextState = MockoloMutex(MockoloHandlerState<(image: CIImage, types: [TextType], time: CMTime), @Sendable (CIImage, [TextType], CMTime) async throws -> [RecognizedText]>())
+    var findSensitiveTextCallCount: Int {
+        return findSensitiveTextState.withLock(\.callCount)
+    }
+    var findSensitiveTextArgValues: [(image: CIImage, types: [TextType], time: CMTime)] {
+        return findSensitiveTextState.withLock(\.argValues).map(\.value)
+    }
+    var findSensitiveTextHandler: (@Sendable (CIImage, [TextType], CMTime) async throws -> [RecognizedText])? {
+        get { findSensitiveTextState.withLock(\.handler) }
+        set { findSensitiveTextState.withLock { $0.handler = newValue } }
+    }
+    func findSensitiveText(in image: CIImage, types: [TextType], at time: CMTime) async throws -> [RecognizedText] {
+        warnIfNotSendable(image, types, time)
+        let findSensitiveTextHandler = findSensitiveTextState.withLock { state in
+            state.callCount += 1
+            state.argValues.append(.init((image, types, time)))
+            return state.handler
+        }
+        if let findSensitiveTextHandler = findSensitiveTextHandler {
+            return try await findSensitiveTextHandler(image, types, time)
+        }
+        return [RecognizedText]()
+    }
+}
+
+final class BodyPoseServiceProtocolMock: BodyPoseServiceProtocol, @unchecked Sendable {
+    init() { }
+
+
+    private let detectBodyPosesState = MockoloMutex(MockoloHandlerState<CIImage, @Sendable (CIImage) async throws -> [BodyPose]>())
+    var detectBodyPosesCallCount: Int {
+        return detectBodyPosesState.withLock(\.callCount)
+    }
+    var detectBodyPosesArgValues: [CIImage] {
+        return detectBodyPosesState.withLock(\.argValues).map(\.value)
+    }
+    var detectBodyPosesHandler: (@Sendable (CIImage) async throws -> [BodyPose])? {
+        get { detectBodyPosesState.withLock(\.handler) }
+        set { detectBodyPosesState.withLock { $0.handler = newValue } }
+    }
+    func detectBodyPoses(in image: CIImage) async throws -> [BodyPose] {
+        warnIfNotSendable(image)
+        let detectBodyPosesHandler = detectBodyPosesState.withLock { state in
+            state.callCount += 1
+            state.argValues.append(.init((image)))
+            return state.handler
+        }
+        if let detectBodyPosesHandler = detectBodyPosesHandler {
+            return try await detectBodyPosesHandler(image)
+        }
+        return [BodyPose]()
+    }
+
+    private let detectHandPosesState = MockoloMutex(MockoloHandlerState<CIImage, @Sendable (CIImage) async throws -> [HandPose]>())
+    var detectHandPosesCallCount: Int {
+        return detectHandPosesState.withLock(\.callCount)
+    }
+    var detectHandPosesArgValues: [CIImage] {
+        return detectHandPosesState.withLock(\.argValues).map(\.value)
+    }
+    var detectHandPosesHandler: (@Sendable (CIImage) async throws -> [HandPose])? {
+        get { detectHandPosesState.withLock(\.handler) }
+        set { detectHandPosesState.withLock { $0.handler = newValue } }
+    }
+    func detectHandPoses(in image: CIImage) async throws -> [HandPose] {
+        warnIfNotSendable(image)
+        let detectHandPosesHandler = detectHandPosesState.withLock { state in
+            state.callCount += 1
+            state.argValues.append(.init((image)))
+            return state.handler
+        }
+        if let detectHandPosesHandler = detectHandPosesHandler {
+            return try await detectHandPosesHandler(image)
+        }
+        return [HandPose]()
+    }
+
+    private let detectGesturesState = MockoloMutex(MockoloHandlerState<(videoURL: URL, gestures: [BodyGesture], sampleInterval: TimeInterval), @Sendable (URL, [BodyGesture], TimeInterval, (@Sendable (Int, Int) -> Void)?) async throws -> [(gesture: BodyGesture, time: CMTime)]>())
+    var detectGesturesCallCount: Int {
+        return detectGesturesState.withLock(\.callCount)
+    }
+    var detectGesturesArgValues: [(videoURL: URL, gestures: [BodyGesture], sampleInterval: TimeInterval)] {
+        return detectGesturesState.withLock(\.argValues).map(\.value)
+    }
+    var detectGesturesHandler: (@Sendable (URL, [BodyGesture], TimeInterval, (@Sendable (Int, Int) -> Void)?) async throws -> [(gesture: BodyGesture, time: CMTime)])? {
+        get { detectGesturesState.withLock(\.handler) }
+        set { detectGesturesState.withLock { $0.handler = newValue } }
+    }
+    func detectGestures(in videoURL: URL, gestures: [BodyGesture], sampleInterval: TimeInterval, progressHandler: (@Sendable (Int, Int) -> Void)?) async throws -> [(gesture: BodyGesture, time: CMTime)] {
+        warnIfNotSendable(videoURL, gestures, sampleInterval)
+        let detectGesturesHandler = detectGesturesState.withLock { state in
+            state.callCount += 1
+            state.argValues.append(.init((videoURL, gestures, sampleInterval)))
+            return state.handler
+        }
+        if let detectGesturesHandler = detectGesturesHandler {
+            return try await detectGesturesHandler(videoURL, gestures, sampleInterval, progressHandler)
+        }
+        return [(gesture: BodyGesture, time: CMTime)]()
+    }
+}
+
+final class VisionOrchestratorProtocolMock: VisionOrchestratorProtocol, @unchecked Sendable {
+    init() { }
+
+
+    private let analyzeState = MockoloMutex(MockoloHandlerState<(videoURL: URL, config: VisionAnalysisConfig), @Sendable (URL, VisionAnalysisConfig, ((Double) -> Void)?) async throws -> VisionAnalysisResult>())
+    var analyzeCallCount: Int {
+        return analyzeState.withLock(\.callCount)
+    }
+    var analyzeArgValues: [(videoURL: URL, config: VisionAnalysisConfig)] {
+        return analyzeState.withLock(\.argValues).map(\.value)
+    }
+    var analyzeHandler: (@Sendable (URL, VisionAnalysisConfig, ((Double) -> Void)?) async throws -> VisionAnalysisResult)? {
+        get { analyzeState.withLock(\.handler) }
+        set { analyzeState.withLock { $0.handler = newValue } }
+    }
+    func analyze(videoURL: URL, config: VisionAnalysisConfig, progressHandler: ((Double) -> Void)?) async throws -> VisionAnalysisResult {
+        warnIfNotSendable(videoURL, config)
+        let analyzeHandler = analyzeState.withLock { state in
+            state.callCount += 1
+            state.argValues.append(.init((videoURL, config)))
+            return state.handler
+        }
+        if let analyzeHandler = analyzeHandler {
+            return try await analyzeHandler(videoURL, config, progressHandler)
+        }
+        fatalError("analyzeHandler returns can't have a default value thus its handler must be set")
+    }
+
+    private let warmupState = MockoloMutex(MockoloHandlerState<Never, @Sendable () -> ()>())
+    var warmupCallCount: Int {
+        return warmupState.withLock(\.callCount)
+    }
+    var warmupHandler: (@Sendable () -> ())? {
+        get { warmupState.withLock(\.handler) }
+        set { warmupState.withLock { $0.handler = newValue } }
+    }
+    func warmup() {
+        let warmupHandler = warmupState.withLock { state in
+            state.callCount += 1
+            return state.handler
+        }
+        if let warmupHandler = warmupHandler {
+            warmupHandler()
+        }
+        
     }
 }
 
@@ -342,3 +905,4 @@ fileprivate struct MockoloHandlerState<Arg, Handler> {
     var handler: Handler? = nil
     var callCount: Int = 0
 }
+

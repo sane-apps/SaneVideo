@@ -329,6 +329,9 @@ final class VideoWriter {
         return task
     }
 
+    /// Timeout for finishWriting operation (30 seconds should be sufficient for most recordings)
+    private static let finishWritingTimeout: TimeInterval = 30.0
+
     private func performFinish() async -> URL? {
         let outputURL = getOutputURL()
 
@@ -344,17 +347,48 @@ final class VideoWriter {
             systemAudioInput?.markAsFinished()
 
             if let writer = assetWriter, writer.status == .writing {
-                await writer.finishWriting()
+                // CRITICAL FIX: Use continuation-based timeout to prevent hanging
+                // AVAssetWriter.finishWriting is callback-based, we wrap it with timeout
+                let timeoutSeconds = Self.finishWritingTimeout
 
-                if writer.status == .completed {
-                    AppLogger.recording.info("VideoWriter: Successfully finished writing")
-                    cleanup()
-                    return outputURL
-                } else {
-                    AppLogger.recording.error("VideoWriter: Finish failed with status \(writer.status.rawValue)")
+                let success = await withCheckedContinuation { (continuation: CheckedContinuation<Bool, Never>) in
+                    var didResume = false
+                    let resumeLock = NSLock()
+
+                    // Create timeout timer
+                    let timer = DispatchSource.makeTimerSource(queue: .global())
+                    timer.schedule(deadline: .now() + timeoutSeconds)
+                    timer.setEventHandler {
+                        resumeLock.lock()
+                        defer { resumeLock.unlock() }
+                        guard !didResume else { return }
+                        didResume = true
+                        AppLogger.recording.error("VideoWriter: finishWriting timed out after \(timeoutSeconds)s")
+                        continuation.resume(returning: false)
+                    }
+                    timer.resume()
+
+                    // Start finish writing
+                    writer.finishWriting {
+                        timer.cancel()
+                        resumeLock.lock()
+                        defer { resumeLock.unlock() }
+                        guard !didResume else { return }
+                        didResume = true
+                        continuation.resume(returning: writer.status == .completed)
+                    }
+                }
+
+                if !success {
+                    writer.cancelWriting()
+                    if let url = outputURL { try? FileManager.default.removeItem(at: url) }
                     cleanup()
                     return nil
                 }
+
+                AppLogger.recording.info("VideoWriter: Successfully finished writing")
+                cleanup()
+                return outputURL
             }
 
             cleanup()

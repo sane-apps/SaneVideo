@@ -119,17 +119,7 @@ struct SharedRecordingControls: View {
             }
             .padding(.vertical, Theme.Dimensions.paddingSM)
             .padding(.horizontal, Theme.Dimensions.paddingLG)
-            .background {
-                if useGlassBackground {
-                    Capsule()
-                        .fill(.ultraThinMaterial)
-                        .overlay(
-                            Capsule()
-                                .stroke(Color.white.opacity(Theme.Opacity.light), lineWidth: 1)
-                        )
-                        .shadow(color: .black.opacity(0.3), radius: 8, x: 0, y: 2)
-                }
-            }
+            .modifier(ConditionalCapsuleGlass(isEnabled: useGlassBackground))
 
             // Gear icon - subtle, bottom-left, outside main bar
             if showDevicePickers {

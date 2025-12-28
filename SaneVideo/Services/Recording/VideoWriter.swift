@@ -10,7 +10,7 @@ import CoreImage
 import CoreMedia
 
 @RecordingActor
-final class VideoWriter {
+final class VideoWriter: VideoWriterProtocol {
     private var assetWriter: AVAssetWriter?
     private var videoInput: AVAssetWriterInput?
     private var micInput: AVAssetWriterInput?

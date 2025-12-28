@@ -13,7 +13,7 @@ import Foundation
 /// Tracks failures and intelligently suggests alternative engines
 @MainActor
 @Observable
-class TranscriptionCoordinator {
+class TranscriptionCoordinator: TranscriptionCoordinatorProtocol {
     
     // MARK: - Properties
     

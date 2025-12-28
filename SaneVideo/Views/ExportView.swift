@@ -20,6 +20,7 @@ struct ExportView: View {
     @State var showingError = false
     @State var exportSettings = SaneExportSettings()
     @State var selectedPreset: ExportPreset? = .youtube4K
+    @State var mlEffects = MLExportEffects()
 
     // YouTube State
     var youtubeService = ServiceContainer.shared.youtubeService
@@ -175,6 +176,7 @@ struct ExportView: View {
             ExportConfigurationView(
                 exportSettings: $exportSettings,
                 selectedPreset: $selectedPreset,
+                mlEffects: $mlEffects,
                 estimateFileSize: estimateFileSize
             )
             .disabled(isExporting || youtubeService.isUploading)

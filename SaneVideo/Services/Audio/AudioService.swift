@@ -11,7 +11,7 @@ import Combine
 
 @MainActor
 @Observable
-class AudioService: NSObject {
+class AudioService: NSObject, AudioServiceProtocol {
   // MARK: - State Properties
 
   var isRunning = false

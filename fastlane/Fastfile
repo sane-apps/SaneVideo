@@ -117,8 +117,7 @@ platform :mac do
         scheme: "SaneVideo",
         output_directory: "fastlane/coverage",
         minimum_coverage_percentage: 0.0, # Don't fail on low coverage, just report
-        only_project_targets: true,
-        exclude_targets: ["SaneVideoTests", "SaneVideoUITests"] # Don't include test targets
+        only_project_targets: true
       )
       UI.success("✅ Code coverage report generated at fastlane/coverage/index.html")
     rescue => ex

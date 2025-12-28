@@ -127,7 +127,6 @@ class RecordingEngine: NSObject, @unchecked Sendable {
     }
   }
 
-  @objc func handleWake() {}
 
   // MARK: - Interruption Handlers
 
@@ -294,9 +293,6 @@ class RecordingEngine: NSObject, @unchecked Sendable {
     }
 
     if initialSource == .screen {
-      let cursorService = await ServiceContainer.shared.cursorTrackingService
-      await cursorService.startTracking()
-
       // Start click tracking for auto-zoom feature
       let clickService = await ServiceContainer.shared.clickTrackingService
       await clickService.startTracking()
@@ -382,16 +378,12 @@ class RecordingEngine: NSObject, @unchecked Sendable {
       finalURL = nil
     }
 
-    // CRITICAL: Save cursor/click tracking only if we have a valid file
+    // CRITICAL: Save click tracking only if we have a valid file (for auto-zoom feature)
     if let url = finalURL {
-      let cursorService = await ServiceContainer.shared.cursorTrackingService
-      _ = try? await cursorService.stopTrackingAndSave(to: url)
-
-      // Stop click tracking and save
       let clickService = await ServiceContainer.shared.clickTrackingService
       _ = try? await clickService.stopTrackingAndSave(to: url)
     } else {
-      AppLogger.recording.warning("⚠️ No final URL, skipping cursor/click tracking save")
+      AppLogger.recording.warning("⚠️ No final URL, skipping click tracking save")
     }
 
     // CRITICAL: Cleanup only after we've attempted to save everything

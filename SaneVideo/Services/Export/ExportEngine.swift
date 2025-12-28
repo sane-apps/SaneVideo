@@ -44,13 +44,7 @@ class ExportEngine: ExportServiceProtocol {
 
   // MARK: - Initialization
 
-  init() {
-    setupBindings()
-  }
-
-  private func setupBindings() {
-    // No-op for now, progress driven manually
-  }
+  init() {}
 
   // MARK: - Export
 

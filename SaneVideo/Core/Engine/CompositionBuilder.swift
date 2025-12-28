@@ -154,7 +154,6 @@ enum CompositionBuilder {
                 trackPrivacyRegions: videoResult.trackPrivacyRegions,
                 activeTransitions: videoResult.activeTransitions,
                 textLayers: textLayers,
-                trackCursorData: videoResult.trackCursorData,
                 visionService: ServiceContainer.shared.personSegmentationService
             )
 

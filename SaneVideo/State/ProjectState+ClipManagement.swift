@@ -81,12 +81,6 @@ extension ProjectState {
           AppLogger.project.info("Attached click data for auto-zoom: \(clickDataURL.lastPathComponent)")
         }
 
-        let cursorDataURL = targetURL.deletingPathExtension().appendingPathExtension("json")
-        if FileManager.default.fileExists(atPath: cursorDataURL.path) {
-          resultClip.cursorDataURL = cursorDataURL
-          AppLogger.project.info("Attached cursor data: \(cursorDataURL.lastPathComponent)")
-        }
-
         NSLog("Successfully loaded clip. Duration: \(resultClip.duration.seconds)s. Adding to timeline...")
         AppLogger.project.info("Successfully loaded clip. Duration: \(resultClip.duration.seconds)s. Adding to timeline...")
         addClip(resultClip)
@@ -730,41 +724,6 @@ extension ProjectState {
       project.timeline = timeline
       currentProject = project
       saveProject(project)
-    }
-  }
-
-  // MARK: - Cursor Enhancements
-
-  func updateClipCursorHighlight(_ clip: VideoClip, show: Bool, transactionId: UUID? = nil) {
-    guard !shouldBlockOperation(transactionId: transactionId) else { return }
-    guard var project = currentProject else { return }
-
-    var timeline = project.timeline
-    var clipFound = false
-
-    for (trackIndex, track) in timeline.tracks.enumerated() {
-      if let index = track.clips.firstIndex(where: { $0.id == clip.id }) {
-        if track.isLocked {
-          ServiceContainer.shared.toastManager.show("Track is locked", type: .error)
-          return
-        }
-
-        registerUndo("Toggle Cursor Highlight")
-
-        var mutableTrack = track
-        mutableTrack.clips[index].showCursorHighlight = show
-        timeline.tracks[trackIndex] = mutableTrack
-        clipFound = true
-        break
-      }
-    }
-
-    if clipFound {
-      project.timeline = timeline
-      currentProject = project
-      saveProject(project)
-
-      AppLogger.project.info("Updated clip cursor highlight to \(show)")
     }
   }
 }

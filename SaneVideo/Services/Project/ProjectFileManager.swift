@@ -357,9 +357,6 @@ final class ProjectFileManager: Sendable {
         for track in project.timeline.tracks {
             for clip in track.clips {
                 urls.insert(clip.url)
-                if let cursorURL = clip.cursorDataURL {
-                    urls.insert(cursorURL)
-                }
                 if let clickURL = clip.clickDataURL {
                     urls.insert(clickURL)
                 }

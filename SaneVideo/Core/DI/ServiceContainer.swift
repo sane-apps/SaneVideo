@@ -81,10 +81,9 @@ final class ServiceContainer {
     // smartThumbnailService consolidated into thumbnailService
     
     // MARK: - Project/Timeline Services
-    
+
     let projectFileManager: ProjectFileManager
     let timelineEngine: TimelineEngine
-    let cursorTrackingService: CursorTrackingService
     let clickTrackingService: ClickTrackingService
     // timelineThumbnailService consolidated into thumbnailService
     let renderingService: RenderingService
@@ -161,7 +160,6 @@ final class ServiceContainer {
         // Project/Timeline Services
         self.projectFileManager = ProjectFileManager()
         self.timelineEngine = TimelineEngine()
-        self.cursorTrackingService = CursorTrackingService()
         self.clickTrackingService = ClickTrackingService()
         // timelineThumbnailService now consolidated into thumbnailService
         

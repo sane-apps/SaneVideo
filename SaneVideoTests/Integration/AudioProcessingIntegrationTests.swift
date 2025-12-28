@@ -44,7 +44,7 @@ final class AudioProcessingIntegrationTests: XCTestCase {
 
         // Arrange
         let detector = ServiceContainer.shared.silenceDetector
-        let asset = AVAsset(url: silenceTestAssetURL)
+        let asset = AVURLAsset(url: silenceTestAssetURL)
         let duration = try await asset.load(.duration)
 
         let clip = VideoClip(
@@ -75,7 +75,7 @@ final class AudioProcessingIntegrationTests: XCTestCase {
 
         // Arrange
         let detector = ServiceContainer.shared.silenceDetector
-        let asset = AVAsset(url: silenceTestAssetURL)
+        let asset = AVURLAsset(url: silenceTestAssetURL)
         let duration = try await asset.load(.duration)
 
         let clip = VideoClip(
@@ -146,7 +146,7 @@ final class AudioProcessingIntegrationTests: XCTestCase {
 
         // Arrange
         let waveformService = WaveformService()
-        let asset = AVAsset(url: testAssetURL)
+        let asset = AVURLAsset(url: testAssetURL)
 
         // Check if asset has audio
         let audioTracks = try await asset.loadTracks(withMediaType: .audio)
@@ -197,7 +197,7 @@ final class AudioProcessingIntegrationTests: XCTestCase {
         }
 
         // Arrange
-        let asset = AVAsset(url: testAssetURL)
+        let asset = AVURLAsset(url: testAssetURL)
 
         // Check if asset has audio
         let audioTracks = try await asset.loadTracks(withMediaType: .audio)
@@ -230,7 +230,7 @@ final class AudioProcessingIntegrationTests: XCTestCase {
         }
 
         // Check if asset has audio
-        let sourceAsset = AVAsset(url: testAssetURL)
+        let sourceAsset = AVURLAsset(url: testAssetURL)
         let audioTracks = try await sourceAsset.loadTracks(withMediaType: .audio)
         guard !audioTracks.isEmpty else {
             throw XCTSkip("Test asset has no audio track")
@@ -289,7 +289,7 @@ final class AudioProcessingIntegrationTests: XCTestCase {
         }
 
         // Check if asset has audio
-        let sourceAsset = AVAsset(url: testAssetURL)
+        let sourceAsset = AVURLAsset(url: testAssetURL)
         let audioTracks = try await sourceAsset.loadTracks(withMediaType: .audio)
         guard !audioTracks.isEmpty else {
             throw XCTSkip("Test asset has no audio track")

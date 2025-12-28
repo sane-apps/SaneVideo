@@ -178,6 +178,15 @@ struct SaneVideoApp: App {
         }
         .accessibilityIdentifier("menu.file.generate_voiceover")
 
+        Button(
+          String(localized: "menu.file.create_shorts", defaultValue: "Create Shorts...")
+        ) {
+          NotificationCenter.default.post(
+            name: NSNotification.Name("ShowRepurposingSheet"), object: nil)
+        }
+        .keyboardShortcut("r", modifiers: [.command, .shift])
+        .accessibilityIdentifier("menu.file.create_shorts")
+
         Divider()
 
         Button(String(localized: "menu.file.share", defaultValue: "Share...")) {

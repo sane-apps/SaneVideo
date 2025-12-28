@@ -9,7 +9,7 @@ import Foundation
 import Translation
 import OSLog
 
-@available(macOS 15.0, *)
+@available(macOS 26.0, *)
 actor TranslationService {
     static let shared = TranslationService()
     

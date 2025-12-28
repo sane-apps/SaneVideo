@@ -186,20 +186,11 @@ actor MediaAssetManager {
 
         // Check if file is already downloaded
         var isDownloaded = false
-        var isDownloading = false
 
         if let resourceValues = try? iCloudURL.resourceValues(forKeys: [.ubiquitousItemDownloadingStatusKey]),
            let status = resourceValues.ubiquitousItemDownloadingStatus {
-            switch status {
-            case .current:
-                isDownloaded = true
-            case .downloaded:
-                isDownloaded = true
-            case .notDownloaded:
-                isDownloaded = false
-            @unknown default:
-                break
-            }
+            // URLUbiquitousItemDownloadingStatus is a typed string (NS_TYPED_ENUM), not a true enum
+            isDownloaded = (status == .current || status == .downloaded)
         }
 
         if !isDownloaded {
@@ -293,7 +284,7 @@ private struct SHA256 {
     private var totalLength: UInt64 = 0
 
     mutating func update(data: UnsafeRawBufferPointer) {
-        var bytes = Array(data)
+        let bytes = Array(data)
         totalLength += UInt64(bytes.count)
         buffer.append(contentsOf: bytes)
     }

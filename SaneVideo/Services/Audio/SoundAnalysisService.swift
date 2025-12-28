@@ -11,7 +11,7 @@ import SoundAnalysis
 
 /// Service responsible for real-time audio analysis (sentiment, transcription)
 @Observable
-class SoundAnalysisService: @unchecked Sendable {
+class SoundAnalysisService: @unchecked Sendable, SoundAnalysisServiceProtocol {
 
   // MARK: - Publishers
   var resultsStream = PassthroughSubject<AudioClassification, Never>()

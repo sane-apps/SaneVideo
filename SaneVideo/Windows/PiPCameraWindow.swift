@@ -241,16 +241,17 @@ class PiPCameraWindow: NSPanel {
 
         guard let contentView else { return }
 
-        // Add visual effect view for nice background
-        let visualEffect = NSVisualEffectView(frame: contentView.bounds)
-        visualEffect.material = .hudWindow
-        visualEffect.state = .active
-        visualEffect.wantsLayer = true
-        visualEffect.layer?.cornerRadius = 12
-        visualEffect.layer?.masksToBounds = true
-        visualEffect.autoresizingMask = [.width, .height]
+        // Add Liquid Glass background for consistent Tahoe styling
+        let glassView = LiquidGlassNSView(intensity: .premium, cornerRadius: 12)
+        glassView.translatesAutoresizingMaskIntoConstraints = false
+        contentView.addSubview(glassView)
 
-        contentView.addSubview(visualEffect)
+        NSLayoutConstraint.activate([
+            glassView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            glassView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+            glassView.topAnchor.constraint(equalTo: contentView.topAnchor),
+            glassView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor)
+        ])
 
         // CRITICAL FIX: Add resize handle to contentView directly, NOT visualEffect
         // This ensures it can be layered on top of the video preview
@@ -428,9 +429,9 @@ class PiPCameraWindow: NSPanel {
         // Add to contentView
         contentView.addSubview(containerView)
 
-        // Ensure container is on top of visual effect view
-        if let visualEffect = contentView.subviews.first(where: { $0 is NSVisualEffectView }) {
-            contentView.addSubview(containerView, positioned: .above, relativeTo: visualEffect)
+        // Ensure container is on top of glass background view
+        if let glassView = contentView.subviews.first(where: { $0 is LiquidGlassNSView }) {
+            contentView.addSubview(containerView, positioned: .above, relativeTo: glassView)
         } else {
              contentView.addSubview(containerView)
         }
@@ -439,9 +440,9 @@ class PiPCameraWindow: NSPanel {
         // Removing views breaks constraints and causes use-after-free crashes
         // Instead, use sortSubviews to reorder the z-index
         contentView.sortSubviews({ (view1, view2, _) -> ComparisonResult in
-            // Order: visualEffect < containerView < resizeHandle < controls
+            // Order: glassView < containerView < resizeHandle < controls
             let order: [String: Int] = [
-                "NSVisualEffectView": 0,
+                "LiquidGlassNSView": 0,
                 "NSView": 1,  // containerView for video
                 "ResizeHandleView": 2,
                 "NSHostingView": 3  // controls on top

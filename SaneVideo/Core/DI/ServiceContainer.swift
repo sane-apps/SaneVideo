@@ -54,12 +54,13 @@ final class ServiceContainer {
     let realTimeAudioProcessor: RealTimeAudioProcessor
     
     // MARK: - AI/ML Services
-    
+
     let aiService: AIService
     let appleSpeechService: AppleSpeechService
     let transcriptionCoordinator: TranscriptionCoordinator
     let smartFillerDetector: SmartFillerDetector
     let sentimentAnalysisService: SentimentAnalysisService
+    let mlEffectsService: MLEffectsService
     
     // MARK: - Vision Services
     
@@ -87,7 +88,10 @@ final class ServiceContainer {
     let clickTrackingService: ClickTrackingService
     // timelineThumbnailService consolidated into thumbnailService
     let renderingService: RenderingService
-    
+    let templateStore: TemplateStore
+    let syncManager: SyncManager
+    let mediaAssetManager: MediaAssetManager
+
     // MARK: - Utility Services
     
     let logManager: LogManager
@@ -154,7 +158,8 @@ final class ServiceContainer {
         self.transcriptionCoordinator = TranscriptionCoordinator()
         self.smartFillerDetector = SmartFillerDetector()
         self.sentimentAnalysisService = SentimentAnalysisService()
-        
+        self.mlEffectsService = MLEffectsService()
+
         self.visionOrchestrator = VisionOrchestrator()
         
         // Project/Timeline Services
@@ -162,10 +167,13 @@ final class ServiceContainer {
         self.timelineEngine = TimelineEngine()
         self.clickTrackingService = ClickTrackingService()
         // timelineThumbnailService now consolidated into thumbnailService
-        
+
         let renderingService = RenderingService.shared
         self.renderingService = renderingService
-        
+        self.templateStore = TemplateStore()
+        self.syncManager = SyncManager()
+        self.mediaAssetManager = MediaAssetManager()
+
         // Vision Services (Now using unified context)
         self.bodyPoseService = BodyPoseService()
         self.faceTrackingService = FaceTrackingService()

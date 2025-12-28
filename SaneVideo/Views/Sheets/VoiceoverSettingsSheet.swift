@@ -65,6 +65,7 @@ struct VoiceoverSettingsSheet: View {
             )
         }
         .frame(width: 450, height: 520)
+        .subtleGlass(radius: 12)
         .onAppear {
             voiceoverService.loadAvailableVoices()
         }

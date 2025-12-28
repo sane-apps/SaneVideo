@@ -48,6 +48,12 @@ struct SettingsView: View {
         }
         .tag("apikeys")
 
+      iCloudSyncSettingsView()
+        .tabItem {
+          Label("iCloud Sync", systemImage: "icloud")
+        }
+        .tag("icloud")
+
       DebugSettingsView()
         .tabItem {
           Label(

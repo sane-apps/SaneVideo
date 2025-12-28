@@ -378,3 +378,46 @@ These require manual visual inspection.
 bundle exec fastlane coverage        # Generate report
 open fastlane/coverage/index.html    # View report
 ```
+
+---
+
+## MCP SERVERS & PLUGINS
+
+### Active MCP Servers (`.mcp.json`)
+
+| Server | Purpose | Use Case |
+|--------|---------|----------|
+| **apple-docs** | Apple Developer Documentation & WWDC transcripts (1,260+ sessions) | API examples, related APIs, understanding "why" behind APIs |
+| **context7** | Real-time library documentation | Up-to-date docs for WhisperKit, Vapor, any library |
+| **github** | GitHub API integration (Official MCP) | Issues, PRs, repos, code search |
+| **memory** | Persistent knowledge graph (Official MCP) | Cross-session context retention |
+| **TestSprite** | Automated test generation | Generate test plans, analyze coverage |
+| **XcodeBuildMCP** | Programmatic Xcode builds | CI/CD integration, test runs, signing |
+
+### Plugins
+
+| Plugin | Purpose |
+|--------|---------|
+| **swift-lsp** | Swift code intelligence (completion, go-to-definition, diagnostics) |
+
+### When to Use Each Tool (Decision Matrix)
+
+| Situation | Tool | Why |
+|-----------|------|-----|
+| **API signature/existence** | `verify_api` | SDK is source of truth (Rule #6) |
+| **API examples/WWDC context** | `apple-docs` MCP | Rich examples, related APIs |
+| **Build/test the project** | `SaneMaster.rb verify` | Always use SaneMaster (Rule #1) |
+| **CI/CD programmatic builds** | `XcodeBuildMCP` | Granular control, automation |
+| **Generate mock classes** | `gen_mock` (Mockolo) | Fast protocol→mock generation |
+| **Generate test templates** | `gen_test` | Creates structured unit/UI tests |
+| **iOS companion app testing** | `TestSprite` | AI-powered SwiftUI test gen |
+| **GitHub issues/PRs** | `github` MCP | Create issues, review PRs |
+| **Cross-session context** | `memory` MCP | Persistent knowledge graph |
+| **Code intelligence** | `swift-lsp` plugin | Completions, go-to-definition |
+
+### Future: iOS/iPadOS Companion Apps
+
+- **TestSprite** = Primary UI testing tool for iOS
+- **XcodeBuildMCP** = Target iOS simulators/devices
+- Shared code in Swift Package for cross-platform
+- Use `apple-docs` for UIKit vs AppKit differences

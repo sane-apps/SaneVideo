@@ -10,7 +10,7 @@ import Foundation
 
 /// Centralized service for handling File IO, Bookmark Resolution, and Asset Loading
 /// Replaces ad-hoc IO in VideoClip and ProjectState
-final class ProjectFileManager: Sendable {
+final class ProjectFileManager: Sendable, ProjectFileManagerProtocol {
 
     init() {}
 

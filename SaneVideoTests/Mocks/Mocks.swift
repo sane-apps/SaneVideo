@@ -4,16 +4,15 @@
 
 
 
+@testable import SaneVideo
 import AVFoundation
 import AppKit
 import Combine
 import CoreImage
+import CoreMedia
 import Foundation
-@testable import SaneVideo
+import ScreenCaptureKit
 import Vision
-
-// Disambiguate RecognizedText from Vision framework's VNRecognizedText
-typealias RecognizedText = SaneVideo.RecognizedText
 
 
 final class ExportServiceProtocolMock: ExportServiceProtocol, @unchecked Sendable {
@@ -194,6 +193,45 @@ final class ProjectStoreProtocolMock: ProjectStoreProtocol, @unchecked Sendable 
     }
 }
 
+actor WaveformServiceProtocolMock: WaveformServiceProtocol {
+    init() { }
+
+
+    private(set) var waveformCallCount = 0
+    var waveformArgValues = [VideoClip]()
+    var waveformHandler: ((VideoClip) async -> [Float]?)?
+    func waveform(for clip: VideoClip) async -> [Float]? {
+        waveformCallCount += 1
+        waveformArgValues.append(clip)
+        if let waveformHandler = waveformHandler {
+            return await waveformHandler(clip)
+        }
+        return nil
+    }
+
+    private(set) var cancelLoadCallCount = 0
+    var cancelLoadArgValues = [VideoClip]()
+    var cancelLoadHandler: ((VideoClip) -> ())?
+    func cancelLoad(for clip: VideoClip) {
+        cancelLoadCallCount += 1
+        cancelLoadArgValues.append(clip)
+        if let cancelLoadHandler = cancelLoadHandler {
+            cancelLoadHandler(clip)
+        }
+        
+    }
+
+    private(set) var clearCacheCallCount = 0
+    var clearCacheHandler: (() -> ())?
+    func clearCache() {
+        clearCacheCallCount += 1
+        if let clearCacheHandler = clearCacheHandler {
+            clearCacheHandler()
+        }
+        
+    }
+}
+
 final class CameraServiceProtocolMock: CameraServiceProtocol, @unchecked Sendable {
     init() { }
     init(isActive: Bool = false, hasVideoSignal: Bool = false, permissionGranted: Bool = false, lastError: AppError? = nil, session: AVCaptureSession? = nil) {
@@ -227,10 +265,11 @@ final class CameraServiceProtocolMock: CameraServiceProtocol, @unchecked Sendabl
     private(set) var sessionPublisherSubject = PassthroughSubject<AVCaptureSession?, Never>()
 
 
-    // CRITICAL FIX: Must be nonisolated(unsafe) like the real services.
-    // RecordingEngine.setupSubscriptions() accesses this from @RecordingActor,
-    // so MainActor.assumeIsolated would crash.
-    nonisolated(unsafe) var sampleBufferSubject = PassthroughSubject<CMSampleBuffer, Never>()
+    nonisolated(unsafe) private var _sampleBufferSubject: PassthroughSubject<CMSampleBuffer, Never> = PassthroughSubject()
+    nonisolated var sampleBufferSubject: PassthroughSubject<CMSampleBuffer, Never> {
+        get { return _sampleBufferSubject }
+        set { _sampleBufferSubject = newValue }
+    }
 
     private let startState = MockoloMutex(MockoloHandlerState<Never, @Sendable () async throws -> ()>())
     var startCallCount: Int {
@@ -323,6 +362,1012 @@ final class CameraServiceProtocolMock: CameraServiceProtocol, @unchecked Sendabl
         }
         if let restartSessionHandler = restartSessionHandler {
             restartSessionHandler()
+        }
+        
+    }
+}
+
+final class ProjectFileManagerProtocolMock: ProjectFileManagerProtocol, @unchecked Sendable {
+    init() { }
+
+
+    private let loadClipState = MockoloMutex(MockoloHandlerState<URL, @Sendable (URL) async throws -> VideoClip>())
+    var loadClipCallCount: Int {
+        return loadClipState.withLock(\.callCount)
+    }
+    var loadClipArgValues: [URL] {
+        return loadClipState.withLock(\.argValues).map(\.value)
+    }
+    var loadClipHandler: (@Sendable (URL) async throws -> VideoClip)? {
+        get { loadClipState.withLock(\.handler) }
+        set { loadClipState.withLock { $0.handler = newValue } }
+    }
+    func loadClip(from url: URL) async throws -> VideoClip {
+        warnIfNotSendable(url)
+        let loadClipHandler = loadClipState.withLock { state in
+            state.callCount += 1
+            state.argValues.append(.init((url)))
+            return state.handler
+        }
+        if let loadClipHandler = loadClipHandler {
+            return try await loadClipHandler(url)
+        }
+        fatalError("loadClipHandler returns can't have a default value thus its handler must be set")
+    }
+
+    private let createBookmarkState = MockoloMutex(MockoloHandlerState<URL, @Sendable (URL) throws -> Data>())
+    var createBookmarkCallCount: Int {
+        return createBookmarkState.withLock(\.callCount)
+    }
+    var createBookmarkArgValues: [URL] {
+        return createBookmarkState.withLock(\.argValues).map(\.value)
+    }
+    var createBookmarkHandler: (@Sendable (URL) throws -> Data)? {
+        get { createBookmarkState.withLock(\.handler) }
+        set { createBookmarkState.withLock { $0.handler = newValue } }
+    }
+    func createBookmark(for url: URL) throws -> Data {
+        warnIfNotSendable(url)
+        let createBookmarkHandler = createBookmarkState.withLock { state in
+            state.callCount += 1
+            state.argValues.append(.init((url)))
+            return state.handler
+        }
+        if let createBookmarkHandler = createBookmarkHandler {
+            return try createBookmarkHandler(url)
+        }
+        return Data()
+    }
+
+    private let resolveBookmarkState = MockoloMutex(MockoloHandlerState<Data, @Sendable (Data) throws -> (URL, Bool)>())
+    var resolveBookmarkCallCount: Int {
+        return resolveBookmarkState.withLock(\.callCount)
+    }
+    var resolveBookmarkArgValues: [Data] {
+        return resolveBookmarkState.withLock(\.argValues).map(\.value)
+    }
+    var resolveBookmarkHandler: (@Sendable (Data) throws -> (URL, Bool))? {
+        get { resolveBookmarkState.withLock(\.handler) }
+        set { resolveBookmarkState.withLock { $0.handler = newValue } }
+    }
+    func resolveBookmark(data: Data) throws -> (URL, Bool) {
+        warnIfNotSendable(data)
+        let resolveBookmarkHandler = resolveBookmarkState.withLock { state in
+            state.callCount += 1
+            state.argValues.append(.init((data)))
+            return state.handler
+        }
+        if let resolveBookmarkHandler = resolveBookmarkHandler {
+            return try resolveBookmarkHandler(data)
+        }
+        return (URL(fileURLWithPath: ""), false)
+    }
+
+    private let deleteFileState = MockoloMutex(MockoloHandlerState<URL, @Sendable (URL) async throws -> ()>())
+    var deleteFileCallCount: Int {
+        return deleteFileState.withLock(\.callCount)
+    }
+    var deleteFileArgValues: [URL] {
+        return deleteFileState.withLock(\.argValues).map(\.value)
+    }
+    var deleteFileHandler: (@Sendable (URL) async throws -> ())? {
+        get { deleteFileState.withLock(\.handler) }
+        set { deleteFileState.withLock { $0.handler = newValue } }
+    }
+    func deleteFile(at url: URL) async throws {
+        warnIfNotSendable(url)
+        let deleteFileHandler = deleteFileState.withLock { state in
+            state.callCount += 1
+            state.argValues.append(.init((url)))
+            return state.handler
+        }
+        if let deleteFileHandler = deleteFileHandler {
+            try await deleteFileHandler(url)
+        }
+        
+    }
+
+    private let hydrateProjectState = MockoloMutex(MockoloHandlerState<VideoProject, @Sendable (VideoProject) -> (VideoProject, Bool)>())
+    var hydrateProjectCallCount: Int {
+        return hydrateProjectState.withLock(\.callCount)
+    }
+    var hydrateProjectArgValues: [VideoProject] {
+        return hydrateProjectState.withLock(\.argValues).map(\.value)
+    }
+    var hydrateProjectHandler: (@Sendable (VideoProject) -> (VideoProject, Bool))? {
+        get { hydrateProjectState.withLock(\.handler) }
+        set { hydrateProjectState.withLock { $0.handler = newValue } }
+    }
+    func hydrateProject(_ project: VideoProject) -> (VideoProject, Bool) {
+        warnIfNotSendable(project)
+        let hydrateProjectHandler = hydrateProjectState.withLock { state in
+            state.callCount += 1
+            state.argValues.append(.init((project)))
+            return state.handler
+        }
+        if let hydrateProjectHandler = hydrateProjectHandler {
+            return hydrateProjectHandler(project)
+        }
+        fatalError("hydrateProjectHandler returns can't have a default value thus its handler must be set")
+    }
+
+    private let enterSecurityScopeState = MockoloMutex(MockoloHandlerState<VideoProject, @Sendable (VideoProject) -> ProjectFileManager.SecurityScopeSession>())
+    var enterSecurityScopeCallCount: Int {
+        return enterSecurityScopeState.withLock(\.callCount)
+    }
+    var enterSecurityScopeArgValues: [VideoProject] {
+        return enterSecurityScopeState.withLock(\.argValues).map(\.value)
+    }
+    var enterSecurityScopeHandler: (@Sendable (VideoProject) -> ProjectFileManager.SecurityScopeSession)? {
+        get { enterSecurityScopeState.withLock(\.handler) }
+        set { enterSecurityScopeState.withLock { $0.handler = newValue } }
+    }
+    func enterSecurityScope(for project: VideoProject) -> ProjectFileManager.SecurityScopeSession {
+        warnIfNotSendable(project)
+        let enterSecurityScopeHandler = enterSecurityScopeState.withLock { state in
+            state.callCount += 1
+            state.argValues.append(.init((project)))
+            return state.handler
+        }
+        if let enterSecurityScopeHandler = enterSecurityScopeHandler {
+            return enterSecurityScopeHandler(project)
+        }
+        fatalError("enterSecurityScopeHandler returns can't have a default value thus its handler must be set")
+    }
+}
+
+final class PermissionManagerProtocolMock: PermissionManagerProtocol, @unchecked Sendable {
+    init() { }
+    init(cameraStatus: PermissionStatus, microphoneStatus: PermissionStatus, screenRecordingStatus: PermissionStatus) {
+        self._cameraStatus = cameraStatus
+        self._microphoneStatus = microphoneStatus
+        self._screenRecordingStatus = screenRecordingStatus
+    }
+
+
+
+    private var _cameraStatus: PermissionStatus!
+    var cameraStatus: PermissionStatus {
+        get { return _cameraStatus }
+        set { _cameraStatus = newValue }
+    }
+
+
+    private var _microphoneStatus: PermissionStatus!
+    var microphoneStatus: PermissionStatus {
+        get { return _microphoneStatus }
+        set { _microphoneStatus = newValue }
+    }
+
+
+    private var _screenRecordingStatus: PermissionStatus!
+    var screenRecordingStatus: PermissionStatus {
+        get { return _screenRecordingStatus }
+        set { _screenRecordingStatus = newValue }
+    }
+
+    var cameraStatusPublisher: AnyPublisher<PermissionStatus, Never> { return self.cameraStatusPublisherSubject.eraseToAnyPublisher() }
+    private(set) var cameraStatusPublisherSubject = PassthroughSubject<PermissionStatus, Never>()
+
+    var microphoneStatusPublisher: AnyPublisher<PermissionStatus, Never> { return self.microphoneStatusPublisherSubject.eraseToAnyPublisher() }
+    private(set) var microphoneStatusPublisherSubject = PassthroughSubject<PermissionStatus, Never>()
+
+    var screenRecordingStatusPublisher: AnyPublisher<PermissionStatus, Never> { return self.screenRecordingStatusPublisherSubject.eraseToAnyPublisher() }
+    private(set) var screenRecordingStatusPublisherSubject = PassthroughSubject<PermissionStatus, Never>()
+
+    private let checkAllPermissionsState = MockoloMutex(MockoloHandlerState<Never, @Sendable () -> ()>())
+    var checkAllPermissionsCallCount: Int {
+        return checkAllPermissionsState.withLock(\.callCount)
+    }
+    var checkAllPermissionsHandler: (@Sendable () -> ())? {
+        get { checkAllPermissionsState.withLock(\.handler) }
+        set { checkAllPermissionsState.withLock { $0.handler = newValue } }
+    }
+    func checkAllPermissions() {
+        let checkAllPermissionsHandler = checkAllPermissionsState.withLock { state in
+            state.callCount += 1
+            return state.handler
+        }
+        if let checkAllPermissionsHandler = checkAllPermissionsHandler {
+            checkAllPermissionsHandler()
+        }
+        
+    }
+
+    private let checkCameraPermissionState = MockoloMutex(MockoloHandlerState<Never, @Sendable () -> ()>())
+    var checkCameraPermissionCallCount: Int {
+        return checkCameraPermissionState.withLock(\.callCount)
+    }
+    var checkCameraPermissionHandler: (@Sendable () -> ())? {
+        get { checkCameraPermissionState.withLock(\.handler) }
+        set { checkCameraPermissionState.withLock { $0.handler = newValue } }
+    }
+    func checkCameraPermission() {
+        let checkCameraPermissionHandler = checkCameraPermissionState.withLock { state in
+            state.callCount += 1
+            return state.handler
+        }
+        if let checkCameraPermissionHandler = checkCameraPermissionHandler {
+            checkCameraPermissionHandler()
+        }
+        
+    }
+
+    private let checkMicrophonePermissionState = MockoloMutex(MockoloHandlerState<Never, @Sendable () -> ()>())
+    var checkMicrophonePermissionCallCount: Int {
+        return checkMicrophonePermissionState.withLock(\.callCount)
+    }
+    var checkMicrophonePermissionHandler: (@Sendable () -> ())? {
+        get { checkMicrophonePermissionState.withLock(\.handler) }
+        set { checkMicrophonePermissionState.withLock { $0.handler = newValue } }
+    }
+    func checkMicrophonePermission() {
+        let checkMicrophonePermissionHandler = checkMicrophonePermissionState.withLock { state in
+            state.callCount += 1
+            return state.handler
+        }
+        if let checkMicrophonePermissionHandler = checkMicrophonePermissionHandler {
+            checkMicrophonePermissionHandler()
+        }
+        
+    }
+
+    private let checkScreenRecordingPermissionState = MockoloMutex(MockoloHandlerState<Never, @Sendable () -> ()>())
+    var checkScreenRecordingPermissionCallCount: Int {
+        return checkScreenRecordingPermissionState.withLock(\.callCount)
+    }
+    var checkScreenRecordingPermissionHandler: (@Sendable () -> ())? {
+        get { checkScreenRecordingPermissionState.withLock(\.handler) }
+        set { checkScreenRecordingPermissionState.withLock { $0.handler = newValue } }
+    }
+    func checkScreenRecordingPermission() {
+        let checkScreenRecordingPermissionHandler = checkScreenRecordingPermissionState.withLock { state in
+            state.callCount += 1
+            return state.handler
+        }
+        if let checkScreenRecordingPermissionHandler = checkScreenRecordingPermissionHandler {
+            checkScreenRecordingPermissionHandler()
+        }
+        
+    }
+
+    private let requestCameraPermissionState = MockoloMutex(MockoloHandlerState<Never, @Sendable () async -> Bool>())
+    var requestCameraPermissionCallCount: Int {
+        return requestCameraPermissionState.withLock(\.callCount)
+    }
+    var requestCameraPermissionHandler: (@Sendable () async -> Bool)? {
+        get { requestCameraPermissionState.withLock(\.handler) }
+        set { requestCameraPermissionState.withLock { $0.handler = newValue } }
+    }
+    func requestCameraPermission() async -> Bool {
+        let requestCameraPermissionHandler = requestCameraPermissionState.withLock { state in
+            state.callCount += 1
+            return state.handler
+        }
+        if let requestCameraPermissionHandler = requestCameraPermissionHandler {
+            return await requestCameraPermissionHandler()
+        }
+        return false
+    }
+
+    private let requestMicrophonePermissionState = MockoloMutex(MockoloHandlerState<Never, @Sendable () async -> Bool>())
+    var requestMicrophonePermissionCallCount: Int {
+        return requestMicrophonePermissionState.withLock(\.callCount)
+    }
+    var requestMicrophonePermissionHandler: (@Sendable () async -> Bool)? {
+        get { requestMicrophonePermissionState.withLock(\.handler) }
+        set { requestMicrophonePermissionState.withLock { $0.handler = newValue } }
+    }
+    func requestMicrophonePermission() async -> Bool {
+        let requestMicrophonePermissionHandler = requestMicrophonePermissionState.withLock { state in
+            state.callCount += 1
+            return state.handler
+        }
+        if let requestMicrophonePermissionHandler = requestMicrophonePermissionHandler {
+            return await requestMicrophonePermissionHandler()
+        }
+        return false
+    }
+
+    private let requestScreenRecordingPermissionState = MockoloMutex(MockoloHandlerState<Never, @Sendable () -> ()>())
+    var requestScreenRecordingPermissionCallCount: Int {
+        return requestScreenRecordingPermissionState.withLock(\.callCount)
+    }
+    var requestScreenRecordingPermissionHandler: (@Sendable () -> ())? {
+        get { requestScreenRecordingPermissionState.withLock(\.handler) }
+        set { requestScreenRecordingPermissionState.withLock { $0.handler = newValue } }
+    }
+    func requestScreenRecordingPermission() {
+        let requestScreenRecordingPermissionHandler = requestScreenRecordingPermissionState.withLock { state in
+            state.callCount += 1
+            return state.handler
+        }
+        if let requestScreenRecordingPermissionHandler = requestScreenRecordingPermissionHandler {
+            requestScreenRecordingPermissionHandler()
+        }
+        
+    }
+
+    private let requestAllPermissionsState = MockoloMutex(MockoloHandlerState<Never, @Sendable () async -> [String: Bool]>())
+    var requestAllPermissionsCallCount: Int {
+        return requestAllPermissionsState.withLock(\.callCount)
+    }
+    var requestAllPermissionsHandler: (@Sendable () async -> [String: Bool])? {
+        get { requestAllPermissionsState.withLock(\.handler) }
+        set { requestAllPermissionsState.withLock { $0.handler = newValue } }
+    }
+    func requestAllPermissions() async -> [String: Bool] {
+        let requestAllPermissionsHandler = requestAllPermissionsState.withLock { state in
+            state.callCount += 1
+            return state.handler
+        }
+        if let requestAllPermissionsHandler = requestAllPermissionsHandler {
+            return await requestAllPermissionsHandler()
+        }
+        return [String: Bool]()
+    }
+
+    private let openSystemSettingsState = MockoloMutex(MockoloHandlerState<Never, @Sendable () -> ()>())
+    var openSystemSettingsCallCount: Int {
+        return openSystemSettingsState.withLock(\.callCount)
+    }
+    var openSystemSettingsHandler: (@Sendable () -> ())? {
+        get { openSystemSettingsState.withLock(\.handler) }
+        set { openSystemSettingsState.withLock { $0.handler = newValue } }
+    }
+    func openSystemSettings() {
+        let openSystemSettingsHandler = openSystemSettingsState.withLock { state in
+            state.callCount += 1
+            return state.handler
+        }
+        if let openSystemSettingsHandler = openSystemSettingsHandler {
+            openSystemSettingsHandler()
+        }
+        
+    }
+
+    private let openScreenRecordingSettingsState = MockoloMutex(MockoloHandlerState<Never, @Sendable () -> ()>())
+    var openScreenRecordingSettingsCallCount: Int {
+        return openScreenRecordingSettingsState.withLock(\.callCount)
+    }
+    var openScreenRecordingSettingsHandler: (@Sendable () -> ())? {
+        get { openScreenRecordingSettingsState.withLock(\.handler) }
+        set { openScreenRecordingSettingsState.withLock { $0.handler = newValue } }
+    }
+    func openScreenRecordingSettings() {
+        let openScreenRecordingSettingsHandler = openScreenRecordingSettingsState.withLock { state in
+            state.callCount += 1
+            return state.handler
+        }
+        if let openScreenRecordingSettingsHandler = openScreenRecordingSettingsHandler {
+            openScreenRecordingSettingsHandler()
+        }
+        
+    }
+
+    private let verifyPermissionsForRecordingState = MockoloMutex(MockoloHandlerState<(requiresCamera: Bool, requiresMicrophone: Bool, requiresScreenRecording: Bool), @Sendable (Bool, Bool, Bool) -> Bool>())
+    var verifyPermissionsForRecordingCallCount: Int {
+        return verifyPermissionsForRecordingState.withLock(\.callCount)
+    }
+    var verifyPermissionsForRecordingArgValues: [(requiresCamera: Bool, requiresMicrophone: Bool, requiresScreenRecording: Bool)] {
+        return verifyPermissionsForRecordingState.withLock(\.argValues).map(\.value)
+    }
+    var verifyPermissionsForRecordingHandler: (@Sendable (Bool, Bool, Bool) -> Bool)? {
+        get { verifyPermissionsForRecordingState.withLock(\.handler) }
+        set { verifyPermissionsForRecordingState.withLock { $0.handler = newValue } }
+    }
+    func verifyPermissionsForRecording(requiresCamera: Bool, requiresMicrophone: Bool, requiresScreenRecording: Bool) -> Bool {
+        warnIfNotSendable(requiresCamera, requiresMicrophone, requiresScreenRecording)
+        let verifyPermissionsForRecordingHandler = verifyPermissionsForRecordingState.withLock { state in
+            state.callCount += 1
+            state.argValues.append(.init((requiresCamera, requiresMicrophone, requiresScreenRecording)))
+            return state.handler
+        }
+        if let verifyPermissionsForRecordingHandler = verifyPermissionsForRecordingHandler {
+            return verifyPermissionsForRecordingHandler(requiresCamera, requiresMicrophone, requiresScreenRecording)
+        }
+        return false
+    }
+}
+
+final class VideoWriterProtocolMock: VideoWriterProtocol, @unchecked Sendable {
+    init() { }
+    init(isWriting: Bool = false, error: Error? = nil, isReadyForData: Bool = false) {
+        self.isWriting = isWriting
+        self.error = error
+        self.isReadyForData = isReadyForData
+    }
+
+
+
+    var isWriting: Bool = false
+
+
+    var error: Error? = nil
+
+
+    var isReadyForData: Bool = false
+
+    private let startState = MockoloMutex(MockoloHandlerState<URL, @Sendable (URL) throws -> ()>())
+    var startCallCount: Int {
+        return startState.withLock(\.callCount)
+    }
+    var startArgValues: [URL] {
+        return startState.withLock(\.argValues).map(\.value)
+    }
+    var startHandler: (@Sendable (URL) throws -> ())? {
+        get { startState.withLock(\.handler) }
+        set { startState.withLock { $0.handler = newValue } }
+    }
+    func start(outputURL: URL) throws {
+        warnIfNotSendable(outputURL)
+        let startHandler = startState.withLock { state in
+            state.callCount += 1
+            state.argValues.append(.init((outputURL)))
+            return state.handler
+        }
+        if let startHandler = startHandler {
+            try startHandler(outputURL)
+        }
+        
+    }
+
+    private let startSessionState = MockoloMutex(MockoloHandlerState<CMTime, @Sendable (CMTime) -> ()>())
+    var startSessionCallCount: Int {
+        return startSessionState.withLock(\.callCount)
+    }
+    var startSessionArgValues: [CMTime] {
+        return startSessionState.withLock(\.argValues).map(\.value)
+    }
+    var startSessionHandler: (@Sendable (CMTime) -> ())? {
+        get { startSessionState.withLock(\.handler) }
+        set { startSessionState.withLock { $0.handler = newValue } }
+    }
+    func startSession(at sourceTime: CMTime) {
+        warnIfNotSendable(sourceTime)
+        let startSessionHandler = startSessionState.withLock { state in
+            state.callCount += 1
+            state.argValues.append(.init((sourceTime)))
+            return state.handler
+        }
+        if let startSessionHandler = startSessionHandler {
+            startSessionHandler(sourceTime)
+        }
+        
+    }
+
+    private let finishState = MockoloMutex(MockoloHandlerState<Never, @Sendable () async -> URL?>())
+    var finishCallCount: Int {
+        return finishState.withLock(\.callCount)
+    }
+    var finishHandler: (@Sendable () async -> URL?)? {
+        get { finishState.withLock(\.handler) }
+        set { finishState.withLock { $0.handler = newValue } }
+    }
+    func finish() async -> URL? {
+        let finishHandler = finishState.withLock { state in
+            state.callCount += 1
+            return state.handler
+        }
+        if let finishHandler = finishHandler {
+            return await finishHandler()
+        }
+        return nil
+    }
+
+    private let writeVideoState = MockoloMutex(MockoloHandlerState<(sampleBuffer: CMSampleBuffer, presentationTime: CMTime, source: RecordingSource), @Sendable (CMSampleBuffer, CMTime, RecordingSource) -> ()>())
+    var writeVideoCallCount: Int {
+        return writeVideoState.withLock(\.callCount)
+    }
+    var writeVideoArgValues: [(sampleBuffer: CMSampleBuffer, presentationTime: CMTime, source: RecordingSource)] {
+        return writeVideoState.withLock(\.argValues).map(\.value)
+    }
+    var writeVideoHandler: (@Sendable (CMSampleBuffer, CMTime, RecordingSource) -> ())? {
+        get { writeVideoState.withLock(\.handler) }
+        set { writeVideoState.withLock { $0.handler = newValue } }
+    }
+    func writeVideo(sampleBuffer: CMSampleBuffer, presentationTime: CMTime, source: RecordingSource) {
+        warnIfNotSendable(sampleBuffer, presentationTime, source)
+        let writeVideoHandler = writeVideoState.withLock { state in
+            state.callCount += 1
+            state.argValues.append(.init((sampleBuffer, presentationTime, source)))
+            return state.handler
+        }
+        if let writeVideoHandler = writeVideoHandler {
+            writeVideoHandler(sampleBuffer, presentationTime, source)
+        }
+        
+    }
+
+    private let writeMicAudioState = MockoloMutex(MockoloHandlerState<CMSampleBuffer, @Sendable (CMSampleBuffer) -> ()>())
+    var writeMicAudioCallCount: Int {
+        return writeMicAudioState.withLock(\.callCount)
+    }
+    var writeMicAudioArgValues: [CMSampleBuffer] {
+        return writeMicAudioState.withLock(\.argValues).map(\.value)
+    }
+    var writeMicAudioHandler: (@Sendable (CMSampleBuffer) -> ())? {
+        get { writeMicAudioState.withLock(\.handler) }
+        set { writeMicAudioState.withLock { $0.handler = newValue } }
+    }
+    func writeMicAudio(sampleBuffer: CMSampleBuffer) {
+        warnIfNotSendable(sampleBuffer)
+        let writeMicAudioHandler = writeMicAudioState.withLock { state in
+            state.callCount += 1
+            state.argValues.append(.init((sampleBuffer)))
+            return state.handler
+        }
+        if let writeMicAudioHandler = writeMicAudioHandler {
+            writeMicAudioHandler(sampleBuffer)
+        }
+        
+    }
+
+    private let writeSystemAudioState = MockoloMutex(MockoloHandlerState<CMSampleBuffer, @Sendable (CMSampleBuffer) -> ()>())
+    var writeSystemAudioCallCount: Int {
+        return writeSystemAudioState.withLock(\.callCount)
+    }
+    var writeSystemAudioArgValues: [CMSampleBuffer] {
+        return writeSystemAudioState.withLock(\.argValues).map(\.value)
+    }
+    var writeSystemAudioHandler: (@Sendable (CMSampleBuffer) -> ())? {
+        get { writeSystemAudioState.withLock(\.handler) }
+        set { writeSystemAudioState.withLock { $0.handler = newValue } }
+    }
+    func writeSystemAudio(sampleBuffer: CMSampleBuffer) {
+        warnIfNotSendable(sampleBuffer)
+        let writeSystemAudioHandler = writeSystemAudioState.withLock { state in
+            state.callCount += 1
+            state.argValues.append(.init((sampleBuffer)))
+            return state.handler
+        }
+        if let writeSystemAudioHandler = writeSystemAudioHandler {
+            writeSystemAudioHandler(sampleBuffer)
+        }
+        
+    }
+
+    private let updateCameraFrameState = MockoloMutex(MockoloHandlerState<CVPixelBuffer?, @Sendable (CVPixelBuffer?) -> ()>())
+    var updateCameraFrameCallCount: Int {
+        return updateCameraFrameState.withLock(\.callCount)
+    }
+    var updateCameraFrameArgValues: [CVPixelBuffer?] {
+        return updateCameraFrameState.withLock(\.argValues).map(\.value)
+    }
+    var updateCameraFrameHandler: (@Sendable (CVPixelBuffer?) -> ())? {
+        get { updateCameraFrameState.withLock(\.handler) }
+        set { updateCameraFrameState.withLock { $0.handler = newValue } }
+    }
+    func updateCameraFrame(_ pixelBuffer: CVPixelBuffer?) {
+        warnIfNotSendable(pixelBuffer)
+        let updateCameraFrameHandler = updateCameraFrameState.withLock { state in
+            state.callCount += 1
+            state.argValues.append(.init((pixelBuffer)))
+            return state.handler
+        }
+        if let updateCameraFrameHandler = updateCameraFrameHandler {
+            updateCameraFrameHandler(pixelBuffer)
+        }
+        
+    }
+
+    private let updatePiPFrameState = MockoloMutex(MockoloHandlerState<(frame: CGRect?, screenFrame: CGRect?), @Sendable (CGRect?, CGRect?) -> ()>())
+    var updatePiPFrameCallCount: Int {
+        return updatePiPFrameState.withLock(\.callCount)
+    }
+    var updatePiPFrameArgValues: [(frame: CGRect?, screenFrame: CGRect?)] {
+        return updatePiPFrameState.withLock(\.argValues).map(\.value)
+    }
+    var updatePiPFrameHandler: (@Sendable (CGRect?, CGRect?) -> ())? {
+        get { updatePiPFrameState.withLock(\.handler) }
+        set { updatePiPFrameState.withLock { $0.handler = newValue } }
+    }
+    func updatePiPFrame(_ frame: CGRect?, screenFrame: CGRect?) {
+        warnIfNotSendable(frame, screenFrame)
+        let updatePiPFrameHandler = updatePiPFrameState.withLock { state in
+            state.callCount += 1
+            state.argValues.append(.init((frame, screenFrame)))
+            return state.handler
+        }
+        if let updatePiPFrameHandler = updatePiPFrameHandler {
+            updatePiPFrameHandler(frame, screenFrame)
+        }
+        
+    }
+}
+
+actor ThumbnailServiceProtocolMock: ThumbnailServiceProtocol {
+    init() { }
+
+
+    private(set) var thumbnailCallCount = 0
+    var thumbnailArgValues = [(clip: VideoClip, time: CMTime, size: CGSize)]()
+    var thumbnailHandler: ((VideoClip, CMTime, CGSize) async -> NSImage?)?
+    func thumbnail(for clip: VideoClip, time: CMTime, size: CGSize) async -> NSImage? {
+        thumbnailCallCount += 1
+        thumbnailArgValues.append((clip, time, size))
+        if let thumbnailHandler = thumbnailHandler {
+            return await thumbnailHandler(clip, time, size)
+        }
+        return nil
+    }
+
+    private(set) var clearCacheCallCount = 0
+    var clearCacheHandler: (() -> ())?
+    func clearCache() {
+        clearCacheCallCount += 1
+        if let clearCacheHandler = clearCacheHandler {
+            clearCacheHandler()
+        }
+        
+    }
+
+    private(set) var generateBestThumbnailCallCount = 0
+    var generateBestThumbnailArgValues = [(url: URL, strategy: ThumbnailScoringStrategy)]()
+    var generateBestThumbnailHandler: ((URL, ThumbnailScoringStrategy) async throws -> NSImage)?
+    func generateBestThumbnail(for url: URL, strategy: ThumbnailScoringStrategy) async throws -> NSImage {
+        generateBestThumbnailCallCount += 1
+        generateBestThumbnailArgValues.append((url, strategy))
+        if let generateBestThumbnailHandler = generateBestThumbnailHandler {
+            return try await generateBestThumbnailHandler(url, strategy)
+        }
+        fatalError("generateBestThumbnailHandler returns can't have a default value thus its handler must be set")
+    }
+
+    private(set) var generateSmartThumbnailCallCount = 0
+    var generateSmartThumbnailArgValues = [(url: URL, strategy: ThumbnailScoringStrategy)]()
+    var generateSmartThumbnailHandler: ((URL, ThumbnailScoringStrategy) async throws -> URL)?
+    func generateSmartThumbnail(for url: URL, strategy: ThumbnailScoringStrategy) async throws -> URL {
+        generateSmartThumbnailCallCount += 1
+        generateSmartThumbnailArgValues.append((url, strategy))
+        if let generateSmartThumbnailHandler = generateSmartThumbnailHandler {
+            return try await generateSmartThumbnailHandler(url, strategy)
+        }
+        return URL(fileURLWithPath: "")
+    }
+}
+
+final class RealTimeAudioProcessorProtocolMock: RealTimeAudioProcessorProtocol, @unchecked Sendable {
+    init() { }
+
+
+    private let setupForPlayerItemState = MockoloMutex(MockoloHandlerState<(item: AVPlayerItem, clip: VideoClip, videoPlayer: AVPlayer), @Sendable (AVPlayerItem, VideoClip, AVPlayer) async throws -> ()>())
+    var setupForPlayerItemCallCount: Int {
+        return setupForPlayerItemState.withLock(\.callCount)
+    }
+    var setupForPlayerItemArgValues: [(item: AVPlayerItem, clip: VideoClip, videoPlayer: AVPlayer)] {
+        return setupForPlayerItemState.withLock(\.argValues).map(\.value)
+    }
+    var setupForPlayerItemHandler: (@Sendable (AVPlayerItem, VideoClip, AVPlayer) async throws -> ())? {
+        get { setupForPlayerItemState.withLock(\.handler) }
+        set { setupForPlayerItemState.withLock { $0.handler = newValue } }
+    }
+    func setupForPlayerItem(_ item: AVPlayerItem, clip: VideoClip, videoPlayer: AVPlayer) async throws {
+        warnIfNotSendable(item, clip, videoPlayer)
+        let setupForPlayerItemHandler = setupForPlayerItemState.withLock { state in
+            state.callCount += 1
+            state.argValues.append(.init((item, clip, videoPlayer)))
+            return state.handler
+        }
+        if let setupForPlayerItemHandler = setupForPlayerItemHandler {
+            try await setupForPlayerItemHandler(item, clip, videoPlayer)
+        }
+        
+    }
+
+    private let playState = MockoloMutex(MockoloHandlerState<Never, @Sendable () -> ()>())
+    var playCallCount: Int {
+        return playState.withLock(\.callCount)
+    }
+    var playHandler: (@Sendable () -> ())? {
+        get { playState.withLock(\.handler) }
+        set { playState.withLock { $0.handler = newValue } }
+    }
+    func play() {
+        let playHandler = playState.withLock { state in
+            state.callCount += 1
+            return state.handler
+        }
+        if let playHandler = playHandler {
+            playHandler()
+        }
+        
+    }
+
+    private let pauseState = MockoloMutex(MockoloHandlerState<Never, @Sendable () -> ()>())
+    var pauseCallCount: Int {
+        return pauseState.withLock(\.callCount)
+    }
+    var pauseHandler: (@Sendable () -> ())? {
+        get { pauseState.withLock(\.handler) }
+        set { pauseState.withLock { $0.handler = newValue } }
+    }
+    func pause() {
+        let pauseHandler = pauseState.withLock { state in
+            state.callCount += 1
+            return state.handler
+        }
+        if let pauseHandler = pauseHandler {
+            pauseHandler()
+        }
+        
+    }
+
+    private let seekState = MockoloMutex(MockoloHandlerState<CMTime, @Sendable (CMTime) -> ()>())
+    var seekCallCount: Int {
+        return seekState.withLock(\.callCount)
+    }
+    var seekArgValues: [CMTime] {
+        return seekState.withLock(\.argValues).map(\.value)
+    }
+    var seekHandler: (@Sendable (CMTime) -> ())? {
+        get { seekState.withLock(\.handler) }
+        set { seekState.withLock { $0.handler = newValue } }
+    }
+    func seek(to time: CMTime) {
+        warnIfNotSendable(time)
+        let seekHandler = seekState.withLock { state in
+            state.callCount += 1
+            state.argValues.append(.init((time)))
+            return state.handler
+        }
+        if let seekHandler = seekHandler {
+            seekHandler(time)
+        }
+        
+    }
+
+    private let updateEffectsState = MockoloMutex(MockoloHandlerState<VideoClip, @Sendable (VideoClip) async throws -> ()>())
+    var updateEffectsCallCount: Int {
+        return updateEffectsState.withLock(\.callCount)
+    }
+    var updateEffectsArgValues: [VideoClip] {
+        return updateEffectsState.withLock(\.argValues).map(\.value)
+    }
+    var updateEffectsHandler: (@Sendable (VideoClip) async throws -> ())? {
+        get { updateEffectsState.withLock(\.handler) }
+        set { updateEffectsState.withLock { $0.handler = newValue } }
+    }
+    func updateEffects(for clip: VideoClip) async throws {
+        warnIfNotSendable(clip)
+        let updateEffectsHandler = updateEffectsState.withLock { state in
+            state.callCount += 1
+            state.argValues.append(.init((clip)))
+            return state.handler
+        }
+        if let updateEffectsHandler = updateEffectsHandler {
+            try await updateEffectsHandler(clip)
+        }
+        
+    }
+
+    private let cleanupState = MockoloMutex(MockoloHandlerState<Never, @Sendable () -> ()>())
+    var cleanupCallCount: Int {
+        return cleanupState.withLock(\.callCount)
+    }
+    var cleanupHandler: (@Sendable () -> ())? {
+        get { cleanupState.withLock(\.handler) }
+        set { cleanupState.withLock { $0.handler = newValue } }
+    }
+    func cleanup() {
+        let cleanupHandler = cleanupState.withLock { state in
+            state.callCount += 1
+            return state.handler
+        }
+        if let cleanupHandler = cleanupHandler {
+            cleanupHandler()
+        }
+        
+    }
+}
+
+actor TranscriptionServiceProtocolMock: TranscriptionServiceProtocol {
+    init() { }
+
+
+    private(set) var checkAvailabilityCallCount = 0
+    var checkAvailabilityHandler: (() async -> Bool)?
+    func checkAvailability() async -> Bool {
+        checkAvailabilityCallCount += 1
+        if let checkAvailabilityHandler = checkAvailabilityHandler {
+            return await checkAvailabilityHandler()
+        }
+        return false
+    }
+
+    private(set) var generateCaptionsCallCount = 0
+    var generateCaptionsArgValues = [URL]()
+    var generateCaptionsHandler: ((URL, (@Sendable (Int, Int, Int) -> Void)?) async throws -> [Caption])?
+    func generateCaptions(for videoURL: URL, progressHandler: (@Sendable (Int, Int, Int) -> Void)?) async throws -> [Caption] {
+        generateCaptionsCallCount += 1
+        generateCaptionsArgValues.append(videoURL)
+        if let generateCaptionsHandler = generateCaptionsHandler {
+            return try await generateCaptionsHandler(videoURL, progressHandler)
+        }
+        return [Caption]()
+    }
+
+    private(set) var cancelCallCount = 0
+    var cancelHandler: (() async -> ())?
+    func cancel() async {
+        cancelCallCount += 1
+        if let cancelHandler = cancelHandler {
+            await cancelHandler()
+        }
+        
+    }
+}
+
+final class AudioServiceProtocolMock: AudioServiceProtocol, @unchecked Sendable {
+    init() { }
+    init(isRunning: Bool = false, permissionGranted: Bool = false, currentMicID: String? = nil, availableMicrophones: [AVCaptureDevice] = [AVCaptureDevice]()) {
+        self.isRunning = isRunning
+        self.permissionGranted = permissionGranted
+        self.currentMicID = currentMicID
+        self.availableMicrophones = availableMicrophones
+    }
+
+
+
+    var isRunning: Bool = false
+
+
+    var permissionGranted: Bool = false
+
+
+    var currentMicID: String? = nil
+
+
+    var availableMicrophones: [AVCaptureDevice] = [AVCaptureDevice]()
+
+
+    nonisolated(unsafe) private var _sampleBufferSubject: PassthroughSubject<CMSampleBuffer, Never> = PassthroughSubject()
+    nonisolated var sampleBufferSubject: PassthroughSubject<CMSampleBuffer, Never> {
+        get { return _sampleBufferSubject }
+        set { _sampleBufferSubject = newValue }
+    }
+
+
+    nonisolated(unsafe) private var _audioLevelSubject: PassthroughSubject<Float, Never> = PassthroughSubject()
+    nonisolated var audioLevelSubject: PassthroughSubject<Float, Never> {
+        get { return _audioLevelSubject }
+        set { _audioLevelSubject = newValue }
+    }
+
+    private let refreshMicrophonesState = MockoloMutex(MockoloHandlerState<Never, @Sendable () -> ()>())
+    var refreshMicrophonesCallCount: Int {
+        return refreshMicrophonesState.withLock(\.callCount)
+    }
+    var refreshMicrophonesHandler: (@Sendable () -> ())? {
+        get { refreshMicrophonesState.withLock(\.handler) }
+        set { refreshMicrophonesState.withLock { $0.handler = newValue } }
+    }
+    func refreshMicrophones() {
+        let refreshMicrophonesHandler = refreshMicrophonesState.withLock { state in
+            state.callCount += 1
+            return state.handler
+        }
+        if let refreshMicrophonesHandler = refreshMicrophonesHandler {
+            refreshMicrophonesHandler()
+        }
+        
+    }
+
+    private let ensureMicrophonesDiscoveredState = MockoloMutex(MockoloHandlerState<Never, @Sendable () -> ()>())
+    var ensureMicrophonesDiscoveredCallCount: Int {
+        return ensureMicrophonesDiscoveredState.withLock(\.callCount)
+    }
+    var ensureMicrophonesDiscoveredHandler: (@Sendable () -> ())? {
+        get { ensureMicrophonesDiscoveredState.withLock(\.handler) }
+        set { ensureMicrophonesDiscoveredState.withLock { $0.handler = newValue } }
+    }
+    func ensureMicrophonesDiscovered() {
+        let ensureMicrophonesDiscoveredHandler = ensureMicrophonesDiscoveredState.withLock { state in
+            state.callCount += 1
+            return state.handler
+        }
+        if let ensureMicrophonesDiscoveredHandler = ensureMicrophonesDiscoveredHandler {
+            ensureMicrophonesDiscoveredHandler()
+        }
+        
+    }
+
+    private let checkPermissionState = MockoloMutex(MockoloHandlerState<Never, @Sendable () -> ()>())
+    var checkPermissionCallCount: Int {
+        return checkPermissionState.withLock(\.callCount)
+    }
+    var checkPermissionHandler: (@Sendable () -> ())? {
+        get { checkPermissionState.withLock(\.handler) }
+        set { checkPermissionState.withLock { $0.handler = newValue } }
+    }
+    func checkPermission() {
+        let checkPermissionHandler = checkPermissionState.withLock { state in
+            state.callCount += 1
+            return state.handler
+        }
+        if let checkPermissionHandler = checkPermissionHandler {
+            checkPermissionHandler()
+        }
+        
+    }
+
+    private let requestPermissionState = MockoloMutex(MockoloHandlerState<Never, @Sendable () -> ()>())
+    var requestPermissionCallCount: Int {
+        return requestPermissionState.withLock(\.callCount)
+    }
+    var requestPermissionHandler: (@Sendable () -> ())? {
+        get { requestPermissionState.withLock(\.handler) }
+        set { requestPermissionState.withLock { $0.handler = newValue } }
+    }
+    func requestPermission() {
+        let requestPermissionHandler = requestPermissionState.withLock { state in
+            state.callCount += 1
+            return state.handler
+        }
+        if let requestPermissionHandler = requestPermissionHandler {
+            requestPermissionHandler()
+        }
+        
+    }
+
+    private let startState = MockoloMutex(MockoloHandlerState<Never, @Sendable () -> ()>())
+    var startCallCount: Int {
+        return startState.withLock(\.callCount)
+    }
+    var startHandler: (@Sendable () -> ())? {
+        get { startState.withLock(\.handler) }
+        set { startState.withLock { $0.handler = newValue } }
+    }
+    func start() {
+        let startHandler = startState.withLock { state in
+            state.callCount += 1
+            return state.handler
+        }
+        if let startHandler = startHandler {
+            startHandler()
+        }
+        
+    }
+
+    private let stopState = MockoloMutex(MockoloHandlerState<Never, @Sendable () -> ()>())
+    var stopCallCount: Int {
+        return stopState.withLock(\.callCount)
+    }
+    var stopHandler: (@Sendable () -> ())? {
+        get { stopState.withLock(\.handler) }
+        set { stopState.withLock { $0.handler = newValue } }
+    }
+    func stop() {
+        let stopHandler = stopState.withLock { state in
+            state.callCount += 1
+            return state.handler
+        }
+        if let stopHandler = stopHandler {
+            stopHandler()
+        }
+        
+    }
+
+    private let switchMicrophoneState = MockoloMutex(MockoloHandlerState<AVCaptureDevice, @Sendable (AVCaptureDevice) -> ()>())
+    var switchMicrophoneCallCount: Int {
+        return switchMicrophoneState.withLock(\.callCount)
+    }
+    var switchMicrophoneArgValues: [AVCaptureDevice] {
+        return switchMicrophoneState.withLock(\.argValues).map(\.value)
+    }
+    var switchMicrophoneHandler: (@Sendable (AVCaptureDevice) -> ())? {
+        get { switchMicrophoneState.withLock(\.handler) }
+        set { switchMicrophoneState.withLock { $0.handler = newValue } }
+    }
+    func switchMicrophone(to device: AVCaptureDevice) {
+        warnIfNotSendable(device)
+        let switchMicrophoneHandler = switchMicrophoneState.withLock { state in
+            state.callCount += 1
+            state.argValues.append(.init((device)))
+            return state.handler
+        }
+        if let switchMicrophoneHandler = switchMicrophoneHandler {
+            switchMicrophoneHandler(device)
         }
         
     }
@@ -426,6 +1471,325 @@ final class FaceTrackingServiceProtocolMock: FaceTrackingServiceProtocol, @unche
             return try await analyzeVideoHandler(videoURL, sampleInterval)
         }
         return [CMTime: CGRect]()
+    }
+}
+
+final class ScreenRecorderProtocolMock: ScreenRecorderProtocol, @unchecked Sendable {
+    init() { }
+    init(activeStream: SCStream? = nil, isStopping: Bool = false, baseFilter: SCContentFilter? = nil, recordingFrame: CGRect? = nil) {
+        self.activeStream = activeStream
+        self.isStopping = isStopping
+        self.baseFilter = baseFilter
+        self.recordingFrame = recordingFrame
+    }
+
+
+
+    nonisolated(unsafe) private var _sampleBufferSubject: PassthroughSubject<CMSampleBuffer, Never> = PassthroughSubject()
+    nonisolated var sampleBufferSubject: PassthroughSubject<CMSampleBuffer, Never> {
+        get { return _sampleBufferSubject }
+        set { _sampleBufferSubject = newValue }
+    }
+
+
+    nonisolated(unsafe) private var _audioSampleBufferSubject: PassthroughSubject<CMSampleBuffer, Never> = PassthroughSubject()
+    nonisolated var audioSampleBufferSubject: PassthroughSubject<CMSampleBuffer, Never> {
+        get { return _audioSampleBufferSubject }
+        set { _audioSampleBufferSubject = newValue }
+    }
+
+
+    nonisolated(unsafe) private var _micSampleBufferSubject: PassthroughSubject<CMSampleBuffer, Never> = PassthroughSubject()
+    nonisolated var micSampleBufferSubject: PassthroughSubject<CMSampleBuffer, Never> {
+        get { return _micSampleBufferSubject }
+        set { _micSampleBufferSubject = newValue }
+    }
+
+
+    var activeStream: SCStream? = nil
+
+
+    var isStopping: Bool = false
+
+
+    var baseFilter: SCContentFilter? = nil
+
+
+    var recordingFrame: CGRect? = nil
+
+    private(set) var onStopSetCallCount = 0
+    var onStop: ((Error?) -> Void)? = nil { didSet { onStopSetCallCount += 1 } }
+
+    private(set) var onPresenterOverlayChangedSetCallCount = 0
+    var onPresenterOverlayChanged: ((Bool) -> Void)? = nil { didSet { onPresenterOverlayChangedSetCallCount += 1 } }
+
+    private(set) var onContentSelectedSetCallCount = 0
+    var onContentSelected: (() -> Void)? = nil { didSet { onContentSelectedSetCallCount += 1 } }
+
+    private let startState = MockoloMutex(MockoloHandlerState<URL?, @Sendable (URL?) async throws -> ()>())
+    var startCallCount: Int {
+        return startState.withLock(\.callCount)
+    }
+    var startArgValues: [URL?] {
+        return startState.withLock(\.argValues).map(\.value)
+    }
+    var startHandler: (@Sendable (URL?) async throws -> ())? {
+        get { startState.withLock(\.handler) }
+        set { startState.withLock { $0.handler = newValue } }
+    }
+    func start(outputURL: URL?) async throws {
+        warnIfNotSendable(outputURL)
+        let startHandler = startState.withLock { state in
+            state.callCount += 1
+            state.argValues.append(.init((outputURL)))
+            return state.handler
+        }
+        if let startHandler = startHandler {
+            try await startHandler(outputURL)
+        }
+        
+    }
+
+    private let stopState = MockoloMutex(MockoloHandlerState<Never, @Sendable () async -> ()>())
+    var stopCallCount: Int {
+        return stopState.withLock(\.callCount)
+    }
+    var stopHandler: (@Sendable () async -> ())? {
+        get { stopState.withLock(\.handler) }
+        set { stopState.withLock { $0.handler = newValue } }
+    }
+    func stop() async {
+        let stopHandler = stopState.withLock { state in
+            state.callCount += 1
+            return state.handler
+        }
+        if let stopHandler = stopHandler {
+            await stopHandler()
+        }
+        
+    }
+
+    private let teardownState = MockoloMutex(MockoloHandlerState<Never, @Sendable () -> ()>())
+    var teardownCallCount: Int {
+        return teardownState.withLock(\.callCount)
+    }
+    var teardownHandler: (@Sendable () -> ())? {
+        get { teardownState.withLock(\.handler) }
+        set { teardownState.withLock { $0.handler = newValue } }
+    }
+    func teardown() {
+        let teardownHandler = teardownState.withLock { state in
+            state.callCount += 1
+            return state.handler
+        }
+        if let teardownHandler = teardownHandler {
+            teardownHandler()
+        }
+        
+    }
+
+    private let updateContentFilterState = MockoloMutex(MockoloHandlerState<Never, @Sendable () async -> ()>())
+    var updateContentFilterCallCount: Int {
+        return updateContentFilterState.withLock(\.callCount)
+    }
+    var updateContentFilterHandler: (@Sendable () async -> ())? {
+        get { updateContentFilterState.withLock(\.handler) }
+        set { updateContentFilterState.withLock { $0.handler = newValue } }
+    }
+    func updateContentFilter() async {
+        let updateContentFilterHandler = updateContentFilterState.withLock { state in
+            state.callCount += 1
+            return state.handler
+        }
+        if let updateContentFilterHandler = updateContentFilterHandler {
+            await updateContentFilterHandler()
+        }
+        
+    }
+
+    private let handleContentSelectedState = MockoloMutex(MockoloHandlerState<SCContentFilter, @Sendable (SCContentFilter) async -> ()>())
+    var handleContentSelectedCallCount: Int {
+        return handleContentSelectedState.withLock(\.callCount)
+    }
+    var handleContentSelectedArgValues: [SCContentFilter] {
+        return handleContentSelectedState.withLock(\.argValues).map(\.value)
+    }
+    var handleContentSelectedHandler: (@Sendable (SCContentFilter) async -> ())? {
+        get { handleContentSelectedState.withLock(\.handler) }
+        set { handleContentSelectedState.withLock { $0.handler = newValue } }
+    }
+    func handleContentSelected(filter: SCContentFilter) async {
+        warnIfNotSendable(filter)
+        let handleContentSelectedHandler = handleContentSelectedState.withLock { state in
+            state.callCount += 1
+            state.argValues.append(.init((filter)))
+            return state.handler
+        }
+        if let handleContentSelectedHandler = handleContentSelectedHandler {
+            await handleContentSelectedHandler(filter)
+        }
+        
+    }
+}
+
+final class TranscriptionCoordinatorProtocolMock: TranscriptionCoordinatorProtocol, @unchecked Sendable {
+    init() { }
+    init(selectedEngine: TranscriptionEngine, shouldSuggestWhisperKit: Bool = false) {
+        self._selectedEngine = selectedEngine
+        self.shouldSuggestWhisperKit = shouldSuggestWhisperKit
+    }
+
+
+    private(set) var selectedEngineSetCallCount = 0
+    private var _selectedEngine: TranscriptionEngine! { didSet { selectedEngineSetCallCount += 1 } }
+    var selectedEngine: TranscriptionEngine {
+        get { return _selectedEngine }
+        set { _selectedEngine = newValue }
+    }
+
+
+    var shouldSuggestWhisperKit: Bool = false
+
+    private let generateCaptionsState = MockoloMutex(MockoloHandlerState<URL, @Sendable (URL, (@Sendable (Int, Int, Int) -> Void)?) async throws -> [Caption]>())
+    var generateCaptionsCallCount: Int {
+        return generateCaptionsState.withLock(\.callCount)
+    }
+    var generateCaptionsArgValues: [URL] {
+        return generateCaptionsState.withLock(\.argValues).map(\.value)
+    }
+    var generateCaptionsHandler: (@Sendable (URL, (@Sendable (Int, Int, Int) -> Void)?) async throws -> [Caption])? {
+        get { generateCaptionsState.withLock(\.handler) }
+        set { generateCaptionsState.withLock { $0.handler = newValue } }
+    }
+    func generateCaptions(for videoURL: URL, progressHandler: (@Sendable (Int, Int, Int) -> Void)?) async throws -> [Caption] {
+        warnIfNotSendable(videoURL)
+        let generateCaptionsHandler = generateCaptionsState.withLock { state in
+            state.callCount += 1
+            state.argValues.append(.init((videoURL)))
+            return state.handler
+        }
+        if let generateCaptionsHandler = generateCaptionsHandler {
+            return try await generateCaptionsHandler(videoURL, progressHandler)
+        }
+        return [Caption]()
+    }
+
+    private let resetFailureCountsState = MockoloMutex(MockoloHandlerState<Never, @Sendable () -> ()>())
+    var resetFailureCountsCallCount: Int {
+        return resetFailureCountsState.withLock(\.callCount)
+    }
+    var resetFailureCountsHandler: (@Sendable () -> ())? {
+        get { resetFailureCountsState.withLock(\.handler) }
+        set { resetFailureCountsState.withLock { $0.handler = newValue } }
+    }
+    func resetFailureCounts() {
+        let resetFailureCountsHandler = resetFailureCountsState.withLock { state in
+            state.callCount += 1
+            return state.handler
+        }
+        if let resetFailureCountsHandler = resetFailureCountsHandler {
+            resetFailureCountsHandler()
+        }
+        
+    }
+
+    private let setEngineState = MockoloMutex(MockoloHandlerState<TranscriptionEngine, @Sendable (TranscriptionEngine) -> ()>())
+    var setEngineCallCount: Int {
+        return setEngineState.withLock(\.callCount)
+    }
+    var setEngineArgValues: [TranscriptionEngine] {
+        return setEngineState.withLock(\.argValues).map(\.value)
+    }
+    var setEngineHandler: (@Sendable (TranscriptionEngine) -> ())? {
+        get { setEngineState.withLock(\.handler) }
+        set { setEngineState.withLock { $0.handler = newValue } }
+    }
+    func setEngine(_ engine: TranscriptionEngine) {
+        warnIfNotSendable(engine)
+        let setEngineHandler = setEngineState.withLock { state in
+            state.callCount += 1
+            state.argValues.append(.init((engine)))
+            return state.handler
+        }
+        if let setEngineHandler = setEngineHandler {
+            setEngineHandler(engine)
+        }
+        
+    }
+}
+
+final class SoundAnalysisServiceProtocolMock: SoundAnalysisServiceProtocol, @unchecked Sendable {
+    init() { }
+
+
+    private(set) var onSoundDetectedSetCallCount = 0
+    var onSoundDetected: ((AudioClassification) -> Void)? = nil { didSet { onSoundDetectedSetCallCount += 1 } }
+
+    private let analyzeState = MockoloMutex(MockoloHandlerState<CMSampleBuffer, @Sendable (CMSampleBuffer) -> ()>())
+    var analyzeCallCount: Int {
+        return analyzeState.withLock(\.callCount)
+    }
+    var analyzeArgValues: [CMSampleBuffer] {
+        return analyzeState.withLock(\.argValues).map(\.value)
+    }
+    var analyzeHandler: (@Sendable (CMSampleBuffer) -> ())? {
+        get { analyzeState.withLock(\.handler) }
+        set { analyzeState.withLock { $0.handler = newValue } }
+    }
+    func analyze(sampleBuffer: CMSampleBuffer) {
+        warnIfNotSendable(sampleBuffer)
+        let analyzeHandler = analyzeState.withLock { state in
+            state.callCount += 1
+            state.argValues.append(.init((sampleBuffer)))
+            return state.handler
+        }
+        if let analyzeHandler = analyzeHandler {
+            analyzeHandler(sampleBuffer)
+        }
+        
+    }
+
+    private let startRealTimeAnalysisState = MockoloMutex(MockoloHandlerState<AVAudioFormat, @Sendable (AVAudioFormat) -> ()>())
+    var startRealTimeAnalysisCallCount: Int {
+        return startRealTimeAnalysisState.withLock(\.callCount)
+    }
+    var startRealTimeAnalysisArgValues: [AVAudioFormat] {
+        return startRealTimeAnalysisState.withLock(\.argValues).map(\.value)
+    }
+    var startRealTimeAnalysisHandler: (@Sendable (AVAudioFormat) -> ())? {
+        get { startRealTimeAnalysisState.withLock(\.handler) }
+        set { startRealTimeAnalysisState.withLock { $0.handler = newValue } }
+    }
+    func startRealTimeAnalysis(format: AVAudioFormat) {
+        warnIfNotSendable(format)
+        let startRealTimeAnalysisHandler = startRealTimeAnalysisState.withLock { state in
+            state.callCount += 1
+            state.argValues.append(.init((format)))
+            return state.handler
+        }
+        if let startRealTimeAnalysisHandler = startRealTimeAnalysisHandler {
+            startRealTimeAnalysisHandler(format)
+        }
+        
+    }
+
+    private let stopRealTimeAnalysisState = MockoloMutex(MockoloHandlerState<Never, @Sendable () -> ()>())
+    var stopRealTimeAnalysisCallCount: Int {
+        return stopRealTimeAnalysisState.withLock(\.callCount)
+    }
+    var stopRealTimeAnalysisHandler: (@Sendable () -> ())? {
+        get { stopRealTimeAnalysisState.withLock(\.handler) }
+        set { stopRealTimeAnalysisState.withLock { $0.handler = newValue } }
+    }
+    func stopRealTimeAnalysis() {
+        let stopRealTimeAnalysisHandler = stopRealTimeAnalysisState.withLock { state in
+            state.callCount += 1
+            return state.handler
+        }
+        if let stopRealTimeAnalysisHandler = stopRealTimeAnalysisHandler {
+            stopRealTimeAnalysisHandler()
+        }
+        
     }
 }
 
@@ -654,18 +2018,18 @@ final class TextRecognitionServiceProtocolMock: TextRecognitionServiceProtocol, 
     init() { }
 
 
-    private let recognizeTextState = MockoloMutex(MockoloHandlerState<(image: CIImage, time: CMTime), @Sendable (CIImage, CMTime) async throws -> [RecognizedText]>())
+    private let recognizeTextState = MockoloMutex(MockoloHandlerState<(image: CIImage, time: CMTime), @Sendable (CIImage, CMTime) async throws -> [SaneVideo.RecognizedText]>())
     var recognizeTextCallCount: Int {
         return recognizeTextState.withLock(\.callCount)
     }
     var recognizeTextArgValues: [(image: CIImage, time: CMTime)] {
         return recognizeTextState.withLock(\.argValues).map(\.value)
     }
-    var recognizeTextHandler: (@Sendable (CIImage, CMTime) async throws -> [RecognizedText])? {
+    var recognizeTextHandler: (@Sendable (CIImage, CMTime) async throws -> [SaneVideo.RecognizedText])? {
         get { recognizeTextState.withLock(\.handler) }
         set { recognizeTextState.withLock { $0.handler = newValue } }
     }
-    func recognizeText(in image: CIImage, at time: CMTime) async throws -> [RecognizedText] {
+    func recognizeText(in image: CIImage, at time: CMTime) async throws -> [SaneVideo.RecognizedText] {
         warnIfNotSendable(image, time)
         let recognizeTextHandler = recognizeTextState.withLock { state in
             state.callCount += 1
@@ -675,21 +2039,21 @@ final class TextRecognitionServiceProtocolMock: TextRecognitionServiceProtocol, 
         if let recognizeTextHandler = recognizeTextHandler {
             return try await recognizeTextHandler(image, time)
         }
-        return [RecognizedText]()
+        return [SaneVideo.RecognizedText]()
     }
 
-    private let scanVideoForTextState = MockoloMutex(MockoloHandlerState<(videoURL: URL, sampleInterval: TimeInterval), @Sendable (URL, TimeInterval, (@Sendable (Int, Int) -> Void)?) async throws -> [RecognizedText]>())
+    private let scanVideoForTextState = MockoloMutex(MockoloHandlerState<(videoURL: URL, sampleInterval: TimeInterval), @Sendable (URL, TimeInterval, (@Sendable (Int, Int) -> Void)?) async throws -> [SaneVideo.RecognizedText]>())
     var scanVideoForTextCallCount: Int {
         return scanVideoForTextState.withLock(\.callCount)
     }
     var scanVideoForTextArgValues: [(videoURL: URL, sampleInterval: TimeInterval)] {
         return scanVideoForTextState.withLock(\.argValues).map(\.value)
     }
-    var scanVideoForTextHandler: (@Sendable (URL, TimeInterval, (@Sendable (Int, Int) -> Void)?) async throws -> [RecognizedText])? {
+    var scanVideoForTextHandler: (@Sendable (URL, TimeInterval, (@Sendable (Int, Int) -> Void)?) async throws -> [SaneVideo.RecognizedText])? {
         get { scanVideoForTextState.withLock(\.handler) }
         set { scanVideoForTextState.withLock { $0.handler = newValue } }
     }
-    func scanVideoForText(videoURL: URL, sampleInterval: TimeInterval, progressHandler: (@Sendable (Int, Int) -> Void)?) async throws -> [RecognizedText] {
+    func scanVideoForText(videoURL: URL, sampleInterval: TimeInterval, progressHandler: (@Sendable (Int, Int) -> Void)?) async throws -> [SaneVideo.RecognizedText] {
         warnIfNotSendable(videoURL, sampleInterval)
         let scanVideoForTextHandler = scanVideoForTextState.withLock { state in
             state.callCount += 1
@@ -699,21 +2063,21 @@ final class TextRecognitionServiceProtocolMock: TextRecognitionServiceProtocol, 
         if let scanVideoForTextHandler = scanVideoForTextHandler {
             return try await scanVideoForTextHandler(videoURL, sampleInterval, progressHandler)
         }
-        return [RecognizedText]()
+        return [SaneVideo.RecognizedText]()
     }
 
-    private let findSensitiveTextState = MockoloMutex(MockoloHandlerState<(image: CIImage, types: [TextType], time: CMTime), @Sendable (CIImage, [TextType], CMTime) async throws -> [RecognizedText]>())
+    private let findSensitiveTextState = MockoloMutex(MockoloHandlerState<(image: CIImage, types: [TextType], time: CMTime), @Sendable (CIImage, [TextType], CMTime) async throws -> [SaneVideo.RecognizedText]>())
     var findSensitiveTextCallCount: Int {
         return findSensitiveTextState.withLock(\.callCount)
     }
     var findSensitiveTextArgValues: [(image: CIImage, types: [TextType], time: CMTime)] {
         return findSensitiveTextState.withLock(\.argValues).map(\.value)
     }
-    var findSensitiveTextHandler: (@Sendable (CIImage, [TextType], CMTime) async throws -> [RecognizedText])? {
+    var findSensitiveTextHandler: (@Sendable (CIImage, [TextType], CMTime) async throws -> [SaneVideo.RecognizedText])? {
         get { findSensitiveTextState.withLock(\.handler) }
         set { findSensitiveTextState.withLock { $0.handler = newValue } }
     }
-    func findSensitiveText(in image: CIImage, types: [TextType], at time: CMTime) async throws -> [RecognizedText] {
+    func findSensitiveText(in image: CIImage, types: [TextType], at time: CMTime) async throws -> [SaneVideo.RecognizedText] {
         warnIfNotSendable(image, types, time)
         let findSensitiveTextHandler = findSensitiveTextState.withLock { state in
             state.callCount += 1
@@ -723,7 +2087,7 @@ final class TextRecognitionServiceProtocolMock: TextRecognitionServiceProtocol, 
         if let findSensitiveTextHandler = findSensitiveTextHandler {
             return try await findSensitiveTextHandler(image, types, time)
         }
-        return [RecognizedText]()
+        return [SaneVideo.RecognizedText]()
     }
 }
 

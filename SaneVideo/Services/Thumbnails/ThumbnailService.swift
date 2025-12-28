@@ -43,7 +43,7 @@ enum ThumbnailScoringStrategy: Sendable {
 /// Service responsible for generating and caching video thumbnails
 /// Optimized for scrolling performance on M1+
 /// Consolidated: Handles both on-demand timeline thumbnails and "best" thumbnail generation
-actor ThumbnailService {
+actor ThumbnailService: ThumbnailServiceProtocol {
 
     // MARK: - Caching
 

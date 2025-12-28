@@ -13,7 +13,7 @@ import Foundation
 /// Real-time audio processor that applies effects during playback
 /// Taps AVPlayer audio and processes it through effects in real-time
 @MainActor
-final class RealTimeAudioProcessor {
+final class RealTimeAudioProcessor: RealTimeAudioProcessorProtocol {
     
     // MARK: - Properties
     

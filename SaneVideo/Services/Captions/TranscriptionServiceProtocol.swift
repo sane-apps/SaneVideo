@@ -8,6 +8,7 @@
 import AVFoundation
 import Foundation
 
+/// @mockable
 /// Protocol for transcription services
 /// Allows switching between different engines (Apple Speech, WhisperKit, etc.)
 protocol TranscriptionServiceProtocol: Actor {

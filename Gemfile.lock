@@ -230,6 +230,7 @@ GEM
     simctl (1.6.10)
       CFPropertyList
       naturally
+    slack-notifier (2.4.0)
     strings (0.2.1)
       strings-ansi (~> 0.2)
       unicode-display_width (>= 1.5, < 3.0)
@@ -270,6 +271,15 @@ GEM
       colored2 (~> 3.1)
       nanaimo (~> 0.4.0)
       rexml (>= 3.3.6, < 4.0)
+    xcov (1.9.0)
+      abbrev
+      fastlane (>= 2.141.0, < 3.0.0)
+      multipart-post
+      nkf
+      slack-notifier
+      terminal-table
+      xcodeproj
+      xcresult (~> 0.2.0)
     xcpretty (0.4.1)
       rouge (~> 3.28.0)
     xcpretty-travis-formatter (1.0.1)
@@ -290,9 +300,9 @@ DEPENDENCIES
   tty-spinner (~> 0.9)
   tty-table (~> 0.12)
   xcodeproj (~> 1.27)
+  xcov (~> 1.8)
   xcpretty (~> 0.3)
   xcresult (~> 0.1)
-
 
 BUNDLED WITH
    2.4.22

@@ -55,6 +55,10 @@
 2. **VERIFY LOGS ALWAYS**: Run `./Scripts/SaneMaster.rb diagnose --dump` after every build/test to see runtime logs (e.g. `ProjectStore initialized at...`).
 3. **FILE CREATION = XCODEGEN**: If you create a new file, run `xcodegen generate` immediately.
 4. **FILE SIZE LIMITS**: Soft limit **500 lines** (warning), hard limit **800 lines** (error). Files 500-800 lines trigger SwiftLint warnings but commits are allowed. Files over 800 lines are blocked.
+   - **Split by responsibility, not by line count.** A well-constructed 650-line file with clear MARK sections and single responsibility is preferable to two files that break logical cohesion.
+   - **Good splits**: Protocol conformances (delegates), feature domains (ClipManagement, Analysis), lifecycle concerns (Setup, Switching).
+   - **Bad splits**: Arbitrary cuts just to hit a number.
+   - The limits exist to trigger review ("is this file doing too much?"), not mandate splitting.
 5. **SAFETY FIRST**: Every bug fix **MUST** have a regression test. Create tests as you go using `./Scripts/SaneMaster.rb gen_test`.
 6. **SDK IS THE SOURCE OF TRUTH (CRITICAL)**:
    - **NEVER trust web search for API existence or signatures**.

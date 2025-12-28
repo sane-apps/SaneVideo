@@ -26,6 +26,8 @@ struct RepurposingSheet: View {
     @State private var analysisProgress: Double = 0.0
     @State private var error: Error?
     @State private var showingError = false
+    @State private var isExporting = false
+    @State private var exportProgress: Double = 0.0
 
     // MARK: - Computed Properties
 
@@ -38,7 +40,7 @@ struct RepurposingSheet: View {
     }
 
     private var canExport: Bool {
-        !selectedCandidateIds.isEmpty && !isAnalyzing
+        !selectedCandidateIds.isEmpty && !isAnalyzing && !isExporting
     }
 
     // MARK: - Body
@@ -103,6 +105,14 @@ struct RepurposingSheet: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                     ProgressView(value: analysisProgress)
+                        .frame(width: 120)
+                }
+            } else if isExporting {
+                VStack(alignment: .trailing, spacing: 4) {
+                    Text("Exporting...")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    ProgressView(value: exportProgress)
                         .frame(width: 120)
                 }
             }
@@ -380,16 +390,58 @@ struct RepurposingSheet: View {
     }
 
     private func exportSelectedShorts() {
-        guard !selectedCandidates.isEmpty else { return }
+        guard let clip = sourceClip, !selectedCandidates.isEmpty else { return }
 
-        // TODO: Integrate with BatchExportService
-        // For now, show success toast
-        ServiceContainer.shared.toastManager.show(
-            "Exporting \(selectedCandidates.count) shorts...",
-            type: .info
-        )
+        isExporting = true
+        exportProgress = 0.0
 
-        dismiss()
+        Task {
+            let batchService = BatchExportService()
+
+            do {
+                let outputURLs = try await batchService.exportShorts(
+                    selectedCandidates,
+                    from: clip.url,
+                    settings: settings
+                ) { progress in
+                    Task { @MainActor in
+                        self.exportProgress = progress
+                    }
+                }
+
+                await MainActor.run {
+                    isExporting = false
+
+                    if outputURLs.isEmpty {
+                        ServiceContainer.shared.toastManager.show(
+                            "No shorts were exported",
+                            type: .info
+                        )
+                    } else {
+                        ServiceContainer.shared.toastManager.show(
+                            "Exported \(outputURLs.count) short\(outputURLs.count == 1 ? "" : "s") to ~/Movies/SaneVideo/Shorts",
+                            type: .success
+                        )
+
+                        // Open the output folder
+                        if let firstURL = outputURLs.first {
+                            NSWorkspace.shared.selectFile(
+                                firstURL.path,
+                                inFileViewerRootedAtPath: firstURL.deletingLastPathComponent().path
+                            )
+                        }
+                    }
+
+                    dismiss()
+                }
+            } catch {
+                await MainActor.run {
+                    self.error = error
+                    self.showingError = true
+                    self.isExporting = false
+                }
+            }
+        }
     }
 }
 

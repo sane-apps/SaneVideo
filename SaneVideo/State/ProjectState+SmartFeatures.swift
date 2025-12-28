@@ -530,8 +530,7 @@ extension ProjectState {
         }
 
         do {
-            let captions = try await coordinator.generateCaptions(for: clip.url) {
-                chunk, total, eta in
+            let captions = try await coordinator.generateCaptions(for: clip.url) { chunk, total, eta in
                 if tracker.shouldUpdate() || chunk == 1 || chunk == total {
                     Task { @MainActor in
                         let percent = Double(chunk) / Double(total)

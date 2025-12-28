@@ -542,9 +542,9 @@ class PiPCameraWindow: NSPanel {
             // Show size name toast
             let currentPreset = PiPSize.fromWidth(frame.width)
             let sizeName = switch currentPreset {
-                case .small: "Small"
-                case .medium: "Medium"
-                case .large: "Large"
+            case .small: "Small"
+            case .medium: "Medium"
+            case .large: "Large"
             }
             ServiceContainer.shared.toastManager.show("PiP: \(sizeName)")
         }

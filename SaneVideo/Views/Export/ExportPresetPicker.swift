@@ -133,7 +133,7 @@ struct TemplateQuickApplyButton: View {
 
 #Preview {
     @Previewable @State var settings = SaneExportSettings()
-    @Previewable @State var preset: ExportPreset? = nil
+    @Previewable @State var preset: ExportPreset?
 
     ExportPresetPicker(
         exportSettings: $settings,

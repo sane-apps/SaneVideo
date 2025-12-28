@@ -35,9 +35,8 @@ extension ScreenRecorder: SCStreamOutput {
 
         case .audio:
             if !loggedScreenAudioFormat,
-                let format = CMSampleBufferGetFormatDescription(sampleBuffer),
-                let asbdPointer = CMAudioFormatDescriptionGetStreamBasicDescription(format)?.pointee
-            {
+               let format = CMSampleBufferGetFormatDescription(sampleBuffer),
+               let asbdPointer = CMAudioFormatDescriptionGetStreamBasicDescription(format)?.pointee {
                 AppLogger.recording.info(
                     "Screen audio format sampleRate=\(asbdPointer.mSampleRate), " +
                     "channels=\(asbdPointer.mChannelsPerFrame), formatID=\(asbdPointer.mFormatID)"

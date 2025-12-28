@@ -17,6 +17,12 @@ actor BatchExportService {
     private let logger = Logger(subsystem: "com.sanevideo.app", category: "BatchExport")
     private var isExporting = false
 
+    /// Export context for single short (reduces parameter count)
+    private struct ExportContext {
+        let outputDirectory: URL
+        let index: Int
+    }
+
     // MARK: - Public API
 
     /// Export multiple short candidates from a source video
@@ -53,12 +59,12 @@ actor BatchExportService {
             let baseProgress = Double(index) / Double(totalCount)
 
             do {
+                let context = ExportContext(outputDirectory: outputDir, index: index + 1)
                 let outputURL = try await exportSingleShort(
                     candidate: candidate,
                     from: sourceURL,
                     settings: settings,
-                    outputDirectory: outputDir,
-                    index: index + 1
+                    context: context
                 ) { individualProgress in
                     let overallProgress = baseProgress + (individualProgress / Double(totalCount))
                     progressHandler(overallProgress)
@@ -100,8 +106,7 @@ actor BatchExportService {
         candidate: ShortCandidate,
         from sourceURL: URL,
         settings: RepurposingSettings,
-        outputDirectory: URL,
-        index: Int,
+        context: ExportContext,
         progressHandler: @escaping @Sendable (Double) -> Void
     ) async throws -> URL {
         let asset = AVURLAsset(url: sourceURL)
@@ -155,8 +160,8 @@ actor BatchExportService {
 
         // Generate output filename
         let timestamp = DateFormatter.shortExportFormatter.string(from: Date())
-        let filename = "Short_\(index)_\(timestamp).mp4"
-        let outputURL = outputDirectory.appendingPathComponent(filename)
+        let filename = "Short_\(context.index)_\(timestamp).mp4"
+        let outputURL = context.outputDirectory.appendingPathComponent(filename)
 
         // Remove existing file if present
         try? FileManager.default.removeItem(at: outputURL)

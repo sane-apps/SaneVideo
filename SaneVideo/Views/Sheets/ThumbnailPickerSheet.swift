@@ -70,6 +70,7 @@ struct ThumbnailPickerSheet: View {
             footer
         }
         .frame(width: 600, height: 700)
+        .subtleGlass(radius: 12)
         .task { await loadCandidates() }
         .onChange(of: selectedIndex) { _, _ in updateStyledPreview() }
         .onChange(of: selectedStyle) { _, _ in applyPreset(); updateStyledPreview() }

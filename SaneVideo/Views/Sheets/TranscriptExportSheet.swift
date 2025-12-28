@@ -106,6 +106,7 @@ struct TranscriptExportSheet: View {
             )
         }
         .frame(width: 450, height: 480)
+        .subtleGlass(radius: 12)
     }
 
     // MARK: - Sections

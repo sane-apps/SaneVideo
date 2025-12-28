@@ -79,6 +79,7 @@ struct GIFExportSheet: View {
             )
         }
         .frame(width: 420, height: 520)
+        .subtleGlass(radius: 12)
         .onAppear {
             endTime = clipDuration
             updateSizeEstimate()

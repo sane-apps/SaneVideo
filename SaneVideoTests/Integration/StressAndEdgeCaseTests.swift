@@ -28,7 +28,8 @@ final class StressAndEdgeCaseTests: XCTestCase {
         super.setUp()
         projectState = ProjectState()
 
-        testAssetURL = URL(fileURLWithPath: "/Users/sj/SaneVideo/Tests/Assets/test_silence.mp4")
+        // Prefer test_silence.mp4 for stress tests, fall back to default
+        testAssetURL = TestEnvironment.testAsset(named: "test_silence.mp4")
         if !FileManager.default.fileExists(atPath: testAssetURL.path) {
             testAssetURL = TestEnvironment.mockAssetURL
         }

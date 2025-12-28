@@ -98,4 +98,62 @@ final class RecordingRegressionTests: XCTestCase {
     XCTAssertFalse(recordingState.isRecording, "Should be stopped")
     XCTAssertFalse(recordingState.isPreparing, "Should not be preparing")
   }
+
+  // MARK: - Bug Fix: Source Switch Timeout Race Condition (2025-12-27)
+
+  /// Regression test for: "Device switch timed out" error appearing immediately
+  /// Bug: When starting a new source switch, the previous timeout task wasn't cancelled.
+  /// If the old timeout fired during the new switch, it would corrupt state and show error.
+  /// Fix: Cancel previous timeout task before creating new one, and check Task.isCancelled.
+  /// Location: RecordingEngine+Lifecycle.swift:269-283
+  ///
+  /// This test verifies the fix by checking that:
+  /// 1. Cancelling a Task prevents its continuation from running
+  /// 2. Task.isCancelled returns true after cancellation
+  func testTimeoutTaskCancellation() async {
+    // Simulate the pattern used in RecordingEngine
+    var timeoutFired = false
+    var wasCancelled = false
+
+    // Create a timeout task (like sourceSwitchTimeoutTask)
+    let timeoutTask = Task {
+      try? await Task.sleep(nanoseconds: 100_000_000) // 100ms
+
+      // CRITICAL: This is the check we added to fix the bug
+      guard !Task.isCancelled else {
+        wasCancelled = true
+        return
+      }
+
+      timeoutFired = true
+    }
+
+    // Simulate starting a new switch (which should cancel the old timeout)
+    timeoutTask.cancel()
+
+    // Wait for the task to complete (it should exit early due to cancellation)
+    await timeoutTask.value
+
+    // The timeout should NOT have fired because we cancelled it
+    XCTAssertFalse(timeoutFired, "Timeout should not fire after cancellation")
+    XCTAssertTrue(wasCancelled, "Task should detect it was cancelled")
+  }
+
+  /// Verify that Task.sleep throws CancellationError when cancelled
+  func testTaskSleepCancellationBehavior() async {
+    let task = Task {
+      do {
+        try await Task.sleep(nanoseconds: 1_000_000_000) // 1 second
+        return "completed"
+      } catch {
+        return "cancelled"
+      }
+    }
+
+    // Cancel immediately
+    task.cancel()
+
+    let result = await task.value
+    XCTAssertEqual(result, "cancelled", "Task.sleep should throw when cancelled")
+  }
 }

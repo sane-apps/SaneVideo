@@ -55,33 +55,27 @@ final class ExportPipelineIntegrationTests: XCTestCase {
 
     private func getTestAssetURL() -> URL {
         // Use test_silence.mp4 first for stable, fast tests
-        let silenceAsset = URL(fileURLWithPath: "/Users/sj/SaneVideo/Tests/Assets/test_silence.mp4")
+        let silenceAsset = TestEnvironment.testAsset(named: "test_silence.mp4")
         if FileManager.default.fileExists(atPath: silenceAsset.path) {
             return silenceAsset
         }
 
-        // Fall back to test_video.mp4
-        let testVideo = URL(fileURLWithPath: "/Users/sj/SaneVideo/Tests/Assets/test_video.mp4")
-        if FileManager.default.fileExists(atPath: testVideo.path) {
-            return testVideo
-        }
-
-        // Use TestEnvironment fallback
+        // Fall back to default test asset
         return TestEnvironment.mockAssetURL
     }
 
     /// Returns a variety of test assets for more comprehensive testing
     private func getAllTestAssets() -> [URL] {
-        let assetPaths = [
-            "/Users/sj/SaneVideo/Tests/Assets/IMG_6091.MOV",      // 33MB - medium
-            "/Users/sj/SaneVideo/Tests/Assets/test_silence.mp4",  // 185KB - small
-            "/Users/sj/SaneVideo/Tests/Assets/IMG_0422.MOV",      // 490MB - large
-            "/Users/sj/SaneVideo/Tests/Assets/IMG_7668.MOV"       // 565MB - large
+        let assetNames = [
+            "IMG_6091.MOV",      // 33MB - medium
+            "test_silence.mp4",  // 185KB - small
+            "IMG_0422.MOV",      // 490MB - large
+            "IMG_7668.MOV"       // 565MB - large
         ]
 
-        return assetPaths.compactMap { path in
-            let url = URL(fileURLWithPath: path)
-            return FileManager.default.fileExists(atPath: path) ? url : nil
+        return assetNames.compactMap { name in
+            let url = TestEnvironment.testAsset(named: name)
+            return FileManager.default.fileExists(atPath: url.path) ? url : nil
         }
     }
 

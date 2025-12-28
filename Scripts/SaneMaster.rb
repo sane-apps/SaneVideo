@@ -112,6 +112,7 @@ class SaneMaster
     when 'crash_report', 'crashes' then analyze_crashes(args)
     when 'launch', 'run' then launch_app(args)
     when 'logs' then show_app_logs(args)
+    when 'test_mode', 'tm' then enter_test_mode(args)
     when 'console'
       require 'pry'
       # rubocop:disable Lint/Debugger
@@ -963,11 +964,21 @@ class SaneMaster
           --details (-d): Show individual crash details
           --recent (-r): Last 24 hours only
 
-        logs [--tail N] [--follow] [--exported]
+        logs [--tail N] [--follow]
           Show SaneVideo application logs
           --tail N: Show last N lines (default: 50)
           --follow (-f): Follow log file (like tail -f)
-          --exported (-e): Show manually exported log from ~/Downloads/
+          Log location: ~/Movies/SaneVideo/SaneVideo_Debug.log
+
+        test_mode (or tm)
+          Enter interactive debugging workflow:
+          1. Kill existing app instances
+          2. Show recent screenshots (Screenshots/)
+          3. Show recent crash reports
+          4. Build the app
+          5. Launch the app
+          6. Show log file status
+          Use when user says "test mode" to prepare clean debugging environment
 
         check_binary
           Audit binary for security issues
@@ -2357,108 +2368,171 @@ class SaneMaster
     puts "  ℹ️  #{test_crashes} crash(es) in test cleanup - review async test handling"
   end
 
+  def enter_test_mode(args)
+    puts '🧪 --- [ TEST MODE ] ---'
+    puts 'Preparing clean testing environment...'
+    puts ''
+
+    screenshots_dir = File.join(Dir.pwd, 'Screenshots')
+    log_file = File.expand_path('~/Movies/SaneVideo/SaneVideo_Debug.log')
+    crash_dir = File.expand_path('~/Library/Logs/DiagnosticReports')
+
+    # Step 1: Kill any running instances
+    puts '1️⃣  Killing existing SaneVideo processes...'
+    system('killall -9 SaneVideo 2>/dev/null')
+    puts '   ✅ Done'
+    puts ''
+
+    # Step 2: Show recent screenshots
+    puts '2️⃣  Screenshots in project:'
+    if Dir.exist?(screenshots_dir)
+      screenshots = Dir.glob(File.join(screenshots_dir, '*.png')).sort_by { |f| File.mtime(f) }.reverse
+      if screenshots.any?
+        puts "   📁 #{screenshots_dir}"
+        screenshots.first(5).each do |f|
+          mtime = File.mtime(f).strftime('%Y-%m-%d %H:%M:%S')
+          puts "   📸 #{File.basename(f)} (#{mtime})"
+        end
+        puts "   ... and #{screenshots.count - 5} more" if screenshots.count > 5
+        puts ''
+        puts '   💡 To clear old screenshots: rm Screenshots/*.png'
+      else
+        puts '   (no screenshots found)'
+      end
+    else
+      puts "   (screenshots directory doesn't exist)"
+    end
+    puts ''
+
+    # Step 3: Show recent crash/hang reports
+    puts '3️⃣  Recent diagnostic reports:'
+    crash_files = Dir.glob(File.join(crash_dir, 'SaneVideo-*.ips')).sort_by { |f| File.mtime(f) }.reverse
+    hang_files = Dir.glob(File.join(crash_dir, 'SaneVideo-*.{spin,hang}')).sort_by { |f| File.mtime(f) }.reverse
+
+    if crash_files.any?
+      puts '   Crashes:'
+      crash_files.first(3).each do |f|
+        mtime = File.mtime(f).strftime('%Y-%m-%d %H:%M:%S')
+        puts "   💥 #{File.basename(f)} (#{mtime})"
+      end
+      puts "   ... and #{crash_files.count - 3} more crashes" if crash_files.count > 3
+    else
+      puts '   💥 No crash reports'
+    end
+
+    if hang_files.any?
+      puts '   Hangs/Spins:'
+      hang_files.first(2).each do |f|
+        mtime = File.mtime(f).strftime('%Y-%m-%d %H:%M:%S')
+        puts "   🔄 #{File.basename(f)} (#{mtime})"
+      end
+    end
+
+    # Check for recent xcresult bundles
+    xcresult_dir = File.expand_path('~/Library/Developer/Xcode/DerivedData')
+    xcresults = Dir.glob(File.join(xcresult_dir, 'SaneVideo-*/Logs/Test/*.xcresult')).sort_by { |f| File.mtime(f) }.reverse
+    if xcresults.any?
+      latest = xcresults.first
+      mtime = File.mtime(latest).strftime('%Y-%m-%d %H:%M:%S')
+      puts "   📊 Latest test result: #{File.basename(latest)} (#{mtime})"
+    end
+    puts ''
+
+    # Step 4: Build the app
+    puts '4️⃣  Building app...'
+    build_success = system('xcodebuild -scheme SaneVideo -destination "platform=macOS" build 2>&1 | grep -E "(BUILD|error:)" | tail -5')
+    unless build_success
+      puts '   ❌ Build failed! Fix errors before continuing.'
+      return
+    end
+    puts '   ✅ Build succeeded'
+    puts ''
+
+    # Step 5: Launch the app
+    puts '5️⃣  Launching app...'
+    launch_app([])
+    sleep 2
+    puts ''
+
+    # Step 6: Show log file status
+    puts '6️⃣  Debug log status:'
+    if File.exist?(log_file)
+      mtime = File.mtime(log_file).strftime('%Y-%m-%d %H:%M:%S')
+      size = (File.size(log_file) / 1024.0).round(1)
+      puts "   📋 #{log_file}"
+      puts "   📅 Last updated: #{mtime} (#{size}KB)"
+    else
+      puts '   (log file not created yet - will appear after app runs)'
+    end
+    puts ''
+
+    puts '═' * 60
+    puts '🧪 TEST MODE READY'
+    puts '═' * 60
+    puts ''
+    puts 'Diagnostic commands:'
+    puts '  ./Scripts/SaneMaster.rb logs --follow    # Watch debug log live'
+    puts '  ./Scripts/SaneMaster.rb logs             # Show recent debug log'
+    puts '  ./Scripts/SaneMaster.rb crashes          # Analyze crash reports'
+    puts '  ./Scripts/SaneMaster.rb diagnose         # Analyze latest xcresult'
+    puts '  open Screenshots/                        # View screenshots'
+    puts ''
+    puts 'All diagnostic locations:'
+    puts '  📋 Debug log:    ~/Movies/SaneVideo/SaneVideo_Debug.log'
+    puts '  📸 Screenshots:  Screenshots/'
+    puts '  💥 Crashes:      ~/Library/Logs/DiagnosticReports/SaneVideo-*.ips'
+    puts '  📊 Test results: ~/Library/Developer/Xcode/DerivedData/SaneVideo-*/Logs/Test/'
+    puts ''
+    puts 'Session timestamps to cross-reference:'
+    puts "  🕐 Session started: #{Time.now.strftime('%Y-%m-%d %H:%M:%S')}"
+    puts ''
+
+    # Post-fix checklist reminder
+    puts '⚠️  POST-FIX CHECKLIST (after each bug fix):'
+    puts '  [ ] Regression test added?'
+    puts '  [ ] Similar bugs checked elsewhere?'
+    puts '  [ ] Changes committed to git?'
+    puts '  [ ] Can explain fix in plain English?'
+    puts ''
+  end
+
   def show_app_logs(args)
     puts '📋 --- [ APPLICATION LOGS ] ---'
 
-    # Two possible log locations:
-    # 1. File-based logs (new): ~/Library/Logs/SaneVideo/
-    # 2. Exported logs (manual): ~/Downloads/SaneVideo_Debug.log
-    log_dir = File.expand_path('~/Library/Logs/SaneVideo')
-    downloads_log = File.expand_path('~/Downloads/SaneVideo_Debug.log')
-    today = Time.now.strftime('%Y-%m-%d')
+    # Primary log location: ~/Movies/SaneVideo/SaneVideo_Debug.log
+    # This file is overwritten on each app launch for easy debugging
+    log_file = File.expand_path('~/Movies/SaneVideo/SaneVideo_Debug.log')
 
     # Parse options
     tail_count = 50
     follow_mode = args.include?('--follow') || args.include?('-f')
-    show_exported = args.include?('--exported') || args.include?('-e')
 
     args.each_with_index do |arg, i|
       tail_count = args[i + 1].to_i if arg == '--tail' && args[i + 1]
     end
 
-    # Check for exported debug log (from app's "Export to File" button)
-    if File.exist?(downloads_log)
-      mtime = File.mtime(downloads_log)
-      size = File.size(downloads_log) / 1024.0
-      puts '📥 Exported debug log: ~/Downloads/SaneVideo_Debug.log'
-      puts "   Last updated: #{mtime.strftime('%Y-%m-%d %H:%M:%S')} (#{size.round(1)}KB)"
-      puts '   Use --exported (-e) to view this file'
+    unless File.exist?(log_file)
+      puts '❌ No log file found at: ~/Movies/SaneVideo/SaneVideo_Debug.log'
       puts ''
-    end
-
-    # If user wants exported log
-    if show_exported
-      if File.exist?(downloads_log)
-        puts '📖 Showing exported log: ~/Downloads/SaneVideo_Debug.log'
-        puts '─' * 60
-        lines = File.readlines(downloads_log)
-        if lines.length > tail_count
-          puts "(showing last #{tail_count} of #{lines.length} lines)"
-          puts ''
-          puts lines.last(tail_count).join
-        else
-          puts lines.join
-        end
-      else
-        puts '❌ No exported log found at ~/Downloads/SaneVideo_Debug.log'
-        puts "   Open the app's Log View and click 'Export to File' to create one."
-      end
+      puts 'To generate logs:'
+      puts '  1. Rebuild the app: ./Scripts/SaneMaster.rb verify'
+      puts '  2. Launch the app: ./Scripts/SaneMaster.rb launch'
+      puts '  3. Run this command again'
       return
     end
 
-    # Check for file-based logs
-    log_files = Dir.exist?(log_dir) ? Dir.glob(File.join(log_dir, 'SaneVideo-*.log')).sort.reverse : []
-
-    if log_files.empty?
-      puts '📁 File-based logs: Not yet created'
-      puts ''
-      puts 'File-based logging was just added. After rebuilding and running the app,'
-      puts 'logs will appear at: ~/Library/Logs/SaneVideo/'
-      puts ''
-
-      # Fall back to exported log if available
-      if File.exist?(downloads_log)
-        puts "💡 Showing exported debug log instead (from app's Export button):"
-        puts '─' * 60
-        lines = File.readlines(downloads_log)
-        puts lines.last([tail_count, lines.length].min).join
-      else
-        puts 'To generate logs:'
-        puts '  1. Rebuild the app: ./Scripts/SaneMaster.rb verify'
-        puts '  2. Run the app and use features'
-        puts '  3. Run this command again'
-      end
-      return
-    end
-
-    puts "📁 Log directory: #{log_dir}"
-    puts '📄 Available logs:'
-    log_files.first(5).each do |f|
-      size = File.size(f) / 1024.0
-      size_str = size >= 1 ? "#{size.round(1)}KB" : "#{(size * 1024).round}B"
-      is_today = File.basename(f).include?(today) ? ' (today)' : ''
-      puts "   #{File.basename(f)} (#{size_str})#{is_today}"
-    end
-    puts ''
-
-    # Show today's log or most recent
-    log_file = File.join(log_dir, "SaneVideo-#{today}.log")
-    target_file = File.exist?(log_file) ? log_file : log_files.first
-
-    unless target_file && File.exist?(target_file)
-      puts '❌ No log file to display'
-      return
-    end
-
-    puts "📖 Showing: #{File.basename(target_file)}"
+    mtime = File.mtime(log_file)
+    size = File.size(log_file) / 1024.0
+    puts "📁 Log file: ~/Movies/SaneVideo/SaneVideo_Debug.log"
+    puts "   Last updated: #{mtime.strftime('%Y-%m-%d %H:%M:%S')} (#{size.round(1)}KB)"
     puts '─' * 60
 
     if follow_mode
       puts 'Following log file (Ctrl+C to stop)...'
       puts ''
-      exec("tail -f '#{target_file}'")
+      exec("tail -f '#{log_file}'")
     else
-      lines = File.readlines(target_file)
+      lines = File.readlines(log_file)
       if lines.length > tail_count
         puts "(showing last #{tail_count} of #{lines.length} lines)"
         puts ''

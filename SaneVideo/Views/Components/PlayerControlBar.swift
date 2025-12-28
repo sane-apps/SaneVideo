@@ -12,18 +12,19 @@ import SwiftUI
 struct PlayerControlBar: View {
     var playbackState: PlaybackState
     var projectState: ProjectState
+    @Binding var displayMode: VideoDisplayMode
 
     var body: some View {
         HStack {
             // Left: Timecode
             HStack(spacing: 4) {
                 Text(timecodeString(from: playbackState.currentTime))
-                    .foregroundColor(.white)
+                    .foregroundColor(.primary)
                     .fontWeight(.medium)
                 Text("/")
-                    .foregroundColor(.gray)
+                    .foregroundColor(.secondary)
                 Text(timecodeString(from: projectState.currentProject?.timeline.duration ?? .zero))
-                    .foregroundColor(.gray)
+                    .foregroundColor(.secondary)
             }
             .font(.system(size: 11, design: .monospaced))
 
@@ -35,7 +36,7 @@ struct PlayerControlBar: View {
                 Button(action: { playbackState.stepBackward() }, label: {
                     Image(systemName: "backward.frame.fill")
                         .font(.system(size: 14))
-                        .foregroundColor(.white.opacity(0.8))
+                        .foregroundColor(.accentColor)
                 })
                 .buttonStyle(.plain)
                 .hoverScale(1.15)
@@ -49,9 +50,9 @@ struct PlayerControlBar: View {
                     label: {
                         Image(systemName: playbackState.isPlaying ? "pause.fill" : "play.fill")
                             .font(.system(size: 20))
-                            .foregroundColor(.white)
+                            .foregroundColor(.accentColor)
                             .frame(width: 36, height: 36)
-                            .background(Color.white.opacity(0.1), in: Circle())
+                            .background(Color.accentColor.opacity(0.15), in: Circle())
                     }
                 )
                 .buttonStyle(.plain)
@@ -67,7 +68,7 @@ struct PlayerControlBar: View {
                 Button(action: { playbackState.stepForward() }, label: {
                     Image(systemName: "forward.frame.fill")
                         .font(.system(size: 14))
-                        .foregroundColor(.white.opacity(0.8))
+                        .foregroundColor(.accentColor)
                 })
                 .buttonStyle(.plain)
                 .hoverScale(1.15)
@@ -78,23 +79,40 @@ struct PlayerControlBar: View {
 
             Spacer()
 
-            // Right: Balance the layout (same width as left timecode)
-            HStack(spacing: 4) {
-                Text(timecodeString(from: projectState.currentProject?.timeline.duration ?? .zero))
-                    .foregroundColor(.clear) // Invisible but takes space
-                Text("/")
-                    .foregroundColor(.clear)
-                Text(timecodeString(from: .zero))
-                    .foregroundColor(.clear)
+            // Right: Video display mode picker
+            HStack(spacing: 2) {
+                ForEach(VideoDisplayMode.allCases, id: \.self) { mode in
+                    Button(action: {
+                        withAnimation(.easeInOut(duration: 0.15)) {
+                            displayMode = mode
+                        }
+                    }, label: {
+                        Image(systemName: mode.icon)
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundColor(displayMode == mode ? .white : .accentColor)
+                            .frame(width: 28, height: 24)
+                            .background(
+                                displayMode == mode
+                                    ? Color.accentColor
+                                    : Color.accentColor.opacity(0.1)
+                            )
+                            .cornerRadius(4)
+                    })
+                    .buttonStyle(.plain)
+                    .help(mode.label)
+                    .accessibilityIdentifier("player.displayMode.\(mode.rawValue)")
+                }
             }
-            .font(.system(size: 11, design: .monospaced))
+            .padding(3)
+            .background(Color.primary.opacity(0.05), in: RoundedRectangle(cornerRadius: 8))
         }
         .padding(.horizontal, 16)
-        .padding(.vertical, 8)
-        .background(.ultraThinMaterial, in: Capsule())
-        .padding(.bottom, 20)
-        .padding(.horizontal, 24)
-        .frame(maxWidth: .infinity) // Responsive width
+        .padding(.vertical, 10)
+        .background(.regularMaterial, in: Capsule())
+        .shadow(color: .black.opacity(0.15), radius: 8, y: 2)
+        .padding(.bottom, 16)
+        .padding(.horizontal, 20)
+        .frame(maxWidth: .infinity)
     }
 
     // Helper for Visual Effect (since SwiftUI Material is limited on older macOS or specific looks)

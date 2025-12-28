@@ -14,7 +14,8 @@ import SwiftUI
 extension ProjectState {
 
     func recalculateStartTimes(in timeline: inout Timeline) {
-        @AppStorage("magneticTimeline") var magneticTimeline = true
+        // Use UserDefaults directly instead of @AppStorage (property wrapper not valid inside functions)
+        let magneticTimeline = UserDefaults.standard.object(forKey: "magneticTimeline") as? Bool ?? true
 
         for (trackIndex, track) in timeline.tracks.enumerated() {
             var mutableTrack = track
@@ -29,13 +30,17 @@ extension ProjectState {
                         cumulativeTime, mutableTrack.clips[clipIndex].effectiveDuration)
                 }
             } else {
-                for clipIndex in 1..<mutableTrack.clips.count {
-                    let prevClip = mutableTrack.clips[clipIndex - 1]
-                    let prevEnd = CMTimeAdd(prevClip.startTime, prevClip.effectiveDuration)
-                    let currentClip = mutableTrack.clips[clipIndex]
+                // CRITICAL FIX: Guard against empty or single-clip tracks
+                // Range 1..<0 causes "Fatal error: Range requires lowerBound <= upperBound"
+                if mutableTrack.clips.count > 1 {
+                    for clipIndex in 1..<mutableTrack.clips.count {
+                        let prevClip = mutableTrack.clips[clipIndex - 1]
+                        let prevEnd = CMTimeAdd(prevClip.startTime, prevClip.effectiveDuration)
+                        let currentClip = mutableTrack.clips[clipIndex]
 
-                    if currentClip.startTime < prevEnd {
-                        mutableTrack.clips[clipIndex].startTime = prevEnd
+                        if currentClip.startTime < prevEnd {
+                            mutableTrack.clips[clipIndex].startTime = prevEnd
+                        }
                     }
                 }
             }

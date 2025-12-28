@@ -100,42 +100,46 @@ enum AppLogger {
         return libraryDir.appendingPathComponent("Logs/SaneVideo")
     }()
 
-    /// Current log file path - rotates daily
+    /// Current log file path - uses Movies/SaneVideo for app access, overwrites on each launch
     private static var currentLogFile: URL? {
-        guard let logDir = logDirectory else { return nil }
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyy-MM-dd"
-        let filename = "SaneVideo-\(dateFormatter.string(from: Date())).log"
-        return logDir.appendingPathComponent(filename)
+        // Use Movies/SaneVideo directory which the app already has access to
+        guard let moviesDir = FileManager.default.urls(for: .moviesDirectory, in: .userDomainMask).first else {
+            return logDirectory?.appendingPathComponent("SaneVideo.log")
+        }
+        let logDir = moviesDir.appendingPathComponent("SaneVideo")
+        // Ensure directory exists
+        try? FileManager.default.createDirectory(at: logDir, withIntermediateDirectories: true)
+        return logDir.appendingPathComponent("SaneVideo_Debug.log")
     }
 
     /// Thread-safe file writing lock
     private static let fileLock = NSLock()
 
-    /// Enable/disable file logging (enabled by default in DEBUG)
-    #if DEBUG
+    /// Whether we've cleared the log this session (to enable fresh start)
+    nonisolated(unsafe) private static var hasInitializedLog = false
+
+    /// Enable/disable file logging (always enabled for debugging)
     nonisolated(unsafe) static var fileLoggingEnabled = true
-    #else
-    nonisolated(unsafe) static var fileLoggingEnabled = false
-    #endif
 
     /// Write a log message to file (thread-safe)
+    /// First write of each session clears the file for a fresh log
     nonisolated static func writeToFile(_ message: String) {
-        guard fileLoggingEnabled else { return }
+        guard fileLoggingEnabled else {
+            NSLog("📝 AppLogger: fileLoggingEnabled is false")
+            return
+        }
 
         fileLock.lock()
         defer { fileLock.unlock() }
 
-        guard let logDir = logDirectory, let logFile = currentLogFile else {
-            NSLog("📝 AppLogger: logDirectory or currentLogFile is nil")
+        guard let logFile = currentLogFile else {
+            NSLog("📝 AppLogger: currentLogFile is nil")
             return
         }
 
-        // Ensure directory exists
-        do {
-            try FileManager.default.createDirectory(at: logDir, withIntermediateDirectories: true)
-        } catch {
-            NSLog("📝 AppLogger: Failed to create log directory: \(error)")
+        // Debug: print file path once
+        if !hasInitializedLog {
+            NSLog("📝 AppLogger: Will write to \(logFile.path)")
         }
 
         // Format: [2025-12-25 16:30:45] message
@@ -144,22 +148,25 @@ enum AppLogger {
         let timestamp = dateFormatter.string(from: Date())
         let logLine = "[\(timestamp)] \(message)\n"
 
-        // Append to file
-        if let data = logLine.data(using: .utf8) {
-            if FileManager.default.fileExists(atPath: logFile.path) {
-                if let handle = try? FileHandle(forWritingTo: logFile) {
-                    _ = try? handle.seekToEnd()
-                    try? handle.write(contentsOf: data)
-                    try? handle.close()
-                }
-            } else {
-                do {
-                    try data.write(to: logFile)
-                    NSLog("📝 AppLogger: Created log file at \(logFile.path)")
-                } catch {
-                    NSLog("📝 AppLogger: Failed to create log file: \(error)")
-                }
+        guard let data = logLine.data(using: .utf8) else { return }
+
+        // First write of session: overwrite the file (fresh start)
+        if !hasInitializedLog {
+            hasInitializedLog = true
+            do {
+                try data.write(to: logFile)
+                NSLog("📝 AppLogger: Started fresh log at \(logFile.path)")
+            } catch {
+                NSLog("📝 AppLogger: Failed to create log file: \(error)")
             }
+            return
+        }
+
+        // Subsequent writes: append to file
+        if let handle = try? FileHandle(forWritingTo: logFile) {
+            _ = try? handle.seekToEnd()
+            try? handle.write(contentsOf: data)
+            try? handle.close()
         }
     }
 

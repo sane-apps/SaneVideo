@@ -13,25 +13,26 @@ struct PrivacyBadge: View {
     @State private var hasCloudAI: Bool = false
     
     var body: some View {
+        // ACCESSIBILITY FIX: Improved contrast for light mode visibility
         HStack(spacing: 6) {
             Image(systemName: isOnDevice ? "lock.shield.fill" : "cloud.fill")
                 .font(.caption2)
                 .foregroundColor(isOnDevice ? .green : .blue)
-            
+
             Text(isOnDevice ? "100% On-Device" : "Cloud AI (Optional)")
                 .font(.caption2)
-                .fontWeight(.medium)
-                .foregroundColor(.secondary)
+                .fontWeight(.semibold)  // Bolder for better readability
+                .foregroundColor(isOnDevice ? .green : .blue)  // Match icon color for cohesion
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 4)
         .background(
             RoundedRectangle(cornerRadius: 6)
-                .fill(isOnDevice ? Color.green.opacity(0.1) : Color.blue.opacity(0.1))
+                .fill(isOnDevice ? Color.green.opacity(0.15) : Color.blue.opacity(0.15))  // Stronger fill
         )
         .overlay(
             RoundedRectangle(cornerRadius: 6)
-                .stroke(isOnDevice ? Color.green.opacity(0.3) : Color.blue.opacity(0.3), lineWidth: 1)
+                .stroke(isOnDevice ? Color.green.opacity(0.5) : Color.blue.opacity(0.5), lineWidth: 1)  // Stronger border
         )
         .task {
             await updateStatus()

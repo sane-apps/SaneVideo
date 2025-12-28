@@ -105,6 +105,57 @@ final class TimelineRegressionTests: XCTestCase {
       "Second clip should snap to the end of the first clip (5s)")
   }
 
+  // MARK: - Bug Fix: Empty Track Range Crash (2025-12-27)
+
+  /// Regression test for: "Range requires lowerBound <= upperBound" crash
+  /// Bug: In non-magnetic timeline mode, `for clipIndex in 1..<mutableTrack.clips.count`
+  /// crashes when clips.count is 0 because 1..<0 is an invalid range in Swift.
+  /// Fix: Added guard `if mutableTrack.clips.count > 1` before the loop.
+  /// Location: ProjectState+Timeline.swift:33
+  @MainActor
+  func testRecalculateStartTimesWithEmptyTrack() {
+    let projectState = ProjectState()
+    projectState.startNewProject()
+
+    guard var project = projectState.currentProject else {
+      XCTFail("Should have a project")
+      return
+    }
+
+    // Create an empty track (0 clips)
+    var emptyTrack = Track(name: "Empty Track", type: .video, clips: [], zIndex: 0)
+    project.timeline.tracks = [emptyTrack]
+
+    // This should NOT crash - the bug was 1..<0 creating an invalid range
+    projectState.recalculateStartTimes(in: &project.timeline)
+
+    // Verify it completed without crash
+    XCTAssertTrue(true, "recalculateStartTimes should handle empty tracks without crashing")
+  }
+
+  @MainActor
+  func testRecalculateStartTimesWithSingleClipTrack() {
+    let projectState = ProjectState()
+    projectState.startNewProject()
+
+    guard var project = projectState.currentProject else {
+      XCTFail("Should have a project")
+      return
+    }
+
+    // Create a track with exactly 1 clip
+    let videoURL = URL(fileURLWithPath: "/tmp/test.mp4")
+    let clip = VideoClip(
+      url: videoURL, duration: CMTime(seconds: 5, preferredTimescale: 600), startTime: .zero)
+    var singleClipTrack = Track(name: "Single Clip Track", type: .video, clips: [clip], zIndex: 0)
+    project.timeline.tracks = [singleClipTrack]
+
+    // This should NOT crash - 1..<1 is valid but empty, but guard prevents it anyway
+    projectState.recalculateStartTimes(in: &project.timeline)
+
+    XCTAssertTrue(true, "recalculateStartTimes should handle single-clip tracks without crashing")
+  }
+
   // MARK: - Feature: Smooth Cut Insertion
 
   func testSmoothCutInsertion() {

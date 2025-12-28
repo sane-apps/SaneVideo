@@ -158,28 +158,25 @@ extension AppState {
     Task { @MainActor in
       NSLog("📹 Quick Access: Edit Now selected for \(url.lastPathComponent)")
 
-      // CRITICAL FIX: Switch to editing mode IMMEDIATELY for responsiveness
-      // This prevents the "nothing happened" scenario if import takes time
-      self.switchToEditing()
-
       // Show loading feedback
       ServiceContainer.shared.toastManager.show("📹 Importing recording...")
 
-      if self.projectState.currentProject == nil {
-        self.projectState.startNewProject()
-      }
+      // CRITICAL FIX: Create project FIRST, then switch mode
+      // This prevents constraint crashes from EditorLayoutView rendering with nil project
+      // Order matters: project → mode switch → add clip
+      self.projectState.startNewProject()
 
-      // CRITICAL FIX: Wait longer for video file to be fully written and finalized
-      // Video files need time for:
-      // 1. Disk flush to complete
-      // 2. Moov atom to be finalized (moved to front of file)
-      // 3. File system metadata to be updated
-      // The retry logic in addVideoToTimeline will handle any remaining issues
-      try? await Task.sleep(nanoseconds: 500_000_000) // 500ms initial delay
+      // Brief delay for project state to settle
+      try? await Task.sleep(nanoseconds: 100_000_000) // 100ms
+
+      // NOW switch to editing mode (project exists)
+      self.switchToEditing()
+
+      // CRITICAL FIX: Wait for video file to be fully written and finalized
+      try? await Task.sleep(nanoseconds: 400_000_000) // 400ms for file I/O
 
       await self.projectState.addVideoToTimeline(url: url)
 
-      // Removed second sleep - not needed if we switched mode early
       ServiceContainer.shared.toastManager.show("✅ Ready to edit!")
     }
   }
@@ -232,25 +229,14 @@ extension AppState {
       // CRITICAL FIX: If recording, switch to camera FIRST before stopping screen share
       // This ensures recording continues seamlessly
       if recordingState.isRecording {
-        // CRITICAL: Switch source to camera and AWAIT completion
+        // CRITICAL: Switch source to camera - completes instantly via fast path
         let newSource: RecordingSource = .camera
         AppLogger.recording.info("🔄 AppState: Switching from screen to camera recording")
         recordingState.switchSource(newSource)
 
         Task { @MainActor in
-          // Wait for switch to complete (max 5 seconds)
-          var attempts = 0
-          let maxAttempts = 50
-
-          while attempts < maxAttempts {
-            try? await Task.sleep(nanoseconds: 100_000_000) // 100ms
-            if !recordingState.isRecording || !windowManager.isScreenSharing { break }
-            attempts += 1
-          }
-
-          if attempts >= maxAttempts {
-            AppLogger.recording.warning("Source switch timed out after 5s")
-          }
+          // Brief delay for screen recorder cleanup (switch itself is instant)
+          try? await Task.sleep(nanoseconds: 200_000_000) // 200ms
 
           windowManager.restoreMainWindow()
           windowManager.isScreenSharing = false

@@ -236,9 +236,83 @@ class AppDelegate: NSObject, NSApplicationDelegate {
       _ = ServiceContainer.shared.memoryManager  // Initialize to start memory pressure observer
     }
 
+    // Clean up orphaned temp files from previous crash/incomplete sessions
+    Task.detached(priority: .utility) {
+      await Self.cleanupOrphanedTempFiles()
+    }
+
     // NOTE: Apple Speech Recognition is used for captions (no model download needed)
     // Camera is NOT started on app launch for privacy.
     // It will start automatically when user clicks Record or toggles Camera on.
+  }
+
+  /// Clean up orphaned temp files that may have been left from crashed sessions
+  private static func cleanupOrphanedTempFiles() async {
+    let fileManager = FileManager.default
+
+    // 1. Clean up EnhancedAudio temp directory
+    let enhancedAudioDir = fileManager.temporaryDirectory.appendingPathComponent("EnhancedAudio")
+    if fileManager.fileExists(atPath: enhancedAudioDir.path) {
+      do {
+        let contents = try fileManager.contentsOfDirectory(at: enhancedAudioDir, includingPropertiesForKeys: [.creationDateKey])
+        let cutoffDate = Date().addingTimeInterval(-24 * 60 * 60) // 24 hours ago
+
+        for file in contents {
+          if let attrs = try? file.resourceValues(forKeys: [.creationDateKey]),
+             let created = attrs.creationDate,
+             created < cutoffDate {
+            try? fileManager.removeItem(at: file)
+            AppLogger.general.info("Cleaned up orphaned temp file: \(file.lastPathComponent)")
+          }
+        }
+      } catch {
+        AppLogger.general.warning("Failed to clean EnhancedAudio temp dir: \(error.localizedDescription)")
+      }
+    }
+
+    // 2. Clean up orphaned recordings (incomplete MP4s from crashed sessions)
+    guard let moviesDir = fileManager.urls(for: .moviesDirectory, in: .userDomainMask).first else { return }
+    let recordingsDir = moviesDir.appendingPathComponent("SaneVideo/Recordings")
+
+    if fileManager.fileExists(atPath: recordingsDir.path) {
+      do {
+        let contents = try fileManager.contentsOfDirectory(at: recordingsDir, includingPropertiesForKeys: [.creationDateKey, .fileSizeKey])
+        let cutoffDate = Date().addingTimeInterval(-24 * 60 * 60) // 24 hours ago
+
+        for file in contents where file.pathExtension.lowercased() == "mp4" {
+          if let attrs = try? file.resourceValues(forKeys: [.creationDateKey, .fileSizeKey]),
+             let created = attrs.creationDate,
+             let size = attrs.fileSize,
+             created < cutoffDate,
+             size < 1024 * 1024 { // Less than 1MB = likely incomplete/corrupt
+            try? fileManager.removeItem(at: file)
+            AppLogger.general.info("Cleaned up orphaned recording: \(file.lastPathComponent)")
+          }
+        }
+      } catch {
+        AppLogger.general.warning("Failed to clean recordings dir: \(error.localizedDescription)")
+      }
+    }
+
+    // 3. Clean up WhisperKit temp files
+    let whisperTempDir = fileManager.temporaryDirectory.appendingPathComponent("whisperkit_temp")
+    if fileManager.fileExists(atPath: whisperTempDir.path) {
+      do {
+        let contents = try fileManager.contentsOfDirectory(at: whisperTempDir, includingPropertiesForKeys: [.creationDateKey])
+        let cutoffDate = Date().addingTimeInterval(-24 * 60 * 60)
+
+        for file in contents {
+          if let attrs = try? file.resourceValues(forKeys: [.creationDateKey]),
+             let created = attrs.creationDate,
+             created < cutoffDate {
+            try? fileManager.removeItem(at: file)
+            AppLogger.general.info("Cleaned up WhisperKit temp file: \(file.lastPathComponent)")
+          }
+        }
+      } catch {
+        AppLogger.general.warning("Failed to clean WhisperKit temp dir: \(error.localizedDescription)")
+      }
+    }
   }
 
   private func setupMenuBar() {

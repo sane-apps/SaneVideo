@@ -16,7 +16,7 @@ struct CompositionBuilderTests {
 
     // MARK: - Basic Composition Building
 
-    @Test("Build composition with empty timeline")
+    @Test("Build composition with empty timeline throws error")
     func buildCompositionWithEmptyTimeline() async throws {
         let project = VideoProject(
             id: UUID(),
@@ -24,19 +24,13 @@ struct CompositionBuilderTests {
             createdAt: Date()
         )
 
-        // Should not throw, but create empty composition
-        let result = try await CompositionBuilder.build(from: project)
-        let composition = result.composition
-
-        // Check for valid output
-        #expect(composition.tracks.count >= 0)
-
-        // CompositionBuilder may create tracks even for empty timelines (A/B roll architecture)
-        // The important thing is it doesn't crash
-        #expect(composition.tracks.count >= 0, "Composition should be created successfully")
+        // Empty timeline should throw - you can't export nothing
+        await #expect(throws: AppError.self) {
+            _ = try await CompositionBuilder.build(from: project)
+        }
     }
 
-    @Test("Build composition with single track")
+    @Test("Build composition with empty track throws error")
     func buildCompositionWithSingleTrack() async throws {
         var project = VideoProject(
             id: UUID(),
@@ -44,17 +38,15 @@ struct CompositionBuilderTests {
             createdAt: Date()
         )
 
-        // Create a timeline with one video track
+        // Create a timeline with one video track but no clips
         let track = Track(name: "Video 1", type: .video, zIndex: 0)
         let timeline = Timeline(tracks: [track])
         project.updateTimeline(timeline)
 
-        let result = try await CompositionBuilder.build(from: project)
-        let composition = result.composition
-
-        // For video tracks, we create A/B roll tracks (2 per timeline track)
-        // But with no clips, we might not have tracks yet
-        #expect(composition.tracks.count >= 0)
+        // Track exists but has no clips - should throw
+        await #expect(throws: AppError.self) {
+            _ = try await CompositionBuilder.build(from: project)
+        }
     }
 
     // MARK: - Valid Segments Tests

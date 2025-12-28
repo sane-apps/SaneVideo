@@ -82,6 +82,7 @@ struct KeyboardShortcutsSheet: View {
             }
         }
         .frame(width: 500, height: 600)
+        .subtleGlass(radius: 12)
     }
 }
 

@@ -12,6 +12,7 @@ import SwiftUI
 struct ExportConfigurationView: View {
     @Binding var exportSettings: SaneExportSettings
     @Binding var selectedPreset: ExportPreset?
+    @Binding var mlEffects: MLExportEffects
     let estimateFileSize: () -> String
 
     var body: some View {
@@ -19,9 +20,16 @@ struct ExportConfigurationView: View {
             VStack(spacing: 12) {
                 // PRESETS ROW with descriptions
                 VStack(alignment: .leading, spacing: 8) {
-                    Text(String(localized: "export.preset.label", defaultValue: "Preset"))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                    HStack {
+                        Text(String(localized: "export.preset.label", defaultValue: "Preset"))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        ExportPresetPicker(
+                            exportSettings: $exportSettings,
+                            selectedPreset: $selectedPreset
+                        )
+                    }
 
                     // Enhanced presets: Primary row + Social media row
                     VStack(spacing: 8) {
@@ -97,6 +105,11 @@ struct ExportConfigurationView: View {
                     }
                 }
                 .padding(4)
+
+                Divider()
+
+                // ML Effects Section
+                MLEffectsExportSection(mlEffects: $mlEffects)
             }
         }
     }

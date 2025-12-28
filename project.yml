@@ -59,6 +59,7 @@ schemes:
       - framework: FoundationModels
       - framework: VideoToolbox
     test:
+      gatherCoverageData: true
       targets:
         - SaneVideoTests
         - SaneVideoUITests

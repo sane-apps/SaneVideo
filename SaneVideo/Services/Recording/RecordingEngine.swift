@@ -14,7 +14,7 @@ import OSLog
 import ScreenCaptureKit
 
 @MainActor
-class RecordingEngine: NSObject, @unchecked Sendable {
+class RecordingEngine: NSObject {
   // Error handler callback - will be called on Main Queue
   var onError: ((AppError) -> Void)?
 

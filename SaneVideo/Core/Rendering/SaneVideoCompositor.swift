@@ -182,28 +182,7 @@ final class SaneVideoCompositor: NSObject, AVVideoCompositing {
       }
     }
 
-    // 4. Render Cursor
-    for (_, cursors) in instruction.trackCursorData {
-      let compositionTime = request.compositionTime.seconds
-
-      // Find the cursor metadata active at this composition time
-      if let metadata = cursors.first(where: { $0.timeRange.containsTime(request.compositionTime) }) {
-        // Calculate source time: (CompositionElapsed * speed) + sourceOffset
-        let elapsedInComposition = compositionTime - metadata.timeRange.start.seconds
-        let sourceTime = (elapsedInComposition * metadata.speed) + metadata.sourceOffset
-
-        if let cursorImage = CursorRenderer.renderCursor(
-          for: metadata.url, time: sourceTime, renderSize: request.renderContext.size) {
-          if let final = currentImage {
-            currentImage = cursorImage.composited(over: final)
-          } else {
-            currentImage = cursorImage
-          }
-        }
-      }
-    }
-
-    // 5. Render Final
+    // 4. Render Final
     guard let buffer = outputPixelBuffer else {
       renderError = NSError(
         domain: "SaneVideoCompositor", code: -4,

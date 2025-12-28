@@ -78,9 +78,6 @@ final class MemoryManager {
             // Clear Rendering caches (Core Image/Metal)
             RenderingService.shared.ciContext.clearCaches()
 
-            // Clear Cursor cache
-            CursorRenderer.clearCursorCache()
-            
             // Clear Network caches
             URLCache.shared.removeAllCachedResponses()
 

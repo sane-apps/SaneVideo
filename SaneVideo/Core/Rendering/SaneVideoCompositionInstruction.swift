@@ -31,14 +31,6 @@ struct TextLayerItem: Sendable {
   // Future: Font, color, etc.
 }
 
-/// Metadata for cursor rendering
-struct CursorMetadata: Sendable {
-  let timeRange: CMTimeRange
-  let url: URL
-  let sourceOffset: Double  // The time in the source file corresponding to timeRange.start
-  let speed: Double  // Playback speed of the clip
-}
-
 // MARK: - Instruction Class
 
 /// Custom Instruction that carries effect metadata
@@ -72,9 +64,6 @@ class SaneVideoCompositionInstruction: NSObject, AVVideoCompositionInstructionPr
   /// Active Text Layers (Captions + Overlays) for this instruction time range
   let textLayers: [TextLayerItem]
 
-  /// Track ID -> List of Cursor Metadata (TimeRange, URL, Offset)
-  let trackCursorData: [CMPersistentTrackID: [CursorMetadata]]
-
   /// Vision service for background effects (optional)
   let visionService: PersonSegmentationService?
 
@@ -88,7 +77,6 @@ class SaneVideoCompositionInstruction: NSObject, AVVideoCompositionInstructionPr
     trackBackgroundEffects: [CMPersistentTrackID: [(CMTimeRange, [BackgroundEffect])]] = [:],
     trackPrivacyRegions: [CMPersistentTrackID: [(CMTimeRange, [PrivacyRegion])]] = [:],
     activeTransitions: [TransitionMetadata] = [], textLayers: [TextLayerItem] = [],
-    trackCursorData: [CMPersistentTrackID: [CursorMetadata]] = [:],
     visionService: PersonSegmentationService? = nil
   ) {
     self.timeRange = timeRange
@@ -99,7 +87,6 @@ class SaneVideoCompositionInstruction: NSObject, AVVideoCompositionInstructionPr
     self.trackPrivacyRegions = trackPrivacyRegions
     self.activeTransitions = activeTransitions
     self.textLayers = textLayers
-    self.trackCursorData = trackCursorData
     self.visionService = visionService
 
     // Extract required track IDs from layer instructions

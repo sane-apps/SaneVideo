@@ -44,8 +44,6 @@ struct VideoClip: Identifiable, Equatable, Hashable, Codable, Sendable {
 
   var captions: [Caption] = []
 
-  var cursorDataURL: URL?
-  var showCursorHighlight: Bool = false
   var clickDataURL: URL?  // Auto-zoom click events
 
   // Background Effects (Person Segmentation)
@@ -122,8 +120,6 @@ struct VideoClip: Identifiable, Equatable, Hashable, Codable, Sendable {
       transition: self.transition,
       overlays: self.overlays,
       bookmarkData: self.bookmarkData,
-      showCursorHighlight: self.showCursorHighlight,
-      cursorDataURL: self.cursorDataURL,
       thumbnailURL: self.thumbnailURL
     )
 
@@ -155,7 +151,7 @@ struct VideoClip: Identifiable, Equatable, Hashable, Codable, Sendable {
     id: UUID, url: URL, duration: CMTime, trimStart: CMTime, trimEnd: CMTime, startTime: CMTime,
     volume: Float, speed: Double, isMuted: Bool, captions: [Caption] = [],
     transition: VideoTransition? = nil, overlays: [VideoOverlay] = [], bookmarkData: Data? = nil,
-    showCursorHighlight: Bool = false, cursorDataURL: URL? = nil, thumbnailURL: URL? = nil
+    thumbnailURL: URL? = nil
   ) {
     self.id = id
     self.url = url
@@ -170,8 +166,6 @@ struct VideoClip: Identifiable, Equatable, Hashable, Codable, Sendable {
     self.transition = transition
     self.overlays = overlays
     self.bookmarkData = bookmarkData
-    self.showCursorHighlight = showCursorHighlight
-    self.cursorDataURL = cursorDataURL
     self.thumbnailURL = thumbnailURL
     self.useSmoothCutForRemovals = false
   }
@@ -282,7 +276,6 @@ struct VideoClip: Identifiable, Equatable, Hashable, Codable, Sendable {
     case transition, overlays, bookmarkData, rotation
     case removedRanges, useSmoothCutForRemovals
     case transform
-    case cursorDataURL, showCursorHighlight
     case clickDataURL
     case backgroundEffect
     // FIX: Add effects to coding keys
@@ -328,9 +321,6 @@ struct VideoClip: Identifiable, Equatable, Hashable, Codable, Sendable {
     useSmoothCutForRemovals =
       try container.decodeIfPresent(Bool.self, forKey: .useSmoothCutForRemovals) ?? false
 
-    cursorDataURL = try container.decodeIfPresent(URL.self, forKey: .cursorDataURL)
-    showCursorHighlight =
-      try container.decodeIfPresent(Bool.self, forKey: .showCursorHighlight) ?? false
     clickDataURL = try container.decodeIfPresent(URL.self, forKey: .clickDataURL)
     backgroundEffect = try container.decodeIfPresent(
       BackgroundEffect.self, forKey: .backgroundEffect)
@@ -373,8 +363,6 @@ struct VideoClip: Identifiable, Equatable, Hashable, Codable, Sendable {
     try container.encodeIfPresent(bookmarkData, forKey: .bookmarkData)
     try container.encode(removedRanges, forKey: .removedRanges)
     try container.encode(useSmoothCutForRemovals, forKey: .useSmoothCutForRemovals)
-    try container.encodeIfPresent(cursorDataURL, forKey: .cursorDataURL)
-    try container.encode(showCursorHighlight, forKey: .showCursorHighlight)
     try container.encodeIfPresent(clickDataURL, forKey: .clickDataURL)
     try container.encodeIfPresent(backgroundEffect, forKey: .backgroundEffect)
     try container.encode(privacyRegions, forKey: .privacyRegions)

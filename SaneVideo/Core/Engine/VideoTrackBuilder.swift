@@ -21,7 +21,6 @@ enum VideoTrackBuilder {
     let trackBackgroundEffects: [CMPersistentTrackID: [(CMTimeRange, [BackgroundEffect])]]
     let trackPrivacyRegions: [CMPersistentTrackID: [(CMTimeRange, [PrivacyRegion])]]
     let activeTransitions: [TransitionMetadata]
-    let trackCursorData: [CMPersistentTrackID: [CursorMetadata]]
   }
 
   /// Build video tracks with A/B roll architecture
@@ -57,7 +56,6 @@ enum VideoTrackBuilder {
     var trackBackgroundEffects: [CMPersistentTrackID: [(CMTimeRange, [BackgroundEffect])]] = [:]
     var trackPrivacyRegions: [CMPersistentTrackID: [(CMTimeRange, [PrivacyRegion])]] = [:]
     var activeTransitions: [TransitionMetadata] = []
-    var trackCursorData: [CMPersistentTrackID: [CursorMetadata]] = [:]
 
     // Iterate Timeline Tracks and Insert Clips
     for (index, timelineTrack) in visualTimelineTracks.enumerated() {
@@ -212,20 +210,7 @@ enum VideoTrackBuilder {
           trackPrivacyRegions[currentCompTrack.trackID] = regions
         }
 
-        // F. Cursor Data
-        if clip.showCursorHighlight, let cursorURL = clip.cursorDataURL {
-          var cursors = trackCursorData[currentCompTrack.trackID] ?? []
-          cursors.append(
-            CursorMetadata(
-              timeRange: CMTimeRange(start: insertStart, duration: playDuration),
-              url: cursorURL,
-              sourceOffset: clip.trimStart.seconds,
-              speed: clip.speed
-            ))
-          trackCursorData[currentCompTrack.trackID] = cursors
-        }
-
-        // G. Active Transition (Incoming)
+        // F. Active Transition (Incoming)
         if overlapDuration > .zero {
           let prevTrackID = useTrackA ? trackB.trackID : trackA.trackID
           let currentTrackID = currentCompTrack.trackID
@@ -246,15 +231,13 @@ enum VideoTrackBuilder {
     }
 
     return BuildResult(
-
       compositionVideoTracks: compositionVideoTracks,
       layerInstructions: layerInstructions,
       trackEffects: trackEffects,
       trackKeyframes: trackKeyframes,
       trackBackgroundEffects: trackBackgroundEffects,
       trackPrivacyRegions: trackPrivacyRegions,
-      activeTransitions: activeTransitions,
-      trackCursorData: trackCursorData
+      activeTransitions: activeTransitions
     )
   }
 

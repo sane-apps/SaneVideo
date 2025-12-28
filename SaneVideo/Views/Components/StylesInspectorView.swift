@@ -23,7 +23,6 @@ struct StylesInspectorView: View {
     @AppStorage("inspector.showEffects") private var showEffects = false
     @AppStorage("inspector.showAudio") private var showAudio = false
     @AppStorage("inspector.showClipInfo") private var showClipInfo = false
-    @AppStorage("inspector.showCursor") private var showCursor = false
 
     // CRITICAL FIX: Track if operation is in progress to prevent mode switching
     @State private var isOperationInProgress = false
@@ -150,15 +149,6 @@ struct StylesInspectorView: View {
                             ClipInfoSection(clip: clip)
                         }
 
-                        // ═══════════════════════════════════════════
-                        // CURSOR (Screen Recordings Only)
-                        // ═══════════════════════════════════════════
-                        if clip.cursorDataURL != nil {
-                            Divider().padding(.horizontal)
-                            CollapsibleSection(title: "Cursor", icon: "cursorarrow.rays", isExpanded: $showCursor) {
-                                CursorEnhancementsView(clip: clip)
-                            }
-                        }
                     }
                     .padding(.bottom, 20)
                 }

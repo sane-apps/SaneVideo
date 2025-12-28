@@ -188,8 +188,9 @@ actor MediaAssetManager {
         var isDownloaded = false
         var isDownloading = false
 
-        if let resourceValues = try? iCloudURL.resourceValues(forKeys: [.ubiquitousItemDownloadingStatusKey]) {
-            switch resourceValues.ubiquitousItemDownloadingStatus {
+        if let resourceValues = try? iCloudURL.resourceValues(forKeys: [.ubiquitousItemDownloadingStatusKey]),
+           let status = resourceValues.ubiquitousItemDownloadingStatus {
+            switch status {
             case .current:
                 isDownloaded = true
             case .downloaded:

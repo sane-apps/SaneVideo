@@ -82,7 +82,7 @@ final class ExportPipelineIntegrationTests: XCTestCase {
     /// Creates a project with a single clip from the test asset
     @MainActor
     private func createProjectWithClip() async throws -> (VideoProject, VideoClip) {
-        let asset = AVAsset(url: testAssetURL)
+        let asset = AVURLAsset(url: testAssetURL)
         let duration = try await asset.load(.duration)
 
         let clip = VideoClip(
@@ -109,7 +109,7 @@ final class ExportPipelineIntegrationTests: XCTestCase {
         let fileSize = try FileManager.default.attributesOfItem(atPath: url.path)[.size] as? Int ?? 0
         XCTAssertGreaterThan(fileSize, 0, "Exported file should not be empty")
 
-        let asset = AVAsset(url: url)
+        let asset = AVURLAsset(url: url)
         let isPlayable = try await asset.load(.isPlayable)
         XCTAssertTrue(isPlayable, "Exported file should be playable")
 
@@ -158,7 +158,7 @@ final class ExportPipelineIntegrationTests: XCTestCase {
 
         // Verify duration is approximately correct (within 0.5 seconds)
         let exportedDuration = try await exportedAsset.load(.duration)
-        let originalAsset = AVAsset(url: testAssetURL)
+        let originalAsset = AVURLAsset(url: testAssetURL)
         let originalDuration = try await originalAsset.load(.duration)
 
         XCTAssertEqual(
@@ -246,7 +246,7 @@ final class ExportPipelineIntegrationTests: XCTestCase {
         }
 
         // Arrange
-        let asset = AVAsset(url: testAssetURL)
+        let asset = AVURLAsset(url: testAssetURL)
         let originalDuration = try await asset.load(.duration)
 
         // Only run if video is long enough to trim
@@ -372,7 +372,7 @@ final class ExportPipelineIntegrationTests: XCTestCase {
         }
 
         // Arrange - need two clips for a transition
-        let asset = AVAsset(url: testAssetURL)
+        let asset = AVURLAsset(url: testAssetURL)
         let duration = try await asset.load(.duration)
 
         guard duration.seconds > 4.0 else {
@@ -431,7 +431,7 @@ final class ExportPipelineIntegrationTests: XCTestCase {
         }
 
         // Check if source has audio
-        let sourceAsset = AVAsset(url: testAssetURL)
+        let sourceAsset = AVURLAsset(url: testAssetURL)
         let audioTracks = try await sourceAsset.loadTracks(withMediaType: .audio)
 
         guard !audioTracks.isEmpty else {
@@ -527,7 +527,7 @@ final class ExportPipelineIntegrationTests: XCTestCase {
         }
 
         // Arrange
-        let asset = AVAsset(url: testAssetURL)
+        let asset = AVURLAsset(url: testAssetURL)
         let originalDuration = try await asset.load(.duration)
 
         guard originalDuration.seconds > 2.0 else {
@@ -679,7 +679,7 @@ final class ExportPipelineIntegrationTests: XCTestCase {
         }
 
         // Arrange
-        let asset = AVAsset(url: testAssetURL)
+        let asset = AVURLAsset(url: testAssetURL)
         let duration = try await asset.load(.duration)
 
         guard duration.seconds > 2.0 else {

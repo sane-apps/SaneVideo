@@ -146,7 +146,7 @@ extension PerformanceMonitor {
 
  // Measure a specific operation:
  let result = PerformanceMonitor.measure("Load Asset", log: .exportLog) {
-     try AVAsset(url: videoURL).load(.duration)
+     try AVURLAsset(url: videoURL).load(.duration)
  }
 
  // View in Instruments:

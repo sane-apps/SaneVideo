@@ -24,9 +24,6 @@ struct AudioSection: View {
     @State private var isFindingHighlights = false
     @State private var isAnalyzingAudio = false
     
-    // CRITICAL FIX: Debounce slider updates
-    @State private var pendingVolumeUpdate: Task<Void, Never>?
-
     init(clip: VideoClip, isOperationInProgress: Binding<Bool>) {
         self.clip = clip
         self._isOperationInProgress = isOperationInProgress
@@ -55,21 +52,11 @@ struct AudioSection: View {
                 .help(volume == 0 ? "Unmute" : "Mute")
                 .accessibilityIdentifier("audio.mute_button")
 
-                // P1 FIX: Wider slider
-                Slider(value: $volume, in: 0 ... 1, step: 0.05)
-                    .accessibilityIdentifier("audio.volume.slider")
-                    .onChange(of: volume) { _, newValue in
-                        // CRITICAL FIX: Debounce slider updates to prevent excessive saves
-                        pendingVolumeUpdate?.cancel()
-                        pendingVolumeUpdate = Task {
-                            // Wait 300ms after user stops dragging
-                            try? await Task.sleep(nanoseconds: 300_000_000)
-                            guard !Task.isCancelled else { return }
-                            await MainActor.run {
-                                appState.projectState.updateClipVolume(clipId: clip.id, volume: newValue)
-                            }
-                        }
-                    }
+                // P1 FIX: Wider slider with debounced updates
+                DebouncedSlider(value: $volume, in: 0...1, step: 0.05) { newValue in
+                  appState.projectState.updateClipVolume(clipId: clip.id, volume: newValue)
+                }
+                .accessibilityIdentifier("audio.volume.slider")
 
                 // P1 FIX: Larger percentage display
                 Text(String(format: "%.0f%%", volume * 100))

@@ -227,22 +227,10 @@ final class CameraServiceProtocolMock: CameraServiceProtocol, @unchecked Sendabl
     private(set) var sessionPublisherSubject = PassthroughSubject<AVCaptureSession?, Never>()
 
 
-    private var _sampleBufferSubjectStorage: PassthroughSubject<CMSampleBuffer, Never>!
-    nonisolated var sampleBufferSubject: PassthroughSubject<CMSampleBuffer, Never> {
-        get { 
-            return MainActor.assumeIsolated {
-                if _sampleBufferSubjectStorage == nil {
-                    _sampleBufferSubjectStorage = PassthroughSubject<CMSampleBuffer, Never>()
-                }
-                return _sampleBufferSubjectStorage 
-            }
-        }
-        set { 
-            MainActor.assumeIsolated {
-                _sampleBufferSubjectStorage = newValue
-            }
-        }
-    }
+    // CRITICAL FIX: Must be nonisolated(unsafe) like the real services.
+    // RecordingEngine.setupSubscriptions() accesses this from @RecordingActor,
+    // so MainActor.assumeIsolated would crash.
+    nonisolated(unsafe) var sampleBufferSubject = PassthroughSubject<CMSampleBuffer, Never>()
 
     private let startState = MockoloMutex(MockoloHandlerState<Never, @Sendable () async throws -> ()>())
     var startCallCount: Int {

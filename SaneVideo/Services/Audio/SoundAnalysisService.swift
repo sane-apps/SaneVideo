@@ -41,35 +41,39 @@ class SoundAnalysisService: @unchecked Sendable {
 
   func startRealTimeAnalysis(format: AVAudioFormat) {
     AppLogger.audio.info("SoundAnalysis: Real-time analysis started with format: \(format)")
-    self.currentFormat = format
-    self.streamAnalyzer = SNAudioStreamAnalyzer(format: format)
 
-    // Wire up the request
-    do {
-      let request = try SNClassifySoundRequest(classifierIdentifier: .version1)
-      request.windowDuration = CMTime(seconds: 1.5, preferredTimescale: 48000)
-      request.overlapFactor = 0.5
+    // CRITICAL FIX: All access to streamAnalyzer/currentFormat must be on analysisQueue
+    // to prevent data races with processBuffer
+    analysisQueue.sync { [self] in
+      self.currentFormat = format
+      self.streamAnalyzer = SNAudioStreamAnalyzer(format: format)
 
-      let observer = RealTimeResultsObserver { [weak self] classification in
-        self?.onSoundDetected?(classification)
+      // Wire up the request
+      do {
+        let request = try SNClassifySoundRequest(classifierIdentifier: .version1)
+        request.windowDuration = CMTime(seconds: 1.5, preferredTimescale: 48000)
+        request.overlapFactor = 0.5
+
+        let observer = RealTimeResultsObserver { [weak self] classification in
+          self?.onSoundDetected?(classification)
+        }
+
+        try streamAnalyzer?.add(request, withObserver: observer)
+        AppLogger.audio.info("✅ SoundAnalysis: Request added successfully")
+
+      } catch {
+        AppLogger.audio.error("❌ SoundAnalysis: Failed to create request: \(error)")
       }
-
-      // Retain observer if needed? SNAudioStreamAnalyzer holds strong ref to request,
-      // but request holds strong ref to observer? Yes, usually.
-      // Actually add adds it.
-
-      try streamAnalyzer?.add(request, withObserver: observer)
-      AppLogger.audio.info("✅ SoundAnalysis: Request added successfully")
-
-    } catch {
-      AppLogger.audio.error("❌ SoundAnalysis: Failed to create request: \(error)")
     }
   }
 
   func stopRealTimeAnalysis() {
     AppLogger.audio.info("SoundAnalysis: Real-time analysis stopped")
-    self.streamAnalyzer = nil
-    self.currentFormat = nil
+    // CRITICAL FIX: Synchronize with analysisQueue to prevent races
+    analysisQueue.sync { [self] in
+      self.streamAnalyzer = nil
+      self.currentFormat = nil
+    }
   }
 
   // MARK: - Internal Processing

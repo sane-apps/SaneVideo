@@ -186,6 +186,7 @@
 		8DA818DADCBFF89FA63E65E3 /* CaptionStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = F78323D41C6D9B08FA7C5565 /* CaptionStyle.swift */; };
 		8DCBFC25D2DA6124F032AF7E /* ExportProgressTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3D2099532ECEF7D01E92197 /* ExportProgressTracker.swift */; };
 		8E8C9D29820876AAD36392CB /* CaptionsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = D349DDB3C2885DBD0B17DB30 /* CaptionsSection.swift */; };
+		8F3AE97D8CE0A4052B66BA68 /* DebouncedSlider.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE33AF63DBBB0A7F9D2BAABC /* DebouncedSlider.swift */; };
 		9044A7F8110541CF3AD6E046 /* ServiceContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF6AFC3AD3F0B7C8340415ED /* ServiceContainer.swift */; };
 		905A639FA6661D3B23F0FEC0 /* RecordingActor.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4BFAC24349232A01BC9D5C6 /* RecordingActor.swift */; };
 		916EF39266088F36CEA0A0EB /* stress_test_clip.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = 1FFE8D509644A0AE3DDE5E32 /* stress_test_clip.mp4 */; };
@@ -628,6 +629,7 @@
 		DA104161CC8F2AFB30EEA712 /* test.mov */ = {isa = PBXFileReference; lastKnownFileType = video.quicktime; path = test.mov; sourceTree = "<group>"; };
 		DD346DA719C9EC9EE97E78F4 /* TranscriptionCoordinatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptionCoordinatorTests.swift; sourceTree = "<group>"; };
 		DD6067F1F19960C7915642D0 /* UITestBase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UITestBase.swift; sourceTree = "<group>"; };
+		DE33AF63DBBB0A7F9D2BAABC /* DebouncedSlider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebouncedSlider.swift; sourceTree = "<group>"; };
 		DE5B383DFB4011C9278BB5F2 /* PricingConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PricingConfiguration.swift; sourceTree = "<group>"; };
 		DEA963FF610EC2437BAB0E0E /* GlobalSheetModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlobalSheetModifier.swift; sourceTree = "<group>"; };
 		DEBE235EDB4D32DF98C0797E /* ProjectState+Audio.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ProjectState+Audio.swift"; sourceTree = "<group>"; };
@@ -704,6 +706,7 @@
 		0D680021C0C31C39A33ED438 /* Utilities */ = {
 			isa = PBXGroup;
 			children = (
+				DE33AF63DBBB0A7F9D2BAABC /* DebouncedSlider.swift */,
 				6CAC962563DC7B410B6A9917 /* ErrorPresenter.swift */,
 				3E1A8BE7244EF6E968EA8DED /* ErrorRecovery.swift */,
 				2EF07ED01E18E49B731F3AB9 /* FeatureDiscovery.swift */,
@@ -1772,6 +1775,7 @@
 				E4CE08797C52D32D93C52916 /* CompositionBuilder.swift in Sources */,
 				A0858DDD36B5F64FAB3042CA /* ControlsKit.swift in Sources */,
 				F8C7D1C839C6645553B32860 /* CrashReporter.swift in Sources */,
+				8F3AE97D8CE0A4052B66BA68 /* DebouncedSlider.swift in Sources */,
 				0DB7D43354E5D4A5DB87A931 /* DebugVerifier.swift in Sources */,
 				68D630F8C2C87F8D5D3B3058 /* DesignSystem.swift in Sources */,
 				0D3D858C029173AA6C9B0940 /* DiskSpaceMonitor.swift in Sources */,

@@ -23,9 +23,6 @@ struct VideoSection: View {
     @State private var selectedAspectRatio: AspectRatioOption = .vertical
     @State private var cropError: String?
     
-    // CRITICAL FIX: Debounce slider updates
-    @State private var pendingSpeedUpdate: Task<Void, Never>?
-
     init(clip: VideoClip, isOperationInProgress: Binding<Bool>) {
         self.clip = clip
         self._isOperationInProgress = isOperationInProgress
@@ -43,20 +40,10 @@ struct VideoSection: View {
             // Speed
             SubsectionHeader(title: String(localized: "video.section.speed", defaultValue: "Speed"))
             HStack {
-                Slider(value: $speed, in: 0.25 ... 4.0, step: 0.25)
-                    .accessibilityIdentifier("video.speed_slider")
-                    .onChange(of: speed) { _, newValue in
-                        // CRITICAL FIX: Debounce slider updates to prevent excessive saves
-                        pendingSpeedUpdate?.cancel()
-                        pendingSpeedUpdate = Task {
-                            // Wait 300ms after user stops dragging
-                            try? await Task.sleep(nanoseconds: 300_000_000)
-                            guard !Task.isCancelled else { return }
-                            await MainActor.run {
-                                appState.projectState.updateClipSpeed(clipId: clip.id, speed: newValue)
-                            }
-                        }
-                    }
+                DebouncedSlider(value: $speed, in: 0.25...4.0, step: 0.25) { newValue in
+                  appState.projectState.updateClipSpeed(clipId: clip.id, speed: newValue)
+                }
+                .accessibilityIdentifier("video.speed_slider")
                 Text(String(format: "%.1fx", speed))
                     .font(.system(size: 11, design: .monospaced))
                     .frame(width: 40)

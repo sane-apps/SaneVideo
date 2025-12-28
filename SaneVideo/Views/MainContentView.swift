@@ -293,7 +293,7 @@ struct MainContentView: View {
           }
         )
         .buttonStyle(.borderedProminent)
-        .tint(Theme.Colors.accent)  // Force App Theme Color
+        // Removed explicit tint - .borderedProminent uses system accent color automatically
         .controlSize(.regular)
         .hoverScale(1.05)
         .pressScale()  // Enhanced press animation
@@ -340,59 +340,26 @@ struct MainContentView: View {
 
       ToolbarItem(placement: .primaryAction) {
         if appState.appMode == .editing {
-          HStack(spacing: 8) {
-            // MAGIC QUICK BUTTON (Global)
-            Button(
-              action: {
-                NotificationCenter.default.post(
-                  name: NSNotification.Name("TriggerMagicFix"), object: nil)
-              },
-              label: {
-                Label("Magic Fix", systemImage: "sparkles")
-              }
-            )
-            .buttonStyle(.borderedProminent)
-            .tint(Theme.Colors.accent)  // Force App Theme Color
-            .hoverScale(1.05)
-            .pressScale()  // Enhanced press animation
-            .simultaneousGesture(
-              TapGesture().onEnded {
-                ServiceContainer.shared.hapticsManager.impact()
-              }
-            )
-            .help("Auto-Fix Project (Cmd+Shift+M)")
-            .keyboardShortcut("m", modifiers: [.command, .shift])
-            .enhancedAccessibility(
-              label: "Magic Fix",
-              hint: "Automatically removes silence, filler words, and enhances your video",
-              traits: .isButton
-            )
-            .keyboardShortcutHint("⌘⇧M")
-
-            Divider()
-              .frame(height: 16)
-
-            // SHARE/EXPORT
-            Button(
-              action: { appState.showExportSheet = true },
-              label: {
-                Label("Share", systemImage: "square.and.arrow.up")
-              }
-            )
-            .buttonStyle(.borderedProminent)
-            .tint(Theme.Colors.accent)  // Force App Theme Color
-            .hoverScale(1.05)
-            .disabled(appState.currentProject?.timeline.tracks.allSatisfy { $0.clips.isEmpty } ?? true)
-            .help((appState.currentProject?.timeline.tracks.allSatisfy { $0.clips.isEmpty } ?? true) ? "Add clips to timeline first" : "Export Gallery (Cmd+E)")
-            .keyboardShortcut("e", modifiers: [.command])
-            .accessibilityIdentifier(AccessibilityIdentifiers.exportButton)
-            .enhancedAccessibility(
-              label: "Share",
-              hint: (appState.currentProject?.timeline.tracks.allSatisfy { $0.clips.isEmpty } ?? true) ? "Add clips to timeline first" : "Export your video project",
-              traits: .isButton
-            )
-            .keyboardShortcutHint("⌘E")
-          }
+          // SHARE/EXPORT - Magic Fix is in Inspector panel, no need for duplicate
+          Button(
+            action: { appState.showExportSheet = true },
+            label: {
+              Label("Share", systemImage: "square.and.arrow.up")
+            }
+          )
+          .buttonStyle(.borderedProminent)
+          // .borderedProminent uses system accent automatically
+          .hoverScale(1.05)
+          .disabled(appState.currentProject?.timeline.tracks.allSatisfy { $0.clips.isEmpty } ?? true)
+          .help((appState.currentProject?.timeline.tracks.allSatisfy { $0.clips.isEmpty } ?? true) ? "Add clips to timeline first" : "Export (Cmd+E)")
+          .keyboardShortcut("e", modifiers: [.command])
+          .accessibilityIdentifier(AccessibilityIdentifiers.exportButton)
+          .enhancedAccessibility(
+            label: "Share",
+            hint: (appState.currentProject?.timeline.tracks.allSatisfy { $0.clips.isEmpty } ?? true) ? "Add clips to timeline first" : "Export your video project",
+            traits: .isButton
+          )
+          .keyboardShortcutHint("⌘E")
         }
       }
     }

@@ -30,7 +30,8 @@ final class ProjectIntegrityTests: XCTestCase {
         projectStore = ProjectStore()
         projectState = ProjectState()
 
-        testAssetURL = URL(fileURLWithPath: "/Users/sj/SaneVideo/Tests/Assets/test_silence.mp4")
+        // Prefer test_silence.mp4 for project tests, fall back to default
+        testAssetURL = TestEnvironment.testAsset(named: "test_silence.mp4")
         if !FileManager.default.fileExists(atPath: testAssetURL.path) {
             testAssetURL = TestEnvironment.mockAssetURL
         }

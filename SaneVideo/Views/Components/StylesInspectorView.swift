@@ -15,16 +15,15 @@ struct StylesInspectorView: View {
     @Environment(AppState.self) var appState
     @Binding var selectedClip: VideoClip?
 
-    @AppStorage("inspectorProMode") private var isProMode = false // Default to Simple Mode
-
-    // CRITICAL FIX: Persist collapsible section states
-    @AppStorage("inspector.showSmartTools") private var showSmartTools = true
-    @AppStorage("inspector.showCaptions") private var showCaptions = true
+    // UX FIX: All sections collapsed by default so users can see all available tools
+    @AppStorage("inspector.showSmartTools") private var showSmartTools = false
+    @AppStorage("inspector.showCaptions") private var showCaptions = false
     @AppStorage("inspector.showVideo") private var showVideo = false
     @AppStorage("inspector.showBackground") private var showBackground = false
     @AppStorage("inspector.showEffects") private var showEffects = false
     @AppStorage("inspector.showAudio") private var showAudio = false
     @AppStorage("inspector.showClipInfo") private var showClipInfo = false
+    @AppStorage("inspector.showCursor") private var showCursor = false
 
     // CRITICAL FIX: Track if operation is in progress to prevent mode switching
     @State private var isOperationInProgress = false
@@ -57,36 +56,12 @@ struct StylesInspectorView: View {
         @Bindable var projectState = appState.projectState
 
         VStack(spacing: 0) {
-            // Header with Pro Mode Toggle
+            // UX FIX: Clean header without mode toggle - unified experience
             HStack {
                 InspectorHeader()
                 Spacer()
-
-                // CRITICAL FIX: Show mode indicator
-                if isProMode {
-                    Text("Pro")
-                        .font(.caption2)
-                        .foregroundColor(.secondary)
-                        .padding(.trailing, 4)
-                }
-
-                // Mode Toggle
-                Picker("Mode", selection: $isProMode) {
-                    Text("Simple").tag(false)
-                    Text("Pro").tag(true)
-                }
-                .pickerStyle(.segmented)
-                .labelsHidden()
-                .frame(width: 120) // Fixed width for stability
-                .controlSize(.small)
-                .padding(.trailing, 16)
-                .help(isOperationInProgress ? "Cannot switch modes while an operation is in progress" : "Toggle between Simple (AI) and Pro (Manual) controls")
-                .disabled(isOperationInProgress) // CRITICAL FIX: Prevent mode switch during operations
-                .accessibilityLabel("Inspector Mode")
-                .accessibilityHint(isOperationInProgress ? "Cannot switch modes while an operation is in progress" : "Switch between Simple mode for AI tools and Pro mode for manual controls")
-                .accessibilityValue(isOperationInProgress ? "Operation in progress" : (isProMode ? "Pro Mode" : "Simple Mode"))
-                .focusable() // P0 FIX: Keyboard navigation
             }
+            .padding(.trailing, 16)
 
             // CRITICAL FIX: Validate clip exists before rendering
             if let clip = validatedClip {
@@ -109,122 +84,78 @@ struct StylesInspectorView: View {
                         Divider().padding(.horizontal)
 
                         // ═══════════════════════════════════════════
-                        // PRIORITY 1: CAPTIONS
-                        // Visible in Simple Mode IF captions exist (or if forced)
-                        // Always visible in Pro Mode
+                        // CAPTIONS (with badge if present)
                         // ═══════════════════════════════════════════
-                        if isProMode || hasCaptions {
-                            CollapsibleSection(
-                                title: hasCaptions ? "Captions ✓" : "Captions",
-                                icon: "captions.bubble",
-                                isExpanded: $showCaptions,
-                                badge: hasCaptions ? "\(clip.captions.count)" : nil
-                            ) {
-                                CaptionsSection(clip: clip, isOperationInProgress: $isOperationInProgress)
-                            }
+                        CollapsibleSection(
+                            title: hasCaptions ? "Captions ✓" : "Captions",
+                            icon: "captions.bubble",
+                            isExpanded: $showCaptions,
+                            badge: hasCaptions ? "\(clip.captions.count)" : nil
+                        ) {
+                            CaptionsSection(clip: clip, isOperationInProgress: $isOperationInProgress)
+                        }
 
-                            Divider().padding(.horizontal)
+                        Divider().padding(.horizontal)
+
+                        // ═══════════════════════════════════════════
+                        // VIDEO (Transform, Speed, Crop)
+                        // ═══════════════════════════════════════════
+                        CollapsibleSection(title: "Video", icon: "film", isExpanded: $showVideo) {
+                            VideoSection(clip: clip, isOperationInProgress: $isOperationInProgress)
+                        }
+
+                        Divider().padding(.horizontal)
+
+                        // ═══════════════════════════════════════════
+                        // BACKGROUND (AI Replacement)
+                        // ═══════════════════════════════════════════
+                        CollapsibleSection(
+                            title: clip.backgroundEffect != nil ? "Background ✓" : "Background",
+                            icon: "person.crop.rectangle",
+                            isExpanded: $showBackground,
+                            badge: clip.backgroundEffect != nil ? "On" : nil
+                        ) {
+                            BackgroundEffectsView(clip: clip, isOperationInProgress: $isOperationInProgress)
+                        }
+
+                        Divider().padding(.horizontal)
+
+                        // ═══════════════════════════════════════════
+                        // EFFECTS (Filters, LUTs)
+                        // ═══════════════════════════════════════════
+                        CollapsibleSection(
+                            title: "Effects",
+                            icon: "sparkles",
+                            isExpanded: $showEffects,
+                            badge: clip.effects.isEmpty ? nil : "\(clip.effects.count)"
+                        ) {
+                            EffectsPickerView(clip: clip, isOperationInProgress: $isOperationInProgress)
+                        }
+
+                        Divider().padding(.horizontal)
+
+                        // ═══════════════════════════════════════════
+                        // AUDIO (Volume, EQ, Voice Isolation)
+                        // ═══════════════════════════════════════════
+                        CollapsibleSection(title: "Audio", icon: "waveform", isExpanded: $showAudio) {
+                            AudioSection(clip: clip, isOperationInProgress: $isOperationInProgress)
+                        }
+
+                        Divider().padding(.horizontal)
+
+                        // ═══════════════════════════════════════════
+                        // CLIP INFO (Metadata, Locate File)
+                        // ═══════════════════════════════════════════
+                        CollapsibleSection(title: "Clip Info", icon: "info.circle", isExpanded: $showClipInfo) {
+                            ClipInfoSection(clip: clip)
                         }
 
                         // ═══════════════════════════════════════════
-                        // ADVANCED SECTIONS (Pro Mode Only)
+                        // CURSOR (Screen Recordings Only)
                         // ═══════════════════════════════════════════
-
-                        if isProMode {
-                            // PRIORITY 2: VIDEO
-                            CollapsibleSection(title: "Video", icon: "film", isExpanded: $showVideo) {
-                                VideoSection(clip: clip, isOperationInProgress: $isOperationInProgress)
-                            }
-
+                        if clip.cursorDataURL != nil {
                             Divider().padding(.horizontal)
-
-                            // PRIORITY 2.5: BACKGROUND
-                            CollapsibleSection(
-                                title: clip.backgroundEffect != nil ? "Background ✓" : "Background",
-                                icon: "person.crop.rectangle",
-                                isExpanded: $showBackground,
-                                badge: clip.backgroundEffect != nil ? "On" : nil
-                            ) {
-                                BackgroundEffectsView(clip: clip, isOperationInProgress: $isOperationInProgress)
-                            }
-
-                            Divider().padding(.horizontal)
-
-                            // PRIORITY 3: EFFECTS
-                            CollapsibleSection(
-                                title: "Effects",
-                                icon: "sparkles",
-                                isExpanded: $showEffects,
-                                badge: clip.effects.isEmpty ? nil : "\(clip.effects.count)"
-                            ) {
-                                EffectsPickerView(clip: clip, isOperationInProgress: $isOperationInProgress)
-                            }
-
-                            Divider().padding(.horizontal)
-
-                            // PRIORITY 4: AUDIO
-                            CollapsibleSection(title: "Audio", icon: "waveform", isExpanded: $showAudio) {
-                                AudioSection(clip: clip, isOperationInProgress: $isOperationInProgress)
-                            }
-
-                            Divider().padding(.horizontal)
-
-                            // PRIORITY 5: CLIP INFO
-                            CollapsibleSection(title: "Clip Info", icon: "info.circle", isExpanded: $showClipInfo) {
-                                ClipInfoSection(clip: clip)
-                            }
-                        } else {
-                            // Simple Mode: Basic Adjustments
-                            CollapsibleSection(
-                                title: "Adjustments",
-                                icon: "slider.horizontal.3",
-                                isExpanded: .constant(true)
-                            ) {
-                                HStack {
-                                    Text("Rotation")
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                    Spacer()
-                                    Button {
-                                        guard !clip.isMissing else {
-                                            ServiceContainer.shared.toastManager.show(
-                                                "Cannot rotate: Clip file is missing. Use 'Locate File' in Clip Info to relink the file.",
-                                                type: .error
-                                            )
-                                            return
-                                        }
-                                        withAnimation {
-                                            appState.projectState.rotateClip(clip)
-                                        }
-                                    } label: {
-                                        Label("Rotate 90°", systemImage: "rotate.right")
-                                            .font(.body)
-                                    }
-                                    .buttonStyle(.bordered)
-                                    .controlSize(.small)
-                                    .disabled(clip.isMissing)
-                                    .help(clip.isMissing ? "Clip file is missing. Use 'Locate File' in Clip Info to relink the file." : "Rotate video 90 degrees clockwise")
-                                    .accessibilityHint(clip.isMissing ? "Clip file is missing. Use 'Locate File' in Clip Info to relink the file." : "Rotate video 90 degrees clockwise")
-                                }
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 8)
-                            }
-
-                            Divider().padding(.horizontal)
-
-                            // Simple Mode Footer
-                            Text("Switch to Pro Mode for manual video, audio, and effect controls.")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                                .padding(.top, 20)
-                                .padding(.horizontal)
-                                .multilineTextAlignment(.center)
-                        }
-
-                        // Cursor enhancements (screen recordings only) - Always useful
-                        if clip.cursorDataURL != nil && isProMode {
-                            Divider().padding(.horizontal)
-                            CollapsibleSection(title: "Cursor", icon: "cursorarrow.rays", isExpanded: .constant(true)) {
+                            CollapsibleSection(title: "Cursor", icon: "cursorarrow.rays", isExpanded: $showCursor) {
                                 CursorEnhancementsView(clip: clip)
                             }
                         }

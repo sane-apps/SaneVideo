@@ -6,6 +6,8 @@ import SwiftUI
 
 public struct IconCircleButton: View {
     public enum Size: Equatable {
+        /// Tiny size for very small PiP (28pt) - minimalist
+        case mini
         /// Compact size for PiP overlay (40pt) - fits in small spaces
         case small
         /// Standard size for main window controls (52pt)
@@ -17,6 +19,7 @@ public struct IconCircleButton: View {
 
         public var diameter: CGFloat {
             switch self {
+            case .mini: return 28    // Very compact for tiny PiP
             case .small: return 40   // Compact for PiP
             case .medium: return 52  // Standard controls
             case .large: return 64   // Primary actions
@@ -26,6 +29,7 @@ public struct IconCircleButton: View {
 
         public var iconSize: CGFloat {
             switch self {
+            case .mini: return 12
             case .small: return 16
             case .medium: return 20
             case .large: return 24
@@ -36,10 +40,20 @@ public struct IconCircleButton: View {
         /// Spacing between buttons at this size
         public var spacing: CGFloat {
             switch self {
+            case .mini: return Theme.Dimensions.spacingXS    // 4pt
             case .small: return Theme.Dimensions.spacingSM   // 8pt
             case .medium: return Theme.Dimensions.spacingMD  // 12pt
             case .large: return Theme.Dimensions.spacingLG   // 16pt
             case .custom(let val): return val * 0.2
+            }
+        }
+
+        /// Returns appropriate size for a given PiP window width
+        public static func forPiPWidth(_ width: CGFloat) -> Size {
+            switch width {
+            case ..<250: return .mini
+            case 250..<400: return .small
+            default: return .medium
             }
         }
     }

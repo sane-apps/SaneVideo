@@ -163,8 +163,11 @@ struct QuickAccessOverlay: View {
         }
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
-            onDismiss()
+            // CRITICAL FIX: Call completion BEFORE onDismiss
+            // onDismiss clears quickAccessRecordingURL, so completion (onEdit/onSave/onShare)
+            // must run first while the URL is still available
             completion?()
+            onDismiss()
         }
     }
 }

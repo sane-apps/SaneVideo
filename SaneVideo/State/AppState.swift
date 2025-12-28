@@ -216,6 +216,13 @@ class AppState {
         isCameraActive: self.cameraState.isActive,
         isRecording: self.recordingState.isRecording
       )
+
+      // CRITICAL FIX: If already recording, switch source to screen
+      // Without this, currentSource stays .camera and screen frames are filtered out
+      if self.recordingState.isRecording {
+        NSLog("🖥️ Already recording - switching source to screen")
+        self.recordingState.switchSource(.screen)
+      }
     }
   }
 

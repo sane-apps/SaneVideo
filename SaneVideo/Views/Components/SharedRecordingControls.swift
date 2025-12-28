@@ -215,3 +215,44 @@ private struct GalleryButton: View {
         }
     }
 }
+
+// MARK: - PiP Controls with Countdown Overlay
+
+/// Wrapper that shows countdown overlay over PiP controls when recording starts
+struct PiPControlsWithCountdown: View {
+    @Environment(AppState.self) var appState
+    var buttonSize: IconCircleButton.Size
+
+    var body: some View {
+        ZStack {
+            // Controls at bottom
+            VStack {
+                Spacer()
+                SharedRecordingControls(
+                    showDevicePickers: false,
+                    showGalleryTarget: false,
+                    showTimer: false,
+                    useGlassBackground: true,
+                    buttonSize: buttonSize
+                )
+            }
+
+            // Countdown overlay (fills entire PiP window)
+            if appState.recordingState.countdownValue > 0 {
+                ZStack {
+                    // Semi-transparent background
+                    Color.black.opacity(0.5)
+
+                    // Large countdown number
+                    Text("\(appState.recordingState.countdownValue)")
+                        .font(.system(size: 80, weight: .bold, design: .rounded))
+                        .foregroundColor(.white)
+                        .shadow(color: .black.opacity(0.5), radius: 8, x: 0, y: 4)
+                }
+                .transition(.opacity)
+                .animation(.easeInOut(duration: 0.2), value: appState.recordingState.countdownValue)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}

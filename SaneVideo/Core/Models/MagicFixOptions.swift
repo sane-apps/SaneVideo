@@ -11,8 +11,8 @@ struct MagicFixOptions: Codable, Equatable {
     var removeSilence: Bool = true
     var removeFillers: Bool = true
     var generateCaptions: Bool = true
-    var enhanceAudio: Bool = false // Studio Sound (EQ & Compression)
-    var autoEnhance: Bool = false // Visual Auto-Color/Light adjustment
+    var enhanceAudio: Bool = true // UX FIX: Voice isolation on by default - almost always beneficial
+    var autoEnhance: Bool = false // Visual Auto-Color/Light adjustment - more subjective, keep off
     var findHighlights: Bool = false // Detect applause/laughter moments
     
     // New Super Magic Fix options

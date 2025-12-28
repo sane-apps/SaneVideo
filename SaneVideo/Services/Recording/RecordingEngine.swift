@@ -57,6 +57,12 @@ class RecordingEngine: NSObject, @unchecked Sendable {
   // Components
   @RecordingActor let timeCoordinator = RecordingTimeCoordinator()
 
+  // PiP Frame Sync: Cached frame for compositing into screen recordings
+  @RecordingActor private var cachedPiPFrame: CGRect?
+  @RecordingActor private var cachedScreenFrame: CGRect?
+  @RecordingActor private var pipFrameSyncCounter: Int = 0
+  private let pipFrameSyncInterval: Int = 15  // Sync every 15 frames (~0.5s at 30fps)
+
   // CRITICAL FIX: Track source switch to detect if new source fails silently
   // nonisolated(unsafe) allows safe cancellation from deinit on any thread
   nonisolated(unsafe) var sourceSwitchTimeoutTask: Task<Void, Never>?
@@ -439,10 +445,36 @@ class RecordingEngine: NSObject, @unchecked Sendable {
 
   // MARK: - Sample Processing
 
+  /// Periodically sync PiP frame from MainActor for compositing
+  @RecordingActor private func syncPiPFrameIfNeeded() {
+    pipFrameSyncCounter += 1
+    guard pipFrameSyncCounter >= pipFrameSyncInterval else { return }
+    pipFrameSyncCounter = 0
+
+    // Dispatch to MainActor to get current frames
+    Task { @MainActor in
+      let pipFrame = ServiceContainer.shared.appState.windowManager.pipWindowFrame
+      let screenFrame = self.screenRecorder.recordingFrame
+
+      // Update cached values on RecordingActor
+      Task { @RecordingActor in
+        self.cachedPiPFrame = pipFrame
+        self.cachedScreenFrame = screenFrame
+        // Update VideoWriter with new frame positions
+        self.videoWriter?.updatePiPFrame(pipFrame, screenFrame: screenFrame)
+      }
+    }
+  }
+
   @RecordingActor func processSample(_ sampleBuffer: CMSampleBuffer, source: RecordingSource) {
     autoreleasepool {
       if source == .camera, let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) {
         videoWriter?.updateCameraFrame(pixelBuffer)
+      }
+
+      // Sync PiP frame periodically for accurate compositing during screen recording
+      if source == .screen {
+        syncPiPFrameIfNeeded()
       }
 
       if timeCoordinator.startTimeNeedsRecalibration, source == currentSource {

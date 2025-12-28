@@ -187,10 +187,21 @@ class RecordingState {
     let permissionManager = ServiceContainer.shared.permissionManager
     NSLog("🎬 Permission check: camera=\(permissionManager.cameraStatus), mic=\(permissionManager.microphoneStatus), screen=\(permissionManager.screenRecordingStatus)")
 
+    // CRITICAL FIX: If we're already screen sharing with an active stream,
+    // we KNOW screen recording permission is granted (ScreenCaptureKit wouldn't work without it).
+    // CGPreflightScreenCaptureAccess() is unreliable and can return false even when granted.
+    // Trust the active stream rather than the flaky preflight check.
+    let hasActiveScreenStream = recordingEngine?.screenRecorder.activeStream != nil
+    let shouldSkipScreenPermissionCheck = isScreenSharing && hasActiveScreenStream
+
+    if shouldSkipScreenPermissionCheck {
+      NSLog("🎬 Screen permission check SKIPPED - active stream proves permission is granted")
+    }
+
     let hasPermissions = permissionManager.verifyPermissionsForRecording(
       requiresCamera: !isScreenSharing, // Camera not needed for screen sharing
       requiresMicrophone: true,
-      requiresScreenRecording: isScreenSharing
+      requiresScreenRecording: isScreenSharing && !shouldSkipScreenPermissionCheck
     )
 
     if !hasPermissions {

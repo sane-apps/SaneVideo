@@ -6,6 +6,7 @@
 //  Redesigned: Direct effect tiles using Apple's CIFilter effects
 //
 
+import CoreMedia
 import SwiftUI
 
 struct EffectsPickerView: View {
@@ -15,6 +16,7 @@ struct EffectsPickerView: View {
 
     @State private var effects: [VideoEffect]
     @State private var selectedCategory: EffectCategory = .looks
+    @State private var previewThumbnail: NSImage?  // Cached preview frame for effect tiles
 
     init(clip: VideoClip, isOperationInProgress: Binding<Bool>) {
         self.clip = clip
@@ -28,41 +30,9 @@ struct EffectsPickerView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            // Smart Actions
-            Button(action: {
-                Task {
-                    await appState.projectState.applySmartColorGrade(to: clip)
-                }
-            }, label: {
-                HStack(spacing: 4) {
-                    Image(systemName: "wand.and.stars")
-                        .foregroundColor(.purple)
-                    Text(String(localized: "effects.action.auto_grade", defaultValue: "Auto-Grade (AI)"))
-                        .foregroundColor(.primary)
-                    Spacer()
-                    Image(systemName: "chevron.right")
-                        .font(.caption2)
-                        .foregroundColor(.secondary)
-                }
-                .padding(8)
-                .background(Color.purple.opacity(0.1))
-                .cornerRadius(6)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 6)
-                        .stroke(Color.purple.opacity(0.3), lineWidth: 1)
-                )
-            })
-            .buttonStyle(.plain)
-            .hoverScale(1.02)
-            .pressScale()
-            .disabled(clip.isMissing || isOperationInProgress) // CRITICAL FIX: Disable if clip is missing or operation in progress
-            .help(clip.isMissing ? "Clip file is missing. Use 'Locate File' in Clip Info to relink the file." : (isOperationInProgress ? "Another operation is in progress" : "Automatically applies color grading to the video"))
-            .padding(.bottom, 4)
-            .accessibilityIdentifier("effects.action.auto_grade")
-            .accessibilityLabel("Auto-Grade")
-            .accessibilityHint(clip.isMissing ? "Clip file is missing. Use 'Locate File' in Clip Info to relink the file." : (isOperationInProgress ? "Another operation is in progress" : "Automatically applies color grading to the video"))
-            .focusable() // P0 FIX: Keyboard navigation
-            .smoothAppear()
+            // UX FIX: Removed duplicate Auto-Grade button
+            // This feature is already accessible in Smart Tools as "Auto Color"
+            // Having it in two places was confusing users
 
             // Active effects (if any) - shown at top with sliders
             if !effects.isEmpty {
@@ -108,17 +78,22 @@ struct EffectsPickerView: View {
                 }
             }
 
-            // P1 FIX: Larger effect tiles grid (64x64px minimum)
+            // UX FIX: Effect tiles with live previews showing what each filter does
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 64), spacing: 8)], spacing: 8) {
                 ForEach(effectsForCategory) { effectType in
                     EffectTile(
                         effectType: effectType,
                         isActive: effects.contains { $0.type == effectType },
                         id: "effects.tile.\(effectType.rawValue)",
-                        onTap: { toggleEffect(effectType) }
+                        onTap: { toggleEffect(effectType) },
+                        previewImage: previewThumbnail  // Show effect preview on actual clip frame
                     )
                 }
             }
+        }
+        .task(id: clip.id) {
+            // Load a preview thumbnail for effect previews
+            await loadPreviewThumbnail()
         }
         // CRITICAL FIX: Sync effects when clip changes externally
         .onChange(of: clip.effects) { _, newEffects in
@@ -183,6 +158,25 @@ struct EffectsPickerView: View {
         }
         appState.projectState.updateClipEffects(clipId: clip.id, effects: effects)
     }
+
+    /// Load a preview thumbnail from the clip for effect previews
+    private func loadPreviewThumbnail() async {
+        guard !clip.isMissing else { return }
+
+        // Use middle of clip for representative frame
+        let midTime = CMTime(seconds: clip.duration.seconds * 0.5, preferredTimescale: 600)
+        let previewSize = CGSize(width: 128, height: 128)  // Small for performance
+
+        if let thumbnail = await ServiceContainer.shared.thumbnailService.thumbnail(
+            for: clip,
+            time: midTime,
+            size: previewSize
+        ) {
+            await MainActor.run {
+                self.previewThumbnail = thumbnail
+            }
+        }
+    }
 }
 
 // MARK: - Effect Tile (Tappable)
@@ -192,26 +186,42 @@ struct EffectTile: View {
     let isActive: Bool
     let id: String
     let onTap: () -> Void
-    
+    var previewImage: NSImage?  // Optional preview frame from clip
+
     // P1 FIX: State for hover preview
     @State private var isHovering = false
+    @State private var filteredPreview: NSImage?
 
     var body: some View {
         Button(action: onTap, label: {
             VStack(spacing: 4) {
                 ZStack {
-                    // P1 FIX: Larger tile (64x64px)
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(isActive ? Color.accentColor : Color.secondary.opacity(0.15))
-                        .frame(width: 64, height: 64)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 8)
-                                .stroke(isActive ? Color.accentColor : Color.clear, lineWidth: 2)
-                        )
+                    // UX FIX: Show actual effect preview if we have a sample frame
+                    if let preview = filteredPreview ?? previewImage {
+                        Image(nsImage: preview)
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                            .frame(width: 64, height: 64)
+                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .stroke(isActive ? Color.blue : Color.secondary.opacity(0.3), lineWidth: isActive ? 2 : 1)
+                            )
+                            .saturation(isActive ? 1.0 : 0.8)  // Slight desaturation when inactive
+                    } else {
+                        // Fallback to icon-based tile
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(isActive ? Color.blue.opacity(0.2) : Color.secondary.opacity(0.15))
+                            .frame(width: 64, height: 64)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .stroke(isActive ? Color.blue : Color.clear, lineWidth: 2)
+                            )
 
-                    Image(systemName: effectType.icon)
-                        .font(.system(size: 20)) // P1 FIX: Larger icon
-                        .foregroundColor(isActive ? .white : .primary)
+                        Image(systemName: effectType.icon)
+                            .font(.system(size: 20))
+                            .foregroundColor(isActive ? .blue : .primary)
+                    }
 
                     // Checkmark badge when active
                     if isActive {
@@ -219,9 +229,9 @@ struct EffectTile: View {
                             HStack {
                                 Spacer()
                                 Image(systemName: "checkmark.circle.fill")
-                                    .font(.system(size: 14)) // P1 FIX: Larger checkmark
+                                    .font(.system(size: 14))
                                     .foregroundColor(.white)
-                                    .background(Circle().fill(Color.accentColor))
+                                    .background(Circle().fill(Color.blue))
                             }
                             Spacer()
                         }
@@ -231,28 +241,53 @@ struct EffectTile: View {
                 }
 
                 Text(effectType.displayName)
-                    .font(.system(size: 10)) // P1 FIX: Slightly larger text
+                    .font(.system(size: 10))
                     .fontWeight(isActive ? .bold : .regular)
-                    .foregroundColor(isActive ? .accentColor : .secondary)
+                    .foregroundColor(isActive ? .blue : .secondary)
                     .lineLimit(1)
             }
         })
         .buttonStyle(.plain)
         .hoverScale(1.1)
         .pressScale()
-        .shadow(color: isActive ? Color.accentColor.opacity(0.3) : .clear, radius: 6, x: 0, y: 3)
+        .shadow(color: isActive ? Color.blue.opacity(0.3) : .clear, radius: 6, x: 0, y: 3)
         .animation(.smoothUI, value: isActive)
-        .help(isActive ? 
-            String(localized: "effects.tile.remove", defaultValue: "Remove") + " \(effectType.displayName)" : 
+        .help(isActive ?
+            String(localized: "effects.tile.remove", defaultValue: "Remove") + " \(effectType.displayName)" :
             String(localized: "effects.tile.apply", defaultValue: "Apply") + " \(effectType.displayName)")
-        // P0 FIX: Enhanced accessibility
         .accessibilityIdentifier(id)
         .accessibilityLabel(effectType.displayName)
         .accessibilityHint(isActive ? "Remove \(effectType.displayName) effect" : "Apply \(effectType.displayName) effect")
         .accessibilityValue(isActive ? "Active" : "Inactive")
-        // P0 FIX: Keyboard navigation
         .focusable()
         .smoothAppear()
+        .task(id: previewImage) {
+            // Generate filtered preview when we have a source image
+            if let sourceImage = previewImage {
+                filteredPreview = applyEffectToPreview(sourceImage)
+            }
+        }
+    }
+
+    /// Apply this effect type to a preview image
+    private func applyEffectToPreview(_ source: NSImage) -> NSImage? {
+        guard let cgImage = source.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
+            return source
+        }
+
+        let ciImage = CIImage(cgImage: cgImage)
+        let effect = VideoEffect(type: effectType)
+
+        guard let filtered = effect.apply(to: ciImage) else {
+            return source
+        }
+
+        let context = CIContext()
+        guard let outputCG = context.createCGImage(filtered, from: filtered.extent) else {
+            return source
+        }
+
+        return NSImage(cgImage: outputCG, size: source.size)
     }
 }
 

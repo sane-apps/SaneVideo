@@ -39,6 +39,16 @@ actor AppleSpeechService: TranscriptionServiceProtocol {
         
         AppLogger.project.info("🎤 Starting Modern Speech Analysis for: \(videoURL.lastPathComponent)")
 
+        // 0. Validate file size before loading
+        if !AppConstants.MagicFeatures.isFileSizeValid(videoURL) {
+            let sizeBytes = AppConstants.MagicFeatures.fileSize(videoURL) ?? 0
+            let sizeMB = sizeBytes / (1024 * 1024)
+            let limitMB = AppConstants.MagicFeatures.maxAudioFileSize / (1024 * 1024)
+            AppLogger.project.error("❌ AppleSpeechService: File too large (\(sizeMB)MB > \(limitMB)MB limit)")
+            throw NSError(domain: "AppleSpeechService", code: -1,
+                          userInfo: [NSLocalizedDescriptionKey: "File too large for transcription (\(sizeMB)MB exceeds \(limitMB)MB limit)"])
+        }
+
         // 1. Setup Audio File and Meta
         AppLogger.project.debug("🎤 AppleSpeechService: Reading file at \(videoURL.path)")
         let audioFile: AVAudioFile

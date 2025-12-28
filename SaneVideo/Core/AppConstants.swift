@@ -102,11 +102,37 @@ enum AppConstants {
         /// Maximum audio file size for processing (bytes) - 500MB
         static let maxAudioFileSize: Int = 500 * 1024 * 1024
 
+        /// Validates that a file is within the size limit for processing
+        /// - Parameter url: The file URL to validate
+        /// - Returns: True if file is within limits, false otherwise
+        static func isFileSizeValid(_ url: URL) -> Bool {
+            guard let attrs = try? FileManager.default.attributesOfItem(atPath: url.path),
+                  let size = attrs[.size] as? Int else {
+                return true // Allow if can't determine size
+            }
+            return size <= maxAudioFileSize
+        }
+
+        /// Returns the file size in bytes, or nil if unavailable
+        static func fileSize(_ url: URL) -> Int? {
+            guard let attrs = try? FileManager.default.attributesOfItem(atPath: url.path),
+                  let size = attrs[.size] as? Int else {
+                return nil
+            }
+            return size
+        }
+
         /// Maximum video duration for real-time processing (seconds)
         static let maxRealtimeProcessingDuration: TimeInterval = 3600.0
 
         /// Frame skip interval for vision processing (process every Nth frame)
         static let visionFrameSkipInterval: Int = 3
+
+        /// Vision processing sample interval in seconds (controls FPS of analysis)
+        static let visionSampleInterval: TimeInterval = 0.5
+
+        /// Number of frames between Task.yield() calls for cooperative multitasking
+        static let visionYieldInterval: Int = 10
 
         // MARK: Auto-Framing
 

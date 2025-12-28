@@ -26,7 +26,7 @@
 
 ```bash
 ./Scripts/SaneMaster.rb setup      # Initial setup
-./Scripts/SaneMaster.rb verify     # Build app (tests disabled)
+./Scripts/SaneMaster.rb verify     # Build + unit tests (fast)
 ./Scripts/SaneMaster.rb test_suite --quick  # Comprehensive validation
 ```
 
@@ -49,7 +49,7 @@
 
 ---
 
-## 1. The "Golden Rules" (CRITICAL)
+## 1. The 12 Golden Rules (CRITICAL)
 
 1. **USE SaneMaster.rb FIRST**: Use `./Scripts/SaneMaster.rb` for verification, setup, and diagnostics.
 2. **VERIFY LOGS ALWAYS**: Run `./Scripts/SaneMaster.rb diagnose --dump` after every build/test to see runtime logs (e.g. `ProjectStore initialized at...`).
@@ -75,6 +75,10 @@
     - Launch with live logging: `./Scripts/SaneMaster.rb launch` followed by `./Scripts/SaneMaster.rb logs --follow` in background
     - This enables real-time debugging and verification that changes work as expected
     - **Rationale**: Old instances can hold stale state, and live logs are essential for debugging user-reported issues
+12. **CLEAN SLATE — DON'T TRUST TRAINING DATA**:
+    - Do NOT rely on internal training data for project specifics (window names, view hierarchies, API signatures).
+    - Use `grep`/`find` to discover the actual codebase state.
+    - The codebase changes; training data is stale.
 
 ---
 
@@ -179,7 +183,7 @@ AppLogger.recording   // Recording lifecycle
 AppLogger.export      // Export operations
 AppLogger.timeline    // Timeline edits
 AppLogger.project     // Persistence
-AppLogger.ui          // UI events
+AppLogger.uiLog       // UI events
 AppLogger.general     // Everything else
 ```
 
@@ -390,7 +394,7 @@ log stream --predicate 'subsystem == "com.sanevideo.SaneVideo"' --level debug
     - `verify --clean`: Full clean build + run unit tests.
     - `verify --ui`: Build + run unit tests + functional UI tests (excludes visual tests).
     - `doctor`: Health check (environment, assets, permissions, XcodeGen sync).
-    - `console`: **Interactive Ruby REPL** (Pry) for debugging scripts.
+    - `console`: **Interactive Ruby REPL** (Pry) for debugging scripts. Requires: `bundle exec ./Scripts/SaneMaster.rb console`
     - `gen_test <name>`: Generate test files.
     - `gen_mock [options]`: Generate mocks using Mockolo.
     - `verify_api <APIName> [Framework]`: Verify API exists in SDK (prevents hallucinations).

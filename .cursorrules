@@ -27,6 +27,11 @@
    | 500-800 | Warning (SwiftLint nags, commits allowed) |
    | >800 | **BLOCKED** — must split file |
 
+   **Split by responsibility, not by line count.** A well-constructed 650-line file with clear MARK sections is preferable to two files that break logical cohesion.
+   - **Good splits**: Protocol conformances (delegates), feature domains, lifecycle concerns
+   - **Bad splits**: Arbitrary cuts just to hit a number
+   - The limits trigger review ("is this file doing too much?"), not mandate splitting
+
 5. **REGRESSION TESTS MANDATORY**
    - Every bug fix MUST have a corresponding test
    - Use `./Scripts/SaneMaster.rb gen_test` to create tests

@@ -338,6 +338,9 @@ class ExportEngine: ExportServiceProtocol {
     }
   }
 
+  // Timeout for finishWriting operation (60 seconds for complex exports)
+  let finishWritingTimeout: TimeInterval = 60.0
+
   // Wait for inputs to finish
   // We use a safe continuation to bridge the dispatch group wrap
   return try await withCheckedThrowingContinuation { continuation in
@@ -357,8 +360,22 @@ class ExportEngine: ExportServiceProtocol {
         return
       }
 
+      // CRITICAL FIX: Add timeout to finishWriting to prevent indefinite hangs
+      var finishCompleted = false
+      let timeoutWorkItem = DispatchWorkItem {
+        guard !finishCompleted else { return }
+        AppLogger.export.error("❌ Export finishWriting timed out after \(finishWritingTimeout)s")
+        uncheckedWriter.writer.cancelWriting()
+        continuation.resume(throwing: ExportError.timeout)
+      }
+
+      processingQueue.asyncAfter(deadline: .now() + finishWritingTimeout, execute: timeoutWorkItem)
+
       // Use uncheckedWriter to avoid Sendable warning in completion closure
       uncheckedWriter.writer.finishWriting {
+        finishCompleted = true
+        timeoutWorkItem.cancel()
+
         if uncheckedWriter.writer.status == .completed {
           continuation.resume(returning: outputURL)
         } else {

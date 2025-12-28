@@ -10,38 +10,73 @@ import Foundation
 import OSLog
 
 /// Manages recording time, pauses, and source switch recalibration
+/// Thread-safe via NSLock synchronization
 class RecordingTimeCoordinator: @unchecked Sendable {
-    
-    // MARK: - State
-    
-    var startTime: CMTime = .zero
-    var pauseTime: CMTime = .zero
-    var timeOffset: CMTime = .zero
-    
-    // Source switch recalibration
-    var startTimeNeedsRecalibration = false
-    var lastRecordedTime: CMTime = .zero
+
+    // MARK: - Thread Safety
+
+    private let lock = NSLock()
+
+    // MARK: - State (all access must be synchronized via lock)
+
+    private var _startTime: CMTime = .zero
+    private var _pauseTime: CMTime = .zero
+    private var _timeOffset: CMTime = .zero
+    private var _startTimeNeedsRecalibration = false
+    private var _lastRecordedTime: CMTime = .zero
+
+    // Thread-safe accessors
+    var startTime: CMTime {
+        get { lock.withLock { _startTime } }
+        set { lock.withLock { _startTime = newValue } }
+    }
+
+    var pauseTime: CMTime {
+        get { lock.withLock { _pauseTime } }
+        set { lock.withLock { _pauseTime = newValue } }
+    }
+
+    var timeOffset: CMTime {
+        get { lock.withLock { _timeOffset } }
+        set { lock.withLock { _timeOffset = newValue } }
+    }
+
+    var startTimeNeedsRecalibration: Bool {
+        get { lock.withLock { _startTimeNeedsRecalibration } }
+        set { lock.withLock { _startTimeNeedsRecalibration = newValue } }
+    }
+
+    var lastRecordedTime: CMTime {
+        get { lock.withLock { _lastRecordedTime } }
+        set { lock.withLock { _lastRecordedTime = newValue } }
+    }
     
     // MARK: - Lifecycle
-    
+
     func reset() {
-        startTime = .zero
-        timeOffset = .zero
-        startTimeNeedsRecalibration = false
-        lastRecordedTime = .zero
-        pauseTime = .zero
+        lock.withLock {
+            _startTime = .zero
+            _timeOffset = .zero
+            _startTimeNeedsRecalibration = false
+            _lastRecordedTime = .zero
+            _pauseTime = .zero
+        }
     }
-    
+
     // MARK: - Pause/Resume
-    
+
     func pause() {
-        pauseTime = CMClockGetTime(CMClockGetHostTimeClock())
+        lock.withLock {
+            _pauseTime = CMClockGetTime(CMClockGetHostTimeClock())
+        }
     }
-    
+
     func resume() {
-        let now = CMClockGetTime(CMClockGetHostTimeClock())
-        let pauseDuration = CMTimeSubtract(now, pauseTime)
-        timeOffset = CMTimeAdd(timeOffset, pauseDuration)
+        lock.withLock {
+            let now = CMClockGetTime(CMClockGetHostTimeClock())
+            let pauseDuration = CMTimeSubtract(now, _pauseTime)
+            _timeOffset = CMTimeAdd(_timeOffset, pauseDuration)
+        }
     }
     
     // MARK: - Processing
@@ -54,55 +89,49 @@ class RecordingTimeCoordinator: @unchecked Sendable {
     
     /// Process a sample buffer timestamp and return adjusted time and write decision
     func processSampleTime(_ samplePresentationTime: CMTime) -> ProcessingResult {
-        var isFirstSample = false
-        
-        // Handle first sample OR source switch recalibration
-        if startTime == .zero {
-            // First sample ever - set the baseline
-            startTime = samplePresentationTime
-            startTimeNeedsRecalibration = false
-            isFirstSample = true
-            AppLogger.recording.info("Recording started. First sample time: \(self.startTime.seconds)")
-        } else if startTimeNeedsRecalibration {
-            // Recalibrate
-            recalibrate(currentPresentationTime: samplePresentationTime)
+        lock.withLock {
+            var isFirstSample = false
+
+            // Handle first sample OR source switch recalibration
+            if _startTime == .zero {
+                // First sample ever - set the baseline
+                _startTime = samplePresentationTime
+                _startTimeNeedsRecalibration = false
+                isFirstSample = true
+                AppLogger.recording.info("Recording started. First sample time: \(self._startTime.seconds)")
+            } else if _startTimeNeedsRecalibration {
+                // Recalibrate (inline to stay within lock)
+                let gap = CMTime(value: 100, timescale: 1000) // 100ms gap
+                let lastAbsoluteTime = CMTimeAdd(_startTime, _lastRecordedTime)
+                let targetNewTime = CMTimeAdd(lastAbsoluteTime, gap)
+                let newTimeOffset = CMTimeSubtract(samplePresentationTime, targetNewTime)
+                _timeOffset = newTimeOffset
+                _startTimeNeedsRecalibration = false
+                AppLogger.recording.info("Time base recalibrated. Safe gap added: 100ms. New offset: \(self._timeOffset.seconds)s, continuing from: \(self._lastRecordedTime.seconds)s")
+            }
+
+            var presentationTime = samplePresentationTime
+            if _timeOffset != .zero {
+                presentationTime = CMTimeSubtract(presentationTime, _timeOffset)
+            }
+
+            // Track last recorded time
+            _lastRecordedTime = CMTimeSubtract(presentationTime, _startTime)
+
+            return ProcessingResult(
+                presentationTime: presentationTime,
+                shouldWrite: true, // Logic flow handled by caller checking writer state
+                isFirstSample: isFirstSample
+            )
         }
-        
-        var presentationTime = samplePresentationTime
-        if timeOffset != .zero {
-            presentationTime = CMTimeSubtract(presentationTime, timeOffset)
-        }
-        
-        // Track last recorded time
-        lastRecordedTime = CMTimeSubtract(presentationTime, startTime)
-        
-        return ProcessingResult(
-            presentationTime: presentationTime,
-            shouldWrite: true, // Logic flow handled by caller checking writer state
-            isFirstSample: isFirstSample
-        )
-    }
-    
-    private func recalibrate(currentPresentationTime: CMTime) {
-        // CRITICAL FIX: Add a "safe gap" (100ms) to ensure strictly increasing timestamps
-        let gap = CMTime(value: 100, timescale: 1000) // 100ms gap
-        let lastAbsoluteTime = CMTimeAdd(startTime, lastRecordedTime)
-        let targetNewTime = CMTimeAdd(lastAbsoluteTime, gap)
-
-        // We want: samplePresentationTime - newTimeOffset = targetNewTime
-        // So: newTimeOffset = samplePresentationTime - targetNewTime
-        let newTimeOffset = CMTimeSubtract(currentPresentationTime, targetNewTime)
-
-        timeOffset = newTimeOffset
-        startTimeNeedsRecalibration = false
-
-        AppLogger.recording.info("Time base recalibrated. Safe gap added: 100ms. New offset: \(self.timeOffset.seconds)s, continuing from: \(self.lastRecordedTime.seconds)s")
     }
     
     /// Adjust sample buffer timing based on current offset
     func adjustBufferTime(_ sample: CMSampleBuffer) -> CMSampleBuffer {
-        guard timeOffset != .zero else { return sample }
-        
+        // Capture offset atomically once to avoid multiple lock acquisitions
+        let currentOffset = timeOffset
+        guard currentOffset != .zero else { return sample }
+
         var count: CMItemCount = 0
         CMSampleBufferGetSampleTimingInfoArray(sample, entryCount: 0, arrayToFill: nil, entriesNeededOut: &count)
 
@@ -110,8 +139,8 @@ class RecordingTimeCoordinator: @unchecked Sendable {
         CMSampleBufferGetSampleTimingInfoArray(sample, entryCount: count, arrayToFill: &info, entriesNeededOut: nil)
 
         for index in 0 ..< Int(count) {
-            info[index].decodeTimeStamp = CMTimeSubtract(info[index].decodeTimeStamp, timeOffset)
-            info[index].presentationTimeStamp = CMTimeSubtract(info[index].presentationTimeStamp, timeOffset)
+            info[index].decodeTimeStamp = CMTimeSubtract(info[index].decodeTimeStamp, currentOffset)
+            info[index].presentationTimeStamp = CMTimeSubtract(info[index].presentationTimeStamp, currentOffset)
         }
 
         var newSample: CMSampleBuffer?

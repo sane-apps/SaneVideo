@@ -25,6 +25,9 @@ final class ProjectEditingTests: XCTestCase {
     var projectState: ProjectState!
     
     override func setUp() async throws {
+        // Ensure magnetic timeline is enabled for ripple behavior
+        UserDefaults.standard.set(true, forKey: "magneticTimeline")
+
         // Initialize with Mock Store
         projectState = ProjectState(projectStore: MockProjectStore())
         // Start fresh

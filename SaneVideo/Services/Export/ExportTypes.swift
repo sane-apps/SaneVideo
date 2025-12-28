@@ -12,6 +12,7 @@ enum ExportError: LocalizedError {
     case failedToCreateSession
     case cancelled
     case invalidProject(String)
+    case timeout
     case unknown
 
     var errorDescription: String? {
@@ -24,6 +25,8 @@ enum ExportError: LocalizedError {
             "Export was cancelled"
         case .invalidProject(let message):
             message
+        case .timeout:
+            "Export timed out - the operation took too long to complete"
         case .unknown:
             "An unknown error occurred"
         }

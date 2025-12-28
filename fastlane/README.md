@@ -55,6 +55,14 @@ Run SwiftLint audit
 
 Generate Ruby quality report
 
+### mac coverage
+
+```sh
+[bundle exec] fastlane mac coverage
+```
+
+Generate code coverage report
+
 ### mac changelog
 
 ```sh

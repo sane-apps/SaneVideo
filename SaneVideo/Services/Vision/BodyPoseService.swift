@@ -159,6 +159,7 @@ enum HandGesture: String, Sendable {
 }
 
 /// Service for detecting body and hand poses
+/// Note: Does not conform to BodyPoseServiceProtocol due to Swift 6 actor isolation rules.
 actor BodyPoseService {
 
     init() {}
@@ -273,7 +274,7 @@ actor BodyPoseService {
         in videoURL: URL,
         gestures: [BodyGesture] = BodyGesture.allCases,
         sampleInterval: TimeInterval = 0.5,
-        progressHandler: ((Int, Int) -> Void)? = nil
+        progressHandler: (@Sendable (Int, Int) -> Void)? = nil
     ) async throws -> [(gesture: BodyGesture, time: CMTime)] {
         let asset = AVURLAsset(url: videoURL)
         let duration = try await asset.load(.duration)

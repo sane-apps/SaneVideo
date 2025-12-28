@@ -58,6 +58,9 @@ class ExportEngine: ExportServiceProtocol {
       throw ExportError.alreadyExporting
     }
 
+    // Pre-flight disk space check
+    try validateDiskSpace(for: project, settings: settings, outputURL: outputURL)
+
     isExporting = true
     let state = ExportSessionState()
     currentExportState = state
@@ -395,6 +398,41 @@ class ExportEngine: ExportServiceProtocol {
       return "HEVC_Main_AutoLevel"
     } else {
       return "H264_High_AutoLevel"
+    }
+  }
+
+  /// Pre-flight disk space validation
+  /// Estimates required space and checks available capacity before export
+  private func validateDiskSpace(for project: VideoProject, settings: SaneExportSettings, outputURL: URL) throws {
+    // Calculate project duration
+    let duration = project.timeline.duration.seconds
+    guard duration > 0 else { return } // Empty project will fail later anyway
+
+    // Estimate file size: (video bitrate + audio bitrate) * duration / 8 bytes
+    let videoBitrate = Double(settings.bitrate)
+    let audioBitrate: Double = 128_000 // ~128 kbps for AAC
+    let totalBitrate = videoBitrate + audioBitrate
+
+    let estimatedBytes = Int64((totalBitrate * duration) / 8.0)
+    // Add 30% overhead for container, metadata, B-frames, etc.
+    let requiredSpace = Int64(Double(estimatedBytes) * 1.3)
+
+    // Check available space on output volume
+    let outputVolume = outputURL.deletingLastPathComponent()
+    do {
+      let values = try outputVolume.resourceValues(forKeys: [.volumeAvailableCapacityForImportantUsageKey])
+      if let available = values.volumeAvailableCapacityForImportantUsage {
+        if available < requiredSpace {
+          AppLogger.export.error("Insufficient disk space. Required: \(requiredSpace) bytes, Available: \(available) bytes")
+          throw ExportError.insufficientDiskSpace(required: requiredSpace, available: available)
+        }
+        AppLogger.export.info("Disk space check passed. Required: \(requiredSpace) bytes, Available: \(available) bytes")
+      }
+    } catch let error as ExportError {
+      throw error // Re-throw disk space error
+    } catch {
+      // Log but continue if we can't check (better than blocking)
+      AppLogger.export.warning("Failed to check disk space: \(error.localizedDescription). Proceeding with export.")
     }
   }
 

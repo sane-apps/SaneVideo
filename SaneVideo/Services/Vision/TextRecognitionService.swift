@@ -40,6 +40,7 @@ enum TextType: Sendable {
 }
 
 /// Service for detecting and recognizing text in video frames
+/// Note: Does not conform to TextRecognitionServiceProtocol due to Swift 6 actor isolation rules.
 actor TextRecognitionService {
 
   init() {}

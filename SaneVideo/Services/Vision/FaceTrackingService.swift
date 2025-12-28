@@ -15,6 +15,8 @@ import Vision
 
 /// Face tracking using Vision framework
 /// Detects faces and provides coordinates for auto-framing
+/// Note: Does not conform to FaceTrackingServiceProtocol due to Swift 6 actor isolation rules.
+/// Use FaceTrackingServiceProtocolMock for testing.
 actor FaceTrackingService {
 
   init() {}
@@ -35,7 +37,8 @@ actor FaceTrackingService {
 
     return results.map { observation in
       let box = observation.boundingBox
-      return CGRect(x: box.minX, y: box.minY, width: box.width, height: box.height)
+      // CRITICAL: Flip Y from Vision's bottom-left origin to top-left origin
+      return CGRect(x: box.minX, y: 1.0 - box.maxY, width: box.width, height: box.height)
     }
   }
 
@@ -194,7 +197,9 @@ actor FaceTrackingService {
         // Track or Detect
         if let observation = try await trackFace(in: ciImage, previousObservation: lastObservation) {
           lastObservation = observation
-          results[actualTime] = observation.boundingBox
+          // CRITICAL: Flip Y from Vision's bottom-left origin to top-left origin
+          let box = observation.boundingBox
+          results[actualTime] = CGRect(x: box.minX, y: 1.0 - box.maxY, width: box.width, height: box.height)
         } else {
           lastObservation = nil  // Lost face
         }

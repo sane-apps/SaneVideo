@@ -34,6 +34,7 @@ struct VisionAnalysisConfig: Sendable {
 }
 
 /// Orchestrates multiple Vision requests in a single video pass using VNVideoProcessor
+/// Note: Does not conform to VisionOrchestratorProtocol due to Swift 6 actor isolation rules.
 actor VisionOrchestrator {
 
   // MARK: - Dependencies
@@ -236,7 +237,9 @@ actor VisionOrchestrator {
           // Faces
           if let fReq = faceReq, let results = fReq.results {
             if let firstFace = results.first {
-              finalResult.faces[pts] = firstFace.boundingBox
+              // CRITICAL: Flip Y from Vision's bottom-left origin to top-left origin
+              let box = firstFace.boundingBox
+              finalResult.faces[pts] = CGRect(x: box.minX, y: 1.0 - box.maxY, width: box.width, height: box.height)
             }
           }
 

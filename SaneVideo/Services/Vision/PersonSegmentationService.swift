@@ -16,6 +16,7 @@ import AVFoundation
 
 /// Person segmentation using Vision framework
 /// Separates person from background for blur/replacement effects
+/// Note: Does not conform to PersonSegmentationServiceProtocol due to Swift 6 actor isolation rules.
 actor PersonSegmentationService {
 
     /// Metal-accelerated CIContext for rendering

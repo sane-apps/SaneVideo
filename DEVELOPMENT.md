@@ -413,6 +413,10 @@ log stream --predicate 'subsystem == "com.sanevideo.SaneVideo"' --level debug
     - **RuboCop**: `bundle exec rubocop` for script linting.
     - **Bundler-Audit**: `bundle exec bundle-audit` for security.
 3. **XcodeBuildMCP**: Use for granular programmatic builds/tests.
+4. **Claude Code Plugins** (install via `/plugin install`):
+    - **swift-lsp@claude-plugins-official**: ✅ Enabled - Provides Swift code intelligence (completion, go-to-definition, diagnostics)
+    - **code-review@claude-plugins-official**: Automated PR review with 4 parallel agents (install: `/plugin install code-review@claude-plugins-official`)
+    - **security-guidance@claude-plugins-official**: Security vulnerability alerts during editing (install: `/plugin install security-guidance@claude-plugins-official`)
 
 ### Test Generation Tool
 

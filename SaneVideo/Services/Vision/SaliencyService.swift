@@ -20,6 +20,7 @@ struct SaliencyResult: Sendable {
 }
 
 /// Service for detecting salient (attention-grabbing) regions in video
+/// Note: Does not conform to SaliencyServiceProtocol due to Swift 6 actor isolation rules.
 actor SaliencyService {
 
     init() {}
@@ -136,7 +137,7 @@ actor SaliencyService {
     func analyzeVideoForReframe(
         videoURL: URL,
         sampleInterval: TimeInterval = 1.0,
-        progressHandler: ((Int, Int) -> Void)? = nil
+        progressHandler: (@Sendable (Int, Int) -> Void)? = nil
     ) async throws -> [CMTime: SaliencyResult] {
         let asset = AVURLAsset(url: videoURL)
         let duration = try await asset.load(.duration)

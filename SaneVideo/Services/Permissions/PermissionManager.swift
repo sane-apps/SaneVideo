@@ -21,7 +21,7 @@ enum PermissionStatus {
 
 @MainActor
 @Observable
-class PermissionManager {
+class PermissionManager: PermissionManagerProtocol {
   // MARK: - Status
 
   var cameraStatus: PermissionStatus = .notDetermined {

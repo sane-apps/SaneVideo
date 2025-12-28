@@ -311,9 +311,6 @@
     "Add clips to timeline first" : {
 
     },
-    "AI Gating" : {
-
-    },
     "AI-Powered Polish" : {
 
     },
@@ -508,39 +505,6 @@
         }
       }
     },
-    "audio.ai_gating.subtitle" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Automatically mute non-speech segments"
-          }
-        }
-      }
-    },
-    "audio.ai_gating.title" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "AI Gating"
-          }
-        }
-      }
-    },
-    "audio.ai_tools.header" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "AI Audio"
-          }
-        }
-      }
-    },
     "audio.analysis.failed" : {
       "extractionState" : "extracted_with_value",
       "localizations" : {
@@ -596,28 +560,6 @@
         }
       }
     },
-    "audio.voice_isolation.subtitle" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Remove background noise with Apple ML"
-          }
-        }
-      }
-    },
-    "audio.voice_isolation.title" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Voice Isolation"
-          }
-        }
-      }
-    },
     "audio.volume.header" : {
       "extractionState" : "extracted_with_value",
       "localizations" : {
@@ -629,25 +571,13 @@
         }
       }
     },
-    "Auto-Fix Project (Cmd+Shift+M)" : {
-
-    },
-    "Auto-Grade" : {
-
-    },
     "Automatically adjusts brightness, contrast, and saturation (Instant Preview)." : {
-
-    },
-    "Automatically applies color grading to the video" : {
 
     },
     "Automatically cuts segments of the video where no speech is detected (Timeline Edit)." : {
 
     },
     "Automatically detects and removes people or distracting objects from the background." : {
-
-    },
-    "Automatically mute non-speech segments" : {
 
     },
     "Automatically removes silence, filler words, and enhances your video" : {
@@ -1033,9 +963,6 @@
 
     },
     "Canceling will stop the current Magic Fix operation. Any progress will be lost." : {
-
-    },
-    "Cannot switch modes while an operation is in progress" : {
 
     },
     "caption.placeholder" : {
@@ -1437,28 +1364,6 @@
     "Current:" : {
 
     },
-    "cursor.desc" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Enhance cursor visibility for screen recordings"
-          }
-        }
-      }
-    },
-    "cursor.toggle" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Show Highlight"
-          }
-        }
-      }
-    },
     "Delete Clip?" : {
 
     },
@@ -1491,6 +1396,12 @@
 
     },
     "Do you want to remove the clip reference from the project, or move the actual '%@' file to the Trash?" : {
+
+    },
+    "Download AI Model" : {
+
+    },
+    "Downloading AI model..." : {
 
     },
     "Drop media clips here to start your project" : {
@@ -1967,17 +1878,6 @@
         }
       }
     },
-    "effects.action.auto_grade" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Auto-Grade (AI)"
-          }
-        }
-      }
-    },
     "effects.active.status.on" : {
       "extractionState" : "extracted_with_value",
       "localizations" : {
@@ -2017,9 +1917,6 @@
     "End: %@" : {
 
     },
-    "Enhances cursor visibility in screen recordings by adding a highlight effect" : {
-
-    },
     "Exclude SaneVideo from Recording" : {
 
     },
@@ -2029,7 +1926,7 @@
     "Expanded" : {
 
     },
-    "Export Gallery (Cmd+E)" : {
+    "Export (Cmd+E)" : {
 
     },
     "export.action.batch_export" : {
@@ -2669,9 +2566,6 @@
     "Initializing Screen Share..." : {
 
     },
-    "Inspector Mode" : {
-
-    },
     "Inspector panel" : {
 
     },
@@ -3022,9 +2916,6 @@
     "Minimal Fix" : {
 
     },
-    "Mode" : {
-
-    },
     "Move Source File to Trash" : {
 
     },
@@ -3106,13 +2997,7 @@
     "Privacy & AI" : {
 
     },
-    "Pro" : {
-
-    },
     "Pro Clean-up" : {
-
-    },
-    "Pro Mode" : {
 
     },
     "Processing" : {
@@ -3189,9 +3074,6 @@
     "Remove %@ effect" : {
 
     },
-    "Remove background noise with Apple ML" : {
-
-    },
     "Remove from Project (Reference Only)" : {
 
     },
@@ -3210,9 +3092,6 @@
     "Retry" : {
 
     },
-    "Rotate 90°" : {
-
-    },
     "Rotate 90° clockwise" : {
 
     },
@@ -3223,9 +3102,6 @@
 
     },
     "Rotate video 90 degrees counter-clockwise" : {
-
-    },
-    "Rotation" : {
 
     },
     "SANE" : {
@@ -3953,9 +3829,6 @@
     "Share" : {
 
     },
-    "Show cursor highlight" : {
-
-    },
     "Show Details" : {
 
     },
@@ -4168,13 +4041,10 @@
         }
       }
     },
-    "Simple" : {
-
-    },
-    "Simple Mode" : {
-
-    },
     "sk-..." : {
+
+    },
+    "Skip for Now" : {
 
     },
     "smart_tools.footer.description" : {
@@ -4195,12 +4065,6 @@
 
     },
     "Switch" : {
-
-    },
-    "Switch between Simple mode for AI tools and Pro mode for manual controls" : {
-
-    },
-    "Switch to Pro Mode for manual video, audio, and effect controls." : {
 
     },
     "Synced with timeline" : {
@@ -5016,9 +4880,6 @@
     "Toggle background effects" : {
 
     },
-    "Toggle between Simple (AI) and Pro (Manual) controls" : {
-
-    },
     "Toggle Record/Edit Mode (Cmd+M)" : {
 
     },
@@ -5493,9 +5354,6 @@
       }
     },
     "View and edit properties of the selected clip" : {
-
-    },
-    "Voice Isolation" : {
 
     },
     "voiceover.action.generate" : {

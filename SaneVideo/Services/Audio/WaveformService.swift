@@ -8,7 +8,7 @@
 import AVFoundation
 import SwiftUI
 
-actor WaveformService {
+actor WaveformService: WaveformServiceProtocol {
 
     // Cache: ClipID -> [Float] (normalized samples)
     private var cache: [UUID: [Float]] = [:]

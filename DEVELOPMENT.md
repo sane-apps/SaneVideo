@@ -427,8 +427,37 @@ log stream --predicate 'subsystem == "com.sanevideo.SaneVideo"' --level debug
     - **swift-lsp@claude-plugins-official**: ✅ Enabled - Provides Swift code intelligence (completion, go-to-definition, diagnostics)
     - **code-review@claude-plugins-official**: Automated PR review with 4 parallel agents (install: `/plugin install code-review@claude-plugins-official`)
     - **security-guidance@claude-plugins-official**: Security vulnerability alerts during editing (install: `/plugin install security-guidance@claude-plugins-official`)
-5. **MCP Servers** (configured in `.mcp.json`):
+5. **MCP Servers** (configured in `.mcp.json` and `.claude.json`):
     - **apple-docs**: ✅ Enabled - Apple Developer Documentation & WWDC transcripts (1,260+ sessions, 2012-2025). Use for API examples, related APIs, and understanding "why" behind APIs.
+    - **github**: ✅ Enabled - GitHub API integration for issues, PRs, repos, and code search. (Official MCP)
+    - **memory**: ✅ Enabled - Persistent knowledge graph for cross-session context. (Official MCP)
+    - **context7**: ✅ Enabled - Real-time, version-specific library documentation. Prevents hallucinated APIs by fetching current docs from source repos.
+    - **TestSprite**: ✅ Enabled - Automated test generation and execution. Use for generating test plans and analyzing coverage. *Note: Primary focus is iOS mobile apps - will be essential for future iPad/iPhone companion apps.*
+    - **XcodeBuildMCP**: ✅ Enabled - Programmatic Xcode builds, test runs, and code signing. Use for CI/CD integration.
+
+### When to Use Which Tool (Decision Matrix)
+
+| Situation | Tool to Use | Why |
+|-----------|-------------|-----|
+| **Need API signature or existence** | `./Scripts/SaneMaster.rb verify_api` | SDK is source of truth (Rule #6) |
+| **Need API usage examples or WWDC context** | `apple-docs` MCP | Rich examples, related APIs, historical context |
+| **Need up-to-date library docs (WhisperKit, Vapor, etc.)** | `context7` MCP | Fetches real-time docs from source repos |
+| **Build/test the project** | `./Scripts/SaneMaster.rb verify` | Always use SaneMaster (Rule #1) |
+| **Programmatic builds (CI/CD)** | `XcodeBuildMCP` | Granular control, JSON output, automation |
+| **Generate mock classes** | `./Scripts/SaneMaster.rb gen_mock` (Mockolo) | Fast protocol→mock generation |
+| **Generate test templates** | `./Scripts/SaneMaster.rb gen_test` | Creates structured unit/UI tests |
+| **iOS companion app testing** | `TestSprite` | AI-powered SwiftUI test generation |
+| **GitHub issues/PRs** | `github` MCP | Create issues, review PRs, search code |
+| **Remember context across sessions** | `memory` MCP | Persistent knowledge graph |
+| **Code intelligence (completions, go-to-def)** | `swift-lsp` plugin | IDE-like Swift support in Claude Code |
+
+### Future: iOS/iPadOS Companion Apps
+
+When developing the iPhone/iPad companion apps:
+- **TestSprite** will be the primary UI testing tool (designed for iOS)
+- **XcodeBuildMCP** can target iOS simulators and devices
+- Shared code should live in a Swift Package for cross-platform use
+- Use `apple-docs` for platform-specific API differences (UIKit vs AppKit)
 
 ### Test Generation Tool
 

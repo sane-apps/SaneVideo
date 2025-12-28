@@ -2,6 +2,7 @@ source "https://rubygems.org"
 
 gem "xcodeproj", "~> 1.27"
 gem "fastlane", "~> 2.220" # CI/CD for iOS/macOS
+gem "xcov", "~> 1.8"        # Code coverage reporting
 gem "rubocop", "~> 1.50"    # Static code analysis
 gem "xcresult", "~> 0.1"
 gem "xcpretty", "~> 0.3"

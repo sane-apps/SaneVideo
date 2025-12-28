@@ -39,8 +39,10 @@ final class VoiceIsolationService: @unchecked Sendable {
     /// Whether voice isolation is currently active and initialized
     private(set) var isReady = false
     
-    /// Timeout for AUSoundIsolation instantiation (in seconds)
-    private let instantiationTimeoutSeconds: UInt64 = 5
+    /// Timeout for AUSoundIsolation instantiation (from centralized config)
+    private var instantiationTimeoutSeconds: UInt64 {
+        UInt64(AppConstants.MagicFeatures.voiceIsolationTimeout)
+    }
     
     // MARK: - Initialization
     

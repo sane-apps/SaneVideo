@@ -42,6 +42,14 @@ actor RepurposingOrchestrator {
     /// Maximum overlapping segments when building candidates
     private let maxOverlap: Double = 5.0
 
+    /// Bundled analysis data for segment building (reduces parameter count)
+    private struct SegmentAnalysisData {
+        let speakingRanges: [CMTimeRange]
+        let audioHighlights: [(CMTimeRange, HighlightType)]
+        let saliencyData: [CMTime: SaliencyResult]
+        let captions: [Caption]
+    }
+
     init(
         saliencyService: SaliencyService,
         silenceDetector: SilenceDetector,
@@ -108,11 +116,14 @@ actor RepurposingOrchestrator {
         // 5. Build candidate segments
         progressHandler?(.scoringCandidates, 0.7)
         let targetDuration = Double(settings.targetDuration.rawValue)
-        var candidates = buildCandidateSegments(
+        let analysisData = SegmentAnalysisData(
             speakingRanges: speakingRanges,
             audioHighlights: audioHighlights,
             saliencyData: saliencyData,
-            captions: captions,
+            captions: captions
+        )
+        var candidates = buildCandidateSegments(
+            analysisData: analysisData,
             targetDuration: targetDuration,
             totalDuration: totalSeconds
         )
@@ -198,10 +209,7 @@ actor RepurposingOrchestrator {
     // MARK: - Segment Building
 
     private func buildCandidateSegments(
-        speakingRanges: [CMTimeRange],
-        audioHighlights: [(CMTimeRange, HighlightType)],
-        saliencyData: [CMTime: SaliencyResult],
-        captions: [Caption],
+        analysisData: SegmentAnalysisData,
         targetDuration: Double,
         totalDuration: Double
     ) -> [ShortCandidate] {
@@ -217,22 +225,22 @@ actor RepurposingOrchestrator {
             let timeRange = CMTimeRange(start: startTime, duration: candidateDuration)
 
             // Find highlights in this segment
-            let segmentHighlights = audioHighlights
+            let segmentHighlights = analysisData.audioHighlights
                 .filter { timeRange.containsTimeRange($0.0) || $0.0.intersection(timeRange).duration.seconds > 0 }
                 .map { $0.1 }
 
             // Check for faces/saliency
-            let hasFace = saliencyData.contains { time, result in
+            let hasFace = analysisData.saliencyData.contains { time, result in
                 timeRange.containsTime(time) && result.confidence > 0.6
             }
 
             // Calculate average saliency confidence
-            let relevantSaliency = saliencyData.filter { timeRange.containsTime($0.key) }
+            let relevantSaliency = analysisData.saliencyData.filter { timeRange.containsTime($0.key) }
             let avgSaliency = relevantSaliency.isEmpty ? 0.5 :
                 relevantSaliency.values.map { Double($0.confidence) }.reduce(0, +) / Double(relevantSaliency.count)
 
             // Check for captions
-            let hasCaption = captions.contains { caption in
+            let hasCaption = analysisData.captions.contains { caption in
                 let captionStart = caption.startTime.seconds
                 let captionEnd = caption.endTime.seconds
                 return captionStart >= currentStart && captionEnd <= currentStart + targetDuration

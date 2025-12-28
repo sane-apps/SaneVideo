@@ -108,6 +108,7 @@ class SaneMaster
     when 'check_docs' then check_documentation_sync
     when 'dead_code', 'find_dead_code' then find_dead_code
     when 'check_deprecations', 'deprecations' then check_deprecations
+    when 'swift6_check', 'swift6', 'concurrency_check' then swift6_check
     when 'test_suite', 'suite' then run_test_suite(args)
     when 'crash_report', 'crashes' then analyze_crashes(args)
     when 'launch', 'run' then launch_app(args)
@@ -952,6 +953,10 @@ class SaneMaster
 
         check_deprecations (or deprecations)
           Scan for deprecated API usage and warnings
+
+        swift6_check (or swift6, concurrency_check)
+          Verify Swift 6 concurrency compliance
+          Checks for proper actor isolation, Sendable, @MainActor usage
 
         test_suite (or suite) [--quick] [--full] [--ci]
           Run comprehensive validation suite (all static analysis tools)
@@ -2004,6 +2009,134 @@ class SaneMaster
     puts "⚡ Performance: #{performance_warnings.length} warning(s)" if performance_warnings.any?
     puts "⚠️  Correctness: #{correctness_warnings.length} warning(s)" if correctness_warnings.any?
     puts '💡 Tip: Review each warning and update to modern APIs when possible'
+  end
+
+  def swift6_check
+    puts '🔍 --- [ SWIFT 6 CONCURRENCY COMPLIANCE ] ---'
+    puts 'Scanning for concurrency patterns...'
+    puts ''
+
+    source_dir = File.join(Dir.pwd, 'SaneVideo')
+    unless File.directory?(source_dir)
+      puts "❌ Source directory not found: #{source_dir}"
+      return
+    end
+
+    # Define patterns to check
+    patterns = {
+      '@MainActor' => { count: 0, files: [], description: 'Main actor isolated types/methods' },
+      'actor ' => { count: 0, files: [], description: 'Custom actors' },
+      'nonisolated' => { count: 0, files: [], description: 'Non-isolated members' },
+      '@Sendable' => { count: 0, files: [], description: 'Sendable closures' },
+      '@unchecked Sendable' => { count: 0, files: [], description: 'Unchecked Sendable conformances' },
+      'nonisolated(unsafe)' => { count: 0, files: [], description: 'Unsafe nonisolated (for threading edge cases)' },
+      'Task { @MainActor' => { count: 0, files: [], description: 'Tasks dispatched to MainActor' },
+      'Task.detached' => { count: 0, files: [], description: 'Detached tasks' },
+      ': Sendable' => { count: 0, files: [], description: 'Sendable protocol conformance' }
+    }
+
+    # Problems to flag
+    problems = []
+
+    # Scan all Swift files
+    swift_files = Dir.glob("#{source_dir}/**/*.swift")
+    swift_files.each do |file|
+      content = File.read(file)
+      rel_path = file.sub("#{Dir.pwd}/", '')
+
+      patterns.each do |pattern, data|
+        matches = content.scan(/#{Regexp.escape(pattern)}/).count
+        next unless matches.positive?
+
+        data[:count] += matches
+        data[:files] << rel_path unless data[:files].include?(rel_path)
+      end
+
+      # Check for potential issues
+      lines = content.lines
+      lines.each_with_index do |line, idx|
+        line_num = idx + 1
+
+        # Flag DispatchQueue usage (should use async/await)
+        if line.include?('DispatchQueue.main') && !line.include?('//')
+          problems << { file: rel_path, line: line_num, issue: 'DispatchQueue.main - consider Task { @MainActor }' }
+        end
+
+        # Flag completion handlers without @Sendable
+        if line =~ /completion:\s*@escaping\s+\(/ && !line.include?('@Sendable')
+          problems << { file: rel_path, line: line_num, issue: 'Completion handler may need @Sendable' }
+        end
+
+        # Flag assumeIsolated in deinit (common crash pattern)
+        if line.include?('assumeIsolated') && content.include?('deinit')
+          problems << { file: rel_path, line: line_num, issue: 'assumeIsolated near deinit - potential crash' }
+        end
+      end
+    end
+
+    # Report findings
+    puts '📊 Concurrency Pattern Usage:'
+    puts ''
+
+    patterns.each do |pattern, data|
+      emoji = data[:count].positive? ? '✅' : '⚪'
+      puts "  #{emoji} #{data[:description]}: #{data[:count]} usages in #{data[:files].length} files"
+    end
+
+    total_usages = patterns.values.map { |d| d[:count] }.sum
+    puts ''
+    puts "  📈 Total concurrency annotations: #{total_usages}"
+
+    # Grade the codebase
+    grade = if total_usages > 400 && patterns['actor '][:count] > 10
+              'A'
+            elsif total_usages > 200 && patterns['@MainActor'][:count] > 20
+              'B'
+            elsif total_usages > 50
+              'C'
+            else
+              'D'
+            end
+
+    puts ''
+    puts "  🎯 Swift 6 Readiness Grade: #{grade}"
+    puts ''
+
+    # Report problems
+    if problems.any?
+      puts '⚠️  Potential Issues Found:'
+      problems.group_by { |p| p[:file] }.each do |file, issues|
+        puts "  📄 #{file}"
+        issues.each do |issue|
+          puts "     Line #{issue[:line]}: #{issue[:issue]}"
+        end
+      end
+      puts ''
+    else
+      puts '✅ No potential concurrency issues detected!'
+      puts ''
+    end
+
+    # Recommendations
+    puts '💡 Swift 6 Recommendations:'
+    puts '   - All public types with mutable state should be actors or @MainActor'
+    puts '   - Use Task { @MainActor in } instead of DispatchQueue.main.async'
+    puts '   - Mark completion handlers as @Sendable for cross-actor safety'
+    puts '   - Use nonisolated for computed properties that access immutable data'
+    puts ''
+
+    # Check for strict concurrency build setting
+    project_file = File.join(Dir.pwd, 'project.yml')
+    if File.exist?(project_file)
+      yml_content = File.read(project_file)
+      if yml_content.include?('SWIFT_STRICT_CONCURRENCY') && yml_content.include?('complete')
+        puts '✅ Strict concurrency checking enabled (complete mode)'
+      elsif yml_content.include?('SWIFT_STRICT_CONCURRENCY')
+        puts '⚠️  Strict concurrency checking enabled (consider upgrading to complete)'
+      else
+        puts '⚠️  Consider adding SWIFT_STRICT_CONCURRENCY: complete to project.yml'
+      end
+    end
   end
 
   def run_test_suite(args)

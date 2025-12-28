@@ -12,6 +12,29 @@ import SwiftUI
 // Import new modifiers
 // AnimationModifiers
 
+// MARK: - Video Display Modes
+enum VideoDisplayMode: String, CaseIterable {
+    case fit      // Fit entire video (may have letterboxing)
+    case fill     // Fill container (may crop edges)
+    case actual   // Actual size (1:1 pixels, scrollable if larger)
+
+    var label: String {
+        switch self {
+        case .fit: return "Fit"
+        case .fill: return "Fill"
+        case .actual: return "Actual Size"
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .fit: return "rectangle.arrowtriangle.2.inward"
+        case .fill: return "rectangle.arrowtriangle.2.outward"
+        case .actual: return "1.square"
+        }
+    }
+}
+
 struct EditorLayoutView: View {
     @Environment(AppState.self) var appState
     @Binding var selectedClip: VideoClip?
@@ -21,6 +44,9 @@ struct EditorLayoutView: View {
     @State private var isSidebarCollapsed = false
     @State private var isInspectorCollapsed = false
     @State private var lastLoadedProjectId: UUID? // For playhead restoration
+
+    // Video display mode - persisted per user preference
+    @AppStorage("editor.videoDisplayMode") private var videoDisplayMode: VideoDisplayMode = .fit
 
     var body: some View {
         VStack(spacing: 0) {
@@ -59,26 +85,17 @@ struct EditorLayoutView: View {
 
                         if let player = appState.playbackState.player {
                             VStack(spacing: 0) {
-                                Spacer()
+                                Spacer(minLength: 8)
 
-                                // Video Window with Heavy Professional Shadow
-                                AdvancedVideoPlayer(player: player)
-                                    .overlay {
-                                        CanvasOverlay(clip: selectedClip, projectState: appState.projectState)
-                                    }
-                                    .aspectRatio(16/9, contentMode: .fit)
-                                    .padding(40)
-                                    .shadow(color: .black.opacity(0.3), radius: 10, y: 5)
-                                    .overlay {
-                                        RoundedRectangle(cornerRadius: 12)
-                                            .stroke(Color.white.opacity(0.1), lineWidth: 1)
-                                    }
+                                // Video Window - responsive sizing based on display mode
+                                videoPlayerView(player: player)
 
-                                Spacer()
+                                Spacer(minLength: 8)
 
                                 PlayerControlBar(
                                     playbackState: appState.playbackState,
-                                    projectState: appState.projectState
+                                    projectState: appState.projectState,
+                                    displayMode: $videoDisplayMode
                                 )
                                 .padding(.bottom, 12)
                             }
@@ -323,6 +340,53 @@ struct EditorLayoutView: View {
             return (caption, mediaTime)
         }
         return nil
+    }
+
+    // MARK: - Video Player with Display Mode Support
+
+    @ViewBuilder
+    private func videoPlayerView(player: AVPlayer) -> some View {
+        Group {
+            switch videoDisplayMode {
+            case .fit:
+                // Fit: Show entire video, may have letterboxing
+                AdvancedVideoPlayer(player: player)
+                    .overlay {
+                        CanvasOverlay(clip: selectedClip, projectState: appState.projectState)
+                    }
+                    .aspectRatio(16/9, contentMode: .fit)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+
+            case .fill:
+                // Fill: Fill the container, may crop edges
+                AdvancedVideoPlayer(player: player)
+                    .overlay {
+                        CanvasOverlay(clip: selectedClip, projectState: appState.projectState)
+                    }
+                    .aspectRatio(16/9, contentMode: .fill)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+
+            case .actual:
+                // Actual: 1:1 pixel mapping, scrollable if larger
+                ScrollView([.horizontal, .vertical], showsIndicators: true) {
+                    AdvancedVideoPlayer(player: player)
+                        .overlay {
+                            CanvasOverlay(clip: selectedClip, projectState: appState.projectState)
+                        }
+                        .frame(minWidth: 640, minHeight: 360) // Minimum reasonable size
+                }
+                .padding(8)
+            }
+        }
+        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .shadow(color: .black.opacity(0.25), radius: 8, y: 3)
+        .overlay {
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     @ViewBuilder

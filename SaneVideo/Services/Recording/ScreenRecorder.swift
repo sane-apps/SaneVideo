@@ -47,6 +47,27 @@ class ScreenRecorder: NSObject, SCContentSharingPickerObserver, SCStreamDelegate
   /// Callback triggered when user selects content in the picker
   var onContentSelected: (() -> Void)?
 
+  /// The screen/display frame being recorded (for PiP compositing)
+  /// Returns the frame in global screen coordinates for accurate PiP positioning
+  var recordingFrame: CGRect? {
+    guard let filter = baseFilter else { return nil }
+    // For display captures, get the actual display frame including origin
+    if let scDisplay = filter.includedDisplays.first {
+      // Get the actual NSScreen for this display to get its frame in global coords
+      if let nsScreen = NSScreen.screens.first(where: { screen in
+        // Match by size (SCDisplay doesn't expose displayID directly in a convenient way)
+        Int(screen.frame.width) == scDisplay.width && Int(screen.frame.height) == scDisplay.height
+      }) {
+        return nsScreen.frame
+      }
+      // Fallback: assume main display at origin
+      return CGRect(x: 0, y: 0, width: CGFloat(scDisplay.width), height: CGFloat(scDisplay.height))
+    }
+    // For window captures, we don't have the frame easily accessible
+    // Return nil and let VideoWriter use fallback positioning
+    return nil
+  }
+
   override init() {
     super.init()
     setupDisplayObserver()

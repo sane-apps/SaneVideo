@@ -53,7 +53,7 @@ struct InspectorToggle: View {
   let subtitle: String
   @Binding var isOn: Bool
   let icon: String
-  var color: Color = .purple  // Default for safety, but calls should override
+  var color: Color = .accentColor  // Use system accent color by default
   var identifier: String?
 
   var body: some View {
@@ -77,7 +77,8 @@ struct InspectorToggle: View {
           .multilineTextAlignment(.leading)
         Text(subtitle)
           .font(.system(size: Theme.Typography.fontSizeSM))
-          .foregroundColor(.secondary)
+          .foregroundStyle(.secondary)  // ACCESSIBILITY FIX: Use foregroundStyle for better adaptive contrast
+          .opacity(0.8)  // Slightly stronger than default secondary
           .lineLimit(2)
           .multilineTextAlignment(.leading)
       }
@@ -86,11 +87,13 @@ struct InspectorToggle: View {
       // Spacer with minimum length
       Spacer(minLength: Theme.Dimensions.spacingXS)
 
-      // Toggle - UX FIX: Better sizing
+      // Toggle - UX FIX: Always use blue for accessibility (WCAG contrast)
+      // Yellow/orange toggles fail contrast requirements on light backgrounds
+      // Apple uses blue for system toggles for this exact reason
       Toggle("", isOn: $isOn)
         .labelsHidden()
         .toggleStyle(.switch)
-        .tint(color)
+        .tint(.blue)  // ACCESSIBILITY FIX: Blue has 4.5:1 contrast ratio, yellow doesn't
         .accessibilityLabel(title)
         .accessibilityIdentifier(identifier ?? "Toggle_\(title)")
         .controlSize(.small)

@@ -17,6 +17,41 @@ class PiPCameraWindow: NSPanel {
     // CRITICAL FIX: Embed controls directly in PiPCameraWindow to prevent detachment.
     private var controlsHostingView: NSHostingView<AnyView>?
 
+    // MARK: - Size Presets (user-friendly defaults based on industry research)
+    enum PiPSize: Int, CaseIterable {
+        case small = 0   // 200px - minimal, just your face
+        case medium = 1  // 320px - balanced (default)
+        case large = 2   // 480px - detailed view
+
+        var width: CGFloat {
+            switch self {
+            case .small: return 200
+            case .medium: return 320
+            case .large: return 480
+            }
+        }
+
+        // Height based on 3:2 aspect ratio
+        var height: CGFloat { width / 1.5 }
+
+        var next: PiPSize {
+            let allCases = PiPSize.allCases
+            let nextIndex = (rawValue + 1) % allCases.count
+            return allCases[nextIndex]
+        }
+
+        static func fromWidth(_ width: CGFloat) -> PiPSize {
+            switch width {
+            case ..<260: return .small
+            case 260..<400: return .medium
+            default: return .large
+            }
+        }
+    }
+
+    // Track current size for dynamic control scaling
+    private var currentButtonSize: IconCircleButton.Size = .small
+
     override var canBecomeKey: Bool { true }
     override var canBecomeMain: Bool { false }
 
@@ -43,10 +78,16 @@ class PiPCameraWindow: NSPanel {
 
     convenience init() {
         let screen = NSScreen.main?.frame ?? .zero
-        // Default size: 320x240 video + 60pt for controls = 320x300
+
+        // Load saved size preference (default to medium if not set)
+        let savedSizeRaw = UserDefaults.standard.integer(forKey: "pipPreferredSize")
+        let savedPreset = PiPSize(rawValue: savedSizeRaw) ?? .medium
+
+        // Use saved preset dimensions
+        let pipWidth: CGFloat = savedPreset.width
+        let pipHeight: CGFloat = savedPreset.height
+
         // Position in bottom-right corner with padding
-        let pipWidth: CGFloat = 320
-        let pipHeight: CGFloat = 280  // 16:9 video + controls
         let initialFrame = NSRect(
             x: screen.maxX - pipWidth - 20,
             y: 40,
@@ -87,37 +128,82 @@ class PiPCameraWindow: NSPanel {
         // Remove existing if any
         controlsHostingView?.removeFromSuperview()
 
-        // PiP uses .small button size (40pt) for compact display
-        // Record button auto-scales to 56pt (40 * 1.4)
-        let controlsView = SharedRecordingControls(
-            showDevicePickers: false,
-            showGalleryTarget: false,
-            showTimer: false,
-            useGlassBackground: true,
-            buttonSize: .small  // Uses unified size system (40pt buttons, 56pt record)
-        )
-        .environment(ServiceContainer.shared.appState)
+        // DYNAMIC SIZING: Calculate button size based on window width
+        // This ensures controls scale appropriately as user resizes PiP
+        currentButtonSize = IconCircleButton.Size.forPiPWidth(frame.width)
 
-        let hosting = NSHostingView(rootView: AnyView(controlsView))
+        // UX FIX: Wrap controls with countdown overlay so PiP users see the countdown too
+        let controlsWithCountdown = PiPControlsWithCountdown(buttonSize: currentButtonSize)
+            .environment(ServiceContainer.shared.appState)
+
+        let hosting = NSHostingView(rootView: AnyView(controlsWithCountdown))
         hosting.translatesAutoresizingMaskIntoConstraints = false
 
         contentView.addSubview(hosting)
         controlsHostingView = hosting
 
-        // Use Theme.Dimensions for consistent spacing
-        let bottomPadding = Theme.Dimensions.paddingLG  // 16pt
-        let sidePadding = Theme.Dimensions.paddingXL    // 20pt (for resize handle clearance)
+        // Dynamic padding based on button size
+        let bottomPadding: CGFloat = currentButtonSize == .mini ? 8 : Theme.Dimensions.paddingLG
+        let sidePadding: CGFloat = currentButtonSize == .mini ? 12 : Theme.Dimensions.paddingXL
+        let minWidth: CGFloat = currentButtonSize == .mini ? 120 : 180
+        let minHeight: CGFloat = currentButtonSize == .mini ? 36 : 52
 
         NSLayoutConstraint.activate([
             // Position at bottom center with proper margins
             hosting.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
             hosting.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -bottomPadding),
             // Ensure width fits content
-            hosting.widthAnchor.constraint(greaterThanOrEqualToConstant: 180),
-            hosting.heightAnchor.constraint(greaterThanOrEqualToConstant: 52),
+            hosting.widthAnchor.constraint(greaterThanOrEqualToConstant: minWidth),
+            hosting.heightAnchor.constraint(greaterThanOrEqualToConstant: minHeight),
             // Keep clear of resize handle (bottom right)
             hosting.trailingAnchor.constraint(lessThanOrEqualTo: contentView.trailingAnchor, constant: -sidePadding * 2)
         ])
+    }
+
+    /// Re-embed controls when size changes significantly (to update button sizes)
+    private func updateControlsForCurrentSize() {
+        let newSize = IconCircleButton.Size.forPiPWidth(frame.width)
+        if newSize != currentButtonSize {
+            embedControls()
+        }
+    }
+
+    /// Cycle to next size preset (for double-click)
+    func cycleToNextSize() {
+        let currentPreset = PiPSize.fromWidth(frame.width)
+        let nextPreset = currentPreset.next
+        resizeToPreset(nextPreset)
+    }
+
+    /// Resize window to a specific preset
+    func resizeToPreset(_ preset: PiPSize) {
+        let newWidth = preset.width
+        let newHeight = preset.height
+
+        // Keep top-left anchored (same as manual resize)
+        let currentMaxY = frame.maxY
+        let newY = currentMaxY - newHeight
+
+        let newFrame = NSRect(
+            x: frame.origin.x,
+            y: newY,
+            width: newWidth,
+            height: newHeight
+        )
+
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = 0.2
+            context.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+            self.animator().setFrame(newFrame, display: true)
+        }
+
+        // Update controls after animation
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { [weak self] in
+            self?.updateControlsForCurrentSize()
+        }
+
+        // Save preference
+        UserDefaults.standard.set(preset.rawValue, forKey: "pipPreferredSize")
     }
 
     // Keeping this method signature to minimize diff/breakage
@@ -438,6 +524,40 @@ class PiPCameraWindow: NSPanel {
             CATransaction.setDisableActions(true)
             layer.frame = containerView.bounds
             CATransaction.commit()
+        }
+
+        // DYNAMIC CONTROLS: Update button sizes when window is resized
+        updateControlsForCurrentSize()
+    }
+
+    // MARK: - Double-Click to Cycle Size Presets
+    override func mouseUp(with event: NSEvent) {
+        super.mouseUp(with: event)
+
+        // Double-click cycles through size presets
+        if event.clickCount == 2 {
+            cycleToNextSize()
+            ServiceContainer.shared.hapticsManager.impact()
+
+            // Show size name toast
+            let currentPreset = PiPSize.fromWidth(frame.width)
+            let sizeName = switch currentPreset {
+                case .small: "Small"
+                case .medium: "Medium"
+                case .large: "Large"
+            }
+            ServiceContainer.shared.toastManager.show("PiP: \(sizeName)")
+        }
+    }
+
+    /// Show hint about double-click resize on first use
+    func showResizeHintIfNeeded() {
+        let hasShownHint = UserDefaults.standard.bool(forKey: "pipResizeHintShown")
+        if !hasShownHint {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                ServiceContainer.shared.toastManager.show("💡 Double-click PiP to resize")
+                UserDefaults.standard.set(true, forKey: "pipResizeHintShown")
+            }
         }
     }
 

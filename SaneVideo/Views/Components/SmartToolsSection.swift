@@ -151,10 +151,14 @@ struct SmartToolsSection: View {
           subtitle: "Cut non-speech gaps",
           isOn: Binding(
             get: { options.removeSilence },
-            set: { newValue in
+            set: { [clip] newValue in
+              // CRITICAL FIX: Capture clip by value to prevent stale reference crash
               options.removeSilence = newValue
               // LIVE PREVIEW: Use Gating as proxy for silence removal preview
-              appState.projectState.updateClipGating(clipId: clip.id, enabled: newValue)
+              let clipId = clip.id
+              Task { @MainActor in
+                appState.projectState.updateClipGating(clipId: clipId, enabled: newValue)
+              }
             }
           ),
           icon: "waveform.slash",
@@ -204,10 +208,14 @@ struct SmartToolsSection: View {
           subtitle: "Isolate voice & remove noise",
           isOn: Binding(
             get: { options.enhanceAudio },
-            set: { newValue in
+            set: { [clip] newValue in
+              // CRITICAL FIX: Capture clip by value to prevent stale reference crash
               options.enhanceAudio = newValue
               // LIVE PREVIEW: Use Voice Isolation for enhancement preview
-              appState.projectState.updateClipVoiceIsolation(clipId: clip.id, enabled: newValue)
+              let clipId = clip.id
+              Task { @MainActor in
+                appState.projectState.updateClipVoiceIsolation(clipId: clipId, enabled: newValue)
+              }
             }
           ),
           icon: "mic.fill",

@@ -266,11 +266,21 @@ extension RecordingEngine {
         ServiceContainer.shared.toastManager.show("Switching to \(sourceName)...")
       }
 
-      let timeoutDuration: UInt64 = (source == .screen) ? 120_000_000_000 : 10_000_000_000
+      // CRITICAL FIX: Cancel any previous timeout task before starting new one
+      // This prevents race conditions where old timeout corrupts new switch state
+      sourceSwitchTimeoutTask?.cancel()
+      sourceSwitchTimeoutTask = nil
+
+      // CRITICAL FIX: Increased camera timeout from 10s to 30s
+      // Camera can take time to start, especially if permissions dialog appears
+      let timeoutDuration: UInt64 = (source == .screen) ? 120_000_000_000 : 30_000_000_000
 
       sourceSwitchTimeoutTask = Task { @RecordingActor [weak self] in
         try? await Task.sleep(nanoseconds: timeoutDuration)
         guard let self = self else { return }
+
+        // CRITICAL: Check if this task was cancelled (e.g., by a new switch starting)
+        guard !Task.isCancelled else { return }
 
         if self.isSwitching, self.pendingSource == source {
           let timeoutSecs = timeoutDuration / 1_000_000_000
@@ -384,8 +394,19 @@ extension RecordingEngine {
       await screenRecorder.stop()
       AppLogger.recording.info("Screen recorder stopped, camera transition complete")
 
+      // CRITICAL FIX: Always complete switch immediately after stopping screen recorder
+      // The camera should already be running (it was started for PiP overlay)
+      // Don't wait for first frame - this causes unnecessary timeouts
+      // The processSample flow will handle recalibration naturally
       if pendingSource == newSource {
-        AppLogger.recording.info("Waiting for first camera frame to complete switch...")
+        AppLogger.recording.info("Completing camera switch immediately (cameraWasActive: \(cameraWasActive))")
+        currentSource = newSource
+        pendingSource = nil
+        isSwitching = false
+        // Keep timeCoordinator.startTimeNeedsRecalibration = true so next frame recalibrates
+        sourceSwitchTimeoutTask?.cancel()
+        sourceSwitchTimeoutTask = nil
+        AppLogger.recording.info("Source switch to camera completed successfully")
       }
     } else {
       AppLogger.recording.info(

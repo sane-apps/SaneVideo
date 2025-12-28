@@ -47,14 +47,35 @@ enum TestEnvironment {
       return URL(fileURLWithPath: localPath)
     }
 
-    // 3. Fallback to known development path on this machine
-    let devPath = "/Users/sj/SaneVideo/Tests/Assets/" + filename
-    if FileManager.default.fileExists(atPath: devPath) {
-      return URL(fileURLWithPath: devPath)
+    // 3. Try to find project root by looking for project.yml
+    let possibleRoots = [
+      FileManager.default.currentDirectoryPath,
+      FileManager.default.homeDirectoryForCurrentUser.path + "/SaneVideo",
+      Bundle.main.bundlePath + "/../../../.."  // From .app bundle
+    ]
+
+    for root in possibleRoots {
+      let projectYml = root + "/project.yml"
+      if FileManager.default.fileExists(atPath: projectYml) {
+        let assetPath = root + "/Tests/Assets/" + filename
+        if FileManager.default.fileExists(atPath: assetPath) {
+          return URL(fileURLWithPath: assetPath)
+        }
+      }
     }
 
-    // 4. Ultimate fallback
-    return URL(fileURLWithPath: "/tmp/SaneVideo/" + filename)
+    // 4. Ultimate fallback - create temp directory
+    let tmpPath = "/tmp/SaneVideo/" + filename
+    return URL(fileURLWithPath: tmpPath)
+  }
+
+  /// Get a specific test asset by name
+  static func testAsset(named name: String) -> URL {
+    let originalEnv = ProcessInfo.processInfo.environment["TEST_ASSET_NAME"]
+    // Temporarily override to get the specific asset
+    let url = mockAssetURL
+    let directory = url.deletingLastPathComponent()
+    return directory.appendingPathComponent(name)
   }
 
   /// Shared logger for environment detection

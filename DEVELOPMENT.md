@@ -351,7 +351,7 @@ for t in data.get('threads', []):
 ./Scripts/SaneMaster.rb logs --follow
 ```
 
-Log files are stored at: `~/Library/Logs/SaneVideo/SaneVideo-YYYY-MM-DD.log`
+Log files are stored at: `~/Movies/SaneVideo/SaneVideo_Debug.log` (overwrites on each app launch for easy debugging)
 
 **System unified logs** (only available when streaming):
 
@@ -618,6 +618,76 @@ The following files are historical records and should NOT be used as primary sou
 - You can see exactly what happens when the user tests the changes
 
 **Exception**: Skip this workflow if the build fails - fix build errors first.
+
+### Test Mode (Interactive Debugging)
+
+When the user says **"test mode"**, enter an interactive debugging workflow:
+
+```bash
+./Scripts/SaneMaster.rb test_mode   # or just: ./Scripts/SaneMaster.rb tm
+```
+
+This command automatically:
+1. Kills existing SaneVideo processes
+2. Shows recent screenshots from `Screenshots/` folder (with timestamps)
+3. Shows recent crash reports from `~/Library/Logs/DiagnosticReports/`
+4. Builds the app
+5. Launches the app
+6. Shows debug log status
+
+**All diagnostic resources to monitor:**
+- **Debug log**: `~/Movies/SaneVideo/SaneVideo_Debug.log` (overwrites each launch)
+- **Screenshots**: `Screenshots/` in project root
+- **Crash reports**: `~/Library/Logs/DiagnosticReports/SaneVideo-*.ips`
+- **Hang/spin reports**: `~/Library/Logs/DiagnosticReports/SaneVideo-*.spin` or `*.hang`
+- **Xcode test results**: `~/Library/Developer/Xcode/DerivedData/SaneVideo-*/Logs/Test/*.xcresult`
+- **System console**: `log show --predicate 'process == "SaneVideo"' --last 5m`
+- **MetricKit reports**: Logged via `CrashReporter` in app (see `AppLogger.general`)
+
+**Note**: When user says "logs" or "check logs", they mean ALL diagnostic resources above, not just the debug log file.
+
+**Cross-reference timestamps**: When debugging, match screenshot timestamps (filename) with:
+- Log entries (timestamp in log file)
+- Crash report timestamps (file modification time)
+
+**After each fix**: Re-run `test_mode` to rebuild, relaunch, and verify the fix works.
+
+### Post-Fix Checklist (MANDATORY)
+
+After fixing ANY bug, you **MUST** complete this checklist:
+
+- [ ] **Regression test added?** - Every bug fix MUST have a test that would have caught it
+      ```bash
+      ./Scripts/SaneMaster.rb gen_test RegressionTests --target <Component>
+      ```
+- [ ] **Similar bugs checked?** - Search for the same pattern elsewhere in codebase
+      ```bash
+      # Example: if you fixed a timeout race condition, search for other timeouts
+      grep -r "Task.*sleep" SaneVideo/
+      ```
+- [ ] **Changes committed?** - Don't lose work! Commit after each fix
+      ```bash
+      git add -A && git commit -m "Fix: <description>"
+      ```
+- [ ] **Plain English explanation?** - Can you explain what broke and why in simple terms?
+- [ ] **Technical debt tracked?** - Any TODOs or FIXMEs added? Track them:
+      ```bash
+      grep -rn "TODO\|FIXME" SaneVideo/ | head -20
+      ```
+
+**Why this matters:**
+- Regression tests prevent the same bug from coming back
+- Similar bugs often exist nearby (copy-paste, same pattern)
+- Uncommitted work can be lost
+- You (the user) should always understand what was fixed
+- TODOs get forgotten if not tracked
+
+**Useful follow-up commands:**
+```bash
+./Scripts/SaneMaster.rb logs --follow  # Watch logs live
+./Scripts/SaneMaster.rb crashes        # Analyze crash patterns
+open Screenshots/                       # View screenshots
+```
 
 ### Documentation Priority
 

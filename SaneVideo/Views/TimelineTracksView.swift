@@ -56,6 +56,7 @@ struct TimelineTracksView: View {
                 playheadOverlay
             }
             .coordinateSpace(name: "TimelineContent")
+            .clipped() // CRITICAL FIX: Prevent playhead from bleeding past timeline bounds
         }
     }
 

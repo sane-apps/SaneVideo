@@ -134,62 +134,11 @@ struct AudioSection: View {
                     .smoothAppear()
             }
 
-            Divider().padding(.vertical, 4)
-
-            // AI Audio Tools
-            SubsectionHeader(title: String(localized: "audio.ai_tools.header", defaultValue: "AI Audio"))
-
-            VStack(spacing: 10) {
-                // P1 FIX: Larger toggles with better spacing
-                Toggle(isOn: Binding(
-                    get: { clip.isVoiceIsolationEnabled },
-                    set: { appState.projectState.updateClipVoiceIsolation(clipId: clip.id, enabled: $0) }
-                )) {
-                    Label {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(String(localized: "audio.voice_isolation.title", defaultValue: "Voice Isolation"))
-                                .font(.system(size: 13, weight: .medium))
-                            Text(String(localized: "audio.voice_isolation.subtitle", defaultValue: "Remove background noise with Apple ML"))
-                                .font(.system(size: 11))
-                                .foregroundColor(.secondary)
-                        }
-                    } icon: {
-                        Image(systemName: "waveform.path.badge.minus")
-                            .foregroundColor(.blue)
-                            .font(.system(size: 16)) // P1 FIX: Larger icon
-                    }
-                }
-                .toggleStyle(SwitchToggleStyle(tint: .blue))
-                .controlSize(.regular) // P1 FIX: Larger control
-                .accessibilityLabel("Voice Isolation")
-                .accessibilityHint("Remove background noise with Apple ML")
-                .focusable()
-
-                Toggle(isOn: Binding(
-                    get: { clip.isGatingEnabled },
-                    set: { appState.projectState.updateClipGating(clipId: clip.id, enabled: $0) }
-                )) {
-                    Label {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(String(localized: "audio.ai_gating.title", defaultValue: "AI Gating"))
-                                .font(.system(size: 13, weight: .medium))
-                            Text(String(localized: "audio.ai_gating.subtitle", defaultValue: "Automatically mute non-speech segments"))
-                                .font(.system(size: 11))
-                                .foregroundColor(.secondary)
-                        }
-                    } icon: {
-                        Image(systemName: "door.left.hand.closed")
-                            .foregroundColor(.purple)
-                            .font(.system(size: 16)) // P1 FIX: Larger icon
-                    }
-                }
-                .toggleStyle(SwitchToggleStyle(tint: .purple))
-                .controlSize(.regular) // P1 FIX: Larger control
-                .accessibilityLabel("AI Gating")
-                .accessibilityHint("Automatically mute non-speech segments")
-                .focusable()
-            }
-            .padding(.horizontal, 4)
+            // UX FIX: Removed duplicate AI Audio toggles (Voice Isolation, AI Gating)
+            // These features are already accessible in Smart Tools section as:
+            // - "Enhance Speech" = Voice Isolation
+            // - "Remove Silence" preview = AI Gating
+            // Having them in two places was confusing users
         }
     }
 

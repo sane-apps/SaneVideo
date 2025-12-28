@@ -28,14 +28,10 @@ final class AudioProcessingIntegrationTests: XCTestCase {
         super.setUp()
 
         // Prefer test_silence.mp4 for silence detection tests
-        silenceTestAssetURL = URL(fileURLWithPath: "/Users/sj/SaneVideo/Tests/Assets/test_silence.mp4")
+        silenceTestAssetURL = TestEnvironment.testAsset(named: "test_silence.mp4")
 
         // Regular test video
-        testAssetURL = URL(fileURLWithPath: "/Users/sj/SaneVideo/Tests/Assets/test_video.mp4")
-
-        if !FileManager.default.fileExists(atPath: testAssetURL.path) {
-            testAssetURL = TestEnvironment.mockAssetURL
-        }
+        testAssetURL = TestEnvironment.mockAssetURL
     }
 
     // MARK: - Silence Detection Tests
@@ -386,7 +382,7 @@ final class AudioProcessingIntegrationTests: XCTestCase {
 
     @MainActor
     func testTranscriptionWithGermanAudio() async throws {
-        let germanAssetURL = URL(fileURLWithPath: "/Users/sj/SaneVideo/Tests/Assets/German.MOV")
+        let germanAssetURL = TestEnvironment.testAsset(named: "German.MOV")
         guard FileManager.default.fileExists(atPath: germanAssetURL.path) else {
             throw XCTSkip("German test asset not available at \(germanAssetURL.path)")
         }

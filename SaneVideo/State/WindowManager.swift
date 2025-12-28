@@ -157,6 +157,7 @@ class WindowManager {
 
       window.orderFrontRegardless()
       window.snapToCorner(.bottomRight)
+      window.showResizeHintIfNeeded()  // Show double-click hint on first use
 
       isTogglingPiP = false
       AppLogger.window.info("PiP Window shown (filter updated first)")

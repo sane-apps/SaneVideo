@@ -27,8 +27,8 @@ final class SoundAnalysisServiceTests: XCTestCase {
         // SaneMaster.rb gen_assets usually creates test_video.mp4 and others.
         let bundle = Bundle(for: SoundAnalysisServiceTests.self)
         // Try to find a test asset
-        let testAssetURL = bundle.url(forResource: "test_video", withExtension: "mp4") ?? 
-                          URL(fileURLWithPath: "/Users/sj/SaneVideo/Tests/Assets/test_video.mp4")
+        let testAssetURL = bundle.url(forResource: "test_video", withExtension: "mp4") ??
+                          TestEnvironment.mockAssetURL
         
         // Ensure asset exists
         guard FileManager.default.fileExists(atPath: testAssetURL.path) else {

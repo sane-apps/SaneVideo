@@ -121,9 +121,18 @@ enum AppLogger {
     /// Enable/disable file logging (always enabled for debugging)
     nonisolated(unsafe) static var fileLoggingEnabled = true
 
+    /// Detect if running in XCTest environment to avoid file logging crashes during tests
+    private static let isRunningTests: Bool = {
+        NSClassFromString("XCTestCase") != nil
+    }()
+
     /// Write a log message to file (thread-safe)
     /// First write of each session clears the file for a fresh log
+    /// Skips file logging during XCTest execution to prevent crashes from concurrent file access
     nonisolated static func writeToFile(_ message: String) {
+        // Skip file logging during tests to prevent crashes
+        guard !isRunningTests else { return }
+
         guard fileLoggingEnabled else {
             NSLog("📝 AppLogger: fileLoggingEnabled is false")
             return

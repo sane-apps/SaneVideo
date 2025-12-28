@@ -148,7 +148,7 @@ struct FirstLaunchView: View {
             config.prewarm = true
 
             AppLogger.project.info("🎤 Onboarding: Starting WhisperKit large-v3 model download (~1.5GB)...")
-            let _ = try await WhisperKit(config)
+            _ = try await WhisperKit(config)
             AppLogger.project.info("✅ Onboarding: WhisperKit model download complete")
             whisperKitDownloadComplete = true
         } catch {

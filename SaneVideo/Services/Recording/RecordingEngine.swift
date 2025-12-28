@@ -127,7 +127,6 @@ class RecordingEngine: NSObject, @unchecked Sendable {
     }
   }
 
-
   // MARK: - Interruption Handlers
 
   @objc func handleSessionWasInterrupted(notification: Notification) {

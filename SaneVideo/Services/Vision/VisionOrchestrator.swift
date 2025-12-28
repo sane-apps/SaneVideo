@@ -187,9 +187,13 @@ actor VisionOrchestrator {
     // Result Storage
     var finalResult = VisionAnalysisResult()
 
-    // Loop State
-    let sampleInterval = CMTime(seconds: 0.5, preferredTimescale: 600)  // 2 FPS is usually enough for Magic Fix
+    // Loop State - use configurable throttling
+    let sampleInterval = CMTime(
+      seconds: AppConstants.MagicFeatures.visionSampleInterval,
+      preferredTimescale: 600
+    )
     var nextSampleTime = CMTime.zero
+    let yieldInterval = AppConstants.MagicFeatures.visionYieldInterval
 
     AppLogger.vision.info(
       "👁️ VisionOrchestrator: Starting unified pass for [\(config.detectText ? "Text " : "")\(config.detectFaces ? "Faces " : "")\(config.detectSaliency ? "Saliency" : "")]"
@@ -215,7 +219,7 @@ actor VisionOrchestrator {
       }
       
       // ROBUSTNESS: Yield periodically to prevent blocking
-      if frameCount % 10 == 0 {
+      if frameCount % yieldInterval == 0 {
         await Task.yield()
       }
       let pts = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
@@ -294,8 +298,26 @@ actor VisionOrchestrator {
           }
 
         } catch {
-          // Log but continue
-          // print("Vision error frame \(frameCount): \(error)")
+          // NEURAL ENGINE FALLBACK: If ANE fails, retry with CPU-only
+          let errorDescription = (error as NSError).localizedDescription.lowercased()
+          let isANEFailure = errorDescription.contains("neural") ||
+                             errorDescription.contains("ane") ||
+                             (error as NSError).code == -1 // Generic Vision failure
+
+          if isANEFailure && frameCount == 0 {
+            // First frame failed - likely ANE issue, configure for CPU fallback
+            AppLogger.vision.warning("👁️ VisionOrchestrator: ANE failure detected, enabling CPU fallback")
+            for request in requests {
+              request.usesCPUOnly = true
+            }
+            // Retry this frame with CPU
+            do {
+              try handler.perform(requests)
+            } catch {
+              AppLogger.vision.error("👁️ VisionOrchestrator: CPU fallback also failed: \(error.localizedDescription)")
+            }
+          }
+          // Continue processing - Vision errors on individual frames are non-fatal
         }
 
         nextSampleTime = pts + sampleInterval

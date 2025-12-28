@@ -25,6 +25,17 @@ final class SaneAudioEnhancementService {
     /// - Returns: URL of the enhanced audio file (.m4a)
     func enhanceAudio(from sourceURL: URL, onProgress: ((Double) -> Void)? = nil) async throws -> URL {
         AppLogger.recording.info("🎙️ AudioEnhancement: Starting for \(sourceURL.lastPathComponent)")
+
+        // 0. Validate file size before loading into memory
+        if !AppConstants.MagicFeatures.isFileSizeValid(sourceURL) {
+            let sizeBytes = AppConstants.MagicFeatures.fileSize(sourceURL) ?? 0
+            let sizeMB = sizeBytes / (1024 * 1024)
+            let limitMB = AppConstants.MagicFeatures.maxAudioFileSize / (1024 * 1024)
+            AppLogger.recording.error("🎙️ AudioEnhancement: File too large (\(sizeMB)MB > \(limitMB)MB limit)")
+            throw NSError(domain: "SaneAudioEnhancementService", code: -1,
+                          userInfo: [NSLocalizedDescriptionKey: "Audio file too large for enhancement (\(sizeMB)MB exceeds \(limitMB)MB limit)"])
+        }
+
         // 1. Setup paths
         let fileManager = FileManager.default
         let folder = fileManager.temporaryDirectory.appendingPathComponent("EnhancedAudio", isDirectory: true)

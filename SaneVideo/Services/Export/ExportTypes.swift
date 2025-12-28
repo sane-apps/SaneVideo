@@ -13,22 +13,27 @@ enum ExportError: LocalizedError {
     case cancelled
     case invalidProject(String)
     case timeout
+    case insufficientDiskSpace(required: Int64, available: Int64)
     case unknown
 
     var errorDescription: String? {
         switch self {
         case .alreadyExporting:
-            "Export already in progress"
+            return "Export already in progress"
         case .failedToCreateSession:
-            "Failed to create export session"
+            return "Failed to create export session"
         case .cancelled:
-            "Export was cancelled"
+            return "Export was cancelled"
         case .invalidProject(let message):
-            message
+            return message
         case .timeout:
-            "Export timed out - the operation took too long to complete"
+            return "Export timed out - the operation took too long to complete"
+        case .insufficientDiskSpace(let required, let available):
+            let requiredStr = ByteCountFormatter.string(fromByteCount: required, countStyle: .file)
+            let availableStr = ByteCountFormatter.string(fromByteCount: available, countStyle: .file)
+            return "Insufficient disk space. Required: \(requiredStr), Available: \(availableStr)"
         case .unknown:
-            "An unknown error occurred"
+            return "An unknown error occurred"
         }
     }
 }

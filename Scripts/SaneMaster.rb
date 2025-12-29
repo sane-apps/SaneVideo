@@ -107,7 +107,7 @@ class SaneMaster
     when 'verify_api' then verify_api(args)
     when 'verify_mocks' then verify_mocks
     when 'check_protocol_changes' then check_protocol_changes(args)
-    when 'check_docs' then check_documentation_sync
+    when 'check_docs' then verify_documentation_sync
     when 'dead_code', 'find_dead_code' then find_dead_code
     when 'check_deprecations', 'deprecations' then check_deprecations
     when 'swift6_check', 'swift6', 'concurrency_check' then swift6_check
@@ -616,7 +616,7 @@ class SaneMaster
     force_refresh = args.include?('--refresh') || args.include?('-f')
 
     # Load or fetch version cache
-    cache = load_version_cache(force_refresh)
+    cache = load_version_cache(force_refresh: force_refresh)
 
     if cache[:fetched_at]
       age_days = ((Time.now - Time.parse(cache[:fetched_at])) / 86_400).round(1)
@@ -645,7 +645,8 @@ class SaneMaster
                  '⬆️  update available'
                end
 
-      puts format('%-15s %-12s %-12s %s', tool, installed, latest, status)
+      puts format('%-15<tool>s %-12<installed>s %-12<latest>s %<status>s',
+                  tool: tool, installed: installed, latest: latest, status: status)
     end
 
     puts ''
@@ -658,7 +659,7 @@ class SaneMaster
     puts "\n🔄 To refresh cache: ./Scripts/SaneMaster.rb versions --refresh"
   end
 
-  def load_version_cache(force_refresh = false)
+  def load_version_cache(force_refresh: false)
     ensure_sop_dirs
 
     # Check if cache exists and is fresh
@@ -909,13 +910,12 @@ class SaneMaster
     in_specs = false
 
     File.readlines('Gemfile.lock').each do |line|
-      if line.strip == 'GEM'
-        in_specs = false
-      elsif line.strip == 'specs:'
+      stripped = line.strip
+      if stripped == 'specs:'
         in_specs = true
       elsif in_specs && line.match(/^\s{4}(\S+)\s+\(([\d.]+)\)/)
         gems << { name: ::Regexp.last_match(1), version: ::Regexp.last_match(2) }
-      elsif line.strip.empty? || line.start_with?('PLATFORMS')
+      elsif stripped == 'GEM' || stripped.empty? || line.start_with?('PLATFORMS')
         in_specs = false
       end
     end
@@ -999,7 +999,8 @@ class SaneMaster
     end
 
     puts ''
-    puts "📊 Total: #{deps[:swift_packages].count} Swift packages, #{deps[:ruby_gems].count} gems, #{deps[:homebrew].count} tools, #{deps[:frameworks].count} frameworks"
+    puts "📊 Total: #{deps[:swift_packages].count} Swift packages, #{deps[:ruby_gems].count} gems, " \
+         "#{deps[:homebrew].count} tools, #{deps[:frameworks].count} frameworks"
   end
 
   def generate_dot_graph(deps)
@@ -1853,7 +1854,8 @@ class SaneMaster
 
   # --- Documentation Sync Check ---
 
-  def check_documentation_sync
+  # rubocop:disable Naming/PredicateMethod -- This is an action, not a predicate
+  def verify_documentation_sync
     puts '📚 --- [ DOCUMENTATION SYNC CHECK ] ---'
 
     issues = []
@@ -1897,6 +1899,7 @@ class SaneMaster
 
     issues.any?
   end
+  # rubocop:enable Naming/PredicateMethod
 
   # --- Existing methods continue below ---
 
@@ -2303,19 +2306,18 @@ class SaneMaster
   def run_tests_with_progress(timeout_seconds:, include_ui: false)
     require 'timeout'
     require 'open3'
-    require 'ostruct'
 
     cmd = build_test_command(include_ui)
 
-    # State object to track progress across callbacks (use OpenStruct to avoid dynamic constant assignment)
-    state = OpenStruct.new(
+    # State hash to track progress across callbacks
+    state = {
       start_time: Time.now,
       tests_run: 0,
       current_test: nil,
       last_update: Time.now,
       spinner_chars: ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'],
       spinner_idx: 0
-    )
+    }
 
     result = execute_with_logging(cmd, timeout_seconds) do |line|
       handle_progress_update(line, state)
@@ -2326,8 +2328,8 @@ class SaneMaster
 
     {
       success: result[:success],
-      tests_run: state.tests_run,
-      duration: (Time.now - state.start_time).to_i,
+      tests_run: state[:tests_run],
+      duration: (Time.now - state[:start_time]).to_i,
       timeout: result[:timeout]
     }
   end
@@ -2378,20 +2380,22 @@ class SaneMaster
     # Parse test progress
     case line
     when /Test Case.*'(.+)'/
-      state.current_test = ::Regexp.last_match(1)
-      state.tests_run += 1
-      elapsed = (Time.now - state.start_time).to_i
-      print "\r#{state.spinner_chars[state.spinner_idx % state.spinner_chars.length]} Running: #{state.current_test} (#{state.tests_run} tests, #{elapsed}s)    "
-      state.spinner_idx += 1
-      state.last_update = Time.now
+      state[:current_test] = ::Regexp.last_match(1)
+      state[:tests_run] += 1
+      elapsed = (Time.now - state[:start_time]).to_i
+      spinner = state[:spinner_chars][state[:spinner_idx] % state[:spinner_chars].length]
+      print "\r#{spinner} Running: #{state[:current_test]} (#{state[:tests_run]} tests, #{elapsed}s)    "
+      state[:spinner_idx] += 1
+      state[:last_update] = Time.now
     when /Test Suite.*passed|Test Suite.*failed/, /BUILD (SUCCEEDED|FAILED)/, /error:|warning:|❌|✅/
       print "\r"
       puts "   #{line}"
     when /Testing|Building/
-      if Time.now - state.last_update > 2
-        print "\r#{state.spinner_chars[state.spinner_idx % state.spinner_chars.length]} #{line}    "
-        state.spinner_idx += 1
-        state.last_update = Time.now
+      if Time.now - state[:last_update] > 2
+        spinner = state[:spinner_chars][state[:spinner_idx] % state[:spinner_chars].length]
+        print "\r#{spinner} #{line}    "
+        state[:spinner_idx] += 1
+        state[:last_update] = Time.now
       end
     end
   end
@@ -3317,14 +3321,8 @@ class SaneMaster
     # Print summary
     print_summary(results)
 
-    # Exit with appropriate code
-    if results[:failed].any?
-      exit 1
-    elsif results[:warnings].any? && ci_mode
-      exit 0 # Warnings don't fail CI
-    else
-      exit 0
-    end
+    # Exit with appropriate code (warnings don't fail CI)
+    exit(results[:failed].any? ? 1 : 0)
   end
 
   def print_summary(results)

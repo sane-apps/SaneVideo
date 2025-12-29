@@ -12,6 +12,83 @@ import Foundation
 
 extension ProjectState {
 
+    // MARK: - Reset Magic Fix
+
+    /// Resets all Magic Fix results for a clip and optionally regenerates with current options
+    /// - Parameters:
+    ///   - clip: The clip to reset
+    ///   - regenerate: If true, automatically runs Magic Fix again with current options after clearing
+    @MainActor func resetMagicFix(for clip: VideoClip, regenerate: Bool = true) async {
+        guard var project = currentProject else { return }
+
+        registerUndo("Reset Magic Fix")
+
+        // Find clip in timeline
+        guard let trackIndex = project.timeline.tracks.firstIndex(where: {
+            $0.clips.contains(where: { $0.id == clip.id })
+        }),
+        let clipIndex = project.timeline.tracks[trackIndex].clips.firstIndex(where: {
+            $0.id == clip.id
+        }) else {
+            AppLogger.project.warning("⚠️ Reset Magic Fix: Clip not found in timeline")
+            return
+        }
+
+        var updatedClip = project.timeline.tracks[trackIndex].clips[clipIndex]
+
+        // Reset all Magic Fix modifications
+        updatedClip.removedRanges = [] // Clear silence/filler cuts
+        updatedClip.useSmoothCutForRemovals = false
+        updatedClip.captions = [] // Clear generated captions
+        updatedClip.enhancedAudioURL = nil // Clear audio enhancement
+        updatedClip.isVoiceIsolationEnabled = false // Reset voice isolation
+        updatedClip.isGatingEnabled = false // Reset AI gating
+
+        // Remove Magic Fix visual effects (autoEnhance only - smartCrop/autoFraming are transforms, not effects)
+        updatedClip.effects.removeAll { effect in
+            effect.type == .autoEnhance
+        }
+
+        // Clear privacy regions added by Magic Fix
+        updatedClip.privacyRegions = []
+
+        // Clear smart crop and auto-framing transforms
+        updatedClip.transform = .identity
+
+        project.timeline.tracks[trackIndex].clips[clipIndex] = updatedClip
+        currentProject = project
+        saveProject(project)
+
+        AppLogger.project.info("✨ Reset Magic Fix for clip \(clip.id)")
+
+        // CRITICAL FIX: If regenerate is true, automatically run Magic Fix with current options
+        if regenerate {
+            // Get the updated clip after reset
+            guard let resetClip = getClip(by: clip.id) else {
+                ServiceContainer.shared.toastManager.show("⚠️ Could not find clip after reset", type: .error)
+                return
+            }
+
+            ServiceContainer.shared.toastManager.show("🔄 Regenerating Magic Fix with current settings...", type: .info)
+            await performMagicFix(for: resetClip, options: magicFixOptions)
+        } else {
+            ServiceContainer.shared.toastManager.show("🔄 Magic Fix results reset", type: .info)
+        }
+    }
+
+    /// Checks if a clip has any Magic Fix results applied
+    func hasMagicFixResults(for clip: VideoClip) -> Bool {
+        return !clip.removedRanges.isEmpty ||
+               !clip.captions.isEmpty ||
+               clip.enhancedAudioURL != nil ||
+               clip.isVoiceIsolationEnabled ||
+               clip.isGatingEnabled ||
+               clip.useSmoothCutForRemovals ||
+               clip.effects.contains { $0.type == .autoEnhance } ||
+               !clip.privacyRegions.isEmpty ||
+               clip.transform != .identity // Smart crop/auto-framing modify transform
+    }
+
     func performMagicFix(for clip: VideoClip, options: MagicFixOptions) async {
         guard currentProject != nil else { return }
 
@@ -80,13 +157,29 @@ extension ProjectState {
             if options.enhanceAudio {
                 try Task.checkCancellation()
                 processingStatus = "🎙️ Enhancing audio first..."
-                await enhanceAudioFirst(for: clip)
-                updateTransactionProgress(transactionId, progress: 0.2)
+                do {
+                    // CRITICAL FIX: Add timeout and proper error handling for audio enhancement
+                    try await withTimeout(seconds: 600.0) {
+                        try await self.enhanceAudioFirst(for: clip)
+                    }
+                    self.updateTransactionProgress(transactionId, progress: 0.2)
+                } catch is CancellationError {
+                    throw CancellationError()
+                } catch {
+                    AppLogger.project.warning("⚠️ Magic Fix: Audio enhancement failed: \(error.localizedDescription)")
+                    // Continue execution - do not fail the whole process (graceful degradation)
+                    // User can still benefit from other Magic Fix features
+                }
             }
 
+            // CRITICAL FIX: Verify clip still exists after audio enhancement
+            // Clip might have been deleted during processing
             guard let enhancedClipId = Optional(clip.id),
                   let preAnalysisClip = getClip(by: enhancedClipId)
-            else { return }
+            else {
+                AppLogger.project.warning("⚠️ Magic Fix: Clip \(clip.id) no longer exists, aborting")
+                return
+            }
 
             if (options.generateCaptions || options.removeFillers || options.autoEnhance)
                 && preAnalysisClip.captions.isEmpty {
@@ -105,7 +198,11 @@ extension ProjectState {
             }
             updateTransactionProgress(transactionId, progress: 0.4)
 
-            guard let readyForCutsClip = getClip(by: preAnalysisClip.id) else { return }
+            // CRITICAL FIX: Verify clip still exists before processing cuts
+            guard let readyForCutsClip = getClip(by: preAnalysisClip.id) else {
+                AppLogger.project.warning("⚠️ Magic Fix: Clip \(preAnalysisClip.id) no longer exists before cuts processing")
+                return
+            }
 
             do {
                 try Task.checkCancellation()
@@ -114,7 +211,11 @@ extension ProjectState {
                     for: readyForCutsClip, options: options, transactionId: transactionId)
                 updateTransactionProgress(transactionId, progress: 0.6)
 
-                guard let visualClip = getClip(by: readyForCutsClip.id) else { return }
+                // CRITICAL FIX: Verify clip still exists before applying visual effects
+                guard let visualClip = getClip(by: readyForCutsClip.id) else {
+                    AppLogger.project.warning("⚠️ Magic Fix: Clip \(readyForCutsClip.id) no longer exists before visual effects")
+                    return
+                }
 
                 let visionResult = await visionTask
 
@@ -206,9 +307,24 @@ extension ProjectState {
         }
     }
 
-    private func enhanceAudioFirst(for clip: VideoClip) async {
+    private func enhanceAudioFirst(for clip: VideoClip) async throws {
+        // CRITICAL FIX: Check for cancellation before starting audio enhancement
+        try Task.checkCancellation()
+
         processingStatus = "🎙️ Enhancing audio..."
         await enhanceAudio(for: clip)
+
+        // CRITICAL FIX: Verify enhancement succeeded by checking if enhancedAudioURL was set
+        // enhanceAudio doesn't throw, so we need to check the result
+        guard let updatedClip = getClip(by: clip.id),
+              updatedClip.enhancedAudioURL != nil else {
+            // If enhancement failed silently, throw to indicate failure
+            throw NSError(
+                domain: "ProjectState",
+                code: -1,
+                userInfo: [NSLocalizedDescriptionKey: "Audio enhancement completed but enhanced URL was not set"]
+            )
+        }
     }
 
     private func applyVisualEffects(

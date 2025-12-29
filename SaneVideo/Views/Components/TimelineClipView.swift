@@ -38,6 +38,7 @@ struct TimelineClipView: View {
     @State private var leftTrimOffset: CGFloat = 0
     @State private var rightTrimOffset: CGFloat = 0
     @State private var isHovering = false
+    @State private var isHoveringHandle = false // Track if hovering over trim handle
     @State private var showingDeleteFileConfirmation = false
 
     // CRITICAL FIX: Track waveform loading task for cancellation
@@ -72,34 +73,43 @@ struct TimelineClipView: View {
                     isLeft: true, clipHeight: clipHeight, pixelsPerSecond: pixelsPerSecond,
                     clip: clip, playheadTime: playheadTime, snapThreshold: snapThreshold,
                     onTrimStart: onTrimStart, onTrimEnd: nil,
-                    isDragging: $isDraggingLeftHandle, trimOffset: $leftTrimOffset
+                    isDragging: $isDraggingLeftHandle, trimOffset: $leftTrimOffset,
+                    onHoverChange: { hovering in isHoveringHandle = hovering }
                 )
 
                 // CLIP CONTENT
+                // CRITICAL FIX: Don't use scale effect - it changes layout and pushes handles out of bounds
+                // Use brightness/opacity instead for visual feedback that doesn't affect layout
                 clipContent
+                    .brightness((isHovering && !isHoveringHandle) ? 0.1 : 0.0)
+                    .animation(.smoothUI, value: isHovering)
 
                 // RIGHT TRIM HANDLE
                 ClipTrimHandle(
                     isLeft: false, clipHeight: clipHeight, pixelsPerSecond: pixelsPerSecond,
                     clip: clip, playheadTime: playheadTime, snapThreshold: snapThreshold,
                     onTrimStart: nil, onTrimEnd: onTrimEnd,
-                    isDragging: $isDraggingRightHandle, trimOffset: $rightTrimOffset
+                    isDragging: $isDraggingRightHandle, trimOffset: $rightTrimOffset,
+                    onHoverChange: { hovering in isHoveringHandle = hovering }
                 )
             }
         }
         .frame(width: frameWidth, height: clipHeight)
         .accessibilityIdentifier(AccessibilityIdentifiers.timelineClip)
         .accessibilityLabel(clip.url.lastPathComponent)
+        // CRITICAL FIX: Only offset entire clip for left handle drag
+        // Right handle stays in place via its own offset
         .offset(x: isDraggingLeftHandle ? leftTrimOffset : 0)
         .background(isSelected ? Color.accentColor : Color.secondary.opacity(0.3))
         .cornerRadius(Theme.Dimensions.cornerRadius)
         .shadow(color: .black.opacity(0.3), radius: 2, x: 0, y: 1)
-        .overlay(RoundedRectangle(cornerRadius: 6).stroke(isSelected ? Color.yellow : Color.clear, lineWidth: 2))
+        .overlay(RoundedRectangle(cornerRadius: 6).stroke(isSelected ? Color.accentColor : Color.clear, lineWidth: 2))
         .onHover { hovering in
+            // CRITICAL FIX: Don't scale if hovering over trim handle
+            // This prevents the clip from expanding when trying to grab the handle
+            guard !isHoveringHandle else { return }
             withAnimation(.smoothUI) { isHovering = hovering }
         }
-        .scaleEffect(isHovering ? 1.02 : 1.0)
-        .animation(.smoothUI, value: isHovering)
         .modifier(ClipGestureModifier(
             isDraggingLeftHandle: isDraggingLeftHandle,
             isDraggingRightHandle: isDraggingRightHandle,
@@ -258,7 +268,7 @@ struct TimelineClipView: View {
 
     private var stitchMarkerOverlay: some View {
         ForEach(stitchMarkers, id: \.self) { progress in
-            Rectangle().fill(Color.orange).frame(width: 1)
+            Rectangle().fill(Color.accentColor).frame(width: 1)
                 .offset(x: CGFloat(progress) * max(0, clipWidth - handleWidth * 2))
         }
     }
@@ -277,7 +287,7 @@ struct TimelineClipView: View {
             HStack(spacing: 8) {
                 Button(action: { onSplit?() }, label: {
                     Image(systemName: "scissors").font(.system(size: 12)).foregroundColor(.white)
-                        .frame(width: 28, height: 28).background(Color.orange).clipShape(Circle())
+                        .frame(width: 28, height: 28).background(Color.accentColor).clipShape(Circle())
                         .shadow(color: .black.opacity(0.3), radius: 2)
                 })
                 .buttonStyle(.plain)

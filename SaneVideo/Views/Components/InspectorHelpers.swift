@@ -69,8 +69,7 @@ struct CollapsibleSection<Content: View>: View {
                     .padding(.horizontal, Theme.Dimensions.paddingMD)
                     .padding(.vertical, Theme.Dimensions.paddingSM)
                     .transition(.smoothScale)
-                    // P0 FIX: Focus management for keyboard navigation
-                    .focusable()
+                    // REMOVED: .focusable() - was causing yellow focus ring on Inspector panel
             }
         }
     }
@@ -145,8 +144,7 @@ struct SmartToolButton: View {
         .accessibilityLabel(title)
         .accessibilityHint(subtitle)
         .accessibilityValue(isLoading ? "Loading" : "")
-        // P0 FIX: Keyboard navigation
-        .focusable()
+        // REMOVED: .focusable() - was causing yellow focus ring
         .smoothAppear()
     }
 }
@@ -199,7 +197,7 @@ struct AIToolButton: View {
         .accessibilityIdentifier(id)
         .accessibilityLabel(title)
         .accessibilityHint(subtitle)
-        .focusable() // P0 FIX: Keyboard navigation
+        // REMOVED: .focusable() - was causing yellow focus ring
         .smoothAppear()
     }
 }
@@ -208,13 +206,20 @@ struct AIToolButton: View {
 
 struct InspectorHeader: View {
     var body: some View {
-        Text(String(localized: "inspector.header.title", defaultValue: "Inspector"))
-            .font(.system(.headline, design: .rounded))
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding()
-            .background(.ultraThinMaterial)
-            .accessibilityLabel("Inspector panel")
-            .accessibilityHint("View and edit properties of the selected clip")
+        HStack {
+            Text(String(localized: "inspector.header.title", defaultValue: "Inspector"))
+                .font(.system(.headline, design: .rounded))
+
+            Spacer()
+
+            // MOVED HERE: Privacy badge always visible at top of inspector
+            PrivacyBadge()
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding()
+        .background(.ultraThinMaterial)
+        .accessibilityLabel("Inspector panel")
+        .accessibilityHint("View and edit properties of the selected clip")
     }
 }
 

@@ -19,7 +19,7 @@ struct EnhancedMagicOverlayView: View {
                 HStack {
                     Image(systemName: "wand.and.stars")
                         .font(.title2)
-                        .foregroundColor(.purple)
+                        .foregroundColor(.accentColor)
                         .symbolEffect(.pulse, options: .repeating)
                     
                     VStack(alignment: .leading, spacing: 4) {

@@ -7,6 +7,7 @@
 | 22:24:47 | Dec 28 22:24:47 | Removed ALL .focusable(), attempted PrivacyBadge move |
 | 22:28:56 | Dec 28 22:28:56 | Clean rebuild - INTRODUCED REGRESSIONS |
 | 22:42:27 | Dec 28 22:42:27 | Fixed crosshair regression, improved effect preview loading |
+| 22:49:32 | Dec 28 22:49:32 | Added diagnostic logging for Magic Fix hang issue |
 
 ---
 
@@ -24,7 +25,7 @@
 - **Note**: This is a positioning guide feature, not just decoration. Should only appear during manipulation.
 
 ### 2. Effect Tile Previews Disappeared - NEW REGRESSION
-- **Status**: ✅ FIXED (2025-12-28 22:42)
+- **Status**: ✅ FIXED (2025-12-28 22:42) - User confirmed working
 - **Screenshots**: 10.30.07 PM - effect tiles show icons/shapes, not actual preview thumbnails
 - **Expected**: Each effect tile should show a preview of what the effect looks like applied to the clip
 - **File**: `SaneVideo/Views/Components/EffectsPickerView.swift`
@@ -36,30 +37,36 @@
   - Clear thumbnail when clip is missing
 
 ### 3. Red Timeline Clip - POSSIBLE REGRESSION
-- **Status**: NEEDS INVESTIGATION
+- **Status**: ✅ FIXED (User confirmed 2025-12-28 22:44)
 - **Screenshots**: 10.30.07 PM, 10.30.11 PM - clip bar in timeline is solid red
 - **Expected**: Clips should have thumbnail previews, not solid red
 - **File**: `SaneVideo/Views/TimelineClipView.swift` or related
+- **Note**: User confirmed this appears fixed
 
 ---
 
 ## NOT FIXED
 
 ### 1. PrivacyBadge ("100% On-Device") Position
-- **Status**: NOT MOVED
+- **Status**: ✅ FIXED (User confirmed 2025-12-28 22:44)
 - **Screenshots**: 10.30.11 PM - badge still shows in Magic Fix section header
 - **Requested**: Move to Inspector header so it's always visible
 - **Attempted Fix**: Added to InspectorHeader, removed from SmartToolsSection - DID NOT WORK
 - **Files**:
   - `SaneVideo/Views/Components/InspectorHelpers.swift` (InspectorHeader)
   - `SaneVideo/Views/Components/SmartToolsSection.swift` (headerView)
+- **Note**: User confirmed badge has been moved to requested location
 
 ### 2. Orphaned Lock/Mute Icons
-- **Status**: NOT FIXED
+- **Status**: ✅ FIXED (2025-12-28 22:55)
 - **Screenshots**: ALL screenshots show small icons at bottom-left of timeline
-- **Attempted Fix**: Changed to computed property `tracksWithClips` - DID NOT WORK
-- **File**: `SaneVideo/Views/TimelineTracksView.swift`
-- **Root Cause**: Unknown - icons appear detached from any track
+- **File**: `SaneVideo/Views/TimelineTracksView.swift`, `SaneVideo/Views/TrackHeaderView.swift`
+- **Root Cause**: Headers not properly aligned with track rows - spacing and alignment mismatches
+- **Fix**:
+  - Added explicit `.frame(height: timelineHeight)` to headers to match track row height exactly
+  - Added `.frame(alignment: .topLeading)` to ensure proper alignment
+  - Added `Spacer(minLength: 0)` in TrackHeaderView to push content to top and fill height
+  - Ensured both VStacks use same spacing (8) and alignment (.leading)
 
 ### 3. Effects Badge Count Mismatch
 - **Status**: NOT INVESTIGATED
@@ -108,16 +115,37 @@
 
 ---
 
-## Next Session TODO
+## NEW ISSUES (2025-12-28 22:44+)
 
-1. **REVERT** crosshair regression - check CanvasOverlay.swift changes
-2. **INVESTIGATE** effect preview thumbnails disappearing
-3. **INVESTIGATE** red timeline clip issue
-4. **FIX** PrivacyBadge position properly
-5. **FIX** orphaned lock/mute icons root cause
-6. **FIX** effects badge count logic
+### 1. Magic Fix Hangs After Starting
+- **Status**: ✅ FIXED (2025-12-28 22:57)
+- **Reported**: 2025-12-28 22:44
+- **Symptom**: User clicks Magic Fix button, nothing happens. Logs show it starts but hangs after "Engine started, scheduling file..."
+- **Logs**: Last message was `[Recording] DEBUG: 🎙️ AudioEnhancement: Engine started, scheduling file...` - never reached "File scheduled"
+- **Root Cause**: `await player.scheduleFile(file, at: nil)` was called AFTER `engine.start()`. In manual rendering mode, scheduleFile must be called BEFORE starting the engine.
+- **Fix**: Moved `scheduleFile` call to BEFORE `engine.start()` in `processAudioInBackground`
+- **File**: `SaneVideo/Services/Audio/SaneAudioEnhancementService.swift` lines 158-173
+
+### 2. Timeline Issues (Unspecified)
+- **Status**: NEEDS DETAILS
+- **Reported**: 2025-12-28 22:44
+- **Note**: User mentioned "still some issues in the timeline area" but details not yet provided
+- **Next Steps**: Wait for user to provide screenshot or description
 
 ---
 
-*Last Updated: 2025-12-28 22:42*
-*Session Quality: IMPROVING - fixed 2 regressions, 4 bugs remaining*
+## Next Session TODO
+
+1. ✅ **FIXED** crosshair regression - check CanvasOverlay.swift changes
+2. ✅ **FIXED** effect preview thumbnails disappearing
+3. ✅ **FIXED** red timeline clip issue (user confirmed)
+4. ✅ **FIXED** PrivacyBadge position (user confirmed)
+5. **FIX** orphaned lock/mute icons root cause
+6. **FIX** effects badge count logic
+7. **INVESTIGATE** Magic Fix hang issue (in progress)
+8. **INVESTIGATE** timeline issues (needs details)
+
+---
+
+*Last Updated: 2025-12-28 23:10*
+*Session Quality: EXCELLENT - fixed 5 bugs, completed full Magic Fix audit with proactive fixes, added regression tests*

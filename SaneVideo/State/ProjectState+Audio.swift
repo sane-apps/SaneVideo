@@ -349,9 +349,11 @@ extension ProjectState {
 
         do {
             let enhancedURL = try await ServiceContainer.shared.audioEnhancementService
-                .enhanceAudio(from: clip.url) { progress in
-                    self.processingProgress = progress
-                    self.processingStatus = "🎙️ Enhancing audio... \(Int(progress * 100))%"
+                .enhanceAudio(from: clip.url) { [weak self] progress in
+                    Task { @MainActor in
+                        self?.processingProgress = progress
+                        self?.processingStatus = "🎙️ Enhancing audio... \(Int(progress * 100))%"
+                    }
                 }
 
             await MainActor.run {

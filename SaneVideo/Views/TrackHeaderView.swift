@@ -17,28 +17,31 @@ struct TrackHeaderView: View {
     let onLockToggle: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 6) {
             // Track Name & Type Icon
-            HStack(spacing: 4) {
+            HStack(spacing: 6) {
                 Image(systemName: trackIcon)
-                    .font(.caption)
+                    .font(.system(size: 12, weight: .medium))
                     .foregroundColor(track.isMuted ? .secondary : trackColor)
+                    .frame(width: 16)
 
                 if !track.name.isEmpty && track.name != "Video 1" {
                     Text(track.name)
-                        .font(.caption.bold())
+                        .font(.system(size: 11, weight: .semibold))
                         .lineLimit(1)
                         .foregroundColor(track.isMuted ? .secondary : .primary)
                 }
             }
 
-            // Controls
-            HStack(spacing: 8) {
+            // Controls - Better spacing and sizing
+            HStack(spacing: 10) {
                 // Mute Button
                 Button(action: onMuteToggle) {
                     Image(systemName: track.isMuted ? "speaker.slash.fill" : "speaker.wave.2.fill")
-                        .font(.system(size: 10))
+                        .font(.system(size: 12, weight: .medium))
                         .foregroundColor(track.isMuted ? .red : .secondary)
+                        .frame(width: 20, height: 20)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
                 .help(track.isMuted ? String(localized: "track.help.unmute", defaultValue: "Unmute Track") : String(localized: "track.help.mute", defaultValue: "Mute Track"))
@@ -47,21 +50,33 @@ struct TrackHeaderView: View {
                 // Lock Button
                 Button(action: onLockToggle) {
                     Image(systemName: track.isLocked ? "lock.fill" : "lock.open")
-                        .font(.system(size: 10))
+                        .font(.system(size: 12, weight: .medium))
                         .foregroundColor(track.isLocked ? .orange : .secondary)
+                        .frame(width: 20, height: 20)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
                 .help(track.isLocked ? String(localized: "track.help.unlock", defaultValue: "Unlock Track") : String(localized: "track.help.lock", defaultValue: "Lock Track"))
                 .accessibilityIdentifier("track_header.lock_button")
             }
+            .padding(.top, 2)
+
+            // CRITICAL FIX: Spacer to push content to top and fill height
+            Spacer(minLength: 0)
         }
-        .padding(8)
-        .frame(minWidth: 80, idealWidth: 100, maxWidth: 120)
-        .frame(height: AppConstants.timelineHeight)
-        .background(Color(NSColor.controlBackgroundColor))
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .frame(width: 100, alignment: .topLeading)
+        .frame(height: AppConstants.timelineHeight, alignment: .top)
+        // CRITICAL FIX: Ensure perfect vertical alignment with track rows
+        // Both header and track row use same height (120px) and VStack spacing (8px)
+        .background(
+            RoundedRectangle(cornerRadius: 4)
+                .fill(Color(NSColor.controlBackgroundColor))
+        )
         .overlay(
-            Rectangle()
-                .stroke(Color.secondary.opacity(0.2), lineWidth: 1)
+            RoundedRectangle(cornerRadius: 4)
+                .stroke(Color.secondary.opacity(0.15), lineWidth: 0.5)
         )
     }
 

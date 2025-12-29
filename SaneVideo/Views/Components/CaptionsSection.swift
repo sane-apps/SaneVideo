@@ -41,7 +41,7 @@ struct CaptionsSection: View {
                         }
                         .buttonStyle(.bordered)
                         .accessibilityIdentifier("captions.text_editor_button")
-                        
+
                         Button {
                             showTranscriptEditor.toggle()
                         } label: {
@@ -53,7 +53,7 @@ struct CaptionsSection: View {
                     }
                 }
             }
-            
+
             // Caption count & status
             if clip.captions.isEmpty {
                 emptyCaptionsHint
@@ -83,12 +83,12 @@ struct CaptionsSection: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 6) {
                 Image(systemName: "info.circle")
-                    .foregroundColor(.orange)
+                    .foregroundColor(.accentColor)
                 Text(String(localized: "captions.empty_hint", defaultValue: "No captions yet"))
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
-            
+
             // P1 FIX: Primary action button
             Button {
                 Task { await generateCaptions() }
@@ -114,7 +114,7 @@ struct CaptionsSection: View {
                         .scaleEffect(0.8)
                 }
             }
-            
+
             // P1 FIX: Alternative hint
             Text(String(localized: "captions.alternative_hint", defaultValue: "Or use Magic Fix for full cleanup"))
                 .font(.caption2)
@@ -122,14 +122,14 @@ struct CaptionsSection: View {
                 .multilineTextAlignment(.center)
         }
         .padding(12)
-        .background(Color.orange.opacity(0.05))
+        .background(Color.accentColor.opacity(0.05))
         .cornerRadius(8)
         .overlay(
             RoundedRectangle(cornerRadius: 8)
-                .stroke(Color.orange.opacity(0.2), lineWidth: 1)
+                .stroke(Color.accentColor.opacity(0.2), lineWidth: 1)
         )
     }
-    
+
     // P1 FIX: Generate captions action
     private func generateCaptions() async {
         guard !clip.isMissing else {
@@ -141,7 +141,7 @@ struct CaptionsSection: View {
             }
             return
         }
-        
+
         // P0 FIX: Use separate state for caption generation
         isGeneratingCaptions = true
         defer {
@@ -149,13 +149,13 @@ struct CaptionsSection: View {
                 isGeneratingCaptions = false
             }
         }
-        
+
         do {
             // P0 FIX: Use TranscriptionCoordinator for caption generation
             await MainActor.run {
                 analysisResult = "Generating captions... This may take a moment."
             }
-            
+
             // Use the transcription coordinator to generate captions
             let coordinator = ServiceContainer.shared.transcriptionCoordinator
             let captions = try await coordinator.generateCaptions(
@@ -167,7 +167,7 @@ struct CaptionsSection: View {
                     }
                 }
             )
-            
+
             await MainActor.run {
                 appState.projectState.updateCaptions(for: clip, newCaptions: captions)
                 ServiceContainer.shared.toastManager.show(
@@ -239,13 +239,33 @@ struct CaptionsSection: View {
             // P1 FIX: Grid layout instead of horizontal scroll
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 80), spacing: 8)], spacing: 8) {
                 ForEach(CaptionStyle.allPresets) { style in
+                    let isSelected = appState.projectState.currentProject?.captionStyle.name == style.name
+
                     CaptionStylePreview(style: style)
+                        .overlay(
+                            // CRITICAL FIX: Show visual indicator for selected style
+                            RoundedRectangle(cornerRadius: 6)
+                                .stroke(isSelected ? Color.accentColor : Color.clear, lineWidth: 2)
+                        )
+                        .overlay(
+                            // Checkmark for selected style
+                            Group {
+                                if isSelected {
+                                    Image(systemName: "checkmark.circle.fill")
+                                        .foregroundColor(.accentColor)
+                                        .background(Circle().fill(Color(NSColor.controlBackgroundColor)))
+                                        .font(.system(size: 16))
+                                        .offset(x: 32, y: -20)
+                                }
+                            }
+                        )
                         .onTapGesture {
                             appState.projectState.updateCaptionStyle(style)
                         }
                         .accessibilityLabel("\(style.name) caption style")
                         .accessibilityHint("Apply \(style.name) style to captions")
-                        .focusable()
+                        .accessibilityAddTraits(isSelected ? .isSelected : [])
+                        // REMOVED: .focusable() - was causing yellow focus ring
                 }
             }
         }
@@ -333,9 +353,9 @@ struct CaptionsSection: View {
             }
             return
         }
-        
+
         isAnalyzing = true
-        defer { 
+        defer {
             Task { @MainActor in
                 isAnalyzing = false
             }
@@ -361,9 +381,9 @@ struct CaptionsSection: View {
             }
             return
         }
-        
+
         isAnalyzing = true
-        defer { 
+        defer {
             Task { @MainActor in
                 isAnalyzing = false
             }
@@ -409,7 +429,7 @@ struct CaptionsSection: View {
             }
             return
         }
-        
+
         guard !clip.captions.isEmpty else {
             await MainActor.run {
                 ServiceContainer.shared.toastManager.show(
@@ -419,9 +439,9 @@ struct CaptionsSection: View {
             }
             return
         }
-        
+
         isRefining = true
-        defer { 
+        defer {
             Task { @MainActor in
                 isRefining = false
             }

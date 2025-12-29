@@ -56,10 +56,13 @@ struct CaptionOverlayView: View {
             .onHover { inside in
                 if inside { NSCursor.openHand.push() } else { NSCursor.pop() }
             }
-            // Smooth transition between keys
-            .id(caption.id) // Force redraw on new caption to reset animations if needed? No, separate identity is better.
+            // CRITICAL FIX: Use stable ID to prevent position jumping
+            // Only change ID when caption actually changes, not on every text update
+            .id("\(caption.id)-\(caption.startTime.seconds)")
             .transition(.scale.combined(with: .opacity))
-            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: caption.text)
+            // CRITICAL FIX: Remove animation on text change to prevent jumping
+            // Only animate on caption change (handled by transition)
+            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: caption.id)
         }
     }
 }
@@ -80,13 +83,13 @@ struct KaraokeTextRenderer: View {
         // Workaround: Use a ZStack with layout logic OR `Text` concatenation if we don't need distinct per-word geometry (but we do for scale/pop).
         //
         // Correct approach: `Layout` protocol (Grid/Flow)
-        
+
         FlowLayout(alignment: .center, spacing: 6) {
             // If we have word timestamps, render individually
             if let words = caption.words, !words.isEmpty {
                 ForEach(words) { word in
                     let isWordActive = isWordActive(word)
-                    
+
                     Text(word.text)
                         .font(.custom(style.fontName, size: style.fontSize))
                         .fontWeight(style.isBold ? .bold : .regular)
@@ -147,18 +150,18 @@ struct FlowLayout: Layout {
 
         for subview in subviews {
             let size = subview.sizeThatFits(ProposedViewSize(width: nil, height: nil))
-            
+
             if x + size.width > width && x > 0 {
                 // New Line
                 x = 0
                 y += rowHeight + spacing
                 rowHeight = 0
             }
-            
+
             rowHeight = max(rowHeight, size.height)
             x += size.width + spacing
         }
-        
+
         return CGSize(width: width, height: y + rowHeight)
     }
 
@@ -166,17 +169,17 @@ struct FlowLayout: Layout {
         let width = bounds.width
         var y: CGFloat = bounds.minY
         var rowHeight: CGFloat = 0
-        
+
         // This simple impl doesn't strictly honor 'alignment' within lines (just left-aligned wrapping).
         // For true center alignment, we'd need 2 passes.
         // Let's implement row-buffering for center/trailing alignment.
-        
+
         var currentRow: [LayoutSubviews.Element] = []
         var currentRowWidth: CGFloat = 0
-        
+
         for subview in subviews {
             let size = subview.sizeThatFits(ProposedViewSize(width: nil, height: nil))
-            
+
             if currentRowWidth + size.width + (currentRow.isEmpty ? 0 : spacing) > width {
                 // Place Row
                 placeRow(currentRow, width: currentRowWidth, y: y, bounds: bounds)
@@ -185,28 +188,28 @@ struct FlowLayout: Layout {
                 currentRowWidth = 0
                 rowHeight = 0
             }
-            
+
             currentRow.append(subview)
             currentRowWidth += size.width + (currentRow.count > 1 ? spacing : 0)
             rowHeight = max(rowHeight, size.height)
         }
-        
+
         // Final Row
         if !currentRow.isEmpty {
             placeRow(currentRow, width: currentRowWidth, y: y, bounds: bounds)
         }
     }
-    
+
     private func placeRow(_ subviews: [LayoutSubviews.Element], width rowWidth: CGFloat, y: CGFloat, bounds: CGRect) {
         // Calculate X start based on alignment
         var x: CGFloat = bounds.minX
-        
+
         if alignment.horizontal == .center {
             x += (bounds.width - rowWidth) / 2
         } else if alignment.horizontal == .trailing {
             x += bounds.width - rowWidth
         }
-        
+
         for subview in subviews {
             let size = subview.sizeThatFits(ProposedViewSize(width: nil, height: nil))
             // Center vertically in row

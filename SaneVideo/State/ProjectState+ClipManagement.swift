@@ -415,6 +415,8 @@ extension ProjectState {
 
     if clipFound {
       recalculateStartTimes(in: &timeline)
+      // CRITICAL FIX: Speed changes affect effectiveDuration, so timeline duration must update
+      timeline.updateDuration()
       project.timeline = timeline
       currentProject = project
       saveProject(project)

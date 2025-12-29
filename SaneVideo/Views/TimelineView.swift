@@ -32,7 +32,7 @@ public struct SaneTimelineView: View {
 
     public var body: some View {
         @Bindable var projectState = appState.projectState
-        
+
         VStack(spacing: 0) {
             TimelineControls(
                 zoomLevel: $zoomLevel,
@@ -48,31 +48,59 @@ public struct SaneTimelineView: View {
                 TimelineEmptyStateView()
                     .frame(minHeight: 150, maxHeight: .infinity)
             } else {
-                ScrollView(.horizontal, showsIndicators: true) {
-                    TimelineTracksView(
+                // CRITICAL FIX: Left column fixed, right section scrolls
+                // This ensures lock/mute icons stay aligned with tracks
+                HStack(alignment: .top, spacing: 0) {
+                    // Fixed left column (headers) - extracted from TimelineTracksView
+                    TimelineHeadersView(
                         zoomLevel: zoomLevel,
-                        isScrubbing: $isScrubbing,
-                        scrubTime: $scrubTime,
-                        clipToDelete: $clipToDelete,
-                        showDeleteConfirmation: $showDeleteConfirmation,
-                        selectedClip: $selectedClip,
-                        draggingClip: $draggingClip,
-                        selectedClipIds: $selectedClipIds,
                         pixelsPerSecond: pixelsPerSecond
                     )
+                    .frame(width: 100)
+                    .background(Color(NSColor.controlBackgroundColor))
+                    .fixedSize(horizontal: true, vertical: false)
+
+                    // Scrollable right section (ruler + tracks)
+                    ScrollView(.horizontal, showsIndicators: true) {
+                        TimelineTracksView(
+                            zoomLevel: zoomLevel,
+                            isScrubbing: $isScrubbing,
+                            scrubTime: $scrubTime,
+                            clipToDelete: $clipToDelete,
+                            showDeleteConfirmation: $showDeleteConfirmation,
+                            selectedClip: $selectedClip,
+                            draggingClip: $draggingClip,
+                            selectedClipIds: $selectedClipIds,
+                            pixelsPerSecond: pixelsPerSecond
+                        )
+                        // CRITICAL FIX: Removed .padding(.leading, 20) - padding is handled internally
+                        // by spacers in ruler and trackRow to ensure proper alignment
+                    }
+                    .accessibilityIdentifier("TimelineScroll")
+                    .frame(maxWidth: .infinity)
                 }
-                .accessibilityIdentifier("TimelineScroll")
+                .frame(maxWidth: .infinity, alignment: .topLeading)
                 .frame(minHeight: 150, maxHeight: .infinity)
             }
         }
         .alert(String(localized: "timeline.alert.delete.title", defaultValue: "Delete Clip"), isPresented: $showDeleteConfirmation, presenting: clipToDelete) { clip in
             Button(String(localized: "timeline.alert.delete.remove", defaultValue: "Remove from Project only"), role: .none) {
+                // CRITICAL FIX: Clear selection BEFORE deletion to prevent stale reference
+                if selectedClip?.id == clip.id {
+                    selectedClip = nil
+                }
+                appState.selectedClipIds.remove(clip.id)
                 appState.projectState.deleteClip(clip)
                 clipToDelete = nil
             }
             .accessibilityIdentifier("timeline.alert.delete.remove")
 
             Button(String(localized: "timeline.alert.delete.disk", defaultValue: "Delete from Disk"), role: .destructive) {
+                // CRITICAL FIX: Clear selection BEFORE deletion to prevent stale reference
+                if selectedClip?.id == clip.id {
+                    selectedClip = nil
+                }
+                appState.selectedClipIds.remove(clip.id)
                 appState.projectState.deleteClipFile(clip)
                 clipToDelete = nil
             }
@@ -83,7 +111,7 @@ public struct SaneTimelineView: View {
             }
             .accessibilityIdentifier("timeline.alert.delete.cancel")
         } message: { clip in
-            Text(String(localized: "timeline.alert.delete.message", 
+            Text(String(localized: "timeline.alert.delete.message",
                         defaultValue: "Do you want to remove the clip from the project, or permanently delete the file from your disk?") + ": '\(clip.url.lastPathComponent)'.")
         }
         .sheet(isPresented: $showLogs) {
@@ -93,7 +121,7 @@ public struct SaneTimelineView: View {
             if selectedClip == nil {
                 autoSelectFirstClip()
             }
-            
+
             // Restore Zoom Level
             if let project = appState.projectState.currentProject, project.zoomLevel > 0 {
                 self.zoomLevel = project.zoomLevel

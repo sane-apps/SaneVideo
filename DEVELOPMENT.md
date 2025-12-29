@@ -14,21 +14,30 @@
 
 **New to this project? Start here:**
 
-1. **Read this file** (DEVELOPMENT.md) - It's the single source of truth
-2. **Check current status**:
+1. **Bootstrap runs automatically** - When you open this project in Claude Code, `bootstrap` runs automatically via SessionStart hook
+2. **Read this file** (DEVELOPMENT.md) - It's the single source of truth (SOP = Standard Operating Procedure)
+3. **Check current status**:
    - Tests are working! (see section 8)
    - Unit tests run by default with `verify`
    - Visual tests are excluded (manual testing only)
-3. **Use SaneMaster.rb**: All tools are in `./Scripts/SaneMaster.rb`
-4. **Reference docs**: See section 9 for documentation structure
+4. **Use SaneMaster.rb**: All tools are in `./Scripts/SaneMaster.rb`
+5. **Reference docs**: See section 9 for documentation structure
 
 **Key Commands:**
 
 ```bash
-./Scripts/SaneMaster.rb setup      # Initial setup
+./Scripts/SaneMaster.rb bootstrap  # Environment check + auto-update (runs on session start)
 ./Scripts/SaneMaster.rb verify     # Build + unit tests (fast)
 ./Scripts/SaneMaster.rb test_suite --quick  # Comprehensive validation
 ```
+
+**Bootstrap Features:**
+- Auto-updates Ruby, bundle, Homebrew tools
+- Verifies Claude plugins & MCP servers
+- Creates rollback snapshots before changes
+- Logs all operations to `~/.sanemaster/logs/`
+- Use `--check-only` to report without changes
+- Use `--rollback` to restore previous configuration
 
 **Supplementary Documentation:**
 
@@ -45,6 +54,7 @@
 
 - **OS**: macOS 26.2 (Tahoe). APIs differ from older versions.
 - **Hardware**: Apple Silicon (M1+) ONLY. No Intel support.
+- **Ruby**: Homebrew Ruby 3.4+ required. System Ruby 2.6 is deprecated. A `.ruby-version` file is provided for version managers.
 - **Rule**: If unsure about an API, **CHECK THE SDK FIRST** (see SDK verification workflow in Golden Rules), then search the web for context/usage. Do not guess.
 
 ---
@@ -396,6 +406,7 @@ log stream --predicate 'subsystem == "com.sanevideo.SaneVideo"' --level debug
 ## 7. Available Tools
 
 1. **SaneMaster.rb** (`./Scripts/SaneMaster.rb`): The master controller.
+    - `bootstrap`: **Auto-runs on session start.** Full environment bootstrap with auto-update, rollback support, and session logging.
     - `verify`: Build app + run unit tests (default).
     - `verify --clean`: Full clean build + run unit tests.
     - `verify --ui`: Build + run unit tests + functional UI tests (excludes visual tests).
@@ -425,15 +436,16 @@ log stream --predicate 'subsystem == "com.sanevideo.SaneVideo"' --level debug
 3. **XcodeBuildMCP**: Use for granular programmatic builds/tests.
 4. **Claude Code Plugins** (install via `/plugin install`):
     - **swift-lsp@claude-plugins-official**: ✅ Enabled - Provides Swift code intelligence (completion, go-to-definition, diagnostics)
-    - **code-review@claude-plugins-official**: Automated PR review with 4 parallel agents (install: `/plugin install code-review@claude-plugins-official`)
-    - **security-guidance@claude-plugins-official**: Security vulnerability alerts during editing (install: `/plugin install security-guidance@claude-plugins-official`)
-5. **MCP Servers** (configured in `.mcp.json` and `.claude.json`):
+    - **code-review@claude-plugins-official**: ✅ Enabled - Automated PR review with 4 parallel agents
+    - **security-guidance@claude-plugins-official**: ✅ Enabled - Security vulnerability alerts during editing
+5. **MCP Servers** (configured in `.mcp.json`):
+    - **Note**: Ensure `enableAllProjectMcpServers: true` is set in `.claude/settings.local.json` and no restrictive `enabledMcpjsonServers` array exists.
     - **apple-docs**: ✅ Enabled - Apple Developer Documentation & WWDC transcripts (1,260+ sessions, 2012-2025). Use for API examples, related APIs, and understanding "why" behind APIs.
     - **github**: ✅ Enabled - GitHub API integration for issues, PRs, repos, and code search. (Official MCP)
     - **memory**: ✅ Enabled - Persistent knowledge graph for cross-session context. (Official MCP)
     - **context7**: ✅ Enabled - Real-time, version-specific library documentation. Prevents hallucinated APIs by fetching current docs from source repos.
-    - **TestSprite**: ✅ Enabled - Automated test generation and execution. Use for generating test plans and analyzing coverage. *Note: Primary focus is iOS mobile apps - will be essential for future iPad/iPhone companion apps.*
     - **XcodeBuildMCP**: ✅ Enabled - Programmatic Xcode builds, test runs, and code signing. Use for CI/CD integration.
+    - **TestSprite**: ⏸️ Not loaded (future) - Automated test generation for iOS/iPad companion apps. Will be enabled when mobile development begins.
 
 ### When to Use Which Tool (Decision Matrix)
 
@@ -446,15 +458,17 @@ log stream --predicate 'subsystem == "com.sanevideo.SaneVideo"' --level debug
 | **Programmatic builds (CI/CD)** | `XcodeBuildMCP` | Granular control, JSON output, automation |
 | **Generate mock classes** | `./Scripts/SaneMaster.rb gen_mock` (Mockolo) | Fast protocol→mock generation |
 | **Generate test templates** | `./Scripts/SaneMaster.rb gen_test` | Creates structured unit/UI tests |
-| **iOS companion app testing** | `TestSprite` | AI-powered SwiftUI test generation |
+| **iOS companion app testing** | `TestSprite` (future) | AI-powered SwiftUI test generation - enable when mobile dev begins |
 | **GitHub issues/PRs** | `github` MCP | Create issues, review PRs, search code |
 | **Remember context across sessions** | `memory` MCP | Persistent knowledge graph |
 | **Code intelligence (completions, go-to-def)** | `swift-lsp` plugin | IDE-like Swift support in Claude Code |
 
 ### Future: iOS/iPadOS Companion Apps
 
+> **Current Focus**: macOS app until rock solid. iOS/iPad work comes later.
+
 When developing the iPhone/iPad companion apps:
-- **TestSprite** will be the primary UI testing tool (designed for iOS)
+- **TestSprite** - Add to `.mcp.json` when mobile development begins (primary UI testing tool for iOS)
 - **XcodeBuildMCP** can target iOS simulators and devices
 - Shared code should live in a Swift Package for cross-platform use
 - Use `apple-docs` for platform-specific API differences (UIKit vs AppKit)

@@ -107,7 +107,8 @@ extension VideoClip {
 
     // MARK: - Computed Properties
 
-    /// Effective duration after trimming and removing internal ranges
+    /// Effective duration after trimming, removing internal ranges, and applying speed
+    /// CRITICAL FIX: Speed affects played duration (2x speed = half duration)
     var effectiveDuration: CMTime {
         let safeEnd = min(trimEnd, duration)
         let safeStart = min(trimStart, safeEnd)
@@ -127,7 +128,12 @@ extension VideoClip {
             }
         }
 
-        return totalDuration
+        // CRITICAL FIX: Apply speed scaling to get actual played duration
+        // speed > 1.0 = faster playback = shorter duration
+        // speed < 1.0 = slower playback = longer duration
+        guard speed > 0 else { return totalDuration }
+        let scaledSeconds = totalDuration.seconds / speed
+        return CMTime(seconds: scaledSeconds, preferredTimescale: totalDuration.timescale)
     }
 
     /// Whether the clip has been trimmed or has internal cuts

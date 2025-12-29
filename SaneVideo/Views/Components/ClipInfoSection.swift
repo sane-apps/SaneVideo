@@ -63,7 +63,7 @@ struct ClipInfoSection: View {
                     .accessibilityIdentifier("clip_info.locate_file")
                     .accessibilityLabel("Locate missing file")
                     .accessibilityHint("Opens a file picker to locate the missing video file")
-                    .focusable() // P0 FIX: Keyboard navigation
+                    // REMOVED: .focusable() - was causing yellow focus ring
                 }
                 .padding(8)
                 .background(Color.orange.opacity(0.1))

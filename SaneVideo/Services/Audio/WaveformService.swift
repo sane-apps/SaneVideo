@@ -93,12 +93,15 @@ actor WaveformService: WaveformServiceProtocol {
     private func generateWaveform(for clip: VideoClip) async throws -> [Float] {
         let asset = AVURLAsset(url: clip.url)
 
-        // Load tracks
+        // Load tracks and duration
         let tracks = try await asset.loadTracks(withMediaType: .audio)
         guard let track = tracks.first else {
             await MainActor.run { AppLogger.timeline.warning("WaveformService: No audio track found for \(clip.url.lastPathComponent)") }
             return []
         }
+
+        let duration = try await asset.load(.duration)
+        let durationSeconds = duration.seconds
 
         let outputSettings: [String: Any] = [
             AVFormatIDKey: kAudioFormatLinearPCM,
@@ -115,6 +118,18 @@ actor WaveformService: WaveformServiceProtocol {
         reader.startReading()
 
         var samples: [Float] = []
+
+        // CRITICAL FIX: Dynamic downsampling based on clip duration
+        // Target ~2000 samples for visualization (works well for most waveform widths)
+        // This prevents memory explosion and processing delays for 2+ hour clips
+        let targetSampleCount = 2000
+        let sampleRate: Double = 44100 // Assume standard sample rate
+        let totalAudioSamples = durationSeconds * sampleRate
+
+        // Calculate how many audio samples to skip per output sample
+        // Minimum of 800 for short clips to maintain performance
+        let calculatedSkip = max(800, Int(totalAudioSamples / Double(targetSampleCount)))
+        let accumulationWindow = max(10, calculatedSkip / 800) // Scale accumulation window with skip rate
 
         // Read samples
         while reader.status == .reading {
@@ -137,19 +152,18 @@ actor WaveformService: WaveformServiceProtocol {
             let ptr = data.withMemoryRebound(to: Int16.self, capacity: sampleCount) { $0 }
 
             // Downsample: Take max amplitude in chunk
-            // This is a simplified extraction for visualization
+            // Dynamic rate based on clip length to ensure ~2000 total samples
             var maxAmp: Float = 0
             var count = 0
-            let downsampleRate = 800 // Skip samples for performance (approx 55 samples/sec at 44.1kHz)
 
-            for i in stride(from: 0, to: sampleCount, by: downsampleRate) {
+            for i in stride(from: 0, to: sampleCount, by: calculatedSkip) {
                 let val = Float(abs(ptr[i])) / Float(Int16.max)
                 if val > maxAmp {
                     maxAmp = val
                 }
                 count += 1
 
-                if count >= 10 { // Accumulate a bit
+                if count >= accumulationWindow {
                     samples.append(maxAmp)
                     maxAmp = 0
                     count = 0

@@ -7,6 +7,7 @@ require 'fileutils'
 require 'tmpdir'
 require 'optparse'
 require 'set'
+require 'time'
 
 # ==============================================================================
 # SaneMaster: Professional Automation Suite for SaneVideo
@@ -98,6 +99,7 @@ class SaneMaster
     when 'quality'  then run_quality_report
     when 'check_binary' then check_binary
     when 'restore' then restore_xcode
+    when 'verify_mcps' then verify_mcps
     when 'gen_assets' then generate_test_assets
     when 'gen_test' then generate_test_file(args)
     when 'gen_mock' then generate_mocks(args)
@@ -114,6 +116,11 @@ class SaneMaster
     when 'launch', 'run' then launch_app(args)
     when 'logs' then show_app_logs(args)
     when 'test_mode', 'tm' then enter_test_mode(args)
+    when 'bootstrap', 'preflight', 'env' then run_bootstrap(args)
+    when 'version_check', 'versions' then check_latest_versions(args)
+    when 'ci_parity', 'ci_check' then check_ci_parity
+    when 'deps', 'dependencies' then show_dependency_graph(args)
+    when 'template' then manage_templates(args)
     when 'console'
       require 'pry'
       # rubocop:disable Lint/Debugger
@@ -175,6 +182,1009 @@ class SaneMaster
     end
 
     puts "\n✅ Setup complete."
+  end
+
+  # =============================================================================
+  # SOP Bootstrap - Full environment setup with auto-update and rollback
+  # =============================================================================
+
+  SOP_SNAPSHOT_DIR = File.expand_path('~/.sanemaster/snapshots')
+  SOP_LOG_DIR = File.expand_path('~/.sanemaster/logs')
+  HOMEBREW_RUBY = '/opt/homebrew/opt/ruby/bin/ruby'
+  HOMEBREW_BUNDLE = '/opt/homebrew/opt/ruby/bin/bundle'
+
+  # Known latest versions (updated periodically)
+  TOOL_VERSIONS = {
+    'swiftlint' => { cmd: 'swiftlint --version', min: '0.62.0' },
+    'xcodegen' => { cmd: 'xcodegen --version', extract: /Version: ([\d.]+)/, min: '2.44.0' },
+    'periphery' => { cmd: 'periphery version', min: '3.2.0' },
+    'mockolo' => { cmd: 'mockolo --version', min: '2.4.0' },
+    'lefthook' => { cmd: 'lefthook --version', extract: /lefthook version ([\d.]+)/, min: '2.0.0' }
+  }.freeze
+
+  def run_bootstrap(args)
+    check_only = args.include?('--check-only')
+    rollback = args.include?('--rollback')
+
+    puts '🚀 --- [ SANEMASTER BOOTSTRAP ] ---'
+    puts "Mode: #{if check_only
+                    'CHECK ONLY'
+                  else
+                    rollback ? 'ROLLBACK' : 'FULL UPDATE'
+                  end}"
+    puts ''
+
+    # Initialize logging
+    ensure_sop_dirs
+    @sop_log = File.join(SOP_LOG_DIR, "sop_#{Time.now.strftime('%Y%m%d_%H%M%S')}.log")
+    sop_log("SOP Bootstrap started - #{if check_only
+                                         'check-only'
+                                       else
+                                         rollback ? 'rollback' : 'full-update'
+                                       end}")
+
+    if rollback
+      perform_rollback
+      return
+    end
+
+    # Create snapshot before making changes
+    create_snapshot unless check_only
+
+    results = {
+      ruby: check_ruby_environment(check_only),
+      bundle: check_bundle(check_only),
+      homebrew_tools: check_homebrew_tools(check_only),
+      claude_plugins: check_claude_plugins,
+      mcp_servers: check_mcp_config,
+      doctor: nil
+    }
+
+    # Run doctor at the end
+    puts "\n📋 Running doctor health check..."
+    results[:doctor] = doctor_silent
+
+    # Print summary
+    print_sop_summary(results, check_only)
+
+    # Log completion
+    sop_log("SOP Bootstrap completed - #{results.values.all? { |r| [:ok, true].include?(r) } ? 'SUCCESS' : 'ISSUES FOUND'}")
+  end
+
+  def ensure_sop_dirs
+    FileUtils.mkdir_p(SOP_SNAPSHOT_DIR)
+    FileUtils.mkdir_p(SOP_LOG_DIR)
+  end
+
+  def sop_log(message)
+    return unless @sop_log
+
+    File.open(@sop_log, 'a') { |f| f.puts "[#{Time.now.strftime('%H:%M:%S')}] #{message}" }
+  end
+
+  def create_snapshot
+    puts '📸 Creating configuration snapshot...'
+    timestamp = Time.now.strftime('%Y%m%d_%H%M%S')
+    snapshot_dir = File.join(SOP_SNAPSHOT_DIR, timestamp)
+    FileUtils.mkdir_p(snapshot_dir)
+
+    # Snapshot key files
+    files_to_snapshot = %w[
+      Gemfile
+      Gemfile.lock
+      .ruby-version
+      .claude/settings.local.json
+      .mcp.json
+    ]
+
+    files_to_snapshot.each do |file|
+      src = File.join(Dir.pwd, file)
+      next unless File.exist?(src)
+
+      dest_dir = File.join(snapshot_dir, File.dirname(file))
+      FileUtils.mkdir_p(dest_dir)
+      FileUtils.cp(src, File.join(snapshot_dir, file))
+    end
+
+    # Record tool versions
+    versions = {}
+    TOOL_VERSIONS.each do |tool, config|
+      version = `#{config[:cmd]} 2>/dev/null`.strip
+      if config[:extract]
+        match = version.match(config[:extract])
+        version = match[1] if match
+      end
+      versions[tool] = version
+    end
+    versions['ruby'] = begin
+      `#{HOMEBREW_RUBY} --version 2>/dev/null`.strip.split[1]
+    rescue StandardError
+      'unknown'
+    end
+
+    File.write(File.join(snapshot_dir, 'versions.json'), JSON.pretty_generate(versions))
+
+    # Update latest symlink
+    latest_link = File.join(SOP_SNAPSHOT_DIR, 'latest')
+    FileUtils.rm_f(latest_link)
+    FileUtils.ln_s(snapshot_dir, latest_link)
+
+    puts "   ✅ Snapshot saved: #{snapshot_dir}"
+    sop_log("Snapshot created: #{snapshot_dir}")
+  end
+
+  def perform_rollback
+    latest = File.join(SOP_SNAPSHOT_DIR, 'latest')
+    unless File.exist?(latest)
+      puts '❌ No snapshot found to rollback to'
+      return
+    end
+
+    snapshot_dir = File.realpath(latest)
+    puts "🔄 Rolling back to: #{snapshot_dir}"
+
+    # Restore files
+    %w[Gemfile Gemfile.lock .ruby-version].each do |file|
+      src = File.join(snapshot_dir, file)
+      next unless File.exist?(src)
+
+      FileUtils.cp(src, File.join(Dir.pwd, file))
+      puts "   ✅ Restored: #{file}"
+    end
+
+    # Re-run bundle install
+    puts '📦 Re-installing bundle...'
+    system("#{HOMEBREW_BUNDLE} install")
+
+    puts "\n✅ Rollback complete"
+    sop_log("Rollback performed from: #{snapshot_dir}")
+  end
+
+  def check_ruby_environment(check_only)
+    puts '💎 Checking Ruby environment...'
+
+    # Check if Homebrew Ruby exists
+    unless File.exist?(HOMEBREW_RUBY)
+      puts '   ❌ Homebrew Ruby not found. Install: brew install ruby'
+      sop_log('Ruby: Homebrew Ruby not installed')
+      return :missing
+    end
+
+    # Get current version
+    version = `#{HOMEBREW_RUBY} --version 2>/dev/null`.strip
+    puts "   Ruby: #{version}"
+
+    # Check .ruby-version file
+    ruby_version_file = File.join(Dir.pwd, '.ruby-version')
+    if File.exist?(ruby_version_file)
+      puts '   ✅ .ruby-version exists'
+    elsif !check_only
+      # Create .ruby-version
+      ruby_ver = begin
+        version.match(/ruby ([\d.]+)/)[1]
+      rescue StandardError
+        '3.4'
+      end
+      File.write(ruby_version_file, "#{ruby_ver}\n")
+      puts "   ✅ Created .ruby-version (#{ruby_ver})"
+      sop_log("Created .ruby-version: #{ruby_ver}")
+    else
+      puts '   ⚠️  .ruby-version missing'
+    end
+
+    # Check RubyGems version (no more 3.0.3.1 warning)
+    gems_version = `#{HOMEBREW_RUBY} -e "puts Gem::VERSION" 2>/dev/null`.strip
+    if Gem::Version.new(gems_version) >= Gem::Version.new('3.2.0')
+      puts "   ✅ RubyGems #{gems_version}"
+    else
+      puts "   ⚠️  RubyGems #{gems_version} (upgrade recommended)"
+    end
+
+    sop_log("Ruby check: #{version}, RubyGems #{gems_version}")
+    :ok
+  end
+
+  def check_bundle(check_only)
+    puts "\n📦 Checking bundle dependencies..."
+
+    unless File.exist?(HOMEBREW_BUNDLE)
+      puts '   ❌ Homebrew bundle not found'
+      return :missing
+    end
+
+    # Check if bundle is satisfied
+    bundle_check = `#{HOMEBREW_BUNDLE} check 2>&1`
+    if bundle_check.include?('dependencies are satisfied')
+      puts '   ✅ Bundle dependencies satisfied'
+      sop_log('Bundle: dependencies satisfied')
+      return :ok if check_only
+    end
+
+    unless check_only
+      puts '   🔄 Running bundle update...'
+      if system("#{HOMEBREW_BUNDLE} update 2>&1")
+        puts '   ✅ Bundle updated'
+        sop_log('Bundle: updated successfully')
+
+        # Reinstall lefthook after bundle update
+        system('lefthook install -f 2>/dev/null')
+      else
+        puts '   ❌ Bundle update failed'
+        sop_log('Bundle: update failed')
+        return :failed
+      end
+    end
+
+    :ok
+  end
+
+  def check_homebrew_tools(check_only)
+    puts "\n🍺 Checking Homebrew tools..."
+
+    outdated = []
+    TOOL_VERSIONS.each do |tool, config|
+      version_output = `#{config[:cmd]} 2>/dev/null`.strip
+      current = if config[:extract]
+                  match = version_output.match(config[:extract])
+                  match ? match[1] : version_output
+                else
+                  version_output.split.first
+                end
+
+      status = if current.empty?
+                 '❌ not installed'
+               elsif Gem::Version.new(current.gsub(/[^\d.]/, '')) >= Gem::Version.new(config[:min])
+                 '✅'
+               else
+                 outdated << tool
+                 '⚠️  outdated'
+               end
+
+      puts "   #{tool}: #{current.empty? ? 'missing' : current} #{status}"
+    end
+
+    if outdated.any? && !check_only
+      puts "\n   🔄 Updating outdated tools: #{outdated.join(', ')}"
+      outdated.each do |tool|
+        print "      Updating #{tool}... "
+        if system("brew upgrade #{tool} 2>/dev/null || brew install #{tool} 2>/dev/null")
+          puts '✅'
+          sop_log("Updated: #{tool}")
+        else
+          puts '❌'
+          sop_log("Failed to update: #{tool}")
+        end
+      end
+    end
+
+    sop_log("Homebrew tools check: #{outdated.empty? ? 'all current' : "outdated: #{outdated.join(', ')}"}")
+    outdated.empty? ? :ok : :updated
+  end
+
+  def check_claude_plugins
+    puts "\n🔌 Checking Claude Code plugins..."
+
+    settings_file = File.expand_path('~/.claude/settings.json')
+    unless File.exist?(settings_file)
+      puts '   ⚠️  Claude settings not found'
+      return :missing
+    end
+
+    begin
+      settings = JSON.parse(File.read(settings_file))
+      plugins = settings['enabledPlugins'] || {}
+
+      required_plugins = %w[
+        swift-lsp@claude-plugins-official
+        code-review@claude-plugins-official
+        security-guidance@claude-plugins-official
+      ]
+
+      required_plugins.each do |plugin|
+        status = plugins[plugin] ? '✅ enabled' : '⚠️  not enabled'
+        puts "   #{plugin.split('@').first}: #{status}"
+      end
+
+      sop_log("Claude plugins: #{plugins.keys.join(', ')}")
+      :ok
+    rescue JSON::ParserError => e
+      puts "   ❌ Failed to parse settings: #{e.message}"
+      :error
+    end
+  end
+
+  def check_mcp_config
+    puts "\n🔗 Checking MCP configuration..."
+
+    # Check .mcp.json
+    mcp_file = File.join(Dir.pwd, '.mcp.json')
+    unless File.exist?(mcp_file)
+      puts '   ❌ .mcp.json not found'
+      return :missing
+    end
+
+    begin
+      mcp_config = JSON.parse(File.read(mcp_file))
+      servers = mcp_config['mcpServers'] || {}
+      puts "   ✅ .mcp.json: #{servers.keys.count} servers configured"
+      servers.each_key { |s| puts "      - #{s}" }
+
+      # Check settings.local.json for enableAllProjectMcpServers
+      local_settings = File.join(Dir.pwd, '.claude/settings.local.json')
+      if File.exist?(local_settings)
+        local = JSON.parse(File.read(local_settings))
+        if local['enableAllProjectMcpServers']
+          puts '   ✅ enableAllProjectMcpServers: true'
+        else
+          puts '   ⚠️  enableAllProjectMcpServers not set'
+        end
+
+        puts "   ⚠️  enabledMcpjsonServers restrictive list found (#{local['enabledMcpjsonServers'].count} servers)" if local['enabledMcpjsonServers']
+      end
+
+      sop_log("MCP: #{servers.keys.count} servers configured")
+      :ok
+    rescue JSON::ParserError => e
+      puts "   ❌ Failed to parse MCP config: #{e.message}"
+      :error
+    end
+  end
+
+  def doctor_silent
+    # Run key doctor checks silently
+    issues = []
+
+    # Check DerivedData size
+    dd_size = begin
+      `du -sh ~/Library/Developer/Xcode/DerivedData 2>/dev/null`.split.first
+    rescue StandardError
+      '?'
+    end
+    issues << "DerivedData: #{dd_size}" if dd_size.to_f > 5 # > 5GB
+
+    # Check for stuck processes
+    stuck = `pgrep -f 'xcodebuild|xctest' 2>/dev/null`.strip.split.count
+    issues << "#{stuck} stuck build processes" if stuck.positive?
+
+    # Check disk space
+    available = `df -h . | tail -1 | awk '{print $4}'`.strip
+    issues << "Low disk: #{available}" if available.end_with?('M') || available.to_f < 50
+
+    issues.empty? ? :ok : issues
+  end
+
+  def print_sop_summary(results, check_only)
+    puts "\n#{'=' * 60}"
+    puts check_only ? '📋 SOP STATUS REPORT' : '✅ SOP BOOTSTRAP COMPLETE'
+    puts '=' * 60
+
+    summary = {
+      'Ruby Environment' => results[:ruby],
+      'Bundle Dependencies' => results[:bundle],
+      'Homebrew Tools' => results[:homebrew_tools],
+      'Claude Plugins' => results[:claude_plugins],
+      'MCP Servers' => results[:mcp_servers]
+    }
+
+    summary.each do |name, status|
+      icon = case status
+             when :ok, true then '✅'
+             when :updated then '🔄'
+             when :missing, :failed, :error then '❌'
+             else '⚠️'
+             end
+      puts "#{icon} #{name}"
+    end
+
+    # Doctor issues
+    if results[:doctor].is_a?(Array) && results[:doctor].any?
+      puts "\n⚠️  Health Issues:"
+      results[:doctor].each { |issue| puts "   - #{issue}" }
+    else
+      puts '✅ Health Check'
+    end
+
+    puts '=' * 60
+
+    unless check_only
+      puts "\n💡 Session log: #{@sop_log}"
+      puts '💾 Rollback available: ./Scripts/SaneMaster.rb sop --rollback'
+    end
+
+    puts "\n🎯 Ready to work!"
+  end
+
+  # =============================================================================
+  # Version Checking - Fetch latest versions from Homebrew/GitHub
+  # =============================================================================
+
+  VERSION_CACHE_FILE = File.expand_path('~/.sanemaster/versions_cache.json')
+  VERSION_CACHE_MAX_AGE = 7 * 24 * 60 * 60 # 7 days in seconds
+
+  TOOL_SOURCES = {
+    'swiftlint' => { type: :homebrew, formula: 'swiftlint' },
+    'xcodegen' => { type: :homebrew, formula: 'xcodegen' },
+    'periphery' => { type: :homebrew, formula: 'periphery' },
+    'mockolo' => { type: :github, repo: 'uber/mockolo' },
+    'lefthook' => { type: :homebrew, formula: 'lefthook' },
+    'fastlane' => { type: :rubygems, gem: 'fastlane' },
+    'ruby' => { type: :homebrew, formula: 'ruby' }
+  }.freeze
+
+  def check_latest_versions(args)
+    puts '🔍 --- [ SANEMASTER VERSION CHECK ] ---'
+    force_refresh = args.include?('--refresh') || args.include?('-f')
+
+    # Load or fetch version cache
+    cache = load_version_cache(force_refresh)
+
+    if cache[:fetched_at]
+      age_days = ((Time.now - Time.parse(cache[:fetched_at])) / 86_400).round(1)
+      puts "📅 Cache age: #{age_days} days #{'(refreshed)' if force_refresh}"
+      puts ''
+    end
+
+    # Compare installed vs latest
+    puts 'Tool            Installed    Latest       Status'
+    puts '-' * 55
+
+    all_current = true
+    TOOL_SOURCES.each_key do |tool|
+      installed = get_installed_version(tool)
+      latest = cache[:versions][tool] || 'unknown'
+
+      status = if installed == 'not installed'
+                 all_current = false
+                 '❌ missing'
+               elsif latest == 'unknown'
+                 '❓ unknown'
+               elsif Gem::Version.new(installed.gsub(/[^\d.]/, '')) >= Gem::Version.new(latest.gsub(/[^\d.]/, ''))
+                 '✅ current'
+               else
+                 all_current = false
+                 '⬆️  update available'
+               end
+
+      puts format('%-15s %-12s %-12s %s', tool, installed, latest, status)
+    end
+
+    puts ''
+    if all_current
+      puts '✅ All tools are up to date!'
+    else
+      puts '💡 Run `brew upgrade <tool>` or `./Scripts/SaneMaster.rb bootstrap` to update'
+    end
+
+    puts "\n🔄 To refresh cache: ./Scripts/SaneMaster.rb versions --refresh"
+  end
+
+  def load_version_cache(force_refresh = false)
+    ensure_sop_dirs
+
+    # Check if cache exists and is fresh
+    if !force_refresh && File.exist?(VERSION_CACHE_FILE)
+      begin
+        cache = JSON.parse(File.read(VERSION_CACHE_FILE), symbolize_names: true)
+        cache_age = Time.now - Time.parse(cache[:fetched_at])
+        return cache if cache_age < VERSION_CACHE_MAX_AGE
+      rescue StandardError
+        # Cache corrupted, will refresh
+      end
+    end
+
+    # Fetch fresh versions
+    puts '🌐 Fetching latest versions from package managers...'
+    versions = {}
+
+    TOOL_SOURCES.each do |tool, config|
+      print "   #{tool}... "
+      version = fetch_latest_version(config)
+      versions[tool] = version
+      puts version
+    end
+
+    cache = {
+      fetched_at: Time.now.iso8601,
+      versions: versions
+    }
+
+    File.write(VERSION_CACHE_FILE, JSON.pretty_generate(cache))
+    puts ''
+    cache
+  end
+
+  def fetch_latest_version(config)
+    case config[:type]
+    when :homebrew
+      # Homebrew only serves stable versions by default
+      output = `brew info #{config[:formula]} 2>/dev/null`.lines.first
+      # Match patterns like "==> swiftlint: stable 0.62.2" or "swiftlint: 0.62.2"
+      version = output&.match(/stable ([\d.]+)/)&.[](1) ||
+                output&.match(/#{config[:formula]}[:\s]+([\d.]+)/)&.[](1)
+      # Double-check it's not a beta/rc version
+      return 'unknown' if version&.match?(/alpha|beta|rc|pre/i)
+
+      version || 'unknown'
+    when :github
+      # Fetch releases and find latest stable (not prerelease)
+      output = `curl -s "https://api.github.com/repos/#{config[:repo]}/releases" 2>/dev/null`
+      begin
+        releases = JSON.parse(output)
+        # Find first non-prerelease, non-draft release
+        stable = releases.find { |r| !r['prerelease'] && !r['draft'] }
+        version = stable&.dig('tag_name')&.gsub(/^v/, '')
+        # Skip if version contains alpha/beta/rc
+        return 'unknown' if version&.match?(/alpha|beta|rc|pre/i)
+
+        version || 'unknown'
+      rescue StandardError
+        'unknown'
+      end
+    when :rubygems
+      # RubyGems returns stable versions by default
+      output = `gem search ^#{config[:gem]}$ --remote 2>/dev/null`
+      version = output&.match(/#{config[:gem]} \(([\d.]+)\)/)&.[](1)
+      return 'unknown' if version&.match?(/alpha|beta|rc|pre/i)
+
+      version || 'unknown'
+    else
+      'unknown'
+    end
+  rescue StandardError
+    'unknown'
+  end
+
+  def get_installed_version(tool)
+    case tool
+    when 'swiftlint'
+      `swiftlint --version 2>/dev/null`.strip.split.first || 'not installed'
+    when 'xcodegen'
+      output = `xcodegen --version 2>/dev/null`
+      output.match(/Version: ([\d.]+)/)&.[](1) || 'not installed'
+    when 'periphery'
+      `periphery version 2>/dev/null`.strip || 'not installed'
+    when 'mockolo'
+      `mockolo --version 2>/dev/null`.strip || 'not installed'
+    when 'lefthook'
+      output = `lefthook --version 2>/dev/null`
+      output.match(/lefthook version ([\d.]+)/)&.[](1) || 'not installed'
+    when 'fastlane'
+      output = `#{HOMEBREW_BUNDLE} exec fastlane --version 2>/dev/null`
+      output.match(/fastlane ([\d.]+)/)&.[](1) || 'not installed'
+    when 'ruby'
+      output = `#{HOMEBREW_RUBY} --version 2>/dev/null`
+      output.match(/ruby ([\d.]+)/)&.[](1) || 'not installed'
+    else
+      'unknown'
+    end
+  rescue StandardError
+    'not installed'
+  end
+
+  # =============================================================================
+  # CI Parity Check - Compare local environment with CI configuration
+  # =============================================================================
+
+  def check_ci_parity
+    puts '🔄 --- [ SANEMASTER CI PARITY CHECK ] ---'
+    puts 'Comparing local environment with CI configuration...'
+    puts ''
+
+    issues = []
+
+    # Check GitHub Actions workflow
+    gh_workflow = Dir.glob('.github/workflows/*.yml').first
+    if gh_workflow
+      puts "📄 Found: #{gh_workflow}"
+      workflow = File.read(gh_workflow)
+
+      # Extract Xcode version from workflow
+      xcode_match = workflow.match(/xcode-version:\s*['"]?([\d.]+)['"]?/i) ||
+                    workflow.match(/DEVELOPER_DIR.*Xcode[_-]?([\d.]+)/i)
+      if xcode_match
+        ci_xcode = xcode_match[1]
+        local_xcode = `xcodebuild -version 2>/dev/null`.lines.first&.match(/Xcode ([\d.]+)/)&.[](1)
+        if local_xcode && ci_xcode != local_xcode
+          issues << "Xcode: CI uses #{ci_xcode}, local is #{local_xcode}"
+        else
+          puts "   ✅ Xcode version matches: #{local_xcode}"
+        end
+      end
+
+      # Check for Ruby version
+      ruby_match = workflow.match(/ruby-version:\s*['"]?([\d.]+)['"]?/i)
+      if ruby_match
+        ci_ruby = ruby_match[1]
+        local_ruby = `#{HOMEBREW_RUBY} --version 2>/dev/null`.match(/ruby ([\d.]+)/)&.[](1)
+        if local_ruby && !local_ruby.start_with?(ci_ruby)
+          issues << "Ruby: CI uses #{ci_ruby}, local is #{local_ruby}"
+        else
+          puts "   ✅ Ruby version compatible: #{local_ruby}"
+        end
+      end
+    else
+      puts '⚠️  No GitHub Actions workflow found'
+    end
+
+    # Check Fastlane Fastfile
+    fastfile = 'fastlane/Fastfile'
+    if File.exist?(fastfile)
+      puts "\n📄 Found: #{fastfile}"
+      content = File.read(fastfile)
+
+      # Check for specific version pins
+      puts '   ℹ️  Fastfile uses xcversion for Xcode management' if content.include?('xcversion')
+    end
+
+    # Check .xcode-version file
+    xcode_version_file = '.xcode-version'
+    if File.exist?(xcode_version_file)
+      pinned = File.read(xcode_version_file).strip
+      local = `xcodebuild -version 2>/dev/null`.lines.first&.match(/Xcode ([\d.]+)/)&.[](1)
+      if local == pinned
+        puts "\n✅ .xcode-version matches local: #{local}"
+      else
+        issues << ".xcode-version pins #{pinned}, local is #{local}"
+      end
+    end
+
+    # Check Gemfile.lock for version mismatches
+    if File.exist?('Gemfile.lock')
+      puts "\n📄 Checking Gemfile.lock..."
+      lock_content = File.read('Gemfile.lock')
+
+      # Check bundled with version
+      bundler_match = lock_content.match(/BUNDLED WITH\n\s+([\d.]+)/)
+      if bundler_match
+        ci_bundler = bundler_match[1]
+        local_bundler = `#{HOMEBREW_BUNDLE} --version 2>/dev/null`.match(/Bundler version ([\d.]+)/)&.[](1)
+        if local_bundler && Gem::Version.new(local_bundler) < Gem::Version.new(ci_bundler)
+          issues << "Bundler: lock requires #{ci_bundler}, local is #{local_bundler}"
+        else
+          puts "   ✅ Bundler version compatible: #{local_bundler}"
+        end
+      end
+    end
+
+    # Summary
+    puts "\n#{'=' * 50}"
+    if issues.empty?
+      puts '✅ CI PARITY: Local environment matches CI configuration'
+    else
+      puts '⚠️  CI PARITY ISSUES FOUND:'
+      issues.each { |issue| puts "   - #{issue}" }
+      puts "\n💡 Fix these to avoid CI failures"
+    end
+    puts '=' * 50
+  end
+
+  # =============================================================================
+  # Dependency Graph - Visualize project dependencies
+  # =============================================================================
+
+  def show_dependency_graph(args)
+    puts '📊 --- [ SANEMASTER DEPENDENCY GRAPH ] ---'
+
+    output_format = args.include?('--dot') ? :dot : :ascii
+
+    deps = {
+      swift_packages: scan_swift_packages,
+      ruby_gems: scan_ruby_gems,
+      homebrew: scan_homebrew_deps,
+      frameworks: scan_frameworks
+    }
+
+    if output_format == :dot
+      generate_dot_graph(deps)
+    else
+      print_ascii_graph(deps)
+    end
+  end
+
+  def scan_swift_packages
+    package_file = 'SaneVideo.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved'
+    package_file = 'Package.resolved' unless File.exist?(package_file)
+
+    return [] unless File.exist?(package_file)
+
+    begin
+      data = JSON.parse(File.read(package_file))
+      pins = data['pins'] || data.dig('object', 'pins') || []
+      pins.map do |pin|
+        {
+          name: pin['identity'] || pin['package'],
+          version: pin.dig('state', 'version') || pin.dig('state', 'revision')&.[](0..6) || 'branch',
+          url: pin['location'] || pin['repositoryURL']
+        }
+      end
+    rescue StandardError
+      []
+    end
+  end
+
+  def scan_ruby_gems
+    return [] unless File.exist?('Gemfile.lock')
+
+    gems = []
+    in_specs = false
+
+    File.readlines('Gemfile.lock').each do |line|
+      if line.strip == 'GEM'
+        in_specs = false
+      elsif line.strip == 'specs:'
+        in_specs = true
+      elsif in_specs && line.match(/^\s{4}(\S+)\s+\(([\d.]+)\)/)
+        gems << { name: ::Regexp.last_match(1), version: ::Regexp.last_match(2) }
+      elsif line.strip.empty? || line.start_with?('PLATFORMS')
+        in_specs = false
+      end
+    end
+
+    gems.first(15) # Top 15 gems
+  end
+
+  def scan_homebrew_deps
+    TOOL_SOURCES.keys.map do |tool|
+      version = get_installed_version(tool)
+      { name: tool, version: version } if version != 'not installed'
+    end.compact
+  end
+
+  def scan_frameworks
+    # Scan for framework imports in Swift files
+    frameworks = Set.new
+    Dir.glob('SaneVideo/**/*.swift').each do |file|
+      File.readlines(file).each do |line|
+        if line.match(/^import\s+(\w+)/)
+          fw = ::Regexp.last_match(1)
+          frameworks << fw unless %w[Foundation SwiftUI Combine].include?(fw)
+        end
+      end
+    rescue StandardError
+      next
+    end
+    frameworks.to_a.sort.map { |f| { name: f, version: 'system' } }
+  end
+
+  def print_ascii_graph(deps)
+    puts ''
+    puts '┌─────────────────────────────────────────────────────────┐'
+    puts '│                    SaneVideo                            │'
+    puts '└─────────────────────────────────────────────────────────┘'
+    puts '                           │'
+
+    # Swift Packages
+    if deps[:swift_packages].any?
+      puts '          ┌────────────────┴────────────────┐'
+      puts '          │        Swift Packages           │'
+      puts '          └─────────────────────────────────┘'
+      deps[:swift_packages].each do |pkg|
+        puts "                    ├── #{pkg[:name]} (#{pkg[:version]})"
+      end
+      puts ''
+    end
+
+    # Ruby Gems
+    if deps[:ruby_gems].any?
+      puts '          ┌─────────────────────────────────┐'
+      puts '          │          Ruby Gems              │'
+      puts '          └─────────────────────────────────┘'
+      deps[:ruby_gems].first(10).each do |gem|
+        puts "                    ├── #{gem[:name]} (#{gem[:version]})"
+      end
+      puts "                    └── ... and #{deps[:ruby_gems].count - 10} more" if deps[:ruby_gems].count > 10
+      puts ''
+    end
+
+    # Homebrew Tools
+    if deps[:homebrew].any?
+      puts '          ┌─────────────────────────────────┐'
+      puts '          │        Homebrew Tools           │'
+      puts '          └─────────────────────────────────┘'
+      deps[:homebrew].each do |tool|
+        puts "                    ├── #{tool[:name]} (#{tool[:version]})"
+      end
+      puts ''
+    end
+
+    # Apple Frameworks
+    if deps[:frameworks].any?
+      puts '          ┌─────────────────────────────────┐'
+      puts '          │       Apple Frameworks          │'
+      puts '          └─────────────────────────────────┘'
+      deps[:frameworks].first(15).each do |fw|
+        puts "                    ├── #{fw[:name]}"
+      end
+      puts "                    └── ... and #{deps[:frameworks].count - 15} more" if deps[:frameworks].count > 15
+    end
+
+    puts ''
+    puts "📊 Total: #{deps[:swift_packages].count} Swift packages, #{deps[:ruby_gems].count} gems, #{deps[:homebrew].count} tools, #{deps[:frameworks].count} frameworks"
+  end
+
+  def generate_dot_graph(deps)
+    dot_file = 'dependencies.dot'
+    File.open(dot_file, 'w') do |f|
+      f.puts 'digraph Dependencies {'
+      f.puts '  rankdir=TB;'
+      f.puts '  node [shape=box];'
+      f.puts ''
+      f.puts '  SaneVideo [style=filled, fillcolor=lightblue];'
+      f.puts ''
+
+      deps[:swift_packages].each do |pkg|
+        f.puts "  \"#{pkg[:name]}\" [label=\"#{pkg[:name]}\\n#{pkg[:version]}\"];"
+        f.puts "  SaneVideo -> \"#{pkg[:name]}\";"
+      end
+
+      deps[:homebrew].each do |tool|
+        f.puts "  \"#{tool[:name]}\" [label=\"#{tool[:name]}\\n#{tool[:version]}\", style=filled, fillcolor=lightyellow];"
+        f.puts "  SaneVideo -> \"#{tool[:name]}\" [style=dashed];"
+      end
+
+      f.puts '}'
+    end
+
+    puts "✅ Generated: #{dot_file}"
+    puts '💡 View with: dot -Tpng dependencies.dot -o dependencies.png && open dependencies.png'
+    puts '   Or online: https://dreampuf.github.io/GraphvizOnline/'
+  end
+
+  # =============================================================================
+  # Project Templates - Save and apply project configurations
+  # =============================================================================
+
+  TEMPLATE_DIR = File.expand_path('~/.sanemaster/templates')
+
+  def manage_templates(args)
+    ensure_template_dir
+
+    subcommand = args.shift || 'list'
+
+    case subcommand
+    when 'save'
+      save_template(args.first || 'default')
+    when 'apply'
+      apply_template(args.first || 'default')
+    when 'list'
+      list_templates
+    when 'delete'
+      delete_template(args.first)
+    else
+      puts "Unknown template command: #{subcommand}"
+      puts 'Usage: template [save|apply|list|delete] [name]'
+    end
+  end
+
+  def ensure_template_dir
+    FileUtils.mkdir_p(TEMPLATE_DIR)
+  end
+
+  def save_template(name)
+    puts "📦 --- [ SAVE TEMPLATE: #{name} ] ---"
+
+    template_path = File.join(TEMPLATE_DIR, name)
+    FileUtils.mkdir_p(template_path)
+
+    # Files to include in template
+    template_files = {
+      'Gemfile' => 'Gemfile',
+      '.ruby-version' => '.ruby-version',
+      '.swiftlint.yml' => '.swiftlint.yml',
+      'project.yml' => 'project.yml',
+      '.mcp.json' => '.mcp.json',
+      'lefthook.yml' => 'lefthook.yml',
+      '.claude/settings.json' => '.claude/settings.json'
+    }
+
+    saved = []
+    template_files.each do |src, dest|
+      src_path = File.join(Dir.pwd, src)
+      next unless File.exist?(src_path)
+
+      dest_path = File.join(template_path, dest)
+      FileUtils.mkdir_p(File.dirname(dest_path))
+      FileUtils.cp(src_path, dest_path)
+      saved << src
+    end
+
+    # Save metadata
+    metadata = {
+      name: name,
+      created_at: Time.now.iso8601,
+      source_project: File.basename(Dir.pwd),
+      files: saved
+    }
+    File.write(File.join(template_path, 'metadata.json'), JSON.pretty_generate(metadata))
+
+    puts "✅ Template saved: #{template_path}"
+    puts "   Files: #{saved.join(', ')}"
+    puts "\n💡 Apply to new project: ./Scripts/SaneMaster.rb template apply #{name}"
+  end
+
+  def apply_template(name)
+    puts "📥 --- [ APPLY TEMPLATE: #{name} ] ---"
+
+    template_path = File.join(TEMPLATE_DIR, name)
+    unless File.exist?(template_path)
+      puts "❌ Template not found: #{name}"
+      list_templates
+      return
+    end
+
+    metadata_file = File.join(template_path, 'metadata.json')
+    if File.exist?(metadata_file)
+      metadata = JSON.parse(File.read(metadata_file))
+      puts "📋 Template from: #{metadata['source_project']} (#{metadata['created_at']})"
+    end
+
+    # Copy template files (skip existing unless --force)
+    applied = []
+    Dir.glob(File.join(template_path, '**/*')).each do |src|
+      next if File.directory?(src)
+      next if src.end_with?('metadata.json')
+
+      relative = src.sub("#{template_path}/", '')
+      dest = File.join(Dir.pwd, relative)
+
+      if File.exist?(dest)
+        puts "   ⚠️  Skipping (exists): #{relative}"
+        next
+      end
+
+      FileUtils.mkdir_p(File.dirname(dest))
+      FileUtils.cp(src, dest)
+      applied << relative
+    end
+
+    if applied.any?
+      puts "\n✅ Applied files:"
+      applied.each { |f| puts "   - #{f}" }
+      puts "\n💡 Run ./Scripts/SaneMaster.rb bootstrap to complete setup"
+    else
+      puts '⚠️  No new files applied (all exist already)'
+    end
+  end
+
+  def list_templates
+    puts '📋 --- [ AVAILABLE TEMPLATES ] ---'
+
+    templates = Dir.glob(File.join(TEMPLATE_DIR, '*')).select { |f| File.directory?(f) }
+
+    if templates.empty?
+      puts '   No templates saved yet.'
+      puts "\n💡 Save current project as template: ./Scripts/SaneMaster.rb template save mytemplate"
+      return
+    end
+
+    templates.each do |template_path|
+      name = File.basename(template_path)
+      metadata_file = File.join(template_path, 'metadata.json')
+
+      if File.exist?(metadata_file)
+        metadata = JSON.parse(File.read(metadata_file))
+        puts "   #{name}"
+        puts "      From: #{metadata['source_project']}"
+        puts "      Created: #{metadata['created_at']}"
+        puts "      Files: #{metadata['files']&.count || '?'}"
+      else
+        puts "   #{name} (no metadata)"
+      end
+      puts ''
+    end
+  end
+
+  def delete_template(name)
+    return puts '❌ Specify template name to delete' unless name
+
+    template_path = File.join(TEMPLATE_DIR, name)
+    unless File.exist?(template_path)
+      puts "❌ Template not found: #{name}"
+      return
+    end
+
+    FileUtils.rm_rf(template_path)
+    puts "✅ Deleted template: #{name}"
   end
 
   def generate_test_assets
@@ -314,8 +1324,8 @@ class SaneMaster
       //
 
       import XCTest
-      #{options[:type] == 'ui' ? 'import XCUITest' : ''}
-      #{options[:async] ? 'import AVFoundation' : ''}
+      #{'import XCUITest' if options[:type] == 'ui'}
+      #{'import AVFoundation' if options[:async]}
       @testable import SaneVideo
 
       @MainActor
@@ -398,8 +1408,8 @@ class SaneMaster
       //
 
       import Testing
-      #{options[:type] == 'ui' ? 'import XCUITest' : ''}
-      #{options[:async] ? 'import AVFoundation' : ''}
+      #{'import XCUITest' if options[:type] == 'ui'}
+      #{'import AVFoundation' if options[:async]}
       @testable import SaneVideo
 
       @Suite("#{test_name.gsub(/([A-Z])/, ' \1').strip} Tests")
@@ -527,19 +1537,19 @@ class SaneMaster
           content = File.read(output_file)
           # Remove any malformed import lines (from custom-imports)
           content.gsub!(/^import [A-Za-z]+ [A-Za-z]+.*\n/, '')
-          # rubocop:disable Metrics/BlockNesting, Layout/LineLength
+          # rubocop:disable Layout/LineLength
           # Add @testable import after Foundation if not present
           content.gsub!(/(import Foundation\n)/, "\\1@testable import SaneVideo\n") unless content.include?('@testable import SaneVideo')
           # Fix nonisolated sampleBufferSubject for CameraServiceProtocol
           # Replace stored property with computed property that uses MainActor.assumeIsolated
-          content.gsub!(/private var _sampleBufferSubject: PassthroughSubject<CMSampleBuffer, Never>!/,
+          content.gsub!('private var _sampleBufferSubject: PassthroughSubject<CMSampleBuffer, Never>!',
                         'private var _sampleBufferSubjectStorage: PassthroughSubject<CMSampleBuffer, Never>!')
           content.gsub!(/(var sampleBufferSubject: PassthroughSubject<CMSampleBuffer, Never> \{)/, 'nonisolated \\1')
           content.gsub!(/(get \{ return _sampleBufferSubject \})/,
                         "get { \n            return MainActor.assumeIsolated {\n                if _sampleBufferSubjectStorage == nil {\n                    _sampleBufferSubjectStorage = PassthroughSubject<CMSampleBuffer, Never>()\n                }\n                return _sampleBufferSubjectStorage \n            }\n        }")
           content.gsub!(/(set \{ _sampleBufferSubject = newValue \})/,
                         "set { \n            MainActor.assumeIsolated {\n                _sampleBufferSubjectStorage = newValue\n            }\n        }")
-          # rubocop:enable Metrics/BlockNesting, Layout/LineLength
+          # rubocop:enable Layout/LineLength
           File.write(output_file, content)
         end
         puts '✅ Mocks generated successfully'
@@ -939,6 +1949,9 @@ class SaneMaster
         verify_mocks
           Verify all mocks are up to date
 
+        verify_mcps
+          Verify all SOP-required MCP servers are configured
+
         check_xcodegen [files]
           Check if new Swift files are in Xcode project
 
@@ -985,6 +1998,41 @@ class SaneMaster
           6. Show log file status
           Use when user says "test mode" to prepare clean debugging environment
 
+        bootstrap (or preflight, env)
+          Full environment bootstrap (runs automatically on session start):
+          1. Snapshot current config (for rollback)
+          2. Check/update Ruby environment
+          3. Update bundle dependencies
+          4. Update Homebrew tools (SwiftLint, XcodeGen, etc.)
+          5. Verify Claude plugins & MCP servers
+          6. Run doctor health check
+          7. Report summary
+          Use at start of every session to ensure environment is ready.
+          --check-only: Report status without making changes
+          --rollback: Restore previous configuration snapshot
+
+        versions (or version_check)
+          Check installed tool versions against latest stable releases.
+          Fetches from Homebrew, GitHub, and RubyGems (cached for 7 days).
+          Only shows stable releases (excludes alpha/beta/rc versions).
+          --refresh (-f): Force refresh the version cache
+
+        ci_parity (or ci_check)
+          Compare local environment with CI configuration.
+          Checks GitHub Actions workflow, Gemfile.lock, .xcode-version.
+          Warns about version mismatches that could cause CI failures.
+
+        deps (or dependencies)
+          Show project dependency graph (Swift packages, gems, frameworks).
+          --dot: Output GraphViz DOT format for visualization
+
+        template [save|apply|list|delete] [name]
+          Manage project configuration templates.
+          save <name>   - Save current project config as template
+          apply <name>  - Apply template to current directory
+          list          - Show available templates
+          delete <name> - Remove a template
+
         check_binary
           Audit binary for security issues
 
@@ -1010,9 +2058,7 @@ class SaneMaster
     if disk_info.length >= 4
       available = disk_info[3]
       puts "  ✅ Available: #{available}"
-      if available.include?('G') && available.to_f < 10
-        puts "  ⚠️  Low disk space! Export/build may fail"
-      end
+      puts '  ⚠️  Low disk space! Export/build may fail' if available.include?('G') && available.to_f < 10
     end
 
     # Check test assets (enhanced)
@@ -1099,7 +2145,7 @@ class SaneMaster
       puts '  ✅ No stuck test processes'
     else
       puts "  ⚠️  Found stuck processes: #{stuck.split.join(', ')}"
-      puts "     Run: killall -9 xcodebuild xctest"
+      puts '     Run: killall -9 xcodebuild xctest'
     end
 
     # Check DerivedData size
@@ -1109,7 +2155,7 @@ class SaneMaster
     if dd_dirs.any?
       total_size = dd_dirs.map { |d| `du -sh "#{d}" 2>/dev/null`.split.first }.join(', ')
       puts "  📦 Size: #{total_size}"
-      puts "     Clean with: ./Scripts/SaneMaster.rb clean --nuclear"
+      puts '     Clean with: ./Scripts/SaneMaster.rb clean --nuclear'
     else
       puts '  ✅ No DerivedData cache'
     end
@@ -1289,9 +2335,9 @@ class SaneMaster
   def build_test_command(include_ui)
     if include_ui
       # Exclude visual test classes - they require manual inspection
-      skip_visual = ' -skip-testing:SaneVideoUITests/SaneSmartFeaturesVisualTests' \
-                    ' -skip-testing:SaneVideoUITests/VisualEditingTests' \
-                    ' -skip-testing:SaneVideoUITests/VisualRecordingTests'
+      skip_visual = ' -skip-testing:SaneVideoUITests/SaneSmartFeaturesVisualTests ' \
+                    '-skip-testing:SaneVideoUITests/VisualEditingTests ' \
+                    '-skip-testing:SaneVideoUITests/VisualRecordingTests'
       "xcodebuild test -scheme SaneVideo -destination 'platform=macOS,arch=arm64'#{skip_visual} 2>&1"
     else
       "xcodebuild test -scheme SaneVideo -destination 'platform=macOS,arch=arm64' -only-testing:SaneVideoTests 2>&1"
@@ -1451,7 +2497,7 @@ class SaneMaster
         last_pos = 0
         while (start_idx = content.index(/\b#{component}\s*\(/, last_pos))
           # Find the next 3000 characters for context (closures can be very large in SwiftUI)
-          context = content[start_idx..start_idx + 3000] || ''
+          context = content[start_idx..(start_idx + 3000)] || ''
 
           # Check if accessibilityIdentifier is present in the chain
           unless context.include?('accessibilityIdentifier')
@@ -1539,7 +2585,7 @@ class SaneMaster
     puts "\n✅ All test references are valid!"
     puts "   UI identifiers: #{ui_identifiers.count}"
     puts "   Test references: #{test_references.count}"
-    return unless ui_identifiers.count.positive?
+    return unless ui_identifiers.any?
 
     coverage = (test_references.count.to_f / ui_identifiers.count * 100).round(1)
     puts "   Coverage: #{coverage}%"
@@ -1991,23 +3037,8 @@ class SaneMaster
       puts ''
     end
 
-    # Report other warning categories
-    if performance_warnings.any?
-      puts "\n⚡ Performance Warnings (#{performance_warnings.length}):"
-      performance_warnings.first(5).each { |w| puts "   - #{w}" }
-      puts "   ... (#{performance_warnings.length - 5} more)" if performance_warnings.length > 5
-    end
-
-    if correctness_warnings.any?
-      puts "\n⚠️  Correctness Warnings (#{correctness_warnings.length}):"
-      correctness_warnings.first(5).each { |w| puts "   - #{w}" }
-      puts "   ... (#{correctness_warnings.length - 5} more)" if correctness_warnings.length > 5
-    end
-
     puts ''
     puts "⚠️  Total: #{deprecation_warnings.length} deprecation warning(s)"
-    puts "⚡ Performance: #{performance_warnings.length} warning(s)" if performance_warnings.any?
-    puts "⚠️  Correctness: #{correctness_warnings.length} warning(s)" if correctness_warnings.any?
     puts '💡 Tip: Review each warning and update to modern APIs when possible'
   end
 
@@ -2078,7 +3109,7 @@ class SaneMaster
     puts '📊 Concurrency Pattern Usage:'
     puts ''
 
-    patterns.each do |pattern, data|
+    patterns.each_value do |data|
       emoji = data[:count].positive? ? '✅' : '⚪'
       puts "  #{emoji} #{data[:description]}: #{data[:count]} usages in #{data[:files].length} files"
     end
@@ -2111,11 +3142,10 @@ class SaneMaster
           puts "     Line #{issue[:line]}: #{issue[:issue]}"
         end
       end
-      puts ''
     else
       puts '✅ No potential concurrency issues detected!'
-      puts ''
     end
+    puts ''
 
     # Recommendations
     puts '💡 Swift 6 Recommendations:'
@@ -2127,15 +3157,15 @@ class SaneMaster
 
     # Check for strict concurrency build setting
     project_file = File.join(Dir.pwd, 'project.yml')
-    if File.exist?(project_file)
-      yml_content = File.read(project_file)
-      if yml_content.include?('SWIFT_STRICT_CONCURRENCY') && yml_content.include?('complete')
-        puts '✅ Strict concurrency checking enabled (complete mode)'
-      elsif yml_content.include?('SWIFT_STRICT_CONCURRENCY')
-        puts '⚠️  Strict concurrency checking enabled (consider upgrading to complete)'
-      else
-        puts '⚠️  Consider adding SWIFT_STRICT_CONCURRENCY: complete to project.yml'
-      end
+    return unless File.exist?(project_file)
+
+    yml_content = File.read(project_file)
+    if yml_content.include?('SWIFT_STRICT_CONCURRENCY') && yml_content.include?('complete')
+      puts '✅ Strict concurrency checking enabled (complete mode)'
+    elsif yml_content.include?('SWIFT_STRICT_CONCURRENCY')
+      puts '⚠️  Strict concurrency checking enabled (consider upgrading to complete)'
+    else
+      puts '⚠️  Consider adding SWIFT_STRICT_CONCURRENCY: complete to project.yml'
     end
   end
 
@@ -2492,7 +3522,7 @@ class SaneMaster
     puts "  Oldest: #{crash_data.last[:time].strftime('%Y-%m-%d %H:%M')}" if crash_data.any?
     puts "  Newest: #{crash_data.first[:time].strftime('%Y-%m-%d %H:%M')}" if crash_data.any?
 
-    main_thread_crashes = crash_data.count { |c| (c[:thread_index]).zero? }
+    main_thread_crashes = crash_data.count { |c| c[:thread_index].zero? }
     puts "  ⚠️  #{main_thread_crashes}/#{crash_data.count} crashes on Main Thread - check UI/state code" if main_thread_crashes > crash_data.count * 0.5
 
     test_crashes = crash_data.count { |c| c[:signature].include?('XCT') }
@@ -2501,7 +3531,7 @@ class SaneMaster
     puts "  ℹ️  #{test_crashes} crash(es) in test cleanup - review async test handling"
   end
 
-  def enter_test_mode(args)
+  def enter_test_mode(_args)
     puts '🧪 --- [ TEST MODE ] ---'
     puts 'Preparing clean testing environment...'
     puts ''
@@ -2656,7 +3686,7 @@ class SaneMaster
 
     mtime = File.mtime(log_file)
     size = File.size(log_file) / 1024.0
-    puts "📁 Log file: ~/Movies/SaneVideo/SaneVideo_Debug.log"
+    puts '📁 Log file: ~/Movies/SaneVideo/SaneVideo_Debug.log'
     puts "   Last updated: #{mtime.strftime('%Y-%m-%d %H:%M:%S')} (#{size.round(1)}KB)"
     puts '─' * 60
 
@@ -2673,6 +3703,80 @@ class SaneMaster
       else
         puts lines.join
       end
+    end
+  end
+
+  # --- Verify MCP Configuration (Rule #10: MISSING TOOL = UPGRADE SANEMASTER) ---
+  def verify_mcps
+    puts '🔍 --- [ MCP VERIFICATION ] ---'
+    puts ''
+
+    # SOP-required MCPs from DEVELOPMENT.md
+    sop_mcps = {
+      'apple-docs' => { package: '@mweinbach/apple-docs-mcp@latest', required: true },
+      'github' => { package: '@modelcontextprotocol/server-github', required: true },
+      'memory' => { package: '@modelcontextprotocol/server-memory', required: true },
+      'context7' => { package: '@upstash/context7-mcp@latest', required: true },
+      'XcodeBuildMCP' => { package: 'xcodebuildmcp@latest', required: true }
+    }
+
+    config_paths = ['.mcp.json', '.cursor/mcp.json']
+    all_valid = true
+
+    config_paths.each do |config_path|
+      next unless File.exist?(config_path)
+
+      puts "📄 Checking: #{config_path}"
+      begin
+        config = JSON.parse(File.read(config_path))
+        servers = config['mcpServers'] || {}
+
+        sop_mcps.each do |name, info|
+          if servers.key?(name)
+            package = servers[name]['args']&.last || 'unknown'
+            puts "   ✅ #{name}: Configured (#{package})"
+          else
+            puts "   ❌ #{name}: MISSING"
+            all_valid = false if info[:required]
+            puts "      ⚠️  #{info[:note]}" if info[:note]
+          end
+        end
+
+        # Check for extra servers
+        extra = servers.keys - sop_mcps.keys
+        puts "   📦 Extra servers: #{extra.join(', ')}" if extra.any?
+
+        puts "   📊 Total: #{servers.length} servers"
+        puts ''
+      rescue JSON::ParserError => e
+        puts "   ❌ Invalid JSON: #{e.message}"
+        all_valid = false
+        puts ''
+      end
+    end
+
+    # Check if .cursor/mcp.json exists (Cursor-specific)
+    unless File.exist?('.cursor/mcp.json')
+      puts '⚠️  .cursor/mcp.json not found (Cursor may use this location)'
+      puts '   Run: cp .mcp.json .cursor/mcp.json'
+      all_valid = false
+    end
+
+    puts ''
+    if all_valid
+      puts '✅ All required MCPs are configured'
+      puts ''
+      puts '💡 To verify MCPs are working in Cursor:'
+      puts '   1. Restart Cursor'
+      puts '   2. Check Settings > MCP Tools'
+      puts '   3. Or run: cursor-agent mcp list'
+    else
+      puts '❌ Some required MCPs are missing or misconfigured'
+      puts ''
+      puts '💡 Fix by:'
+      puts '   1. Add missing MCPs to .mcp.json'
+      puts '   2. Copy to .cursor/mcp.json: cp .mcp.json .cursor/mcp.json'
+      puts '   3. Restart Cursor'
     end
   end
 end

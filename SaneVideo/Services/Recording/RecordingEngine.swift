@@ -290,8 +290,12 @@ class RecordingEngine: NSObject {
     timeCoordinator.reset()
 
     // Start Real-time Sound Analysis
-    let format = AVAudioFormat(standardFormatWithSampleRate: 44100, channels: 1)!
-    soundAnalysisService.startRealTimeAnalysis(format: format)
+    // RELIABILITY FIX: Guard against nil format instead of force unwrap
+    if let format = AVAudioFormat(standardFormatWithSampleRate: 44100, channels: 1) {
+      soundAnalysisService.startRealTimeAnalysis(format: format)
+    } else {
+      AppLogger.recording.warning("Failed to create audio format for sound analysis - feature disabled")
+    }
     await MainActor.run {
       self.setupSoundAnalysisMonitoring()
     }

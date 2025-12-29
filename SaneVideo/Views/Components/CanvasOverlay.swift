@@ -156,8 +156,10 @@ struct CanvasOverlay: View {
 
                 // Visual Feedback
 
-                // 1. Caption Box
-                if let project = projectState.currentProject {
+                // 1. Caption Box - Only show when clip has captions or actively interacting
+                if let project = projectState.currentProject,
+                   let selectedClip = clip,
+                   !selectedClip.captions.isEmpty || interactionTarget == .caption {
                     let currentOffset = project.captionOffset
                     let dragOffset = (interactionTarget == .caption) ? localTranslation : .zero
                     let normalizedDragX = dragOffset.width / geo.size.width
@@ -167,9 +169,9 @@ struct CanvasOverlay: View {
                     let finalY = 0.8 + currentOffset.height + normalizedDragY
 
                     Rectangle()
-                        .strokeBorder(Color.yellow, style: StrokeStyle(lineWidth: 2, dash: [5]))
-                        .background(Color.yellow.opacity(0.1))
-                        .overlay(Text("Captions Area").font(.caption).foregroundStyle(.yellow))
+                        .strokeBorder(Color.accentColor, style: StrokeStyle(lineWidth: 2, dash: [5]))
+                        .background(Color.accentColor.opacity(0.1))
+                        .overlay(Text("Captions Area").font(.caption).foregroundStyle(Color.accentColor))
                         .position(
                             x: (finalX + 0.4) * geo.size.width,
                             y: (finalY + 0.075) * geo.size.height
@@ -205,25 +207,22 @@ struct CanvasOverlay: View {
                     }
                 }
 
-                // 3. Clip Crosshair (if dragging clip)
-                if interactionTarget == .clip || (interactionTarget == .none && clip != nil) {
-                    // Only show crosshair if dragging/selected
-                    // Reuse existing logic but handle optional clip
-                    if clip != nil {
-                        ZStack {
-                            Circle()
-                                .strokeBorder(Color.accentColor, lineWidth: 2)
-                                .background(Circle().fill(Color.accentColor.opacity(0.2)))
-                                .frame(width: 20, height: 20)
-                            Rectangle().fill(Color.accentColor).frame(width: 40, height: 1)
-                            Rectangle().fill(Color.accentColor).frame(width: 1, height: 40)
-                        }
-                        .position(x: geo.size.width / 2, y: geo.size.height / 2)
-                        .offset(x: (interactionTarget == .clip) ? localTranslation.width : 0,
-                                y: (interactionTarget == .clip) ? localTranslation.height : 0)
-                        .scaleEffect((interactionTarget == .clip) ? localScale : 1.0)
-                        .allowsHitTesting(false)
+                // 3. Clip Crosshair - ONLY show during ACTIVE drag/scale manipulation
+                // CRITICAL FIX: Only show crosshair when actively manipulating (translation or scale changed)
+                // This prevents crosshair from showing when clip is just selected but not being dragged
+                if interactionTarget == .clip && (localTranslation != .zero || localScale != 1.0) {
+                    ZStack {
+                        Circle()
+                            .strokeBorder(Color.accentColor, lineWidth: 2)
+                            .background(Circle().fill(Color.accentColor.opacity(0.2)))
+                            .frame(width: 20, height: 20)
+                        Rectangle().fill(Color.accentColor).frame(width: 40, height: 1)
+                        Rectangle().fill(Color.accentColor).frame(width: 1, height: 40)
                     }
+                    .position(x: geo.size.width / 2, y: geo.size.height / 2)
+                    .offset(x: localTranslation.width, y: localTranslation.height)
+                    .scaleEffect(localScale)
+                    .allowsHitTesting(false)
                 }
             }
         }

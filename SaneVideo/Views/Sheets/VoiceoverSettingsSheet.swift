@@ -258,7 +258,7 @@ private struct VoiceButton: View {
                         if voice.quality == .premium {
                             Image(systemName: "star.fill")
                                 .font(.caption2)
-                                .foregroundStyle(.yellow)
+                                .foregroundStyle(Color.accentColor)
                         }
                     }
                     Text(genderLabel)
@@ -268,14 +268,14 @@ private struct VoiceButton: View {
                 Spacer()
                 if isSelected {
                     Image(systemName: "checkmark.circle.fill")
-                        .foregroundStyle(.blue)
+                        .foregroundStyle(Color.accentColor)
                 }
             }
             .frame(maxWidth: .infinity)
             .padding(8)
         }
         .buttonStyle(.bordered)
-        .tint(isSelected ? .blue : .secondary)
+        .tint(isSelected ? Color.accentColor : .secondary)
         .accessibilityIdentifier("voiceover.voice.\(voice.identifier).button")
     }
 

@@ -90,7 +90,6 @@ targets:
         VALID_ARCHS: arm64
         MTL_ENABLE_APPLE_SILICON_ONLY_OPTIMIZATIONS: YES
         ENABLE_USER_SCRIPT_SANDBOXING: NO
-        CODE_SIGN_ENTITLEMENTS: SaneVideo/SaneVideo.entitlements
         CODE_SIGN_IDENTITY: "-"
         CODE_SIGN_STYLE: Manual
         CODE_SIGN_INJECT_BASE_ENTITLEMENTS: YES
@@ -105,6 +104,11 @@ targets:
         # Modern replacement would be Metal-based CIKernel, but requires significant refactor
         # This is acceptable as the functionality still works correctly
         GCC_PREPROCESSOR_DEFINITIONS: CI_SILENCE_GL_DEPRECATION=1
+      configs:
+        Debug:
+          CODE_SIGN_ENTITLEMENTS: SaneVideo/SaneVideo.debug.entitlements
+        Release:
+          CODE_SIGN_ENTITLEMENTS: SaneVideo/SaneVideo.entitlements
     preCompileScripts:
       - script: |
           export PATH="$PATH:/opt/homebrew/bin"

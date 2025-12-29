@@ -142,8 +142,29 @@ actor WhisperKitService: TranscriptionServiceProtocol {
             let startTime = CMTime(seconds: Double(segment.start), preferredTimescale: 600)
             let endTime = CMTime(seconds: Double(segment.end), preferredTimescale: 600)
 
+            // CRITICAL FIX: Clean timestamps from text (WhisperKit may include [00:01:23] format)
+            var cleanedText = segment.text.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
+
+            // Remove timestamp patterns: [00:01:23], (00:01:23), 00:01:23, etc.
+            let timestampPatterns = [
+                #"\[?\d{1,2}:\d{2}:\d{2}(?:\.\d+)?\]?\s*"#,  // [00:01:23] or 00:01:23
+                #"\[?\d{1,2}:\d{2}\]?\s*"#,                  // [01:23] or 01:23
+                #"\(\d{1,2}:\d{2}:\d{2}(?:\.\d+)?\)\s*"#    // (00:01:23)
+            ]
+
+            for pattern in timestampPatterns {
+                cleanedText = cleanedText.replacingOccurrences(
+                    of: pattern,
+                    with: "",
+                    options: [.regularExpression, .caseInsensitive]
+                )
+            }
+
+            // Final trim
+            cleanedText = cleanedText.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
+
             let caption = Caption(
-                text: segment.text.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines),
+                text: cleanedText,
                 startTime: startTime,
                 endTime: endTime
             )

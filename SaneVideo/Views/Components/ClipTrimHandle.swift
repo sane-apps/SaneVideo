@@ -17,20 +17,22 @@ struct ClipTrimHandle: View {
     let clip: VideoClip
     let playheadTime: CMTime
     let snapThreshold: CGFloat
-    
+
     var onTrimStart: ((CMTime) -> Void)?
     var onTrimEnd: ((CMTime) -> Void)?
-    
+
     @Binding var isDragging: Bool
     @Binding var trimOffset: CGFloat
-    
+
+    var onHoverChange: ((Bool) -> Void)?
+
     var body: some View {
         ZStack {
             // Touch target - Transparent but wide for easy grabbing
             Rectangle()
-                .fill(Color.orange.opacity(0.01))
+                .fill(Color.accentColor.opacity(0.01))
                 .frame(width: 20, height: clipHeight)
-            
+
             // Visual component - Distinct "Handle"
             RoundedRectangle(cornerRadius: 4)
                 .fill(Color.white)
@@ -41,35 +43,46 @@ struct ClipTrimHandle: View {
                     HStack(spacing: 2) {
                         ForEach(0..<3) { _ in
                             Capsule()
-                                .fill(Color.orange)
+                                .fill(Color.accentColor)
                                 .frame(width: 2, height: 12)
                         }
                     }
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 4)
-                        .stroke(Color.orange, lineWidth: 1)
+                        .stroke(Color.accentColor, lineWidth: 1)
                 )
         }
+        // CRITICAL FIX: Offset handle during drag to keep it under cursor
+        // This prevents the handle from moving away when the clip expands
+        .offset(x: isDragging ? trimOffset : 0)
         .contentShape(Rectangle())
         .cursor(NSCursor.resizeLeftRight)
+        .onHover { hovering in
+            // CRITICAL FIX: Notify parent when hovering over handle
+            // This prevents clip from scaling when trying to grab handle
+            AppLogger.uiLog.debug("🔧 Trim handle hover: isLeft=\(isLeft), hovering=\(hovering)")
+            onHoverChange?(hovering)
+        }
         .highPriorityGesture(
             DragGesture(minimumDistance: 0, coordinateSpace: .local)
                 .onChanged { value in
+                    AppLogger.uiLog.info("🔧 Trim handle drag started: isLeft=\(isLeft), translation=\(value.translation.width)")
                     isDragging = true
                     trimOffset = value.translation.width
                 }
                 .onEnded { value in
+                    AppLogger.uiLog.info("🔧 Trim handle drag ended: isLeft=\(isLeft), finalTranslation=\(value.translation.width)")
                     var deltaSeconds = value.translation.width / pixelsPerSecond
-                    
+
                     // SNAP TO PLAYHEAD
                     deltaSeconds = applyPlayheadSnapping(
                         deltaSeconds: deltaSeconds,
                         isLeft: isLeft
                     )
-                    
+
                     let delta = CMTime(seconds: deltaSeconds, preferredTimescale: 600)
-                    
+
                     if isLeft {
                         isDragging = false
                         let newStart = CMTimeAdd(clip.trimStart, delta)
@@ -89,10 +102,10 @@ struct ClipTrimHandle: View {
             // Do nothing - let the drag handle the interaction
         }
     }
-    
+
     private func applyPlayheadSnapping(deltaSeconds: Double, isLeft: Bool) -> Double {
         var result = deltaSeconds
-        
+
         if isLeft {
             let proposedTrimStart = clip.trimStart.seconds + deltaSeconds
             let playheadRelative = playheadTime.seconds - clip.startTime.seconds
@@ -108,7 +121,7 @@ struct ClipTrimHandle: View {
                 result = playheadRelative - clip.trimEnd.seconds
             }
         }
-        
+
         return result
     }
 }

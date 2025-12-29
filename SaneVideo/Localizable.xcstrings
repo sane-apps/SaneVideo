@@ -10,6 +10,16 @@
     "/" : {
 
     },
+    "%@ • %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ • %2$@"
+          }
+        }
+      }
+    },
     "%@ aspect ratio" : {
 
     },
@@ -35,10 +45,16 @@
     "%lld" : {
 
     },
+    "%lld Candidates" : {
+
+    },
     "%lld clips" : {
 
     },
     "%lld dB" : {
+
+    },
+    "%lld fps" : {
 
     },
     "%lld FPS" : {
@@ -53,7 +69,16 @@
     "%lldpx" : {
 
     },
+    "•" : {
+
+    },
     "• %@" : {
+
+    },
+    "1.5x" : {
+
+    },
+    "2x" : {
 
     },
     "4K UHD" : {
@@ -62,16 +87,25 @@
     "30 fps" : {
 
     },
+    "48 fps" : {
+
+    },
     "60 fps" : {
 
     },
     "100% On-Device" : {
 
     },
+    "120 fps" : {
+
+    },
     "720p HD" : {
 
     },
     "1080p HD" : {
+
+    },
+    "About iCloud Sync" : {
 
     },
     "action.auto_generate" : {
@@ -308,10 +342,19 @@
     "Active" : {
 
     },
+    "Add captions" : {
+
+    },
     "Add clips to timeline first" : {
 
     },
-    "AI-Powered Polish" : {
+    "Analysis" : {
+
+    },
+    "Analysis Error" : {
+
+    },
+    "Analyze" : {
 
     },
     "Analyze audio to detect speech, music, and silence" : {
@@ -324,6 +367,9 @@
 
     },
     "Analyzing video for smart crop..." : {
+
+    },
+    "Analyzing video..." : {
 
     },
     "Another operation is in progress" : {
@@ -365,6 +411,9 @@
 
     },
     "Apply smart crop to reframe video" : {
+
+    },
+    "Aspect Ratio" : {
 
     },
     "aspect_ratio.1_1" : {
@@ -584,6 +633,9 @@
 
     },
     "Automatically removes silence, filler words, and enhances your video. Keyboard shortcut: Command Shift M" : {
+
+    },
+    "Avoid silence" : {
 
     },
     "Back" : {
@@ -1092,6 +1144,18 @@
         }
       }
     },
+    "Clear" : {
+
+    },
+    "Clear all existing Magic Fix results and regenerate with your current toggle settings" : {
+
+    },
+    "Clears all existing Magic Fix results and automatically regenerates based on which toggles are currently enabled" : {
+
+    },
+    "Click 'Analyze' to find short clips" : {
+
+    },
     "Click a clip in the timeline" : {
 
     },
@@ -1361,10 +1425,19 @@
     "Continue Processing" : {
 
     },
+    "Create Shorts" : {
+
+    },
     "Current:" : {
 
     },
     "Delete Clip?" : {
+
+    },
+    "Detect faces" : {
+
+    },
+    "Detect highlights" : {
 
     },
     "Detects and removes hesitation words like 'um' and 'uh' from the timeline." : {
@@ -1408,6 +1481,9 @@
 
     },
     "Drop to Import Media" : {
+
+    },
+    "Duration" : {
 
     },
     "Duration: %@" : {
@@ -1914,6 +1990,9 @@
     "Empty Timeline. Drop video clips here to start." : {
 
     },
+    "Enable iCloud Sync" : {
+
+    },
     "End: %@" : {
 
     },
@@ -1927,6 +2006,19 @@
 
     },
     "Export (Cmd+E)" : {
+
+    },
+    "Export %lld Short%@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Export %1$lld Short%2$@"
+          }
+        }
+      }
+    },
+    "Export Options" : {
 
     },
     "export.action.batch_export" : {
@@ -2024,6 +2116,149 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Format"
+          }
+        }
+      }
+    },
+    "export.ml.denoise" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Noise Reduction"
+          }
+        }
+      }
+    },
+    "export.ml.denoise.desc" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Temporal noise filter for cleaner video"
+          }
+        }
+      }
+    },
+    "export.ml.download" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Download"
+          }
+        }
+      }
+    },
+    "export.ml.header" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "AI Enhancement"
+          }
+        }
+      }
+    },
+    "export.ml.interpolation" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Frame Interpolation"
+          }
+        }
+      }
+    },
+    "export.ml.interpolation.desc" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Smooth motion with ML-generated frames"
+          }
+        }
+      }
+    },
+    "export.ml.model_required" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "ML model download required"
+          }
+        }
+      }
+    },
+    "export.ml.scale" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Scale:"
+          }
+        }
+      }
+    },
+    "export.ml.strength" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Strength:"
+          }
+        }
+      }
+    },
+    "export.ml.superres" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Super Resolution"
+          }
+        }
+      }
+    },
+    "export.ml.superres.desc" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "ML upscaling for sharper video"
+          }
+        }
+      }
+    },
+    "export.ml.target_fps" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Target FPS:"
+          }
+        }
+      }
+    },
+    "export.ml.warning" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Export will take longer"
           }
         }
       }
@@ -2160,6 +2395,39 @@
         }
       }
     },
+    "export.templates.browse" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Templates"
+          }
+        }
+      }
+    },
+    "export.templates.recent" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Recent Templates"
+          }
+        }
+      }
+    },
+    "export.templates.view_all" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "View All Templates..."
+          }
+        }
+      }
+    },
     "export.title" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2215,6 +2483,9 @@
         }
       }
     },
+    "Exporting..." : {
+
+    },
     "File Missing" : {
 
     },
@@ -2222,6 +2493,9 @@
 
     },
     "Frame Rate" : {
+
+    },
+    "From: %@" : {
 
     },
     "Generate captions first to analyze mood" : {
@@ -2518,6 +2792,18 @@
     "Hide Details" : {
 
     },
+    "iCloud Available" : {
+
+    },
+    "iCloud Sync" : {
+
+    },
+    "iCloud Sync keeps your SaneVideo projects synchronized across all your Mac computers. Projects are automatically synced when you save changes.\n\nNote: Sync is currently available for Mac-to-Mac only. iPad and iPhone support is coming in a future update." : {
+
+    },
+    "iCloud Unavailable" : {
+
+    },
     "Import Audio File" : {
 
     },
@@ -2589,6 +2875,9 @@
     "Keyboard Shortcuts" : {
 
     },
+    "Last sync: %@" : {
+
+    },
     "Launch" : {
 
     },
@@ -2599,6 +2888,9 @@
 
     },
     "Loading" : {
+
+    },
+    "Loading..." : {
 
     },
     "Locate File" : {
@@ -2676,6 +2968,12 @@
     "Magic Fix" : {
 
     },
+    "Max Shorts" : {
+
+    },
+    "Media files are stored in iCloud Drive and may count against your storage quota." : {
+
+    },
     "MEDIA OFFLINE" : {
 
     },
@@ -2719,6 +3017,17 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Magic Fix All Clips"
+          }
+        }
+      }
+    },
+    "menu.file.create_shorts" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Create Shorts..."
           }
         }
       }
@@ -2928,7 +3237,19 @@
     "Next" : {
 
     },
+    "No candidates yet" : {
+
+    },
+    "No projects synced yet" : {
+
+    },
+    "Normalize audio" : {
+
+    },
     "Nothing Selected" : {
+
+    },
+    "OK" : {
 
     },
     "On-Device" : {
@@ -2953,6 +3274,9 @@
 
     },
     "Or use Cmd+Click to select" : {
+
+    },
+    "Platform" : {
 
     },
     "player.help.play_pause" : {
@@ -3001,6 +3325,15 @@
 
     },
     "Processing" : {
+
+    },
+    "Project %@..." : {
+
+    },
+    "Projects in iCloud" : {
+
+    },
+    "Projects will sync automatically when saved" : {
 
     },
     "REC" : {
@@ -3071,6 +3404,9 @@
     "Reframes horizontal video to vertical (9:16) keeping the subject centered." : {
 
     },
+    "Regenerate Magic Fix" : {
+
+    },
     "Remove %@ effect" : {
 
     },
@@ -3093,6 +3429,9 @@
 
     },
     "Rotate 90° clockwise" : {
+
+    },
+    "Rotate 90° clockwise (R)" : {
 
     },
     "Rotate 90° counter-clockwise" : {
@@ -3128,6 +3467,9 @@
       }
     },
     "Select a clip in the timeline\nto view and edit properties." : {
+
+    },
+    "Select All" : {
 
     },
     "Selected: %lld characters" : {
@@ -4047,16 +4389,8 @@
     "Skip for Now" : {
 
     },
-    "smart_tools.footer.description" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "One-click AI cleanup for your entire clip."
-          }
-        }
-      }
+    "Smart crop" : {
+
     },
     "Social Media Ready" : {
 
@@ -4067,11 +4401,312 @@
     "Switch" : {
 
     },
+    "Sync captions" : {
+
+    },
+    "Sync media files" : {
+
+    },
+    "Sync Now" : {
+
+    },
+    "Sync Options" : {
+
+    },
+    "Sync projects across your Mac devices" : {
+
+    },
     "Synced with timeline" : {
 
     },
     "Technical Details:" : {
 
+    },
+    "templates.action.cancel" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Cancel"
+          }
+        }
+      }
+    },
+    "templates.action.create" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "New Template"
+          }
+        }
+      }
+    },
+    "templates.action.create_from_current" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Create from Current"
+          }
+        }
+      }
+    },
+    "templates.action.delete" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Delete"
+          }
+        }
+      }
+    },
+    "templates.action.done" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Done"
+          }
+        }
+      }
+    },
+    "templates.builtin.header" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Built-in Templates"
+          }
+        }
+      }
+    },
+    "templates.custom.header" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "My Templates"
+          }
+        }
+      }
+    },
+    "templates.delete.message" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "This will permanently delete '%@'."
+          }
+        }
+      }
+    },
+    "templates.delete.title" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Delete Template?"
+          }
+        }
+      }
+    },
+    "templates.editor.cancel" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Cancel"
+          }
+        }
+      }
+    },
+    "templates.editor.color" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Color"
+          }
+        }
+      }
+    },
+    "templates.editor.create" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Create Template"
+          }
+        }
+      }
+    },
+    "templates.editor.description" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Description"
+          }
+        }
+      }
+    },
+    "templates.editor.description.placeholder" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Optional description..."
+          }
+        }
+      }
+    },
+    "templates.editor.edit" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Edit Template"
+          }
+        }
+      }
+    },
+    "templates.editor.icon" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Icon"
+          }
+        }
+      }
+    },
+    "templates.editor.name" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Name"
+          }
+        }
+      }
+    },
+    "templates.editor.name.placeholder" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "My Template"
+          }
+        }
+      }
+    },
+    "templates.editor.save" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Save Template"
+          }
+        }
+      }
+    },
+    "templates.editor.settings" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Settings to Save"
+          }
+        }
+      }
+    },
+    "templates.editor.subtitle" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Save current settings as template"
+          }
+        }
+      }
+    },
+    "templates.empty.subtitle" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Create templates from your current project settings"
+          }
+        }
+      }
+    },
+    "templates.empty.title" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "No custom templates yet"
+          }
+        }
+      }
+    },
+    "templates.header.subtitle" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Save and reuse export settings"
+          }
+        }
+      }
+    },
+    "templates.header.title" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Template Library"
+          }
+        }
+      }
+    },
+    "templates.loading" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Loading templates..."
+          }
+        }
+      }
     },
     "Text Editor" : {
 
@@ -5235,6 +5870,9 @@
 
     },
     "Unmute Microphone" : {
+
+    },
+    "Use captions" : {
 
     },
     "Video" : {

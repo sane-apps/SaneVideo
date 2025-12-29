@@ -13,6 +13,7 @@ struct PlayerControlBar: View {
     var playbackState: PlaybackState
     var projectState: ProjectState
     @Binding var displayMode: VideoDisplayMode
+    var selectedClip: VideoClip? // For quick actions like rotate
 
     var body: some View {
         HStack {
@@ -79,8 +80,37 @@ struct PlayerControlBar: View {
 
             Spacer()
 
-            // Right: Video display mode picker
-            HStack(spacing: 2) {
+            // Right: Quick actions + Video display mode picker
+            HStack(spacing: 12) {
+                // CRITICAL FIX: Add common video editing controls (rotate, speed, volume)
+                // Rotate button (most common action)
+                if let clip = selectedClip, !clip.isMissing {
+                    Button(action: {
+                        projectState.rotateClip(clip)
+                        ServiceContainer.shared.hapticsManager.impact()
+                    }, label: {
+                        Image(systemName: "arrow.triangle.2.circlepath")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(.accentColor)
+                            .frame(width: 28, height: 24)
+                            .background(Color.accentColor.opacity(0.1))
+                            .cornerRadius(4)
+                    })
+                    .buttonStyle(.plain)
+                    .hoverScale(1.1)
+                    .help("Rotate 90° clockwise (R)")
+                    .keyboardShortcut("r", modifiers: [])
+                    .accessibilityIdentifier("player.rotate")
+                }
+                
+                // Divider between quick actions and display modes
+                if selectedClip != nil {
+                    Divider()
+                        .frame(height: 16)
+                }
+                
+                // Video display mode picker
+                HStack(spacing: 2) {
                 ForEach(VideoDisplayMode.allCases, id: \.self) { mode in
                     Button(action: {
                         withAnimation(.easeInOut(duration: 0.15)) {
@@ -102,9 +132,10 @@ struct PlayerControlBar: View {
                     .help(mode.label)
                     .accessibilityIdentifier("player.displayMode.\(mode.rawValue)")
                 }
+                }
+                .padding(3)
+                .background(Color.primary.opacity(0.05), in: RoundedRectangle(cornerRadius: 8))
             }
-            .padding(3)
-            .background(Color.primary.opacity(0.05), in: RoundedRectangle(cornerRadius: 8))
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 10)

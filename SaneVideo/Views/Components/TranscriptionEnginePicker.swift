@@ -43,7 +43,7 @@ struct TranscriptionEnginePicker: View {
             if coordinator.shouldSuggestWhisperKit && prefs.transcriptionEngine == .apple {
                 HStack(spacing: 8) {
                     Image(systemName: "lightbulb.fill")
-                        .foregroundColor(.yellow)
+                        .foregroundColor(.accentColor)
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Try WhisperKit for better accuracy")
                             .font(.caption)
@@ -61,11 +61,11 @@ struct TranscriptionEnginePicker: View {
                     .controlSize(.small)
                 }
                 .padding(10)
-                .background(Color.yellow.opacity(0.1))
+                .background(Color.accentColor.opacity(0.1))
                 .cornerRadius(8)
                 .overlay(
                     RoundedRectangle(cornerRadius: 8)
-                        .stroke(Color.yellow.opacity(0.3), lineWidth: 1)
+                        .stroke(Color.accentColor.opacity(0.3), lineWidth: 1)
                 )
                 .transition(.opacity.combined(with: .scale))
             }

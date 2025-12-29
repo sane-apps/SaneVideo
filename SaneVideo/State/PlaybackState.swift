@@ -308,20 +308,52 @@ class PlaybackState {
 
     // MARK: - Frame Stepping (Arrow Keys)
 
-    /// Step forward one frame (~30fps assumed)
-    func stepForward() {
-        pause()
-        let frameDuration = 1.0 / 30.0 // Assume 30fps
-        let newTime = min(duration.seconds, currentTime.seconds + frameDuration)
-        seek(to: CMTime(seconds: newTime, preferredTimescale: 600))
+    /// Get the actual frame rate from the current player item, with 30fps fallback
+    private func getFrameRate() async -> Double {
+        guard let playerItem = player?.currentItem,
+              let asset = playerItem.asset as? AVURLAsset else {
+            return 30.0 // Fallback for composition assets
+        }
+
+        do {
+            let tracks = try await asset.load(.tracks)
+            if let videoTrack = tracks.first(where: { $0.mediaType == .video }) {
+                let frameRate = try await videoTrack.load(.nominalFrameRate)
+                if frameRate > 0 {
+                    return Double(frameRate)
+                }
+            }
+        } catch {
+            AppLogger.playback.debug("Could not determine frame rate: \(error.localizedDescription)")
+        }
+
+        return 30.0 // Default fallback
     }
 
-    /// Step backward one frame (~30fps assumed)
+    /// Step forward one frame (uses actual video frame rate)
+    func stepForward() {
+        pause()
+        Task {
+            let frameRate = await getFrameRate()
+            let frameDuration = 1.0 / frameRate
+            let newTime = min(duration.seconds, currentTime.seconds + frameDuration)
+            await MainActor.run {
+                seek(to: CMTime(seconds: newTime, preferredTimescale: 600))
+            }
+        }
+    }
+
+    /// Step backward one frame (uses actual video frame rate)
     func stepBackward() {
         pause()
-        let frameDuration = 1.0 / 30.0 // Assume 30fps
-        let newTime = max(0, currentTime.seconds - frameDuration)
-        seek(to: CMTime(seconds: newTime, preferredTimescale: 600))
+        Task {
+            let frameRate = await getFrameRate()
+            let frameDuration = 1.0 / frameRate
+            let newTime = max(0, currentTime.seconds - frameDuration)
+            await MainActor.run {
+                seek(to: CMTime(seconds: newTime, preferredTimescale: 600))
+            }
+        }
     }
 
     // MARK: - Playback Rate Control (J/K/L Shuttle)

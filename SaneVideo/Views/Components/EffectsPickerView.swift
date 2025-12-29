@@ -79,7 +79,8 @@ struct EffectsPickerView: View {
             }
 
             // UX FIX: Effect tiles with live previews showing what each filter does
-            LazyVGrid(columns: [GridItem(.adaptive(minimum: 64), spacing: 8)], spacing: 8) {
+            // CRITICAL: Increased spacing and added contentShape to fix click target issues
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 70), spacing: 12)], spacing: 12) {
                 ForEach(effectsForCategory) { effectType in
                     EffectTile(
                         effectType: effectType,
@@ -88,6 +89,7 @@ struct EffectsPickerView: View {
                         onTap: { toggleEffect(effectType) },
                         previewImage: previewThumbnail  // Show effect preview on actual clip frame
                     )
+                    .contentShape(Rectangle()) // Ensure hit area matches visual bounds
                 }
             }
         }
@@ -95,10 +97,16 @@ struct EffectsPickerView: View {
             // Load a preview thumbnail for effect previews
             await loadPreviewThumbnail()
         }
+        // CRITICAL FIX: Also reload thumbnail when clip URL changes (file relinked)
+        .onChange(of: clip.url) { _, _ in
+            Task {
+                await loadPreviewThumbnail()
+            }
+        }
         // CRITICAL FIX: Sync effects when clip changes externally
         .onChange(of: clip.effects) { _, newEffects in
             // Only update if significantly different to avoid unnecessary re-renders
-            if effects.count != newEffects.count || 
+            if effects.count != newEffects.count ||
                !effects.elementsEqual(newEffects, by: { $0.id == $1.id && $0.intensity == $1.intensity }) {
                 self.effects = newEffects
             }
@@ -121,7 +129,7 @@ struct EffectsPickerView: View {
             )
             return
         }
-        
+
         if let index = effects.firstIndex(where: { $0.type == type }) {
             // Remove if already active
             effects.remove(at: index)
@@ -161,20 +169,32 @@ struct EffectsPickerView: View {
 
     /// Load a preview thumbnail from the clip for effect previews
     private func loadPreviewThumbnail() async {
-        guard !clip.isMissing else { return }
+        guard !clip.isMissing else {
+            // CRITICAL FIX: Clear thumbnail if clip is missing
+            await MainActor.run {
+                self.previewThumbnail = nil
+            }
+            return
+        }
 
-        // Use middle of clip for representative frame
-        let midTime = CMTime(seconds: clip.duration.seconds * 0.5, preferredTimescale: 600)
+        // CRITICAL FIX: Use original time mapping to get correct frame from source file
+        // Use middle of effective duration, then map to original time
+        let effectiveMidTime = CMTime(seconds: clip.effectiveDuration.seconds * 0.5, preferredTimescale: 600)
+        let originalTime = clip.originalTime(forEffectiveTime: effectiveMidTime) ?? clip.trimStart
+
         let previewSize = CGSize(width: 128, height: 128)  // Small for performance
 
         if let thumbnail = await ServiceContainer.shared.thumbnailService.thumbnail(
             for: clip,
-            time: midTime,
+            time: originalTime,
             size: previewSize
         ) {
             await MainActor.run {
                 self.previewThumbnail = thumbnail
             }
+        } else {
+            // CRITICAL FIX: Log failure for debugging
+            AppLogger.general.warning("Failed to load preview thumbnail for effect tiles (clip: \(clip.id))")
         }
     }
 }
@@ -205,22 +225,22 @@ struct EffectTile: View {
                             .clipShape(RoundedRectangle(cornerRadius: 8))
                             .overlay(
                                 RoundedRectangle(cornerRadius: 8)
-                                    .stroke(isActive ? Color.blue : Color.secondary.opacity(0.3), lineWidth: isActive ? 2 : 1)
+                                    .stroke(isActive ? Color.accentColor : Color.secondary.opacity(0.3), lineWidth: isActive ? 2 : 1)
                             )
                             .saturation(isActive ? 1.0 : 0.8)  // Slight desaturation when inactive
                     } else {
                         // Fallback to icon-based tile
                         RoundedRectangle(cornerRadius: 8)
-                            .fill(isActive ? Color.blue.opacity(0.2) : Color.secondary.opacity(0.15))
+                            .fill(isActive ? Color.accentColor.opacity(0.2) : Color.secondary.opacity(0.15))
                             .frame(width: 64, height: 64)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 8)
-                                    .stroke(isActive ? Color.blue : Color.clear, lineWidth: 2)
+                                    .stroke(isActive ? Color.accentColor : Color.clear, lineWidth: 2)
                             )
 
                         Image(systemName: effectType.icon)
                             .font(.system(size: 20))
-                            .foregroundColor(isActive ? .blue : .primary)
+                            .foregroundColor(isActive ? .accentColor : .primary)
                     }
 
                     // Checkmark badge when active
@@ -231,7 +251,7 @@ struct EffectTile: View {
                                 Image(systemName: "checkmark.circle.fill")
                                     .font(.system(size: 14))
                                     .foregroundColor(.white)
-                                    .background(Circle().fill(Color.blue))
+                                    .background(Circle().fill(Color.accentColor))
                             }
                             Spacer()
                         }
@@ -243,14 +263,13 @@ struct EffectTile: View {
                 Text(effectType.displayName)
                     .font(.system(size: 10))
                     .fontWeight(isActive ? .bold : .regular)
-                    .foregroundColor(isActive ? .blue : .secondary)
+                    .foregroundColor(isActive ? .accentColor : .secondary)
                     .lineLimit(1)
             }
         })
         .buttonStyle(.plain)
-        .hoverScale(1.1)
-        .pressScale()
-        .shadow(color: isActive ? Color.blue.opacity(0.3) : .clear, radius: 6, x: 0, y: 3)
+        // FIX: Removed .hoverScale(1.1), .pressScale(), and .shadow()
+        // These were causing visual clutter (double yellow box) and click target issues
         .animation(.smoothUI, value: isActive)
         .help(isActive ?
             String(localized: "effects.tile.remove", defaultValue: "Remove") + " \(effectType.displayName)" :
@@ -259,8 +278,7 @@ struct EffectTile: View {
         .accessibilityLabel(effectType.displayName)
         .accessibilityHint(isActive ? "Remove \(effectType.displayName) effect" : "Apply \(effectType.displayName) effect")
         .accessibilityValue(isActive ? "Active" : "Inactive")
-        .focusable()
-        .smoothAppear()
+        // REMOVED: .focusable() - was adding macOS focus ring (double yellow box)
         .task(id: previewImage) {
             // Generate filtered preview when we have a source image
             if let sourceImage = previewImage {
@@ -353,6 +371,6 @@ struct ActiveEffectRow: View {
             RoundedRectangle(cornerRadius: 6)
                 .stroke(Color.accentColor.opacity(0.2), lineWidth: 1)
         )
-        .smoothAppear()
+        // REMOVED: .smoothAppear() - animation can cause layout shifts
     }
 }

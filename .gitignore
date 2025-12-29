@@ -47,17 +47,29 @@ vendor/
 !.cursor/
 !.vscode/
 
-# Large media/test artifacts
+# Large media/test artifacts (but NOT app assets)
 *.mp4
 *.mov
 *.m4v
 *.m4a
-*.png
-*.jpg
-*.jpeg
 *.xcresult/
 TranscriptionTest*/
 TestReports/
+
+# Images - ignore in root/tests, but keep app assets
+/*.png
+/*.jpg
+/*.jpeg
+/Screenshots/**/*.png
+/Screenshots/**/*.jpg
+/Tests/**/*.png
+/Tests/**/*.jpg
+/Media/**/*.png
+/Media/**/*.jpg
+
+# Keep all xcassets (app icons, etc)
+!SaneVideo/Assets.xcassets/**/*.png
+!SaneVideo/Assets.xcassets/**/*.jpg
 
 # Code coverage reports
 fastlane/coverage/

@@ -697,6 +697,130 @@ This command automatically:
 
 **After each fix**: Re-run `test_mode` to rebuild, relaunch, and verify the fix works.
 
+### Issue Tracking Workflow (CRITICAL - Don't Get Lost!)
+
+When the user reports bugs or complaints, you **MUST** document them immediately to prevent:
+- Forgetting issues mid-conversation
+- Fixing the wrong thing
+- Making the user repeat themselves
+
+#### Step 1: Document Issues Immediately
+
+When user reports a problem, **IMMEDIATELY** use TodoWrite to create entries:
+
+```
+Format: "BUG: [Component] - [Brief Description]"
+Status: pending
+```
+
+**Good examples:**
+- `BUG: Effects - Double yellow box around selected tile`
+- `BUG: Timeline - Orphaned lock icon in bottom-left`
+- `BUG: Video Preview - Crosshair showing when not dragging`
+
+**Bad examples:**
+- `Fix UI` (too vague)
+- `Look into problem` (not specific)
+
+#### Step 2: Capture Screenshot Evidence
+
+**CRITICAL: Always check the MOST RECENT screenshot by timestamp, not just the one attached.**
+
+When user posts a screenshot or says "check ss":
+
+1. **Find the most recent screenshot by timestamp:**
+```bash
+# List recent screenshots sorted by modification time (newest first)
+ls -lt Screenshots/*.png 2>/dev/null | head -5
+
+# Or get the absolute most recent with full timestamp
+stat -f "%Sm %N" -t "%Y-%m-%d %H:%M:%S" Screenshots/*.png 2>/dev/null | sort -r | head -1
+```
+
+2. **Verify you're looking at the latest:**
+   - Compare screenshot timestamp with current time
+   - If user says "check ss", they mean the MOST RECENT one
+   - Don't assume the attached screenshot is the latest - verify!
+
+3. **Add screenshot reference to the todo item:**
+   - `BUG: Effects - Double yellow box (SS: 10.02.23 PM)`
+   - Always include the timestamp from the filename
+
+**Common mistake**: Looking at an old screenshot when user has taken a new one. Always check timestamps first!
+
+#### Step 3: Correlate with Logs
+
+```bash
+# Check what was happening at screenshot time
+./Scripts/SaneMaster.rb logs --tail 50
+
+# For specific timestamps, check the log file directly
+grep "22:02" ~/Movies/SaneVideo/SaneVideo_Debug.log
+```
+
+#### Step 4: Verification After Each Fix
+
+After deploying a fix, **VERIFY** with the user by:
+
+1. **Build timestamp check**: Confirm new binary is deployed
+   ```bash
+   stat -f "%Sm" "/path/to/SaneVideo.app/Contents/MacOS/SaneVideo"
+   ```
+
+2. **Screenshot comparison**: Ask user to test and compare against original screenshot
+
+3. **Update todo status**:
+   - `completed` - User confirmed fixed
+   - `pending` - Not yet addressed
+   - `in_progress` - Currently working on
+
+4. **NEVER mark as completed until user confirms** or you visually verify via screenshot
+
+#### Issue Tracking Template
+
+When entering test mode, maintain this mental checklist:
+
+```
+REPORTED ISSUES:
+[ ] Issue 1: [Description] - Screenshot: [timestamp] - Status: [pending/fixed]
+[ ] Issue 2: [Description] - Screenshot: [timestamp] - Status: [pending/fixed]
+...
+
+VERIFIED FIXES:
+[x] Issue A: [Description] - Confirmed via screenshot [timestamp]
+[x] Issue B: [Description] - Confirmed via logs showing [evidence]
+```
+
+#### Anti-Patterns to Avoid
+
+1. ❌ **Claiming "fixed" without verification** - Always rebuild, deploy, and check
+2. ❌ **Forgetting issues** - Document IMMEDIATELY in TodoWrite
+3. ❌ **Fixing symptoms** - Look for root cause, not just what's visible
+4. ❌ **Moving on before confirming** - User says "fixed" before you mark complete
+5. ❌ **Ignoring old screenshots** - Always check latest screenshot by TIMESTAMP, not just the one attached
+   - **MANDATORY**: Run `ls -lt Screenshots/*.png | head -5` to see most recent
+   - **MANDATORY**: Compare screenshot timestamp with current time
+   - User saying "check ss" means check the MOST RECENT screenshot
+
+#### Quick Commands for Issue Tracking
+
+```bash
+# See recent screenshots (sorted by modification time, newest first)
+ls -lt Screenshots/*.png | head -5
+
+# Get absolute most recent with full timestamp
+stat -f "%Sm %N" -t "%Y-%m-%d %H:%M:%S" Screenshots/*.png 2>/dev/null | sort -r | head -1
+
+# Check build timestamp (is this a fresh build?)
+stat -f "%Sm" "$(find ~/Library/Developer/Xcode/DerivedData -name 'SaneVideo.app' -type d | head -1)/Contents/MacOS/SaneVideo"
+
+# Watch logs while user tests
+./Scripts/SaneMaster.rb logs --follow
+
+# Kill, rebuild, deploy cycle
+killall -9 SaneVideo; ./Scripts/SaneMaster.rb verify && ./Scripts/SaneMaster.rb launch
+```
+
 ### Post-Fix Checklist (MANDATORY)
 
 After fixing ANY bug, you **MUST** complete this checklist:

@@ -41,6 +41,9 @@ struct TimeRulerView: View {
 
             let totalSeconds = Int(ceil(duration)) + 5 // Add buffer
 
+            // Draw ticks starting from x=0
+            // The TimeRulerView is already positioned after the 20px spacer in the parent HStack,
+            // so the Canvas coordinate space (x=0) already aligns with the content start
             for second in 0 ... totalSeconds {
                 let x = CGFloat(second) * pixelsPerSecond
 
@@ -87,10 +90,11 @@ struct TimeRulerView: View {
                 }
             }
         }
-        .frame(height: 40) // Fixed height for ruler
+        .frame(height: 30) // CRITICAL FIX: Match TimelineTracksView ruler height constraint
         .contentShape(Rectangle())
         .onTapGesture { location in
             // Click-to-seek: Calculate time from tap position
+            // Location is in Canvas coordinate space (x=0 is start of ruler, not start of scrollable area)
             let tappedTime = max(0, Double(location.x / pixelsPerSecond))
             onSeek?(min(tappedTime, duration))
         }

@@ -417,6 +417,20 @@ class AppDelegate: NSObject, NSApplicationDelegate {
       return .terminateLater
     }
 
+    // RELIABILITY FIX: Check for active exports and cancel gracefully
+    if ServiceContainer.shared.exportService.isExporting {
+      AppLogger.general.warning("App terminating during active export - cancelling export")
+      ServiceContainer.shared.exportService.cancelExport()
+      // Give export a moment to cleanup before terminating
+      Task { @MainActor in
+        try? await Task.sleep(nanoseconds: 500_000_000)  // 0.5 second for cleanup
+        ServiceContainer.shared.appState.windowManager.cleanupAllWindows()
+        ServiceContainer.shared.appState.saveCurrentState()
+        sender.reply(toApplicationShouldTerminate: true)
+      }
+      return .terminateLater
+    }
+
     // CRITICAL FIX: Close all windows before quitting
     Task { @MainActor in
       ServiceContainer.shared.appState.windowManager.cleanupAllWindows()

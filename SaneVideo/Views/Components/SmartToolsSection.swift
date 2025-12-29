@@ -25,13 +25,13 @@ struct SmartToolsSection: View {
   var body: some View {
     // CRITICAL FIX: Remove nested ScrollView - parent StylesInspectorView already has ScrollView
     // Nested ScrollViews cause scrolling conflicts and performance issues
-    VStack(alignment: .leading, spacing: Theme.Dimensions.spacingXL) {
+    VStack(alignment: .leading, spacing: Theme.Dimensions.spacingMD) {
       // MARK: - Header & Presets
       headerView
 
       // MARK: - Action Card logic
-      // UX FIX: Improved spacing for better visual breathing room
-      VStack(spacing: Theme.Dimensions.spacingMD) {
+      // UX FIX: Compact spacing to keep button visible
+      VStack(spacing: Theme.Dimensions.spacingSM) {
         // Responsive Layout: Stacks vertically when width is constrained
         ViewThatFits(in: .horizontal) {
           // Option 1: Side-by-side (Wide)
@@ -66,80 +66,60 @@ struct SmartToolsSection: View {
       // Global Action Button
       magicButton
 
-      Text(
-        String(
-          localized: "smart_tools.footer.description",
-          defaultValue: "One-click AI cleanup for your entire clip.")
-      )
-      .font(.system(size: Theme.Typography.fontSizeXS))
-      .foregroundColor(.secondary.opacity(Theme.Opacity.textTertiary))
-      .frame(maxWidth: .infinity, alignment: .center)
-      .padding(.top, Theme.Dimensions.spacingSM)
+      // CRITICAL FIX: Reset/Regenerate button when Magic Fix has been applied
+      if appState.projectState.hasMagicFixResults(for: clip) {
+        resetMagicFixButton
+      }
     }
-    .padding(Theme.Dimensions.paddingLG)
+    .padding(Theme.Dimensions.paddingMD)
   }
 
   private var headerView: some View {
-    VStack(alignment: .leading, spacing: Theme.Dimensions.spacingSM) {
-      HStack(alignment: .top) {
-        VStack(alignment: .leading, spacing: Theme.Dimensions.spacingXS) {
-          Text("Magic Fix")
-            .font(.system(size: Theme.Typography.fontSizeXL, weight: .bold))
-            .foregroundColor(.primary)
-          Text("AI-Powered Polish")
-            .font(.system(size: Theme.Typography.fontSizeSM))
-            .foregroundColor(.secondary)
-        }
-        Spacer()
-        Menu {
-          Button {
-            options = .minimal
-          } label: {
-            Label("Minimal Fix", systemImage: "scissors")
-          }
-          .accessibilityIdentifier(AccessibilityIdentifiers.presetMinimal)
+    // COMPACT: Single row with title and presets menu
+    // NOTE: PrivacyBadge moved to InspectorHeader (always visible)
+    HStack(alignment: .center) {
+      Text("Magic Fix")
+        .font(.system(size: Theme.Typography.fontSizeLG, weight: .bold))
+        .foregroundColor(.primary)
 
-          Button {
-            options = .proClean
-          } label: {
-            Label("Pro Clean-up", systemImage: "sparkles")
-          }
-          .accessibilityIdentifier(AccessibilityIdentifiers.presetProClean)
+      Spacer()
 
-          Button {
-            options = .socialMedia
-          } label: {
-            Label("Social Media Ready", systemImage: "square.stack.3d.up")
-          }
-          .accessibilityIdentifier(AccessibilityIdentifiers.presetSocialMedia)
+      Menu {
+        Button {
+          options = .minimal
         } label: {
-          Label("Presets", systemImage: "slider.horizontal.3")
-            .font(.system(size: Theme.Typography.fontSizeSM, weight: .semibold))
-            .padding(.horizontal, Theme.Dimensions.paddingSM)
-            .padding(.vertical, Theme.Dimensions.paddingXS)
-            .background(Theme.Colors.secondaryBackground)
-            .cornerRadius(Theme.Dimensions.smallCornerRadius)
-            .overlay(
-              RoundedRectangle(cornerRadius: Theme.Dimensions.smallCornerRadius)
-                .stroke(Color.secondary.opacity(Theme.Opacity.medium), lineWidth: 0.5)
-            )
+          Label("Minimal Fix", systemImage: "scissors")
         }
-        .menuStyle(.button)
-        .buttonStyle(.plain)
-        .accessibilityIdentifier(AccessibilityIdentifiers.presetsMenu)
-      }
+        .accessibilityIdentifier(AccessibilityIdentifiers.presetMinimal)
 
-      // Preset description and privacy badge
-      HStack(alignment: .center) {
-        if !options.presetName.isEmpty && options.presetName != "Custom" {
-          Text(options.presetDescription)
-            .font(.system(size: Theme.Typography.fontSizeXS))
-            .foregroundColor(.secondary)
-            .lineLimit(1)
+        Button {
+          options = .proClean
+        } label: {
+          Label("Pro Clean-up", systemImage: "sparkles")
         }
-        Spacer()
-        PrivacyBadge()
+        .accessibilityIdentifier(AccessibilityIdentifiers.presetProClean)
+
+        Button {
+          options = .socialMedia
+        } label: {
+          Label("Social Media Ready", systemImage: "square.stack.3d.up")
+        }
+        .accessibilityIdentifier(AccessibilityIdentifiers.presetSocialMedia)
+      } label: {
+        Label("Presets", systemImage: "slider.horizontal.3")
+          .font(.system(size: Theme.Typography.fontSizeSM, weight: .semibold))
+          .padding(.horizontal, Theme.Dimensions.paddingSM)
+          .padding(.vertical, Theme.Dimensions.paddingXS)
+          .background(Theme.Colors.secondaryBackground)
+          .cornerRadius(Theme.Dimensions.smallCornerRadius)
+          .overlay(
+            RoundedRectangle(cornerRadius: Theme.Dimensions.smallCornerRadius)
+              .stroke(Color.secondary.opacity(Theme.Opacity.medium), lineWidth: 0.5)
+          )
       }
+      .menuStyle(.button)
+      .buttonStyle(.plain)
+      .accessibilityIdentifier(AccessibilityIdentifiers.presetsMenu)
     }
   }
 
@@ -184,12 +164,12 @@ struct SmartToolsSection: View {
             }
             Slider(value: $options.silenceThreshold, in: -60 ... -20, step: 1)
               .controlSize(.small)
-              .tint(.blue)
+              .tint(.accentColor)
               .help("Audio levels below this threshold will be considered silence.")
           }
           .padding(.vertical, Theme.Dimensions.paddingXS)
           .padding(.horizontal, Theme.Dimensions.paddingXS)
-          .background(Color.blue.opacity(Theme.Opacity.subtle))
+          .background(Color.accentColor.opacity(Theme.Opacity.subtle))
           .cornerRadius(Theme.Dimensions.smallCornerRadius)
         }
 
@@ -382,6 +362,42 @@ struct SmartToolsSection: View {
         )
         .accessibilityValue(isOperationInProgress ? "Processing" : "")
       }
+    }
+  }
+
+  // MARK: - Reset Magic Fix Button
+
+  private var resetMagicFixButton: some View {
+    VStack(spacing: 8) {
+      Divider()
+        .padding(.vertical, 4)
+
+      Button {
+        ServiceContainer.shared.hapticsManager.impact()
+        Task {
+          // CRITICAL FIX: Reset clears old results AND regenerates with current toggle settings
+          await appState.projectState.resetMagicFix(for: clip, regenerate: true)
+        }
+      } label: {
+        HStack(spacing: Theme.Dimensions.spacingSM) {
+          Image(systemName: "arrow.counterclockwise")
+            .font(.system(size: Theme.Typography.iconSizeMD, weight: .medium))
+
+          Text("Regenerate Magic Fix")
+            .font(.system(size: Theme.Typography.fontSizeMD, weight: .semibold))
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, Theme.Dimensions.paddingMD)
+        .background(Color.secondary.opacity(0.1))
+        .foregroundColor(.secondary)
+        .cornerRadius(Theme.Dimensions.cornerRadius)
+      }
+      .buttonStyle(.plain)
+      .disabled(isOperationInProgress)
+      .help("Clear all existing Magic Fix results and regenerate with your current toggle settings")
+      .accessibilityIdentifier("magicFix.regenerateButton")
+      .accessibilityLabel("Regenerate Magic Fix")
+      .accessibilityHint("Clears all existing Magic Fix results and automatically regenerates based on which toggles are currently enabled")
     }
   }
 }

@@ -271,39 +271,46 @@ class ExportEngine: ExportServiceProtocol {
     let videoInput = uncheckedVideoInput.input
     let videoOutput = uncheckedVideoOutput.output
 
-    while videoInput.isReadyForMoreMediaData {
-      if sessionState?.isCancelled == true {
-        videoInput.markAsFinished()
-        group.leave()
-        return
-      }
-
-      if let buffer = videoOutput.copyNextSampleBuffer() {
-        if videoInput.append(buffer) {
-          // Update Progress
-          let pts = CMSampleBufferGetPresentationTimeStamp(buffer).seconds
-          let currentProgress = pts / duration
-
-          // Debounce updates to main thread
-          if Date().timeIntervalSince(progressState.lastProgressUpdate) > 0.1 {
-            progressState.lastProgressUpdate = Date()
-            Task { @MainActor [weak self] in
-              self?.progress = currentProgress
-              progressHandler(currentProgress)
-            }
-          }
-        } else {
-          // Write failed
-          progressState.exportError = uncheckedWriter.writer.error
+    var shouldContinue = true
+    while videoInput.isReadyForMoreMediaData && shouldContinue {
+      // RELIABILITY FIX: autoreleasepool prevents memory buildup during long exports (8K, 2+ hours)
+      autoreleasepool {
+        if sessionState?.isCancelled == true {
           videoInput.markAsFinished()
           group.leave()
+          shouldContinue = false
           return
         }
-      } else {
-        // Done
-        videoInput.markAsFinished()
-        group.leave()
-        return
+
+        if let buffer = videoOutput.copyNextSampleBuffer() {
+          if videoInput.append(buffer) {
+            // Update Progress
+            let pts = CMSampleBufferGetPresentationTimeStamp(buffer).seconds
+            let currentProgress = pts / duration
+
+            // Debounce updates to main thread
+            if Date().timeIntervalSince(progressState.lastProgressUpdate) > 0.1 {
+              progressState.lastProgressUpdate = Date()
+              Task { @MainActor [weak self] in
+                self?.progress = currentProgress
+                progressHandler(currentProgress)
+              }
+            }
+          } else {
+            // Write failed
+            progressState.exportError = uncheckedWriter.writer.error
+            videoInput.markAsFinished()
+            group.leave()
+            shouldContinue = false
+            return
+          }
+        } else {
+          // Done
+          videoInput.markAsFinished()
+          group.leave()
+          shouldContinue = false
+          return
+        }
       }
     }
   }

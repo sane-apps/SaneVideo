@@ -85,11 +85,11 @@ struct VideoSection: View {
                             .foregroundStyle(.secondary)
                     }
                     .padding(8)
-                    .background(Color.blue.opacity(0.15))
+                    .background(Color.accentColor.opacity(0.15))
                     .cornerRadius(6)
                     .overlay(
                         RoundedRectangle(cornerRadius: 6)
-                            .stroke(Color.blue.opacity(0.3), lineWidth: 1)
+                            .stroke(Color.accentColor.opacity(0.3), lineWidth: 1)
                     )
                 }
                 .buttonStyle(.plain)
@@ -119,7 +119,7 @@ struct VideoSection: View {
                     .accessibilityIdentifier("video.aspect_ratio.\(option.id)")
                     .accessibilityLabel("\(option.localizedLabel) aspect ratio")
                     .accessibilityHint(option.localizedPlatform)
-                    .focusable()
+                    // REMOVED: .focusable() - was causing yellow focus ring
                 }
             }
 
@@ -294,14 +294,14 @@ struct AspectRatioButton: View {
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 6)
-            .background(isSelected ? Color.purple.opacity(0.2) : Color.secondary.opacity(0.1))
-            .foregroundColor(isSelected ? .purple : .secondary)
+            .background(isSelected ? Color.accentColor.opacity(0.2) : Color.secondary.opacity(0.1))
+            .foregroundColor(isSelected ? .accentColor : .secondary)
             .cornerRadius(6)
             .overlay(
                 RoundedRectangle(cornerRadius: 6)
-                    .stroke(isSelected ? Color.purple : Color.clear, lineWidth: 1)
+                    .stroke(isSelected ? Color.accentColor : Color.clear, lineWidth: 1)
             )
-            .shadow(color: isSelected ? Color.purple.opacity(0.3) : .clear, radius: 4, x: 0, y: 2)
+            .shadow(color: isSelected ? Color.accentColor.opacity(0.3) : .clear, radius: 4, x: 0, y: 2)
         }
         .buttonStyle(.plain)
         .hoverScale(1.05)

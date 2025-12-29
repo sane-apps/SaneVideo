@@ -70,6 +70,8 @@ struct EditorLayoutView: View {
                         .offset(x: 8)
                         .zIndex(1)
                 }
+                // CRITICAL FIX: When collapsed, use minimal width so center pane can expand
+                .frame(width: isSidebarCollapsed ? 40 : nil)
 
                 // CENTER: Stage (Player + Timeline)
                 VSplitView {
@@ -95,7 +97,8 @@ struct EditorLayoutView: View {
                                 PlayerControlBar(
                                     playbackState: appState.playbackState,
                                     projectState: appState.projectState,
-                                    displayMode: $videoDisplayMode
+                                    displayMode: $videoDisplayMode,
+                                    selectedClip: selectedClip
                                 )
                                 .padding(.bottom, 12)
                             }
@@ -129,6 +132,8 @@ struct EditorLayoutView: View {
                             .transition(.move(edge: .trailing).combined(with: .opacity))
                     }
                 }
+                // CRITICAL FIX: When collapsed, use minimal width so center pane can expand
+                .frame(width: isInspectorCollapsed ? 40 : nil)
             }
             .animation(.easeInOut(duration: 0.2), value: isSidebarCollapsed)
             .animation(.easeInOut(duration: 0.2), value: isInspectorCollapsed)
@@ -353,6 +358,19 @@ struct EditorLayoutView: View {
                 AdvancedVideoPlayer(player: player)
                     .overlay {
                         CanvasOverlay(clip: selectedClip, projectState: appState.projectState)
+                        // CRITICAL FIX: Add caption overlay with project style
+                        if let project = appState.projectState.currentProject,
+                           let captionData = currentCaption(for: selectedClip, at: appState.playbackState.currentTime) {
+                            CaptionOverlayView(
+                                caption: captionData.0,
+                                currentTime: captionData.1,
+                                style: project.captionStyle,
+                                offset: Binding(
+                                    get: { project.captionOffset },
+                                    set: { appState.projectState.updateCaptionOffset($0) }
+                                )
+                            )
+                        }
                     }
                     .aspectRatio(16/9, contentMode: .fit)
                     .padding(.horizontal, 16)
@@ -363,6 +381,19 @@ struct EditorLayoutView: View {
                 AdvancedVideoPlayer(player: player)
                     .overlay {
                         CanvasOverlay(clip: selectedClip, projectState: appState.projectState)
+                        // CRITICAL FIX: Add caption overlay with project style
+                        if let project = appState.projectState.currentProject,
+                           let captionData = currentCaption(for: selectedClip, at: appState.playbackState.currentTime) {
+                            CaptionOverlayView(
+                                caption: captionData.0,
+                                currentTime: captionData.1,
+                                style: project.captionStyle,
+                                offset: Binding(
+                                    get: { project.captionOffset },
+                                    set: { appState.projectState.updateCaptionOffset($0) }
+                                )
+                            )
+                        }
                     }
                     .aspectRatio(16/9, contentMode: .fill)
                     .padding(.horizontal, 8)
@@ -374,6 +405,19 @@ struct EditorLayoutView: View {
                     AdvancedVideoPlayer(player: player)
                         .overlay {
                             CanvasOverlay(clip: selectedClip, projectState: appState.projectState)
+                            // CRITICAL FIX: Add caption overlay with project style
+                            if let project = appState.projectState.currentProject,
+                               let captionData = currentCaption(for: selectedClip, at: appState.playbackState.currentTime) {
+                                CaptionOverlayView(
+                                    caption: captionData.0,
+                                    currentTime: captionData.1,
+                                    style: project.captionStyle,
+                                    offset: Binding(
+                                        get: { project.captionOffset },
+                                        set: { appState.projectState.updateCaptionOffset($0) }
+                                    )
+                                )
+                            }
                         }
                         .frame(minWidth: 640, minHeight: 360) // Minimum reasonable size
                 }

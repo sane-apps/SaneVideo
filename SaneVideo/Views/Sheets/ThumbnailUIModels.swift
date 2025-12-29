@@ -76,7 +76,7 @@ struct ThumbnailCard: View {
                     if score > 0 {
                         Image(systemName: "face.smiling.fill")
                             .font(.caption2)
-                            .foregroundStyle(.yellow)
+                            .foregroundStyle(Color.accentColor)
                     }
                 }
             }

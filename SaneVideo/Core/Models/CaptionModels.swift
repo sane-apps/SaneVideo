@@ -24,6 +24,34 @@ public struct Caption: Identifiable, Codable, Equatable, Sendable {
         self.words = words
     }
 
+    // MARK: - Utility: Clean Timestamps
+
+    /// Removes timestamp patterns from caption text (e.g., [00:01:23], (00:01:23))
+    public func withCleanedText() -> Caption {
+        var cleanedText = text.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
+
+        // Remove timestamp patterns: [00:01:23], (00:01:23), 00:01:23, etc.
+        let timestampPatterns = [
+            #"\[?\d{1,2}:\d{2}:\d{2}(?:\.\d+)?\]?\s*"#,  // [00:01:23] or 00:01:23
+            #"\[?\d{1,2}:\d{2}\]?\s*"#,                  // [01:23] or 01:23
+            #"\(\d{1,2}:\d{2}:\d{2}(?:\.\d+)?\)\s*"#    // (00:01:23)
+        ]
+
+        for pattern in timestampPatterns {
+            cleanedText = cleanedText.replacingOccurrences(
+                of: pattern,
+                with: "",
+                options: [.regularExpression, .caseInsensitive]
+            )
+        }
+
+        cleanedText = cleanedText.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
+
+        var cleaned = self
+        cleaned.text = cleanedText
+        return cleaned
+    }
+
     // MARK: - Codable (Manual implementation for CMTime)
 
     enum CodingKeys: String, CodingKey {

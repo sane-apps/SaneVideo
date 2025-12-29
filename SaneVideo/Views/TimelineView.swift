@@ -57,7 +57,7 @@ public struct SaneTimelineView: View {
                         pixelsPerSecond: pixelsPerSecond
                     )
                     .frame(width: 100)
-                    .background(Color(NSColor.controlBackgroundColor))
+                    .background(Color(nsColor: .controlBackgroundColor))
                     .fixedSize(horizontal: true, vertical: false)
 
                     // Scrollable right section (ruler + tracks)
@@ -78,7 +78,9 @@ public struct SaneTimelineView: View {
                     }
                     .accessibilityIdentifier("TimelineScroll")
                     .frame(maxWidth: .infinity)
+                    .background(Color(nsColor: .controlBackgroundColor))
                 }
+                .background(Color(nsColor: .controlBackgroundColor))
                 .frame(maxWidth: .infinity, alignment: .topLeading)
                 .frame(minHeight: 150, maxHeight: .infinity)
             }

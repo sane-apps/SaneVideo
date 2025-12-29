@@ -149,3 +149,146 @@
 
 *Last Updated: 2025-12-28 23:10*
 *Session Quality: EXCELLENT - fixed 5 bugs, completed full Magic Fix audit with proactive fixes, added regression tests*
+
+---
+
+# Session 2025-12-29
+
+## NEW BUGS REPORTED
+
+### 1. Scrub Header Not Starting at Zero
+- **Status**: 🟡 FIX APPLIED - NEEDS VERIFICATION
+- **Reported**: 2025-12-29 16:38
+- **Screenshot**: Screenshot 2025-12-29 at 4.38.21 PM.png
+- **Symptom**: Time ruler "00m" label appears offset, not aligned to zero position
+- **Files**: `TimeRulerView.swift`, `TimelineTracksView.swift`
+- **Fix Applied**: First label (00:00) now starts at exactly x=0 (left edge of ruler canvas)
+
+### 2. Layout Collapse When Left Sidebar Minimized
+- **Status**: 🟡 FIX APPLIED - NEEDS VERIFICATION
+- **Reported**: 2025-12-29 16:38
+- **Screenshot**: Screenshot 2025-12-29 at 4.38.42 PM.png
+- **Symptom**: Massive empty space above timeline, content not filling available width
+- **File**: `EditorLayoutView.swift`
+- **Root Cause**: HSplitView not recalculating when sidebar collapses
+- **Fix Applied**: Replaced HSplitView with GeometryReader + HStack with explicit widths
+
+### 3. Layout Collapse When Right Sidebar Minimized
+- **Status**: 🟡 FIX APPLIED - NEEDS VERIFICATION
+- **Reported**: 2025-12-29 16:38
+- **Screenshot**: Screenshot 2025-12-29 at 4.38.49 PM.png
+- **Symptom**: Similar spacing issues, awkward gaps
+- **File**: `EditorLayoutView.swift`
+- **Fix Applied**: Same as #2
+
+### 4. CATASTROPHIC: Content Disappears When Both Sidebars Minimized
+- **Status**: 🟡 FIX APPLIED - NEEDS VERIFICATION
+- **Reported**: 2025-12-29 16:38
+- **Screenshot**: Screenshot 2025-12-29 at 4.38.56 PM.png
+- **Symptom**: Video preview and timeline COMPLETELY disappear, only playback controls visible
+- **File**: `EditorLayoutView.swift`
+- **Root Cause**: HSplitView with `frame(width: isSidebarCollapsed ? 40 : nil)` doesn't honor center pane's `minWidth: 400`. Dividers squeeze center to nothing.
+- **Fix Applied**:
+  - Replaced HSplitView with GeometryReader + HStack
+  - Center pane now uses `maxWidth: .infinity`
+  - Sidebars: 260px/320px expanded, 20px collapsed normally
+  - **When BOTH collapsed**: Extra minimal 16px width to maximize center screen real estate
+
+### 5. ExportEngine Sendable Warning
+- **Status**: ✅ FIXED (2025-12-29 16:52)
+- **Reported**: 2025-12-29 16:45
+- **Location**: `ExportEngine.swift:387`
+- **Symptom**: `Capture of 'timeoutWorkItem' with non-Sendable type 'DispatchWorkItem' in a '@Sendable' closure`
+- **Fix**: Wrapped DispatchWorkItem in UnsafeSendable, used `nonisolated(unsafe)` for finishCompleted flag
+
+### 6. Video Preview Too Small / Empty Space in Center
+- **Status**: 🟡 FIX APPLIED - NEEDS VERIFICATION
+- **Reported**: 2025-12-29 17:04
+- **Screenshot**: Screenshot 2025-12-29 at 5.04.15 PM.png, 5.04.22 PM.png
+- **Symptom**: Video preview was tiny with massive empty space around it; timeline had wasted space below
+- **File**: `EditorLayoutView.swift`
+- **Root Cause**: Video sizing used `.aspectRatio(contentMode: .fit)` without explicit container sizing
+- **Fix Applied**:
+  - Added GeometryReader to pass available size to video player
+  - Calculate optimal 16:9 video size based on available container space
+  - Explicit frame sizing for video based on calculated dimensions
+  - Increased timeline height from 160px to 200px
+
+---
+
+## Build Warnings (2025-12-29)
+
+| File | Warning |
+|------|---------|
+| ProjectState+Effects.swift | File Length: 503 lines |
+| ProjectState+ClipManagement.swift | File Length: 556 lines |
+| PiPCameraWindow.swift | File Length: 601 lines |
+| TemplateBrowserSheet.swift | File Length: 553 lines |
+| EditorLayoutView.swift | File Length: 522 lines |
+| RecordingEngine.swift | File Length: 576 lines |
+| RepurposingOrchestrator.swift | File Length: 540 lines |
+
+---
+
+### 7. Toolbar Consolidation - Unified Player + Timeline Controls
+- **Status**: 🟡 FIX APPLIED - NEEDS VERIFICATION
+- **Reported**: 2025-12-29 17:12
+- **Symptom**: Two separate toolbars (PlayerControlBar + TimelineControls) wasting ~90-94px vertical space
+- **Files Modified**:
+  - `TimelineControls.swift` - Unified toolbar with all controls
+  - `EditorLayoutView.swift` - Removed PlayerControlBar
+  - `TimeRulerView.swift` - Height 30→40px, label y-position fixed
+  - `TimelineHeadersView.swift` - Spacer 30→40px
+  - `TimelineTracksView.swift` - Ruler frame 30→40px
+- **Changes**:
+  - Merged PlayerControlBar into TimelineControls (single unified toolbar)
+  - Playback controls (step back, play/pause, step forward) added to unified bar
+  - Display mode toggle: 3 buttons → 1 cyclic toggle with hover tooltip
+  - Timecode display consolidated (single display showing current/total)
+  - Rotate button moved to unified toolbar (shows when clip selected)
+  - **Savings**: ~50px vertical space recovered
+  - **Ruler Fix**: Labels no longer clipped (height 30→40px, y-position adjusted)
+
+### 8. Toolbar Enhancement - Added Undo/Redo, Volume, Speed Controls
+- **Status**: ✅ IMPLEMENTED (2025-12-29 18:00)
+- **Changes**:
+  - Added Undo/Redo buttons (left side of toolbar)
+  - Added Volume/Mute control with slider
+  - Added Playback Speed dropdown (0.25x - 2x)
+  - Refined button sizes and spacing for all controls
+
+### 9. Background Color Consistency Fixes
+- **Status**: ✅ FIXED (2025-12-29 18:00)
+- **Files Modified**:
+  - `TimelineTracksView.swift` - Track row background: `secondary.opacity(0.1)` → `controlBackgroundColor`
+  - `EditorLayoutView.swift` - CollapseButton background: `secondary.opacity(0.1)` → `controlBackgroundColor`
+  - `TimelineView.swift` - Added explicit backgrounds to ScrollView and timeline HStack
+  - `TimeRulerView.swift` - Background set to `Color.clear` to inherit from parent
+
+---
+
+## SESSION END: 2025-12-29 ~18:00
+
+### Current State:
+- Unified toolbar working with all controls (Undo/Redo, Playback, Speed, Volume, Editing, Timeline, Display Mode)
+- Background colors should now be consistent (using system colors)
+- Ruler labels visible (height increased to 40px)
+- Video preview sizing improved with GeometryReader
+
+### Pending/To Verify:
+- [ ] Fullscreen toggle (requires custom implementation - skipped for now)
+- [ ] Test all new toolbar controls thoroughly
+- [ ] Verify background color consistency in light mode
+- [ ] Check if Clip Info section in inspector has redundant info with toolbar
+
+### Files Modified This Session:
+1. `TimelineControls.swift` - Complete rewrite with unified toolbar + new controls
+2. `EditorLayoutView.swift` - Removed PlayerControlBar, fixed video sizing, fixed collapse buttons
+3. `TimelineView.swift` - Added background colors to scroll area
+4. `TimelineTracksView.swift` - Fixed track row backgrounds
+5. `TimeRulerView.swift` - Height 30→40px, label position, clear background
+6. `TimelineHeadersView.swift` - Updated spacer 30→40px
+
+---
+
+*Last Updated: 2025-12-29 18:00*

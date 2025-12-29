@@ -39,7 +39,7 @@ struct TimelineTracksView: View {
 
         ZStack(alignment: .topLeading) {
             VStack(alignment: .leading, spacing: 0) {
-                // Ruler - matches left column spacer height (30px)
+                // Ruler - matches left column spacer height (40px)
                 HStack(spacing: 0) {
                     Rectangle().fill(Color.clear).frame(width: leadingPadding)
                     TimeRulerView(
@@ -51,7 +51,7 @@ struct TimelineTracksView: View {
                         }
                     )
                 }
-                .frame(height: 30)
+                .frame(height: 40)
 
                 // Track rows - MUST match headers VStack spacing exactly (8px)
                 VStack(alignment: .leading, spacing: 8) {
@@ -180,7 +180,7 @@ struct TimelineTracksView: View {
             }
         }
         .frame(height: timelineHeight)
-        .background(Color.secondary.opacity(0.1))
+        .background(Color(nsColor: .controlBackgroundColor))
     }
 
     private var playheadOverlay: some View {

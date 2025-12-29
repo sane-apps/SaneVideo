@@ -59,7 +59,7 @@
 
 ---
 
-## 1. The 12 Golden Rules (CRITICAL)
+## 1. The 13 Golden Rules (CRITICAL)
 
 1. **USE SaneMaster.rb FIRST**: Use `./Scripts/SaneMaster.rb` for verification, setup, and diagnostics.
 2. **VERIFY LOGS ALWAYS**: Run `./Scripts/SaneMaster.rb diagnose --dump` after every build/test to see runtime logs (e.g. `ProjectStore initialized at...`).
@@ -70,7 +70,12 @@
    - **Bad splits**: Arbitrary cuts just to hit a number.
    - The limits exist to trigger review ("is this file doing too much?"), not mandate splitting.
 5. **SAFETY FIRST**: Every bug fix **MUST** have a regression test. Create tests as you go using `./Scripts/SaneMaster.rb gen_test`.
-6. **SDK IS THE SOURCE OF TRUTH (CRITICAL)**:
+6. **BUG TRACKING (CRITICAL)**: Document ALL bugs in `BUG_TRACKING.md` immediately when discovered.
+   - This is a **permanent record** that persists across sessions
+   - Include: Status, Screenshot filename, Symptom, File(s), Root cause (if known)
+   - Update status as bugs are fixed (🔴 OPEN → 🟡 IN PROGRESS → ✅ FIXED)
+   - Helps future sessions understand history and avoid regression
+7. **SDK IS THE SOURCE OF TRUTH (CRITICAL)**:
    - **NEVER trust web search for API existence or signatures**.
    - **ALWAYS query the SDK directly** before assuming an API exists or is deprecated.
    - The SDK `.swiftinterface` files are the **authoritative source**.
@@ -79,19 +84,19 @@
      2. `apple-docs` MCP server — Get usage examples, related APIs, WWDC context
    - See workflow: `.agent/workflows/sdk-api-verification.md`
    - Example: `./Scripts/SaneMaster.rb verify_api faceCaptureQuality Vision`
-7. **TWO-FIX RULE (CRITICAL)**: If you fail twice in a row, **STOP GUESSING**. Look up the SDK (rule 6) or web search for documentation. Never attempt a third guess.
-8. **WEB SEARCH IS SECONDARY**: Only use web search for understanding *why* or *how* after verifying with SDK.
-9. **FIX THE TOOL, NOT THE SYMPTOM**:
-   - **Trigger**: Persistent errors or repetitive manual work.
-   - **Action**: STOP. Fix or upgrade the underlying tool (`SaneMaster.rb`).
-10. **MISSING TOOL = UPGRADE SANEMASTER**: Do not create separate scripts. Upgrade the central `SaneMaster.rb`.
-11. **AUTOMATIC BUILD & LAUNCH WITH LOGGING (CRITICAL)**: After making code changes, you **MUST**:
+8. **TWO-FIX RULE (CRITICAL)**: If you fail twice in a row, **STOP GUESSING**. Look up the SDK (rule 7) or web search for documentation. Never attempt a third guess.
+9. **WEB SEARCH IS SECONDARY**: Only use web search for understanding *why* or *how* after verifying with SDK.
+10. **FIX THE TOOL, NOT THE SYMPTOM**:
+    - **Trigger**: Persistent errors or repetitive manual work.
+    - **Action**: STOP. Fix or upgrade the underlying tool (`SaneMaster.rb`).
+11. **MISSING TOOL = UPGRADE SANEMASTER**: Do not create separate scripts. Upgrade the central `SaneMaster.rb`.
+12. **AUTOMATIC BUILD & LAUNCH WITH LOGGING (CRITICAL)**: After making code changes, you **MUST**:
     - Build the app: `./Scripts/SaneMaster.rb verify`
     - Kill any running instances: `killall -9 SaneVideo`
     - Launch with live logging: `./Scripts/SaneMaster.rb launch` followed by `./Scripts/SaneMaster.rb logs --follow` in background
     - This enables real-time debugging and verification that changes work as expected
     - **Rationale**: Old instances can hold stale state, and live logs are essential for debugging user-reported issues
-12. **CLEAN SLATE — DON'T TRUST TRAINING DATA**:
+13. **CLEAN SLATE — DON'T TRUST TRAINING DATA**:
     - Do NOT rely on internal training data for project specifics (window names, view hierarchies, API signatures).
     - Use `grep`/`find` to discover the actual codebase state.
     - The codebase changes; training data is stale.

@@ -48,95 +48,34 @@ struct EditorLayoutView: View {
     // Video display mode - persisted per user preference
     @AppStorage("editor.videoDisplayMode") private var videoDisplayMode: VideoDisplayMode = .fit
 
+    // Layout constants
+    private let sidebarExpandedWidth: CGFloat = 260
+    private let inspectorExpandedWidth: CGFloat = 320
+    private let collapsedWidth: CGFloat = 20  // Collapsed width for sidebar toggle button
+
     var body: some View {
         VStack(spacing: 0) {
 
             Divider()
 
-            // MAIN SPLIT VIEW (3 Panes) - Using native HSplitView for resizing
-            HSplitView {
-                // ... (content omitted for brevity, match existing)
-                // LEFT: Sidebar (Collapsible)
-                ZStack(alignment: .trailing) {
-                    if !isSidebarCollapsed {
-                        SidebarView(selectedClip: $selectedClip)
-                            .frame(minWidth: 200, idealWidth: 260, maxWidth: 400)
-                            .transition(.move(edge: .leading).combined(with: .opacity))
-                            .animation(.spring(response: 0.4, dampingFraction: 0.8), value: isSidebarCollapsed)
-                    }
+            // MAIN LAYOUT: HStack with explicit sizing (replaces HSplitView for better collapse behavior)
+            GeometryReader { _ in
+                HStack(spacing: 0) {
+                    // LEFT: Sidebar (Collapsible)
+                    sidebarPane
+                        .frame(width: isSidebarCollapsed ? collapsedWidth : sidebarExpandedWidth)
 
-                    CollapseButton(isCollapsed: $isSidebarCollapsed, edge: .leading)
-                        .accessibilityIdentifier(AccessibilityIdentifiers.sidebarToggle)
-                        .offset(x: 8)
-                        .zIndex(1)
+                    // CENTER: Stage (Player + Timeline) - fills remaining space
+                    centerPane
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+                    // RIGHT: Inspector (Collapsible)
+                    inspectorPane
+                        .frame(width: isInspectorCollapsed ? collapsedWidth : inspectorExpandedWidth)
                 }
-                // CRITICAL FIX: When collapsed, use minimal width so center pane can expand
-                .frame(width: isSidebarCollapsed ? 40 : nil)
-
-                // CENTER: Stage (Player + Timeline)
-                VSplitView {
-                    // PLAYER STAGE
-                    ZStack {
-                        // ... existing backdrop code ...
-                        Color(nsColor: .windowBackgroundColor)
-                            .ignoresSafeArea()
-
-                        // Subtle grid pattern
-                        GridPattern()
-                            .stroke(Color.white.opacity(0.04), lineWidth: 0.5)
-
-                        if let player = appState.playbackState.player {
-                            VStack(spacing: 0) {
-                                Spacer(minLength: 8)
-
-                                // Video Window - responsive sizing based on display mode
-                                videoPlayerView(player: player)
-
-                                Spacer(minLength: 8)
-
-                                PlayerControlBar(
-                                    playbackState: appState.playbackState,
-                                    projectState: appState.projectState,
-                                    displayMode: $videoDisplayMode,
-                                    selectedClip: selectedClip
-                                )
-                                .padding(.bottom, 12)
-                            }
-                        } else {
-                            // EMPTY STATE: Elevated Magic Fix
-                            magicFixEmptyState
-                        }
-                    }
-                    .frame(minHeight: 250)
-                    .clipShape(Rectangle())
-
-                    // TIMELINE
-                    SaneTimelineView(
-                        selectedClip: $selectedClip,
-                        selectedClipIds: $selectedClipIds
-                    )
-                    .frame(minHeight: 180)
-                }
-                .frame(minWidth: 400, maxWidth: .infinity, maxHeight: .infinity)
-
-                // RIGHT: Inspector (Collapsible)
-                ZStack(alignment: .leading) {
-                    CollapseButton(isCollapsed: $isInspectorCollapsed, edge: .trailing)
-                        .accessibilityIdentifier(AccessibilityIdentifiers.inspectorToggle)
-                        .offset(x: -8)
-                        .zIndex(1)
-
-                    if !isInspectorCollapsed {
-                        StylesInspectorView(selectedClip: $selectedClip)
-                            .frame(minWidth: 260, idealWidth: 320, maxWidth: 450)
-                            .transition(.move(edge: .trailing).combined(with: .opacity))
-                    }
-                }
-                // CRITICAL FIX: When collapsed, use minimal width so center pane can expand
-                .frame(width: isInspectorCollapsed ? 40 : nil)
             }
-            .animation(.easeInOut(duration: 0.2), value: isSidebarCollapsed)
-            .animation(.easeInOut(duration: 0.2), value: isInspectorCollapsed)
+            .animation(.easeInOut(duration: 0.25), value: isSidebarCollapsed)
+            .animation(.easeInOut(duration: 0.25), value: isInspectorCollapsed)
         }
         .onAppear {
             if let project = appState.projectState.currentProject, lastLoadedProjectId != project.id {
@@ -267,6 +206,69 @@ struct EditorLayoutView: View {
         }
     }
 
+    // MARK: - Layout Panes
+
+    @ViewBuilder
+    private var sidebarPane: some View {
+        ZStack(alignment: .trailing) {
+            if !isSidebarCollapsed {
+                SidebarView(selectedClip: $selectedClip)
+                    .transition(.opacity)
+            }
+
+            CollapseButton(isCollapsed: $isSidebarCollapsed, edge: .leading)
+                .accessibilityIdentifier(AccessibilityIdentifiers.sidebarToggle)
+                .offset(x: 8)
+                .zIndex(1)
+        }
+        .background(Color(nsColor: .controlBackgroundColor))
+    }
+
+    @ViewBuilder
+    private var centerPane: some View {
+        VStack(spacing: 0) {
+            // PLAYER STAGE - Video fills available space using GeometryReader
+            GeometryReader { geometry in
+                ZStack {
+                    Color(nsColor: .windowBackgroundColor)
+
+                    if let player = appState.playbackState.player {
+                        // Video fills the stage area - pass explicit size for proper layout
+                        videoPlayerView(player: player, availableSize: geometry.size)
+                    } else {
+                        // EMPTY STATE
+                        magicFixEmptyState
+                    }
+                }
+            }
+
+            // NOTE: PlayerControlBar removed - controls moved to unified TimelineControls toolbar
+
+            // TIMELINE - includes unified toolbar with playback controls
+            SaneTimelineView(
+                selectedClip: $selectedClip,
+                selectedClipIds: $selectedClipIds
+            )
+            .frame(height: 240) // Increased to accommodate unified toolbar (42px) + ruler (40px) + tracks
+        }
+    }
+
+    @ViewBuilder
+    private var inspectorPane: some View {
+        ZStack(alignment: .leading) {
+            CollapseButton(isCollapsed: $isInspectorCollapsed, edge: .trailing)
+                .accessibilityIdentifier(AccessibilityIdentifiers.inspectorToggle)
+                .offset(x: -8)
+                .zIndex(1)
+
+            if !isInspectorCollapsed {
+                StylesInspectorView(selectedClip: $selectedClip)
+                    .transition(.opacity)
+            }
+        }
+        .background(Color(nsColor: .controlBackgroundColor))
+    }
+
     // MARK: - Shuttle Playback Control
 
     /// J key: Play backward or decrease playback rate
@@ -349,12 +351,39 @@ struct EditorLayoutView: View {
 
     // MARK: - Video Player with Display Mode Support
 
+    /// Calculate optimal video size to fill available space while maintaining 16:9 aspect ratio
+    private func calculateVideoSize(availableSize: CGSize) -> CGSize {
+        let videoAspect: CGFloat = 16.0 / 9.0
+        let containerAspect = availableSize.width / availableSize.height
+
+        // Video size calculation: fit 16:9 video into available space with minimal padding
+        let padding: CGFloat = 16 // Total padding (8 per side)
+        let usableWidth = availableSize.width - padding
+        let usableHeight = availableSize.height - padding
+
+        if containerAspect > videoAspect {
+            // Container is wider than video - height constrained
+            let height = usableHeight
+            let width = height * videoAspect
+            return CGSize(width: width, height: height)
+        } else {
+            // Container is taller than video - width constrained
+            let width = usableWidth
+            let height = width / videoAspect
+            return CGSize(width: width, height: height)
+        }
+    }
+
     @ViewBuilder
-    private func videoPlayerView(player: AVPlayer) -> some View {
+    private func videoPlayerView(player: AVPlayer, availableSize: CGSize) -> some View {
+        let videoSize = calculateVideoSize(availableSize: availableSize)
+        let usableWidth = availableSize.width - 16
+        let usableHeight = availableSize.height - 16
+
         Group {
             switch videoDisplayMode {
             case .fit:
-                // Fit: Show entire video, may have letterboxing
+                // Fit: Show entire video at maximum size while maintaining aspect ratio
                 AdvancedVideoPlayer(player: player)
                     .overlay {
                         CanvasOverlay(clip: selectedClip, projectState: appState.projectState)
@@ -372,9 +401,7 @@ struct EditorLayoutView: View {
                             )
                         }
                     }
-                    .aspectRatio(16/9, contentMode: .fit)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 8)
+                    .frame(width: videoSize.width, height: videoSize.height)
 
             case .fill:
                 // Fill: Fill the container, may crop edges
@@ -395,9 +422,8 @@ struct EditorLayoutView: View {
                             )
                         }
                     }
-                    .aspectRatio(16/9, contentMode: .fill)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
+                    .frame(width: usableWidth, height: usableHeight)
+                    .clipped()
 
             case .actual:
                 // Actual: 1:1 pixel mapping, scrollable if larger
@@ -421,7 +447,7 @@ struct EditorLayoutView: View {
                         }
                         .frame(minWidth: 640, minHeight: 360) // Minimum reasonable size
                 }
-                .padding(8)
+                .frame(width: usableWidth, height: usableHeight)
             }
         }
         .clipShape(RoundedRectangle(cornerRadius: 8))
@@ -430,7 +456,6 @@ struct EditorLayoutView: View {
             RoundedRectangle(cornerRadius: 8)
                 .stroke(Color.white.opacity(0.08), lineWidth: 1)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     @ViewBuilder
@@ -504,7 +529,7 @@ struct CollapseButton: View {
                 .font(.system(size: 10, weight: .semibold))
                 .foregroundColor(.secondary)
                 .frame(width: 16, height: 44)
-                .background(Color.secondary.opacity(0.1))
+                .background(Color(nsColor: .controlBackgroundColor))
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)

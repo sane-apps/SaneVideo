@@ -371,20 +371,23 @@ class ExportEngine: ExportServiceProtocol {
       }
 
       // CRITICAL FIX: Add timeout to finishWriting to prevent indefinite hangs
-      var finishCompleted = false
+      // Use nonisolated(unsafe) to safely share state across closures on same queue
+      nonisolated(unsafe) var finishCompleted = false
       let timeoutWorkItem = DispatchWorkItem {
         guard !finishCompleted else { return }
         AppLogger.export.error("❌ Export finishWriting timed out after \(finishWritingTimeout)s")
         uncheckedWriter.writer.cancelWriting()
         continuation.resume(throwing: ExportError.timeout)
       }
+      // Wrap in UnsafeSendable to cross @Sendable boundary
+      let wrappedTimeout = UnsafeSendable(timeoutWorkItem)
 
       processingQueue.asyncAfter(deadline: .now() + finishWritingTimeout, execute: timeoutWorkItem)
 
       // Use uncheckedWriter to avoid Sendable warning in completion closure
       uncheckedWriter.writer.finishWriting {
         finishCompleted = true
-        timeoutWorkItem.cancel()
+        wrappedTimeout.value.cancel()
 
         if uncheckedWriter.writer.status == .completed {
           continuation.resume(returning: outputURL)

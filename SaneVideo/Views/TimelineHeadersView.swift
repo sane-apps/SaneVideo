@@ -23,9 +23,9 @@ struct TimelineHeadersView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // Spacer for ruler height alignment - MUST match TimeRulerView height exactly (30px)
+            // Spacer for ruler height alignment - MUST match TimeRulerView height exactly (40px)
             Color.clear
-                .frame(height: 30)
+                .frame(height: 40)
                 .frame(width: 100)
 
             // Headers VStack - MUST match track rows VStack spacing exactly (8px)

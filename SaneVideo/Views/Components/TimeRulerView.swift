@@ -23,9 +23,10 @@ struct TimeRulerView: View {
             let width = size.width
             let height = size.height
 
-            // Draw background
+            // Draw background - use clear to inherit from parent (system colors)
+            // Parent containers should set appropriate background
             let rect = CGRect(origin: .zero, size: size)
-            context.fill(Path(rect), with: .color(Color.secondary.opacity(0.1)))
+            context.fill(Path(rect), with: .color(Color.clear))
 
             // Draw bottom border
             let borderPath = Path { path in
@@ -74,7 +75,10 @@ struct TimeRulerView: View {
                         .font(.system(size: labelFontSize))
                         .foregroundColor(.secondary)
 
-                    context.draw(text, at: CGPoint(x: x + 5, y: height - majorTickHeight - 8), anchor: .leading)
+                    // Position labels at y=12 (from top) - gives 12px for text, 8px gap, then 20px for ticks
+                    // First label (00:00) starts exactly at x=0 (left edge); others offset from tick
+                    let labelX = second == 0 ? x : x + 4
+                    context.draw(text, at: CGPoint(x: labelX, y: 12), anchor: .leading)
                 }
 
                 // Draw Minor Ticks (4 ticks between seconds)
@@ -90,7 +94,7 @@ struct TimeRulerView: View {
                 }
             }
         }
-        .frame(height: 30) // CRITICAL FIX: Match TimelineTracksView ruler height constraint
+        .frame(height: 40) // Increased from 30 to give labels room above ticks
         .contentShape(Rectangle())
         .onTapGesture { location in
             // Click-to-seek: Calculate time from tap position

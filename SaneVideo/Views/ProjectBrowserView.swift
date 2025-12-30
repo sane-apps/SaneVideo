@@ -22,7 +22,7 @@ struct ProjectBrowserView: View {
     // Delete state
     @State private var projectToDelete: VideoProject?
     @State private var showingDeleteConfirmation = false
-    
+
     // Info state
     @State private var projectToShowInfo: VideoProject?
     @State private var showingProjectInfo = false
@@ -261,13 +261,13 @@ struct ProjectCard: View {
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
-                    
+
                     // Icon overlay
                     Image(systemName: firstClip == nil ? "film.stack" : "photo")
                         .font(.system(size: 32))
                         .foregroundColor(.secondary.opacity(0.6))
                 }
-                
+
                 // Loading indicator
                 if isLoadingThumbnail {
                     ProgressView()
@@ -296,10 +296,10 @@ struct ProjectCard: View {
                     Label("\(clipCount)", systemImage: clipCount == 1 ? "film" : "film.stack")
                         .font(.caption)
                         .foregroundColor(.secondary)
-                    
+
                     Text("•")
                         .foregroundColor(.secondary.opacity(0.5))
-                    
+
                     Text(project.modifiedAt.formatted(.relative(presentation: .named)))
                         .font(.caption)
                         .foregroundColor(.secondary)
@@ -352,9 +352,9 @@ struct ProjectCard: View {
                 Label(String(localized: "browser.action.open", defaultValue: "Open"), systemImage: "arrow.right.circle")
             }
             .accessibilityIdentifier("browser.card_menu.open")
-            
+
             Divider()
-            
+
             // Project Management
             Button {
                 onDuplicate()
@@ -362,23 +362,23 @@ struct ProjectCard: View {
                 Label(String(localized: "browser.action.duplicate", defaultValue: "Duplicate"), systemImage: "doc.on.doc")
             }
             .accessibilityIdentifier("browser.card_menu.duplicate")
-            
+
             Button {
                 onShowInFinder()
             } label: {
                 Label(String(localized: "browser.action.finder", defaultValue: "Show in Finder"), systemImage: "folder")
             }
             .accessibilityIdentifier("browser.card_menu.finder")
-            
+
             Button {
                 onShowInfo()
             } label: {
                 Label(String(localized: "browser.action.info", defaultValue: "Get Info"), systemImage: "info.circle")
             }
             .accessibilityIdentifier("browser.card_menu.info")
-            
+
             Divider()
-            
+
             // Edit Actions
             Button {
                 onRename()
@@ -386,7 +386,7 @@ struct ProjectCard: View {
                 Label(String(localized: "browser.action.rename_menu", defaultValue: "Rename..."), systemImage: "pencil")
             }
             .accessibilityIdentifier("browser.card_menu.rename")
-            
+
             Button(role: .destructive) {
                 onDelete()
             } label: {
@@ -395,30 +395,30 @@ struct ProjectCard: View {
             .accessibilityIdentifier("browser.card_menu.delete")
         }
     }
-    
+
     // MARK: - Thumbnail Loading
-    
+
     private func loadThumbnail() async {
         guard let clip = firstClip, !clip.isMissing else {
             return
         }
-        
+
         guard !isLoadingThumbnail else { return }
         isLoadingThumbnail = true
-        
+
         // PERFORMANCE: Add small delay to throttle concurrent thumbnail loads
         // This prevents all 30 projects from loading thumbnails simultaneously
         try? await Task.sleep(for: .milliseconds(50))
-        
+
         // Get thumbnail from first clip at 25% through its duration
         let time = CMTime(seconds: clip.effectiveDuration.seconds * 0.25, preferredTimescale: 600)
         let originalTime = clip.originalTime(forEffectiveTime: time) ?? clip.trimStart
-        
+
         // QUALITY: Request retina-quality thumbnails (2x for display, higher for crisp previews)
         // Card display is ~280x140, request 800x450 for high-quality retina display
         let scaleFactor: CGFloat = 2.0 // Retina scaling
         let size = CGSize(width: 800 * scaleFactor, height: 450 * scaleFactor)
-        
+
         // PERFORMANCE: Use lower priority for thumbnail loading
         let thumb = await Task.detached(priority: .utility) {
             await ServiceContainer.shared.thumbnailService.thumbnail(
@@ -427,7 +427,7 @@ struct ProjectCard: View {
                 size: size
             )
         }.value
-        
+
         if let thumb = thumb {
             await MainActor.run {
                 self.thumbnail = thumb
@@ -446,15 +446,15 @@ struct ProjectCard: View {
 struct ProjectInfoSheet: View {
     let project: VideoProject
     @Environment(\.dismiss) var dismiss
-    
+
     private var clipCount: Int {
         project.timeline.tracks.reduce(0) { $0 + $1.clips.count }
     }
-    
+
     private var trackCount: Int {
         project.timeline.tracks.count
     }
-    
+
     private var durationString: String {
         let seconds = CMTimeGetSeconds(project.timeline.duration)
         let minutes = Int(seconds) / 60
@@ -465,7 +465,7 @@ struct ProjectInfoSheet: View {
             return String(format: "0:%02d", secs)
         }
     }
-    
+
     private var fileSizeString: String {
         let url = ServiceContainer.shared.projectStore.fileURL(for: project)
         if let attributes = try? FileManager.default.attributesOfItem(atPath: url.path),
@@ -476,7 +476,7 @@ struct ProjectInfoSheet: View {
         }
         return "Unknown"
     }
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
             // Header
@@ -493,9 +493,9 @@ struct ProjectInfoSheet: View {
                 .buttonStyle(.plain)
             }
             .padding(.bottom, 8)
-            
+
             Divider()
-            
+
             // Project Name
             VStack(alignment: .leading, spacing: 8) {
                 Text("Name")
@@ -504,15 +504,15 @@ struct ProjectInfoSheet: View {
                 Text(project.name)
                     .font(.title3)
             }
-            
+
             Divider()
-            
+
             // Statistics
             VStack(alignment: .leading, spacing: 12) {
                 Text("Statistics")
                     .font(.headline)
                     .foregroundColor(.secondary)
-                
+
                 HStack(spacing: 24) {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Clips")
@@ -522,7 +522,7 @@ struct ProjectInfoSheet: View {
                             .font(.title2)
                             .fontWeight(.semibold)
                     }
-                    
+
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Tracks")
                             .font(.caption)
@@ -531,7 +531,7 @@ struct ProjectInfoSheet: View {
                             .font(.title2)
                             .fontWeight(.semibold)
                     }
-                    
+
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Duration")
                             .font(.caption)
@@ -542,25 +542,25 @@ struct ProjectInfoSheet: View {
                     }
                 }
             }
-            
+
             Divider()
-            
+
             // Metadata
             VStack(alignment: .leading, spacing: 12) {
                 Text("Metadata")
                     .font(.headline)
                     .foregroundColor(.secondary)
-                
+
                 VStack(alignment: .leading, spacing: 8) {
-                    InfoRow(label: "Created", value: project.createdAt.formatted(date: .abbreviated, time: .shortened))
-                    InfoRow(label: "Modified", value: project.modifiedAt.formatted(date: .abbreviated, time: .shortened))
-                    InfoRow(label: "File Size", value: fileSizeString)
-                    InfoRow(label: "Project ID", value: project.id.uuidString)
+                    ProjectInfoRow(label: "Created", value: project.createdAt.formatted(date: .abbreviated, time: .shortened))
+                    ProjectInfoRow(label: "Modified", value: project.modifiedAt.formatted(date: .abbreviated, time: .shortened))
+                    ProjectInfoRow(label: "File Size", value: fileSizeString)
+                    ProjectInfoRow(label: "Project ID", value: project.id.uuidString)
                 }
             }
-            
+
             Spacer()
-            
+
             // Actions
             HStack {
                 Spacer()
@@ -575,7 +575,7 @@ struct ProjectInfoSheet: View {
     }
 }
 
-struct InfoRow: View {
+struct ProjectInfoRow: View {
     let label: String
     let value: String
     

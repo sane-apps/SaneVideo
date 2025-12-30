@@ -387,16 +387,16 @@ class ProjectState {
         duplicate.name = "\(project.name) Copy"
         duplicate.createdAt = Date()
         duplicate.modifiedAt = Date()
-        
+
         // Reset playback state for the duplicate
         duplicate.playbackState = VideoProject.PlaybackState()
-        
+
         // Insert at the beginning of the list (most recent)
         projects.insert(duplicate, at: 0)
-        
+
         // Save the duplicate
         saveProject(duplicate)
-        
+
         AppLogger.project.info("Duplicated project '\(project.name)' to '\(duplicate.name)'")
         ServiceContainer.shared.toastManager.show("Project Duplicated")
     }

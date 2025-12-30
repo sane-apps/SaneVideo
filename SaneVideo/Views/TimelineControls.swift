@@ -86,21 +86,27 @@ struct TimelineControls: View {
 
     private var undoRedoSection: some View {
         HStack(spacing: 4) {
-            Button(action: { undoManager?.undo() }) {
-                Image(systemName: "arrow.uturn.backward")
-                    .font(.system(size: 12))
-                    .foregroundColor(undoManager?.canUndo == true ? .accentColor : .secondary.opacity(0.5))
-            }
+            Button(
+                action: { undoManager?.undo() },
+                label: {
+                    Image(systemName: "arrow.uturn.backward")
+                        .font(.system(size: 12))
+                        .foregroundColor(undoManager?.canUndo == true ? .accentColor : .secondary.opacity(0.5))
+                }
+            )
             .buttonStyle(.plain)
             .disabled(!(undoManager?.canUndo ?? false))
             .help("Undo (⌘Z)")
             .accessibilityIdentifier("toolbar.undo")
 
-            Button(action: { undoManager?.redo() }) {
-                Image(systemName: "arrow.uturn.forward")
-                    .font(.system(size: 12))
-                    .foregroundColor(undoManager?.canRedo == true ? .accentColor : .secondary.opacity(0.5))
-            }
+            Button(
+                action: { undoManager?.redo() },
+                label: {
+                    Image(systemName: "arrow.uturn.forward")
+                        .font(.system(size: 12))
+                        .foregroundColor(undoManager?.canRedo == true ? .accentColor : .secondary.opacity(0.5))
+                }
+            )
             .buttonStyle(.plain)
             .disabled(!(undoManager?.canRedo ?? false))
             .help("Redo (⌘⇧Z)")
@@ -128,11 +134,14 @@ struct TimelineControls: View {
     private var playbackSection: some View {
         HStack(spacing: 10) {
             // Step backward
-            Button(action: { playbackState.stepBackward() }) {
-                Image(systemName: "backward.frame.fill")
-                    .font(.system(size: 12))
-                    .foregroundColor(.accentColor)
-            }
+            Button(
+                action: { playbackState.stepBackward() },
+                label: {
+                    Image(systemName: "backward.frame.fill")
+                        .font(.system(size: 12))
+                        .foregroundColor(.accentColor)
+                }
+            )
             .buttonStyle(.plain)
             .hoverScale(1.15)
             .pressScale()
@@ -140,13 +149,16 @@ struct TimelineControls: View {
             .accessibilityIdentifier("player.step_backward")
 
             // Play/Pause
-            Button(action: { playbackState.togglePlayPause() }) {
-                Image(systemName: playbackState.isPlaying ? "pause.fill" : "play.fill")
-                    .font(.system(size: 14))
-                    .foregroundColor(.accentColor)
-                    .frame(width: 28, height: 28)
-                    .background(Color.accentColor.opacity(0.15), in: Circle())
-            }
+            Button(
+                action: { playbackState.togglePlayPause() },
+                label: {
+                    Image(systemName: playbackState.isPlaying ? "pause.fill" : "play.fill")
+                        .font(.system(size: 14))
+                        .foregroundColor(.accentColor)
+                        .frame(width: 28, height: 28)
+                        .background(Color.accentColor.opacity(0.15), in: Circle())
+                }
+            )
             .buttonStyle(.plain)
             .hoverScale(1.15)
             .pressScale()
@@ -156,11 +168,14 @@ struct TimelineControls: View {
             .accessibilityIdentifier("player.toggle_play_pause")
 
             // Step forward
-            Button(action: { playbackState.stepForward() }) {
-                Image(systemName: "forward.frame.fill")
-                    .font(.system(size: 12))
-                    .foregroundColor(.accentColor)
-            }
+            Button(
+                action: { playbackState.stepForward() },
+                label: {
+                    Image(systemName: "forward.frame.fill")
+                        .font(.system(size: 12))
+                        .foregroundColor(.accentColor)
+                }
+            )
             .buttonStyle(.plain)
             .hoverScale(1.15)
             .pressScale()
@@ -172,26 +187,32 @@ struct TimelineControls: View {
     // MARK: - Speed Control
 
     private var speedControl: some View {
-        Menu {
-            ForEach([0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 2.0], id: \.self) { speed in
-                Button(action: {
-                    playbackSpeed = speed
-                    playbackState.setPlaybackRate(Float(speed))
-                }) {
-                    HStack {
-                        Text("\(speed, specifier: speed == 1.0 ? "%.0f" : "%.2f")x")
-                        if playbackSpeed == speed {
-                            Image(systemName: "checkmark")
+        Menu(
+            content: {
+                ForEach([0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 2.0], id: \.self) { speed in
+                    Button(
+                        action: {
+                            playbackSpeed = speed
+                            playbackState.setPlaybackRate(Float(speed))
+                        },
+                        label: {
+                            HStack {
+                                Text("\(speed, specifier: speed == 1.0 ? "%.0f" : "%.2f")x")
+                                if playbackSpeed == speed {
+                                    Image(systemName: "checkmark")
+                                }
+                            }
                         }
-                    }
+                    )
                 }
+            },
+            label: {
+                Text("\(playbackSpeed, specifier: playbackSpeed == 1.0 ? "%.0f" : "%.1f")x")
+                    .font(.system(size: 10, weight: .medium, design: .monospaced))
+                    .foregroundColor(.secondary)
+                    .frame(width: 32)
             }
-        } label: {
-            Text("\(playbackSpeed, specifier: playbackSpeed == 1.0 ? "%.0f" : "%.1f")x")
-                .font(.system(size: 10, weight: .medium, design: .monospaced))
-                .foregroundColor(.secondary)
-                .frame(width: 32)
-        }
+        )
         .menuStyle(.borderlessButton)
         .help("Playback Speed")
         .accessibilityIdentifier("player.speed")
@@ -201,15 +222,18 @@ struct TimelineControls: View {
 
     private var volumeControl: some View {
         HStack(spacing: 4) {
-            Button(action: {
-                isMuted.toggle()
-                playbackState.player?.isMuted = isMuted
-            }) {
-                Image(systemName: isMuted || volume == 0 ? "speaker.slash.fill" : volumeIcon)
-                    .font(.system(size: 11))
-                    .foregroundColor(isMuted ? .secondary : .accentColor)
-                    .frame(width: 20)
-            }
+            Button(
+                action: {
+                    isMuted.toggle()
+                    playbackState.player?.isMuted = isMuted
+                },
+                label: {
+                    Image(systemName: isMuted || volume == 0 ? "speaker.slash.fill" : volumeIcon)
+                        .font(.system(size: 11))
+                        .foregroundColor(isMuted ? .secondary : .accentColor)
+                        .frame(width: 20)
+                }
+            )
             .buttonStyle(.plain)
             .help(isMuted ? "Unmute" : "Mute")
             .accessibilityIdentifier("player.mute")
@@ -288,12 +312,15 @@ struct TimelineControls: View {
     private var timelineSection: some View {
         HStack(spacing: 14) {
             // Snap Toggle
-            Button(action: { snapEnabled.toggle() }) {
-                Image(systemName: "bolt.fill")
-                    .foregroundColor(snapEnabled ? .accentColor : .secondary)
-                    .font(.system(size: 11))
-                    .opacity(snapEnabled ? 1.0 : 0.6)
-            }
+            Button(
+                action: { snapEnabled.toggle() },
+                label: {
+                    Image(systemName: "bolt.fill")
+                        .foregroundColor(snapEnabled ? .accentColor : .secondary)
+                        .font(.system(size: 11))
+                        .opacity(snapEnabled ? 1.0 : 0.6)
+                }
+            )
             .buttonStyle(.plain)
             .hoverScale(1.15)
             .animation(.smoothUI, value: snapEnabled)
@@ -301,11 +328,14 @@ struct TimelineControls: View {
             .accessibilityIdentifier("timeline.toggle_snap")
 
             // Magnetic Toggle
-            Button(action: { magneticTimeline.toggle() }) {
-                Image(systemName: magneticTimeline ? "arrow.left.to.line.compact" : "arrow.left.to.line")
-                    .foregroundColor(magneticTimeline ? .accentColor : .secondary)
-                    .font(.system(size: 11))
-            }
+            Button(
+                action: { magneticTimeline.toggle() },
+                label: {
+                    Image(systemName: magneticTimeline ? "arrow.left.to.line.compact" : "arrow.left.to.line")
+                        .foregroundColor(magneticTimeline ? .accentColor : .secondary)
+                        .font(.system(size: 11))
+                }
+            )
             .buttonStyle(.plain)
             .hoverScale(1.15)
             .animation(.smoothUI, value: magneticTimeline)
@@ -333,23 +363,26 @@ struct TimelineControls: View {
     // MARK: - Display Mode Toggle
 
     private var displayModeToggle: some View {
-        Button(action: {
-            // Cycle through modes: Fit → Fill → Actual → Fit
-            withAnimation(.easeInOut(duration: 0.15)) {
-                switch displayMode {
-                case .fit: displayMode = .fill
-                case .fill: displayMode = .actual
-                case .actual: displayMode = .fit
+        Button(
+            action: {
+                // Cycle through modes: Fit → Fill → Actual → Fit
+                withAnimation(.easeInOut(duration: 0.15)) {
+                    switch displayMode {
+                    case .fit: displayMode = .fill
+                    case .fill: displayMode = .actual
+                    case .actual: displayMode = .fit
+                    }
                 }
+            },
+            label: {
+                Image(systemName: displayMode.icon)
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundColor(.accentColor)
+                    .frame(width: 26, height: 26)
+                    .background(Color.accentColor.opacity(0.1))
+                    .cornerRadius(6)
             }
-        }) {
-            Image(systemName: displayMode.icon)
-                .font(.system(size: 11, weight: .medium))
-                .foregroundColor(.accentColor)
-                .frame(width: 26, height: 26)
-                .background(Color.accentColor.opacity(0.1))
-                .cornerRadius(6)
-        }
+        )
         .buttonStyle(.plain)
         .hoverScale(1.1)
         .help("Display: \(displayMode.label) (click to cycle)")

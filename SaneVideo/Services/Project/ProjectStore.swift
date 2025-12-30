@@ -246,20 +246,27 @@ final class ProjectStore: ProjectStoreProtocol {
                     throw AppError.projectSaveFailed(NSError(domain: "ProjectStore", code: -1, userInfo: [NSLocalizedDescriptionKey: "File write verification failed"]))
                 }
 
-                // CRITICAL: Verify file is readable (not corrupted)
+                // CRITICAL: Verify file is readable and valid JSON (not corrupted)
                 do {
                     let verifyData = try Data(contentsOf: fileURL)
                     // Quick sanity check - file should not be empty
                     guard !verifyData.isEmpty else {
                         throw AppError.projectSaveFailed(NSError(domain: "ProjectStore", code: -2, userInfo: [NSLocalizedDescriptionKey: "Saved file is empty"]))
                     }
+                    
+                    // CRITICAL: Verify file is valid JSON and can be decoded
+                    // This catches corruption that makes file non-empty but invalid JSON
+                    let _ = try await MainActor.run {
+                        try JSONDecoder().decode(VideoProject.self, from: verifyData)
+                    }
                 } catch {
                     // Restore backup if verification fails
                     if fileManager.fileExists(atPath: backupURL.path) {
                         try? fileManager.copyItem(at: backupURL, to: fileURL)
-                        AppLogger.project.warning("File verification failed, restored from backup")
+                        AppLogger.project.warning("File verification failed (invalid JSON), restored from backup")
+                        AppLogger.uiLog.error("Save verification failed: \(fileURL.lastPathComponent) - file is not valid JSON")
                     }
-                    throw AppError.projectSaveFailed(error)
+                    throw AppError.projectSaveFailed(NSError(domain: "ProjectStore", code: -3, userInfo: [NSLocalizedDescriptionKey: "Saved file is not valid JSON: \(error.localizedDescription)"]))
                 }
 
                 // CRITICAL: Clean up backup after successful save

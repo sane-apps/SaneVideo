@@ -168,6 +168,33 @@ After completing ANY code change, fix, or task, you **MUST** rate yourself 1-10 
 - [ ] Followed Two-Fix Rule (stopped guessing after 2 failures)?
 - [ ] Documented bugs appropriately?
 
+### Comprehensive Reviews (Use Subagents)
+
+When the user requests a **full app review**, **codebase audit**, or **comprehensive check**, use **parallel subagents** to maximize coverage:
+
+```bash
+# Launch these in parallel (all at once, not sequentially):
+Task(subagent_type=Explore): "Analyze file size violations and recommend splits"
+Task(subagent_type=Explore): "Analyze test coverage gaps"
+Task(subagent_type=Explore): "Check dead code and deprecations"
+Task(subagent_type=Explore): "Review architecture patterns"
+Task(subagent_type=Explore): "Check security and crash patterns"
+```
+
+**Why subagents:**
+- Each agent explores deeply in its domain (doesn't miss things)
+- Parallel execution = faster results
+- User doesn't have to catch things you missed
+
+**Expected outputs:**
+- File size agent: Specific split recommendations with line numbers
+- Coverage agent: Missing test areas ranked by risk/priority
+- Dead code agent: Safe-to-delete vs false positives
+- Architecture agent: Race conditions, anti-patterns, DI issues
+- Security agent: Crash patterns, memory leaks, force unwraps
+
+**Self-Rating impact:** If user has to catch issues you missed → lower rating.
+
 ---
 
 ## 2. Quick Start

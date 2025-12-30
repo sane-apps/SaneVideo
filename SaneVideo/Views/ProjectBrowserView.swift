@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import AVFoundation
 
 struct ProjectBrowserView: View {
     @Environment(AppState.self) var appState

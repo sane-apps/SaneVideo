@@ -3,19 +3,20 @@
 ## Session 2025-12-30
 
 ### Project File Corruption Notification
-- **Status**: 🟡 IN PROGRESS (Logging improved)
-- **Symptom**: User saw toast notification "⚠️ Project file corrupted" during app launch
+- **Status**: 🟡 IN PROGRESS (Enhanced logging + toast on recovery)
+- **Symptom**: User saw toast notification "⚠️ Project file corrupted" during app launch (seen multiple times)
 - **File(s)**: `SaneVideo/Services/Project/ProjectStore.swift`
-- **Root Cause**: Project file failed to decode, backup recovery attempted but may have also failed
+- **Root Cause**: Project file failed to decode, backup recovery attempted. If recovery succeeds, user wasn't notified (silent recovery)
 - **Investigation**:
   - Checked all 30 project files: ✅ All currently parse as valid JSON
-  - Notification likely occurred during previous launch
-  - Current logging doesn't capture enough detail (file path, error type, backup status)
+  - Log file overwrites on each launch, so previous errors are lost
+  - Notification appears even when backup recovery succeeds (user should know file was corrupted)
 - **Fix Applied**:
   - Enhanced logging to capture exact error details (error type, localized description)
   - Added UI log entries for corruption events (visible in debug log)
+  - **NEW**: Show toast notification even when backup recovery succeeds (so user knows file was corrupted)
   - Logs now show: file path, error type, backup recovery status, success/failure
-- **Next Steps**: Monitor logs on next launch to identify which project file triggers corruption
+- **Next Steps**: Monitor logs on next launch to identify which project file triggers corruption. Toast will now appear even on successful recovery.
 
 ---
 

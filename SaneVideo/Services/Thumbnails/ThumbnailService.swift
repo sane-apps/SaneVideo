@@ -77,6 +77,8 @@ actor ThumbnailService: ThumbnailServiceProtocol {
         let asset = AVURLAsset(url: url)
         let generator = AVAssetImageGenerator(asset: asset)
         generator.appliesPreferredTrackTransform = true
+        
+        // QUALITY: Use zero tolerance for exact frame extraction (highest quality)
         generator.requestedTimeToleranceBefore = .zero
         generator.requestedTimeToleranceAfter = .zero
 
@@ -134,6 +136,9 @@ actor ThumbnailService: ThumbnailServiceProtocol {
 
         // FIXED: Use cached generator instead of creating new AVURLAsset each time
         let generator = getGenerator(for: clip.url)
+        
+        // QUALITY: Set maximum size (generator maintains aspect ratio)
+        // Use higher resolution for better quality on retina displays
         generator.maximumSize = size
 
         do {

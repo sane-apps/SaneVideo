@@ -36,7 +36,8 @@ struct MainContentView: View {
 
     return
       mainContent
-      .background(.regularMaterial)
+      // CONSISTENCY: Use controlBackgroundColor for consistent UI
+      .background(Color(nsColor: .controlBackgroundColor))
       .overlay(alignment: .top) {
         MagicOverlayView()
       }

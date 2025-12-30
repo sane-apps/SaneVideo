@@ -292,8 +292,8 @@ struct ProjectCard: View {
                     .fixedSize(horizontal: false, vertical: true)
 
                 HStack(spacing: 8) {
-                    let clipCount = project.timeline.tracks.reduce(0) { $0 + $1.clips.count }
-                    Label("\(clipCount)", systemImage: clipCount == 1 ? "film" : "film.stack")
+                    // PERFORMANCE: Use model's clipCount instead of inline reduce()
+                    Label("\(project.clipCount)", systemImage: project.clipCount == 1 ? "film" : "film.stack")
                         .font(.caption)
                         .foregroundColor(.secondary)
 
@@ -447,8 +447,9 @@ struct ProjectInfoSheet: View {
     let project: VideoProject
     @Environment(\.dismiss) var dismiss
 
+    // PERFORMANCE: Use model's clipCount property instead of inline calculation
     private var clipCount: Int {
-        project.timeline.tracks.reduce(0) { $0 + $1.clips.count }
+        project.clipCount
     }
 
     private var trackCount: Int {

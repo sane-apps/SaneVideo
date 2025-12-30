@@ -114,7 +114,11 @@ final class ProjectStore: ProjectStoreProtocol {
                                     }
                                     projects.append(rawProject)
                                     AppLogger.project.info("✅ Successfully loaded from backup: \(fileURL.lastPathComponent)")
-                                    AppLogger.uiLog.info("Project recovery successful: \(fileURL.lastPathComponent) restored from backup")
+                                    AppLogger.uiLog.warning("⚠️ Project recovery: \(fileURL.lastPathComponent) was corrupted but restored from backup")
+                                    // Show toast even on successful recovery so user knows file was corrupted
+                                    await MainActor.run {
+                                        ServiceContainer.shared.toastManager.show("⚠️ Project file corrupted (recovered from backup): \(fileURL.lastPathComponent)", type: .error)
+                                    }
                                     continue
                                 } catch {
                                     let backupError = "\(error.localizedDescription) (type: \(type(of: error)))"
@@ -140,7 +144,7 @@ final class ProjectStore: ProjectStoreProtocol {
                         let errorDetails = "\(error.localizedDescription) (type: \(type(of: error)))"
                         AppLogger.project.error("❌ Failed to load project at \(fileURL.path): \(errorDetails)")
                         AppLogger.uiLog.error("Project corruption detected: \(fileURL.lastPathComponent) - \(errorDetails)")
-                        
+
                         // CRITICAL: Try to load backup if main file fails
                         let backupURL = fileURL.appendingPathExtension("backup")
                         if FileManager.default.fileExists(atPath: backupURL.path) {
@@ -152,7 +156,11 @@ final class ProjectStore: ProjectStoreProtocol {
                                 }
                                 projects.append(rawProject)
                                 AppLogger.project.info("✅ Successfully loaded corrupted project from backup: \(fileURL.lastPathComponent)")
-                                AppLogger.uiLog.info("Project recovery successful: \(fileURL.lastPathComponent) restored from backup")
+                                AppLogger.uiLog.warning("⚠️ Project recovery: \(fileURL.lastPathComponent) was corrupted but restored from backup")
+                                // Show toast even on successful recovery so user knows file was corrupted
+                                await MainActor.run {
+                                    ServiceContainer.shared.toastManager.show("⚠️ Project file corrupted (recovered from backup): \(fileURL.lastPathComponent)", type: .error)
+                                }
                             } catch {
                                 let backupError = "\(error.localizedDescription) (type: \(type(of: error)))"
                                 AppLogger.project.error("Backup also failed to load: \(backupError)")

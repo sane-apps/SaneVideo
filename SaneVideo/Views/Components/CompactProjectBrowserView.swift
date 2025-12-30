@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import AVFoundation
 
 struct CompactProjectBrowserView: View {
     @Environment(AppState.self) var appState
@@ -128,4 +129,3 @@ struct CompactProjectRow: View {
         }
     }
 }
-

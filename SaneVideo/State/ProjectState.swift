@@ -381,12 +381,19 @@ class ProjectState {
     }
 
     func duplicateProject(_ project: VideoProject) {
-        // Create a copy with a new ID and "Copy" suffix
-        var duplicate = project
-        duplicate.id = UUID()
-        duplicate.name = "\(project.name) Copy"
-        duplicate.createdAt = Date()
+        // Create a new project with copied data (id and createdAt are let constants)
+        var duplicate = VideoProject(
+            id: UUID(),
+            name: "\(project.name) Copy",
+            createdAt: Date()
+        )
+        
+        // Copy all mutable properties
+        duplicate.timeline = project.timeline
         duplicate.modifiedAt = Date()
+        duplicate.captionStyleName = project.captionStyleName
+        duplicate.captionOffset = project.captionOffset
+        duplicate.captionFontName = project.captionFontName
         
         // Reset playback state for the duplicate
         duplicate.currentTime = 0.0

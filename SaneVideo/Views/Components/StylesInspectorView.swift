@@ -86,10 +86,11 @@ struct StylesInspectorView: View {
                         // CAPTIONS (with badge if present)
                         // ═══════════════════════════════════════════
                         CollapsibleSection(
-                            title: hasCaptions ? "Captions ✓" : "Captions",
+                            title: "Captions",
                             icon: "captions.bubble",
                             isExpanded: $showCaptions,
-                            badge: hasCaptions ? "\(clip.captions.count)" : nil
+                            // UX FIX: Show simple "Ready" instead of count - users don't need to see numbers
+                            badge: hasCaptions ? "Ready" : nil
                         ) {
                             CaptionsSection(clip: clip, isOperationInProgress: $isOperationInProgress)
                         }
@@ -126,7 +127,8 @@ struct StylesInspectorView: View {
                             title: "Effects",
                             icon: "sparkles",
                             isExpanded: $showEffects,
-                            badge: clip.effects.isEmpty ? nil : "\(clip.effects.count)"
+                            // UX FIX: Show simple indicator instead of count
+                            badge: clip.effects.isEmpty ? nil : "Active"
                         ) {
                             EffectsPickerView(clip: clip, isOperationInProgress: $isOperationInProgress)
                         }
@@ -158,7 +160,8 @@ struct StylesInspectorView: View {
         }
         // P1 FIX: Increase Inspector width for better spacing
         .frame(minWidth: 320, idealWidth: 360, maxWidth: 420)
-        .background(.ultraThinMaterial)
+        // CONSISTENCY: Use controlBackgroundColor to match main editor
+        .background(Color(nsColor: .controlBackgroundColor))
         // CRITICAL FIX: Auto-deselect if clip is deleted
         .onChange(of: appState.projectState.currentProject?.id) { _, _ in
             // CRITICAL FIX: Safely check if clip still exists

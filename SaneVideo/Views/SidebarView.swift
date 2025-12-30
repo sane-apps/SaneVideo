@@ -14,11 +14,41 @@ struct SidebarView: View {
 
     var body: some View {
         HStack(spacing: 0) {
-            // RAIL: 3-tab navigation (Media, Script, Projects)
-            VStack(spacing: 20) {
+            // RAIL: 3-tab navigation (Media, Script, Projects) + Quick Actions
+            VStack(spacing: 12) {
                 SidebarRailItem(icon: "film", label: "Media", tag: 0, selection: $selectedTab)
                 SidebarRailItem(icon: "doc.text", label: "Script", tag: 1, selection: $selectedTab)
                 SidebarRailItem(icon: "folder", label: "Projects", tag: 2, selection: $selectedTab)
+
+                Divider()
+                    .padding(.vertical, 8)
+
+                // Quick Actions (commonly hidden features)
+                Text("QUICK")
+                    .font(.system(size: 7, weight: .bold))
+                    .foregroundStyle(.tertiary)
+                    .textCase(.uppercase)
+                    .padding(.top, 4)
+
+                QuickActionButton(icon: "wand.and.stars", label: "Magic Fix", action: {
+                    NotificationCenter.default.post(name: NSNotification.Name("TriggerMagicFix"), object: nil)
+                })
+                .help("Magic Fix Selected Clip (⇧⌘M)")
+
+                QuickActionButton(icon: "photo", label: "Thumbnail", action: {
+                    NotificationCenter.default.post(name: NSNotification.Name("GenerateThumbnail"), object: nil)
+                })
+                .help("Generate AI Thumbnail (⌘T)")
+
+                QuickActionButton(icon: "waveform", label: "Voiceover", action: {
+                    NotificationCenter.default.post(name: NSNotification.Name("GenerateVoiceover"), object: nil)
+                })
+                .help("Generate Voiceover")
+
+                QuickActionButton(icon: "square.stack.3d.up", label: "Shorts", action: {
+                    NotificationCenter.default.post(name: NSNotification.Name("ShowRepurposingSheet"), object: nil)
+                })
+                .help("Create Shorts (⇧⌘R)")
 
                 Spacer()
                 
@@ -104,5 +134,33 @@ private struct SidebarRailItem: View {
         .hoverScale(1.1)
         .animation(.smoothUI, value: isSelected)
         .help(label)
+    }
+}
+
+// MARK: - Quick Action Button
+
+private struct QuickActionButton: View {
+    let icon: String
+    let label: String
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 4) {
+                Image(systemName: icon)
+                    .font(.system(size: 16))
+                    .foregroundStyle(Color.accentColor)
+
+                Text(label)
+                    .font(.system(size: 8, weight: .medium))
+                    .foregroundColor(.secondary)
+                    .lineLimit(1)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 6)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .hoverScale(1.1)
     }
 }

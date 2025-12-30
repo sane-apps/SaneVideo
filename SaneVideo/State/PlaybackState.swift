@@ -107,10 +107,19 @@ class PlaybackState {
     // nonisolated(unsafe) required for deinit access from any thread
     @ObservationIgnored nonisolated(unsafe) private var loadingTask: Task<Void, Never>?
 
+    // PERFORMANCE: Deferred loading - store pending project for lazy composition
+    private var pendingProject: VideoProject?
+    private var isCompositionReady: Bool = false
+
+    // PERFORMANCE: Debounce delay for project switching (ms)
+    private let compositionDebounceDelay: UInt64 = 300_000_000 // 300ms
+
     /// Reset playback state - call when switching projects
     func reset() {
         loadingTask?.cancel()
         loadingTask = nil
+        pendingProject = nil
+        isCompositionReady = false
         unload()
         lastLoadedProjectID = nil
         lastLoadedClipsHash = 0
@@ -119,21 +128,17 @@ class PlaybackState {
 
     func loadProject(_ project: VideoProject, forceReload: Bool = false) {
         // GUARD: Don't try to compose empty timelines - causes freeze
-        // Check if any track has any clips
         let hasClips = project.timeline.tracks.contains { !$0.clips.isEmpty }
         guard hasClips else {
             AppLogger.playback.debug("loadProject called with empty timeline - skipping composition")
-            // Still unload old player so we don't show stale video
             unload()
+            pendingProject = nil
+            isCompositionReady = false
             return
         }
 
         // Compute hash of clip IDs to detect actual content changes
-        // CRITICAL FIX: Use Hashable array order to ensure reordering triggers reload
-        // Hash all clips in all tracks
-        // Hash all clips in all tracks
         var hasher = Hasher()
-        // Include project-level properties that affect composition
         hasher.combine(project.captionOffset.width)
         hasher.combine(project.captionOffset.height)
         hasher.combine(project.captionStyleName)
@@ -152,31 +157,68 @@ class PlaybackState {
             return
         }
 
-        // Update tracking BEFORE async work to prevent race conditions
+        // Cancel any in-progress loading
+        loadingTask?.cancel()
+
+        // PERFORMANCE: Set duration immediately from timeline (no composition needed)
+        // This makes the UI responsive while composition happens in background
+        self.duration = project.timeline.duration
+        self.pendingProject = project
+        self.isCompositionReady = false
+
+        // Update tracking
         lastLoadedProjectID = project.id
         lastLoadedClipsHash = currentClipsHash
 
-        // CRITICAL FIX: Cancel any previous loading task to prevent races
-        loadingTask?.cancel()
-
+        // PERFORMANCE: Debounced composition - wait for user to stop clicking
+        // If user clicks another project within 300ms, this task gets cancelled
         loadingTask = Task {
+            // Wait for debounce period
+            try? await Task.sleep(nanoseconds: compositionDebounceDelay)
+
+            // Check if cancelled during debounce
+            guard !Task.isCancelled else { return }
+
             do {
                 let totalClips = project.timeline.tracks.reduce(0) { $0 + $1.clips.count }
                 AppLogger.playback.debug("Composing player item for project: \(project.name) with \(totalClips) clips")
                 let playerItem = try await ServiceContainer.shared.timelineEngine.composePlayerItem(for: project)
 
-                // Check if task was cancelled while composing
                 guard !Task.isCancelled else { return }
 
                 await MainActor.run {
                     self.unload()
                     self.setupPlayer(with: playerItem, duration: project.timeline.duration)
+                    self.isCompositionReady = true
+                    self.pendingProject = nil
                     AppLogger.playback.info("Loaded project \(project.name)")
                 }
             } catch {
                 guard !Task.isCancelled else { return }
                 AppLogger.playback.error("Failed to compose project timeline: \(error)")
             }
+        }
+    }
+
+    /// Force immediate composition (called when user clicks play on pending project)
+    private func ensureCompositionReady() async {
+        guard let project = pendingProject, !isCompositionReady else { return }
+
+        // Cancel debounced task and compose immediately
+        loadingTask?.cancel()
+
+        do {
+            AppLogger.playback.debug("Immediate composition for play: \(project.name)")
+            let playerItem = try await ServiceContainer.shared.timelineEngine.composePlayerItem(for: project)
+
+            await MainActor.run {
+                self.unload()
+                self.setupPlayer(with: playerItem, duration: project.timeline.duration)
+                self.isCompositionReady = true
+                self.pendingProject = nil
+            }
+        } catch {
+            AppLogger.playback.error("Failed to compose for play: \(error)")
         }
     }
 
@@ -252,7 +294,6 @@ class PlaybackState {
 
     func play() {
         // CRITICAL FIX: Validate timeline is not empty before play
-        // Note: loadProject already handles this, but double-check for safety
         guard let project = ServiceContainer.shared.appState.projectState.currentProject else {
             AppLogger.playback.warning("Cannot play: No project loaded")
             ServiceContainer.shared.toastManager.show("No project to play", type: .error)
@@ -265,6 +306,22 @@ class PlaybackState {
             ServiceContainer.shared.toastManager.show("Cannot play empty timeline. Add clips first.", type: .error)
             return
         }
+
+        // PERFORMANCE: If composition isn't ready yet, wait for it
+        if !isCompositionReady && pendingProject != nil {
+            Task {
+                await ensureCompositionReady()
+                await MainActor.run {
+                    self.startPlayback()
+                }
+            }
+            return
+        }
+
+        startPlayback()
+    }
+
+    private func startPlayback() {
         guard let player = player else { return }
         if player.currentTime() >= duration {
             player.seek(to: .zero)

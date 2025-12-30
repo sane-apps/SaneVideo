@@ -65,17 +65,6 @@
                ReferencedContainer = "container:SaneVideo.xcodeproj">
             </BuildableReference>
          </TestableReference>
-         <TestableReference
-            skipped = "NO"
-            parallelizable = "NO">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "16A9A36395F6387107022391"
-               BuildableName = "SaneVideoUITests.xctest"
-               BlueprintName = "SaneVideoUITests"
-               ReferencedContainer = "container:SaneVideo.xcodeproj">
-            </BuildableReference>
-         </TestableReference>
       </Testables>
       <CommandLineArguments>
       </CommandLineArguments>

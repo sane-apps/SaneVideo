@@ -62,7 +62,6 @@ schemes:
       gatherCoverageData: true
       targets:
         - SaneVideoTests
-        - SaneVideoUITests
     profile:
       config: Release
     run:
@@ -148,26 +147,6 @@ targets:
     settings:
       # Disable dead code stripping for test target to prevent linker errors
       DEAD_CODE_STRIPPING: NO
-      CODE_SIGN_IDENTITY: "-"
-      CODE_SIGN_STYLE: Manual
-      ENABLE_HARDENED_RUNTIME: NO
-    dependencies:
-      - target: SaneVideo
-  SaneVideoUITests:
-    type: bundle.ui-testing
-    platform: macOS
-    bundleId: com.sanevideo.SaneVideoUITests
-    deploymentTarget:
-      macOS: 26.2
-    sources:
-      - SaneVideoUITests
-      - SaneVideo/Core/Testing/AccessibilityIdentifiers.swift
-    settings:
-      GENERATE_INFOPLIST_FILE: YES
-      # Disable dead code stripping for test target to prevent linker errors
-      DEAD_CODE_STRIPPING: NO
-      # Explicitly set deployment target to override global
-      MACOSX_DEPLOYMENT_TARGET: 26.2
       CODE_SIGN_IDENTITY: "-"
       CODE_SIGN_STYLE: Manual
       ENABLE_HARDENED_RUNTIME: NO

@@ -1616,7 +1616,12 @@ class SaneMaster
       exit 1
     end
 
-    require 'xcodeproj'
+    begin
+      require 'xcodeproj'
+    rescue LoadError
+      puts '⚠️  Skipping XcodeGen check (run with: bundle exec ./Scripts/SaneMaster.rb)'
+      return
+    end
     project = Xcodeproj::Project.open(project_path)
     project_files = Set.new
 

@@ -6,7 +6,7 @@
 - **Status**: 🟡 IN PROGRESS (Enhanced logging + toast on recovery + improved save verification)
 - **Symptom**: User saw toast notification "⚠️ Project file corrupted" during app launch (seen multiple times)
 - **File(s)**: `SaneVideo/Services/Project/ProjectStore.swift`
-- **Root Cause**: 
+- **Root Cause**:
   1. **Save verification bug**: Only checked if file was empty, not if it was valid JSON
   2. This allowed invalid JSON to be saved, which would fail on next load
   3. Backup recovery would succeed, but user wasn't notified (silent recovery)

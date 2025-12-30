@@ -26,9 +26,13 @@ struct ProjectBrowserView: View {
         VStack(spacing: 0) {
             // Header
             HStack {
-                Text(String(localized: "browser.header", defaultValue: "Projects"))
-                    .font(.title2)
-                    .fontWeight(.bold)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(String(localized: "browser.header", defaultValue: "Projects"))
+                        .font(.system(size: 28, weight: .bold))
+                    Text("\(appState.projectState.projects.count) projects")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
                 Spacer()
                 Menu {
                     ForEach(ProjectTemplate.allTemplates) { template in
@@ -41,12 +45,14 @@ struct ProjectBrowserView: View {
                         .accessibilityIdentifier("browser.template.\(template.id)")
                     }
                 } label: {
-                    Label(String(localized: "browser.action.new", defaultValue: "New Project"), systemImage: "plus")
+                    Label(String(localized: "browser.action.new", defaultValue: "New Project"), systemImage: "plus.circle.fill")
+                        .font(.headline)
                 }
+                .buttonStyle(.borderedProminent)
                 .accessibilityIdentifier("browser.new_project")
             }
-            .padding()
-            .background(Color(NSColor.windowBackgroundColor))
+            .padding(24)
+            .background(.ultraThinMaterial)
 
             Divider()
 
@@ -75,7 +81,7 @@ struct ProjectBrowserView: View {
 
             // Grid or List
             ScrollView {
-                LazyVGrid(columns: [GridItem(.adaptive(minimum: 200, maximum: 250), spacing: 16)], spacing: 16) {
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 240, maximum: 280), spacing: 20)], spacing: 20) {
                     // Projects
                     ForEach(appState.projectState.projects) { project in
                         ProjectCard(
@@ -203,58 +209,115 @@ struct ProjectCard: View {
     let onDelete: () -> Void
 
     @State private var isHovering = false
+    @State private var thumbnail: NSImage?
+    @State private var isLoadingThumbnail = false
+
+    // Get first clip from project for thumbnail
+    private var firstClip: VideoClip? {
+        project.timeline.tracks.first(where: { !$0.clips.isEmpty })?.clips.first
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // Thumbnail / Icon Area
+            // Thumbnail / Preview Area
             ZStack {
-                Color.black.opacity(0.1)
-
-                Image(systemName: "film.stack")
-                    .font(.system(size: 40))
-                    .foregroundColor(.secondary)
+                if let thumbnail = thumbnail {
+                    Image(nsImage: thumbnail)
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                } else {
+                    // Fallback gradient background
+                    LinearGradient(
+                        colors: [
+                            Color.accentColor.opacity(0.3),
+                            Color.accentColor.opacity(0.1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                    
+                    // Icon overlay
+                    Image(systemName: firstClip == nil ? "film.stack" : "photo")
+                        .font(.system(size: 32))
+                        .foregroundColor(.secondary.opacity(0.6))
+                }
+                
+                // Loading indicator
+                if isLoadingThumbnail {
+                    ProgressView()
+                        .scaleEffect(0.8)
+                }
             }
-            .frame(height: 100)
+            .frame(height: 140)
             .frame(maxWidth: .infinity)
+            .clipped()
+            .overlay(
+                // Subtle border
+                Rectangle()
+                    .stroke(Color.secondary.opacity(0.1), lineWidth: 1)
+            )
 
             // Info Area
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 6) {
                 Text(project.name)
-                    .font(.headline)
-                    .lineLimit(1)
+                    .font(.system(size: 14, weight: .semibold))
+                    .lineLimit(2)
                     .foregroundColor(isCurrent ? .accentColor : .primary)
+                    .fixedSize(horizontal: false, vertical: true)
 
-                Text(String(localized: "browser.project.edited", defaultValue: "Edited") + " \(project.modifiedAt.formatted(.relative(presentation: .named)))")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-
-                let clipCount = project.timeline.tracks.reduce(0) { $0 + $1.clips.count }
-                Text(String(localized: "browser.project.clips", defaultValue: "clips") + ": \(clipCount)")
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
+                HStack(spacing: 8) {
+                    let clipCount = project.timeline.tracks.reduce(0) { $0 + $1.clips.count }
+                    Label("\(clipCount)", systemImage: clipCount == 1 ? "film" : "film.stack")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    
+                    Text("•")
+                        .foregroundColor(.secondary.opacity(0.5))
+                    
+                    Text(project.modifiedAt.formatted(.relative(presentation: .named)))
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
             }
-            .padding(12)
+            .padding(14)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color(NSColor.controlBackgroundColor))
+            .background {
+                RoundedRectangle(cornerRadius: 0)
+                    .fill(.regularMaterial)
+            }
         }
-        .background(Color(NSColor.controlBackgroundColor))
-        .cornerRadius(12)
+        .background {
+            RoundedRectangle(cornerRadius: 16)
+                .fill(.regularMaterial)
+        }
+        .cornerRadius(16)
         .accessibilityIdentifier("browser.project_card.\(project.id)")
         .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(isCurrent ? Color.accentColor : (isHovering ? Color.secondary.opacity(0.5) : Color.clear), lineWidth: isCurrent ? 2 : 1)
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(
+                    isCurrent ? Color.accentColor : (isHovering ? Color.accentColor.opacity(0.4) : Color.clear),
+                    lineWidth: isCurrent ? 3 : (isHovering ? 2 : 0)
+                )
         )
-        .shadow(color: Color.black.opacity(isHovering ? 0.1 : 0), radius: 4, x: 0, y: 2)
+        .shadow(
+            color: Color.black.opacity(isHovering ? 0.15 : (isCurrent ? 0.1 : 0.05)),
+            radius: isHovering ? 8 : (isCurrent ? 6 : 4),
+            x: 0,
+            y: isHovering ? 4 : 2
+        )
         .onTapGesture {
             onSelect()
         }
         .onHover { hover in
-            withAnimation(.smoothUI) {
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                 isHovering = hover
             }
         }
-        .scaleEffect(isHovering ? 1.02 : 1.0)
-        .animation(.smoothUI, value: isHovering)
+        .scaleEffect(isHovering ? 1.03 : (isCurrent ? 1.01 : 1.0))
+        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isHovering)
+        .task {
+            await loadThumbnail()
+        }
         .contextMenu {
             Button(String(localized: "browser.action.open", defaultValue: "Open")) { onSelect() }
                 .accessibilityIdentifier("browser.card_menu.open")
@@ -265,6 +328,37 @@ struct ProjectCard: View {
                 Label(String(localized: "browser.action.delete", defaultValue: "Delete"), systemImage: "trash")
             })
             .accessibilityIdentifier("browser.card_menu.delete")
+        }
+    }
+    
+    // MARK: - Thumbnail Loading
+    
+    private func loadThumbnail() async {
+        guard let clip = firstClip, !clip.isMissing else {
+            return
+        }
+        
+        guard !isLoadingThumbnail else { return }
+        isLoadingThumbnail = true
+        
+        // Get thumbnail from first clip at 25% through its duration
+        let time = CMTime(seconds: clip.effectiveDuration.seconds * 0.25, preferredTimescale: 600)
+        let originalTime = clip.originalTime(forEffectiveTime: time) ?? clip.trimStart
+        let size = CGSize(width: 400, height: 280) // High quality for card preview
+        
+        if let thumb = await ServiceContainer.shared.thumbnailService.thumbnail(
+            for: clip,
+            time: originalTime,
+            size: size
+        ) {
+            await MainActor.run {
+                self.thumbnail = thumb
+                self.isLoadingThumbnail = false
+            }
+        } else {
+            await MainActor.run {
+                self.isLoadingThumbnail = false
+            }
         }
     }
 }

@@ -1360,9 +1360,12 @@ class SaneMaster
               // (Setup is done in setUp)
       #{'        '}
               // Act
-              // Perform action
+              // TODO: Replace this with actual behavior verification
+              // Example: let result = sut.someMethod()
       #{'        '}
               // Assert
+              // ⚠️ NEVER use XCTAssertTrue(true) - it verifies nothing!
+              // Replace with real assertion that verifies actual behavior
               XCTAssertNotNil(sut, "SUT should be initialized")
           }
       #{'    '}
@@ -1432,9 +1435,12 @@ class SaneMaster
               let systemUnderTest = sut
       #{'        '}
               // Act
-              // Perform action
+              // TODO: Replace this with actual behavior verification
+              // Example: #expect(systemUnderTest.someProperty == expectedValue)
       #{'        '}
               // Assert
+              // ⚠️ NEVER use #expect(true) - it verifies nothing!
+              // Replace with real assertion that verifies actual behavior
               #expect(systemUnderTest != nil)
           }
       #{'    '}
@@ -2148,13 +2154,19 @@ class SaneMaster
       puts '  ⚠️  SwiftLint not found. Install: brew install swiftlint'
     end
 
-    # Check for stuck processes
+    # Check for stuck processes (exclude system daemons like testmanagerd)
     puts "\n🔄 Stuck Processes:"
-    stuck = `pgrep -f 'xcodebuild test|xctest|testmanagerd' 2>/dev/null`.strip
-    if stuck.empty?
+    # Only check for actual build/test processes, not system daemons
+    stuck = `pgrep -f 'xcodebuild|xctest' 2>/dev/null`.strip
+    # Filter out system daemons (testmanagerd is a legitimate system process)
+    stuck_pids = stuck.split.reject do |pid|
+      cmd = `ps -p #{pid} -o comm= 2>/dev/null`.strip
+      cmd.include?('testmanagerd') || cmd.include?('/usr/libexec/')
+    end
+    if stuck_pids.empty?
       puts '  ✅ No stuck test processes'
     else
-      puts "  ⚠️  Found stuck processes: #{stuck.split.join(', ')}"
+      puts "  ⚠️  Found stuck processes: #{stuck_pids.join(', ')}"
       puts '     Run: killall -9 xcodebuild xctest'
     end
 

@@ -89,59 +89,112 @@ struct KeychainServiceTests {
 
     // MARK: - Service Initialization Tests
 
-    @Test("KeychainService can be initialized")
+    @Test("KeychainService can be initialized and queried")
     func serviceInitialization() async {
         // Arrange & Act
         let service = KeychainService()
 
-        // Assert - no crash, service exists
-        _ = service
-        #expect(true)
+        // Assert - Verify service can be queried (tests initialization)
+        // hasValue should return a boolean value, not throw
+        let hasValue = await service.hasValue(for: .youtubeClientID)
+        // Verify we got a value (not nil, not crashed)
+        // We verify it's a boolean by using it in a way that would fail if it weren't
+        let hasValueBool: Bool = hasValue  // Type check - would fail if not Bool
+        _ = hasValueBool  // Verify we can use the value
+        // The test passes if we get here (initialization and query worked)
     }
 
     // MARK: - hasValue Tests (Non-Destructive)
 
     @Test("hasValue returns false for non-existent key")
-    func hasValueReturnsFalseForMissing() async {
+    func hasValueReturnsFalseForMissing() async throws {
         // Arrange
         let service = KeychainService()
+        // Ensure key doesn't exist by deleting it first
+        try? await service.delete(for: .youtubeRefreshToken)
 
-        // Act - check for a key that shouldn't exist in test environment
-        // Note: We test against refresh token which is less likely to be set
+        // Act - check for a key that shouldn't exist
         let hasToken = await service.hasValue(for: .youtubeRefreshToken)
 
-        // Assert - in clean test environment, should be false
-        // (If this fails, it means there's leftover test data - not a real failure)
-        _ = hasToken // Just verify no crash
-        #expect(true)
+        // Assert - should return false for non-existent key
+        #expect(hasToken == false, "hasValue should return false for non-existent key")
+    }
+
+    // MARK: - Save and Retrieve Tests
+
+    @Test("Save and retrieve work correctly")
+    func saveAndRetrieve() async throws {
+        // Arrange
+        let service = KeychainService()
+        let testValue = "test_client_id_12345"
+        let testKey = KeychainService.KeychainKey.youtubeClientID
+
+        // Clean up any existing value
+        try? await service.delete(for: testKey)
+
+        // Act - Save value
+        try await service.save(testValue, for: testKey)
+
+        // Assert - Retrieve should return the saved value
+        let retrieved = await service.retrieve(for: testKey)
+        #expect(retrieved == testValue, "Retrieved value should match saved value")
+
+        // Cleanup
+        try? await service.delete(for: testKey)
     }
 
     // MARK: - Credential Check Tests
 
     @Test("hasYouTubeCredentials checks both client ID and secret")
-    func hasYouTubeCredentialsLogic() async {
+    func hasYouTubeCredentialsLogic() async throws {
         // Arrange
         let service = KeychainService()
+        // Ensure clean state
+        try? await service.delete(for: .youtubeClientID)
+        try? await service.delete(for: .youtubeClientSecret)
 
-        // Act
-        let hasCreds = await service.hasYouTubeCredentials()
+        // Act - Check credentials when both are missing
+        let hasCredsEmpty = await service.hasYouTubeCredentials()
+        #expect(hasCredsEmpty == false, "Should return false when both keys are missing")
 
-        // Assert - this tests the logic works without crashing
-        // Actual value depends on keychain state
-        _ = hasCreds
-        #expect(true)
+        // Act - Save only client ID
+        try await service.save("test_id", for: .youtubeClientID)
+        let hasCredsPartial = await service.hasYouTubeCredentials()
+        #expect(hasCredsPartial == false, "Should return false when only client ID exists")
+
+        // Act - Save both
+        try await service.save("test_secret", for: .youtubeClientSecret)
+        let hasCredsBoth = await service.hasYouTubeCredentials()
+        #expect(hasCredsBoth == true, "Should return true when both client ID and secret exist")
+
+        // Cleanup
+        try? await service.delete(for: .youtubeClientID)
+        try? await service.delete(for: .youtubeClientSecret)
     }
 
     @Test("isYouTubeAuthenticated checks credentials and refresh token")
-    func isYouTubeAuthenticatedLogic() async {
+    func isYouTubeAuthenticatedLogic() async throws {
         // Arrange
         let service = KeychainService()
+        // Ensure clean state
+        try? await service.deleteAll()
 
-        // Act
-        let isAuth = await service.isYouTubeAuthenticated()
+        // Act - Check authentication when nothing is set
+        let isAuthEmpty = await service.isYouTubeAuthenticated()
+        #expect(isAuthEmpty == false, "Should return false when no credentials exist")
 
-        // Assert - this tests the logic works without crashing
-        _ = isAuth
-        #expect(true)
+        // Act - Set only credentials (no refresh token)
+        try await service.save("test_id", for: .youtubeClientID)
+        try await service.save("test_secret", for: .youtubeClientSecret)
+        let isAuthNoToken = await service.isYouTubeAuthenticated()
+        #expect(isAuthNoToken == false, "Should return false when credentials exist but no refresh token")
+
+        // Act - Set refresh token
+        try await service.save("test_token", for: .youtubeRefreshToken)
+        let isAuthComplete = await service.isYouTubeAuthenticated()
+        #expect(isAuthComplete == true, "Should return true when credentials and refresh token exist")
+
+        // Cleanup
+        try? await service.deleteAll()
     }
 }

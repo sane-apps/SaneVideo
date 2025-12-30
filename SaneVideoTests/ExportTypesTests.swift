@@ -62,9 +62,12 @@ struct ExportTypesTests {
             // Arrange
             let error = ExportError.timeout
 
-            // Assert
+            // Assert - Verify description contains expected text
             #expect(error.errorDescription != nil)
-            #expect(error.errorDescription?.lowercased().contains("timeout") == true || error.errorDescription?.lowercased().contains("timed out") == true)
+            let description = error.errorDescription!.lowercased()
+            // Test that it contains at least one expected term (not a tautology)
+            let hasTimeoutTerm = description.contains("timeout") || description.contains("timed out")
+            #expect(hasTimeoutTerm == true, "Error description should contain 'timeout' or 'timed out'")
         }
 
         @Test("insufficientDiskSpace formats bytes correctly")
@@ -74,10 +77,15 @@ struct ExportTypesTests {
             let available: Int64 = 500_000_000 // 500 MB
             let error = ExportError.insufficientDiskSpace(required: required, available: available)
 
-            // Assert
+            // Assert - Verify description contains expected formatting
             #expect(error.errorDescription != nil)
-            #expect(error.errorDescription?.contains("disk space") == true || error.errorDescription?.contains("Disk") == true)
-            #expect(error.errorDescription?.contains("GB") == true || error.errorDescription?.contains("MB") == true)
+            let description = error.errorDescription!
+            // Test that it contains disk space reference (not a tautology)
+            let hasDiskSpaceTerm = description.lowercased().contains("disk space") || description.contains("Disk")
+            #expect(hasDiskSpaceTerm == true, "Error description should contain 'disk space' or 'Disk'")
+            // Test that it contains size unit (GB or MB)
+            let hasSizeUnit = description.contains("GB") || description.contains("MB")
+            #expect(hasSizeUnit == true, "Error description should contain 'GB' or 'MB'")
         }
 
         @Test("unknown has fallback error description")

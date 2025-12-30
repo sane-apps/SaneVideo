@@ -91,18 +91,34 @@ class ProjectState {
 
     // MARK: - Undo Manager (SwiftUI's built-in)
 
-    var undoManager: UndoManager?
+    var undoManager: UndoManager? {
+        didSet {
+            // CRITICAL: Disable automatic run-loop grouping so each registerUndo
+            // call becomes its own undo step. Without this, multiple operations
+            // in the same run loop pass would be grouped into one undo action.
+            // We use explicit beginUndoGroup/endUndoGroup when we want grouping.
+            undoManager?.groupsByEvent = false
+        }
+    }
 
     // MARK: - Undo Helper
 
     func registerUndo(_ actionName: String) {
         guard let project = currentProject else { return }
+        guard let undoManager = undoManager else { return }
+
+        // CRITICAL: With groupsByEvent = false, each undo registration must be
+        // wrapped in its own explicit group. This ensures each operation becomes
+        // a separate undo step that can be undone individually.
+        undoManager.beginUndoGrouping()
+
         // Capture the ENTIRE project state (value type) for robust undo
-        undoManager?.registerUndo(withTarget: self) { target in
+        undoManager.registerUndo(withTarget: self) { target in
             target.restoreProjectState(project)
         }
-        undoManager?.setActionName(actionName)
-        // Note: Toast removed - showing "Undo: X" before action completes was confusing UX
+        undoManager.setActionName(actionName)
+
+        undoManager.endUndoGrouping()
     }
 
     /// Begin an undo group for multiple related operations

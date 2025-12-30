@@ -1,3 +1,24 @@
+# Bug Tracking
+
+## Session 2025-12-30
+
+### Project File Corruption Notification
+- **Status**: 🟡 IN PROGRESS (Logging improved)
+- **Symptom**: User saw toast notification "⚠️ Project file corrupted" during app launch
+- **File(s)**: `SaneVideo/Services/Project/ProjectStore.swift`
+- **Root Cause**: Project file failed to decode, backup recovery attempted but may have also failed
+- **Investigation**:
+  - Checked all 30 project files: ✅ All currently parse as valid JSON
+  - Notification likely occurred during previous launch
+  - Current logging doesn't capture enough detail (file path, error type, backup status)
+- **Fix Applied**:
+  - Enhanced logging to capture exact error details (error type, localized description)
+  - Added UI log entries for corruption events (visible in debug log)
+  - Logs now show: file path, error type, backup recovery status, success/failure
+- **Next Steps**: Monitor logs on next launch to identify which project file triggers corruption
+
+---
+
 # Bug Tracking - Session 2025-12-28
 
 ## Build History

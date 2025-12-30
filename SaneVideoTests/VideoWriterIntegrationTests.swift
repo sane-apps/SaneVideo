@@ -135,8 +135,12 @@ struct VideoWriterIntegrationTests {
         async let result2 = writer.finish()
         let (url1, url2) = await (result1, result2)
 
-        // Assert - both should return the same result
-        #expect((url1 == nil && url2 == nil) || (url1 == url2))
+        // Assert - both should return the same result (idempotent behavior)
+        if url1 == nil {
+            #expect(url2 == nil, "If first result is nil, second should also be nil")
+        } else {
+            #expect(url1 == url2, "Both calls should return the same URL")
+        }
 
         // Cleanup
         try? FileManager.default.removeItem(at: tempURL)
@@ -145,18 +149,21 @@ struct VideoWriterIntegrationTests {
 
     // MARK: - PiP Frame Update Tests
 
-    @Test("UpdatePiPFrame stores frame position")
+    @Test("UpdatePiPFrame completes without error")
     func updatePiPFrameStoresPosition() async throws {
         // Arrange
         let writer = await VideoWriter()
         let pipFrame = CGRect(x: 100, y: 100, width: 200, height: 200)
         let screenFrame = CGRect(x: 0, y: 0, width: 1920, height: 1080)
+        let initialIsWriting = await writer.isWriting
 
         // Act
         await writer.updatePiPFrame(pipFrame, screenFrame: screenFrame)
 
-        // Assert - no crash
-        #expect(true)
+        // Assert - Method completed without error, writer state remains valid
+        let finalIsWriting = await writer.isWriting
+        #expect(finalIsWriting == initialIsWriting, "Writer state should remain unchanged")
+        #expect(finalIsWriting == false, "Writer should not be writing before start()")
     }
 
     @Test("UpdatePiPFrame throttles rapid updates")
@@ -164,6 +171,7 @@ struct VideoWriterIntegrationTests {
         // Arrange
         let writer = await VideoWriter()
         let screenFrame = CGRect(x: 0, y: 0, width: 1920, height: 1080)
+        let initialIsWriting = await writer.isWriting
 
         // Act - rapid updates (should be throttled to ~30fps)
         for i in 0..<100 {
@@ -171,34 +179,39 @@ struct VideoWriterIntegrationTests {
             await writer.updatePiPFrame(frame, screenFrame: screenFrame)
         }
 
-        // Assert - no crash
-        #expect(true)
+        // Assert - Method completed without error, writer state remains valid
+        let finalIsWriting = await writer.isWriting
+        #expect(finalIsWriting == initialIsWriting, "Writer state should remain unchanged after rapid updates")
     }
 
     @Test("UpdatePiPFrame handles nil gracefully")
     func updatePiPFrameHandlesNil() async throws {
         // Arrange
         let writer = await VideoWriter()
+        let initialIsWriting = await writer.isWriting
 
         // Act
         await writer.updatePiPFrame(nil, screenFrame: nil)
 
-        // Assert - no crash
-        #expect(true)
+        // Assert - Method completed without error, writer state remains valid
+        let finalIsWriting = await writer.isWriting
+        #expect(finalIsWriting == initialIsWriting, "Writer state should remain unchanged")
     }
 
     // MARK: - Camera Frame Update Tests
 
-    @Test("UpdateCameraFrame stores frame")
+    @Test("UpdateCameraFrame completes without error")
     func updateCameraFrameStores() async throws {
         // Arrange
         let writer = await VideoWriter()
+        let initialIsWriting = await writer.isWriting
 
         // Act - pass nil (camera frame cleared)
         await writer.updateCameraFrame(nil)
 
-        // Assert - no crash
-        #expect(true)
+        // Assert - Method completed without error, writer state remains valid
+        let finalIsWriting = await writer.isWriting
+        #expect(finalIsWriting == initialIsWriting, "Writer state should remain unchanged")
     }
 
     // MARK: - Write Guards Tests

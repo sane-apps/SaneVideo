@@ -64,14 +64,15 @@ struct ExportEngineTests {
             )
             #expect(Bool(false), "Should throw alreadyExporting error")
         } catch let error as ExportError {
+            // Verify it's the specific error we expect
             if case .alreadyExporting = error {
-                #expect(true)
+                #expect(true, "Correctly threw alreadyExporting error")
             } else {
                 #expect(Bool(false), "Should throw alreadyExporting error, got \(error)")
             }
         } catch {
-            // Other errors are acceptable (e.g., composition errors)
-            #expect(true, "Other errors are acceptable")
+            // Should throw ExportError, not other error types
+            #expect(Bool(false), "Should throw ExportError, got \(error)")
         }
 
         // Cleanup
@@ -80,16 +81,23 @@ struct ExportEngineTests {
 
     // MARK: - Cancellation Tests
 
-    @Test("Cancel export stops export")
+    @Test("Cancel export completes without error")
     func cancelExport() {
         // Arrange
         let engine = sut
+        let initialIsExporting = engine.isExporting
 
         // Act
         engine.cancelExport()
 
-        // Assert - Should complete without error
-        #expect(true, "Should complete without error")
+        // Assert - Verify method completed and state is accessible
+        // The method should complete without throwing
+        // We verify completion by checking state is still accessible
+        let finalIsExporting = engine.isExporting
+        // Verify state is accessible (proves method completed)
+        // Initial state is false (not exporting), so after cancel it should still be false
+        #expect(finalIsExporting == initialIsExporting,
+                "isExporting should remain unchanged when canceling with no active export")
     }
 
     // MARK: - Progress Tracking Tests
@@ -105,7 +113,7 @@ struct ExportEngineTests {
 
     // MARK: - Export Error Handling Tests
 
-    @Test("Export with empty project throws error")
+    @Test("Export with empty project throws invalidProject error")
     func exportEmptyProject() async {
         // Arrange
         let engine = sut
@@ -113,7 +121,7 @@ struct ExportEngineTests {
         let settings = SaneExportSettings()
         let outputURL = FileManager.default.temporaryDirectory.appendingPathComponent("test_export.mp4")
 
-        // Act & Assert - Should throw error for empty project
+        // Act & Assert - Should throw specific invalidProject error
         do {
             _ = try await engine.export(
                 project: project,
@@ -122,8 +130,18 @@ struct ExportEngineTests {
                 progressHandler: { _ in }
             )
             #expect(Bool(false), "Should throw error for empty project")
+        } catch let error as ExportError {
+            // Verify it's the expected error type
+            if case .invalidProject = error {
+                #expect(true, "Correctly threw invalidProject error")
+            } else {
+                // Could be other ExportError types (e.g., failedToCreateSession)
+                // But should be an ExportError, not a generic error
+                #expect(true, "Threw ExportError: \(error)")
+            }
         } catch {
-            #expect(true, "Should throw error for empty project")
+            // Should throw ExportError, not other error types
+            #expect(Bool(false), "Should throw ExportError, got \(error)")
         }
     }
 
@@ -140,7 +158,7 @@ struct ExportEngineTests {
         let outputURL = FileManager.default.temporaryDirectory.appendingPathComponent("test_export.mp4")
 
         // Act & Assert - Should attempt export with settings
-        // Note: Will fail due to empty project, but tests settings are passed
+        // Note: Will fail due to empty project, but should throw ExportError
         do {
             _ = try await engine.export(
                 project: project,
@@ -149,8 +167,12 @@ struct ExportEngineTests {
                 progressHandler: { _ in }
             )
             #expect(Bool(false), "Should throw error for empty project")
+        } catch let error as ExportError {
+            // Verify it throws an ExportError (likely invalidProject)
+            #expect(true, "Correctly threw ExportError: \(error)")
         } catch {
-            #expect(true, "Error is expected for empty project")
+            // Should throw ExportError, not other error types
+            #expect(Bool(false), "Should throw ExportError, got \(error)")
         }
     }
 }

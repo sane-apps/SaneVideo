@@ -113,6 +113,10 @@ Rules are ordered by priority. **Tier 1 rules prevent disasters** — read them 
 ### Tier 3: Code Quality (Maintain standards)
 
 7. **SAFETY FIRST**: Every bug fix **MUST** have a regression test. Create tests as you go using `./Scripts/SaneMaster.rb gen_test`.
+   - **Test Quality**: Tests must verify **actual behavior**, not just that code doesn't crash.
+   - **NEVER use placeholders**: `#expect(true)` or `#expect(true, "message")` verify nothing and are forbidden.
+   - **NEVER use tautologies**: `#expect(a == true || a == false)` always passes and provides zero value.
+   - **Verify specific outcomes**: Test return values, state changes, error types, not just "does not crash".
 
 8. **BUG TRACKING (CRITICAL)**: Document ALL bugs in `BUG_TRACKING.md` immediately when discovered.
    - **During session**: Use TodoWrite to track active work (ephemeral)
@@ -743,6 +747,21 @@ Regression tests are critical for preventing the reintroduction of fixed bugs.
 - **Assets**: Use `SaneMaster.rb gen_assets` to create lightweight test media. Use `TestEnvironment` to load heavy media only when necessary.
 - **Log Output**: `SaneMaster.rb` automatically mirrors raw test logs to `test_output.txt` to prevent terminal freezes.
 - **Test Hygiene**: `test_output.txt` is automatically removed by `./Scripts/SaneMaster.rb clean`. If running manual `xcodebuild`, please redirect output manually (`> output.txt 2>&1`) and clean up afterwards.
+
+### Test Anti-Patterns (NEVER DO THIS)
+
+**These patterns always pass and provide zero value:**
+
+| ❌ Anti-Pattern | Why It's Wrong | ✅ Correct Approach |
+|----------------|----------------|---------------------|
+| `#expect(true)` or `#expect(true, "message")` | Verifies nothing - always passes | `#expect(result == expectedValue)` |
+| `#expect(a == true \|\| a == false)` | Tautology - always passes | `#expect(a == expectedValue)` |
+| `#expect(a != b \|\| a == b)` | Tautology - always passes | `#expect(a == b)` or `#expect(a != b)` |
+| `#expect(type(of: x) == Type.self)` | Type check is always true if x is Type | `#expect(x.property == expectedValue)` |
+| `#expect(array.count >= 0)` | Array count is always >= 0 | `#expect(array.count == expectedCount)` |
+| "Does not crash" tests | Only verify compilation, not behavior | Test actual state changes, return values, or error types |
+
+**When a test fails**: Investigate WHY the code is wrong. Don't "fix" by weakening assertions to `#expect(true)`.
 
 ---
 

@@ -73,6 +73,10 @@ class ScreenRecorder: NSObject, ScreenRecorderProtocol, SCContentSharingPickerOb
     setupDisplayObserver()
   }
 
+  deinit {
+    NotificationCenter.default.removeObserver(self)
+  }
+
   private func setupDisplayObserver() {
     NotificationCenter.default.addObserver(
       self,

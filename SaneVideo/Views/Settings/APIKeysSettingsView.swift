@@ -15,14 +15,6 @@ struct APIKeysSettingsView: View {
     @State private var youtubeClientSecret = ""
     @State private var showYouTubeSecret = false
 
-    // OpenAI
-    @State private var openAIKey = ""
-    @State private var showOpenAIKey = false
-
-    // Gemini
-    @State private var geminiKey = ""
-    @State private var showGeminiKey = false
-
     // UI State
     @State private var showingClearAlert = false
     @State private var saveError: String?
@@ -89,116 +81,6 @@ struct APIKeysSettingsView: View {
                             }
                             .buttonStyle(.borderless)
                             .accessibilityIdentifier("settings.youtube.clear")
-                        }
-                    }
-                }
-                .padding(.vertical, 4)
-            }
-
-            // OpenAI Section
-            Section {
-                VStack(alignment: .leading, spacing: 12) {
-                    HStack {
-                        Image(systemName: "brain")
-                            .foregroundColor(.green)
-                        Text(String(localized: "settings.openai.header", defaultValue: "OpenAI"))
-                            .font(.headline)
-                        Spacer()
-                        statusBadge(configured: keyManager.hasOpenAIKey)
-                    }
-
-                    Text(String(localized: "settings.openai.description", defaultValue: "Used for AI-powered video title and description suggestions. Get your key from [OpenAI Platform](https://platform.openai.com/api-keys)."))
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-
-                    HStack {
-                        Text(String(localized: "settings.openai.key_label", defaultValue: "API Key"))
-                            .frame(width: 100, alignment: .leading)
-                        Group {
-                            if showOpenAIKey {
-                                TextField("sk-...", text: $openAIKey)
-                            } else {
-                                SecureField("sk-...", text: $openAIKey)
-                            }
-                        }
-                        .textFieldStyle(.roundedBorder)
-                        .accessibilityIdentifier("settings.openai.key")
-
-                        Button(action: { showOpenAIKey.toggle() }, label: {
-                            Image(systemName: showOpenAIKey ? "eye.slash" : "eye")
-                        })
-                        .buttonStyle(.borderless)
-                        .accessibilityIdentifier("settings.openai.toggle_secret")
-                    }
-
-                    HStack {
-                        Button(String(localized: "settings.openai.action.save", defaultValue: "Save OpenAI Key")) {
-                            saveOpenAIKey()
-                        }
-                        .disabled(openAIKey.isEmpty)
-                        .accessibilityIdentifier("settings.openai.save")
-
-                        if keyManager.hasOpenAIKey {
-                            Button(String(localized: "settings.openai.action.clear", defaultValue: "Clear"), role: .destructive) {
-                                clearOpenAIKey()
-                            }
-                            .buttonStyle(.borderless)
-                            .accessibilityIdentifier("settings.openai.clear")
-                        }
-                    }
-                }
-                .padding(.vertical, 4)
-            }
-
-            // Gemini Section
-            Section {
-                VStack(alignment: .leading, spacing: 12) {
-                    HStack {
-                        Image(systemName: "sparkles")
-                            .foregroundColor(.blue)
-                        Text(String(localized: "settings.gemini.header", defaultValue: "Google Gemini"))
-                            .font(.headline)
-                        Spacer()
-                        statusBadge(configured: keyManager.hasGeminiKey)
-                    }
-
-                    Text(String(localized: "settings.gemini.description", defaultValue: "Alternative AI provider for title/description generation. Get your key from [Google AI Studio](https://aistudio.google.com/app/apikey)."))
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-
-                    HStack {
-                        Text(String(localized: "settings.gemini.key_label", defaultValue: "API Key"))
-                            .frame(width: 100, alignment: .leading)
-                        Group {
-                            if showGeminiKey {
-                                TextField(String(localized: "settings.gemini.key_placeholder", defaultValue: "Enter API Key"), text: $geminiKey)
-                            } else {
-                                SecureField(String(localized: "settings.gemini.key_placeholder", defaultValue: "Enter API Key"), text: $geminiKey)
-                            }
-                        }
-                        .textFieldStyle(.roundedBorder)
-                        .accessibilityIdentifier("settings.gemini.key")
-
-                        Button(action: { showGeminiKey.toggle() }, label: {
-                            Image(systemName: showGeminiKey ? "eye.slash" : "eye")
-                        })
-                        .buttonStyle(.borderless)
-                        .accessibilityIdentifier("settings.gemini.toggle_secret")
-                    }
-
-                    HStack {
-                        Button(String(localized: "settings.gemini.action.save", defaultValue: "Save Gemini Key")) {
-                            saveGeminiKey()
-                        }
-                        .disabled(geminiKey.isEmpty)
-                        .accessibilityIdentifier("settings.gemini.save")
-
-                        if keyManager.hasGeminiKey {
-                            Button(String(localized: "settings.gemini.action.clear", defaultValue: "Clear"), role: .destructive) {
-                                clearGeminiKey()
-                            }
-                            .buttonStyle(.borderless)
-                            .accessibilityIdentifier("settings.gemini.clear")
                         }
                     }
                 }
@@ -311,42 +193,6 @@ struct APIKeysSettingsView: View {
     private func clearYouTubeCredentials() {
         Task {
             try? await keyManager.clearYouTubeCredentials()
-        }
-    }
-
-    private func saveOpenAIKey() {
-        Task {
-            do {
-                try await keyManager.saveOpenAIKey(openAIKey)
-                openAIKey = ""
-                withAnimation { showingSaveSuccess = true }
-            } catch {
-                saveError = error.localizedDescription
-            }
-        }
-    }
-
-    private func clearOpenAIKey() {
-        Task {
-            try? await keyManager.clearOpenAIKey()
-        }
-    }
-
-    private func saveGeminiKey() {
-        Task {
-            do {
-                try await keyManager.saveGeminiKey(geminiKey)
-                geminiKey = ""
-                withAnimation { showingSaveSuccess = true }
-            } catch {
-                saveError = error.localizedDescription
-            }
-        }
-    }
-
-    private func clearGeminiKey() {
-        Task {
-            try? await keyManager.clearGeminiKey()
         }
     }
 

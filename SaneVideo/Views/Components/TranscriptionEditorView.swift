@@ -150,7 +150,7 @@ struct TranscriptionEditorView: View {
         Task {
             do {
                 // Use dynamic provider selection (prefers on-device, falls back to cloud if available)
-                let refined = try await ServiceContainer.shared.aiService.refineCaptionsWithBestProvider(clip.captions, prompt: "Refine captions for clarity and grammar")
+                let refined = try await ServiceContainer.shared.aiService.refineCaptions(clip.captions)
                 await MainActor.run {
                     appState.projectState.updateCaptions(refined, for: clip)
                     isRefining = false

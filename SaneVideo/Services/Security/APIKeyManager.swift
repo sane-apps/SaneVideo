@@ -18,8 +18,6 @@ class APIKeyManager {
 
     private(set) var hasYouTubeCredentials: Bool = false
     private(set) var isYouTubeAuthenticated: Bool = false
-    private(set) var hasOpenAIKey: Bool = false
-    private(set) var hasGeminiKey: Bool = false
 
     init() {
         Task {
@@ -35,8 +33,6 @@ class APIKeyManager {
 
         hasYouTubeCredentials = await keychain.hasYouTubeCredentials()
         isYouTubeAuthenticated = await keychain.isYouTubeAuthenticated()
-        hasOpenAIKey = await keychain.hasValue(for: .openAIKey)
-        hasGeminiKey = await keychain.hasValue(for: .geminiKey)
     }
 
     // MARK: - YouTube Credentials
@@ -90,52 +86,6 @@ class APIKeyManager {
         try await keychain.delete(for: .youtubeClientID)
         try await keychain.delete(for: .youtubeClientSecret)
         try await keychain.delete(for: .youtubeRefreshToken)
-        await refreshStatus()
-    }
-
-    // MARK: - OpenAI Key
-
-    /// Save OpenAI API key
-    func saveOpenAIKey(_ key: String) async throws {
-        guard !key.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            throw APIKeyError.emptyValue
-        }
-
-        try await ServiceContainer.shared.keychainService.save(key.trimmingCharacters(in: .whitespacesAndNewlines), for: .openAIKey)
-        await refreshStatus()
-    }
-
-    /// Get OpenAI API key
-    func getOpenAIKey() async -> String? {
-        await ServiceContainer.shared.keychainService.retrieve(for: .openAIKey)
-    }
-
-    /// Clear OpenAI API key
-    func clearOpenAIKey() async throws {
-        try await ServiceContainer.shared.keychainService.delete(for: .openAIKey)
-        await refreshStatus()
-    }
-
-    // MARK: - Gemini Key
-
-    /// Save Gemini API key
-    func saveGeminiKey(_ key: String) async throws {
-        guard !key.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            throw APIKeyError.emptyValue
-        }
-
-        try await ServiceContainer.shared.keychainService.save(key.trimmingCharacters(in: .whitespacesAndNewlines), for: .geminiKey)
-        await refreshStatus()
-    }
-
-    /// Get Gemini API key
-    func getGeminiKey() async -> String? {
-        await ServiceContainer.shared.keychainService.retrieve(for: .geminiKey)
-    }
-
-    /// Clear Gemini API key
-    func clearGeminiKey() async throws {
-        try await ServiceContainer.shared.keychainService.delete(for: .geminiKey)
         await refreshStatus()
     }
 

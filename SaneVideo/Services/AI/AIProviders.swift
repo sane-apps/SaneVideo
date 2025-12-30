@@ -6,20 +6,16 @@
 import Foundation
 
 enum AIProvider {
-    case openAI
-    case gemini
     case appleFoundation
 }
 
 enum AIError: Error, LocalizedError {
-    case noAPIKey
     case invalidResponse
     case networkError(Error)
     case apiError(String)
 
     var errorDescription: String? {
         switch self {
-        case .noAPIKey: return "No API key configured. Please add your API key to Secrets.swift"
         case .invalidResponse: return "Invalid response from AI service"
         case let .networkError(error): return "Network error: \(error.localizedDescription)"
         case let .apiError(message): return "API error: \(message)"

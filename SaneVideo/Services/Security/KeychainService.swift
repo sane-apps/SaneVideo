@@ -18,16 +18,12 @@ actor KeychainService {
         case youtubeClientID = "youtube_client_id"
         case youtubeClientSecret = "youtube_client_secret"
         case youtubeRefreshToken = "youtube_refresh_token"
-        case openAIKey = "openai_api_key"
-        case geminiKey = "gemini_api_key"
 
         var displayName: String {
             switch self {
             case .youtubeClientID: return "YouTube Client ID"
             case .youtubeClientSecret: return "YouTube Client Secret"
             case .youtubeRefreshToken: return "YouTube Refresh Token"
-            case .openAIKey: return "OpenAI API Key"
-            case .geminiKey: return "Gemini API Key"
             }
         }
     }

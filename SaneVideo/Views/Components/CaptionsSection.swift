@@ -448,8 +448,8 @@ struct CaptionsSection: View {
         }
 
         do {
-            // Use dynamic provider selection (prefers on-device, falls back to cloud if available)
-            let refinedCaptions = try await ServiceContainer.shared.aiService.refineCaptionsWithBestProvider(clip.captions, prompt: "Refine captions for clarity and grammar")
+            // Use Apple Intelligence for caption refinement (on-device)
+            let refinedCaptions = try await ServiceContainer.shared.aiService.refineCaptions(clip.captions)
             appState.projectState.updateCaptions(for: clip, newCaptions: refinedCaptions)
             ServiceContainer.shared.toastManager.show(
                 String(localized: "toast.captions_refined", defaultValue: "Captions refined!")

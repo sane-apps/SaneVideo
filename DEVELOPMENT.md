@@ -14,22 +14,40 @@
 
 **New to this project? Start here:**
 
-1. **Bootstrap runs automatically** - When you open this project in Claude Code, `bootstrap` runs automatically via SessionStart hook
-2. **Read this file** (DEVELOPMENT.md) - It's the single source of truth (SOP = Standard Operating Procedure)
-3. **Check current status**:
-   - Tests are working! (see section 8)
-   - Unit tests run by default with `verify`
-   - Visual tests are excluded (manual testing only)
-4. **Use SaneMaster.rb**: All tools are in `./Scripts/SaneMaster.rb`
-5. **Reference docs**: See section 9 for documentation structure
+1. **Bootstrap runs automatically** - The `.claude/settings.json` SessionStart hook runs `./Scripts/SaneMaster.rb bootstrap` when you open this project
+2. **Read the Golden Rules** (Section 1) - Especially Tier 1 rules (#1-3) which prevent hallucinations
+3. **Know the Self-Rating requirement** - After every change, rate yourself 1-10 on SOP adherence (see Section 1)
+4. **Use SaneMaster.rb**: All tools are in `./Scripts/SaneMaster.rb` — never use raw `xcodebuild`
+5. **Tests are working**: Unit tests run with `verify`, UI tests with `verify --ui`
+
+**Your first action when user says "check our SOP" or "use our SOP":**
+```bash
+./Scripts/SaneMaster.rb bootstrap  # Verify environment (may already have run)
+./Scripts/SaneMaster.rb verify     # Build + unit tests
+```
 
 **Key Commands:**
 
 ```bash
 ./Scripts/SaneMaster.rb bootstrap  # Environment check + auto-update (runs on session start)
-./Scripts/SaneMaster.rb verify     # Build + unit tests (fast)
+./Scripts/SaneMaster.rb verify     # Build + unit tests (fast, ~30s)
+./Scripts/SaneMaster.rb verify --ui  # Build + unit + UI tests (~60s)
 ./Scripts/SaneMaster.rb test_suite --quick  # Comprehensive validation
 ```
+
+**SessionStart Hook (How Auto-Bootstrap Works):**
+
+The `.claude/settings.json` file contains:
+```json
+"hooks": {
+  "SessionStart": [{ "command": "./Scripts/SaneMaster.rb bootstrap" }]
+}
+```
+
+This runs automatically when you open the project. If bootstrap fails:
+1. Check the error message
+2. Run `./Scripts/SaneMaster.rb doctor` for diagnostics
+3. See Section 6 (Troubleshooting)
 
 **Bootstrap Features:**
 - Auto-updates Ruby, bundle, Homebrew tools
@@ -61,45 +79,94 @@
 
 ## 1. The 13 Golden Rules (CRITICAL)
 
-1. **USE SaneMaster.rb FIRST**: Use `./Scripts/SaneMaster.rb` for verification, setup, and diagnostics.
-2. **VERIFY LOGS ALWAYS**: Run `./Scripts/SaneMaster.rb diagnose --dump` after every build/test to see runtime logs (e.g. `ProjectStore initialized at...`).
-3. **FILE CREATION = XCODEGEN**: If you create a new file, run `xcodegen generate` immediately.
-4. **FILE SIZE LIMITS**: Soft limit **500 lines** (warning), hard limit **800 lines** (error). Files 500-800 lines trigger SwiftLint warnings but commits are allowed. Files over 800 lines are blocked.
-   - **Split by responsibility, not by line count.** A well-constructed 650-line file with clear MARK sections and single responsibility is preferable to two files that break logical cohesion.
-   - **Good splits**: Protocol conformances (delegates), feature domains (ClipManagement, Analysis), lifecycle concerns (Setup, Switching).
-   - **Bad splits**: Arbitrary cuts just to hit a number.
-   - The limits exist to trigger review ("is this file doing too much?"), not mandate splitting.
-5. **SAFETY FIRST**: Every bug fix **MUST** have a regression test. Create tests as you go using `./Scripts/SaneMaster.rb gen_test`.
-6. **BUG TRACKING (CRITICAL)**: Document ALL bugs in `BUG_TRACKING.md` immediately when discovered.
-   - This is a **permanent record** that persists across sessions
-   - Include: Status, Screenshot filename, Symptom, File(s), Root cause (if known)
-   - Update status as bugs are fixed (🔴 OPEN → 🟡 IN PROGRESS → ✅ FIXED)
-   - Helps future sessions understand history and avoid regression
-7. **SDK IS THE SOURCE OF TRUTH (CRITICAL)**:
+Rules are ordered by priority. **Tier 1 rules prevent disasters** — read them first.
+
+### Tier 1: Anti-Hallucination (READ FIRST)
+
+1. **SDK IS THE SOURCE OF TRUTH (CRITICAL)**:
    - **NEVER trust web search for API existence or signatures**.
    - **ALWAYS query the SDK directly** before assuming an API exists or is deprecated.
    - The SDK `.swiftinterface` files are the **authoritative source**.
    - **Verification flow**:
      1. `./Scripts/SaneMaster.rb verify_api <APIName> [Framework]` — Verify API exists in SDK
      2. `apple-docs` MCP server — Get usage examples, related APIs, WWDC context
-   - See workflow: `.agent/workflows/sdk-api-verification.md`
    - Example: `./Scripts/SaneMaster.rb verify_api faceCaptureQuality Vision`
-8. **TWO-FIX RULE (CRITICAL)**: If you fail twice in a row, **STOP GUESSING**. Look up the SDK (rule 7) or web search for documentation. Never attempt a third guess.
-9. **WEB SEARCH IS SECONDARY**: Only use web search for understanding *why* or *how* after verifying with SDK.
-10. **FIX THE TOOL, NOT THE SYMPTOM**:
-    - **Trigger**: Persistent errors or repetitive manual work.
-    - **Action**: STOP. Fix or upgrade the underlying tool (`SaneMaster.rb`).
-11. **MISSING TOOL = UPGRADE SANEMASTER**: Do not create separate scripts. Upgrade the central `SaneMaster.rb`.
-12. **AUTOMATIC BUILD & LAUNCH WITH LOGGING (CRITICAL)**: After making code changes, you **MUST**:
-    - Build the app: `./Scripts/SaneMaster.rb verify`
-    - Kill any running instances: `killall -9 SaneVideo`
-    - Launch with live logging: `./Scripts/SaneMaster.rb launch` followed by `./Scripts/SaneMaster.rb logs --follow` in background
-    - This enables real-time debugging and verification that changes work as expected
-    - **Rationale**: Old instances can hold stale state, and live logs are essential for debugging user-reported issues
-13. **CLEAN SLATE — DON'T TRUST TRAINING DATA**:
-    - Do NOT rely on internal training data for project specifics (window names, view hierarchies, API signatures).
-    - Use `grep`/`find` to discover the actual codebase state.
-    - The codebase changes; training data is stale.
+
+2. **TWO-FIX RULE (CRITICAL)**: If you fail twice in a row, **STOP GUESSING**.
+   - Don't try a third approach — you're likely missing information
+   - Go back to Rule #1: verify the API exists in SDK
+   - Check documentation or ask user
+   - Why: Third-attempt guessing wastes tokens and often makes things worse
+
+3. **WEB SEARCH IS SECONDARY**: Only use web search for understanding *why* or *how* after verifying API exists with SDK. Never use web search to confirm if an API exists.
+
+### Tier 2: Core Workflow (Do these every session)
+
+4. **USE SaneMaster.rb FIRST**: Use `./Scripts/SaneMaster.rb` for verification, setup, and diagnostics. Never use raw `xcodebuild` commands.
+
+5. **AUTOMATIC BUILD & LAUNCH WITH LOGGING (CRITICAL)**: After making code changes, you **MUST**:
+   - Build the app: `./Scripts/SaneMaster.rb verify`
+   - Kill any running instances: `killall -9 SaneVideo`
+   - Launch with live logging: `./Scripts/SaneMaster.rb launch` followed by `./Scripts/SaneMaster.rb logs --follow`
+   - **Rationale**: Old instances can hold stale state, and live logs are essential for debugging
+
+6. **VERIFY LOGS ALWAYS**: Run `./Scripts/SaneMaster.rb diagnose --dump` after every build/test to see runtime logs (e.g. `ProjectStore initialized at...`).
+
+### Tier 3: Code Quality (Maintain standards)
+
+7. **SAFETY FIRST**: Every bug fix **MUST** have a regression test. Create tests as you go using `./Scripts/SaneMaster.rb gen_test`.
+
+8. **BUG TRACKING (CRITICAL)**: Document ALL bugs in `BUG_TRACKING.md` immediately when discovered.
+   - **During session**: Use TodoWrite to track active work (ephemeral)
+   - **After session**: Update BUG_TRACKING.md for permanent record
+   - Include: Status (🔴 OPEN → 🟡 IN PROGRESS → ✅ FIXED), Screenshot filename, Symptom, File(s), Root cause
+   - **Flow**: User reports bug → TodoWrite entry → Fix → Mark complete → Update BUG_TRACKING.md
+
+9. **FILE CREATION = XCODEGEN**: If you create a new file, run `xcodegen generate` immediately.
+
+10. **FILE SIZE LIMITS**: Soft limit **500 lines** (warning), hard limit **800 lines** (error).
+    - **Split by responsibility, not by line count.** A well-constructed 650-line file is preferable to two files that break logical cohesion.
+    - **Good splits**: Protocol conformances, feature domains, lifecycle concerns.
+    - **Bad splits**: Arbitrary cuts just to hit a number.
+
+### Tier 4: Meta/System (System improvement)
+
+11. **FIX THE TOOL, NOT THE SYMPTOM**: If you encounter persistent errors or repetitive manual work, STOP. Fix or upgrade `SaneMaster.rb` instead of working around the issue.
+
+12. **MISSING TOOL = UPGRADE SANEMASTER**: Do not create separate scripts. Add functionality to `SaneMaster.rb`.
+
+13. **ALWAYS VERIFY CURRENT STATE**: Do NOT rely on training data for project specifics (window names, view hierarchies, API signatures). Use `grep`/`find` to discover the actual codebase state. The codebase changes; training data is stale.
+
+---
+
+### Self-Rating After Changes (MANDATORY)
+
+After completing ANY code change, fix, or task, you **MUST** rate yourself 1-10 on SOP adherence:
+
+```
+**Self-rating: X/10**
+- ✅ What you did well (SOP compliance)
+- ❌ What you missed or could improve
+```
+
+**Rating Guide:**
+| Score | Meaning | Example |
+|-------|---------|---------|
+| 9-10 | Flawless SOP execution | Used SaneMaster, ran verify, killed processes, checked logs, added regression test |
+| 7-8 | Good, minor misses | Did most things right but forgot to check logs |
+| 5-6 | Acceptable, notable gaps | Built with xcodebuild directly (should use SaneMaster), skipped logs |
+| 3-4 | Poor, multiple violations | Guessed at APIs without SDK verification, no tests |
+| 1-2 | Failed to follow SOP | Ignored most rules, made random changes |
+
+**Key SOP items to self-check:**
+- [ ] Used SaneMaster.rb (not raw xcodebuild)?
+- [ ] Ran verify after code changes?
+- [ ] Killed old instances before launch?
+- [ ] Checked logs after changes?
+- [ ] Added regression test for bug fixes?
+- [ ] Used SDK verification before assuming API exists (Rule #1)?
+- [ ] Followed Two-Fix Rule (stopped guessing after 2 failures)?
+- [ ] Documented bugs appropriately?
 
 ---
 
@@ -277,6 +344,32 @@ Always diagnostics after a run:
 
 *Why?* This ensures you see "ProjectStore initialized at..." and other critical runtime events that Xcode/MCP might swallow.
 
+#### 4. Test Mode vs Verify: When to Use Which
+
+| Scenario | Command | What It Does |
+|----------|---------|--------------|
+| After code changes | `./Scripts/SaneMaster.rb verify` | Build + run unit tests (automated, ~30s) |
+| Before committing | `./Scripts/SaneMaster.rb verify --ui` | Build + unit + UI tests (automated, ~60s) |
+| User testing live | See "Test Mode" below | Kill → Build → Launch → Stream logs |
+| Debugging crash | See Section 6 | Crash analysis workflow |
+
+**Key distinction:**
+- **`verify`** = Automated, no user interaction, confirms code compiles and tests pass
+- **Test Mode** = Interactive, user provides feedback, you watch logs in real-time
+
+**Test Mode workflow (when user says "test mode" or you need live debugging):**
+```bash
+killall -9 SaneVideo                      # Kill stale processes
+./Scripts/SaneMaster.rb verify            # Build
+./Scripts/SaneMaster.rb launch            # Launch app
+./Scripts/SaneMaster.rb logs --follow     # Stream logs (in background)
+```
+
+Monitor these resources while user tests:
+- **Debug log**: `~/Movies/SaneVideo/SaneVideo_Debug.log`
+- **Screenshots**: `Screenshots/` in project root
+- **Crash reports**: `~/Library/Logs/DiagnosticReports/SaneVideo-*.ips`
+
 ---
 
 ## 6. Troubleshooting
@@ -290,6 +383,25 @@ Always diagnostics after a run:
 ### Crash/Log Analysis SOP (MANDATORY for Debugging)
 
 **When to use this**: After ANY crash, freeze, or unexpected behavior. Run this **before** attempting fixes.
+
+#### Quick Decision Tree
+
+```
+App problem?
+    │
+    ├─ App still running but misbehaving?
+    │   └─ Check logs: ./Scripts/SaneMaster.rb logs --follow
+    │
+    ├─ App crashed/exited?
+    │   └─ Check crash reports: ls ~/Library/Logs/DiagnosticReports/ | grep -i sane
+    │       │
+    │       ├─ Crash files exist? → Analyze with Step 2 below
+    │       └─ No crash files? → Check application logs (Step 3)
+    │
+    └─ App frozen/hanging?
+        └─ Kill it: killall -9 SaneVideo
+            └─ Then check logs and relaunch
+```
 
 #### Step 0: The "Nuclear" Relaunch (CRITICAL)
 
@@ -620,6 +732,10 @@ Regression tests are critical for preventing the reintroduction of fixed bugs.
 
 ### Reference Documentation
 
+**Feature Planning**:
+
+- **ROADMAP.md**: Discussed features for future consideration. Check this when user asks "what features have we discussed?" or similar.
+
 **Testing (Current Status)**:
 
 - **TESTING_SUMMARY.md**: Quick reference for testing status and alternative methods
@@ -661,8 +777,9 @@ The following files are historical records and should NOT be used as primary sou
 
 1. **Read this entire file (DEVELOPMENT.md)** - It's the single source of truth
 2. **Check AI_AGENT_QUICK_START.md** - Quick reference (but this file is authoritative)
-3. **Use SaneMaster.rb** - Don't run raw xcodebuild commands
-4. **Always dump logs** - Critical for debugging
+3. **Check ROADMAP.md** - If user asks about previously discussed features
+4. **Use SaneMaster.rb** - Don't run raw xcodebuild commands
+5. **Always dump logs** - Critical for debugging
 
 ### Mandatory Workflow After Code Changes
 

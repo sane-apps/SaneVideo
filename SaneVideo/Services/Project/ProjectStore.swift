@@ -95,6 +95,16 @@ final class ProjectStore: ProjectStoreProtocol {
                 var projects: [VideoProject] = []
 
                 for fileURL in projectFiles {
+                    // CRITICAL: Check if file exists BEFORE trying to read it
+                    // This prevents false "corrupted" errors for files that were deleted
+                    let fileManager = FileManager.default
+                    guard fileManager.fileExists(atPath: fileURL.path) else {
+                        AppLogger.project.warning("⚠️ Project file not found (may have been deleted): \(fileURL.lastPathComponent)")
+                        AppLogger.uiLog.warning("Project file missing: \(fileURL.lastPathComponent) - file was deleted or moved")
+                        // Skip this project - don't show error for missing files
+                        continue
+                    }
+                    
                     do {
                         // Load file data
                         let data = try Data(contentsOf: fileURL)
@@ -143,18 +153,23 @@ final class ProjectStore: ProjectStoreProtocol {
                         // CRITICAL: Enhanced logging for corruption detection
                         let errorDetails = "\(error.localizedDescription) (type: \(type(of: error)))"
                         
-                        // Check if file exists (might be missing, not corrupted)
-                        let fileManager = FileManager.default
-                        let fileExists = fileManager.fileExists(atPath: fileURL.path)
-                        
-                        if !fileExists {
-                            // File doesn't exist - this is different from corruption
-                            AppLogger.project.warning("⚠️ Project file not found (may have been deleted): \(fileURL.lastPathComponent)")
+                        // Check if error is "file not found" (might have been deleted between listing and reading)
+                        let nsError = error as NSError
+                        if nsError.domain == NSCocoaErrorDomain && nsError.code == NSFileReadNoSuchFileError {
+                            AppLogger.project.warning("⚠️ Project file not found (deleted after listing): \(fileURL.lastPathComponent)")
                             AppLogger.uiLog.warning("Project file missing: \(fileURL.lastPathComponent) - file was deleted or moved")
                             // Skip this project - don't show error for missing files
                             continue
                         }
                         
+                        // Double-check file still exists (race condition)
+                        if !fileManager.fileExists(atPath: fileURL.path) {
+                            AppLogger.project.warning("⚠️ Project file not found (deleted during read): \(fileURL.lastPathComponent)")
+                            AppLogger.uiLog.warning("Project file missing: \(fileURL.lastPathComponent) - file was deleted or moved")
+                            continue
+                        }
+                        
+                        // File exists but failed to load - this is actual corruption
                         AppLogger.project.error("❌ Failed to load project at \(fileURL.path): \(errorDetails)")
                         AppLogger.uiLog.error("Project corruption detected: \(fileURL.lastPathComponent) - \(errorDetails)")
 

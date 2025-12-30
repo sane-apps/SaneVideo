@@ -3,24 +3,29 @@
 ## Session 2025-12-30
 
 ### Project File Corruption Notification
-- **Status**: 🟡 IN PROGRESS (Enhanced logging + toast on recovery + improved save verification)
-- **Symptom**: User saw toast notification "⚠️ Project file corrupted" during app launch (seen multiple times)
+- **Status**: 🟡 IN PROGRESS (Enhanced logging + toast on recovery + improved save verification + missing file handling)
+- **Symptom**: User saw toast notification "⚠️ Project file corrupted: 78018B20-EDFB-463E-A53F-B3D335B36021.svproj" during app launch
 - **File(s)**: `SaneVideo/Services/Project/ProjectStore.swift`
 - **Root Cause**:
   1. **Save verification bug**: Only checked if file was empty, not if it was valid JSON
   2. This allowed invalid JSON to be saved, which would fail on next load
   3. Backup recovery would succeed, but user wasn't notified (silent recovery)
+  4. **NEW ISSUE**: App references deleted project (file doesn't exist) - should show "not found" not "corrupted"
 - **Investigation**:
   - Checked all 30 project files: ✅ All currently parse as valid JSON
-  - Log file overwrites on each launch, so previous errors are lost
-  - **CRITICAL FINDING**: Save verification was incomplete - didn't validate JSON structure
+  - **CRITICAL**: Project file `78018B20-EDFB-463E-A53F-B3D335B36021.svproj` does NOT exist
+  - Project was deleted but app still has reference to it
+  - App should distinguish between "missing" vs "corrupted" files
 - **Fix Applied**:
   - Enhanced logging to capture exact error details (error type, localized description)
   - Added UI log entries for corruption events (visible in debug log)
   - **NEW**: Show toast notification even when backup recovery succeeds (so user knows file was corrupted)
   - **NEW**: Save verification now validates JSON structure (not just empty check)
   - Logs now show: file path, error type, backup recovery status, success/failure
-- **Next Steps**: Monitor logs on next launch. Save verification will now catch invalid JSON before it's saved.
+- **Next Steps**: 
+  - Add handling for missing files (distinguish from corrupted)
+  - Check where deleted project references come from (app state, user defaults, etc.)
+  - Show "Project not found" instead of "corrupted" for missing files
 
 ---
 

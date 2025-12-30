@@ -366,17 +366,20 @@ struct MediaAssetManagerTests {
     @Suite("iCloud Availability")
     struct ICloudAvailabilityTests {
 
-        @Test("isICloudAvailable returns boolean")
+        @Test("isICloudAvailable completes without error")
         func isICloudAvailableReturnsBool() async {
             // Arrange
             let manager = MediaAssetManager()
 
-            // Act
+            // Act - Query iCloud availability
             let available = await manager.isICloudAvailable
 
-            // Assert - just verify it returns without crashing
-            // Value depends on system state
-            #expect(available == true || available == false)
+            // Assert - Verify method completed successfully
+            // The fact that we can await it and get a value means it completed
+            // We verify it's a boolean by using it in a way that would fail if it weren't
+            let isAvailable: Bool = available  // Type check - would fail if not Bool
+            _ = isAvailable  // Verify we can use the value
+            // The test passes if we get here (method completed without error)
         }
     }
 

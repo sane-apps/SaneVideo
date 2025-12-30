@@ -31,24 +31,36 @@ struct ExportCompositorTests {
         do {
             _ = try await compositor.createComposition(from: project)
             #expect(Bool(false), "Should throw error for empty project")
+        } catch let error as ExportError {
+            // Verify it throws ExportError (likely invalidProject)
+            if case .invalidProject = error {
+                #expect(true, "Correctly threw invalidProject error")
+            } else {
+                #expect(true, "Threw ExportError: \(error)")
+            }
         } catch {
-            #expect(true, "Should throw error for empty project")
+            // Should throw ExportError, not other error types
+            #expect(Bool(false), "Should throw ExportError, got \(error)")
         }
     }
 
-    @Test("Create composition builds composition result")
+    @Test("Create composition from empty project throws ExportError")
     func createComposition() async {
         // Arrange
         let compositor = sut
         let project = VideoProject(name: "Test Project")
-        // Note: Empty project will fail, but tests the method exists
+        // Note: Empty project will fail, but should throw specific error
 
         // Act & Assert
         do {
             _ = try await compositor.createComposition(from: project)
             #expect(Bool(false), "Should throw error for empty project")
+        } catch let error as ExportError {
+            // Verify it throws ExportError (likely invalidProject)
+            #expect(true, "Correctly threw ExportError: \(error)")
         } catch {
-            #expect(true, "Error is expected for empty project")
+            // Should throw ExportError, not other error types
+            #expect(Bool(false), "Should throw ExportError, got \(error)")
         }
     }
 

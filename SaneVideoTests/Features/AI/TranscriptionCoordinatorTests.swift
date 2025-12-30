@@ -26,8 +26,9 @@ struct TranscriptionCoordinatorTests {
         // Arrange & Act
         let coordinator = sut
 
-        // Assert
-        #expect(coordinator.selectedEngine == .apple || coordinator.selectedEngine == .whisperKit, "Should have a default engine")
+        // Assert - Default engine is WhisperKit (from TranscriptionEngine.default)
+        // Verify it's the actual default, not "either one" (which is a tautology)
+        #expect(coordinator.selectedEngine == .whisperKit, "Default engine should be WhisperKit")
         #expect(coordinator.shouldSuggestWhisperKit == false, "Should not suggest WhisperKit initially")
     }
 

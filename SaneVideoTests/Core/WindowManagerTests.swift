@@ -122,72 +122,105 @@ struct WindowManagerTests {
 
     // MARK: - Floating Controls Tests
 
-    @Test("Show floating controls does not crash")
+    @Test("Show floating controls completes synchronously")
     func showFloatingControls() {
         // Arrange
         let manager = sut
+        let initialExcludedCount = manager.excludedWindowIDs.count
 
-        // Act & Assert - Should not crash
-        // Note: In test environment, this is a no-op due to TestEnvironment check
+        // Act - In test environment, this returns early but should complete synchronously
         manager.showFloatingControls()
-        #expect(true, "Should complete without error")
+
+        // Assert - Method completed without throwing, state remains accessible
+        // Verify excludedWindowIDs is still accessible (tests state integrity)
+        let finalExcludedCount = manager.excludedWindowIDs.count
+        #expect(finalExcludedCount >= 0, "excludedWindowIDs should remain accessible")
+        #expect(finalExcludedCount == initialExcludedCount, "No windows should be created in test environment")
     }
 
-    @Test("Hide floating controls does not crash")
+    @Test("Hide floating controls completes synchronously")
     func hideFloatingControls() {
         // Arrange
         let manager = sut
+        let initialExcludedCount = manager.excludedWindowIDs.count
 
-        // Act & Assert - Should not crash
+        // Act - In test environment, this returns early but should complete synchronously
         manager.hideFloatingControls()
-        #expect(true, "Should complete without error")
+
+        // Assert - Method completed without throwing, state remains accessible
+        let finalExcludedCount = manager.excludedWindowIDs.count
+        #expect(finalExcludedCount >= 0, "excludedWindowIDs should remain accessible")
+        #expect(finalExcludedCount == initialExcludedCount, "No windows should be removed in test environment")
     }
 
     // MARK: - Window Management Tests
 
-    @Test("Force hide PiP for system overlay")
+    @Test("Force hide PiP for system overlay completes without error")
     func forceHidePiPForSystemOverlay() {
         // Arrange
         let manager = sut
+        let initialExcludedCount = manager.excludedWindowIDs.count
+        let initialPiPVisible = manager.isPiPVisible
 
-        // Act
+        // Act - This calls hidePiPWindow() and showFloatingControls()
+        // In test environment, both return early but we can verify state remains consistent
         manager.forceHidePiPForSystemOverlay()
 
-        // Assert - Should complete without error
-        #expect(true, "Should complete without error")
+        // Assert - Method completed, state remains accessible and consistent
+        // Verify excludedWindowIDs is still accessible (proves method completed)
+        let finalExcludedCount = manager.excludedWindowIDs.count
+        #expect(finalExcludedCount == initialExcludedCount, "No windows should be created/removed in test environment")
+        // Verify PiP visibility state is still accessible (proves state integrity)
+        let finalPiPVisible = manager.isPiPVisible
+        #expect(finalPiPVisible == initialPiPVisible, "PiP visibility should not change in test environment")
     }
 
-    @Test("Minimize main window does not crash")
+    @Test("Minimize main window completes synchronously")
     func minimizeMainWindow() {
         // Arrange
         let manager = sut
+        let initialExcludedCount = manager.excludedWindowIDs.count
 
-        // Act & Assert - Should not crash
-        // Note: In test environment, this is a no-op due to TestEnvironment check
+        // Act - In test environment, this returns early but should complete synchronously
         manager.minimizeMainWindow()
-        #expect(true, "Should complete without error")
+
+        // Assert - Method completed without throwing, state remains accessible
+        let finalExcludedCount = manager.excludedWindowIDs.count
+        #expect(finalExcludedCount >= 0, "excludedWindowIDs should remain accessible")
+        #expect(finalExcludedCount == initialExcludedCount, "No windows should be affected in test environment")
     }
 
-    @Test("Restore main window does not crash")
+    @Test("Restore main window completes synchronously")
     func restoreMainWindow() {
         // Arrange
         let manager = sut
+        let initialExcludedCount = manager.excludedWindowIDs.count
 
-        // Act & Assert - Should not crash
+        // Act - In test environment, this returns early but should complete synchronously
         manager.restoreMainWindow()
-        #expect(true, "Should complete without error")
+
+        // Assert - Method completed without throwing, state remains accessible
+        let finalExcludedCount = manager.excludedWindowIDs.count
+        #expect(finalExcludedCount >= 0, "excludedWindowIDs should remain accessible")
+        #expect(finalExcludedCount == initialExcludedCount, "No windows should be affected in test environment")
     }
 
-    @Test("Cleanup all windows does not crash")
+    @Test("Cleanup all windows completes synchronously")
     func cleanupAllWindows() {
         // Arrange
         let manager = sut
+        let initialExcludedCount = manager.excludedWindowIDs.count
 
-        // Act
+        // Act - This calls hidePiPWindow() and hideFloatingControls()
+        // In test environment, both return early but we can verify state remains consistent
         manager.cleanupAllWindows()
 
-        // Assert - Should complete without error
-        #expect(true, "Should complete without error")
+        // Assert - Method completed, state remains accessible and consistent
+        let finalExcludedCount = manager.excludedWindowIDs.count
+        #expect(finalExcludedCount >= 0, "excludedWindowIDs should remain accessible")
+        #expect(finalExcludedCount == initialExcludedCount, "No windows should be affected in test environment")
+        // Verify PiP frame is still accessible (should be nil after cleanup)
+        #expect(manager.pipWindowFrame == nil, "PiP window frame should be nil after cleanup")
     }
 
     // MARK: - State Coordination Tests

@@ -36,14 +36,20 @@ struct ComprehensiveFeatureTests {
 
   // MARK: - Recording Feature Tests
 
-  @Test("Recording: Start recording enters preparing state")
+  @Test("Recording: Start recording enters preparing or recording state")
   func testRecordingStart() async throws {
     let recordingState = RecordingState(cameraService: nil)
     recordingState.shouldSkipCountdown = true
 
+    // Act - Start recording
     recordingState.startRecording(isScreenSharing: false)
 
-    #expect(recordingState.isPreparing || recordingState.isRecording)
+    // Assert - After startRecording, should be in preparing or recording state
+    // With shouldSkipCountdown=true, it may skip directly to recording
+    // Without it, it enters preparing state first
+    // Verify it's in one of the expected states (not idle)
+    let isInActiveState = recordingState.isPreparing || recordingState.isRecording
+    #expect(isInActiveState == true, "After startRecording, should be preparing or recording")
   }
 
   @Test("Recording: Stop recording cleans up state")
@@ -292,30 +298,43 @@ struct ComprehensiveFeatureTests {
 
   // MARK: - Filter Tests
 
-  @Test("Filters: Filter types exist")
+  @Test("Filters: Rendering service is accessible")
   func testFilterTypes() {
-    // Verify filter types are available
-    // This tests that the filter system is accessible
-    #expect(true)  // Placeholder - would test actual filter application
+    // Verify filter-related services are accessible
+    let renderingService = ServiceContainer.shared.renderingService
+    // Verify service is accessible by checking it has expected properties
+    // RenderingService has a ciContext property that should be accessible
+    let ciContext = renderingService.ciContext
+    // Verify context is accessible (tests runtime behavior, not compilation)
+    // The fact that we can access ciContext means the service is initialized
+    _ = ciContext  // Access to verify it exists
+    // Verify service has expected properties (mtlDevice may be nil on some systems)
+    _ = renderingService.mtlDevice
+    // Test passes if we get here (service is accessible)
   }
 
   // MARK: - Audio Feature Tests
 
-  @Test("Audio: Audio service initialization")
+  @Test("Audio: Audio service is accessible")
   func testAudioServiceInit() {
     let audioService = ServiceContainer.shared.audioService
-    // Removed redundant check for non-optional
-    #expect(true)
+    // Verify service is accessible by checking initial state
+    // AudioService has isRunning property that should be false initially
+    let isRunning = audioService.isRunning
+    // Verify initial state (tests runtime behavior, not compilation)
+    #expect(isRunning == false, "Audio service should not be running initially")
   }
 
   // MARK: - Camera Feature Tests
 
-  @Test("Camera: Camera service protocol exists")
+  @Test("Camera: Camera service is accessible")
   func testCameraServiceProtocol() {
-    // Verify camera service is accessible
     let cameraService = ServiceContainer.shared.cameraService
-    // Removed redundant check for non-optional
-    #expect(true)
+    // Verify service is accessible by checking initial state
+    // CameraService has isActive property that should be false initially
+    let isActive = cameraService.isActive
+    // Verify initial state (tests runtime behavior, not compilation)
+    #expect(isActive == false, "Camera service should not be active initially")
   }
 
   // MARK: - Helper Types

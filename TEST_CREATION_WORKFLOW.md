@@ -4,6 +4,8 @@
 >
 > This document defines the exact process for creating tests. Follow it precisely.
 > Rate yourself against the checklist after every test file created.
+>
+> **SOP Integration**: This workflow explicitly maps to the 13 Golden Rules from `DEVELOPMENT.md` to ensure SOP compliance and accurate self-assessment.
 
 ---
 
@@ -12,6 +14,8 @@
 **NEVER write test code that uses a type, struct, class, or method without first reading its actual definition.**
 
 Guessing API signatures wastes time and tokens. Verify first, code second.
+
+**This aligns with SOP Rules #1 (SDK Verification) and #13 (Verify Current State).**
 
 ---
 
@@ -92,12 +96,37 @@ grep "Suite.*ServiceName" test_output.txt
 
 ## Common Mistakes to Avoid
 
+### API/Implementation Mistakes
+
 | Mistake | Example | Fix |
 |---------|---------|-----|
 | Guessing initializer params | `PrivacyRegion(boundingBox:, type:)` | Read source: actual is `PrivacyRegion(timeRange:, frame:)` |
 | Assuming mock has all properties | `mock.currentCameraID` | Read Mocks.swift: property not in protocol |
 | Assuming publisher behavior | `CurrentValueSubject` auto-emits | Mock uses `PassthroughSubject` - must manually send |
 | Wrong parameter names | `timestamp:` vs `time:` | Grep for exact struct definition |
+
+### Critical: Test Tautologies (NEVER DO THIS)
+
+**These patterns always pass and provide zero value:**
+
+| ❌ Bad Pattern | Why It's Wrong | ✅ Fix |
+|---------------|----------------|---------|
+| `#expect(a == true \|\| a == false)` | Always passes (tautology) | `#expect(a == expectedValue)` |
+| `#expect(a != b \|\| a == b)` | Always passes (tautology) | `#expect(a == b)` or `#expect(a != b)` |
+| `#expect(true)` | Meaningless | `#expect(result == expected)` |
+| `#expect(true, "message")` | Placeholder, adds no value | Replace with real assertion |
+
+**Detection commands:**
+```bash
+# Find tautologies
+grep -r "#expect(true" SaneVideoTests/
+grep -r "#expect.*||" SaneVideoTests/
+
+# Current status: ~36 instances of #expect(true, "...") placeholders exist
+# Files with most: WindowManagerTests.swift (6), KeychainServiceTests.swift (4)
+```
+
+**When test fails → investigate WHY the code is wrong. Don't "fix" by weakening assertions.**
 
 ---
 
@@ -115,23 +144,41 @@ When using a mock from `Mocks.swift`:
 
 ## Self-Rating Checklist (MANDATORY)
 
-After creating each test file, rate yourself 1-10:
+After creating each test file, rate yourself 1-10. **Each item maps to a specific SOP Golden Rule.**
 
-### Pre-Writing (40 points)
-- [ ] (10) Used `Task(Explore)` or `Read` to verify ALL APIs before writing
-- [ ] (10) Verified struct/type initializers with `Grep` or `Read`
-- [ ] (10) Checked if mock exists and read its definition
-- [ ] (10) Confirmed no duplicate test file exists
+### Pre-Writing (40 points - SOP Rules #1, #13)
 
-### Writing (30 points)
-- [ ] (10) Used `gen_test` for scaffold OR followed AAA pattern
-- [ ] (10) Test names describe behavior, not implementation
-- [ ] (10) Tests are isolated (no dependencies between tests)
+| Check | Points | SOP Rule | Tool Used |
+|-------|--------|----------|-----------|
+| Read source file | 10 | #1, #13 | `Read` or `Task(Explore)` |
+| Verified API signatures | 10 | #1 | `grep` or `verify_api` |
+| Checked mock exists | 10 | #13 | `grep "Mock" Mocks.swift` |
+| No duplicate test file | 10 | #13 | `find SaneVideoTests` |
 
-### Post-Writing (30 points)
-- [ ] (10) Ran `xcodegen generate` after creating file
-- [ ] (10) Ran `./Scripts/SaneMaster.rb verify`
-- [ ] (10) Verified test suite appears in output and passes
+**SOP Rule #1**: SDK/API Verification - Always verify before assuming
+**SOP Rule #13**: Verify Current State - Don't rely on training data
+
+### Writing (30 points - SOP Rule #7)
+
+| Check | Points | SOP Rule | Tool Used |
+|-------|--------|----------|-----------|
+| Used gen_test or AAA pattern | 10 | #7 | `gen_test` |
+| **No tautologies** | 10 | #7 | Manual review |
+| Tests are isolated | 10 | #7 | Manual review |
+
+**SOP Rule #7**: Safety First - Every bug fix MUST have a regression test. Tests must verify actual behavior, not tautologies.
+
+### Post-Writing (30 points - SOP Rules #5, #6, #9)
+
+| Check | Points | SOP Rule | Tool Used |
+|-------|--------|----------|-----------|
+| Ran xcodegen generate | 10 | #9 | `xcodegen generate` |
+| Ran verify | 10 | #5 | `./Scripts/SaneMaster.rb verify` |
+| Verified test passes | 10 | #6 | `grep "Suite" test_output.txt` |
+
+**SOP Rule #5**: Automatic Build & Launch - Always verify after changes
+**SOP Rule #6**: Verify Logs Always - Check test output
+**SOP Rule #9**: File Creation = XcodeGen - Run after creating file
 
 ### Scoring
 | Score | Rating |
@@ -206,8 +253,56 @@ Self-rate against checklist.
 
 ## Integration with Main SOP
 
-This workflow extends DEVELOPMENT.md rules:
-- **Rule #1**: SDK verification → Extended to internal APIs via Explore/Read
-- **Rule #7**: Use gen_test → Now with mandatory pre-verification
-- **Rule #9**: xcodegen after file creation → Still required
-- **Rule #13**: Verify current state → Enforced via Explore step
+This workflow explicitly maps to DEVELOPMENT.md Golden Rules:
+
+| SOP Rule | How It Applies | Tools |
+|----------|----------------|-------|
+| **#1: SDK Verification** | Verify APIs before using (Apple APIs: `verify_api`, internal: `Read`/`grep`) | `verify_api`, `Read`, `grep` |
+| **#2: Two-Fix Rule** | If test fails twice, STOP guessing - verify API | `Read`, `Task(Explore)` |
+| **#5: Build & Launch** | Always run `verify` after writing tests | `./Scripts/SaneMaster.rb verify` |
+| **#6: Verify Logs** | Check test output after every run | `./Scripts/SaneMaster.rb diagnose --dump` |
+| **#7: Safety First** | Every bug fix MUST have regression test. No tautologies. | `gen_test`, manual review |
+| **#9: File Creation** | Run `xcodegen generate` after creating test file | `xcodegen generate` |
+| **#13: Verify State** | Don't assume - check existing tests, mocks, APIs | `find`, `grep`, `Read` |
+
+## Quick Reference: SOP Rules → Tools
+
+When creating tests, use this mapping:
+
+```bash
+# Rule #1: SDK/API Verification
+./Scripts/SaneMaster.rb verify_api <APIName> [Framework]  # Apple APIs
+read_file "SaneVideo/Services/ServiceName.swift"          # Internal APIs
+grep "func methodName" SaneVideo/Services/ServiceName.swift # Quick check
+
+# Rule #13: Verify Current State
+find SaneVideoTests -name "*ServiceName*Tests*.swift"      # Check existing
+grep "ServiceNameProtocolMock" SaneVideoTests/Mocks/Mocks.swift # Check mock
+
+# Rule #7: Generate Test
+./Scripts/SaneMaster.rb gen_test ServiceName              # Generate scaffold
+
+# Rule #9: File Creation
+xcodegen generate                                          # Update project
+
+# Rule #5: Build & Verify
+./Scripts/SaneMaster.rb verify                            # Run tests
+
+# Rule #6: Check Logs
+./Scripts/SaneMaster.rb diagnose --dump                   # Verify output
+```
+
+## Current Test Debt Status
+
+**Remaining Issues (Low Priority):**
+- ~36 instances of `#expect(true, "...")` placeholders (not harmful, but add no value)
+- 5 files with tautology patterns (`||` in assertions) - these were fixed in previous session
+
+**Files with Most Placeholders:**
+- `WindowManagerTests.swift` (6 instances)
+- `KeychainServiceTests.swift` (4 instances)
+- `ComprehensiveFeatureTests.swift` (3 instances)
+- `ExportEngineTests.swift` (5 instances)
+- `VideoWriterIntegrationTests.swift` (4 instances)
+
+**When to fix**: During test creation sessions, replace placeholders with real assertions following this workflow.

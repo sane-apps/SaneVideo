@@ -253,7 +253,7 @@ final class ProjectStore: ProjectStoreProtocol {
                     guard !verifyData.isEmpty else {
                         throw AppError.projectSaveFailed(NSError(domain: "ProjectStore", code: -2, userInfo: [NSLocalizedDescriptionKey: "Saved file is empty"]))
                     }
-                    
+
                     // CRITICAL: Verify file is valid JSON and can be decoded
                     // This catches corruption that makes file non-empty but invalid JSON
                     let _ = try await MainActor.run {

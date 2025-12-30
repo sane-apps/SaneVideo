@@ -14,10 +14,10 @@ struct SidebarView: View {
 
     var body: some View {
         HStack(spacing: 0) {
-            // RAIL: 3-tab navigation (Media, Script, Projects) + Quick Actions
+            // RAIL: 3-tab navigation (Media, Transcript, Projects) + Quick Actions
             VStack(spacing: 12) {
                 SidebarRailItem(icon: "film", label: "Media", tag: 0, selection: $selectedTab)
-                SidebarRailItem(icon: "doc.text", label: "Script", tag: 1, selection: $selectedTab)
+                SidebarRailItem(icon: "text.quote", label: "Transcript", tag: 1, selection: $selectedTab)
                 SidebarRailItem(icon: "folder", label: "Projects", tag: 2, selection: $selectedTab)
 
                 Divider()
@@ -67,7 +67,8 @@ struct SidebarView: View {
             }
             .frame(width: 50)
             .padding(.vertical, 16)
-            .background(.ultraThinMaterial)
+            // CONSISTENCY: Use controlBackgroundColor to match main editor
+            .background(Color(nsColor: .controlBackgroundColor))
 
             Divider()
 
@@ -77,7 +78,7 @@ struct SidebarView: View {
                     if selectedTab == 0 {
                         LibraryView(selectedClip: $selectedClip)
                     } else if selectedTab == 1 {
-                        // Script tab = text-based editing (Descript-style)
+                        // Transcript tab = text-based editing (Descript-style)
                         TranscriptionEditorView(selectedClip: $selectedClip)
                     } else {
                         // Projects tab = compact project browser

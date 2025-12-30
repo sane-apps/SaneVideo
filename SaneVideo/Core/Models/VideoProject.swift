@@ -38,6 +38,24 @@ struct VideoProject: Identifiable, Codable, Equatable, Sendable {
         zoomLevel = 1.0
     }
 
+    // MARK: - Computed Properties (Cached at model level for performance)
+
+    /// Total number of clips across all tracks
+    /// Computed at model level to avoid recalculation in view bodies
+    var clipCount: Int {
+        timeline.tracks.reduce(0) { $0 + $1.clips.count }
+    }
+
+    /// Whether the project has any content
+    var hasContent: Bool {
+        clipCount > 0
+    }
+
+    /// Whether any clip has captions ready
+    var hasCaptions: Bool {
+        timeline.tracks.flatMap { $0.clips }.contains { !$0.captions.isEmpty }
+    }
+
     // MARK: - Mutations
 
     /// Update project name and modification date

@@ -59,19 +59,12 @@ struct LibraryClipRow: View {
                         .font(.caption2)
                         .foregroundColor(.secondary)
 
-                    // Caption badge
+                    // Caption badge - simple indicator without count
                     if !clip.captions.isEmpty {
-                        HStack(spacing: 2) {
-                            Image(systemName: "captions.bubble.fill")
-                                .font(.system(size: 8))
-                            Text("\(clip.captions.count)")
-                                .font(.system(size: 9, weight: .medium))
-                        }
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 4)
-                        .padding(.vertical, 2)
-                        .background(Color.green)
-                        .cornerRadius(4)
+                        Image(systemName: "captions.bubble.fill")
+                            .font(.system(size: 10))
+                            .foregroundColor(.green)
+                            .help("Captions ready")
                     }
                 }
             }

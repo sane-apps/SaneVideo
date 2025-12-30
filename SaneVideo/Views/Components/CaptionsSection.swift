@@ -188,10 +188,10 @@ struct CaptionsSection: View {
 
     private var captionControls: some View {
         VStack(alignment: .leading, spacing: 12) {
-            // Status row
+            // Status row - show simple "ready" indicator instead of count
             HStack {
                 Label(
-                    String(localized: "captions.count", defaultValue: "\(clip.captions.count) captions"),
+                    String(localized: "captions.ready", defaultValue: "Ready to edit"),
                     systemImage: "checkmark.circle.fill"
                 )
                 .font(.caption)

@@ -87,8 +87,8 @@ struct CompactProjectRow: View {
                         .foregroundColor(isCurrent ? .accentColor : .primary)
                         .lineLimit(1)
 
-                    let clipCount = project.timeline.tracks.reduce(0) { $0 + $1.clips.count }
-                    Text("\(clipCount) clip\(clipCount == 1 ? "" : "s")")
+                    // PERFORMANCE: Use model's clipCount instead of inline reduce()
+                    Text("\(project.clipCount) clip\(project.clipCount == 1 ? "" : "s")")
                         .font(.caption2)
                         .foregroundColor(.secondary)
                 }
@@ -109,6 +109,51 @@ struct CompactProjectRow: View {
             }
         }
         .buttonStyle(.plain)
+        .contextMenu {
+            Button {
+                onSelect()
+            } label: {
+                Label("Open", systemImage: "arrow.right.circle")
+            }
+
+            Divider()
+
+            Button {
+                NotificationCenter.default.post(
+                    name: NSNotification.Name("RenameProject"),
+                    object: project.id
+                )
+            } label: {
+                Label("Rename...", systemImage: "pencil")
+            }
+
+            Button {
+                NotificationCenter.default.post(
+                    name: NSNotification.Name("DuplicateProject"),
+                    object: project.id
+                )
+            } label: {
+                Label("Duplicate", systemImage: "doc.on.doc")
+            }
+
+            Button {
+                let url = ServiceContainer.shared.projectStore.fileURL(for: project)
+                NSWorkspace.shared.activateFileViewerSelecting([url])
+            } label: {
+                Label("Show in Finder", systemImage: "folder")
+            }
+
+            Divider()
+
+            Button(role: .destructive) {
+                NotificationCenter.default.post(
+                    name: NSNotification.Name("DeleteProject"),
+                    object: project.id
+                )
+            } label: {
+                Label("Delete", systemImage: "trash")
+            }
+        }
         .task {
             await loadThumbnail()
         }

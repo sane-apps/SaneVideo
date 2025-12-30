@@ -12,16 +12,16 @@ pre-commit:
       run: swiftlint lint --strict {staged_files} | grep -q "file_length.*error" && (echo "❌ File exceeds 800 lines! Refactor before committing." && exit 1) || exit 0
     xcodegen_check:
       glob: "*.swift"
-      run: ./Scripts/SaneMaster.rb check_xcodegen {staged_files}
+      run: bundle exec ./Scripts/SaneMaster.rb check_xcodegen {staged_files}
     protocol_change_check:
       glob: "*.swift"
-      run: ./Scripts/SaneMaster.rb check_protocol_changes {staged_files}
+      run: bundle exec ./Scripts/SaneMaster.rb check_protocol_changes {staged_files}
     test_reference_validation:
       glob: "*.swift"
-      run: ./Scripts/SaneMaster.rb validate_test_references
+      run: bundle exec ./Scripts/SaneMaster.rb validate_test_references
     deprecation_check:
       glob: "*.swift"
-      run: ./Scripts/SaneMaster.rb check_deprecations || true
+      run: bundle exec ./Scripts/SaneMaster.rb check_deprecations || true
     rubocop:
       glob: "*.rb"
       run: bundle exec rubocop -a {staged_files} && git add {staged_files}
@@ -32,7 +32,7 @@ pre-push:
     security:
       run: bundle exec bundle-audit check --update
     doctor:
-      run: ./Scripts/SaneMaster.rb doctor
+      run: bundle exec ./Scripts/SaneMaster.rb doctor
     verify_tests:
       # Run the verification script to ensure no regressions before pushing
-      run: ./Scripts/SaneMaster.rb verify
+      run: bundle exec ./Scripts/SaneMaster.rb verify

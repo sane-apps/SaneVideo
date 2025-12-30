@@ -257,7 +257,7 @@ SaneVideo/
 │   ├── AppError.swift     # Unified error handling
 │   └── AppLogger.swift    # Centralized logging
 ├── Services/       # Business logic (20+ services)
-│   ├── AI/         # OpenAI, Gemini, Apple Intelligence
+│   ├── AI/         # Apple Intelligence (on-device)
 │   ├── Audio/      # Processing, waveforms, voice isolation
 │   ├── Camera/     # CameraManager
 │   ├── Captions/   # Caption generation

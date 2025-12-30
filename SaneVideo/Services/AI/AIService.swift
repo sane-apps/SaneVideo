@@ -20,14 +20,7 @@ class AIService {
 
     init(provider: AIProvider = .appleFoundation) {
         self.providerType = provider
-        switch provider {
-        case .openAI:
-            self.engine = OpenAIProvider()
-        case .gemini:
-            self.engine = GeminiProvider()
-        case .appleFoundation:
-            self.engine = AppleFoundationProvider()
-        }
+        self.engine = AppleFoundationProvider()
     }
 
     /// Generates a title and description based on the video transcript

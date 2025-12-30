@@ -59,10 +59,8 @@ This runs automatically when you open the project. If bootstrap fails:
 
 **Supplementary Documentation:**
 
-- `TESTING_SUMMARY.md` - Quick testing reference
-- `ALTERNATIVE_TESTING.md` - Detailed alternative testing guide
-- `CI_TEST_STATUS.md` - CI-specific test status
-- `TEST_DISABLED_NOTICE.md` - Local test status
+- `TEST_CREATION_WORKFLOW.md` - **Test creation workflow** (trigger: "enter test creation workflow")
+- `TEST_COVERAGE_ANALYSIS.md` - Coverage analysis and gaps
 
 **All other docs are historical/archive - refer to DEVELOPMENT.md first.**
 
@@ -102,7 +100,7 @@ Rules are ordered by priority. **Tier 1 rules prevent disasters** — read them 
 
 ### Tier 2: Core Workflow (Do these every session)
 
-4. **USE SaneMaster.rb FIRST**: Use `./Scripts/SaneMaster.rb` for verification, setup, and diagnostics. Never use raw `xcodebuild` commands.
+4. **USE SaneMaster.rb (NOT raw xcodebuild)**: Use `./Scripts/SaneMaster.rb` for verification, setup, and diagnostics. Never use raw `xcodebuild` commands.
 
 5. **AUTOMATIC BUILD & LAUNCH WITH LOGGING (CRITICAL)**: After making code changes, you **MUST**:
    - Build the app: `./Scripts/SaneMaster.rb verify`
@@ -258,7 +256,7 @@ SaneVideo/
 │   ├── AppError.swift    # Unified error handling
 │   └── AppLogger.swift   # Centralized logging
 ├── Services/             # Business logic (20+ services)
-│   ├── AI/              # AI providers (OpenAI, Gemini, Apple Intelligence)
+│   ├── AI/              # AI providers (Apple Intelligence)
 │   ├── Audio/           # Audio processing, waveforms, voice isolation
 │   ├── Camera/          # Camera capture (CameraManager)
 │   ├── Captions/        # Caption generation
@@ -386,10 +384,9 @@ Always diagnostics after a run:
 
 **Test Mode workflow (when user says "test mode" or you need live debugging):**
 ```bash
-killall -9 SaneVideo                      # Kill stale processes
-./Scripts/SaneMaster.rb verify            # Build
-./Scripts/SaneMaster.rb launch            # Launch app
-./Scripts/SaneMaster.rb logs --follow     # Stream logs (in background)
+./Scripts/SaneMaster.rb test_mode   # Preferred: runs all steps below automatically
+# Or manually: killall -9 SaneVideo && ./Scripts/SaneMaster.rb verify && ./Scripts/SaneMaster.rb launch
+# Then: ./Scripts/SaneMaster.rb logs --follow   # Stream logs
 ```
 
 Monitor these resources while user tests:
@@ -641,7 +638,7 @@ When developing the iPhone/iPad companion apps:
 - ✅ Handles async/await patterns
 - ✅ Follows project conventions
 
-**See:** `TESTING_BEST_PRACTICES.md` for comprehensive testing guidelines.
+**See:** `TEST_CREATION_WORKFLOW.md` for test creation workflow and best practices.
 
 ---
 
@@ -753,46 +750,15 @@ Regression tests are critical for preventing the reintroduction of fixed bugs.
 
 ### Primary Documentation (Single Source of Truth)
 
-- **This File (DEVELOPMENT.md)**: Complete SOP, architecture, workflows, style guide
+- **DEVELOPMENT.md** (this file): Complete SOP, architecture, workflows, style guide. The ONLY authoritative source.
 - **README.md**: User-facing features, quick start, keyboard shortcuts
-- **AI_AGENT_QUICK_START.md**: Quick reference for AI agents (points to this file)
 
 ### Reference Documentation
 
-**Feature Planning**:
-
-- **ROADMAP.md**: Discussed features for future consideration. Check this when user asks "what features have we discussed?" or similar.
-
-**Testing (Current Status)**:
-
-- **TESTING_SUMMARY.md**: Quick reference for testing status and alternative methods
-- **ALTERNATIVE_TESTING.md**: Detailed guide on alternative testing tools
-- **TEST_DISABLED_NOTICE.md**: Local test status and re-enable instructions
-- **CI_TEST_STATUS.md**: CI-specific test status and limitations
-- **TEST_SUITE_GUIDE.md**: Comprehensive guide for `test_suite` command
-
-**Tools & Research**:
-
-- **OPEN_SOURCE_TOOLS_FINAL.md**: Open source tools research findings
-- **TOOLS_AUDIT.md**: Tools audit and recommendations
-
-**Architecture** (if exists):
-
-- **ON_DEVICE_ARCHITECTURE.md**: Details on 100% on-device processing architecture
-- **VISUAL_TESTS_SETUP.md**: UI testing setup and permission automation
-
-### Historical/Archive Documentation
-
-The following files are historical records and should NOT be used as primary sources:
-
-- `COMPLETED_IMPROVEMENTS.md` - Completed work log
-- `TOOLS_SUMMARY.md` - Superseded by INSTALLED_TOOLS.md
-- `TOOLS_AND_IMPROVEMENTS.md` - Superseded by INSTALLED_TOOLS.md
-- `TOOLS_RECOMMENDATIONS.md` - Recommendations (some implemented)
-- `PERFORMANCE_AUDIT.md` - Audit results (issues addressed)
-- `*_COMPLETE.md` files - Historical progress logs
-- `UI_UX_IMPROVEMENTS.md` - Historical UI work
-- `UI_REFACTOR_PROGRESS.md` - Historical refactor log
+- **ROADMAP.md**: Discussed features for future consideration. Check when user asks "what features have we discussed?"
+- **BUG_TRACKING.md**: Bug documentation and tracking
+- **TEST_CREATION_WORKFLOW.md**: Test creation workflow (trigger: "enter test creation workflow")
+- **TEST_COVERAGE_ANALYSIS.md**: Coverage analysis and gaps
 
 **Rule**: When in doubt, refer to DEVELOPMENT.md. If information is missing, add it here rather than creating new files.
 
@@ -803,10 +769,9 @@ The following files are historical records and should NOT be used as primary sou
 ### First Steps
 
 1. **Read this entire file (DEVELOPMENT.md)** - It's the single source of truth
-2. **Check AI_AGENT_QUICK_START.md** - Quick reference (but this file is authoritative)
-3. **Check ROADMAP.md** - If user asks about previously discussed features
-4. **Use SaneMaster.rb** - Don't run raw xcodebuild commands
-5. **Always dump logs** - Critical for debugging
+2. **Check ROADMAP.md** - If user asks about previously discussed features
+3. **Use SaneMaster.rb** - Don't run raw xcodebuild commands
+4. **Always dump logs** - Critical for debugging
 
 ### Mandatory Workflow After Code Changes
 
@@ -1032,5 +997,5 @@ open Screenshots/                       # View screenshots
 
 - **Add to DEVELOPMENT.md** if it's a rule, workflow, or architecture detail
 - **Add to README.md** if it's user-facing
-- **Create reference doc** only if it's a large, specialized topic (like ON_DEVICE_ARCHITECTURE.md)
+- **Create reference doc** only if it's a large, specialized topic that doesn't fit in DEVELOPMENT.md
 - **Don't create** new documentation files for small updates

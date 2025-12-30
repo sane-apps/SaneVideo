@@ -3750,134 +3750,13 @@
         }
       }
     },
-    "settings.gemini.action.clear" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Clear"
-          }
-        }
-      }
-    },
-    "settings.gemini.action.save" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Save Gemini Key"
-          }
-        }
-      }
-    },
-    "settings.gemini.description" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Alternative AI provider for title/description generation. Get your key from [Google AI Studio](https://aistudio.google.com/app/apikey)."
-          }
-        }
-      }
-    },
-    "settings.gemini.header" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Google Gemini"
-          }
-        }
-      }
-    },
-    "settings.gemini.key_label" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "API Key"
-          }
-        }
-      }
-    },
-    "settings.gemini.key_placeholder" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Enter API Key"
-          }
-        }
-      }
-    },
-    "settings.openai.action.clear" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Clear"
-          }
-        }
-      }
-    },
-    "settings.openai.action.save" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Save OpenAI Key"
-          }
-        }
-      }
-    },
-    "settings.openai.description" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Used for AI-powered video title and description suggestions. Get your key from [OpenAI Platform](https://platform.openai.com/api-keys)."
-          }
-        }
-      }
-    },
-    "settings.openai.header" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "OpenAI"
-          }
-        }
-      }
-    },
-    "settings.openai.key_label" : {
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "API Key"
-          }
-        }
-      }
-    },
     "settings.privacy.cloud_note" : {
       "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "Optional cloud AI services (like OpenAI or Gemini) can be configured for enhanced features, but are never required."
+            "value" : "All AI features run 100% on-device using Apple Intelligence. No cloud services required."
           }
         }
       }
@@ -3910,7 +3789,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "Manage Cloud AI API Keys"
+            "value" : "Manage API Keys"
           }
         }
       }

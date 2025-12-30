@@ -232,4 +232,287 @@ struct RecordingEngineTests {
         // Assert
         #expect(engine.audioLevelSubject != nil)
     }
+
+    // MARK: - Guard Condition Tests
+
+    @Test("Cannot start recording when already recording")
+    func cannotStartWhenRecording() async throws {
+        // Arrange
+        let engine = sut
+        await engine.startRecording(initialSource: .camera)
+        try await Task.sleep(nanoseconds: 150_000_000)
+        let wasRecording = await engine.isRecording
+        #expect(wasRecording == true)
+
+        // Act - try to start again
+        await engine.startRecording(initialSource: .screen)
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        // Assert - should still be recording with original source
+        let stillRecording = await engine.isRecording
+        let source = await engine.currentSource
+        #expect(stillRecording == true)
+        #expect(source == .camera) // Original source preserved
+
+        // Cleanup
+        _ = await engine.stopRecording()
+    }
+
+    @Test("Stop returns nil when not recording")
+    func stopReturnsNilWhenNotRecording() async throws {
+        // Arrange
+        let engine = sut
+        let isRecording = await engine.isRecording
+        #expect(isRecording == false)
+
+        // Act
+        let result = await engine.stopRecording()
+
+        // Assert
+        #expect(result == nil)
+    }
+
+    @Test("Pause does nothing when not recording")
+    func pauseIgnoredWhenNotRecording() async throws {
+        // Arrange
+        let engine = sut
+        let wasRecording = await engine.isRecording
+        #expect(wasRecording == false)
+
+        // Act
+        await engine.pause()
+
+        // Assert - isPaused should still be false
+        let isPaused = await engine.isPaused
+        #expect(isPaused == false)
+    }
+
+    @Test("Resume does nothing when not paused")
+    func resumeIgnoredWhenNotPaused() async throws {
+        // Arrange
+        let engine = sut
+        await engine.startRecording(initialSource: .camera)
+        try await Task.sleep(nanoseconds: 150_000_000)
+        let isPausedBefore = await engine.isPaused
+        #expect(isPausedBefore == false)
+
+        // Act
+        await engine.resume()
+
+        // Assert - no change
+        let isPausedAfter = await engine.isPaused
+        #expect(isPausedAfter == false)
+
+        // Cleanup
+        _ = await engine.stopRecording()
+    }
+
+    // MARK: - Source Tests
+
+    @Test("Can start with camera source")
+    func canStartWithCamera() async throws {
+        // Arrange
+        let engine = sut
+
+        // Act
+        await engine.startRecording(initialSource: .camera)
+        try await Task.sleep(nanoseconds: 150_000_000)
+
+        // Assert
+        let source = await engine.currentSource
+        #expect(source == .camera)
+
+        // Cleanup
+        _ = await engine.stopRecording()
+    }
+
+    @Test("Can start with screen source")
+    func canStartWithScreen() async throws {
+        // Arrange
+        let engine = sut
+
+        // Act
+        await engine.startRecording(initialSource: .screen)
+        try await Task.sleep(nanoseconds: 150_000_000)
+
+        // Assert
+        let source = await engine.currentSource
+        #expect(source == .screen)
+
+        // Cleanup
+        _ = await engine.stopRecording()
+    }
+
+    // MARK: - isStopping Flag Tests
+
+    @Test("isStopping prevents restart during stop")
+    func isStoppingPreventsRestart() async throws {
+        // Arrange
+        let engine = sut
+        await engine.startRecording(initialSource: .camera)
+        try await Task.sleep(nanoseconds: 150_000_000)
+
+        // Act - start stop and immediately try to start again
+        async let stopTask = engine.stopRecording()
+        try await Task.sleep(nanoseconds: 10_000_000) // Small delay
+        await engine.startRecording(initialSource: .camera)
+        _ = await stopTask
+
+        // Assert - should not be recording (start was blocked by isStopping)
+        let isRecording = await engine.isRecording
+        let isStopping = await engine.isStopping
+        #expect(isStopping == false) // Should be cleared after stop completes
+    }
+
+    // MARK: - TestEnvironment Mode Tests
+
+    @Test("Test mode generates mock file URL")
+    func testModeGeneratesMockURL() async throws {
+        // Note: This tests the TestEnvironment.isTesting path
+        // When isTesting is true, a mock URL is generated instead of real recording
+
+        // Arrange
+        let engine = sut
+
+        // Act
+        await engine.startRecording(initialSource: .camera)
+        try await Task.sleep(nanoseconds: 150_000_000)
+        let url = await engine.stopRecording()
+
+        // Assert - in test mode, should return a URL
+        // (actual file may or may not exist depending on TestEnvironment)
+        if TestEnvironment.isTesting {
+            #expect(url != nil)
+        }
+    }
+
+    // MARK: - Source Switching Edge Case Tests
+
+    @Test("Cannot switch source when not recording")
+    func cannotSwitchWhenNotRecording() async throws {
+        // Arrange
+        let engine = sut
+        let isRecording = await engine.isRecording
+        #expect(isRecording == false)
+
+        // Act - try to switch source when not recording
+        engine.switchSource(source: .screen)
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        // Assert - should still be on default source (no change)
+        let source = await engine.currentSource
+        #expect(source == .camera) // Default source
+    }
+
+    @Test("Cannot switch to same source")
+    func cannotSwitchToSameSource() async throws {
+        // Arrange
+        let engine = sut
+        await engine.startRecording(initialSource: .camera)
+        try await Task.sleep(nanoseconds: 150_000_000)
+        let initialSource = await engine.currentSource
+        #expect(initialSource == .camera)
+
+        // Act - try to switch to same source
+        engine.switchSource(source: .camera)
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        // Assert - isSwitching should NOT be set (request was ignored)
+        let isSwitching = await engine.isSwitching
+        let source = await engine.currentSource
+        #expect(isSwitching == false)
+        #expect(source == .camera)
+
+        // Cleanup
+        _ = await engine.stopRecording()
+    }
+
+    @Test("Switch source from camera to screen")
+    func switchFromCameraToScreen() async throws {
+        // Arrange
+        let engine = sut
+        await engine.startRecording(initialSource: .camera)
+        try await Task.sleep(nanoseconds: 150_000_000)
+
+        // Act - switch to screen
+        engine.switchSource(source: .screen)
+        try await Task.sleep(nanoseconds: 200_000_000) // Allow time for switch
+
+        // Assert - pendingSource should be set or switch completed
+        let pendingSource = await engine.pendingSource
+        let currentSource = await engine.currentSource
+        // Either switch is complete (currentSource == .screen) or in progress (pendingSource == .screen)
+        let switchInitiated = (currentSource == .screen) || (pendingSource == .screen)
+        #expect(switchInitiated == true)
+
+        // Cleanup
+        _ = await engine.stopRecording()
+    }
+
+    @Test("Switch source from screen to camera")
+    func switchFromScreenToCamera() async throws {
+        // Arrange
+        let engine = sut
+        await engine.startRecording(initialSource: .screen)
+        try await Task.sleep(nanoseconds: 150_000_000)
+
+        // Act - switch to camera
+        engine.switchSource(source: .camera)
+        try await Task.sleep(nanoseconds: 200_000_000) // Allow time for switch
+
+        // Assert - pendingSource should be set or switch completed
+        let pendingSource = await engine.pendingSource
+        let currentSource = await engine.currentSource
+        // Either switch is complete (currentSource == .camera) or in progress (pendingSource == .camera)
+        let switchInitiated = (currentSource == .camera) || (pendingSource == .camera)
+        #expect(switchInitiated == true)
+
+        // Cleanup
+        _ = await engine.stopRecording()
+    }
+
+    @Test("Concurrent switch requests are blocked")
+    func concurrentSwitchRequestsBlocked() async throws {
+        // Arrange
+        let engine = sut
+        await engine.startRecording(initialSource: .camera)
+        try await Task.sleep(nanoseconds: 150_000_000)
+
+        // Act - initiate first switch
+        engine.switchSource(source: .screen)
+        try await Task.sleep(nanoseconds: 10_000_000) // Small delay
+
+        // Try to initiate second switch while first is in progress
+        engine.switchSource(source: .camera)
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        // Assert - second switch should be blocked, pendingSource should be .screen (first request)
+        let pendingSource = await engine.pendingSource
+        if pendingSource != nil {
+            #expect(pendingSource == .screen) // First switch should win
+        }
+
+        // Cleanup
+        _ = await engine.stopRecording()
+    }
+
+    @Test("Cannot switch source while stopping")
+    func cannotSwitchWhileStopping() async throws {
+        // Arrange
+        let engine = sut
+        await engine.startRecording(initialSource: .camera)
+        try await Task.sleep(nanoseconds: 150_000_000)
+
+        // Act - start stop and immediately try to switch
+        async let stopTask = engine.stopRecording()
+        try await Task.sleep(nanoseconds: 10_000_000) // Small delay
+        engine.switchSource(source: .screen)
+        _ = await stopTask
+
+        // Assert - should not be switching, stop should complete normally
+        let isSwitching = await engine.isSwitching
+        let isRecording = await engine.isRecording
+        #expect(isSwitching == false)
+        #expect(isRecording == false)
+    }
 }

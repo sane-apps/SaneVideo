@@ -142,12 +142,25 @@ final class ProjectStore: ProjectStoreProtocol {
                     } catch {
                         // CRITICAL: Enhanced logging for corruption detection
                         let errorDetails = "\(error.localizedDescription) (type: \(type(of: error)))"
+                        
+                        // Check if file exists (might be missing, not corrupted)
+                        let fileManager = FileManager.default
+                        let fileExists = fileManager.fileExists(atPath: fileURL.path)
+                        
+                        if !fileExists {
+                            // File doesn't exist - this is different from corruption
+                            AppLogger.project.warning("⚠️ Project file not found (may have been deleted): \(fileURL.lastPathComponent)")
+                            AppLogger.uiLog.warning("Project file missing: \(fileURL.lastPathComponent) - file was deleted or moved")
+                            // Skip this project - don't show error for missing files
+                            continue
+                        }
+                        
                         AppLogger.project.error("❌ Failed to load project at \(fileURL.path): \(errorDetails)")
                         AppLogger.uiLog.error("Project corruption detected: \(fileURL.lastPathComponent) - \(errorDetails)")
 
                         // CRITICAL: Try to load backup if main file fails
                         let backupURL = fileURL.appendingPathExtension("backup")
-                        if FileManager.default.fileExists(atPath: backupURL.path) {
+                        if fileManager.fileExists(atPath: backupURL.path) {
                             AppLogger.project.info("Attempting to load from backup: \(backupURL.lastPathComponent)")
                             do {
                                 let backupData = try Data(contentsOf: backupURL)

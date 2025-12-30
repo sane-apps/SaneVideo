@@ -2103,6 +2103,8 @@ class SaneMaster
         else
           puts "  ✅ Project appears in sync (#{project_swift_count} Swift files)"
         end
+      rescue LoadError
+        puts '  ⚠️  Skipping sync check (run with: bundle exec ./Scripts/SaneMaster.rb doctor)'
       rescue StandardError => e
         puts "  ⚠️  Could not verify sync: #{e.message}"
       end

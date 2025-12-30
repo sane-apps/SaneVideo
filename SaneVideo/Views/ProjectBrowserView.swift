@@ -22,6 +22,10 @@ struct ProjectBrowserView: View {
     // Delete state
     @State private var projectToDelete: VideoProject?
     @State private var showingDeleteConfirmation = false
+    
+    // Info state
+    @State private var projectToShowInfo: VideoProject?
+    @State private var showingProjectInfo = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -100,6 +104,17 @@ struct ProjectBrowserView: View {
                             onDelete: {
                                 projectToDelete = project
                                 showingDeleteConfirmation = true
+                            },
+                            onDuplicate: {
+                                appState.projectState.duplicateProject(project)
+                            },
+                            onShowInFinder: {
+                                let url = appState.projectState.getProjectFileURL(project)
+                                NSWorkspace.shared.activateFileViewerSelecting([url])
+                            },
+                            onShowInfo: {
+                                projectToShowInfo = project
+                                showingProjectInfo = true
                             }
                         )
                         .id(project.id) // Force view identity for proper lazy loading
@@ -110,6 +125,12 @@ struct ProjectBrowserView: View {
         }
         .frame(minWidth: 800, minHeight: 600)
         .background(Color(NSColor.windowBackgroundColor))
+        // Project Info Sheet
+        .sheet(isPresented: $showingProjectInfo) {
+            if let project = projectToShowInfo {
+                ProjectInfoSheet(project: project)
+            }
+        }
         // Rename Alert
         .alert(String(localized: "browser.rename.title", defaultValue: "Rename Project"), isPresented: $isRenaming) {
             TextField(String(localized: "browser.rename.placeholder", defaultValue: "Project Name"), text: $newName)
@@ -209,6 +230,9 @@ struct ProjectCard: View {
     let onSelect: () -> Void
     let onRename: () -> Void
     let onDelete: () -> Void
+    let onDuplicate: () -> Void
+    let onShowInFinder: () -> Void
+    let onShowInfo: () -> Void
 
     @State private var isHovering = false
     @State private var thumbnail: NSImage?
@@ -321,14 +345,53 @@ struct ProjectCard: View {
             await loadThumbnail()
         }
         .contextMenu {
-            Button(String(localized: "browser.action.open", defaultValue: "Open")) { onSelect() }
-                .accessibilityIdentifier("browser.card_menu.open")
+            // Primary Actions
+            Button {
+                onSelect()
+            } label: {
+                Label(String(localized: "browser.action.open", defaultValue: "Open"), systemImage: "arrow.right.circle")
+            }
+            .accessibilityIdentifier("browser.card_menu.open")
+            
             Divider()
-            Button(String(localized: "browser.action.rename_menu", defaultValue: "Rename...")) { onRename() }
-                .accessibilityIdentifier("browser.card_menu.rename")
-            Button(role: .destructive, action: { onDelete() }, label: {
+            
+            // Project Management
+            Button {
+                onDuplicate()
+            } label: {
+                Label(String(localized: "browser.action.duplicate", defaultValue: "Duplicate"), systemImage: "doc.on.doc")
+            }
+            .accessibilityIdentifier("browser.card_menu.duplicate")
+            
+            Button {
+                onShowInFinder()
+            } label: {
+                Label(String(localized: "browser.action.finder", defaultValue: "Show in Finder"), systemImage: "folder")
+            }
+            .accessibilityIdentifier("browser.card_menu.finder")
+            
+            Button {
+                onShowInfo()
+            } label: {
+                Label(String(localized: "browser.action.info", defaultValue: "Get Info"), systemImage: "info.circle")
+            }
+            .accessibilityIdentifier("browser.card_menu.info")
+            
+            Divider()
+            
+            // Edit Actions
+            Button {
+                onRename()
+            } label: {
+                Label(String(localized: "browser.action.rename_menu", defaultValue: "Rename..."), systemImage: "pencil")
+            }
+            .accessibilityIdentifier("browser.card_menu.rename")
+            
+            Button(role: .destructive) {
+                onDelete()
+            } label: {
                 Label(String(localized: "browser.action.delete", defaultValue: "Delete"), systemImage: "trash")
-            })
+            }
             .accessibilityIdentifier("browser.card_menu.delete")
         }
     }
@@ -375,5 +438,155 @@ struct ProjectCard: View {
                 self.isLoadingThumbnail = false
             }
         }
+    }
+}
+
+// MARK: - Project Info Sheet
+
+struct ProjectInfoSheet: View {
+    let project: VideoProject
+    @Environment(\.dismiss) var dismiss
+    
+    private var clipCount: Int {
+        project.timeline.tracks.reduce(0) { $0 + $1.clips.count }
+    }
+    
+    private var trackCount: Int {
+        project.timeline.tracks.count
+    }
+    
+    private var durationString: String {
+        let seconds = CMTimeGetSeconds(project.timeline.duration)
+        let minutes = Int(seconds) / 60
+        let secs = Int(seconds) % 60
+        if minutes > 0 {
+            return String(format: "%d:%02d", minutes, secs)
+        } else {
+            return String(format: "0:%02d", secs)
+        }
+    }
+    
+    private var fileSizeString: String {
+        let url = ServiceContainer.shared.projectStore.fileURL(for: project)
+        if let attributes = try? FileManager.default.attributesOfItem(atPath: url.path),
+           let size = attributes[.size] as? UInt64 {
+            let formatter = ByteCountFormatter()
+            formatter.countStyle = .file
+            return formatter.string(fromByteCount: Int64(size))
+        }
+        return "Unknown"
+    }
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            // Header
+            HStack {
+                Text("Project Info")
+                    .font(.system(size: 24, weight: .bold))
+                Spacer()
+                Button {
+                    dismiss()
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundColor(.secondary)
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(.bottom, 8)
+            
+            Divider()
+            
+            // Project Name
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Name")
+                    .font(.headline)
+                    .foregroundColor(.secondary)
+                Text(project.name)
+                    .font(.title3)
+            }
+            
+            Divider()
+            
+            // Statistics
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Statistics")
+                    .font(.headline)
+                    .foregroundColor(.secondary)
+                
+                HStack(spacing: 24) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Clips")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        Text("\(clipCount)")
+                            .font(.title2)
+                            .fontWeight(.semibold)
+                    }
+                    
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Tracks")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        Text("\(trackCount)")
+                            .font(.title2)
+                            .fontWeight(.semibold)
+                    }
+                    
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Duration")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        Text(durationString)
+                            .font(.title2)
+                            .fontWeight(.semibold)
+                    }
+                }
+            }
+            
+            Divider()
+            
+            // Metadata
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Metadata")
+                    .font(.headline)
+                    .foregroundColor(.secondary)
+                
+                VStack(alignment: .leading, spacing: 8) {
+                    InfoRow(label: "Created", value: project.createdAt.formatted(date: .abbreviated, time: .shortened))
+                    InfoRow(label: "Modified", value: project.modifiedAt.formatted(date: .abbreviated, time: .shortened))
+                    InfoRow(label: "File Size", value: fileSizeString)
+                    InfoRow(label: "Project ID", value: project.id.uuidString)
+                }
+            }
+            
+            Spacer()
+            
+            // Actions
+            HStack {
+                Spacer()
+                Button("Done") {
+                    dismiss()
+                }
+                .buttonStyle(.borderedProminent)
+            }
+        }
+        .padding(24)
+        .frame(width: 500, height: 500)
+    }
+}
+
+struct InfoRow: View {
+    let label: String
+    let value: String
+    
+    var body: some View {
+        HStack {
+            Text(label)
+                .foregroundColor(.secondary)
+                .frame(width: 100, alignment: .leading)
+            Text(value)
+                .textSelection(.enabled)
+        }
+        .font(.system(size: 13))
     }
 }

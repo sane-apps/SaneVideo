@@ -123,12 +123,17 @@ struct CompactProjectRow: View {
         let time = CMTime(seconds: clip.effectiveDuration.seconds * 0.25, preferredTimescale: 600)
         let originalTime = clip.originalTime(forEffectiveTime: time) ?? clip.trimStart
         
+        // QUALITY: Request retina-quality thumbnails (2x for display)
+        // Compact row display is ~50x32, request 200x128 for crisp retina display
+        let scaleFactor: CGFloat = 2.0 // Retina scaling
+        let size = CGSize(width: 200 * scaleFactor, height: 128 * scaleFactor)
+        
         // PERFORMANCE: Use lower priority for thumbnail loading
         let thumb = await Task.detached(priority: .utility) {
             await ServiceContainer.shared.thumbnailService.thumbnail(
                 for: clip,
                 time: originalTime,
-                size: CGSize(width: 100, height: 64)
+                size: size
             )
         }.value
         

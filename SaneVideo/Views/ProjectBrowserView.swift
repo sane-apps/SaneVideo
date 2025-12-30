@@ -350,7 +350,11 @@ struct ProjectCard: View {
         // Get thumbnail from first clip at 25% through its duration
         let time = CMTime(seconds: clip.effectiveDuration.seconds * 0.25, preferredTimescale: 600)
         let originalTime = clip.originalTime(forEffectiveTime: time) ?? clip.trimStart
-        let size = CGSize(width: 400, height: 280) // High quality for card preview
+        
+        // QUALITY: Request retina-quality thumbnails (2x for display, higher for crisp previews)
+        // Card display is ~280x140, request 800x450 for high-quality retina display
+        let scaleFactor: CGFloat = 2.0 // Retina scaling
+        let size = CGSize(width: 800 * scaleFactor, height: 450 * scaleFactor)
         
         // PERFORMANCE: Use lower priority for thumbnail loading
         let thumb = await Task.detached(priority: .utility) {

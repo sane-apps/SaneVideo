@@ -289,7 +289,7 @@ extension ProjectState {
     // CRITICAL: Log why deletion might be blocked
     if shouldBlockOperation(transactionId: transactionId) {
       AppLogger.project.warning("⚠️ Delete clip blocked: operation in progress (transaction: \(transactionId?.uuidString ?? "none"))")
-      ServiceContainer.shared.toastManager.show("Cannot delete: Operation in progress", type: .warning)
+      ServiceContainer.shared.toastManager.show("Cannot delete: Operation in progress", type: .info)
       return
     }
     
@@ -337,7 +337,7 @@ extension ProjectState {
       ServiceContainer.shared.toastManager.show("Deleted Clip")
     } else {
       AppLogger.project.warning("⚠️ Delete clip: Clip not found in timeline: \(clip.id)")
-      ServiceContainer.shared.toastManager.show("Clip not found in project", type: .warning)
+      ServiceContainer.shared.toastManager.show("Clip not found in project", type: .info)
     }
   }
 

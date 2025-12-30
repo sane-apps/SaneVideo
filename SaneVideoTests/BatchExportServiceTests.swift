@@ -8,6 +8,7 @@
 
 import Testing
 import AVFoundation
+import CoreMedia
 @testable import SaneVideo
 
 @Suite("Batch Export Service Tests")
@@ -26,8 +27,8 @@ struct BatchExportServiceTests {
         // Arrange & Act
         let service = sut
 
-        // Assert
-        #expect(service != nil)
+        // Assert - service should be created successfully
+        _ = service  // Just verify it can be created
     }
 
     // MARK: - Export Directory Tests
@@ -37,11 +38,13 @@ struct BatchExportServiceTests {
         // Arrange
         let service = sut
         let emptyCandidates: [ShortCandidate] = []
+        let settings = RepurposingSettings()
 
         // Act
         let results = try await service.exportShorts(
-            candidates: emptyCandidates,
-            sourceURL: TestEnvironment.mockAssetURL,
+            emptyCandidates,
+            from: TestEnvironment.mockAssetURL,
+            settings: settings,
             progressHandler: { _ in }
         )
 
@@ -56,11 +59,14 @@ struct BatchExportServiceTests {
         // Arrange
         let service = sut
         var progressValues: [Double] = []
+        let settings = RepurposingSettings()
 
         // Create a minimal candidate (will fail due to no real video, but progress should be called)
         let candidate = ShortCandidate(
-            startTime: .zero,
-            duration: CMTime(seconds: 1, preferredTimescale: 600),
+            timeRange: CMTimeRange(
+                start: .zero,
+                duration: CMTime(seconds: 1, preferredTimescale: 600)
+            ),
             score: 0.5,
             highlights: []
         )
@@ -68,8 +74,9 @@ struct BatchExportServiceTests {
         // Act - will likely fail but should call progress
         do {
             _ = try await service.exportShorts(
-                candidates: [candidate],
-                sourceURL: TestEnvironment.mockAssetURL,
+                [candidate],
+                from: TestEnvironment.mockAssetURL,
+                settings: settings,
                 progressHandler: { progress in
                     progressValues.append(progress)
                 }
@@ -89,23 +96,52 @@ struct BatchExportServiceTests {
     func handlesRapidExportCalls() async throws {
         // Arrange
         let service = sut
+        let settings = RepurposingSettings()
 
         // Act - call multiple times in rapid succession (should not crash)
         async let export1 = service.exportShorts(
-            candidates: [],
-            sourceURL: TestEnvironment.mockAssetURL,
+            [],
+            from: TestEnvironment.mockAssetURL,
+            settings: settings,
             progressHandler: { _ in }
         )
         async let export2 = service.exportShorts(
-            candidates: [],
-            sourceURL: TestEnvironment.mockAssetURL,
+            [],
+            from: TestEnvironment.mockAssetURL,
+            settings: settings,
             progressHandler: { _ in }
         )
 
-        // Assert - both should complete without crash
-        let (result1, result2) = try await (export1, export2)
-        #expect(result1.isEmpty)
-        #expect(result2.isEmpty)
+        // Assert - both should complete (one may throw alreadyExporting, that's expected)
+        do {
+            let (result1, result2) = try await (export1, export2)
+            #expect(result1.isEmpty)
+            #expect(result2.isEmpty)
+        } catch let error as BatchExportError where error == .alreadyExporting {
+            // This is expected when calling rapidly - actor prevents concurrent exports
+        }
+    }
+
+    // MARK: - Error Tests
+
+    @Test("BatchExportError has proper descriptions")
+    func errorDescriptions() {
+        // Arrange & Act
+        let errors: [BatchExportError] = [
+            .alreadyExporting,
+            .outputDirectoryCreationFailed,
+            .noVideoTrack,
+            .compositionFailed,
+            .exportSessionCreationFailed,
+            .exportFailed,
+            .exportCancelled
+        ]
+
+        // Assert - all errors should have descriptions
+        for error in errors {
+            #expect(error.errorDescription != nil)
+            #expect(error.errorDescription?.isEmpty == false)
+        }
     }
 
     // MARK: - Helper Methods

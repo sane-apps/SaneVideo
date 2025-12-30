@@ -19,17 +19,17 @@ struct PrivacySettingsView: View {
                     PrivacyBadge()
                         .padding(.vertical, 4)
                     
-                    Text(String(localized: "settings.privacy.cloud_note", defaultValue: "Optional cloud AI services (like OpenAI or Gemini) can be configured for enhanced features, but are never required."))
+                    Text(String(localized: "settings.privacy.cloud_note", defaultValue: "All AI features run 100% on-device using Apple Intelligence. No cloud services required."))
                         .font(.caption2)
                         .foregroundColor(.secondary)
-                    
+
                     Divider()
                         .padding(.vertical, 4)
-                    
+
                     NavigationLink {
                         APIKeysSettingsView()
                     } label: {
-                        Label(String(localized: "settings.privacy.manage_api_keys", defaultValue: "Manage Cloud AI API Keys"), systemImage: "key.fill")
+                        Label(String(localized: "settings.privacy.manage_api_keys", defaultValue: "Manage API Keys"), systemImage: "key.fill")
                     }
                     .accessibilityIdentifier("settings.privacy.manage_api_keys_button")
                     

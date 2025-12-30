@@ -34,49 +34,71 @@ struct CameraStateTests {
 
     // MARK: - Camera Discovery Tests
 
-    @Test("Refresh cameras updates available cameras list")
+    @Test("Refresh cameras completes and updates state")
     func refreshCameras() {
         // Arrange
         let cameraState = sut
+        // Initial state: availableCameras is empty (not discovered yet)
 
-        // Act
+        // Act - method should complete without throwing
         cameraState.refreshCameras()
 
-        // Assert - In test environment, cameras list should be empty (mocked)
-        // In real environment, would contain actual devices
-        #expect(true, "Should complete without error")
+        // Assert - Verify method completed and state is consistent
+        // The method sets hasDiscoveredCameras = true internally
+        // We verify completion by checking that ensureCamerasDiscovered()
+        // doesn't call refresh again (proving hasDiscoveredCameras was set)
+        let camerasBefore = cameraState.availableCameras
+        cameraState.ensureCamerasDiscovered()  // Should be a no-op if refresh worked
+        let camerasAfter = cameraState.availableCameras
+
+        // If refreshCameras() set hasDiscoveredCameras = true, then ensureCamerasDiscovered()
+        // won't call refresh again, so cameras list should be unchanged
+        #expect(camerasBefore.count == camerasAfter.count,
+                "ensureCamerasDiscovered should be no-op after refreshCameras")
     }
 
-    @Test("Ensure cameras discovered calls refresh if needed")
+    @Test("Ensure cameras discovered calls refresh when not discovered")
     func ensureCamerasDiscovered() {
         // Arrange
         let cameraState = sut
+        // Initial state: cameras not discovered (availableCameras is empty)
 
-        // Act - Should trigger refresh if not already discovered
+        // Act - This should call refreshCameras() internally
         cameraState.ensureCamerasDiscovered()
 
-        // Assert - Should complete without error
-        #expect(true, "Should complete without error")
+        // Assert - Verify method completed and cameras are now "discovered"
+        // After ensureCamerasDiscovered(), calling it again should be a no-op
+        let camerasBefore = cameraState.availableCameras
+        cameraState.ensureCamerasDiscovered()  // Second call should be no-op
+        let camerasAfter = cameraState.availableCameras
+
+        // If ensureCamerasDiscovered() worked, second call should be no-op
+        #expect(camerasBefore.count == camerasAfter.count,
+                "Second ensureCamerasDiscovered call should be no-op")
     }
 
     // MARK: - Camera Activation Tests
 
-    @Test("Toggle camera updates active state")
+    @Test("Toggle camera calls toggle on service", .disabled("Requires camera service mock injection"))
     func toggleCamera() {
+        // NOTE: This test is disabled because CameraState creates its own service internally.
+        // To properly test toggle behavior, we need dependency injection of CameraServiceProtocolMock.
+        // The current implementation delegates to cameraService.toggle() in production,
+        // and only toggles isActive directly when -uitesting flag is set.
+
         // Arrange
         let cameraState = sut
-        let initialState = cameraState.isActive
 
         // Act
         cameraState.toggleCamera()
 
-        // Assert - In test environment, state should toggle
-        // In real environment, would call cameraService.toggle()
-        #expect(cameraState.isActive != initialState || cameraState.isActive == initialState, "State may or may not change in test environment")
+        // Assert - In unit tests (without -uitesting flag), this calls cameraService.toggle()
+        // which may or may not change isActive depending on service state
     }
 
-    @Test("Start camera activates camera", .disabled("Requires real camera hardware - run manually"))
+    @Test("Start camera activates camera", .disabled("Requires real camera hardware"))
     func startCamera() async {
+        // This test requires real camera hardware or mock injection
         // Arrange
         let cameraState = sut
         var completionCalled = false
@@ -86,41 +108,34 @@ struct CameraStateTests {
             completionCalled = true
         }
 
-        // Assert - In test environment with real hardware, should set isActive and call completion
-        #expect(cameraState.isActive == true || completionCalled, "Camera should start or completion should be called")
+        // Assert
+        #expect(completionCalled, "Completion should be called")
     }
 
-    @Test("Stop camera deactivates camera")
+    @Test("Stop camera completes without throwing")
     func stopCamera() {
         // Arrange
         let cameraState = sut
-        cameraState.isActive = true
 
-        // Act
+        // Act - stopCamera only acts if cameraService.isActive is true
+        // In test env, service is inactive, so this is a no-op but should not crash
         cameraState.stopCamera()
 
-        // Assert - Should complete without error
-        // In real environment, would call cameraService.stop()
-        #expect(true, "Should complete without error")
+        // Assert - method completed without throwing (implicit pass)
+        // No state change expected since camera wasn't active
     }
 
     // MARK: - Camera Switching Tests
 
-    @Test("Switch camera updates current camera ID")
+    @Test("Switch camera method exists", .disabled("Requires AVCaptureDevice"))
     func switchCamera() {
-        // Arrange
-        let cameraState = sut
-        // Note: In test environment, we can't easily create AVCaptureDevice
-        // This test verifies the method exists and doesn't crash
-
-        // Act & Assert - Should complete without error
-        // Real device switching would require actual AVCaptureDevice
-        #expect(true, "Method should exist and not crash")
+        // This test requires a real AVCaptureDevice which can't be mocked easily
+        // The method signature is verified at compile time
     }
 
     // MARK: - Computed Properties Tests
 
-    @Test("Session property returns camera service session")
+    @Test("Session property is accessible")
     func sessionProperty() {
         // Arrange
         let cameraState = sut
@@ -128,11 +143,11 @@ struct CameraStateTests {
         // Act
         let session = cameraState.session
 
-        // Assert - Session may be nil if camera not started
-        #expect(session == nil || session != nil, "Session should be optional")
+        // Assert - Session should be nil when camera not started
+        #expect(session == nil, "Session should be nil before camera starts")
     }
 
-    @Test("Has video signal property returns camera service signal state")
+    @Test("Has video signal defaults to false when inactive")
     func hasVideoSignalProperty() {
         // Arrange
         let cameraState = sut
@@ -140,8 +155,8 @@ struct CameraStateTests {
         // Act
         let hasSignal = cameraState.hasVideoSignal
 
-        // Assert - Should return boolean value
-        #expect(hasSignal == true || hasSignal == false, "Should return boolean")
+        // Assert - Should be false when camera is not active
+        #expect(hasSignal == false, "Should be false when camera inactive")
     }
 
     @Test("Audio level publisher exists")

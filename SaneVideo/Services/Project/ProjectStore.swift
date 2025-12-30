@@ -101,22 +101,28 @@ final class ProjectStore: ProjectStoreProtocol {
 
                         // CRITICAL: Check if file is empty or too small (likely corrupted)
                         guard data.count > 10 else {
-                            AppLogger.project.warning("⚠️ Project file appears corrupted (too small): \(fileURL.lastPathComponent)")
+                            AppLogger.project.warning("⚠️ Project file appears corrupted (too small: \(data.count) bytes): \(fileURL.lastPathComponent)")
+                            AppLogger.uiLog.warning("Project file too small: \(fileURL.lastPathComponent) (\(data.count) bytes)")
                             // Try to load backup if available
                             let backupURL = fileURL.appendingPathExtension("backup")
                             if FileManager.default.fileExists(atPath: backupURL.path) {
-                                AppLogger.project.info("Attempting to load from backup...")
+                                AppLogger.project.info("Attempting to load from backup: \(backupURL.lastPathComponent)")
                                 do {
                                     let backupData = try Data(contentsOf: backupURL)
                                     let rawProject = try await MainActor.run {
                                         try JSONDecoder().decode(VideoProject.self, from: backupData)
                                     }
                                     projects.append(rawProject)
-                                    AppLogger.project.info("✅ Successfully loaded from backup")
+                                    AppLogger.project.info("✅ Successfully loaded from backup: \(fileURL.lastPathComponent)")
+                                    AppLogger.uiLog.info("Project recovery successful: \(fileURL.lastPathComponent) restored from backup")
                                     continue
                                 } catch {
-                                    AppLogger.project.error("Backup also corrupted: \(error)")
+                                    let backupError = "\(error.localizedDescription) (type: \(type(of: error)))"
+                                    AppLogger.project.error("Backup also corrupted: \(backupError)")
+                                    AppLogger.uiLog.error("Project recovery failed: \(fileURL.lastPathComponent) - backup also corrupted: \(backupError)")
                                 }
+                            } else {
+                                AppLogger.uiLog.error("Project corruption (no backup): \(fileURL.lastPathComponent) - file too small (\(data.count) bytes)")
                             }
                             continue
                         }
@@ -130,7 +136,11 @@ final class ProjectStore: ProjectStoreProtocol {
                         // and startup fast. Hydration will happen when a project is opened.
                         projects.append(rawProject)
                     } catch {
-                        AppLogger.project.error("❌ Failed to load project at \(fileURL.path): \(error)")
+                        // CRITICAL: Enhanced logging for corruption detection
+                        let errorDetails = "\(error.localizedDescription) (type: \(type(of: error)))"
+                        AppLogger.project.error("❌ Failed to load project at \(fileURL.path): \(errorDetails)")
+                        AppLogger.uiLog.error("Project corruption detected: \(fileURL.lastPathComponent) - \(errorDetails)")
+                        
                         // CRITICAL: Try to load backup if main file fails
                         let backupURL = fileURL.appendingPathExtension("backup")
                         if FileManager.default.fileExists(atPath: backupURL.path) {
@@ -141,9 +151,12 @@ final class ProjectStore: ProjectStoreProtocol {
                                     try JSONDecoder().decode(VideoProject.self, from: backupData)
                                 }
                                 projects.append(rawProject)
-                                AppLogger.project.info("✅ Successfully loaded corrupted project from backup")
+                                AppLogger.project.info("✅ Successfully loaded corrupted project from backup: \(fileURL.lastPathComponent)")
+                                AppLogger.uiLog.info("Project recovery successful: \(fileURL.lastPathComponent) restored from backup")
                             } catch {
-                                AppLogger.project.error("Backup also failed to load: \(error)")
+                                let backupError = "\(error.localizedDescription) (type: \(type(of: error)))"
+                                AppLogger.project.error("Backup also failed to load: \(backupError)")
+                                AppLogger.uiLog.error("Project recovery failed: \(fileURL.lastPathComponent) - backup also corrupted: \(backupError)")
                                 // CRITICAL: Show warning to user about corrupted project
                                 await MainActor.run {
                                     ServiceContainer.shared.toastManager.show("⚠️ Project file corrupted: \(fileURL.lastPathComponent)", type: .error)
@@ -151,6 +164,8 @@ final class ProjectStore: ProjectStoreProtocol {
                             }
                         } else {
                             // No backup available - show warning
+                            AppLogger.project.warning("No backup available for corrupted project: \(fileURL.lastPathComponent)")
+                            AppLogger.uiLog.error("Project corruption (no backup): \(fileURL.lastPathComponent) - \(errorDetails)")
                             await MainActor.run {
                                 ServiceContainer.shared.toastManager.show("⚠️ Project file corrupted (no backup): \(fileURL.lastPathComponent)", type: .error)
                             }

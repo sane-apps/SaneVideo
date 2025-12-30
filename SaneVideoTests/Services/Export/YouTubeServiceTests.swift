@@ -126,10 +126,13 @@ struct YouTubeServiceTests {
         // Arrange & Act
         let service = YouTubeService()
 
-        // Assert - if it compiles, it's Observable
-        // We can also check that we can access the properties
-        _ = service.isUploading
-        _ = service.uploadProgress
-        #expect(true)
+        // Assert - Verify Observable works by checking initial state
+        // If @Observable works, we can read the properties
+        let isUploading = service.isUploading
+        let uploadProgress = service.uploadProgress
+
+        // Verify initial state (tests runtime behavior, not compilation)
+        #expect(isUploading == false, "Initial isUploading should be false")
+        #expect(uploadProgress == 0.0, "Initial uploadProgress should be 0.0")
     }
 }

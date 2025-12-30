@@ -17,14 +17,15 @@ struct ToastManagerTests {
 
     @Test("AlertType has all expected cases")
     func alertTypeHasAllCases() {
-        // Arrange & Assert - verify all cases exist
+        // Arrange & Assert - verify all cases exist and are distinct
         let info = ToastManager.AlertType.info
         let success = ToastManager.AlertType.success
         let error = ToastManager.AlertType.error
 
-        // If this compiles, all cases exist
-        _ = (info, success, error)
-        #expect(true)
+        // Verify cases are distinct (tests runtime behavior, not compilation)
+        #expect(info != success, "Info and success should be distinct")
+        #expect(success != error, "Success and error should be distinct")
+        #expect(error != info, "Error and info should be distinct")
     }
 
     // MARK: - Initial State Tests
@@ -153,8 +154,8 @@ struct ToastManagerTests {
         // Arrange & Act
         let manager = ToastManager()
 
-        // Assert - if it compiles with @Observable, this works
-        _ = manager.toastMessage
-        #expect(true)
+        // Assert - Verify Observable works by checking initial state
+        // If @Observable works, we can read the property
+        #expect(manager.toastMessage == nil, "Initial toastMessage should be nil")
     }
 }

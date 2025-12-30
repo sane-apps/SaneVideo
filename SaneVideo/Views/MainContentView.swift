@@ -40,6 +40,11 @@ struct MainContentView: View {
       .overlay(alignment: .top) {
         MagicOverlayView()
       }
+      .overlay(alignment: .bottomTrailing) {
+        // Build timestamp for cross-referencing screenshots with logs
+        BuildTimestampView()
+          .padding(12)
+      }
       .overlay {
         // Quick Access Overlay (post-recording)
         if appState.showQuickAccessOverlay,

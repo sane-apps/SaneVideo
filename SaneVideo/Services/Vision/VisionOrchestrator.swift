@@ -305,16 +305,14 @@ actor VisionOrchestrator {
                              (error as NSError).code == -1 // Generic Vision failure
 
           if isANEFailure && frameCount == 0 {
-            // First frame failed - likely ANE issue, configure for CPU fallback
-            AppLogger.vision.warning("👁️ VisionOrchestrator: ANE failure detected, enabling CPU fallback")
-            for request in requests {
-              request.usesCPUOnly = true
-            }
-            // Retry this frame with CPU
+            // First frame failed - likely ANE issue
+            // Note: usesCPUOnly was deprecated in macOS 14.0 - Vision framework handles fallback automatically
+            AppLogger.vision.warning("👁️ VisionOrchestrator: ANE failure detected on first frame, Vision will auto-fallback to CPU")
+            // Retry this frame - Vision framework will automatically use CPU if ANE unavailable
             do {
               try handler.perform(requests)
             } catch {
-              AppLogger.vision.error("👁️ VisionOrchestrator: CPU fallback also failed: \(error.localizedDescription)")
+              AppLogger.vision.error("👁️ VisionOrchestrator: Retry also failed: \(error.localizedDescription)")
             }
           }
           // Continue processing - Vision errors on individual frames are non-fatal

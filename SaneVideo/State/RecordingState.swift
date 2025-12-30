@@ -74,6 +74,7 @@ class RecordingState {
   // Task.cancel() is thread-safe, so we can call it from any thread in deinit
   deinit {
     countdownTask?.cancel()
+    startingTask?.cancel()
   }
 
   private func setupRecordingEngine() {

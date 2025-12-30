@@ -228,6 +228,10 @@ struct SaneVideoApp: App {
 class AppDelegate: NSObject, NSApplicationDelegate {
   var statusItem: NSStatusItem?
 
+  deinit {
+    NotificationCenter.default.removeObserver(self)
+  }
+
   func applicationDidFinishLaunching(_: Notification) {
     setupMenuBar()
 

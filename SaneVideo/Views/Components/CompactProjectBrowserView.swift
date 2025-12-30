@@ -116,13 +116,23 @@ struct CompactProjectRow: View {
 
     private func loadThumbnail() async {
         guard let clip = firstClip, !clip.isMissing else { return }
+        
+        // PERFORMANCE: Throttle thumbnail loading to prevent lag
+        try? await Task.sleep(for: .milliseconds(100))
+        
         let time = CMTime(seconds: clip.effectiveDuration.seconds * 0.25, preferredTimescale: 600)
         let originalTime = clip.originalTime(forEffectiveTime: time) ?? clip.trimStart
-        if let thumb = await ServiceContainer.shared.thumbnailService.thumbnail(
-            for: clip,
-            time: originalTime,
-            size: CGSize(width: 100, height: 64)
-        ) {
+        
+        // PERFORMANCE: Use lower priority for thumbnail loading
+        let thumb = await Task.detached(priority: .utility) {
+            await ServiceContainer.shared.thumbnailService.thumbnail(
+                for: clip,
+                time: originalTime,
+                size: CGSize(width: 100, height: 64)
+            )
+        }.value
+        
+        if let thumb = thumb {
             await MainActor.run {
                 self.thumbnail = thumb
             }

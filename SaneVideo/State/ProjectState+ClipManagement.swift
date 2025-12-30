@@ -286,10 +286,21 @@ extension ProjectState {
   // MARK: - Removal
 
   func deleteClip(_ clip: VideoClip, transactionId: UUID? = nil) {
-    guard !shouldBlockOperation(transactionId: transactionId) else { return }
-    guard var project = currentProject else { return }
+    // CRITICAL: Log why deletion might be blocked
+    if shouldBlockOperation(transactionId: transactionId) {
+      AppLogger.project.warning("⚠️ Delete clip blocked: operation in progress (transaction: \(transactionId?.uuidString ?? "none"))")
+      ServiceContainer.shared.toastManager.show("Cannot delete: Operation in progress", type: .warning)
+      return
+    }
+    
+    guard var project = currentProject else {
+      AppLogger.project.warning("⚠️ Delete clip blocked: No current project")
+      ServiceContainer.shared.toastManager.show("Cannot delete: No project open", type: .error)
+      return
+    }
 
     if isTrackLocked(for: clip) {
+      AppLogger.project.warning("⚠️ Delete clip blocked: Track is locked")
       ServiceContainer.shared.toastManager.show("Track is locked", type: .error)
       return
     }
@@ -322,8 +333,11 @@ extension ProjectState {
       currentProject = project
       saveProject(project)
 
-      AppLogger.project.info("Removed clip from timeline: \(clip.url.lastPathComponent)")
+      AppLogger.project.info("✅ Removed clip from timeline: \(clip.url.lastPathComponent)")
       ServiceContainer.shared.toastManager.show("Deleted Clip")
+    } else {
+      AppLogger.project.warning("⚠️ Delete clip: Clip not found in timeline: \(clip.id)")
+      ServiceContainer.shared.toastManager.show("Clip not found in project", type: .warning)
     }
   }
 

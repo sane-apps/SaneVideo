@@ -102,6 +102,7 @@ struct ProjectBrowserView: View {
                                 showingDeleteConfirmation = true
                             }
                         )
+                        .id(project.id) // Force view identity for proper lazy loading
                     }
                 }
                 .padding()
@@ -342,16 +343,25 @@ struct ProjectCard: View {
         guard !isLoadingThumbnail else { return }
         isLoadingThumbnail = true
         
+        // PERFORMANCE: Add small delay to throttle concurrent thumbnail loads
+        // This prevents all 30 projects from loading thumbnails simultaneously
+        try? await Task.sleep(for: .milliseconds(50))
+        
         // Get thumbnail from first clip at 25% through its duration
         let time = CMTime(seconds: clip.effectiveDuration.seconds * 0.25, preferredTimescale: 600)
         let originalTime = clip.originalTime(forEffectiveTime: time) ?? clip.trimStart
         let size = CGSize(width: 400, height: 280) // High quality for card preview
         
-        if let thumb = await ServiceContainer.shared.thumbnailService.thumbnail(
-            for: clip,
-            time: originalTime,
-            size: size
-        ) {
+        // PERFORMANCE: Use lower priority for thumbnail loading
+        let thumb = await Task.detached(priority: .utility) {
+            await ServiceContainer.shared.thumbnailService.thumbnail(
+                for: clip,
+                time: originalTime,
+                size: size
+            )
+        }.value
+        
+        if let thumb = thumb {
             await MainActor.run {
                 self.thumbnail = thumb
                 self.isLoadingThumbnail = false

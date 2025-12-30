@@ -232,14 +232,13 @@ class PermissionManager: PermissionManagerProtocol {
     // Direct links to specific privacy panes
     // Note: These URLs are not officially documented but widely used.
     // Fallback to generic settings if needed.
-    let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Camera")!
+    guard let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Camera") else { return }
     NSWorkspace.shared.open(url)
   }
 
   func openScreenRecordingSettings() {
     // Direct link to Screen Recording privacy pane
-    let url = URL(
-      string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture")!
+    guard let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture") else { return }
     NSWorkspace.shared.open(url)
   }
 

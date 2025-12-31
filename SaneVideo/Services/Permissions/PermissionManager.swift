@@ -144,18 +144,28 @@ class PermissionManager: PermissionManagerProtocol {
       screenRecordingStatus = .granted
       return
     }
-    // CGPreflightScreenCaptureAccess() returns true if permitted
-    // But it doesn't distinguish between .notDetermined and .denied easily without trying
-    // However, for macOS 10.15+, this is the standard check.
-    let granted = CGPreflightScreenCaptureAccess()
-    
-    // CRITICAL FIX: Use tracking to distinguish .notDetermined from .denied
-    if granted {
+
+    // CRITICAL FIX: CGPreflightScreenCaptureAccess() is unreliable - it can return false
+    // even when permission IS granted (until app restart after grant).
+    // Check multiple signals to determine actual permission status:
+
+    // 1. If preflight returns true, we're definitely granted
+    if CGPreflightScreenCaptureAccess() {
       screenRecordingStatus = .granted
-    } else {
-      // If we've requested before, it's denied. Otherwise, it's not determined.
-      screenRecordingStatus = screenRecordingWasRequested ? .denied : .notDetermined
+      UserDefaults.standard.set(true, forKey: "screenRecordingEverGranted")
+      return
     }
+
+    // 2. If we've ever successfully used screen recording, assume still granted
+    // (User would have to explicitly revoke in System Settings)
+    if UserDefaults.standard.bool(forKey: "screenRecordingEverGranted") {
+      screenRecordingStatus = .granted
+      return
+    }
+
+    // 3. If we've requested before but never succeeded, it's denied
+    let wasRequested = UserDefaults.standard.bool(forKey: "screenRecordingWasRequested")
+    screenRecordingStatus = wasRequested ? .denied : .notDetermined
   }
 
   func requestScreenRecordingPermission() {
@@ -163,25 +173,31 @@ class PermissionManager: PermissionManagerProtocol {
       screenRecordingStatus = .granted
       return
     }
-    // CRITICAL FIX: Mark that we've requested permission
-    screenRecordingWasRequested = true
-    
-    // CRITICAL FIX: Document restart requirement for user
+
+    // CRITICAL FIX: Don't re-request if already granted
+    if screenRecordingStatus == .granted {
+      AppLogger.general.info("📺 Screen recording permission already granted, skipping request")
+      return
+    }
+
+    // CRITICAL FIX: Persist that we've requested permission (survives app restart)
+    UserDefaults.standard.set(true, forKey: "screenRecordingWasRequested")
+
     AppLogger.general.info("📺 Requesting screen recording permission...")
     AppLogger.general.warning("⚠️ Note: If permission is granted, the app must be restarted for it to take effect.")
-    
+
     // This API requests permission. It returns immediately.
     // The user must restart the app if they grant it.
     CGRequestScreenCaptureAccess()
-    
-    // CRITICAL FIX: Show user-friendly message about restart requirement
+
+    // Show user-friendly message about restart requirement
     Task { @MainActor in
       ServiceContainer.shared.toastManager.show(
         "Screen recording permission requested. If granted, please restart the app for it to take effect.",
         type: .info
       )
     }
-    
+
     // We can't await the result, so we just re-check
     checkScreenRecordingPermission()
   }

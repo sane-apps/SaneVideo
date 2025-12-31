@@ -50,15 +50,44 @@ struct KeyboardShortcutsSheet: View {
                         ("Shuttle Backward", "J"),
                         ("Shuttle Forward", "L"),
                         ("Step Backward", "←"),
-                        ("Step Forward", "→")
+                        ("Step Forward", "→"),
+                        ("Seek Back 10s", "⇧←"),
+                        ("Seek Forward 10s", "⇧→")
+                    ])
+
+                    ShortcutSection(title: "Navigation", shortcuts: [
+                        ("Go to Start", "Home"),
+                        ("Go to End", "End"),
+                        ("Mark In Point", "I"),
+                        ("Mark Out Point", "O"),
+                        ("Clear In/Out", "⇧⌘X"),
+                        ("Fit Timeline", "⇧Z")
+                    ])
+
+                    ShortcutSection(title: "Selection", shortcuts: [
+                        ("Select All Clips", "⌘A"),
+                        ("Deselect All", "Esc"),
+                        ("Select at Playhead", "D"),
+                        ("Toggle Selection", "⌘+Click"),
+                        ("Range Selection", "⇧+Click"),
+                        ("Next Clip", "↓"),
+                        ("Previous Clip", "↑"),
+                        ("Extend Selection", "⇧↑/↓")
+                    ])
+
+                    ShortcutSection(title: "Editing", shortcuts: [
+                        ("Copy Clip", "⌘C"),
+                        ("Cut Clip", "⌘X"),
+                        ("Paste Clip", "⌘V"),
+                        ("Duplicate Clip", "⌘D"),
+                        ("Split Clip", "⌘B"),
+                        ("Delete Clip", "⌫")
                     ])
 
                     ShortcutSection(title: "Timeline", shortcuts: [
                         ("Zoom In", "⌘+"),
                         ("Zoom Out", "⌘-"),
                         ("Fit to View", "⌘0"),
-                        ("Split Clip", "⌘B"),
-                        ("Delete Clip", "⌫"),
                         ("Toggle Snapping", "N"),
                         ("Toggle Magnetic", "M")
                     ])
@@ -71,7 +100,9 @@ struct KeyboardShortcutsSheet: View {
 
                     ShortcutSection(title: "View", shortcuts: [
                         ("Toggle Sidebar", "⌥⌘S"),
-                        ("Toggle Inspector", "⌥⌘I")
+                        ("Toggle Inspector", "⌥⌘I"),
+                        ("Toggle Captions", "⌥⌘T"),
+                        ("Open Library", "⌘L")
                     ])
 
                     ShortcutSection(title: "Export", shortcuts: [
@@ -82,7 +113,7 @@ struct KeyboardShortcutsSheet: View {
                 .padding()
             }
         }
-        .frame(width: 500, height: 600)
+        .frame(width: 500, height: 800)
         .subtleGlass(radius: 12)
     }
 }

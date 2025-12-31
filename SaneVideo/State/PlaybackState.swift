@@ -435,6 +435,18 @@ class PlaybackState {
         }
     }
 
+    /// Seek forward 10 seconds (Shift+Right Arrow)
+    func seekForward10Seconds() {
+        let newTime = min(duration.seconds, currentTime.seconds + 10.0)
+        seek(to: CMTime(seconds: newTime, preferredTimescale: 600))
+    }
+
+    /// Seek backward 10 seconds (Shift+Left Arrow)
+    func seekBackward10Seconds() {
+        let newTime = max(0, currentTime.seconds - 10.0)
+        seek(to: CMTime(seconds: newTime, preferredTimescale: 600))
+    }
+
     // MARK: - Playback Rate Control (J/K/L Shuttle)
 
     /// Set playback rate for shuttle control (negative = reverse, >1 = fast forward)

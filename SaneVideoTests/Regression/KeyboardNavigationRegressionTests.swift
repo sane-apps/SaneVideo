@@ -66,6 +66,51 @@ final class KeyboardNavigationRegressionTests: XCTestCase {
         XCTAssertEqual(range.end.seconds, 5.0, "End should be the larger value")
     }
 
+    // MARK: - 10-Second Seek (Shift+Arrow)
+
+    /// Regression test for: Shift+Left/Right Arrow seeks 10 seconds
+    @MainActor
+    func testSeek10Seconds() {
+        let playbackState = PlaybackState()
+
+        // Set a duration so we have room to seek
+        playbackState.duration = CMTime(seconds: 60.0, preferredTimescale: 600)
+
+        // Start at 30 seconds
+        playbackState.currentTime = CMTime(seconds: 30.0, preferredTimescale: 600)
+
+        // Seek forward 10 seconds
+        playbackState.seekForward10Seconds()
+        XCTAssertEqual(playbackState.currentTime.seconds, 40.0, accuracy: 0.001, "Should seek forward 10 seconds")
+
+        // Seek backward 10 seconds
+        playbackState.seekBackward10Seconds()
+        XCTAssertEqual(playbackState.currentTime.seconds, 30.0, accuracy: 0.001, "Should seek backward 10 seconds")
+    }
+
+    /// Regression test for: 10-second seek respects duration boundaries
+    @MainActor
+    func testSeek10SecondsBoundaries() {
+        let playbackState = PlaybackState()
+
+        // Set a short duration
+        playbackState.duration = CMTime(seconds: 15.0, preferredTimescale: 600)
+
+        // Start at 10 seconds
+        playbackState.currentTime = CMTime(seconds: 10.0, preferredTimescale: 600)
+
+        // Seek forward should cap at duration
+        playbackState.seekForward10Seconds()
+        XCTAssertEqual(playbackState.currentTime.seconds, 15.0, accuracy: 0.001, "Should cap at duration")
+
+        // Reset to 5 seconds
+        playbackState.currentTime = CMTime(seconds: 5.0, preferredTimescale: 600)
+
+        // Seek backward should cap at 0
+        playbackState.seekBackward10Seconds()
+        XCTAssertEqual(playbackState.currentTime.seconds, 0.0, accuracy: 0.001, "Should cap at 0")
+    }
+
     // MARK: - FocusNavigationModifier
 
     /// Verify FocusStyle configurations exist
@@ -251,6 +296,8 @@ final class KeyboardNavigationRegressionTests: XCTestCase {
             "shortcut.shuttle_forward",
             "shortcut.step_backward",
             "shortcut.step_forward",
+            "shortcut.seek_backward_10s",
+            "shortcut.seek_forward_10s",
             "shortcut.split_clip",
             "shortcut.delete_clip",
             "shortcut.deselect_all",
@@ -273,6 +320,6 @@ final class KeyboardNavigationRegressionTests: XCTestCase {
 
         // This test verifies the expected shortcuts are documented
         // Actual implementation is verified via UI tests
-        XCTAssertEqual(expectedShortcutIds.count, 24, "Should have 24 timeline-related shortcuts")
+        XCTAssertEqual(expectedShortcutIds.count, 26, "Should have 26 timeline-related shortcuts")
     }
 }

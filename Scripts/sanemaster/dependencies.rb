@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+# rubocop:disable Metrics/ModuleLength
+
 module SaneMasterModules
   # Version checking, dependency graphs, CI parity, MCP verification
   module Dependencies
@@ -107,19 +109,6 @@ module SaneMasterModules
       end
     rescue StandardError
       'not installed'
-    end
-
-    def check_ci_parity
-      puts '🔄 --- [ SANEMASTER CI PARITY CHECK ] ---'
-      puts 'Comparing local environment with CI configuration...'
-      puts ''
-
-      issues = []
-      check_github_workflow(issues)
-      check_fastfile
-      check_xcode_version_file(issues)
-      check_gemfile_lock(issues)
-      print_ci_parity_summary(issues)
     end
 
     def show_dependency_graph(args)
@@ -359,96 +348,6 @@ module SaneMasterModules
       puts '💡 View with: dot -Tpng dependencies.dot -o dependencies.png && open dependencies.png'
     end
 
-    def check_github_workflow(issues)
-      gh_workflow = Dir.glob('.github/workflows/*.yml').first
-      return puts '⚠️  No GitHub Actions workflow found' unless gh_workflow
-
-      puts "📄 Found: #{gh_workflow}"
-      workflow = File.read(gh_workflow)
-
-      check_workflow_xcode(workflow, issues)
-      check_workflow_ruby(workflow, issues)
-    end
-
-    def check_workflow_xcode(workflow, issues)
-      xcode_match = workflow.match(/xcode-version:\s*['"]?([\d.]+)['"]?/i) ||
-                    workflow.match(/DEVELOPER_DIR.*Xcode[_-]?([\d.]+)/i)
-      return unless xcode_match
-
-      ci_xcode = xcode_match[1]
-      local_xcode = `xcodebuild -version 2>/dev/null`.lines.first&.match(/Xcode ([\d.]+)/)&.[](1)
-      if local_xcode && ci_xcode != local_xcode
-        issues << "Xcode: CI uses #{ci_xcode}, local is #{local_xcode}"
-      else
-        puts "   ✅ Xcode version matches: #{local_xcode}"
-      end
-    end
-
-    def check_workflow_ruby(workflow, issues)
-      ruby_match = workflow.match(/ruby-version:\s*['"]?([\d.]+)['"]?/i)
-      return unless ruby_match
-
-      ci_ruby = ruby_match[1]
-      local_ruby = `#{HOMEBREW_RUBY} --version 2>/dev/null`.match(/ruby ([\d.]+)/)&.[](1)
-      if local_ruby && !local_ruby.start_with?(ci_ruby)
-        issues << "Ruby: CI uses #{ci_ruby}, local is #{local_ruby}"
-      else
-        puts "   ✅ Ruby version compatible: #{local_ruby}"
-      end
-    end
-
-    def check_fastfile
-      fastfile = 'fastlane/Fastfile'
-      return unless File.exist?(fastfile)
-
-      puts "\n📄 Found: #{fastfile}"
-      content = File.read(fastfile)
-      puts '   ℹ️  Fastfile uses xcversion for Xcode management' if content.include?('xcversion')
-    end
-
-    def check_xcode_version_file(issues)
-      xcode_version_file = '.xcode-version'
-      return unless File.exist?(xcode_version_file)
-
-      pinned = File.read(xcode_version_file).strip
-      local = `xcodebuild -version 2>/dev/null`.lines.first&.match(/Xcode ([\d.]+)/)&.[](1)
-      if local == pinned
-        puts "\n✅ .xcode-version matches local: #{local}"
-      else
-        issues << ".xcode-version pins #{pinned}, local is #{local}"
-      end
-    end
-
-    def check_gemfile_lock(issues)
-      return unless File.exist?('Gemfile.lock')
-
-      puts "\n📄 Checking Gemfile.lock..."
-      lock_content = File.read('Gemfile.lock')
-
-      bundler_match = lock_content.match(/BUNDLED WITH\n\s+([\d.]+)/)
-      return unless bundler_match
-
-      ci_bundler = bundler_match[1]
-      local_bundler = `#{HOMEBREW_BUNDLE} --version 2>/dev/null`.match(/Bundler version ([\d.]+)/)&.[](1)
-      if local_bundler && Gem::Version.new(local_bundler) < Gem::Version.new(ci_bundler)
-        issues << "Bundler: lock requires #{ci_bundler}, local is #{local_bundler}"
-      else
-        puts "   ✅ Bundler version compatible: #{local_bundler}"
-      end
-    end
-
-    def print_ci_parity_summary(issues)
-      puts "\n#{'=' * 50}"
-      if issues.empty?
-        puts '✅ CI PARITY: Local environment matches CI configuration'
-      else
-        puts '⚠️  CI PARITY ISSUES FOUND:'
-        issues.each { |issue| puts "   - #{issue}" }
-        puts "\n💡 Fix these to avoid CI failures"
-      end
-      puts '=' * 50
-    end
-
     def check_mcp_config_file(config_path, sop_mcps, all_valid)
       puts "📄 Checking: #{config_path}"
       config = JSON.parse(File.read(config_path))
@@ -494,3 +393,4 @@ module SaneMasterModules
     end
   end
 end
+# rubocop:enable Metrics/ModuleLength

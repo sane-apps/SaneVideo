@@ -27,6 +27,7 @@ require_relative 'sanemaster/test_mode'
 require_relative 'sanemaster/verify'
 require_relative 'sanemaster/quality'
 require_relative 'sanemaster/sop_loop'
+require_relative 'sanemaster/export'
 
 class SaneMaster
   include SaneMasterModules::Base
@@ -39,6 +40,86 @@ class SaneMaster
   include SaneMasterModules::Verify
   include SaneMasterModules::Quality
   include SaneMasterModules::SOPLoop
+  include SaneMasterModules::Export
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # COMMAND REFERENCE - Organized by category for easy discovery
+  # ═══════════════════════════════════════════════════════════════════════════
+  COMMANDS = {
+    build: {
+      desc: 'Build, test, and validate code',
+      commands: {
+        'verify' => { args: '[--ui] [--clean]', desc: 'Build and run tests (unit by default, --ui for UI)' },
+        'clean' => { args: '[--nuclear]', desc: 'Wipe build cache and test states' },
+        'lint' => { args: '', desc: 'Run SwiftLint and auto-fix issues' },
+        'audit' => { args: '', desc: 'Scan for missing accessibility identifiers' }
+      }
+    },
+    gen: {
+      desc: 'Generate code, mocks, and assets',
+      commands: {
+        'gen_test' => { args: '[options]', desc: 'Generate test file from template' },
+        'gen_mock' => { args: '', desc: 'Generate mocks using Mockolo' },
+        'gen_assets' => { args: '', desc: 'Generate test video assets' },
+        'template' => { args: '[save|apply|list] [name]', desc: 'Manage configuration templates' }
+      }
+    },
+    check: {
+      desc: 'Static analysis and validation',
+      commands: {
+        'verify_api' => { args: '<API> [Framework]', desc: 'Verify API exists in SDK' },
+        'dead_code' => { args: '', desc: 'Find unused code (Periphery)' },
+        'deprecations' => { args: '', desc: 'Scan for deprecated API usage' },
+        'swift6' => { args: '', desc: 'Verify Swift 6 concurrency compliance' },
+        'check_docs' => { args: '', desc: 'Check docs are in sync with code' },
+        'check_binary' => { args: '', desc: 'Audit binary for security issues' }
+      }
+    },
+    debug: {
+      desc: 'Debugging and crash analysis',
+      commands: {
+        'test_mode' => { args: '(or tm)', desc: 'Kill → Build → Launch → Logs workflow' },
+        'logs' => { args: '[--follow]', desc: 'Show application logs' },
+        'launch' => { args: '', desc: 'Launch the app' },
+        'crashes' => { args: '[--recent]', desc: 'Analyze crash reports' },
+        'diagnose' => { args: '[path]', desc: 'Analyze .xcresult bundle' }
+      }
+    },
+    env: {
+      desc: 'Environment and setup',
+      commands: {
+        'doctor' => { args: '', desc: 'Check environment health' },
+        'bootstrap' => { args: '[--check-only]', desc: 'Full environment setup' },
+        'setup' => { args: '', desc: 'Install gems and dependencies' },
+        'versions' => { args: '', desc: 'Check tool versions' },
+        'reset' => { args: '', desc: 'Reset TCC permissions' },
+        'restore' => { args: '', desc: 'Fix Xcode/Launch Services issues' }
+      }
+    },
+    memory: {
+      desc: 'Cross-session memory (MCP)',
+      commands: {
+        'mc' => { args: '', desc: 'Show memory context' },
+        'mr' => { args: '<type> <name>', desc: 'Record new entity' },
+        'mp' => { args: '[--dry-run]', desc: 'Prune stale entities' }
+      }
+    },
+    export: {
+      desc: 'Export and documentation',
+      commands: {
+        'export' => { args: '[--highlight]', desc: 'Export code to PDF (~/Downloads)' },
+        'deps' => { args: '[--dot]', desc: 'Show dependency graph' },
+        'quality' => { args: '', desc: 'Generate Ruby quality report' }
+      }
+    }
+  }.freeze
+
+  QUICK_START = [
+    { cmd: 'verify', desc: 'Build + run tests' },
+    { cmd: 'test_mode', desc: 'Kill → Build → Launch → Logs' },
+    { cmd: 'doctor', desc: 'Check environment health' },
+    { cmd: 'export', desc: 'Export code to PDF' }
+  ].freeze
 
   def initialize
     @bundle_id = 'com.sanevideo.app'
@@ -51,12 +132,30 @@ class SaneMaster
     end
 
     command = args.shift
+
+    # Handle 'help <category>' specially
+    if command == 'help'
+      category = args.shift
+      if category
+        print_category_help(category.to_sym)
+      else
+        print_help
+      end
+      return
+    end
+
     dispatch_command(command, args)
   end
 
   private
 
   def dispatch_command(command, args)
+    # Check for --help flag on any command
+    if args.include?('--help') || args.include?('-h')
+      print_command_detail(command)
+      return
+    end
+
     case command
     # Diagnostics
     when 'diagnose'
@@ -130,8 +229,6 @@ class SaneMaster
     # Dependencies & Versions
     when 'version_check', 'versions'
       check_latest_versions(args)
-    when 'ci_parity', 'ci_check'
-      check_ci_parity
     when 'deps', 'dependencies'
       show_dependency_graph(args)
     when 'verify_mcps'
@@ -166,7 +263,11 @@ class SaneMaster
       require 'pry'
       # rubocop:disable Lint/Debugger
       binding.pry
-      # rubocop:enable Lint/Debugger
+    # rubocop:enable Lint/Debugger
+
+    # Export
+    when 'export', 'pdf', 'export_pdf'
+      export_pdf(args)
 
     else
       puts "❌ Unknown command: #{command}"
@@ -235,129 +336,263 @@ class SaneMaster
   end
 
   def print_help
-    puts <<~HELP
-      SaneMaster - Professional Automation Suite for SaneVideo
+    puts <<~HEADER
+      ┌─────────────────────────────────────────────────────────────┐
+      │  SaneMaster - Professional Automation Suite for SaneVideo  │
+      └─────────────────────────────────────────────────────────────┘
+
+      Quick Start:
+    HEADER
+
+    QUICK_START.each do |item|
+      puts "        #{item[:cmd].ljust(12)} #{item[:desc]}"
+    end
+
+    puts "\n      Categories (use 'help <category>' for details):"
+    puts '      ─────────────────────────────────────────────────'
+
+    COMMANDS.each do |cat, data|
+      cmd_list = data[:commands].keys.take(3).join(', ')
+      cmd_list += ', ...' if data[:commands].size > 3
+      puts "        #{cat.to_s.ljust(10)} #{data[:desc]}"
+      puts "                   └─ #{cmd_list}"
+    end
+
+    puts <<~FOOTER
+
+      Examples:
+        ./Scripts/SaneMaster.rb verify          # Build + test
+        ./Scripts/SaneMaster.rb help build      # Show build commands
+        ./Scripts/SaneMaster.rb help check      # Show analysis commands
+
+      Aliases: sm = ./Scripts/SaneMaster.rb (if configured)
+    FOOTER
+  end
+
+  def print_category_help(category)
+    unless COMMANDS.key?(category)
+      puts "❌ Unknown category: #{category}"
+      puts "   Available: #{COMMANDS.keys.join(', ')}"
+      return
+    end
+
+    data = COMMANDS[category]
+    puts <<~HEADER
+      ┌─────────────────────────────────────────────────────────────┐
+      │  #{category.to_s.upcase.center(57)}  │
+      │  #{data[:desc].center(57)}  │
+      └─────────────────────────────────────────────────────────────┘
 
       Commands:
-        verify [--ui] [--clean] [--skip-test-validation]
-          Build and run tests (unit tests by default, --ui for UI tests)
+    HEADER
 
-        validate_test_references (or validate-tests)
-          Validate that all UI test references match actual UI code
+    data[:commands].each do |cmd, info|
+      args = info[:args].empty? ? '' : " #{info[:args]}"
+      puts "        #{cmd}#{args}"
+      puts "          #{info[:desc]}"
+      puts
+    end
+  end
 
-        diagnose [path] [--dump]
-          Run intelligent heuristics on a .xcresult bundle
+  # Extended help information for each command
+  # rubocop:disable Lint/UselessConstantScoping
+  COMMAND_DETAILS = {
+    'verify' => {
+      usage: 'verify [--ui] [--clean]',
+      description: 'Build the project and run tests',
+      flags: {
+        '--ui' => 'Run UI tests instead of unit tests',
+        '--clean' => 'Clean build before testing'
+      },
+      examples: [
+        'verify           # Run unit tests',
+        'verify --ui      # Run UI tests',
+        'verify --clean   # Clean build first'
+      ]
+    },
+    'clean' => {
+      usage: 'clean [--nuclear]',
+      description: 'Wipe build cache and test state files',
+      flags: {
+        '--nuclear' => 'Also remove DerivedData and reset Xcode state'
+      },
+      examples: ['clean', 'clean --nuclear']
+    },
+    'test_mode' => {
+      usage: 'test_mode (or tm)',
+      description: 'Interactive debugging workflow: Kill → Build → Launch → Logs',
+      flags: {},
+      examples: %w[test_mode tm]
+    },
+    'doctor' => {
+      usage: 'doctor',
+      description: 'Check environment health and tool versions',
+      flags: {},
+      examples: ['doctor']
+    },
+    'export' => {
+      usage: 'export [--highlight] [--include-tests] [--output <dir>]',
+      description: 'Export source code to PDF for review',
+      flags: {
+        '--highlight' => 'Enable syntax highlighting (larger file)',
+        '--include-tests' => 'Include test files in export',
+        '--output <dir>' => 'Custom output directory (default: ~/Downloads)'
+      },
+      examples: [
+        'export                    # Basic export',
+        'export --highlight        # With syntax highlighting',
+        'export --include-tests    # Include test files'
+      ]
+    },
+    'gen_test' => {
+      usage: 'gen_test <name> [--type <unit|ui>] [--target <class>] [--async]',
+      description: 'Generate test file from template',
+      flags: {
+        '--type' => 'Test type: unit (default) or ui',
+        '--framework' => 'Testing framework: testing (default) or xctest',
+        '--target' => 'Target class/service to test',
+        '--async' => 'Include async/await patterns'
+      },
+      examples: [
+        'gen_test MyFeatureTests --target MyFeature',
+        'gen_test MyTests --async --framework xctest'
+      ]
+    },
+    'gen_mock' => {
+      usage: 'gen_mock [--target <dir>] [--protocol <name>]',
+      description: 'Generate mocks using Mockolo',
+      flags: {
+        '--target' => 'Generate for all protocols in directory',
+        '--protocol' => 'Generate for specific protocol',
+        '--output' => 'Output directory (default: SaneVideoTests/Mocks)'
+      },
+      examples: [
+        'gen_mock --target Services/Camera',
+        'gen_mock --protocol CameraServiceProtocol'
+      ]
+    },
+    'verify_api' => {
+      usage: 'verify_api <APIName> [Framework]',
+      description: 'Verify API exists in macOS SDK',
+      flags: {},
+      examples: [
+        'verify_api faceCaptureQuality Vision',
+        'verify_api SCContentSharingPicker ScreenCaptureKit'
+      ]
+    },
+    'dead_code' => {
+      usage: 'dead_code',
+      description: 'Find unused code using Periphery',
+      flags: {},
+      examples: ['dead_code']
+    },
+    'swift6' => {
+      usage: 'swift6',
+      description: 'Check Swift 6 concurrency compliance',
+      flags: {},
+      examples: ['swift6']
+    },
+    'logs' => {
+      usage: 'logs [--follow]',
+      description: 'Show application logs',
+      flags: {
+        '--follow' => 'Stream logs in real-time'
+      },
+      examples: ['logs', 'logs --follow']
+    },
+    'crashes' => {
+      usage: 'crashes [--recent]',
+      description: 'Analyze crash reports',
+      flags: {
+        '--recent' => 'Show only recent crashes'
+      },
+      examples: ['crashes', 'crashes --recent']
+    },
+    'mc' => {
+      usage: 'mc',
+      description: 'Show current Memory MCP context',
+      flags: {},
+      examples: ['mc']
+    },
+    'mr' => {
+      usage: 'mr <type> <name>',
+      description: 'Record new entity to Memory MCP',
+      flags: {},
+      examples: ['mr bug CrashOnExport', 'mr fix AudioSyncIssue']
+    },
+    'deps' => {
+      usage: 'deps [--dot]',
+      description: 'Show dependency graph',
+      flags: {
+        '--dot' => 'Output in DOT format for visualization'
+      },
+      examples: ['deps', 'deps --dot > graph.dot']
+    }
+  }.freeze
+  # rubocop:enable Lint/UselessConstantScoping
 
-        doctor
-          Check environment, mock assets, and permissions
+  def print_command_detail(command)
+    # Find command info from COMMANDS hash
+    cmd_info = nil
+    category = nil
+    COMMANDS.each do |cat, data|
+      data[:commands].each do |cmd, info|
+        next unless cmd == command
 
-        audit
-          Scan project for missing accessibility identifiers
+        cmd_info = info
+        category = cat
+        break
+      end
+      break if cmd_info
+    end
 
-        clean [--nuclear]
-          Safely wipe build cache and test states
+    # Check for alias mappings
+    aliases = {
+      'tm' => 'test_mode', 'crashes' => 'crash_report', 'versions' => 'version_check',
+      'deprecations' => 'check_deprecations', 'pdf' => 'export'
+    }
+    command = aliases[command] if aliases.key?(command)
 
-        reset
-          Wipe TCC privacy permissions (Camera, Mic, Screen)
+    details = COMMAND_DETAILS[command]
 
-        setup
-          Install missing gems and system dependencies
+    puts <<~HEADER
+      ┌─────────────────────────────────────────────────────────────┐
+      │  #{command.upcase.center(57)}  │
+      └─────────────────────────────────────────────────────────────┘
 
-        lint
-          Run SwiftLint and auto-fix common issues
+    HEADER
 
-        quality
-          Generate Ruby quality reports (HTML)
+    if details
+      puts "Usage: ./Scripts/SaneMaster.rb #{details[:usage]}"
+      puts
+      puts 'Description:'
+      puts "  #{details[:description]}"
 
-        gen_test [options]
-          Generate test file from template
+      if details[:flags].any?
+        puts
+        puts 'Flags:'
+        details[:flags].each do |flag, desc|
+          puts "  #{flag.ljust(20)} #{desc}"
+        end
+      end
 
-        gen_mock
-          Generate mocks using Mockolo
-
-        verify_api <APIName> [Framework]
-          Verify API exists in SDK
-
-        verify_mocks
-          Verify all mocks are up to date
-
-        verify_mcps
-          Verify all SOP-required MCP servers are configured
-
-        check_xcodegen [files]
-          Check if new Swift files are in Xcode project
-
-        check_protocol_changes [files]
-          Check for protocol changes that might break mocks
-
-        check_docs
-          Check documentation is in sync with code
-
-        dead_code (or find_dead_code)
-          Scan for unused code using Periphery
-
-        check_deprecations (or deprecations)
-          Scan for deprecated API usage and warnings
-
-        swift6_check (or swift6, concurrency_check)
-          Verify Swift 6 concurrency compliance
-
-        test_suite (or suite) [--quick] [--full] [--ci]
-          Run comprehensive validation suite
-          --quick: Fast checks only
-          --full: All checks including slow ones
-          --ci: CI-optimized
-
-        crash_report (or crashes) [--details] [--recent]
-          Analyze crash reports for patterns
-
-        logs [--tail N] [--follow]
-          Show SaneVideo application logs
-
-        test_mode (or tm)
-          Enter interactive debugging workflow
-
-        bootstrap (or preflight, env)
-          Full environment bootstrap
-          --check-only: Report status without changes
-          --rollback: Restore previous snapshot
-          --no-fix: Skip auto-fixing
-
-        versions (or version_check)
-          Check installed tool versions
-          --refresh (-f): Force refresh cache
-
-        ci_parity (or ci_check)
-          Compare local environment with CI
-
-        deps (or dependencies)
-          Show project dependency graph
-          --dot: Output GraphViz DOT format
-
-        template [save|apply|list|delete] [name]
-          Manage project configuration templates
-
-        memory_context (or mc)
-          Show cross-session knowledge from Memory MCP
-
-        memory_record (or mr) <type> <name>
-          Record new entity to Memory MCP
-
-        memory_prune (or mp) [--dry-run]
-          Remove stale memory entities
-
-        check_binary
-          Audit binary for security issues
-
-        restore
-          Fix common Xcode/Launch Services issues
-
-        gen_assets
-          Generate test video assets
-
-        console
-          Open Pry console for debugging
-    HELP
+      if details[:examples].any?
+        puts
+        puts 'Examples:'
+        details[:examples].each { |ex| puts "  ./Scripts/SaneMaster.rb #{ex}" }
+      end
+    elsif cmd_info
+      puts "Usage: ./Scripts/SaneMaster.rb #{command} #{cmd_info[:args]}"
+      puts
+      puts 'Description:'
+      puts "  #{cmd_info[:desc]}"
+      puts
+      puts "Category: #{category}"
+    else
+      puts "No detailed help available for '#{command}'"
+      puts
+      puts "Run './Scripts/SaneMaster.rb' to see all available commands."
+    end
   end
 end
 

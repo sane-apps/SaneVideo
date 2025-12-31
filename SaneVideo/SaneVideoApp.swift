@@ -17,7 +17,7 @@ struct SaneVideoApp: App {
   @Environment(\.scenePhase) private var scenePhase
 
   // Sparkle auto-update service (manual check only for launch)
-  @StateObject private var updaterService = UpdaterService()
+  @State private var updaterService = UpdaterService()
 
   var body: some Scene {
     WindowGroup {

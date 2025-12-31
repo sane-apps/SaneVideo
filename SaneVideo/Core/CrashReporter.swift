@@ -6,7 +6,6 @@
 //  Collects crash logs, hang reports, and performance diagnostics.
 //
 
-import Combine
 import Foundation
 import MetricKit
 
@@ -14,10 +13,11 @@ import MetricKit
 /// MetricKit provides system-level insights including crashes, hangs, CPU usage,
 /// memory consumption, and disk writes from users who opt-in to diagnostics.
 @MainActor
-final class CrashReporter: NSObject, ObservableObject {
+@Observable
+final class CrashReporter: NSObject {
 
-    @Published private(set) var lastCrashDate: Date?
-    @Published private(set) var crashCount: Int = 0
+    private(set) var lastCrashDate: Date?
+    private(set) var crashCount: Int = 0
 
     override init() {
         super.init()

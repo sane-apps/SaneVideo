@@ -84,6 +84,7 @@ struct ExportConfigurationView: View {
                         Picker("", selection: $exportSettings.codec) {
                             Text(String(localized: "export.codec.h264", defaultValue: "H.264 (Compat)")).tag(AVVideoCodecType.h264)
                             Text(String(localized: "export.codec.hevc", defaultValue: "HEVC (Small)")).tag(AVVideoCodecType.hevc)
+                            Text(String(localized: "export.codec.hevc_alpha", defaultValue: "HEVC+Alpha")).tag(AVVideoCodecType.hevcWithAlpha)
                             Text(String(localized: "export.codec.prores", defaultValue: "ProRes (Edit)")).tag(AVVideoCodecType.proRes422)
                         }
                         .pickerStyle(.menu)

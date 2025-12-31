@@ -880,248 +880,55 @@ Regression tests are critical for preventing the reintroduction of fixed bugs.
 
 ### Test Mode (Interactive Debugging)
 
-When the user says **"test mode"**, enter an interactive debugging workflow:
+When user says **"test mode"**: `./Scripts/SaneMaster.rb test_mode` (kills processes, shows recent screenshots/crashes, builds, launches).
 
+**Diagnostic resources** (when user says "logs" or "check logs", check ALL):
+- `~/Movies/SaneVideo/SaneVideo_Debug.log` - Debug log (overwrites each launch)
+- `Screenshots/` - Screenshots with timestamps
+- `~/Library/Logs/DiagnosticReports/SaneVideo-*.ips` - Crash reports
+- `log show --predicate 'process == "SaneVideo"' --last 5m` - System console
+
+**Cross-reference timestamps** when debugging: match screenshot filename → log entries → crash reports.
+
+### Issue Tracking Workflow
+
+When user reports bugs, document **IMMEDIATELY** in TodoWrite:
+```
+Format: "BUG: [Component] - [Brief Description] (SS: [timestamp])"
+Example: "BUG: Effects - Double yellow box (SS: 10.02.23 PM)"
+```
+
+**Screenshot rule**: Always check the MOST RECENT by timestamp, not the one attached:
 ```bash
-./Scripts/SaneMaster.rb test_mode   # or just: ./Scripts/SaneMaster.rb tm
+ls -lt Screenshots/*.png | head -5  # Find latest screenshot
 ```
 
-This command automatically:
-1. Kills existing SaneVideo processes
-2. Shows recent screenshots from `Screenshots/` folder (with timestamps)
-3. Shows recent crash reports from `~/Library/Logs/DiagnosticReports/`
-4. Builds the app
-5. Launches the app
-6. Shows debug log status
+**Verification rule**: NEVER mark completed until user confirms or you verify via new screenshot.
 
-**All diagnostic resources to monitor:**
-- **Debug log**: `~/Movies/SaneVideo/SaneVideo_Debug.log` (overwrites each launch)
-- **Screenshots**: `Screenshots/` in project root
-- **Crash reports**: `~/Library/Logs/DiagnosticReports/SaneVideo-*.ips`
-- **Hang/spin reports**: `~/Library/Logs/DiagnosticReports/SaneVideo-*.spin` or `*.hang`
-- **Xcode test results**: `~/Library/Developer/Xcode/DerivedData/SaneVideo-*/Logs/Test/*.xcresult`
-- **System console**: `log show --predicate 'process == "SaneVideo"' --last 5m`
-- **MetricKit reports**: Logged via `CrashReporter` in app (see `AppLogger.general`)
+**Anti-patterns**: ❌ Claiming "fixed" without rebuild/verify ❌ Forgetting issues ❌ Fixing symptoms not root cause
 
-**Note**: When user says "logs" or "check logs", they mean ALL diagnostic resources above, not just the debug log file.
+### Post-Fix Checklist
 
-**Cross-reference timestamps**: When debugging, match screenshot timestamps (filename) with:
-- Log entries (timestamp in log file)
-- Crash report timestamps (file modification time)
+After fixing ANY bug:
+- [ ] Regression test added? (`./Scripts/SaneMaster.rb gen_test`)
+- [ ] Similar bugs checked elsewhere? (`grep -r "pattern" SaneVideo/`)
+- [ ] Changes committed?
+- [ ] Plain English explanation ready?
+- [ ] Memory updated? (if pattern worth remembering)
 
-**After each fix**: Re-run `test_mode` to rebuild, relaunch, and verify the fix works.
-
-### Issue Tracking Workflow (CRITICAL - Don't Get Lost!)
-
-When the user reports bugs or complaints, you **MUST** document them immediately to prevent:
-- Forgetting issues mid-conversation
-- Fixing the wrong thing
-- Making the user repeat themselves
-
-#### Step 1: Document Issues Immediately
-
-When user reports a problem, **IMMEDIATELY** use TodoWrite to create entries:
-
-```
-Format: "BUG: [Component] - [Brief Description]"
-Status: pending
-```
-
-**Good examples:**
-- `BUG: Effects - Double yellow box around selected tile`
-- `BUG: Timeline - Orphaned lock icon in bottom-left`
-- `BUG: Video Preview - Crosshair showing when not dragging`
-
-**Bad examples:**
-- `Fix UI` (too vague)
-- `Look into problem` (not specific)
-
-#### Step 2: Capture Screenshot Evidence
-
-**CRITICAL: Always check the MOST RECENT screenshot by timestamp, not just the one attached.**
-
-When user posts a screenshot or says "check ss":
-
-1. **Find the most recent screenshot by timestamp:**
-```bash
-# List recent screenshots sorted by modification time (newest first)
-ls -lt Screenshots/*.png 2>/dev/null | head -5
-
-# Or get the absolute most recent with full timestamp
-stat -f "%Sm %N" -t "%Y-%m-%d %H:%M:%S" Screenshots/*.png 2>/dev/null | sort -r | head -1
-```
-
-2. **Verify you're looking at the latest:**
-   - Compare screenshot timestamp with current time
-   - If user says "check ss", they mean the MOST RECENT one
-   - Don't assume the attached screenshot is the latest - verify!
-
-3. **Add screenshot reference to the todo item:**
-   - `BUG: Effects - Double yellow box (SS: 10.02.23 PM)`
-   - Always include the timestamp from the filename
-
-**Common mistake**: Looking at an old screenshot when user has taken a new one. Always check timestamps first!
-
-#### Step 3: Correlate with Logs
-
-```bash
-# Check what was happening at screenshot time
-./Scripts/SaneMaster.rb logs --tail 50
-
-# For specific timestamps, check the log file directly
-grep "22:02" ~/Movies/SaneVideo/SaneVideo_Debug.log
-```
-
-#### Step 4: Verification After Each Fix
-
-After deploying a fix, **VERIFY** with the user by:
-
-1. **Build timestamp check**: Confirm new binary is deployed
-   ```bash
-   stat -f "%Sm" "/path/to/SaneVideo.app/Contents/MacOS/SaneVideo"
-   ```
-
-2. **Screenshot comparison**: Ask user to test and compare against original screenshot
-
-3. **Update todo status**:
-   - `completed` - User confirmed fixed
-   - `pending` - Not yet addressed
-   - `in_progress` - Currently working on
-
-4. **NEVER mark as completed until user confirms** or you visually verify via screenshot
-
-#### Issue Tracking Template
-
-When entering test mode, maintain this mental checklist:
-
-```
-REPORTED ISSUES:
-[ ] Issue 1: [Description] - Screenshot: [timestamp] - Status: [pending/fixed]
-[ ] Issue 2: [Description] - Screenshot: [timestamp] - Status: [pending/fixed]
-...
-
-VERIFIED FIXES:
-[x] Issue A: [Description] - Confirmed via screenshot [timestamp]
-[x] Issue B: [Description] - Confirmed via logs showing [evidence]
-```
-
-#### Anti-Patterns to Avoid
-
-1. ❌ **Claiming "fixed" without verification** - Always rebuild, deploy, and check
-2. ❌ **Forgetting issues** - Document IMMEDIATELY in TodoWrite
-3. ❌ **Fixing symptoms** - Look for root cause, not just what's visible
-4. ❌ **Moving on before confirming** - User says "fixed" before you mark complete
-5. ❌ **Ignoring old screenshots** - Always check latest screenshot by TIMESTAMP, not just the one attached
-   - **MANDATORY**: Run `ls -lt Screenshots/*.png | head -5` to see most recent
-   - **MANDATORY**: Compare screenshot timestamp with current time
-   - User saying "check ss" means check the MOST RECENT screenshot
-
-#### Quick Commands for Issue Tracking
-
-```bash
-# See recent screenshots (sorted by modification time, newest first)
-ls -lt Screenshots/*.png | head -5
-
-# Get absolute most recent with full timestamp
-stat -f "%Sm %N" -t "%Y-%m-%d %H:%M:%S" Screenshots/*.png 2>/dev/null | sort -r | head -1
-
-# Check build timestamp (is this a fresh build?)
-stat -f "%Sm" "$(find ~/Library/Developer/Xcode/DerivedData -name 'SaneVideo.app' -type d | head -1)/Contents/MacOS/SaneVideo"
-
-# Watch logs while user tests
-./Scripts/SaneMaster.rb logs --follow
-
-# Kill, rebuild, deploy cycle
-killall -9 SaneVideo; ./Scripts/SaneMaster.rb verify && ./Scripts/SaneMaster.rb launch
-```
-
-### Post-Fix Checklist (MANDATORY)
-
-After fixing ANY bug, you **MUST** complete this checklist:
-
-- [ ] **Regression test added?** - Every bug fix MUST have a test that would have caught it
-      ```bash
-      ./Scripts/SaneMaster.rb gen_test RegressionTests --target <Component>
-      ```
-- [ ] **Similar bugs checked?** - Search for the same pattern elsewhere in codebase
-      ```bash
-      # Example: if you fixed a timeout race condition, search for other timeouts
-      grep -r "Task.*sleep" SaneVideo/
-      ```
-- [ ] **Changes committed?** - Don't lose work! Commit after each fix
-      ```bash
-      git add -A && git commit -m "Fix: <description>"
-      ```
-- [ ] **Plain English explanation?** - Can you explain what broke and why in simple terms?
-- [ ] **Technical debt tracked?** - Any TODOs or FIXMEs added? Track them:
-      ```bash
-      grep -rn "TODO\|FIXME" SaneVideo/ | head -20
-      ```
-
-**Why this matters:**
-- Regression tests prevent the same bug from coming back
-- Similar bugs often exist nearby (copy-paste, same pattern)
-- Uncommitted work can be lost
-- You (the user) should always understand what was fixed
-- TODOs get forgotten if not tracked
-
-**Useful follow-up commands:**
-```bash
-./Scripts/SaneMaster.rb logs --follow  # Watch logs live
-./Scripts/SaneMaster.rb crashes        # Analyze crash patterns
-open Screenshots/                       # View screenshots
-```
-
-### Memory MCP Usage (Cross-Session Knowledge)
-
-The Memory MCP persists valuable knowledge across sessions. Bootstrap automatically displays a summary of stored knowledge.
-
-**Entity Types:**
-- `bug_pattern` - Recurring bugs with symptoms, root cause, and fix
-- `concurrency_gotcha` - Swift 6 concurrency pitfalls and solutions
-- `file_violation` - Files exceeding size limits needing refactoring
-- `architecture_pattern` - Key architectural decisions
-- `service` - Service responsibilities and concurrency notes
-- `compliance_rule` - SOP rules agents frequently violate
-
-**When to READ:**
-- Bootstrap shows summary automatically
-- Before bug fix: `mcp__memory__search_nodes("bug_pattern")`
-- Before concurrency work: `mcp__memory__search_nodes("concurrency")`
-- Full details: `./Scripts/SaneMaster.rb memory_context`
-
-**When to WRITE:**
-- After bug fix (>30 min diagnosis): Create `bug_pattern` entity
-- After concurrency fix: Create/update `concurrency_gotcha`
-- After architecture decision: Create `architecture_pattern`
+### Memory MCP (Cross-Session Knowledge)
 
 **Rule**: If it took >30 minutes to figure out, write it to memory.
 
+**Entity types**: `bug_pattern`, `concurrency_gotcha`, `architecture_pattern`, `compliance_rule`
+
 **Commands:**
 ```bash
-./Scripts/SaneMaster.rb memory_context   # Show all stored knowledge
-./Scripts/SaneMaster.rb memory_record    # Add new entity (interactive)
-./Scripts/SaneMaster.rb memory_prune     # Clean up stale entities
+mcp__memory__search_nodes("bug_pattern")  # Query before bug fix
+./Scripts/SaneMaster.rb memory_context    # Show all stored knowledge
 ```
 
-**Post-Fix Checklist Addition:**
-- [ ] Memory updated? (If pattern worth remembering across sessions)
-
-### Session Reviews (MANDATORY)
-
-At session end, store learnings to memory for cross-session improvement.
-
-**Query past learnings at session start:**
-```
-mcp__memory__search_nodes("SaneVideo mistakes patterns")
-```
-
-**Store new learnings at session end** (naming: `SessionReview_YYYY-MM-DD_TaskName`):
-- Tasks completed, build failures, self-rating (1-10)
-- Mistakes made with root cause
-- Patterns discovered (API gotchas, codebase quirks)
-
-This prevents repeating mistakes and builds institutional knowledge.
+**Session reviews** (at session end): Store `SessionReview_YYYY-MM-DD_TaskName` with tasks completed, mistakes made, patterns discovered.
 
 ### Documentation Priority
 

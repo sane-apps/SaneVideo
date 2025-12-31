@@ -81,4 +81,10 @@ public struct SaneExportSettings: Codable, Sendable {
         try container.encode(bitrate, forKey: .bitrate)
         try container.encode(frameRate, forKey: .frameRate)
     }
+
+    /// File extension for export based on codec
+    /// HEVC with Alpha requires MOV container; others use MP4
+    var fileExtension: String {
+        codec == .hevcWithAlpha ? "mov" : "mp4"
+    }
 }

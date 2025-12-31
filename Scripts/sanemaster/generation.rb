@@ -1,42 +1,19 @@
 # frozen_string_literal: true
 
+# rubocop:disable Metrics/ModuleLength
+
+require_relative 'generation_templates'
+require_relative 'generation_assets'
+require_relative 'generation_mocks'
+
 module SaneMasterModules
-  # Code generation: tests, mocks, templates, assets, API verification
-  # rubocop:disable Metrics/ModuleLength
+  # Code generation: tests, XcodeGen checks, API verification, documentation sync
+  # Template, asset, and mock generation moved to dedicated modules
   module Generation
     include Base
-
-    def manage_templates(args)
-      ensure_template_dir
-      subcommand = args.shift || 'list'
-
-      case subcommand
-      when 'save' then save_template(args.first || 'default')
-      when 'apply' then apply_template(args.first || 'default')
-      when 'list' then list_templates
-      when 'delete' then delete_template(args.first)
-      else
-        puts "Unknown template command: #{subcommand}"
-        puts 'Usage: template [save|apply|list|delete] [name]'
-      end
-    end
-
-    def generate_test_assets
-      puts '🎬 --- [ SANEMASTER TEST ASSETS ] ---'
-      puts 'Generating lightweight test media...'
-
-      assets_dir = 'Tests/Assets'
-      FileUtils.mkdir_p(assets_dir)
-
-      unless system('which ffmpeg > /dev/null 2>&1')
-        puts '❌ ffmpeg not found. Install: brew install ffmpeg'
-        return
-      end
-
-      generate_test_video(assets_dir)
-      generate_silence_audio(assets_dir)
-      puts "\n✅ Test assets ready."
-    end
+    include GenerationTemplates
+    include GenerationAssets
+    include GenerationMocks
 
     def generate_test_file(args)
       puts '🧪 --- [ SANEMASTER TEST GENERATOR ] ---'
@@ -72,34 +49,6 @@ module SaneMasterModules
       puts '  1. Review the generated test template'
       puts '  2. Add your test cases following AAA pattern (Arrange-Act-Assert)'
       puts '  3. Run: ./Scripts/SaneMaster.rb verify'
-    end
-
-    def generate_mocks(args)
-      puts '🎭 --- [ SANEMASTER MOCK GENERATOR ] ---'
-
-      unless system('which mockolo > /dev/null 2>&1')
-        puts '❌ Mockolo not found.'
-        puts "\nInstall Mockolo:"
-        puts '  brew install mockolo'
-        return
-      end
-
-      if args.empty?
-        print_mock_generator_help
-        return
-      end
-
-      target, protocol, output_dir = parse_mock_options(args)
-      FileUtils.mkdir_p(output_dir)
-      output_file = File.join(output_dir, 'Mocks.swift')
-
-      if target
-        generate_mocks_for_target(target, output_file, output_dir)
-      elsif protocol
-        generate_mock_for_protocol(protocol, output_file, output_dir)
-      else
-        puts '❌ Must specify --target or --protocol'
-      end
     end
 
     def check_xcodegen(files)
@@ -157,56 +106,6 @@ module SaneMasterModules
       print_api_not_found(api_name) unless found
     end
 
-    def verify_mocks
-      puts '🎭 --- [ MOCK SYNCHRONIZATION CHECK ] ---'
-
-      unless system('which mockolo > /dev/null 2>&1')
-        puts '❌ Mockolo not found. Install: brew install mockolo'
-        return
-      end
-
-      puts '📂 Scanning for @mockable protocols...'
-      protocol_files = `find SaneVideo -name "*.swift" -exec grep -l "@mockable" {} \\;`.strip.split("\n")
-
-      if protocol_files.empty?
-        puts '⚠️  No @mockable protocols found'
-        return
-      end
-
-      puts "   Found #{protocol_files.length} protocol(s) with @mockable"
-      puts ''
-
-      mocks_file = 'SaneVideoTests/Mocks/Mocks.swift'
-      unless File.exist?(mocks_file)
-        puts "❌ Mocks file not found: #{mocks_file}"
-        puts '   Run: ./Scripts/SaneMaster.rb gen_mock --target Core/Protocols'
-        return
-      end
-
-      compare_mocks(mocks_file)
-    end
-
-    def check_protocol_changes(files)
-      return if files.empty?
-
-      protocol_files = files.select do |file|
-        file.include?('Protocol') && file.end_with?('.swift') && File.exist?(file)
-      end
-      return if protocol_files.empty?
-
-      changed_mockable = protocol_files.select do |file|
-        content = File.read(file)
-        content.include?('@mockable') || content.include?('protocol')
-      end
-      return unless changed_mockable.any?
-
-      puts "\n⚠️  Protocol files with @mockable were modified:"
-      changed_mockable.each { |f| puts "   - #{f}" }
-      puts "\n💡 Remember to regenerate mocks:"
-      puts '   ./Scripts/SaneMaster.rb gen_mock --target Core/Protocols'
-      puts "\n   (This is a reminder - commit will proceed)"
-    end
-
     # rubocop:disable Naming/PredicateMethod
     def verify_documentation_sync
       # rubocop:enable Naming/PredicateMethod
@@ -237,176 +136,6 @@ module SaneMasterModules
     end
 
     private
-
-    def ensure_template_dir
-      FileUtils.mkdir_p(TEMPLATE_DIR)
-    end
-
-    def save_template(name)
-      puts "📦 --- [ SAVE TEMPLATE: #{name} ] ---"
-
-      template_path = File.join(TEMPLATE_DIR, name)
-      FileUtils.mkdir_p(template_path)
-
-      template_files = {
-        'Gemfile' => 'Gemfile',
-        '.ruby-version' => '.ruby-version',
-        '.swiftlint.yml' => '.swiftlint.yml',
-        'project.yml' => 'project.yml',
-        '.mcp.json' => '.mcp.json',
-        'lefthook.yml' => 'lefthook.yml',
-        '.claude/settings.json' => '.claude/settings.json'
-      }
-
-      saved = copy_template_files(template_files, template_path)
-      save_template_metadata(name, template_path, saved)
-
-      puts "✅ Template saved: #{template_path}"
-      puts "   Files: #{saved.join(', ')}"
-      puts "\n💡 Apply to new project: ./Scripts/SaneMaster.rb template apply #{name}"
-    end
-
-    def copy_template_files(template_files, template_path)
-      saved = []
-      template_files.each do |src, dest|
-        src_path = File.join(Dir.pwd, src)
-        next unless File.exist?(src_path)
-
-        dest_path = File.join(template_path, dest)
-        FileUtils.mkdir_p(File.dirname(dest_path))
-        FileUtils.cp(src_path, dest_path)
-        saved << src
-      end
-      saved
-    end
-
-    def save_template_metadata(name, template_path, saved)
-      metadata = {
-        name: name,
-        created_at: Time.now.iso8601,
-        source_project: File.basename(Dir.pwd),
-        files: saved
-      }
-      File.write(File.join(template_path, 'metadata.json'), JSON.pretty_generate(metadata))
-    end
-
-    def apply_template(name)
-      puts "📥 --- [ APPLY TEMPLATE: #{name} ] ---"
-
-      template_path = File.join(TEMPLATE_DIR, name)
-      unless File.exist?(template_path)
-        puts "❌ Template not found: #{name}"
-        list_templates
-        return
-      end
-
-      show_template_metadata(template_path)
-      applied = apply_template_files(template_path)
-
-      if applied.any?
-        puts "\n✅ Applied files:"
-        applied.each { |f| puts "   - #{f}" }
-        puts "\n💡 Run ./Scripts/SaneMaster.rb bootstrap to complete setup"
-      else
-        puts '⚠️  No new files applied (all exist already)'
-      end
-    end
-
-    def show_template_metadata(template_path)
-      metadata_file = File.join(template_path, 'metadata.json')
-      return unless File.exist?(metadata_file)
-
-      metadata = JSON.parse(File.read(metadata_file))
-      puts "📋 Template from: #{metadata['source_project']} (#{metadata['created_at']})"
-    end
-
-    def apply_template_files(template_path)
-      applied = []
-      Dir.glob(File.join(template_path, '**/*')).each do |src|
-        next if File.directory?(src)
-        next if src.end_with?('metadata.json')
-
-        relative = src.sub("#{template_path}/", '')
-        dest = File.join(Dir.pwd, relative)
-
-        if File.exist?(dest)
-          puts "   ⚠️  Skipping (exists): #{relative}"
-          next
-        end
-
-        FileUtils.mkdir_p(File.dirname(dest))
-        FileUtils.cp(src, dest)
-        applied << relative
-      end
-      applied
-    end
-
-    def list_templates
-      puts '📋 --- [ AVAILABLE TEMPLATES ] ---'
-
-      templates = Dir.glob(File.join(TEMPLATE_DIR, '*')).select { |f| File.directory?(f) }
-
-      if templates.empty?
-        puts '   No templates saved yet.'
-        puts "\n💡 Save current project as template: ./Scripts/SaneMaster.rb template save mytemplate"
-        return
-      end
-
-      templates.each { |template_path| display_template(template_path) }
-    end
-
-    def display_template(template_path)
-      name = File.basename(template_path)
-      metadata_file = File.join(template_path, 'metadata.json')
-
-      if File.exist?(metadata_file)
-        metadata = JSON.parse(File.read(metadata_file))
-        puts "   #{name}"
-        puts "      From: #{metadata['source_project']}"
-        puts "      Created: #{metadata['created_at']}"
-        puts "      Files: #{metadata['files']&.count || '?'}"
-      else
-        puts "   #{name} (no metadata)"
-      end
-      puts ''
-    end
-
-    def delete_template(name)
-      return puts '❌ Specify template name to delete' unless name
-
-      template_path = File.join(TEMPLATE_DIR, name)
-      unless File.exist?(template_path)
-        puts "❌ Template not found: #{name}"
-        return
-      end
-
-      FileUtils.rm_rf(template_path)
-      puts "✅ Deleted template: #{name}"
-    end
-
-    def generate_test_video(assets_dir)
-      video_path = "#{assets_dir}/test_video.mp4"
-      if File.exist?(video_path)
-        puts '  ⚠️  test_video.mp4 already exists, skipping'
-        return
-      end
-
-      print '  Generating test_video.mp4 (5s, 640x480)... '
-      cmd = "ffmpeg -f lavfi -i testsrc=duration=5:size=640x480:rate=30 -c:v libx264 -preset ultrafast -crf 28 -pix_fmt yuv420p -y #{video_path} 2>/dev/null"
-      puts system(cmd) ? '✅' : '❌ Failed'
-    end
-
-    def generate_silence_audio(assets_dir)
-      silence_path = "#{assets_dir}/test_silence.mp4"
-      if File.exist?(silence_path)
-        puts '  ⚠️  test_silence.mp4 already exists, skipping'
-        return
-      end
-
-      print '  Generating test_silence.mp4 (5s silence)... '
-      cmd = "ffmpeg -f lavfi -i anullsrc=r=44100:cl=stereo -t 5 -c:a aac -y #{silence_path} 2>/dev/null"
-      puts system(cmd) ? '✅' : '❌ Failed'
-    end
 
     def print_test_generator_help
       puts 'Usage: ./Scripts/SaneMaster.rb gen_test <test_name> [options]'
@@ -553,94 +282,6 @@ module SaneMasterModules
       SWIFT
     end
 
-    def print_mock_generator_help
-      puts 'Usage: ./Scripts/SaneMaster.rb gen_mock [options]'
-      puts ''
-      puts 'Options:'
-      puts '  --target <dir>        Generate mocks for all protocols in directory'
-      puts '  --protocol <name>     Generate mock for specific protocol'
-      puts '  --output <dir>        Output directory (default: SaneVideoTests/Mocks)'
-      puts ''
-      puts 'Examples:'
-      puts '  ./Scripts/SaneMaster.rb gen_mock --target Services/Camera'
-      puts '  ./Scripts/SaneMaster.rb gen_mock --protocol CameraServiceProtocol'
-    end
-
-    def parse_mock_options(args)
-      target = nil
-      protocol = nil
-      output_dir = 'SaneVideoTests/Mocks'
-
-      args.each_with_index do |arg, i|
-        case arg
-        when '--target' then target = args[i + 1] if args[i + 1]
-        when '--protocol' then protocol = args[i + 1] if args[i + 1]
-        when '--output' then output_dir = args[i + 1] if args[i + 1]
-        end
-      end
-
-      [target, protocol, output_dir]
-    end
-
-    def generate_mocks_for_target(target, output_file, output_dir)
-      puts "Generating mocks for target: #{target}"
-      source_dir = "SaneVideo/#{target}"
-      unless File.directory?(source_dir)
-        puts "❌ Directory not found: #{source_dir}"
-        return
-      end
-
-      cmd = "mockolo -s #{source_dir} -d #{output_file} --enable-args-history --mock-all"
-      puts "Running: #{cmd}"
-
-      if system(cmd)
-        post_process_mocks(output_file)
-        puts '✅ Mocks generated successfully'
-        print_mock_next_steps(output_dir)
-      else
-        puts '❌ Mock generation failed'
-      end
-    end
-
-    def generate_mock_for_protocol(protocol, output_file, output_dir)
-      puts "Generating mock for protocol: #{protocol}"
-      protocol_file = `find SaneVideo -name "*.swift" -exec grep -l "protocol #{protocol}" {} \\;`.strip
-
-      if protocol_file.empty?
-        puts "❌ Protocol not found: #{protocol}"
-        return
-      end
-
-      protocol_dir = File.dirname(protocol_file)
-      cmd = "mockolo -s #{protocol_dir} -d #{output_file} --enable-args-history --mock-all -i #{protocol}"
-      puts "Running: #{cmd}"
-
-      if system(cmd)
-        post_process_mocks(output_file)
-        puts '✅ Mocks generated successfully'
-        print_mock_next_steps(output_dir)
-      else
-        puts '❌ Mock generation failed'
-      end
-    end
-
-    def post_process_mocks(output_file)
-      return unless File.exist?(output_file)
-
-      content = File.read(output_file)
-      content.gsub!(/^import [A-Za-z]+ [A-Za-z]+.*\n/, '')
-      content.gsub!(/(import Foundation\n)/, "\\1@testable import SaneVideo\n") unless content.include?('@testable import SaneVideo')
-      File.write(output_file, content)
-    end
-
-    def print_mock_next_steps(output_dir)
-      puts "\n✅ Mocks generated in: #{output_dir}"
-      puts "\n📝 Next steps:"
-      puts '  1. Review generated mocks'
-      puts '  2. Import in your test files'
-      puts '  3. Use in tests: let mock = MockCameraService()'
-    end
-
     def collect_project_files(project_path)
       require 'xcodeproj'
       project = Xcodeproj::Project.open(project_path)
@@ -748,38 +389,6 @@ module SaneMasterModules
       puts '   - Framework may be different - try without framework to search all'
     end
 
-    def compare_mocks(mocks_file)
-      puts '🔄 Generating temporary mocks for comparison...'
-      temp_dir = Dir.mktmpdir
-      temp_mocks = File.join(temp_dir, 'Mocks.swift')
-
-      cmd = "mockolo -s SaneVideo/Core/Protocols -d #{temp_mocks} --enable-args-history --mock-all 2>/dev/null"
-      unless system(cmd)
-        puts '❌ Failed to generate temporary mocks'
-        FileUtils.rm_rf(temp_dir)
-        return
-      end
-
-      post_process_mocks(temp_mocks) if File.exist?(temp_mocks)
-
-      existing_protocols = File.read(mocks_file).scan(/class (\w+ProtocolMock)/).flatten
-      temp_protocols = File.read(temp_mocks).scan(/class (\w+ProtocolMock)/).flatten
-
-      missing = temp_protocols - existing_protocols
-      extra = existing_protocols - temp_protocols
-
-      FileUtils.rm_rf(temp_dir)
-
-      if missing.empty? && extra.empty?
-        puts '✅ Mocks are synchronized with protocols'
-      else
-        puts '⚠️  Mocks may be out of sync:'
-        puts "   Missing mocks: #{missing.join(', ')}" if missing.any?
-        puts "   Extra mocks: #{extra.join(', ')}" if extra.any?
-        puts "\n💡 Regenerate mocks: ./Scripts/SaneMaster.rb gen_mock --target Core/Protocols"
-      end
-    end
-
     def check_documentation_flags(dev_doc, issues)
       issues << "DEVELOPMENT.md doesn't mention --ui flag for verify command" unless dev_doc.include?('verify --ui') || dev_doc.include?('--ui')
       issues << 'SDK API verification tool (verify_api) not documented' unless dev_doc.include?('verify_api') || dev_doc.include?('SDK API verification')
@@ -788,5 +397,5 @@ module SaneMasterModules
       issues << 'Mock synchronization check (verify_mocks) not documented'
     end
   end
-  # rubocop:enable Metrics/ModuleLength
 end
+# rubocop:enable Metrics/ModuleLength

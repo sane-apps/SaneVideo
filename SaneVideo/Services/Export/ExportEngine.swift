@@ -170,7 +170,10 @@ class ExportEngine: ExportServiceProtocol {
       try FileManager.default.removeItem(at: outputURL)
     }
 
-    let writer = try AVAssetWriter(outputURL: outputURL, fileType: .mp4)
+    // Use MOV container for alpha-supporting codecs (HEVC with Alpha, ProRes 4444)
+    // MP4 doesn't properly support alpha channels
+    let fileType: AVFileType = settings.codec == .hevcWithAlpha ? .mov : .mp4
+    let writer = try AVAssetWriter(outputURL: outputURL, fileType: fileType)
     // CRITICAL: Move moov atom to start of file for web streaming fast-start
     // Without this, the entire file must download before playback begins
     writer.shouldOptimizeForNetworkUse = true
@@ -376,21 +379,20 @@ class ExportEngine: ExportServiceProtocol {
       // CRITICAL FIX: Add timeout to finishWriting to prevent indefinite hangs
       // Use nonisolated(unsafe) to safely share state across closures on same queue
       nonisolated(unsafe) var finishCompleted = false
-      let timeoutWorkItem = DispatchWorkItem {
+      nonisolated(unsafe) var timeoutWorkItem: DispatchWorkItem?
+      timeoutWorkItem = DispatchWorkItem {
         guard !finishCompleted else { return }
         AppLogger.export.error("❌ Export finishWriting timed out after \(finishWritingTimeout)s")
         uncheckedWriter.writer.cancelWriting()
         continuation.resume(throwing: ExportError.timeout)
       }
-      // Wrap in UnsafeSendable to cross @Sendable boundary
-      let wrappedTimeout = UnsafeSendable(timeoutWorkItem)
 
-      processingQueue.asyncAfter(deadline: .now() + finishWritingTimeout, execute: timeoutWorkItem)
+      processingQueue.asyncAfter(deadline: .now() + finishWritingTimeout, execute: timeoutWorkItem!)
 
       // Use uncheckedWriter to avoid Sendable warning in completion closure
       uncheckedWriter.writer.finishWriting {
         finishCompleted = true
-        wrappedTimeout.value.cancel()
+        timeoutWorkItem?.cancel()
 
         if uncheckedWriter.writer.status == .completed {
           continuation.resume(returning: outputURL)
@@ -407,9 +409,13 @@ class ExportEngine: ExportServiceProtocol {
   private func getProfileLevel(for codec: AVVideoCodecType) -> String {
     // Simple profile selection using string literals to avoid import issues
     // Note: These match the standard keys from VideoToolbox
-    if codec == .hevc {
+    switch codec {
+    case .hevc:
       return "HEVC_Main_AutoLevel"
-    } else {
+    case .hevcWithAlpha:
+      // HEVC with Alpha uses Main10 profile for alpha layer support
+      return "HEVC_Main10_AutoLevel"
+    default:
       return "H264_High_AutoLevel"
     }
   }

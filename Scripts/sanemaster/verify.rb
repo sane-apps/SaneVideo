@@ -18,6 +18,9 @@ module SaneMasterModules
       check_derived_data
 
       puts "\n✅ Doctor check complete."
+
+      # Suggest recording patterns if recent fixes detected
+      suggest_memory_record if respond_to?(:suggest_memory_record)
     end
 
     def verify(args)
@@ -46,6 +49,8 @@ module SaneMasterModules
 
         if result[:success]
           puts "\n✅ Tests passed! (#{result[:tests_run]} tests, #{result[:duration]}s)"
+          # Suggest recording patterns after successful test run
+          suggest_memory_record if respond_to?(:suggest_memory_record)
         else
           puts "\n❌ Tests failed. Running diagnostics..."
           puts "⚠️  Test run timed out after #{timeout}s" if result[:timeout]

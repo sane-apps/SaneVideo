@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-# rubocop:disable Metrics/ModuleLength
-
 require_relative 'generation_templates'
 require_relative 'generation_assets'
 require_relative 'generation_mocks'
@@ -398,4 +396,3 @@ module SaneMasterModules
     end
   end
 end
-# rubocop:enable Metrics/ModuleLength

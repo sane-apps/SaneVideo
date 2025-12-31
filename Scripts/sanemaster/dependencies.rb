@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-# rubocop:disable Metrics/ModuleLength
-
 module SaneMasterModules
   # Version checking, dependency graphs, CI parity, MCP verification
   module Dependencies
@@ -393,4 +391,3 @@ module SaneMasterModules
     end
   end
 end
-# rubocop:enable Metrics/ModuleLength

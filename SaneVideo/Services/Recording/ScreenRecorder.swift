@@ -477,6 +477,10 @@ class ScreenRecorder: NSObject, ScreenRecorderProtocol, SCContentSharingPickerOb
       // Store active stream
       activeStream = newStream
 
+      // CRITICAL FIX: Mark that screen recording permission is definitely granted
+      // This helps PermissionManager avoid re-requesting permission on next launch
+      UserDefaults.standard.set(true, forKey: "screenRecordingEverGranted")
+
       AppLogger.recording.info("✅ Screen capture started successfully")
 
     } catch {

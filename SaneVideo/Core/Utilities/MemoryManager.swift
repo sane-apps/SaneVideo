@@ -63,23 +63,32 @@ final class MemoryManager {
     // MARK: - Cache Clearing
 
     /// Clear all caches in the app
-    /// - Parameter aggressive: If true, clears more aggressively (e.g., waveform cache)
+    /// - Parameter aggressive: If true, clears more aggressively
     func clearCaches(aggressive: Bool = false) {
         Task {
-            // Clear thumbnail and waveform caches
+            // Clear thumbnail cache (always)
             await ServiceContainer.shared.thumbnailService.clearCache()
-            if aggressive {
-                await ServiceContainer.shared.waveformService.clearCache()
-            }
+
+            // OPTIMIZATION: Clear waveform cache on ANY memory pressure
+            // Waveforms are easily regeneratable and can consume significant memory on long timelines
+            await ServiceContainer.shared.waveformService.clearCache()
 
             // Clear AI/Vision caches
             await ServiceContainer.shared.personSegmentationService.clearCache()
-            
+
+            // OPTIMIZATION: Reset FaceTrackingService sequence handler to prevent memory bloat
+            // VNSequenceRequestHandler can accumulate state over many frames
+            await ServiceContainer.shared.faceTrackingService.resetSequenceHandler()
+
             // Clear Rendering caches (Core Image/Metal)
             RenderingService.shared.ciContext.clearCaches()
 
             // Clear Network caches
             URLCache.shared.removeAllCachedResponses()
+
+            if aggressive {
+                // Additional aggressive cleanup if needed in the future
+            }
 
             AppLogger.general.info("MemoryManager: Caches cleared (aggressive: \(aggressive))")
         }

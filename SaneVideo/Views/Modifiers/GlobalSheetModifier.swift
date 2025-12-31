@@ -13,7 +13,6 @@ struct GlobalSheetModifier: ViewModifier {
     // Local state for sheets
     @State private var showLogs = false
     @State private var showOnboarding = !UserDefaults.standard.bool(forKey: "hasCompletedOnboarding")
-    @State private var showingProjectBrowser = false
     @State private var showShortcuts = false
     @State private var showTemplateBrowser = false
     @State private var showRepurposing = false
@@ -41,9 +40,6 @@ struct GlobalSheetModifier: ViewModifier {
                 set: { showOnboarding = $0 }
             )) {
                 OnboardingView(isPresented: $showOnboarding)
-            }
-            .sheet(isPresented: $showingProjectBrowser) {
-                ProjectBrowserView()
             }
             // 4. Keyboard Shortcuts
             .sheet(isPresented: $showShortcuts) {
@@ -83,9 +79,6 @@ struct GlobalSheetModifier: ViewModifier {
                     newProjectName = currentName
                     showingRenameAlert = true
                 }
-            }
-            .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ShowProjectBrowser"))) { _ in
-                showingProjectBrowser = true
             }
             .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ShowKeyboardShortcuts"))) { _ in
                 showShortcuts = true

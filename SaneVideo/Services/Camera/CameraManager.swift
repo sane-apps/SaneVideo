@@ -33,6 +33,33 @@ final class CameraManager: NSObject, CameraServiceProtocol {
   private let framePublisher = CameraFramePublisher()
   private var cancellables = Set<AnyCancellable>()
 
+  // OPTIMIZATION: Cache device discovery session to avoid recreation on each setupSession call.
+  // AVCaptureDevice.DiscoverySession is thread-safe for reads after creation.
+  // Using nonisolated(unsafe) allows access from nonisolated setupSession function.
+  @ObservationIgnored
+  nonisolated(unsafe) private var _cachedDiscoverySession: AVCaptureDevice.DiscoverySession?
+
+  /// Returns cached discovery session, creating it on first access.
+  /// Thread-safe: only written once, then read-only.
+  nonisolated private var cachedDiscoverySession: AVCaptureDevice.DiscoverySession {
+    if let cached = _cachedDiscoverySession {
+      return cached
+    }
+    var deviceTypes: [AVCaptureDevice.DeviceType] = [
+      .builtInWideAngleCamera, .external, .continuityCamera
+    ]
+    if #available(macOS 15.0, *) {
+      deviceTypes.append(.deskViewCamera)
+    }
+    let session = AVCaptureDevice.DiscoverySession(
+      deviceTypes: deviceTypes,
+      mediaType: .video,
+      position: .unspecified
+    )
+    _cachedDiscoverySession = session
+    return session
+  }
+
   // MARK: - Protocol Implementation
 
   private let _isActiveSubject = CurrentValueSubject<Bool, Never>(false)
@@ -299,23 +326,10 @@ final class CameraManager: NSObject, CameraServiceProtocol {
     // Helps avoid "Connection invalid" errors during rapid startup.
     try? await Task.sleep(nanoseconds: 200_000_000)  // 0.2s
 
-    // 1. Discovery - Include Continuity Camera (iPhone as webcam)
-    // Modernized with macOS 15 device types
-    var deviceTypes: [AVCaptureDevice.DeviceType] = [
-      .builtInWideAngleCamera, .external, .continuityCamera
-    ]
-    if #available(macOS 15.0, *) {
-      deviceTypes.append(.deskViewCamera)
-    }
-
-    let discoverySession = AVCaptureDevice.DiscoverySession(
-      deviceTypes: deviceTypes,
-      mediaType: .video,
-      position: .unspecified
-    )
-
-    // Log discovered cameras sparingly
-    let devices = discoverySession.devices
+    // 1. Discovery - Use cached discovery session (OPTIMIZATION)
+    // Avoids recreating AVCaptureDevice.DiscoverySession on each setup call.
+    // Discovery is faster on Apple Silicon but caching still reduces overhead.
+    let devices = cachedDiscoverySession.devices
     AppLogger.camera.info("Found \(devices.count) camera devices")
 
     for device in devices {
@@ -333,7 +347,7 @@ final class CameraManager: NSObject, CameraServiceProtocol {
       AppLogger.camera.info("Discovered camera: \(device.localizedName) [\(deviceTypeStr)]")
     }
 
-    guard let camera = discoverySession.devices.first else {
+    guard let camera = devices.first else {
       AppLogger.camera.error("❌ NO CAMERA DEVICES FOUND! Discovery session was empty.")
       Task { @MainActor in
         self.lastError = .noCameraFound

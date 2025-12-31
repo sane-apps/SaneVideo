@@ -144,6 +144,12 @@ struct EditorLayoutView: View {
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ToggleInspector"))) { _ in
             withAnimation { isInspectorCollapsed.toggle() }
         }
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ShowSidebarProjects"))) { _ in
+            // Expand sidebar if collapsed, then SidebarView will select Projects tab
+            if isSidebarCollapsed {
+                withAnimation { isSidebarCollapsed = false }
+            }
+        }
         // CONSISTENCY: Use controlBackgroundColor for main editor area
         .background(Color(nsColor: .controlBackgroundColor))
         .liquidGlass(radius: 0) // Full screen edge lighting logic if needed, or 0 for seamless base

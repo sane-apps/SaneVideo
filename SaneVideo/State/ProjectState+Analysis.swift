@@ -235,15 +235,6 @@ extension ProjectState {
         let tracker = ProgressTracker(interval: 3.0)
         let coordinator = ServiceContainer.shared.transcriptionCoordinator
 
-        if coordinator.shouldSuggestWhisperKit && coordinator.selectedEngine == .apple {
-            await MainActor.run {
-                ServiceContainer.shared.toastManager.show(
-                    "Tip: Try WhisperKit for better accuracy with accents or noisy audio",
-                    type: .info
-                )
-            }
-        }
-
         do {
             let captions = try await coordinator.generateCaptions(for: clip.url) { chunk, total, eta in
                 if tracker.shouldUpdate() || chunk == 1 || chunk == total {

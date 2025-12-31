@@ -67,6 +67,12 @@ module SaneMasterModules
         system('rm -rf .derivedData')
         system('rm -rf fastlane/test_output')
         system('rm -rf /tmp/SaneVideo*')
+        # CRITICAL: Also clear Ruby's actual tmpdir (which differs from /tmp on macOS)
+        # Dir.tmpdir returns /var/folders/.../T/ not /tmp
+        diagnostics_dir = File.join(Dir.tmpdir, 'SaneVideo_Diagnostics')
+        FileUtils.rm_rf(diagnostics_dir)
+        # Clear any test project leftovers in container
+        system('rm -rf ~/Library/Containers/com.sanevideo.SaneVideo/Data/tmp/SaneVideo_Test_Projects 2>/dev/null')
         system('rm -f test_output.txt')
         puts '✅ Nuclear clean complete.'
       else
@@ -251,13 +257,11 @@ module SaneMasterModules
 
     def build_test_command(include_ui)
       if include_ui
-        skip_visual = ' -skip-testing:SaneVideoUITests/SaneSmartFeaturesVisualTests ' \
-                      '-skip-testing:SaneVideoUITests/VisualEditingTests ' \
-                      '-skip-testing:SaneVideoUITests/VisualRecordingTests'
-        "xcodebuild test -scheme SaneVideo -destination 'platform=macOS,arch=arm64'#{skip_visual} 2>&1"
-      else
-        "xcodebuild test -scheme SaneVideo -destination 'platform=macOS,arch=arm64' -only-testing:SaneVideoTests 2>&1"
+        # UI tests not yet implemented - warn and run unit tests only
+        puts '  ⚠️  UI tests not available (SaneVideoUITests directory does not exist)'
+        puts '  📦 Running unit tests only...'
       end
+      "xcodebuild test -scheme SaneVideo -destination 'platform=macOS,arch=arm64' -only-testing:SaneVideoTests 2>&1"
     end
 
     def execute_with_logging(cmd, timeout_seconds)
@@ -489,29 +493,14 @@ module SaneMasterModules
     end
 
     def extract_test_references
-      identifiers = Set.new
-      system_buttons = %w[Allow OK Ignore Cancel Continue]
-
-      Dir.glob('SaneVideoUITests/**/*.swift').each do |file|
-        next unless File.exist?(file)
-
-        content = File.read(file)
-        content.scan(/\[["']([^"']+)["']\]/) do |match|
-          id = match[0]
-          identifiers << id unless system_buttons.include?(id) || id.match?(/^\d+$/)
-        end
-      end
-
-      identifiers.to_a
+      # UI tests not yet implemented - return empty set
+      # When SaneVideoUITests is created, this will scan for accessibility identifier references
+      Set.new.to_a
     end
 
-    def find_references_in_files(identifier)
-      files = []
-      Dir.glob('SaneVideoUITests/**/*.swift').each do |file|
-        content = File.read(file)
-        files << File.basename(file) if content.include?(identifier)
-      end
-      files
+    def find_references_in_files(_identifier)
+      # UI tests not yet implemented - return empty array
+      []
     end
   end
 end

@@ -15,17 +15,16 @@ import WhisperKit
 @Suite("WhisperKit Verification")
 struct WhisperKitTests {
 
-    @Test("WhisperKitService initializes without immediate failure", .disabled("Requires model download or testable properties"))
+    @Test("WhisperKitService initializes without immediate failure")
     func checkModelConfiguration() async throws {
-        // This test is disabled because:
-        // 1. We cannot access internal actor state without exposing testable properties
-        // 2. Model download is required for full initialization
-        // 3. The placeholder test (#expect(true)) verifies nothing
+        // Verify WhisperKit service can initialize and check availability
+        let service = WhisperKitService()
 
-        // To properly test this, we would need:
-        // - Testable properties to verify model configuration
-        // - Or mock the WhisperKit dependency
-        // - Or test error handling when model is unavailable
+        // This should work - model is pre-downloaded
+        let isAvailable = await service.checkAvailability()
+
+        // The service should report availability (model is downloaded)
+        #expect(isAvailable == true, "WhisperKit should be available with pre-downloaded model")
     }
 
     @Test("WhisperKitService handles unavailable model gracefully")

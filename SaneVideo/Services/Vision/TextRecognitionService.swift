@@ -52,6 +52,11 @@ actor TextRecognitionService {
     request.usesLanguageCorrection = true
     request.recognitionLanguages = ["en-US"]
 
+    // OPTIMIZATION: Use revision 3 for better accuracy on code snippets and technical text
+    if #available(macOS 13.0, *) {
+      request.revision = VNRecognizeTextRequestRevision3
+    }
+
     let handler = VNImageRequestHandler(ciImage: image)
     try handler.perform([request])
 

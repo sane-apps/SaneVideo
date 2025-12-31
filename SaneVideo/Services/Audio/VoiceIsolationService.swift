@@ -31,7 +31,7 @@ final class VoiceIsolationService: @unchecked Sendable {
     
     // MARK: - Properties
     
-    private let logger = Logger(subsystem: "com.sanevideo.app", category: "VoiceIsolation")
+    private let logger = Logger(subsystem: "com.sanevideo.SaneVideo", category: "VoiceIsolation")
     
     /// The Audio Unit for sound isolation
     private var isolationUnit: AVAudioUnit?

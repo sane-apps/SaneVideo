@@ -6,10 +6,13 @@
 //  Analyzes caption text to detect mood for color grading suggestions
 //
 
+import CoreMedia
 import Foundation
 import NaturalLanguage
+
+#if canImport(FoundationModels)
 import FoundationModels
-import CoreMedia
+#endif
 
 /// Sentiment result for text analysis
 struct SentimentResult: Sendable {
@@ -133,81 +136,94 @@ enum Emotion: String, CaseIterable, Sendable {
 actor SentimentAnalysisService {
 
     private let tagger: NLTagger
-    private var modelSession: LanguageModelSession?
+
+    // Store as Any to avoid compile-time availability issues
+    // LanguageModelSession requires macOS 26+
+    private var modelSession: Any?
 
     init() {
         tagger = NLTagger(tagSchemes: [.sentimentScore, .lexicalClass])
     }
 
-    /// Initialize the Apple Intelligence session for advanced analysis
+    /// Initialize the Apple Intelligence session for advanced analysis (macOS 26+)
     func prepareAI() async {
-        // macOS 26+ FoundationModels session
-        self.modelSession = LanguageModelSession()
+        #if canImport(FoundationModels)
+        if #available(macOS 26.0, *) {
+            self.modelSession = LanguageModelSession()
+        }
+        #endif
     }
 
     /// Analyze sentiment using foundation models for high accuracy (macOS 26+)
     func analyzeSentimentIntelligent(text: String) async -> SentimentResult {
-        guard let session = modelSession else {
-            // Fallback to legacy NLTagger if LLM is not ready
-            return analyzeSentiment(text: text)
-        }
+        #if canImport(FoundationModels)
+        if #available(macOS 26.0, *), let session = modelSession as? LanguageModelSession {
+            do {
+                // Guided Generation pattern for Apple Intelligence
+                let prompt = "Analyze the sentiment of this text and return a single word (Very Positive, Positive, Neutral, Negative, Very Negative): \(text)"
+                let response = try await session.respond(to: prompt)
 
-        do {
-            // Guided Generation pattern for Apple Intelligence
-            let prompt = "Analyze the sentiment of this text and return a single word (Very Positive, Positive, Neutral, Negative, Very Negative): \(text)"
-            let response = try await session.respond(to: prompt)
-            
-            // Accessing the content from the Response object
-            let sentimentStr = response.content.trimmingCharacters(in: .whitespacesAndNewlines)
-            let sentiment = Sentiment(rawValue: sentimentStr) ?? .neutral
-            
-            return SentimentResult(
-                score: 0.0,
-                sentiment: sentiment,
-                confidence: 0.95
-            )
-        } catch {
-            return analyzeSentiment(text: text)
+                // Accessing the content from the Response object
+                let sentimentStr = response.content.trimmingCharacters(in: .whitespacesAndNewlines)
+                let sentiment = Sentiment(rawValue: sentimentStr) ?? .neutral
+
+                return SentimentResult(
+                    score: 0.0,
+                    sentiment: sentiment,
+                    confidence: 0.95
+                )
+            } catch {
+                return analyzeSentiment(text: text)
+            }
         }
+        #endif
+        // Fallback to legacy NLTagger for macOS 15-25
+        return analyzeSentiment(text: text)
     }
 
     /// Analyze tone and nuance using Apple Intelligence (macOS 26+)
     func analyzeNuance(text: String) async -> [String: Double] {
-        guard let session = modelSession else { return [:] }
-        
-        let prompt = "Analyze the tone of this text. Return scores from 0-1 for: Professionalism, Sarcasm, Conciseness, Urgent. Format: Key: Value"
-        
-        do {
-            let response = try await session.respond(to: prompt)
-            let content = response.content
-            
-            // Parse response
-            var metrics: [String: Double] = [:]
-            for line in content.components(separatedBy: .newlines) {
-                let parts = line.components(separatedBy: ":")
-                if parts.count == 2, let score = Double(parts[1].trimmingCharacters(in: .whitespaces)) {
-                    metrics[parts[0].trimmingCharacters(in: .whitespaces)] = score
+        #if canImport(FoundationModels)
+        if #available(macOS 26.0, *), let session = modelSession as? LanguageModelSession {
+            let prompt = "Analyze the tone of this text. Return scores from 0-1 for: Professionalism, Sarcasm, Conciseness, Urgent. Format: Key: Value"
+
+            do {
+                let response = try await session.respond(to: prompt)
+                let content = response.content
+
+                // Parse response
+                var metrics: [String: Double] = [:]
+                for line in content.components(separatedBy: .newlines) {
+                    let parts = line.components(separatedBy: ":")
+                    if parts.count == 2, let score = Double(parts[1].trimmingCharacters(in: .whitespaces)) {
+                        metrics[parts[0].trimmingCharacters(in: .whitespaces)] = score
+                    }
                 }
+                return metrics
+            } catch {
+                return [:]
             }
-            return metrics
-        } catch {
-            return [:]
         }
+        #endif
+        return [:]
     }
 
-    /// Summarize a set of captions using Apple Intelligence
+    /// Summarize a set of captions using Apple Intelligence (macOS 26+)
     func summarizeCaptions(captions: [Caption]) async -> String {
-        guard let session = modelSession else { return "" }
-        
-        let allText = captions.map { $0.text }.joined(separator: " ")
-        let prompt = "Summarize the following video transcript concisely:\n\n\(allText)"
-        
-        do {
-            let response = try await session.respond(to: prompt)
-            return response.content
-        } catch {
-            return "Summary unavailable."
+        #if canImport(FoundationModels)
+        if #available(macOS 26.0, *), let session = modelSession as? LanguageModelSession {
+            let allText = captions.map { $0.text }.joined(separator: " ")
+            let prompt = "Summarize the following video transcript concisely:\n\n\(allText)"
+
+            do {
+                let response = try await session.respond(to: prompt)
+                return response.content
+            } catch {
+                return "Summary unavailable."
+            }
         }
+        #endif
+        return ""
     }
 
     /// Analyze sentiment of text

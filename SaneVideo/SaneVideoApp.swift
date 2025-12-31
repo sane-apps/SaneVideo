@@ -6,6 +6,7 @@
 //
 
 import AppKit
+import Sparkle
 import SwiftUI
 
 @main
@@ -14,6 +15,9 @@ struct SaneVideoApp: App {
   @State private var appState = ServiceContainer.shared.appState
   @State private var prefs = ServiceContainer.shared.userPreferences
   @Environment(\.scenePhase) private var scenePhase
+
+  // Sparkle auto-update service (manual check only for launch)
+  @StateObject private var updaterService = UpdaterService()
 
   var body: some Scene {
     WindowGroup {
@@ -48,6 +52,15 @@ struct SaneVideoApp: App {
     }
 
     .commands {
+      // Sparkle: Check for Updates (after About SaneVideo)
+      CommandGroup(after: .appInfo) {
+        Button(String(localized: "menu.app.check_updates", defaultValue: "Check for Updates...")) {
+          updaterService.checkForUpdates()
+        }
+        .disabled(!updaterService.canCheckForUpdates)
+        .accessibilityIdentifier("menu.app.check_updates")
+      }
+
       CommandGroup(replacing: .newItem) {
         Button(String(localized: "menu.file.new_recording", defaultValue: "New Recording")) {
           appState.startNewRecording()
@@ -57,12 +70,12 @@ struct SaneVideoApp: App {
       }
 
       CommandGroup(after: .importExport) {
-        Button(String(localized: "menu.file.open_project", defaultValue: "Open Project...")) {
+        Button(String(localized: "menu.file.open_project", defaultValue: "Show Projects")) {
           NotificationCenter.default.post(
-            name: NSNotification.Name("ShowProjectBrowser"), object: nil)
+            name: NSNotification.Name("ShowSidebarProjects"), object: nil)
         }
         .keyboardShortcut("o", modifiers: [.command])
-        .accessibilityIdentifier("menu.file.open_project")
+        .accessibilityIdentifier("menu.file.show_projects")
 
         Button(String(localized: "menu.file.import_video", defaultValue: "Import Video...")) {
           appState.importVideo()

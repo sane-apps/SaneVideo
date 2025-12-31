@@ -62,6 +62,11 @@ actor SyncManager {
     /// Publisher for sync events
     nonisolated(unsafe) let syncEventsSubject = PassthroughSubject<SyncEvent, Never>()
 
+    // OPTIMIZATION: NSMetadataQuery for real-time iCloud change detection
+    // Using nonisolated(unsafe) because NSMetadataQuery must be accessed from main thread
+    nonisolated(unsafe) private var metadataQuery: NSMetadataQuery?
+    nonisolated(unsafe) private var queryObservers: [NSObjectProtocol] = []
+
     /// Is iCloud sync enabled
     private var isSyncEnabled: Bool {
         get { UserDefaults.standard.bool(forKey: "iCloudSyncEnabled") }
@@ -293,10 +298,122 @@ actor SyncManager {
     private func startMonitoring() async {
         guard let iCloudURL = iCloudDocumentsURL else { return }
 
-        // Start monitoring iCloud changes using NSMetadataQuery
-        // This would be implemented with NSMetadataQuery for real-time updates
-        await MainActor.run {
-            AppLogger.general.info("SyncManager: Started monitoring iCloud changes at \(iCloudURL.path)")
+        // OPTIMIZATION: Use NSMetadataQuery for real-time iCloud change detection
+        // This replaces polling and is more battery-efficient
+        await MainActor.run { [weak self] in
+            guard let self = self else { return }
+
+            // Stop any existing query
+            self.stopMetadataQuery()
+
+            // Create and configure the query
+            let query = NSMetadataQuery()
+            query.searchScopes = [NSMetadataQueryUbiquitousDocumentsScope]
+
+            // Match .sanevideoproject directories in iCloud
+            query.predicate = NSPredicate(format: "%K LIKE '*.sanevideoproject'", NSMetadataItemFSNameKey)
+
+            // Observe query updates - extract Sendable data on main thread, then update actor
+            let updateObserver = NotificationCenter.default.addObserver(
+                forName: .NSMetadataQueryDidUpdate,
+                object: query,
+                queue: .main
+            ) { [weak self] _ in
+                guard let self = self, let query = self.metadataQuery else { return }
+                let updates = self.extractQueryResults(from: query)
+                Task { await self.applyMetadataUpdates(updates) }
+            }
+
+            let finishObserver = NotificationCenter.default.addObserver(
+                forName: .NSMetadataQueryDidFinishGathering,
+                object: query,
+                queue: .main
+            ) { [weak self] _ in
+                guard let self = self, let query = self.metadataQuery else { return }
+                let updates = self.extractQueryResults(from: query)
+                Task { await self.applyMetadataUpdates(updates) }
+            }
+
+            self.queryObservers = [updateObserver, finishObserver]
+            self.metadataQuery = query
+
+            // Start the query
+            query.start()
+
+            AppLogger.general.info("SyncManager: Started NSMetadataQuery monitoring for iCloud changes at \(iCloudURL.path)")
+        }
+    }
+
+    /// Stop the metadata query and clean up observers
+    nonisolated private func stopMetadataQuery() {
+        metadataQuery?.stop()
+        metadataQuery = nil
+
+        for observer in queryObservers {
+            NotificationCenter.default.removeObserver(observer)
+        }
+        queryObservers.removeAll()
+    }
+
+    /// Sendable update extracted from NSMetadataQuery results
+    private struct MetadataUpdate: Sendable {
+        let projectId: UUID
+        let status: SyncStatus
+        let message: String?
+    }
+
+    /// Extract Sendable data from query results (called on main thread)
+    nonisolated private func extractQueryResults(from query: NSMetadataQuery) -> [MetadataUpdate] {
+        query.disableUpdates()
+        defer { query.enableUpdates() }
+
+        var updates: [MetadataUpdate] = []
+
+        for i in 0..<query.resultCount {
+            guard let item = query.result(at: i) as? NSMetadataItem else { continue }
+            guard let url = item.value(forAttribute: NSMetadataItemURLKey) as? URL else { continue }
+
+            let filename = url.deletingPathExtension().lastPathComponent
+            guard let projectId = UUID(uuidString: filename) else { continue }
+
+            // Check for conflicts
+            if let isConflicted = item.value(forAttribute: NSMetadataUbiquitousItemHasUnresolvedConflictsKey) as? Bool,
+               isConflicted {
+                updates.append(MetadataUpdate(projectId: projectId, status: .conflict, message: "Sync conflict detected"))
+                continue
+            }
+
+            // Check upload status first (takes priority)
+            if let isUploading = item.value(forAttribute: NSMetadataUbiquitousItemIsUploadingKey) as? Bool,
+               isUploading {
+                let percentUploaded = item.value(forAttribute: NSMetadataUbiquitousItemPercentUploadedKey) as? Double ?? 0
+                updates.append(MetadataUpdate(projectId: projectId, status: .syncing, message: "Uploading \(Int(percentUploaded))%..."))
+                continue
+            }
+
+            // Check download status
+            if let downloadStatus = item.value(forAttribute: NSMetadataUbiquitousItemDownloadingStatusKey) as? String {
+                if downloadStatus == NSMetadataUbiquitousItemDownloadingStatusCurrent ||
+                   downloadStatus == NSMetadataUbiquitousItemDownloadingStatusDownloaded {
+                    updates.append(MetadataUpdate(projectId: projectId, status: .synced, message: nil))
+                } else {
+                    updates.append(MetadataUpdate(projectId: projectId, status: .syncing, message: "Downloading from iCloud..."))
+                }
+            }
+        }
+
+        return updates
+    }
+
+    /// Apply metadata updates to actor state
+    private func applyMetadataUpdates(_ updates: [MetadataUpdate]) {
+        for update in updates {
+            if update.status == .conflict {
+                Task { @MainActor in
+                    AppLogger.general.warning("SyncManager: Conflict detected for project \(update.projectId)")
+                }
+            }
+            updateStatus(for: update.projectId, status: update.status, message: update.message)
         }
     }
 

@@ -52,18 +52,21 @@ class ScreenRecorder: NSObject, ScreenRecorderProtocol, SCContentSharingPickerOb
   var recordingFrame: CGRect? {
     guard let filter = baseFilter else { return nil }
     // For display captures, get the actual display frame including origin
-    if let scDisplay = filter.includedDisplays.first {
-      // Get the actual NSScreen for this display to get its frame in global coords
-      if let nsScreen = NSScreen.screens.first(where: { screen in
-        // Match by size (SCDisplay doesn't expose displayID directly in a convenient way)
-        Int(screen.frame.width) == scDisplay.width && Int(screen.frame.height) == scDisplay.height
-      }) {
-        return nsScreen.frame
+    // includedDisplays requires macOS 15.2+
+    if #available(macOS 15.2, *) {
+      if let scDisplay = filter.includedDisplays.first {
+        // Get the actual NSScreen for this display to get its frame in global coords
+        if let nsScreen = NSScreen.screens.first(where: { screen in
+          // Match by size (SCDisplay doesn't expose displayID directly in a convenient way)
+          Int(screen.frame.width) == scDisplay.width && Int(screen.frame.height) == scDisplay.height
+        }) {
+          return nsScreen.frame
+        }
+        // Fallback: assume main display at origin
+        return CGRect(x: 0, y: 0, width: CGFloat(scDisplay.width), height: CGFloat(scDisplay.height))
       }
-      // Fallback: assume main display at origin
-      return CGRect(x: 0, y: 0, width: CGFloat(scDisplay.width), height: CGFloat(scDisplay.height))
     }
-    // For window captures, we don't have the frame easily accessible
+    // For window captures or macOS 15.0-15.1, we don't have the frame easily accessible
     // Return nil and let VideoWriter use fallback positioning
     return nil
   }
@@ -325,8 +328,13 @@ class ScreenRecorder: NSObject, ScreenRecorderProtocol, SCContentSharingPickerOb
       let shareableContent = try await SCShareableContent.currentProcess
 
       // Identify the display for the filter
-      // In macOS 15.2+, use includedDisplays. For older, we'd need to guess, but Tahoe is newer.
-      let display = base.includedDisplays.first ?? shareableContent.displays.first
+      // In macOS 15.2+, use includedDisplays. For older macOS, use displays.first
+      let display: SCDisplay?
+      if #available(macOS 15.2, *) {
+        display = base.includedDisplays.first ?? shareableContent.displays.first
+      } else {
+        display = shareableContent.displays.first
+      }
 
       guard let display = display else {
         AppLogger.recording.warning("⚠️ No display found for filter rebuild")

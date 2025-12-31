@@ -18,29 +18,60 @@ class AIService {
     private let providerType: AIProvider
     private let engine: AIModelProvider
 
+    // OPTIMIZATION: Timeout for AI operations to prevent UI hangs on large transcripts
+    private static let aiOperationTimeout: TimeInterval = 30.0
+
     init(provider: AIProvider = .appleFoundation) {
         self.providerType = provider
         self.engine = AppleFoundationProvider()
+    }
+
+    // MARK: - Timeout Helper
+
+    /// Wraps an async operation with a timeout to prevent indefinite hangs
+    private func withTimeout<T: Sendable>(
+        seconds: TimeInterval = AIService.aiOperationTimeout,
+        operation: @escaping @Sendable () async throws -> T
+    ) async throws -> T {
+        try await withThrowingTaskGroup(of: T.self) { group in
+            group.addTask {
+                try await operation()
+            }
+
+            group.addTask {
+                try await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
+                throw AIError.timeout
+            }
+
+            // Return first completed result, cancel the other
+            let result = try await group.next()!
+            group.cancelAll()
+            return result
+        }
     }
 
     /// Generates a title and description based on the video transcript
     func generateTitleAndDescription(transcript: String) async throws -> AIGeneratedContent {
         isGenerating = true
         defer { isGenerating = false }
-        return try await engine.generateTitleAndDescription(transcript: transcript)
+
+        // OPTIMIZATION: Wrap with timeout to prevent hangs on large transcripts
+        return try await withTimeout { [engine] in
+            try await engine.generateTitleAndDescription(transcript: transcript)
+        }
     }
 
     /// Analyzes transcript for Magic Fix edits (filler words, highlights, topics)
     func analyzeTranscriptForEdits(transcript: String) async throws -> MagicFixAnalysis {
         isGenerating = true
         defer { isGenerating = false }
-        
+
         let prompt = """
         Analyze this video transcript. identifying:
         1. Filler segments (um, uh, tangential/useless chatter) to remove.
         2. Topic changes (start of new sections).
         3. Key highlights (most engaging moments).
-        
+
         Return ONLY valid JSON in this exact format:
         {
             "segments": [
@@ -49,12 +80,15 @@ class AIService {
                 {"startTime": 45.0, "endTime": 60.0, "type": "highlight", "description": "Key insight about AI"}
             ]
         }
-        
+
         Transcript:
         \(transcript)
         """
 
-        return try await engine.analyzeTranscriptForEdits(prompt: prompt)
+        // OPTIMIZATION: Wrap with timeout to prevent hangs on large transcripts
+        return try await withTimeout { [engine] in
+            try await engine.analyzeTranscriptForEdits(prompt: prompt)
+        }
     }
 
     /// Refines a list of captions (grammar, punctuation, readability)
@@ -62,7 +96,7 @@ class AIService {
         guard !captions.isEmpty else { return [] }
         isGenerating = true
         defer { isGenerating = false }
-        
+
         let originalTexts = captions.map { "\($0.id.uuidString): \($0.text)" }.joined(separator: "\n")
         let prompt = """
         Refine these video captions for clarity, grammar, and professional tone.
@@ -73,11 +107,14 @@ class AIService {
             {"id": "UUID", "text": "Refined text here"}
           ]
         }
-        
+
         Captions:
         \(originalTexts)
         """
 
-        return try await engine.refineCaptions(captions: captions, prompt: prompt)
+        // OPTIMIZATION: Wrap with timeout to prevent hangs on large transcripts
+        return try await withTimeout { [engine] in
+            try await engine.refineCaptions(captions: captions, prompt: prompt)
+        }
     }
 }

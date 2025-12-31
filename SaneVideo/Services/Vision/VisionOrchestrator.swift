@@ -181,6 +181,12 @@ actor VisionOrchestrator {
       textReq = VNRecognizeTextRequest()
       textReq?.recognitionLevel = .accurate
       textReq?.usesLanguageCorrection = true
+
+      // OPTIMIZATION: Use revision 3 for better accuracy on code snippets and technical text
+      if #available(macOS 13.0, *) {
+        textReq?.revision = VNRecognizeTextRequestRevision3
+      }
+
       requests.append(textReq!)
     }
 
@@ -337,5 +343,137 @@ actor VisionOrchestrator {
     )
 
     return finalResult
+  }
+
+  // MARK: - Motion Analysis (Optical Flow)
+
+  /// Result of motion analysis for a video segment
+  struct MotionAnalysisResult: Sendable {
+    let timeRange: CMTimeRange
+    let averageMotionMagnitude: Float  // 0.0 = static, 1.0 = high motion
+    let isActionSegment: Bool  // true if motion exceeds threshold
+  }
+
+  /// Analyze motion in a video using optical flow to detect action segments
+  /// - Parameters:
+  ///   - videoURL: Video to analyze
+  ///   - sampleInterval: Seconds between samples (default 1.0)
+  ///   - motionThreshold: Threshold for "action" classification (default 0.3)
+  /// - Returns: Array of motion analysis results per segment
+  func analyzeMotion(
+    videoURL: URL,
+    sampleInterval: TimeInterval = 1.0,
+    motionThreshold: Float = 0.3
+  ) async throws -> [MotionAnalysisResult] {
+    let asset = AVURLAsset(url: videoURL)
+
+    guard let track = try await asset.loadTracks(withMediaType: .video).first else {
+      throw NSError(domain: "VisionOrchestrator", code: -1,
+                    userInfo: [NSLocalizedDescriptionKey: "No video track"])
+    }
+
+    let reader = try AVAssetReader(asset: asset)
+    let settings: [String: Any] = [
+      kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA
+    ]
+    let output = AVAssetReaderTrackOutput(track: track, outputSettings: settings)
+    output.alwaysCopiesSampleData = false
+    reader.add(output)
+
+    guard reader.startReading() else {
+      throw reader.error ?? NSError(domain: "VisionOrchestrator", code: -2,
+                                     userInfo: [NSLocalizedDescriptionKey: "Reader failed"])
+    }
+
+    var results: [MotionAnalysisResult] = []
+    var previousBuffer: CVPixelBuffer?
+    var previousTime: CMTime = .zero
+
+    let sampleCMTime = CMTime(seconds: sampleInterval, preferredTimescale: 600)
+    var nextSampleTime = CMTime.zero
+
+    AppLogger.vision.info("👁️ VisionOrchestrator: Starting motion analysis with optical flow")
+
+    while let sampleBuffer = output.copyNextSampleBuffer() {
+      let pts = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
+
+      guard pts >= nextSampleTime else { continue }
+      guard let currentBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { continue }
+
+      // Need two frames for optical flow
+      if let prevBuffer = previousBuffer {
+        let motionMagnitude = try computeOpticalFlowMagnitude(
+          previousFrame: prevBuffer,
+          currentFrame: currentBuffer
+        )
+
+        let segmentRange = CMTimeRange(start: previousTime, end: pts)
+        let result = MotionAnalysisResult(
+          timeRange: segmentRange,
+          averageMotionMagnitude: motionMagnitude,
+          isActionSegment: motionMagnitude > motionThreshold
+        )
+        results.append(result)
+      }
+
+      previousBuffer = currentBuffer
+      previousTime = pts
+      nextSampleTime = pts + sampleCMTime
+    }
+
+    AppLogger.vision.info("👁️ VisionOrchestrator: Motion analysis complete. Found \(results.filter { $0.isActionSegment }.count) action segments")
+
+    return results
+  }
+
+  /// Compute average motion magnitude between two frames using optical flow
+  private func computeOpticalFlowMagnitude(
+    previousFrame: CVPixelBuffer,
+    currentFrame: CVPixelBuffer
+  ) throws -> Float {
+    let request = VNGenerateOpticalFlowRequest(targetedCVPixelBuffer: previousFrame)
+    request.computationAccuracy = .medium
+
+    let handler = VNImageRequestHandler(cvPixelBuffer: currentFrame)
+    try handler.perform([request])
+
+    guard let observation = request.results?.first else {
+      return 0.0
+    }
+
+    // The optical flow result is a pixel buffer where each pixel contains motion vectors
+    let flowBuffer = observation.pixelBuffer
+    CVPixelBufferLockBaseAddress(flowBuffer, .readOnly)
+    defer { CVPixelBufferUnlockBaseAddress(flowBuffer, .readOnly) }
+
+    let width = CVPixelBufferGetWidth(flowBuffer)
+    let height = CVPixelBufferGetHeight(flowBuffer)
+
+    guard let baseAddress = CVPixelBufferGetBaseAddress(flowBuffer) else {
+      return 0.0
+    }
+
+    // Optical flow output is 2-channel float (dx, dy per pixel)
+    let bytesPerRow = CVPixelBufferGetBytesPerRow(flowBuffer)
+    var totalMagnitude: Float = 0.0
+    var sampleCount = 0
+
+    // Sample every 8th pixel for performance
+    let sampleStep = 8
+    for y in Swift.stride(from: 0, to: height, by: sampleStep) {
+      for x in Swift.stride(from: 0, to: width, by: sampleStep) {
+        let offset = y * bytesPerRow + x * MemoryLayout<Float>.size * 2
+        let ptr = baseAddress.advanced(by: offset).assumingMemoryBound(to: Float.self)
+        let dx = ptr[0]
+        let dy = ptr[1]
+        let magnitude = sqrtf(dx * dx + dy * dy)
+        totalMagnitude += magnitude
+        sampleCount += 1
+      }
+    }
+
+    // Normalize to 0-1 range (typical motion vectors are small)
+    let avgMagnitude = sampleCount > 0 ? totalMagnitude / Float(sampleCount) : 0.0
+    return min(avgMagnitude / 10.0, 1.0)  // Scale factor based on typical values
   }
 }

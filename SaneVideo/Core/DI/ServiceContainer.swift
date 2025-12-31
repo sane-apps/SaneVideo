@@ -102,7 +102,6 @@ final class ServiceContainer {
     let stressTestRunner: StressTestRunner
     let globalHotkeyManager: GlobalHotkeyManager
     let crashReporter: CrashReporter
-    let debugVerifier: DebugVerifier
     let logExportService: LogExportService
     let audioEnhancementService: SaneAudioEnhancementService
     
@@ -192,7 +191,6 @@ final class ServiceContainer {
         self.stressTestRunner = StressTestRunner()
         self.globalHotkeyManager = GlobalHotkeyManager()
         self.crashReporter = CrashReporter()
-        self.debugVerifier = DebugVerifier()
         self.logExportService = LogExportService()
         self.audioEnhancementService = SaneAudioEnhancementService()
         

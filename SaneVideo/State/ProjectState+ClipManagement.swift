@@ -64,6 +64,28 @@ extension ProjectState {
     }
 
     project.timeline = timeline
+
+    // AUTO-NAME: If this is the first clip and project is still "Untitled Project", rename based on video filename
+    if project.name == "Untitled Project" && timeline.tracks.flatMap({ $0.clips }).count == 1 {
+      let videoName = clip.url.deletingPathExtension().lastPathComponent
+      // Clean up the name (remove common prefixes like "recording_")
+      var cleanName = videoName
+        .replacingOccurrences(of: "recording_", with: "")
+        .replacingOccurrences(of: "_", with: " ")
+      // Truncate if too long
+      if cleanName.count > 40 {
+        cleanName = String(cleanName.prefix(40))
+      }
+      // If name is still generic (e.g., just numbers), use date-based name
+      if cleanName.allSatisfy({ $0.isNumber || $0.isWhitespace || $0 == "." }) {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMM d, h:mm a"
+        cleanName = "Recording " + formatter.string(from: Date())
+      }
+      project.name = cleanName
+      AppLogger.project.info("Auto-renamed project to: \(cleanName)")
+    }
+
     currentProject = project
     recentlyAddedClip = mutableClip
     saveProject(project)
@@ -72,6 +94,52 @@ extension ProjectState {
     ServiceContainer.shared.toastManager.show("Added Clip")
 
     NotificationCenter.default.post(name: .clipAddedToTimeline, object: project)
+  }
+
+  // MARK: - Duplicating
+
+  /// Duplicate a clip and insert it at the specified timeline position
+  func duplicateClip(_ clip: VideoClip, atTime insertTime: CMTime) {
+    guard var project = currentProject else { return }
+
+    // Create a copy with a new ID using the clip's copy method
+    var newClip = clip.copy()
+    newClip.startTime = insertTime
+
+    var timeline = project.timeline
+
+    registerUndo("Duplicate Clip")
+
+    // Find the first video track or create one
+    var targetTrackIndex = timeline.tracks.firstIndex { $0.type == .video }
+    if targetTrackIndex == nil {
+      let newTrack = Track(name: "", type: .video, zIndex: 0)
+      timeline.addTrack(newTrack)
+      targetTrackIndex = timeline.tracks.count - 1
+    }
+
+    guard let trackIndex = targetTrackIndex else { return }
+    var track = timeline.tracks[trackIndex]
+
+    // Insert the clip
+    track.clips.append(newClip)
+    timeline.tracks[trackIndex] = track
+
+    // Recalculate positions (magnetic timeline will handle overlap)
+    recalculateStartTimes(in: &timeline)
+    timeline.updateDuration()
+
+    if !validateTimelineState(timeline) {
+      AppLogger.project.error("Timeline state invalid after duplicate, rolling back")
+      ServiceContainer.shared.toastManager.show("Duplicate failed: Timeline state invalid", type: .error)
+      return
+    }
+
+    project.timeline = timeline
+    currentProject = project
+    saveProject(project)
+
+    AppLogger.project.info("Duplicated clip \(clip.id) at \(insertTime.seconds)s")
   }
 
   // MARK: - Splitting

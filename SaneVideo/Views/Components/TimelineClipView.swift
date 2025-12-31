@@ -30,7 +30,8 @@ struct TimelineClipView: View {
     var onDeleteFile: (() -> Void)?
     var onRelink: (() -> Void)?
     var onSetTransition: ((TransitionType) -> Void)?
-    var onSelect: ((CMTime?) -> Void)?
+    /// Selection callback with seek time and modifier flags for Cmd+Click (toggle) and Shift+Click (range)
+    var onSelect: ((CMTime?, NSEvent.ModifierFlags) -> Void)?
 
     @State private var waveformSamples: [Float]?
     @State private var isDraggingLeftHandle = false
@@ -396,7 +397,7 @@ struct ClipGestureModifier: ViewModifier {
     let clipWidth: CGFloat
     let handleWidth: CGFloat
     let clip: VideoClip
-    let onSelect: ((CMTime?) -> Void)?
+    let onSelect: ((CMTime?, NSEvent.ModifierFlags) -> Void)?
 
     func body(content: Content) -> some View {
         content
@@ -419,7 +420,10 @@ struct ClipGestureModifier: ViewModifier {
                         let safePercent = max(0, min(1.0, percent))
                         let timeOffset = clip.effectiveDuration.seconds * Double(safePercent)
                         let seekTime = CMTimeAdd(clip.startTime, CMTime(seconds: timeOffset, preferredTimescale: 600))
-                        onSelect?(seekTime)
+
+                        // Capture current modifier keys for Cmd+Click (toggle) and Shift+Click (range)
+                        let modifiers = NSEvent.modifierFlags
+                        onSelect?(seekTime, modifiers)
                     }
             )
     }

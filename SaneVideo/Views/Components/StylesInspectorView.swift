@@ -42,7 +42,6 @@ struct StylesInspectorView: View {
             // CRITICAL FIX: Get fresh clip from project to ensure we have latest state
             return track.clips.first(where: { $0.id == clip.id })
         }
-        // Clip not found - auto-deselect
         return nil
     }
 

@@ -48,6 +48,14 @@ struct CaptionRow: View {
                     .accessibilityIdentifier("caption.text_field")
                     .onChange(of: isFocused) { _, newValue in
                         showPreview = newValue
+                        // CRITICAL FIX: Clean Whisper tokens when user finishes editing
+                        // This ensures any stray tokens are stripped on blur
+                        if !newValue {
+                            let cleaned = Caption.cleanText(caption.text)
+                            if cleaned != caption.text {
+                                caption.text = cleaned
+                            }
+                        }
                     }
                 
                 if isFocused {
@@ -62,8 +70,9 @@ struct CaptionRow: View {
             }
             
             // Live preview when editing
-            if showPreview && !caption.text.isEmpty {
-                CaptionPreview(text: caption.text, style: style)
+            // CRITICAL FIX: Use displayText to strip Whisper tokens for preview
+            if showPreview && !caption.displayText.isEmpty {
+                CaptionPreview(text: caption.displayText, style: style)
                     .transition(AnyTransition.opacity.combined(with: AnyTransition.scale(scale: 0.95)))
             }
         }

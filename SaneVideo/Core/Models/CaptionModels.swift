@@ -24,11 +24,34 @@ public struct Caption: Identifiable, Codable, Equatable, Sendable {
         self.words = words
     }
 
-    // MARK: - Utility: Clean Timestamps
+    // MARK: - Utility: Clean Text
 
-    /// Removes timestamp patterns from caption text (e.g., [00:01:23], (00:01:23))
-    public func withCleanedText() -> Caption {
-        var cleanedText = text.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
+    /// Returns cleaned text for display (removes Whisper tokens, timestamps, etc.)
+    /// Use this for UI display instead of raw `text` property
+    public var displayText: String {
+        Self.cleanText(text)
+    }
+
+    /// Static helper to clean caption text
+    public static func cleanText(_ input: String) -> String {
+        var cleanedText = input.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
+
+        // CRITICAL: Remove Whisper special tokens first
+        // These are control tokens like <|startoftranscript|>, <|en|>, <|endoftranscript|>, etc.
+        let specialTokenPatterns = [
+            #"<\|[^|>]+\|>"#,  // Matches <|anything|> - all special tokens
+            #"\[BLANK_AUDIO\]"#,  // WhisperKit silence marker
+            #"\[MUSIC\]"#,  // WhisperKit music marker
+            #"\[APPLAUSE\]"#  // WhisperKit sound markers
+        ]
+
+        for pattern in specialTokenPatterns {
+            cleanedText = cleanedText.replacingOccurrences(
+                of: pattern,
+                with: "",
+                options: [.regularExpression, .caseInsensitive]
+            )
+        }
 
         // Remove timestamp patterns: [00:01:23], (00:01:23), 00:01:23, etc.
         let timestampPatterns = [
@@ -45,10 +68,15 @@ public struct Caption: Identifiable, Codable, Equatable, Sendable {
             )
         }
 
-        cleanedText = cleanedText.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
+        // Collapse multiple spaces and trim
+        cleanedText = cleanedText.replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression)
+        return cleanedText.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
+    }
 
+    /// Removes timestamp patterns from caption text (e.g., [00:01:23], (00:01:23))
+    public func withCleanedText() -> Caption {
         var cleaned = self
-        cleaned.text = cleanedText
+        cleaned.text = Self.cleanText(text)
         return cleaned
     }
 

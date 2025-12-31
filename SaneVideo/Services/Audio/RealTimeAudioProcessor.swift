@@ -142,7 +142,8 @@ final class RealTimeAudioProcessor: RealTimeAudioProcessorProtocol {
         // Calculate frame position
         let sampleRate = audioFile.processingFormat.sampleRate
         let framePosition = AVAudioFramePosition(time.seconds * sampleRate)
-        let remainingFrames = max(0, AVAudioFrameCount(audioFile.length - framePosition))
+        // FIX: max() BEFORE converting to UInt32 to prevent negative-to-unsigned crash
+        let remainingFrames = AVAudioFrameCount(max(0, audioFile.length - framePosition))
         
         // Schedule from new position
         Task {

@@ -90,6 +90,21 @@ struct MainContentView: View {
           selectedClip = clip
         }
       }
+      // CRITICAL: Sync selectedClip with selectedClipIds (auto-selection support)
+      .onChange(of: appState.selectedClipIds) { _, newIds in
+        if let firstId = newIds.first,
+           let project = appState.projectState.currentProject {
+          // Find the clip with this ID in the project
+          let clip = project.timeline.tracks
+            .flatMap { $0.clips }
+            .first { $0.id == firstId }
+          if clip != selectedClip {
+            selectedClip = clip
+          }
+        } else if newIds.isEmpty && selectedClip != nil {
+          selectedClip = nil
+        }
+      }
       // OPTIMIZED: Unified state change pipeline (replaces multiple onChange handlers)
       .withUnifiedStateChanges()
       .sheet(item: $errorPresenter.activeError) { error in

@@ -65,6 +65,11 @@ class AppState {
   // MARK: - Timeline Selection (for multi-select and batch operations)
 
   var selectedClipIds: Set<UUID> = []  // Multi-select support for batch operations
+
+  // MARK: - Project Selection (for multi-select in project browser)
+
+  var selectedProjectIds: Set<UUID> = []  // Multi-select support for bulk project operations
+
   private var cancellables = Set<AnyCancellable>()
 
   init(recordingState: RecordingState? = nil) {

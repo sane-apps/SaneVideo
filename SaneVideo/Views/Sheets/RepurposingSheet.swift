@@ -337,6 +337,7 @@ struct RepurposingSheet: View {
                     )
                 }
                 .buttonStyle(.borderedProminent)
+                .keyboardShortcut(.defaultAction)
                 .disabled(!canExport)
                 .accessibilityIdentifier("repurposing.export")
             }

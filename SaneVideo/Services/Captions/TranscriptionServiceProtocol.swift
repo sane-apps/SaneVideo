@@ -29,36 +29,25 @@ protocol TranscriptionServiceProtocol: Actor {
     func cancel() async
 }
 
-/// Transcription engine selection
+/// Transcription engine selection (WhisperKit-only for macOS 15+)
+/// Legacy enum preserved for backwards compatibility with saved preferences
 enum TranscriptionEngine: String, CaseIterable, Identifiable, Codable {
-    case apple = "Apple Speech"
     case whisperKit = "WhisperKit"
-    
+
     var id: String { rawValue }
-    
+
     var displayName: String {
-        switch self {
-        case .apple: return "Apple Speech"
-        case .whisperKit: return "WhisperKit"
-        }
+        "WhisperKit"
     }
-    
+
     var description: String {
-        switch self {
-        case .apple:
-            return "Fast, native transcription using macOS built-in speech recognition"
-        case .whisperKit:
-            return "Highest accuracy for accents, non-English, technical jargon, and noisy audio (~1.5GB download)"
-        }
+        "Industry-leading accuracy for accents, non-English, technical jargon, and noisy audio (~800MB download)"
     }
 
     var icon: String {
-        switch self {
-        case .apple: return "waveform"
-        case .whisperKit: return "brain.head.profile"
-        }
+        "brain.head.profile"
     }
 
-    /// Default engine - WhisperKit for best accuracy
+    /// Default engine - WhisperKit only
     static let `default` = TranscriptionEngine.whisperKit
 }

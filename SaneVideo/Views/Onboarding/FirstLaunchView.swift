@@ -106,7 +106,6 @@ struct FirstLaunchView: View {
                         HStack(spacing: 12) {
                             Button("Skip for Now") {
                                 whisperKitSkipped = true
-                                ServiceContainer.shared.userPreferences.transcriptionEngine = .apple
                                 completeOnboarding()
                             }
                             .buttonStyle(.bordered)
@@ -141,13 +140,13 @@ struct FirstLaunchView: View {
 
         do {
             // Initialize WhisperKit which triggers model download
-            // Using large-v3 for best accuracy with technical jargon
+            // Using distil-large-v3 for optimal accuracy/performance on Apple Silicon
             let config = WhisperKitConfig()
-            config.model = "openai_whisper-large-v3"
+            config.model = "distil-whisper_distil-large-v3"
             config.verbose = false
             config.prewarm = true
 
-            AppLogger.project.info("🎤 Onboarding: Starting WhisperKit large-v3 model download (~1.5GB)...")
+            AppLogger.project.info("🎤 Onboarding: Starting WhisperKit distil-large-v3 model download (~800MB)...")
             _ = try await WhisperKit(config)
             AppLogger.project.info("✅ Onboarding: WhisperKit model download complete")
             whisperKitDownloadComplete = true

@@ -61,20 +61,23 @@ struct MLEffectConfiguration: Sendable {
 }
 
 /// Actor for ML-powered video effects using VideoToolbox
+/// NOTE: VTFrameProcessor requires macOS 15.4+, some configs require macOS 26+
 actor MLEffectsService {
     // MARK: - Properties
+    // Use Any? to avoid compile-time availability issues with VTFrameProcessor (macOS 15.4+)
+    // and configuration types (macOS 26.0+)
 
-    private var superResProcessor: VTFrameProcessor?
-    private var denoiseProcessor: VTFrameProcessor?
-    private var frameRateProcessor: VTFrameProcessor?
+    private var superResProcessor: Any?
+    private var denoiseProcessor: Any?
+    private var frameRateProcessor: Any?
 
-    private var superResConfig: VTSuperResolutionScalerConfiguration?
-    private var denoiseConfig: VTTemporalNoiseFilterConfiguration?
-    private var frameRateConfig: VTFrameRateConversionConfiguration?
+    private var superResConfig: Any?
+    private var denoiseConfig: Any?
+    private var frameRateConfig: Any?
 
     // Store previous frames for super resolution
-    private var previousSourceFrame: VTFrameProcessorFrame?
-    private var previousOutputFrame: VTFrameProcessorFrame?
+    private var previousSourceFrame: Any?
+    private var previousOutputFrame: Any?
 
     private var isInitialized = false
 
@@ -240,21 +243,23 @@ actor MLEffectsService {
 
     /// End all active sessions
     func endAllSessions() {
-        if let processor = superResProcessor {
-            processor.endSession()
-            superResProcessor = nil
-            superResConfig = nil
+        if #available(macOS 15.4, *) {
+            if let processor = superResProcessor as? VTFrameProcessor {
+                processor.endSession()
+            }
+            if let processor = denoiseProcessor as? VTFrameProcessor {
+                processor.endSession()
+            }
+            if let processor = frameRateProcessor as? VTFrameProcessor {
+                processor.endSession()
+            }
         }
-        if let processor = denoiseProcessor {
-            processor.endSession()
-            denoiseProcessor = nil
-            denoiseConfig = nil
-        }
-        if let processor = frameRateProcessor {
-            processor.endSession()
-            frameRateProcessor = nil
-            frameRateConfig = nil
-        }
+        superResProcessor = nil
+        superResConfig = nil
+        denoiseProcessor = nil
+        denoiseConfig = nil
+        frameRateProcessor = nil
+        frameRateConfig = nil
         previousSourceFrame = nil
         previousOutputFrame = nil
         isInitialized = false
@@ -269,7 +274,7 @@ actor MLEffectsService {
         destinationBuffer: CVPixelBuffer,
         presentationTime: CMTime
     ) async throws {
-        guard let processor = superResProcessor else {
+        guard let processor = superResProcessor as? VTFrameProcessor else {
             throw MLEffectsError.sessionNotStarted
         }
 
@@ -288,10 +293,10 @@ actor MLEffectsService {
 
         let parameters = VTSuperResolutionScalerParameters(
             sourceFrame: sourceFrame,
-            previousFrame: previousSourceFrame,
-            previousOutputFrame: previousOutputFrame,
+            previousFrame: previousSourceFrame as? VTFrameProcessorFrame,
+            previousOutputFrame: previousOutputFrame as? VTFrameProcessorFrame,
             opticalFlow: nil,
-            submissionMode: previousSourceFrame == nil ? .random : .sequential,
+            submissionMode: (previousSourceFrame as? VTFrameProcessorFrame) == nil ? .random : .sequential,
             destinationFrame: destinationFrame
         )
 
@@ -324,7 +329,7 @@ actor MLEffectsService {
         filterStrength: Float = 0.5,
         presentationTime: CMTime
     ) async throws {
-        guard let processor = denoiseProcessor else {
+        guard let processor = denoiseProcessor as? VTFrameProcessor else {
             throw MLEffectsError.sessionNotStarted
         }
 
@@ -380,7 +385,7 @@ actor MLEffectsService {
         interpolationPhases: [Float],
         presentationTime: CMTime
     ) async throws {
-        guard let processor = frameRateProcessor else {
+        guard let processor = frameRateProcessor as? VTFrameProcessor else {
             throw MLEffectsError.sessionNotStarted
         }
 

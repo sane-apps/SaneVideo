@@ -14,7 +14,7 @@ import OSLog
 actor BatchExportService {
     // MARK: - Properties
 
-    private let logger = Logger(subsystem: "com.sanevideo.app", category: "BatchExport")
+    private let logger = Logger(subsystem: "com.sanevideo.SaneVideo", category: "BatchExport")
     private var isExporting = false
 
     /// Export context for single short (reduces parameter count)

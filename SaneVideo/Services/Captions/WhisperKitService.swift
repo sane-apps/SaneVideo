@@ -58,12 +58,12 @@ actor WhisperKitService: TranscriptionServiceProtocol {
         // Start new initialization
         let task = Task {
             do {
-                AppLogger.project.info("🎤 WhisperKit: Initializing model (first time may download ~1.5GB)...")
+                AppLogger.project.info("🎤 WhisperKit: Initializing model (first time may download ~800MB)...")
 
                 let config = WhisperKitConfig()
-                // Use large-v3 for best accuracy with technical jargon, accents, and non-English
-                // This is the most accurate Whisper model available (10-20% better than large-v2)
-                config.model = "openai_whisper-large-v3"
+                // Use distil-large-v3 for optimal balance of accuracy and performance on Apple Silicon
+                // ~50% faster than full large-v3, <1-2% WER drop, better M1 8GB RAM compatibility
+                config.model = "distil-whisper_distil-large-v3"
                 config.computeOptions = ModelComputeOptions()
                 config.verbose = true // Enable verbose logging to debug issues
                 config.logLevel = .debug
@@ -229,7 +229,7 @@ actor WhisperKitService: TranscriptionServiceProtocol {
                 throw TranscriptionError.transcriptionFailed("Failed to extract audio from video: \(error.localizedDescription)")
             }
         } else {
-            // Fallback for older macOS (shouldn't happen as we target macOS 26.2)
+            // Fallback for older macOS (shouldn't happen as we target macOS 15.0+)
             await exportSession.export()
             let status: AVAssetExportSession.Status = exportSession.status
             guard status == .completed else {

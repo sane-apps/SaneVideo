@@ -121,11 +121,6 @@ enum CompositionBuilder {
         audioMix.inputParameters = audioMixParams
 
         // 5. Build Video Composition
-        var config = AVVideoComposition.Configuration()
-        config.renderSize = renderSize
-        config.frameDuration = CMTime(value: 1, timescale: 30)
-        config.customVideoCompositorClass = SaneVideoCompositor.self
-
         let totalDuration = timeline.duration
         var videoComposition: AVVideoComposition?
 
@@ -157,8 +152,23 @@ enum CompositionBuilder {
                 visionService: ServiceContainer.shared.personSegmentationService
             )
 
-            config.instructions = [saneInstruction]
-            videoComposition = AVVideoComposition(configuration: config)
+            if #available(macOS 26.0, *) {
+                // macOS 26+: Use modern Configuration API
+                var config = AVVideoComposition.Configuration()
+                config.renderSize = renderSize
+                config.frameDuration = CMTime(value: 1, timescale: 30)
+                config.customVideoCompositorClass = SaneVideoCompositor.self
+                config.instructions = [saneInstruction]
+                videoComposition = AVVideoComposition(configuration: config)
+            } else {
+                // macOS 15-25: Use mutable video composition
+                let mutableVideoComposition = AVMutableVideoComposition()
+                mutableVideoComposition.renderSize = renderSize
+                mutableVideoComposition.frameDuration = CMTime(value: 1, timescale: 30)
+                mutableVideoComposition.customVideoCompositorClass = SaneVideoCompositor.self
+                mutableVideoComposition.instructions = [saneInstruction]
+                videoComposition = mutableVideoComposition
+            }
         }
 
         return CompositionResult(

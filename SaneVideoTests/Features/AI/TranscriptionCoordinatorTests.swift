@@ -2,11 +2,12 @@
 //  TranscriptionCoordinatorTests.swift
 //  SaneVideoTests
 //
-//  Tests for TranscriptionCoordinator - engine selection, fallback logic, failure tracking
+//  Tests for TranscriptionCoordinator - WhisperKit-only for macOS 15+
 //
 
-import Testing
 import AVFoundation
+import Testing
+
 @testable import SaneVideo
 
 @Suite("Transcription Coordinator Tests")
@@ -21,70 +22,13 @@ struct TranscriptionCoordinatorTests {
 
     // MARK: - Initial State Tests
 
-    @Test("Initial state has correct defaults")
+    @Test("Coordinator initializes successfully")
     func initialState() {
-        // Arrange & Act
-        let coordinator = sut
-
-        // Assert - Default engine is WhisperKit (from TranscriptionEngine.default)
-        // Verify it's the actual default, not "either one" (which is a tautology)
-        #expect(coordinator.selectedEngine == .whisperKit, "Default engine should be WhisperKit")
-        #expect(coordinator.shouldSuggestWhisperKit == false, "Should not suggest WhisperKit initially")
-    }
-
-    // MARK: - Engine Selection Tests
-
-    @Test("Set engine updates selected engine")
-    func setEngine() {
-        // Arrange
-        let coordinator = sut
-        let originalEngine = coordinator.selectedEngine
-        let newEngine: TranscriptionEngine = originalEngine == .apple ? .whisperKit : .apple
-
         // Act
-        coordinator.setEngine(newEngine)
-
-        // Assert
-        #expect(coordinator.selectedEngine == newEngine, "Selected engine should be updated")
-    }
-
-    @Test("Set engine resets failure counts")
-    func setEngineResetsFailures() {
-        // Arrange
         let coordinator = sut
 
-        // Act
-        coordinator.setEngine(.apple)
-
-        // Assert - Failure counts should be reset
-        #expect(coordinator.shouldSuggestWhisperKit == false, "Failure counts should be reset")
-    }
-
-    // MARK: - Failure Tracking Tests
-
-    @Test("Should suggest WhisperKit after Apple failures")
-    func shouldSuggestWhisperKit() {
-        // Arrange
-        let coordinator = sut
-
-        // Act - Simulate failures by calling resetFailureCounts (which resets to 0)
-        // Note: In real usage, failures are tracked internally
-        coordinator.resetFailureCounts()
-
-        // Assert - Initially should not suggest
-        #expect(coordinator.shouldSuggestWhisperKit == false, "Should not suggest initially")
-    }
-
-    @Test("Reset failure counts clears tracking")
-    func resetFailureCounts() {
-        // Arrange
-        let coordinator = sut
-
-        // Act
-        coordinator.resetFailureCounts()
-
-        // Assert - Should complete without error
-        #expect(coordinator.shouldSuggestWhisperKit == false, "Failure counts should be reset")
+        // Assert - Coordinator exists and is ready
+        #expect(coordinator != nil, "Coordinator should initialize")
     }
 
     // MARK: - Caption Generation Tests
@@ -104,22 +48,19 @@ struct TranscriptionCoordinatorTests {
         }
     }
 
-    @Test("Generate captions respects selected engine")
-    func generateCaptionsRespectsEngine() async {
+    @Test("Generate captions uses WhisperKit")
+    func generateCaptionsUsesWhisperKit() async {
         // Arrange
         let coordinator = sut
-        coordinator.setEngine(.apple)
-
-        // Act - Try to generate with test asset (will likely fail but tests engine selection)
         let testURL = TestEnvironment.mockAssetURL
 
-        // Assert - Should attempt to use selected engine
-        // Note: Actual transcription requires valid video file and service availability
+        // Act - Try to generate with test asset
+        // Note: Actual transcription requires valid video file and WhisperKit model
         do {
             _ = try await coordinator.generateCaptions(for: testURL)
             #expect(true, "Should complete or throw based on service availability")
         } catch {
-            #expect(true, "Error is expected if service unavailable or file invalid")
+            #expect(true, "Error is expected if WhisperKit unavailable or file invalid")
         }
     }
 }

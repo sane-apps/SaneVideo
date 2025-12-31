@@ -165,8 +165,7 @@ enum VideoTrackBuilder {
         // Video Metadata Collection
 
         // A. Transform
-        var layerConfig = AVVideoCompositionLayerInstruction.Configuration(
-          trackID: currentCompTrack.trackID)
+        let layerInstruction: AVVideoCompositionLayerInstruction
 
         if let transform = try? await TransformCalculator.calculateTransform(
           assetTrack: assetTrack,
@@ -174,11 +173,30 @@ enum VideoTrackBuilder {
           userTransform: clip.transform,
           renderSize: renderSize
         ) {
-          layerConfig.setTransform(transform, at: insertStart)
-          layerConfig.setOpacity(1.0, at: insertStart)
-          layerConfig.setOpacity(0.0, at: CMTimeAdd(insertStart, playDuration))
+          if #available(macOS 26.0, *) {
+            var layerConfig = AVVideoCompositionLayerInstruction.Configuration(
+              trackID: currentCompTrack.trackID)
+            layerConfig.setTransform(transform, at: insertStart)
+            layerConfig.setOpacity(1.0, at: insertStart)
+            layerConfig.setOpacity(0.0, at: CMTimeAdd(insertStart, playDuration))
+            layerInstruction = AVVideoCompositionLayerInstruction(configuration: layerConfig)
+          } else {
+            // macOS 15-25: Use mutable layer instruction API
+            let mutableInstruction = AVMutableVideoCompositionLayerInstruction(assetTrack: assetTrack)
+            mutableInstruction.setTransform(transform, at: insertStart)
+            mutableInstruction.setOpacity(1.0, at: insertStart)
+            mutableInstruction.setOpacity(0.0, at: CMTimeAdd(insertStart, playDuration))
+            layerInstruction = mutableInstruction
+          }
+        } else {
+          if #available(macOS 26.0, *) {
+            let layerConfig = AVVideoCompositionLayerInstruction.Configuration(
+              trackID: currentCompTrack.trackID)
+            layerInstruction = AVVideoCompositionLayerInstruction(configuration: layerConfig)
+          } else {
+            layerInstruction = AVMutableVideoCompositionLayerInstruction(assetTrack: assetTrack)
+          }
         }
-        let layerInstruction = AVVideoCompositionLayerInstruction(configuration: layerConfig)
         layerInstructions.append(layerInstruction)
 
         // B. Effects

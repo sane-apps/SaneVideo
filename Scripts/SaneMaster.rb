@@ -41,7 +41,7 @@ class SaneMaster
   include SaneMasterModules::SOPLoop
 
   def initialize
-    @bundle_id = 'com.sanevideo.SaneVideo'
+    @bundle_id = 'com.sanevideo.app'
   end
 
   def run(args)

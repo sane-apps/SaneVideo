@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+# rubocop:disable Metrics/ModuleLength
 module SaneMasterModules
   # Build, test execution, permissions, test validation
   module Verify
@@ -195,9 +196,9 @@ module SaneMasterModules
 
     def grant_test_permissions
       print '🔐 Granting test permissions... '
-      system('tccutil reset Camera com.sanevideo.SaneVideo 2>/dev/null')
-      system('tccutil reset Microphone com.sanevideo.SaneVideo 2>/dev/null')
-      system('tccutil reset ScreenRecording com.sanevideo.SaneVideo 2>/dev/null')
+      system('tccutil reset Camera com.sanevideo.app 2>/dev/null')
+      system('tccutil reset Microphone com.sanevideo.app 2>/dev/null')
+      system('tccutil reset ScreenRecording com.sanevideo.app 2>/dev/null')
 
       permission_pid = nil
       script_path = File.join(__dir__, '..', 'grant_permissions.applescript')
@@ -514,3 +515,4 @@ module SaneMasterModules
     end
   end
 end
+# rubocop:enable Metrics/ModuleLength

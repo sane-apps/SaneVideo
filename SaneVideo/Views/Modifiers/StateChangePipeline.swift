@@ -103,6 +103,19 @@ struct UnifiedStateChangeModifier: ViewModifier {
             .onReceive(coordinator.clipAdded) { project in
                 handleClipAdded(project)
             }
+            // CRITICAL FIX: Auto-select on initial load (onChange doesn't fire for initial value)
+            .task {
+                // Small delay to ensure project is fully loaded
+                try? await Task.sleep(for: .milliseconds(500))
+                await MainActor.run {
+                    if let project = appState.projectState.currentProject,
+                       appState.selectedClipIds.isEmpty {
+                        if let firstClip = project.timeline.tracks.first(where: { !$0.clips.isEmpty })?.clips.first {
+                            appState.selectedClipIds = [firstClip.id]
+                        }
+                    }
+                }
+            }
     }
     
     private func handleProjectChange(_ change: StateChangeCoordinator.ProjectChange) {
@@ -111,6 +124,14 @@ struct UnifiedStateChangeModifier: ViewModifier {
             appState.playbackState.reset()
             if let project = change.project {
                 appState.playbackState.loadProject(project, forceReload: true)
+
+                // AUTO-SELECT: Select first clip when project loads so Inspector shows content
+                if let firstClip = project.timeline.tracks.first(where: { !$0.clips.isEmpty })?.clips.first {
+                    appState.selectedClipIds = [firstClip.id]
+                } else {
+                    // Clear selection if no clips
+                    appState.selectedClipIds = []
+                }
             }
         } else if change.tracksChanged {
             // Tracks changed - reload player

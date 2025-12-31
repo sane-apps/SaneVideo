@@ -110,6 +110,32 @@ struct GlobalSheetModifier: ViewModifier {
                     ServiceContainer.shared.shareLinkService.shareFile(at: url, from: nil)
                 }
             }
+            // 10. Rename Specific Project (from context menu)
+            .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("RenameProject"))) { notification in
+                if let projectId = notification.object as? UUID,
+                   let project = appState.projectState.projects.first(where: { $0.id == projectId }) {
+                    // Switch to this project first, then show rename dialog
+                    appState.projectState.currentProject = project
+                    newProjectName = project.name
+                    showingRenameAlert = true
+                }
+            }
+            // 11. Duplicate Specific Project (from context menu)
+            .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("DuplicateProject"))) { notification in
+                if let projectId = notification.object as? UUID,
+                   let project = appState.projectState.projects.first(where: { $0.id == projectId }) {
+                    appState.projectState.duplicateProject(project)
+                    ServiceContainer.shared.toastManager.show("Project duplicated")
+                }
+            }
+            // 12. Delete Specific Project (from context menu)
+            .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("DeleteProject"))) { notification in
+                if let projectId = notification.object as? UUID,
+                   let project = appState.projectState.projects.first(where: { $0.id == projectId }) {
+                    appState.projectState.deleteProject(project)
+                    ServiceContainer.shared.toastManager.show("Project deleted", type: .info)
+                }
+            }
     }
 }
 

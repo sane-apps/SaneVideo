@@ -142,8 +142,25 @@ actor WhisperKitService: TranscriptionServiceProtocol {
             let startTime = CMTime(seconds: Double(segment.start), preferredTimescale: 600)
             let endTime = CMTime(seconds: Double(segment.end), preferredTimescale: 600)
 
-            // CRITICAL FIX: Clean timestamps from text (WhisperKit may include [00:01:23] format)
+            // CRITICAL FIX: Clean timestamps and special tokens from text
             var cleanedText = segment.text.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
+
+            // CRITICAL FIX: Remove Whisper special tokens first
+            // These are control tokens like <|startoftranscript|>, <|en|>, <|endoftranscript|>, etc.
+            let specialTokenPatterns = [
+                #"<\|[^|>]+\|>"#,  // Matches <|anything|> - all special tokens
+                #"\[BLANK_AUDIO\]"#,  // WhisperKit silence marker
+                #"\[MUSIC\]"#,  // WhisperKit music marker
+                #"\[APPLAUSE\]"#  // WhisperKit sound markers
+            ]
+
+            for pattern in specialTokenPatterns {
+                cleanedText = cleanedText.replacingOccurrences(
+                    of: pattern,
+                    with: "",
+                    options: [.regularExpression, .caseInsensitive]
+                )
+            }
 
             // Remove timestamp patterns: [00:01:23], (00:01:23), 00:01:23, etc.
             let timestampPatterns = [
@@ -160,7 +177,8 @@ actor WhisperKitService: TranscriptionServiceProtocol {
                 )
             }
 
-            // Final trim
+            // Final trim - collapse multiple spaces
+            cleanedText = cleanedText.replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression)
             cleanedText = cleanedText.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
 
             let caption = Caption(

@@ -125,6 +125,11 @@ struct ProjectBrowserView: View {
         }
         .frame(minWidth: 800, minHeight: 600)
         .background(Color(NSColor.windowBackgroundColor))
+        // Escape key to close
+        .onKeyPress(.escape) {
+            dismiss()
+            return .handled
+        }
         // Project Info Sheet
         .sheet(isPresented: $showingProjectInfo) {
             if let project = projectToShowInfo {

@@ -152,12 +152,8 @@ struct TimelineTracksView: View {
                     onSetTransition: { transitionType in
                         appState.projectState.setClipTransition(clipId: clip.id, transitionType: transitionType)
                     },
-                    onSelect: { seekTime in
-                        if !appState.selectedClipIds.contains(clip.id) {
-                            appState.selectedClipIds.removeAll()
-                            appState.selectedClipIds.insert(clip.id)
-                            selectedClip = clip
-                        }
+                    onSelect: { seekTime, modifiers in
+                        handleClipSelection(clip: clip, modifiers: modifiers, sortedClips: sortedClips)
                         if let time = seekTime {
                             appState.playbackState.seek(to: time)
                         }
@@ -259,5 +255,51 @@ struct TimelineTracksView: View {
         .offset(x: (isScrubbing ? scrubTime : appState.playbackState.currentTime).seconds * pixelsPerSecond + 10)
         .animation(isScrubbing ? nil : .linear(duration: 0.1), value: appState.playbackState.currentTime)
         .padding(.top, 4)
+    }
+
+    // MARK: - Selection Handling
+
+    /// Handle clip selection with modifier keys (Cmd+Click = toggle, Shift+Click = range)
+    private func handleClipSelection(clip: VideoClip, modifiers: NSEvent.ModifierFlags, sortedClips: [VideoClip]) {
+        if modifiers.contains(.command) {
+            // Cmd+Click: Toggle selection (add/remove from multi-select)
+            if appState.selectedClipIds.contains(clip.id) {
+                appState.selectedClipIds.remove(clip.id)
+                // If we removed the primary selection, pick another or nil
+                if selectedClip?.id == clip.id {
+                    selectedClip = appState.selectedClipIds.isEmpty ? nil :
+                        sortedClips.first(where: { appState.selectedClipIds.contains($0.id) })
+                }
+            } else {
+                appState.selectedClipIds.insert(clip.id)
+                selectedClip = clip
+            }
+        } else if modifiers.contains(.shift) {
+            // Shift+Click: Range selection (from primary selection to clicked clip)
+            guard let primaryClip = selectedClip,
+                  let primaryIndex = sortedClips.firstIndex(where: { $0.id == primaryClip.id }),
+                  let clickedIndex = sortedClips.firstIndex(where: { $0.id == clip.id }) else {
+                // No primary selection - just select the clicked clip
+                selectedClip = clip
+                selectedClipIds = [clip.id]
+                return
+            }
+
+            // Select all clips between primary and clicked (inclusive)
+            let startIndex = min(primaryIndex, clickedIndex)
+            let endIndex = max(primaryIndex, clickedIndex)
+            for i in startIndex...endIndex {
+                appState.selectedClipIds.insert(sortedClips[i].id)
+            }
+            // Keep primary selection, update selectedClipIds binding
+            selectedClipIds = appState.selectedClipIds
+        } else {
+            // Normal click: Replace selection
+            if !appState.selectedClipIds.contains(clip.id) {
+                appState.selectedClipIds.removeAll()
+                appState.selectedClipIds.insert(clip.id)
+                selectedClip = clip
+            }
+        }
     }
 }

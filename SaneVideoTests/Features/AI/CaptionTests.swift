@@ -94,18 +94,66 @@ struct CaptionTests {
     func captionStyleResetOnPresetChange() {
         let projectState = ProjectState()
         projectState.currentProject = VideoProject(name: "Test Project")
-        
+
         projectState.updateCaptionFont("Arial")
         #expect(projectState.currentProject?.captionFontName == "Arial")
-        
+
         var project = projectState.currentProject!
         project.captionStyleName = "Classic"
         project.captionFontName = "Arial"
-        
+
         // Change style via the computed property SETTER
         project.captionStyle = .bold
-        
+
         #expect(project.captionFontName == nil)
         #expect(project.captionStyleName == "Bold")
+    }
+
+    // MARK: - Whisper Token Cleanup Tests
+
+    @Test("Caption cleanText removes Whisper special tokens")
+    func captionCleanTextRemovesWhisperTokens() {
+        // Test various Whisper special tokens
+        let inputWithTokens = "<|startoftranscript|><|en|>Hello world<|endoftranscript|>"
+        let cleaned = Caption.cleanText(inputWithTokens)
+        #expect(cleaned == "Hello world")
+    }
+
+    @Test("Caption cleanText removes BLANK_AUDIO markers")
+    func captionCleanTextRemovesBlankAudio() {
+        let inputWithBlank = "[BLANK_AUDIO] Some text here"
+        let cleaned = Caption.cleanText(inputWithBlank)
+        #expect(cleaned == "Some text here")
+    }
+
+    @Test("Caption cleanText removes embedded timestamps")
+    func captionCleanTextRemovesTimestamps() {
+        let inputWithTimestamps = "[00:01:23] Hello [00:01:25] world"
+        let cleaned = Caption.cleanText(inputWithTimestamps)
+        #expect(cleaned == "Hello world")
+    }
+
+    @Test("Caption cleanText handles multiple token types")
+    func captionCleanTextHandlesMultipleTokens() {
+        let complexInput = "<|startoftranscript|><|en|>[BLANK_AUDIO][00:00:05] Hello <|0.50|> world<|endoftranscript|>"
+        let cleaned = Caption.cleanText(complexInput)
+        #expect(cleaned == "Hello world")
+    }
+
+    @Test("Caption cleanText preserves normal text")
+    func captionCleanTextPreservesNormalText() {
+        let normalText = "This is a normal caption with punctuation, numbers 123, and special chars!"
+        let cleaned = Caption.cleanText(normalText)
+        #expect(cleaned == normalText)
+    }
+
+    @Test("Caption displayText returns cleaned text")
+    func captionDisplayTextReturnsCleaned() {
+        let caption = Caption(
+            text: "<|startoftranscript|>Hello world<|endoftranscript|>",
+            startTime: .zero,
+            endTime: CMTime(seconds: 1, preferredTimescale: 600)
+        )
+        #expect(caption.displayText == "Hello world")
     }
 }

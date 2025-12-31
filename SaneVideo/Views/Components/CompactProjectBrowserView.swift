@@ -11,6 +11,7 @@ import AVFoundation
 struct CompactProjectBrowserView: View {
     @Environment(AppState.self) var appState
     @State private var showingFullBrowser = false
+    @State private var selectedProjectId: UUID?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -32,13 +33,14 @@ struct CompactProjectBrowserView: View {
 
             Divider()
 
-            // Projects list
+            // Projects list with keyboard navigation
             ScrollView {
                 LazyVStack(spacing: 8) {
                     ForEach(appState.projectState.projects.prefix(10)) { project in
                         CompactProjectRow(
                             project: project,
-                            isCurrent: appState.projectState.currentProject?.id == project.id
+                            isCurrent: appState.projectState.currentProject?.id == project.id,
+                            isHighlighted: selectedProjectId == project.id
                         ) {
                             appState.projectState.currentProject = project
                         }
@@ -46,6 +48,57 @@ struct CompactProjectBrowserView: View {
                 }
                 .padding(.vertical, 8)
             }
+            .focusable()
+            .focusEffectDisabled()
+            .onKeyPress(.upArrow) {
+                selectPreviousProject()
+                return .handled
+            }
+            .onKeyPress(.downArrow) {
+                selectNextProject()
+                return .handled
+            }
+            .onKeyPress(.return) {
+                if let id = selectedProjectId,
+                   let project = appState.projectState.projects.first(where: { $0.id == id }) {
+                    appState.projectState.currentProject = project
+                }
+                return .handled
+            }
+            .onKeyPress(.escape) {
+                selectedProjectId = nil
+                return .handled
+            }
+        }
+        .onAppear {
+            // Initialize selection to current project
+            selectedProjectId = appState.projectState.currentProject?.id
+        }
+    }
+
+    private func selectPreviousProject() {
+        let projects = Array(appState.projectState.projects.prefix(10))
+        guard !projects.isEmpty else { return }
+
+        if let currentId = selectedProjectId,
+           let currentIndex = projects.firstIndex(where: { $0.id == currentId }),
+           currentIndex > 0 {
+            selectedProjectId = projects[currentIndex - 1].id
+        } else {
+            selectedProjectId = projects.last?.id
+        }
+    }
+
+    private func selectNextProject() {
+        let projects = Array(appState.projectState.projects.prefix(10))
+        guard !projects.isEmpty else { return }
+
+        if let currentId = selectedProjectId,
+           let currentIndex = projects.firstIndex(where: { $0.id == currentId }),
+           currentIndex < projects.count - 1 {
+            selectedProjectId = projects[currentIndex + 1].id
+        } else {
+            selectedProjectId = projects.first?.id
         }
     }
 }
@@ -53,6 +106,7 @@ struct CompactProjectBrowserView: View {
 struct CompactProjectRow: View {
     let project: VideoProject
     let isCurrent: Bool
+    var isHighlighted: Bool = false
     let onSelect: () -> Void
 
     @State private var thumbnail: NSImage?
@@ -105,8 +159,16 @@ struct CompactProjectRow: View {
             .padding(.vertical, 8)
             .background {
                 RoundedRectangle(cornerRadius: 8)
-                    .fill(isCurrent ? Color.accentColor.opacity(0.1) : Color.clear)
+                    .fill(isHighlighted ? Color.accentColor.opacity(0.2) : (isCurrent ? Color.accentColor.opacity(0.1) : Color.clear))
             }
+            .overlay {
+                if isHighlighted {
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(Color.accentColor, lineWidth: 2)
+                }
+            }
+            // CRITICAL: Make entire row clickable, not just the text
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .contextMenu {

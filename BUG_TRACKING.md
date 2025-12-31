@@ -2,9 +2,32 @@
 
 ## Session 2025-12-30
 
-### Project File Corruption Notification
+### File Size Violations (CRITICAL)
+- **Status**: 🔴 OPEN (Tracked for future refactoring)
+- **Discovered**: 2025-12-30 during Memory MCP integration
+
+#### CRITICAL (Exceeds 800-line hard limit):
+| File | Lines | Priority | Split Strategy |
+|------|-------|----------|----------------|
+| `Scripts/SaneMaster.rb` | 3861 | CRITICAL | Extract into `sanemaster/` modules by command category (bootstrap, verify, doctor, memory, test_mode) |
+| `Views/EditorLayoutView.swift` | 886 | HIGH | Extract CollapseButton, VideoPreviewContainer, TimelineContainer |
+
+#### WARNING (Exceeds 500-line soft limit):
+| File | Lines | Priority | Split Strategy |
+|------|-------|----------|----------------|
+| `State/ProjectState+ClipManagement.swift` | 638 | MEDIUM | Extract clip selection logic, CRUD operations |
+| `State/ProjectState.swift` | 608 | LOW | Already split into extensions |
+| `Windows/PiPCameraWindow.swift` | 601 | MEDIUM | Extract NSWindow subclass, controls, overlays |
+| `Services/Recording/RecordingEngine.swift` | 576 | MEDIUM | Extract source switching logic |
+
+**Note**: SOP file limits (Rule #10): Soft 500 lines, Hard 800 lines. Split by responsibility, not line count.
+
+### Project File Corruption Notification (RECURRING)
 - **Status**: 🟡 IN PROGRESS (Enhanced logging + toast on recovery + improved save verification + missing file handling)
-- **Symptom**: User saw toast notification "⚠️ Project file corrupted: 78018B20-EDFB-463E-A53F-B3D335B36021.svproj" during app launch
+- **Symptom**: User sees toast notification "⚠️ Project file corrupted: [UUID].svproj" during app launch
+- **Occurrences**:
+  1. `78018B20-EDFB-463E-A53F-B3D335B36021.svproj` - earlier this session
+  2. `48503645-C4AD-4679-810E-97E0E5284C30.svproj` - Screenshot 7.59.54 PM (most recent)
 - **File(s)**: `SaneVideo/Services/Project/ProjectStore.swift`
 - **Root Cause**:
   1. **Save verification bug**: Only checked if file was empty, not if it was valid JSON
@@ -13,8 +36,8 @@
   4. **NEW ISSUE**: App references deleted project (file doesn't exist) - should show "not found" not "corrupted"
 - **Investigation**:
   - Checked all 30 project files: ✅ All currently parse as valid JSON
-  - **CRITICAL**: Project file `78018B20-EDFB-463E-A53F-B3D335B36021.svproj` does NOT exist
-  - Project was deleted but app still has reference to it
+  - **CRITICAL**: Project files referenced do NOT exist on disk
+  - Projects were deleted but app still has references to them
   - App should distinguish between "missing" vs "corrupted" files
 - **Fix Applied**:
   - Enhanced logging to capture exact error details (error type, localized description)
@@ -22,10 +45,25 @@
   - **NEW**: Show toast notification even when backup recovery succeeds (so user knows file was corrupted)
   - **NEW**: Save verification now validates JSON structure (not just empty check)
   - Logs now show: file path, error type, backup recovery status, success/failure
-- **Next Steps**: 
+- **Next Steps**:
   - Add handling for missing files (distinguish from corrupted)
   - Check where deleted project references come from (app state, user defaults, etc.)
   - Show "Project not found" instead of "corrupted" for missing files
+  - Clean up stale project references on startup
+
+### ProjectBrowser UX Issues (FIXED)
+- **Status**: ✅ FIXED (2025-12-30 20:00)
+- **Symptom**: Multiple UX issues in ProjectBrowser
+- **Issues Fixed**:
+  1. All projects named "Untitled Project" → Now uses Apple convention: "Untitled Project", "Untitled Project 2", etc.
+  2. Window not resizable → Added `maxWidth: .infinity, maxHeight: .infinity`
+  3. No keyboard navigation → Added arrow keys, Enter to open, Escape to close/deselect
+  4. Media tab confusing → Renamed to "Library"
+- **Files Modified**:
+  - `ProjectBrowserView.swift` - Keyboard nav, window resizing
+  - `ProjectBrowserComponents.swift` - Extracted helper views (new file)
+  - `ProjectState.swift` - `generateUniqueProjectName()` function
+  - `SidebarView.swift` - Renamed "Media" to "Library"
 
 ---
 

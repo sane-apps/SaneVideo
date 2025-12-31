@@ -43,6 +43,71 @@
 
 ---
 
+### Click Tracking Overlay (Screen Recording Enhancement)
+
+**Date Discussed**: 2025-12-30
+
+**Concept**: Display visual click indicators (ripple effects, cursor highlights) during screen recordings to help viewers follow along with tutorials and demos.
+
+**Current State**:
+- `ClickTrackingService.swift` exists with working click detection via CGEvent tap
+- `ClickSample.swift` model stores click position, timestamp, and type (left/right/double)
+- `RecordingEngine` can capture clicks during recording
+- **Missing**: No overlay rendering in video output
+
+**Feasibility Assessment**:
+
+| Component | Status | Effort |
+|-----------|--------|--------|
+| Click detection | ✅ Complete | 0 |
+| Click storage | ✅ Complete | 0 |
+| Overlay rendering | ❌ Missing | ~100 lines |
+| Style customization | ❌ Missing | ~50 lines |
+
+**Recommended Path** (if pursued):
+1. Add `ClickOverlayView` that renders ripple animations at click positions
+2. Composite overlay onto video during export (CALayer or Metal)
+3. User settings: ripple color, size, duration, sound effect
+4. Consider adding cursor tracking for smoother trails
+
+**Decision**: Deferred — Core functionality works, overlay rendering ~100 lines to complete. Good candidate for "polish" sprint.
+
+---
+
+### Smart Auto-Framing (Body/Hand Pose Detection)
+
+**Date Discussed**: 2025-12-30
+
+**Concept**: Automatically track and frame subjects in video using Vision framework's body and hand pose detection. Keep speaker centered, zoom to follow hand gestures.
+
+**Current State**:
+- `BodyPoseService.swift` exists with Vision framework integration
+- Detects 19 body landmarks (nose, eyes, shoulders, elbows, wrists, hips, knees, ankles)
+- Detects 21 hand landmarks per hand
+- Converts normalized Vision coordinates to pixel coordinates
+- **Missing**: No UI to trigger detection, no crop/zoom automation
+
+**Feasibility Assessment**:
+
+| Component | Status | Effort |
+|-----------|--------|--------|
+| Body detection | ✅ Complete | 0 |
+| Hand detection | ✅ Complete | 0 |
+| Subject tracking | ❌ Missing | ~80 lines |
+| Auto-crop/zoom | ❌ Missing | ~70 lines |
+| UI controls | ❌ Missing | ~50 lines |
+
+**Recommended Path** (if pursued):
+1. Add "Auto-Frame" toggle in clip inspector
+2. Use body pose to calculate subject bounding box per frame
+3. Smooth camera movement (avoid jitter) with interpolation
+4. Apply crop/scale transform during export
+5. Consider "face-only" vs "upper-body" vs "full-body" framing modes
+
+**Decision**: Deferred — Detection works, needs ~150 lines for full feature. Valuable for talking-head videos and presentations.
+
+---
+
 ## Template for New Entries
 
 ```markdown
@@ -68,4 +133,7 @@
 | Feature | Status | Effort | Notes |
 |---------|--------|--------|-------|
 | Voice Commands | Deferred | Medium-High | Use native SFSpeechRecognizer if revisited |
+| Click Tracking Overlay | Deferred | Low (~100 lines) | Detection works, needs overlay rendering |
+| Smart Auto-Framing | Deferred | Medium (~150 lines) | Body/hand pose detection works, needs UI + crop automation |
+| ML Export Effects | Deferred | High (~300 lines) | MLEffectsService exists, needs export pipeline integration |
 

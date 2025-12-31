@@ -229,6 +229,24 @@ class ProjectState {
 
     // MARK: - Project Management
 
+    /// Generate a unique project name following Apple convention: "Untitled Project", "Untitled Project 2", etc.
+    private func generateUniqueProjectName(baseName: String = "Untitled Project") -> String {
+        let existingNames = Set(projects.map { $0.name })
+
+        // First, try without a number (Apple convention: first doc has no number)
+        if !existingNames.contains(baseName) {
+            return baseName
+        }
+
+        // Find the next available number (starting at 2, per Apple convention)
+        var number = 2
+        while existingNames.contains("\(baseName) \(number)") {
+            number += 1
+        }
+
+        return "\(baseName) \(number)"
+    }
+
     func startNewProject(template: ProjectTemplate? = nil) {
         var project = VideoProject()
 
@@ -238,6 +256,9 @@ class ProjectState {
             // Note: Aspect ratio and export settings are applied at export time
             // Caption style can be set here
             project.captionStyleName = template.defaultCaptionStyle
+        } else {
+            // Generate unique name following Apple convention
+            project.name = generateUniqueProjectName()
         }
 
         updateCurrentProject(project)
@@ -444,6 +465,85 @@ class ProjectState {
                     AppLogger.project.error("Failed to delete project: \(error)")
                     ServiceContainer.shared.errorPresenter.present(AppError.projectSaveFailed(error))
                 }
+            }
+        }
+    }
+
+    // MARK: - Bulk Project Operations
+
+    /// Delete multiple projects at once
+    /// - Parameter projectIds: Set of project IDs to delete
+    func deleteProjects(_ projectIds: Set<UUID>) {
+        let projectsToDelete = projects.filter { projectIds.contains($0.id) }
+        guard !projectsToDelete.isEmpty else { return }
+
+        // If current project is being deleted, switch first
+        let needsSwitch = projectIds.contains(currentProject?.id ?? UUID())
+
+        Task {
+            var deletedCount = 0
+            var errors: [Error] = []
+
+            for project in projectsToDelete {
+                do {
+                    try await projectStore.deleteProject(project)
+                    deletedCount += 1
+                } catch {
+                    errors.append(error)
+                    AppLogger.project.error("Failed to delete project \(project.name): \(error)")
+                }
+            }
+
+            await MainActor.run {
+                // Remove deleted projects from array
+                self.projects.removeAll { projectIds.contains($0.id) }
+
+                // Switch to another project if needed
+                if needsSwitch {
+                    if let next = self.projects.first {
+                        self.updateCurrentProject(next)
+                    } else {
+                        self.startNewProject()
+                    }
+                }
+
+                // Show result
+                if errors.isEmpty {
+                    ServiceContainer.shared.toastManager.show("\(deletedCount) project\(deletedCount == 1 ? "" : "s") deleted")
+                } else {
+                    ServiceContainer.shared.toastManager.show(
+                        "Deleted \(deletedCount) of \(projectsToDelete.count) projects",
+                        type: .error
+                    )
+                }
+
+                AppLogger.project.info("Bulk deleted \(deletedCount) projects")
+            }
+        }
+    }
+
+    /// Delete all projects and start fresh
+    func clearAllProjects() {
+        let allProjectIds = Set(projects.map { $0.id })
+        guard !allProjectIds.isEmpty else { return }
+
+        Task {
+            var deletedCount = 0
+
+            for project in projects {
+                do {
+                    try await projectStore.deleteProject(project)
+                    deletedCount += 1
+                } catch {
+                    AppLogger.project.error("Failed to delete project \(project.name): \(error)")
+                }
+            }
+
+            await MainActor.run {
+                self.projects.removeAll()
+                self.startNewProject()
+                ServiceContainer.shared.toastManager.show("All projects cleared")
+                AppLogger.project.info("Cleared all \(deletedCount) projects")
             }
         }
     }

@@ -140,6 +140,11 @@ public struct SaneTimelineView: View {
             }
             // Removed automatic fitToView() on track change to preserve user zoom
         }
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("FitTimelineToWindow"))) { _ in
+            withAnimation {
+                fitToView()
+            }
+        }
         .overlay {
             Group {
                 // Zoom In: ⌘+

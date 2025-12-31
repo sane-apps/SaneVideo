@@ -123,11 +123,20 @@ final class ProjectStore: ProjectStoreProtocol {
                                         try JSONDecoder().decode(VideoProject.self, from: backupData)
                                     }
                                     projects.append(rawProject)
+
+                                    // CRITICAL: Replace corrupted file with working backup to prevent repeated warnings
+                                    do {
+                                        try backupData.write(to: fileURL, options: .atomic)
+                                        AppLogger.project.info("✅ Replaced corrupted file with backup: \(fileURL.lastPathComponent)")
+                                    } catch {
+                                        AppLogger.project.warning("Could not replace corrupted file: \(error.localizedDescription)")
+                                    }
+
                                     AppLogger.project.info("✅ Successfully loaded from backup: \(fileURL.lastPathComponent)")
                                     AppLogger.uiLog.warning("⚠️ Project recovery: \(fileURL.lastPathComponent) was corrupted but restored from backup")
-                                    // Show toast even on successful recovery so user knows file was corrupted
+                                    // Show toast once - file is now fixed so won't recur
                                     await MainActor.run {
-                                        ServiceContainer.shared.toastManager.show("⚠️ Project file corrupted (recovered from backup): \(fileURL.lastPathComponent)", type: .error)
+                                        ServiceContainer.shared.toastManager.show("✅ Project recovered from backup: \(fileURL.lastPathComponent)", type: .success)
                                     }
                                     continue
                                 } catch {
@@ -183,11 +192,20 @@ final class ProjectStore: ProjectStoreProtocol {
                                     try JSONDecoder().decode(VideoProject.self, from: backupData)
                                 }
                                 projects.append(rawProject)
+
+                                // CRITICAL: Replace corrupted file with working backup to prevent repeated warnings
+                                do {
+                                    try backupData.write(to: fileURL, options: .atomic)
+                                    AppLogger.project.info("✅ Replaced corrupted file with backup: \(fileURL.lastPathComponent)")
+                                } catch {
+                                    AppLogger.project.warning("Could not replace corrupted file: \(error.localizedDescription)")
+                                }
+
                                 AppLogger.project.info("✅ Successfully loaded corrupted project from backup: \(fileURL.lastPathComponent)")
                                 AppLogger.uiLog.warning("⚠️ Project recovery: \(fileURL.lastPathComponent) was corrupted but restored from backup")
-                                // Show toast even on successful recovery so user knows file was corrupted
+                                // Show success toast once - file is now fixed so won't recur
                                 await MainActor.run {
-                                    ServiceContainer.shared.toastManager.show("⚠️ Project file corrupted (recovered from backup): \(fileURL.lastPathComponent)", type: .error)
+                                    ServiceContainer.shared.toastManager.show("✅ Project recovered from backup: \(fileURL.lastPathComponent)", type: .success)
                                 }
                             } catch {
                                 let backupError = "\(error.localizedDescription) (type: \(type(of: error)))"
@@ -284,7 +302,7 @@ final class ProjectStore: ProjectStoreProtocol {
 
                     // CRITICAL: Verify file is valid JSON and can be decoded
                     // This catches corruption that makes file non-empty but invalid JSON
-                    let _ = try await MainActor.run {
+                    _ = try await MainActor.run {
                         try JSONDecoder().decode(VideoProject.self, from: verifyData)
                     }
                 } catch {

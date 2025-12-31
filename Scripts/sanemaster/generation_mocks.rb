@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-# rubocop:disable Metrics/ModuleLength
-
 module SaneMasterModules
   # Mock generation using Mockolo
   module GenerationMocks
@@ -208,4 +206,3 @@ module SaneMasterModules
     end
   end
 end
-# rubocop:enable Metrics/ModuleLength

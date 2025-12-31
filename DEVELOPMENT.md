@@ -15,8 +15,8 @@
 **New to this project? Start here:**
 
 1. **Bootstrap runs automatically** - The `.claude/settings.json` SessionStart hook runs `./Scripts/SaneMaster.rb bootstrap` when you open this project
-2. **Read the Golden Rules** (Section 1) - Especially Tier 1 rules (#1-3) which prevent hallucinations
-3. **Know the Self-Rating requirement** - After every change, rate yourself 1-10 on SOP adherence (see Section 1)
+2. **Read Rule #0 first** (Section 1) - It's about HOW to use all other rules. Then read Tier 1 rules (#1-3)
+3. **Know the Self-Rating requirement** - After every change, rate yourself 1-10 on SOP adherence
 4. **Use SaneMaster.rb**: All tools are in `./Scripts/SaneMaster.rb` — never use raw `xcodebuild`
 5. **Tests are working**: Unit tests run with `verify`, UI tests with `verify --ui`
 
@@ -86,28 +86,6 @@ This runs automatically when you open the project. If bootstrap fails:
 
 ---
 
-## ⚠️ SOP Internalization Protocol
-
-**The #1 failure mode: skimming this SOP instead of internalizing it.**
-
-**Before coding, explicitly map rules to your task:**
-```
-"For this task:
-- Rule #1 applies because [reason]
-- Rule #7 applies because [reason]"
-```
-
-**While working, actively ask:** "Which rule applies here?"
-- Using an Apple API? → Rule #1 (SDK verification)
-- Failed twice? → Rule #2 (stop guessing, investigate)
-- New file? → xcodegen generate
-
-**The key insight:** The difference between 8/10 and 5/10 sessions is NOT knowing the rules—it's **structuring work around which rules apply to each task**.
-
-Skimming = "I know there are rules" → Internalizing = "Rule #3 applies HERE"
-
----
-
 ## 0. Critical System Context: macOS 26.2 (Tahoe)
 
 - **OS**: macOS 26.2 (Tahoe). APIs differ from older versions.
@@ -117,11 +95,29 @@ Skimming = "I know there are rules" → Internalizing = "Rule #3 applies HERE"
 
 ---
 
-## 1. The 13 Golden Rules (CRITICAL)
+## 1. The Golden Rules (CRITICAL)
 
-Rules are ordered by priority. **Tier 1 rules prevent disasters** — read them first.
+Rules are ordered by priority. **Rule #0 is meta** — it's about how to use all other rules.
 
-### Tier 1: Anti-Hallucination (READ FIRST)
+### Rule #0: INTERNALIZE, DON'T SKIM (META)
+
+**The #1 failure mode: skimming this SOP instead of internalizing it.**
+
+Before coding, explicitly map rules to your task:
+```
+"For this task: Rule #1 applies because [X], Rule #7 applies because [Y]"
+```
+
+While working, ask: "Which rule applies here?"
+- Using an Apple API? → Rule #1 (SDK verification)
+- Failed twice? → Rule #2 (stop guessing)
+- New file? → Rule #9 (xcodegen)
+
+**The key insight:** 8/10 vs 5/10 sessions is NOT knowing rules—it's **structuring work around which rules apply**.
+
+---
+
+### Tier 1: Anti-Hallucination
 
 1. **SDK IS THE SOURCE OF TRUTH (CRITICAL)**:
    - **NEVER trust web search for API existence or signatures**.
@@ -880,31 +876,7 @@ Regression tests are critical for preventing the reintroduction of fixed bugs.
 
 ## 10. For AI Agents
 
-### First Steps
-
-1. **Read this entire file (DEVELOPMENT.md)** - It's the single source of truth
-2. **Check ROADMAP.md** - If user asks about previously discussed features
-3. **Use SaneMaster.rb** - Don't run raw xcodebuild commands
-4. **Always dump logs** - Critical for debugging
-
-### Mandatory Workflow After Code Changes
-
-**CRITICAL**: After making any code changes, you **MUST** follow this workflow:
-
-1. **Build the app**: `./Scripts/SaneMaster.rb verify`
-2. **Kill old instances**: `killall -9 SaneVideo` (prevents stale state and zombie processes)
-3. **Launch with logging**:
-   - `./Scripts/SaneMaster.rb launch` (launches the app)
-   - `./Scripts/SaneMaster.rb logs --follow` (monitors logs in real-time)
-4. **Monitor logs**: Watch for errors, warnings, and the specific behavior you're debugging
-
-**Why this matters**:
-- Old instances can hold stale state and interfere with testing
-- Live logs are essential for debugging user-reported issues
-- This workflow enables real-time collaboration with the user
-- You can see exactly what happens when the user tests the changes
-
-**Exception**: Skip this workflow if the build fails - fix build errors first.
+> **Note**: First Steps and Mandatory Workflow are covered in Quick Start and Rule #5. This section covers interactive debugging specifics.
 
 ### Test Mode (Interactive Debugging)
 

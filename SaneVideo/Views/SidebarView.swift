@@ -16,7 +16,7 @@ struct SidebarView: View {
         HStack(spacing: 0) {
             // RAIL: 3-tab navigation (Media, Transcript, Projects) + Quick Actions
             VStack(spacing: 12) {
-                SidebarRailItem(icon: "film", label: "Library", tag: 0, selection: $selectedTab)
+                SidebarRailItem(icon: "film", label: "Media", tag: 0, selection: $selectedTab)
                 SidebarRailItem(icon: "text.quote", label: "Transcript", tag: 1, selection: $selectedTab)
                 SidebarRailItem(icon: "folder", label: "Projects", tag: 2, selection: $selectedTab)
 
@@ -94,6 +94,9 @@ struct SidebarView: View {
         }
         .frame(minWidth: 240, idealWidth: 300, maxWidth: 450)
         .animation(.spring(response: 0.3, dampingFraction: 0.7), value: selectedTab)
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ShowSidebarProjects"))) { _ in
+            selectedTab = 2
+        }
     }
 }
 

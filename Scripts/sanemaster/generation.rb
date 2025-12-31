@@ -2,6 +2,7 @@
 
 module SaneMasterModules
   # Code generation: tests, mocks, templates, assets, API verification
+  # rubocop:disable Metrics/ModuleLength
   module Generation
     include Base
 
@@ -48,7 +49,13 @@ module SaneMasterModules
       test_name = args.shift
       options = parse_test_options(args)
 
-      test_dir = options[:type] == 'ui' ? 'SaneVideoUITests' : 'SaneVideoTests'
+      if options[:type] == 'ui'
+        puts '⚠️  UI tests not yet implemented (SaneVideoUITests directory does not exist)'
+        puts '   Creating unit test instead...'
+        options[:type] = 'unit'
+      end
+
+      test_dir = 'SaneVideoTests'
       test_file = "#{test_dir}/#{test_name}.swift"
 
       if File.exist?(test_file)
@@ -200,7 +207,9 @@ module SaneMasterModules
       puts "\n   (This is a reminder - commit will proceed)"
     end
 
+    # rubocop:disable Naming/PredicateMethod
     def verify_documentation_sync
+      # rubocop:enable Naming/PredicateMethod
       puts '📚 --- [ DOCUMENTATION SYNC CHECK ] ---'
 
       issues = []
@@ -779,4 +788,5 @@ module SaneMasterModules
       issues << 'Mock synchronization check (verify_mocks) not documented'
     end
   end
+  # rubocop:enable Metrics/ModuleLength
 end

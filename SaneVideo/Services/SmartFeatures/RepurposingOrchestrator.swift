@@ -25,6 +25,13 @@ enum RepurposingPhase: String, Sendable {
 /// Progress callback for repurposing analysis
 typealias RepurposingProgressHandler = @Sendable (RepurposingPhase, Double) -> Void
 
+/// Internal enum for parallel analysis results
+private enum AnalysisResult: Sendable {
+    case silence([CMTimeRange])
+    case highlights([(CMTimeRange, HighlightType)])
+    case saliency([CMTime: SaliencyResult])
+}
+
 /// Actor for orchestrating long-to-short video repurposing
 actor RepurposingOrchestrator {
 
@@ -97,21 +104,56 @@ actor RepurposingOrchestrator {
             )
         }
 
-        // 2. Detect silence/speaking segments
+        // OPTIMIZATION: Run audio and vision analysis in parallel using TaskGroup
+        // Audio (silence + highlights) and Vision (saliency) are independent operations
         progressHandler?(.analyzingAudio, 0.1)
-        let silenceRanges = try await detectSilence(in: videoURL, duration: duration)
+
+        // Result containers
+        var silenceRanges: [CMTimeRange] = []
+        var audioHighlights: [(CMTimeRange, HighlightType)] = []
+        var saliencyData: [CMTime: SaliencyResult] = [:]
+
+        // Run all analysis tasks concurrently
+        try await withThrowingTaskGroup(of: AnalysisResult.self) { group in
+            // Task 1: Silence detection
+            group.addTask { [self] in
+                let ranges = try await self.detectSilence(in: videoURL, duration: duration)
+                return .silence(ranges)
+            }
+
+            // Task 2: Audio highlights (applause, laughter, music)
+            group.addTask { [self] in
+                let highlights = await self.detectAudioHighlights(in: videoURL)
+                return .highlights(highlights)
+            }
+
+            // Task 3: Vision/Saliency analysis
+            group.addTask { [self] in
+                let saliency = try await self.saliencyService.analyzeVideoForReframe(
+                    videoURL: videoURL,
+                    sampleInterval: 2.0
+                )
+                return .saliency(saliency)
+            }
+
+            // Collect results as they complete
+            for try await result in group {
+                switch result {
+                case .silence(let ranges):
+                    silenceRanges = ranges
+                    progressHandler?(.detectingHighlights, 0.3)
+                case .highlights(let highlights):
+                    audioHighlights = highlights
+                    progressHandler?(.detectingFaces, 0.5)
+                case .saliency(let saliency):
+                    saliencyData = saliency
+                    progressHandler?(.scoringCandidates, 0.6)
+                }
+            }
+        }
+
+        // Compute speaking ranges from silence (must happen after silence detection)
         let speakingRanges = invertRanges(silenceRanges, duration: duration)
-
-        // 3. Detect audio highlights (applause, laughter, music peaks)
-        progressHandler?(.detectingHighlights, 0.3)
-        let audioHighlights = await detectAudioHighlights(in: videoURL)
-
-        // 4. Detect faces and saliency
-        progressHandler?(.detectingFaces, 0.5)
-        let saliencyData = try await saliencyService.analyzeVideoForReframe(
-            videoURL: videoURL,
-            sampleInterval: 2.0
-        )
 
         // 5. Build candidate segments
         progressHandler?(.scoringCandidates, 0.7)

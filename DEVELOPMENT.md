@@ -35,6 +35,24 @@
 ./Scripts/SaneMaster.rb test_suite --quick  # Comprehensive validation
 ```
 
+**SOP Loop Commands (Two-Fix Rule Enforcement):**
+
+```bash
+./Scripts/SaneMaster.rb verify_gate       # Run verify with failure tracking (--json for structured output)
+./Scripts/SaneMaster.rb sop_loop <prompt> # Start SOP-compliant task loop with auto-verification
+./Scripts/SaneMaster.rb reset_escalation  # Clear escalation state after investigation
+```
+
+The SOP loop enforces the **Two-Fix Rule**: After 2 consecutive `verify` failures, you MUST stop guessing and investigate:
+1. `./Scripts/SaneMaster.rb verify_api <API>` - Verify API exists in SDK
+2. Check docs with `apple-docs` or `context7` MCP servers
+3. Only then run `reset_escalation` and attempt another fix
+
+Task complexity levels for `sop_loop`:
+- `--simple`: 2 iterations (bug fixes, small changes)
+- `--moderate`: 4 iterations (features, refactoring) [default]
+- `--complex`: 10 iterations (large features, architecture)
+
 **SessionStart Hook (How Auto-Bootstrap Works):**
 
 The `.claude/settings.json` file contains:

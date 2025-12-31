@@ -15,16 +15,10 @@ import Foundation
 /// @mockable
 @MainActor
 protocol TranscriptionCoordinatorProtocol: AnyObject, Sendable {
-    var selectedEngine: TranscriptionEngine { get set }
-    var shouldSuggestWhisperKit: Bool { get }
-
     func generateCaptions(
         for videoURL: URL,
         progressHandler: (@Sendable (Int, Int, Int) -> Void)?
     ) async throws -> [Caption]
-
-    func resetFailureCounts()
-    func setEngine(_ engine: TranscriptionEngine)
 }
 
 // MARK: - SoundAnalysisService Protocol

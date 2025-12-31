@@ -13,7 +13,7 @@ import OSLog
 actor TranslationService {
     static let shared = TranslationService()
     
-    private let logger = Logger(subsystem: "com.sanevideo.app", category: "Translation")
+    private let logger = Logger(subsystem: "com.sanevideo.SaneVideo", category: "Translation")
     
     private init() {}
     

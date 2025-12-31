@@ -56,7 +56,6 @@ final class ServiceContainer {
     // MARK: - AI/ML Services
 
     let aiService: AIService
-    let appleSpeechService: AppleSpeechService
     let transcriptionCoordinator: TranscriptionCoordinator
     let smartFillerDetector: SmartFillerDetector
     let sentimentAnalysisService: SentimentAnalysisService
@@ -66,7 +65,7 @@ final class ServiceContainer {
     
     let visionOrchestrator: VisionOrchestrator
     
-    @available(macOS 15.0, *)
+    @available(macOS 26.0, *)
     var translationService: TranslationService {
         TranslationService.shared
     }
@@ -153,7 +152,6 @@ final class ServiceContainer {
         
         // AI/ML Services
         self.aiService = AIService()
-        self.appleSpeechService = AppleSpeechService()
         self.transcriptionCoordinator = TranscriptionCoordinator()
         self.smartFillerDetector = SmartFillerDetector()
         self.sentimentAnalysisService = SentimentAnalysisService()

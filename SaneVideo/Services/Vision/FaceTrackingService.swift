@@ -19,7 +19,18 @@ import Vision
 /// Use FaceTrackingServiceProtocolMock for testing.
 actor FaceTrackingService {
 
+  // OPTIMIZATION: Persist VNSequenceRequestHandler for tracking across frames.
+  // Creating a new handler per frame loses tracking state and increases overhead.
+  // This handler maintains internal state for VNTrackObjectRequest continuity.
+  private var sequenceHandler = VNSequenceRequestHandler()
+
   init() {}
+
+  /// Reset the sequence handler when starting a new tracking sequence.
+  /// Call this before beginning a new video analysis or when tracking is lost.
+  func resetSequenceHandler() {
+    sequenceHandler = VNSequenceRequestHandler()
+  }
 
   // MARK: - Public API
 
@@ -142,20 +153,21 @@ actor FaceTrackingService {
   }
 
   /// Track a face across frames (for smooth following)
+  /// Uses persisted VNSequenceRequestHandler for tracking continuity.
   func trackFace(in image: CIImage, previousObservation: VNFaceObservation?) async throws
     -> VNFaceObservation? {
     if let previous = previousObservation {
-      // Continue tracking existing face
+      // Continue tracking existing face using persisted sequence handler
+      // OPTIMIZATION: VNSequenceRequestHandler maintains tracking state across frames
       let trackRequest = VNTrackObjectRequest(detectedObjectObservation: previous)
       trackRequest.trackingLevel = .fast
 
-      let handler = VNImageRequestHandler(ciImage: image)
-      try handler.perform([trackRequest])
+      try sequenceHandler.perform([trackRequest], on: image)
 
       return trackRequest.results?.first as? VNFaceObservation
     }
 
-    // If tracking failed or no previous, detect new face
+    // If tracking failed or no previous, detect new face (one-shot, use image handler)
     let detectRequest = VNDetectFaceRectanglesRequest()
     let handler = VNImageRequestHandler(ciImage: image)
     try handler.perform([detectRequest])
@@ -174,6 +186,9 @@ actor FaceTrackingService {
     sampleInterval: TimeInterval = 0.5,
     progressHandler: (@Sendable (Double) -> Void)? = nil
   ) async throws -> [CMTime: CGRect] {
+    // OPTIMIZATION: Reset sequence handler for fresh tracking state
+    resetSequenceHandler()
+
     let asset = AVURLAsset(url: videoURL)
     let duration = try await asset.load(.duration)
     let generator = AVAssetImageGenerator(asset: asset)
@@ -202,6 +217,8 @@ actor FaceTrackingService {
           results[actualTime] = CGRect(x: box.minX, y: 1.0 - box.maxY, width: box.width, height: box.height)
         } else {
           lastObservation = nil  // Lost face
+          // Reset sequence handler to clear stale tracking state
+          resetSequenceHandler()
         }
       } catch {
         AppLogger.vision.warning("Face tracking failed at \(currentTime.seconds)s: \(error)")

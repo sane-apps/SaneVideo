@@ -169,7 +169,7 @@ struct TranscriptionEditorView: View {
         guard let clip = selectedClip else { return }
         isTranslating = true
         Task {
-            if #available(macOS 15.0, *) {
+            if #available(macOS 26.0, *) {
                 do {
                     var translatedCaptions: [Caption] = []
                     for caption in clip.captions {

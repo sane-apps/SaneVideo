@@ -2,7 +2,7 @@ name: SaneVideo
 options:
   bundleIdPrefix: com.sanevideo
   deploymentTarget:
-    macOS: 26.2
+    macOS: 15.0
   xcodeVersion: 16.0
 settings:
   # Recommended Xcode settings
@@ -44,7 +44,10 @@ packages:
     branch: main
   WhisperKit:
     url: https://github.com/argmaxinc/WhisperKit
-    from: 0.9.4
+    from: 0.15.0
+  Sparkle:
+    url: https://github.com/sparkle-project/Sparkle
+    from: 2.8.1
 schemes:
   SaneVideo:
     build:
@@ -74,7 +77,7 @@ targets:
     platform: macOS
     bundleId: com.sanevideo.app
     deploymentTarget:
-      macOS: 26.2
+      macOS: 15.0
     sources:
       - path: SaneVideo
     settings:
@@ -84,7 +87,7 @@ targets:
         ENABLE_PREVIEWS: YES
         SWIFT_VERSION: 6.2
         SWIFT_STRICT_CONCURRENCY: complete
-        MACOSX_DEPLOYMENT_TARGET: 26.2
+        MACOSX_DEPLOYMENT_TARGET: 15.0
         ARCHS: arm64
         VALID_ARCHS: arm64
         MTL_ENABLE_APPLE_SILICON_ONLY_OPTIMIZATIONS: YES
@@ -123,6 +126,8 @@ targets:
         product: GrokClient
       - package: WhisperKit
         product: WhisperKit
+      - package: Sparkle
+        product: Sparkle
     postCompileScripts:
       - script: |
           if which swiftlint >/dev/null; then
@@ -137,7 +142,7 @@ targets:
     platform: macOS
     bundleId: com.sanevideo.SaneVideoTests
     deploymentTarget:
-      macOS: 26.2
+      macOS: 15.0
     sources:
       - SaneVideoTests
       - path: Tests/Assets

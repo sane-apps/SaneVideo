@@ -175,6 +175,9 @@ struct TimelineTracksView: View {
                Rectangle().fill(Color.clear).frame(width: duration * pixelsPerSecond)
             }
         }
+        // OPTIMIZATION: Enable scroll target layout for better LazyHStack performance
+        // and programmatic scroll position targeting (e.g., seek-to-playhead).
+        .scrollTargetLayout()
         .frame(height: timelineHeight)
         .background(Color(nsColor: .controlBackgroundColor))
     }

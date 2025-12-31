@@ -119,7 +119,7 @@ struct RecordingModeView: View {
                     Spacer()
                     SharedRecordingControls(
                         showDevicePickers: true,
-                        showGalleryTarget: true,
+                        showGalleryTarget: false,  // Gallery button removed - not needed here
                         showTimer: false,  // Timer moved to top-left
                         useGlassBackground: false,
                         buttonSize: .custom(scaledButtonSize)

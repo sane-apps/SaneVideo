@@ -18,11 +18,12 @@ final class UpdaterService: ObservableObject {
     @Published private(set) var canCheckForUpdates = false
 
     init() {
-        // Initialize Sparkle updater (starts automatically on init)
-        // startingUpdater: true = Sparkle will perform automatic update checks based on Info.plist settings
-        // For launch, we use manual-only (no automatic checks until user trust is established)
+        // Initialize Sparkle updater (manual-only to avoid blocking UI on startup)
+        // startingUpdater: false = No automatic checks (user must click "Check for Updates")
+        // CRITICAL: startingUpdater: true with invalid/placeholder SUPublicEDKey causes
+        // modal error dialog that blocks camera initialization
         self.updaterController = SPUStandardUpdaterController(
-            startingUpdater: true,
+            startingUpdater: false,
             updaterDelegate: nil,
             userDriverDelegate: nil
         )

@@ -100,14 +100,10 @@ enum AppLogger {
         return libraryDir.appendingPathComponent("Logs/SaneVideo")
     }()
 
-    /// Current log file path - uses Movies/SaneVideo for app access, overwrites on each launch
+    /// Current log file path - uses ~/Library/Logs/SaneVideo/, overwrites on each launch
     private static var currentLogFile: URL? {
-        // Use Movies/SaneVideo directory which the app already has access to
-        guard let moviesDir = FileManager.default.urls(for: .moviesDirectory, in: .userDomainMask).first else {
-            return logDirectory?.appendingPathComponent("SaneVideo.log")
-        }
-        let logDir = moviesDir.appendingPathComponent("SaneVideo")
-        // Ensure directory exists
+        guard let logDir = logDirectory else { return nil }
+        // Ensure directory exists (~/Library/Logs/SaneVideo/)
         try? FileManager.default.createDirectory(at: logDir, withIntermediateDirectories: true)
         return logDir.appendingPathComponent("SaneVideo_Debug.log")
     }

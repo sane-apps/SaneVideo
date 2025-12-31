@@ -24,12 +24,46 @@ actor FaceTrackingService {
   // This handler maintains internal state for VNTrackObjectRequest continuity.
   private var sequenceHandler = VNSequenceRequestHandler()
 
+  // SMOOTHING: EMA filter state for temporal smoothing of face positions
+  // Higher alpha = more responsive but more jittery
+  // Lower alpha = smoother but more latency
+  private var smoothingAlpha: CGFloat = 0.3
+  private var smoothedRect: CGRect?
+
   init() {}
 
   /// Reset the sequence handler when starting a new tracking sequence.
   /// Call this before beginning a new video analysis or when tracking is lost.
   func resetSequenceHandler() {
     sequenceHandler = VNSequenceRequestHandler()
+    smoothedRect = nil  // Reset smoothing state
+  }
+
+  /// Configure the smoothing factor for face tracking.
+  /// - Parameter alpha: 0.0-1.0, lower = smoother but more latency, higher = more responsive but jittery
+  func setSmoothing(alpha: CGFloat) {
+    smoothingAlpha = max(0.05, min(1.0, alpha))
+  }
+
+  /// Apply Exponential Moving Average (EMA) smoothing to a face rect.
+  /// Reduces jitter from frame-to-frame face detection variations.
+  private func smoothRect(_ newRect: CGRect) -> CGRect {
+    guard let previous = smoothedRect else {
+      // First detection - use raw value
+      smoothedRect = newRect
+      return newRect
+    }
+
+    // EMA: smoothed = alpha * new + (1 - alpha) * previous
+    let smoothed = CGRect(
+      x: smoothingAlpha * newRect.origin.x + (1 - smoothingAlpha) * previous.origin.x,
+      y: smoothingAlpha * newRect.origin.y + (1 - smoothingAlpha) * previous.origin.y,
+      width: smoothingAlpha * newRect.width + (1 - smoothingAlpha) * previous.width,
+      height: smoothingAlpha * newRect.height + (1 - smoothingAlpha) * previous.height
+    )
+
+    smoothedRect = smoothed
+    return smoothed
   }
 
   // MARK: - Public API
@@ -214,7 +248,11 @@ actor FaceTrackingService {
           lastObservation = observation
           // CRITICAL: Flip Y from Vision's bottom-left origin to top-left origin
           let box = observation.boundingBox
-          results[actualTime] = CGRect(x: box.minX, y: 1.0 - box.maxY, width: box.width, height: box.height)
+          let rawRect = CGRect(x: box.minX, y: 1.0 - box.maxY, width: box.width, height: box.height)
+
+          // SMOOTHING: Apply EMA filter to reduce jitter between frames
+          let smoothedFaceRect = smoothRect(rawRect)
+          results[actualTime] = smoothedFaceRect
         } else {
           lastObservation = nil  // Lost face
           // Reset sequence handler to clear stale tracking state

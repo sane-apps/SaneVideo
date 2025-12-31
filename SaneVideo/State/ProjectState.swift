@@ -98,6 +98,12 @@ class ProjectState {
             // in the same run loop pass would be grouped into one undo action.
             // We use explicit beginUndoGroup/endUndoGroup when we want grouping.
             undoManager?.groupsByEvent = false
+
+            // MEMORY SAFETY: Limit undo stack depth to prevent unbounded memory growth.
+            // Each undo captures the entire project state (value type copy), so
+            // with large projects (100+ clips) this can consume significant memory.
+            // 30 levels provides good undo history while maintaining reasonable memory use.
+            undoManager?.levelsOfUndo = 30
         }
     }
 
@@ -588,9 +594,14 @@ class ProjectState {
             }
 
             currentScopeSession = ServiceContainer.shared.projectFileManager.enterSecurityScope(for: hydratedProject)
+
+            // Register clip URLs with VolumeMonitor to track external drive availability
+            let clipURLs = hydratedProject.timeline.tracks.flatMap { $0.clips }.map { $0.url }
+            VolumeMonitor.shared.registerClipURLs(clipURLs)
         } else {
             currentProject = nil
             // Session already stopped above
+            VolumeMonitor.shared.clearTrackedClips()
         }
     }
 }

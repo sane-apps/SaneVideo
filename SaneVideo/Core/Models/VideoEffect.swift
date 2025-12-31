@@ -319,18 +319,7 @@ struct VideoEffect: Identifiable, Codable, Equatable, Sendable {
   var intensity: Float
   var color: String?  // Hex color, e.g. "#00FF00" for Green Screen
 
-  // GPU-based Chroma Key Kernel
-  private static let chromaKeyKernel = CIColorKernel(
-    source:
-      """
-      kernel vec4 chromaKey(sample_t s, float3 targetColor, float threshold) {
-        float3 diff = s.rgb - targetColor;
-        float dist = length(diff);
-        float alpha = dist < threshold ? 0.0 : 1.0;
-        return vec4(s.rgb, s.a * alpha);
-      }
-      """
-  )
+  // GPU-based Chroma Key Kernel - uses shared ChromaKeyKernel for consistency
 
   nonisolated init(type: VideoEffectType, intensity: Float? = nil, color: String? = nil) {
     self.type = type
@@ -424,13 +413,11 @@ struct VideoEffect: Identifiable, Codable, Equatable, Sendable {
   nonisolated func apply(to image: CIImage) -> CIImage? {
     // Handle Kernel-based effects
     if type == .chromaKey {
-      guard let kernel = Self.chromaKeyKernel else { return nil }
       let keyColor = color != nil ? CIColor(string: color!) : CIColor.green
-      let targetVector = CIVector(x: keyColor.red, y: keyColor.green, z: keyColor.blue)
-
-      return kernel.apply(
-        extent: image.extent,
-        arguments: [image, targetVector, intensity]
+      return ChromaKeyKernel.apply(
+        to: image,
+        targetColor: (r: Float(keyColor.red), g: Float(keyColor.green), b: Float(keyColor.blue)),
+        threshold: intensity
       )
     }
 

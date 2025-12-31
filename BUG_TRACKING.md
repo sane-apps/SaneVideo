@@ -25,6 +25,26 @@ Files approaching limits (monitor for refactoring):
 
 **Rule**: Soft 500 lines, Hard 800 lines. Split by responsibility.
 
+### Voice Isolation Hang (Magic Fix)
+- **Status**: FIXED (2025-12-31)
+- **Symptom**: Magic Fix stuck at 0% on "Starting Magic Fix..." - never progresses
+- **Environment**: M4 Mac, macOS 15 (Sequoia), 20-second video
+- **Root Causes** (two issues):
+  1. `await player.scheduleSegment()` waits for playback completion, which never happens in offline/manual rendering mode
+  2. `AUSoundIsolation` audio unit is incompatible with offline rendering mode
+- **Fixes Applied**:
+  1. Use `player.scheduleSegment(..., completionHandler: nil)` instead of async version
+  2. Skip voice isolation in offline audio enhancement (it's for real-time playback only)
+- **Files**: `Services/Audio/SaneAudioEnhancementService.swift`
+- **Result**: Audio enhancement now completes in ~1 second (was hanging indefinitely)
+
+### Screen Recording Permission Dialog Regression
+- **Status**: FIXED (2025-12-31)
+- **Symptom**: Permission dialog appears on every clean build despite permission being granted
+- **Root Cause**: `CGPreflightScreenCaptureAccess()` returns false even when permission is granted (macOS quirk)
+- **Fix Applied**: Persist `screenRecordingEverGranted` flag in UserDefaults when capture succeeds, check it before re-requesting
+- **Files**: `Services/Permissions/PermissionManager.swift`, `Services/Recording/ScreenRecorder.swift`
+
 ### Project File Corruption
 - **Status**: ENHANCED LOGGING ACTIVE
 - **Last Occurrence**: 2025-12-30

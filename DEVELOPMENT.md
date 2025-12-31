@@ -92,7 +92,7 @@ This runs automatically when you open the project. If bootstrap fails:
 
 - **OS**: macOS 26.2 (Tahoe). APIs differ from older versions.
 - **Hardware**: Apple Silicon (M1+) ONLY. No Intel support.
-- **Ruby**: Homebrew Ruby 3.4+ required. System Ruby 2.6 is deprecated. A `.ruby-version` file is provided for version managers.
+- **Ruby**: Homebrew Ruby 3.4+ required. System Ruby 2.6 is deprecated. A `.ruby-version` file is provided for version managers. **NEVER use Python for tooling—Ruby only.** Python has caused environment conflicts.
 - **Rule**: If unsure about an API, **CHECK THE SDK FIRST** (see SDK verification workflow in Golden Rules), then search the web for context/usage. Do not guess.
 
 ---

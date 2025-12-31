@@ -26,6 +26,7 @@ require_relative 'sanemaster/bootstrap'
 require_relative 'sanemaster/test_mode'
 require_relative 'sanemaster/verify'
 require_relative 'sanemaster/quality'
+require_relative 'sanemaster/sop_loop'
 
 class SaneMaster
   include SaneMasterModules::Base
@@ -37,6 +38,7 @@ class SaneMaster
   include SaneMasterModules::TestMode
   include SaneMasterModules::Verify
   include SaneMasterModules::Quality
+  include SaneMasterModules::SOPLoop
 
   def initialize
     @bundle_id = 'com.sanevideo.SaneVideo'
@@ -150,6 +152,14 @@ class SaneMaster
       record_memory_entity(args)
     when 'memory_prune', 'mp'
       prune_memory_entities(args)
+
+    # SOP Loop (Two-Fix Rule Compliant)
+    when 'verify_gate', 'vg'
+      verify_gate(args)
+    when 'sop_loop', 'sop'
+      start_sop_loop(args)
+    when 'reset_escalation', 're'
+      reset_escalation(args)
 
     # Debug Console
     when 'console'

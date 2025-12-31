@@ -104,6 +104,36 @@ struct ProjectStoreBackupRecoveryTests {
         #expect(loadedProjects.contains(where: { $0.id == project.id }))
     }
 
+    @Test("Load replaces corrupted file with backup after recovery")
+    func loadReplacesCorruptedFileWithBackupAfterRecovery() async throws {
+        let tempDir = Self.createTempDir()
+        defer { Self.cleanupTempDir(tempDir) }
+
+        let store = ProjectStore(rootDirectory: tempDir)
+        let project = VideoProject(name: "Replace Test")
+
+        // Arrange - create valid backup, corrupt main file
+        let fileURL = store.fileURL(for: project)
+        let backupURL = fileURL.appendingPathExtension("backup")
+
+        let validData = try Self.createValidProjectData(project: project)
+        try validData.write(to: backupURL)
+        try "CORRUPTED".data(using: .utf8)?.write(to: fileURL)
+
+        // Act - load should recover from backup AND replace corrupted file
+        let loadedProjects = try await store.loadProjects()
+
+        // Assert - project should be loaded
+        #expect(loadedProjects.contains(where: { $0.id == project.id }))
+
+        // CRITICAL: Verify corrupted file was replaced with backup data
+        // This prevents repeated warnings on every app launch
+        let mainFileData = try Data(contentsOf: fileURL)
+        let decoded = try JSONDecoder().decode(VideoProject.self, from: mainFileData)
+        #expect(decoded.id == project.id, "Main file should now contain valid project data")
+        #expect(decoded.name == "Replace Test", "Main file should match backup data")
+    }
+
     @Test("Load recovers from too-small file using backup")
     func loadRecoversFromTooSmallFileUsingBackup() async throws {
         let tempDir = Self.createTempDir()

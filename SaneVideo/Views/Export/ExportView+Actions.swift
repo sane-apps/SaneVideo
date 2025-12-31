@@ -222,20 +222,22 @@ extension ExportView {
             .appendingPathComponent("Desktop")
 
         // CRITICAL FIX: Validate output directory exists and is writable
+        // File extension based on codec (HEVC with Alpha requires MOV)
+        let ext = exportSettings.fileExtension
         var isDirectory: ObjCBool = false
         var outputURL: URL
         if !FileManager.default.fileExists(atPath: desktopURL.path, isDirectory: &isDirectory) || !isDirectory.boolValue {
             ServiceContainer.shared.toastManager.show("Desktop folder not found. Exporting to Documents instead.", type: .info)
             let documentsURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
-            let fileName = "\(project.name)_\(Int(Date().timeIntervalSince1970)).mp4"
+            let fileName = "\(project.name)_\(Int(Date().timeIntervalSince1970)).\(ext)"
             outputURL = documentsURL.appendingPathComponent(fileName)
         } else if !FileManager.default.isWritableFile(atPath: desktopURL.path) {
             ServiceContainer.shared.toastManager.show("Desktop is not writable. Exporting to Documents instead.", type: .info)
             let documentsURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
-            let fileName = "\(project.name)_\(Int(Date().timeIntervalSince1970)).mp4"
+            let fileName = "\(project.name)_\(Int(Date().timeIntervalSince1970)).\(ext)"
             outputURL = documentsURL.appendingPathComponent(fileName)
         } else {
-            let fileName = "\(project.name)_\(Int(Date().timeIntervalSince1970)).mp4"
+            let fileName = "\(project.name)_\(Int(Date().timeIntervalSince1970)).\(ext)"
             outputURL = desktopURL.appendingPathComponent(fileName)
         }
 
@@ -358,11 +360,12 @@ extension ExportView {
             let timestamp = Int(Date().timeIntervalSince1970)
 
             // Use BatchCoordinator for parallel export (I/O bound, so use 2 workers)
+            let ext = settings.fileExtension
             let results = await BatchCoordinator.execute(
                 items: clips,
                 config: .ioBound, // 2 concurrent workers for I/O-bound operations
                 operation: { clip, index in
-                    let fileName = "\(projectName)_\(clip.url.deletingPathExtension().lastPathComponent)_\(timestamp).mp4"
+                    let fileName = "\(projectName)_\(clip.url.deletingPathExtension().lastPathComponent)_\(timestamp).\(ext)"
                     let outputURL = desktopURL.appendingPathComponent(fileName)
 
                     // Remove existing file if needed
@@ -408,7 +411,7 @@ extension ExportView {
             // Collect exported URLs from successful results
             var exportedURLs: [URL] = []
             for (index, result) in results.enumerated() where result.success {
-                let fileName = "\(projectName)_\(clips[index].url.deletingPathExtension().lastPathComponent)_\(timestamp).mp4"
+                let fileName = "\(projectName)_\(clips[index].url.deletingPathExtension().lastPathComponent)_\(timestamp).\(ext)"
                 let outputURL = desktopURL.appendingPathComponent(fileName)
                 exportedURLs.append(outputURL)
             }
@@ -435,7 +438,8 @@ extension ExportView {
 
         // Export to temp file first
         let tempDir = FileManager.default.temporaryDirectory
-        let fileName = "\(project.name)_\(Int(Date().timeIntervalSince1970)).mp4"
+        let ext = exportSettings.fileExtension
+        let fileName = "\(project.name)_\(Int(Date().timeIntervalSince1970)).\(ext)"
         let outputURL = tempDir.appendingPathComponent(fileName)
 
         isExporting = true

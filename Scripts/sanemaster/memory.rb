@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+# rubocop:disable Metrics/ModuleLength
+
 module SaneMasterModules
   # Memory MCP integration for cross-session knowledge
   module Memory
@@ -140,6 +142,71 @@ module SaneMasterModules
       end
     end
 
+    # ═══════════════════════════════════════════════════════════════════════════
+    # AUTO-RECORD FUNCTIONS
+    # Called automatically from other workflows to record patterns
+    # ═══════════════════════════════════════════════════════════════════════════
+
+    # Record a bug fix pattern (call after successful bug fix)
+    def auto_record_fix(name, observations)
+      auto_record('bug_pattern', name, observations)
+    end
+
+    # Record an architecture decision (call after creating new files)
+    def auto_record_architecture(name, observations)
+      auto_record('architecture_pattern', name, observations)
+    end
+
+    # Record a concurrency pattern (call when fixing concurrency issues)
+    def auto_record_concurrency(name, observations)
+      auto_record('concurrency_gotcha', name, observations)
+    end
+
+    # Generic auto-record (silent, no prompts)
+    def auto_record(entity_type, name, observations)
+      return if name.nil? || observations.empty?
+
+      memory = load_memory || { 'entities' => [], 'relations' => [] }
+      full_name = "#{entity_type}:#{name}"
+
+      # Check if entity already exists
+      existing = memory['entities'].find { |e| e['name'] == full_name }
+      if existing
+        # Add new observations to existing entity
+        existing['observations'] += observations
+        existing['observations'] << "Last updated: #{Date.today}"
+        existing['observations'].uniq!
+      else
+        # Create new entity
+        new_entity = {
+          'name' => full_name,
+          'entityType' => entity_type,
+          'observations' => observations + ["Recorded: #{Date.today}"]
+        }
+        memory['entities'] << new_entity
+      end
+
+      save_memory(memory)
+      puts "   🧠 Auto-recorded: #{full_name}"
+    rescue StandardError => e
+      # Silent failure - don't interrupt workflow
+      puts "   ⚠️  Memory auto-record failed: #{e.message}" if ENV['DEBUG']
+    end
+
+    # Suggest recording based on recent git changes
+    def suggest_memory_record
+      # Check for recent bug fixes in commit messages
+      recent_commits = `git log --oneline -10 --format='%s' 2>/dev/null`.strip.split("\n")
+
+      fix_commits = recent_commits.select { |c| c.downcase.include?('fix') }
+      return if fix_commits.empty?
+
+      puts ''
+      puts '💡 Recent fix commits detected. Consider recording patterns:'
+      fix_commits.first(3).each { |c| puts "   • #{c}" }
+      puts '   Run: ./Scripts/SaneMaster.rb mr bug_pattern <name>'
+    end
+
     private
 
     def show_entity_group(by_type, type_key, header, prefix)
@@ -171,3 +238,4 @@ module SaneMasterModules
     end
   end
 end
+# rubocop:enable Metrics/ModuleLength

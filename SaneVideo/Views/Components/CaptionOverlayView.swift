@@ -110,7 +110,8 @@ struct KaraokeTextRenderer: View {
                 }
             } else {
                 // Fallback: Just render the full text if no word data
-                Text(caption.text)
+                // CRITICAL FIX: Use displayText to strip Whisper tokens like <|startoftranscript|>
+                Text(caption.displayText)
                     .font(.custom(style.fontName, size: style.fontSize))
                     .fontWeight(style.isBold ? .bold : .regular)
                     .italic(style.isItalic)

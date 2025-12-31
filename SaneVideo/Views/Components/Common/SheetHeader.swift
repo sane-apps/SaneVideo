@@ -31,6 +31,7 @@ struct SheetHeader: View {
                     .foregroundStyle(.secondary)
             }
             .buttonStyle(.plain)
+            .keyboardShortcut(.cancelAction)
             .accessibilityIdentifier(accessibilityID)
         }
         .padding(16)

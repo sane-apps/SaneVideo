@@ -19,6 +19,28 @@ class PlaybackState {
     var duration: CMTime = .zero
     var player: AVPlayer?
 
+    // MARK: - In/Out Points (for selection range)
+
+    /// In point marker for timeline selection (nil = not set)
+    var inPoint: CMTime?
+
+    /// Out point marker for timeline selection (nil = not set)
+    var outPoint: CMTime?
+
+    /// Clears both in and out points
+    func clearInOutPoints() {
+        inPoint = nil
+        outPoint = nil
+    }
+
+    /// Returns the selected range if both in and out points are set
+    var selectedRange: CMTimeRange? {
+        guard let inPoint = inPoint, let outPoint = outPoint else { return nil }
+        let start = min(inPoint, outPoint)
+        let end = max(inPoint, outPoint)
+        return CMTimeRange(start: start, end: end)
+    }
+
     // MARK: - Internal Properties
 
     private var timeObserver: Any?

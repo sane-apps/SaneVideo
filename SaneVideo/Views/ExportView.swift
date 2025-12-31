@@ -21,6 +21,8 @@ struct ExportView: View {
     @State var exportSettings = SaneExportSettings()
     @State var selectedPreset: ExportPreset? = .youtube4K
     @State var mlEffects = MLExportEffects()
+    @State var speedTracker = ExportSpeedTracker()
+    @State var estimatedTotalBytes: Int64 = 0
 
     // YouTube State
     var youtubeService = ServiceContainer.shared.youtubeService

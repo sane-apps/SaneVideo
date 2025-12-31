@@ -52,10 +52,12 @@ This runs automatically when you open the project. If bootstrap fails:
 **Bootstrap Features:**
 - Auto-updates Ruby, bundle, Homebrew tools
 - Verifies Claude plugins & MCP servers
+- **Auto-fixes common issues**: Kills stuck xcodebuild/xctest processes, clears DerivedData if >5GB
 - Creates rollback snapshots before changes
 - Logs all operations to `~/.sanemaster/logs/`
 - Use `--check-only` to report without changes
 - Use `--rollback` to restore previous configuration
+- Use `--no-fix` to skip auto-fixing (report only)
 
 **Supplementary Documentation:**
 
@@ -583,6 +585,7 @@ log stream --predicate 'subsystem == "com.sanevideo.SaneVideo"' --level debug
     - **swift-lsp@claude-plugins-official**: ✅ Enabled - Provides Swift code intelligence (completion, go-to-definition, diagnostics)
     - **code-review@claude-plugins-official**: ✅ Enabled - Automated PR review with 4 parallel agents
     - **security-guidance@claude-plugins-official**: ✅ Enabled - Security vulnerability alerts during editing
+    - **ralph-wiggum@claude-plugins-official**: ✅ Enabled - **SOP Enforcement Loop** - Prevents task completion until verification criteria are met (see below)
 5. **MCP Servers** (configured in `.mcp.json`):
     - **Note**: Ensure `enableAllProjectMcpServers: true` is set in `.claude/settings.local.json` and no restrictive `enabledMcpjsonServers` array exists.
     - **apple-docs**: ✅ Enabled - Apple Developer Documentation & WWDC transcripts (1,260+ sessions, 2012-2025). Use for API examples, related APIs, and understanding "why" behind APIs.
@@ -590,7 +593,6 @@ log stream --predicate 'subsystem == "com.sanevideo.SaneVideo"' --level debug
     - **memory**: ✅ Enabled - Persistent knowledge graph for cross-session context. (Official MCP)
     - **context7**: ✅ Enabled - Real-time, version-specific library documentation. Prevents hallucinated APIs by fetching current docs from source repos.
     - **XcodeBuildMCP**: ✅ Enabled - Programmatic Xcode builds, test runs, and code signing. Use for CI/CD integration.
-    - **TestSprite**: ⏸️ Not loaded (future) - Automated test generation for iOS/iPad companion apps. Will be enabled when mobile development begins.
 
 ### When to Use Which Tool (Decision Matrix)
 
@@ -603,7 +605,7 @@ log stream --predicate 'subsystem == "com.sanevideo.SaneVideo"' --level debug
 | **Programmatic builds (CI/CD)** | `XcodeBuildMCP` | Granular control, JSON output, automation |
 | **Generate mock classes** | `./Scripts/SaneMaster.rb gen_mock` (Mockolo) | Fast protocol→mock generation |
 | **Generate test templates** | `./Scripts/SaneMaster.rb gen_test` | Creates structured unit/UI tests |
-| **iOS companion app testing** | `TestSprite` (future) | AI-powered SwiftUI test generation - enable when mobile dev begins |
+| **iOS companion app testing** | XcodeBuildMCP + manual | Enable additional tools when mobile dev begins |
 | **GitHub issues/PRs** | `github` MCP | Create issues, review PRs, search code |
 | **Remember context across sessions** | `memory` MCP | Persistent knowledge graph |
 | **Code intelligence (completions, go-to-def)** | `swift-lsp` plugin | IDE-like Swift support in Claude Code |
@@ -613,7 +615,6 @@ log stream --predicate 'subsystem == "com.sanevideo.SaneVideo"' --level debug
 > **Current Focus**: macOS app until rock solid. iOS/iPad work comes later.
 
 When developing the iPhone/iPad companion apps:
-- **TestSprite** - Add to `.mcp.json` when mobile development begins (primary UI testing tool for iOS)
 - **XcodeBuildMCP** can target iOS simulators and devices
 - Shared code should live in a Swift Package for cross-platform use
 - Use `apple-docs` for platform-specific API differences (UIKit vs AppKit)
@@ -643,6 +644,55 @@ When developing the iPhone/iPad companion apps:
 - ✅ Follows project conventions
 
 **See:** `TEST_CREATION_WORKFLOW.md` for test creation workflow and best practices.
+
+### Ralph Wiggum: SOP Enforcement Loop
+
+**Purpose**: Forces Claude to complete ALL SOP requirements before claiming a task is done.
+
+**How it works**:
+1. You run `/ralph-loop` with a prompt containing SOP requirements
+2. Claude works on the task
+3. When Claude tries to exit, a Stop hook intercepts and feeds the prompt back
+4. Claude sees previous work and iterates until completion criteria are met
+5. Loop exits when `<promise>COMPLETE</promise>` appears or max iterations hit
+
+**Usage for bug fixes**:
+
+```bash
+/ralph-loop "Fix: [describe bug]
+
+SOP Requirements (verify before completing):
+1. ./Scripts/SaneMaster.rb verify passes
+2. killall -9 SaneVideo && ./Scripts/SaneMaster.rb launch
+3. ./Scripts/SaneMaster.rb logs --follow (check for errors)
+4. Regression test added in SaneVideoTests/Regression/
+5. Self-rating 1-10 provided
+
+Output <promise>SOP-COMPLETE</promise> ONLY when ALL verified." --completion-promise "SOP-COMPLETE" --max-iterations 10
+```
+
+**Usage for features**:
+
+```bash
+/ralph-loop "Implement: [describe feature]
+
+Requirements: [list requirements]
+
+SOP: verify passes, logs checked, self-rating provided.
+
+<promise>FEATURE-DONE</promise>" --completion-promise "FEATURE-DONE" --max-iterations 15
+```
+
+**Commands**:
+- `/ralph-loop "<prompt>" --completion-promise "<text>" --max-iterations N` - Start loop
+- `/cancel-ralph` - Cancel active loop
+
+**When to use**:
+- Complex bug fixes requiring multiple verification steps
+- Feature implementations with many requirements
+- Any task where Claude tends to skip SOP steps
+
+**Auto-injection**: SOP context is automatically injected at session start via `.claude/SOP_CONTEXT.md`.
 
 ---
 
@@ -1004,6 +1054,41 @@ After fixing ANY bug, you **MUST** complete this checklist:
 ./Scripts/SaneMaster.rb crashes        # Analyze crash patterns
 open Screenshots/                       # View screenshots
 ```
+
+### Memory MCP Usage (Cross-Session Knowledge)
+
+The Memory MCP persists valuable knowledge across sessions. Bootstrap automatically displays a summary of stored knowledge.
+
+**Entity Types:**
+- `bug_pattern` - Recurring bugs with symptoms, root cause, and fix
+- `concurrency_gotcha` - Swift 6 concurrency pitfalls and solutions
+- `file_violation` - Files exceeding size limits needing refactoring
+- `architecture_pattern` - Key architectural decisions
+- `service` - Service responsibilities and concurrency notes
+- `compliance_rule` - SOP rules agents frequently violate
+
+**When to READ:**
+- Bootstrap shows summary automatically
+- Before bug fix: `mcp__memory__search_nodes("bug_pattern")`
+- Before concurrency work: `mcp__memory__search_nodes("concurrency")`
+- Full details: `./Scripts/SaneMaster.rb memory_context`
+
+**When to WRITE:**
+- After bug fix (>30 min diagnosis): Create `bug_pattern` entity
+- After concurrency fix: Create/update `concurrency_gotcha`
+- After architecture decision: Create `architecture_pattern`
+
+**Rule**: If it took >30 minutes to figure out, write it to memory.
+
+**Commands:**
+```bash
+./Scripts/SaneMaster.rb memory_context   # Show all stored knowledge
+./Scripts/SaneMaster.rb memory_record    # Add new entity (interactive)
+./Scripts/SaneMaster.rb memory_prune     # Clean up stale entities
+```
+
+**Post-Fix Checklist Addition:**
+- [ ] Memory updated? (If pattern worth remembering across sessions)
 
 ### Documentation Priority
 

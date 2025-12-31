@@ -54,7 +54,8 @@ struct TranscriptTimelineView: View {
                 }
             } else {
                 // Fallback: estimate word timestamps from caption duration
-                let words = caption.text.split(separator: " ")
+                // CRITICAL FIX: Use displayText to strip Whisper tokens
+                let words = caption.displayText.split(separator: " ")
                 guard !words.isEmpty else { continue }
                 
                 let wordDuration = (caption.endTime.seconds - caption.startTime.seconds) / Double(words.count)

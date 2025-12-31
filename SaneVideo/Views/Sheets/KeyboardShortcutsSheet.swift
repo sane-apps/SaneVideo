@@ -24,6 +24,7 @@ struct KeyboardShortcutsSheet: View {
                         .foregroundColor(.secondary)
                 }
                 .buttonStyle(.plain)
+                .keyboardShortcut(.cancelAction)
             }
             .padding()
             .background(Color(NSColor.controlBackgroundColor))

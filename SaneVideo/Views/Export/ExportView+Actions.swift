@@ -250,17 +250,17 @@ extension ExportView {
 
     // CRITICAL FIX: Separate function for export with validation
     private func startExportWithValidation(project: VideoProject, outputURL: URL, uploadToYouTube: Bool) async {
+        // Estimate file size: duration (seconds) × bitrate (bits/sec) / 8 = bytes
+        let duration = project.timeline.duration.seconds
+        let videoBitrate = Double(exportSettings.bitrate) // bits per second
+        let audioBitrate = 192_000.0 // 192 kbps
+        let totalBitrate = videoBitrate + audioBitrate
+        let estimatedBytes = Int64((totalBitrate * duration) / 8.0)
+        // Add 20% overhead for container, metadata, etc.
+        let requiredSpace = Int64(Double(estimatedBytes) * 1.2)
+
         // CRITICAL FIX: Check disk space before export
         do {
-            // Estimate required space: duration (seconds) × bitrate (bits/sec) / 8 = bytes
-            let duration = project.timeline.duration.seconds
-            let videoBitrate = Double(exportSettings.bitrate) // bits per second
-            let audioBitrate = 192_000.0 // 192 kbps
-            let totalBitrate = videoBitrate + audioBitrate
-            let estimatedBytes = Int64((totalBitrate * duration) / 8.0)
-            // Add 20% overhead for container, metadata, etc.
-            let requiredSpace = Int64(Double(estimatedBytes) * 1.2)
-
             // Check available space on output volume
             let outputVolume = outputURL.deletingLastPathComponent()
             let values = try outputVolume.resourceValues(forKeys: [.volumeAvailableCapacityForImportantUsageKey])
@@ -280,6 +280,10 @@ extension ExportView {
         isExporting = true
         exportProgress = 0
 
+        // Initialize speed tracking with estimated file size
+        estimatedTotalBytes = requiredSpace
+        speedTracker.startTracking(totalBytes: estimatedTotalBytes)
+
         Task {
             do {
                 _ = try await exportEngine.export(
@@ -289,11 +293,15 @@ extension ExportView {
                     progressHandler: { progress in
                         Task { @MainActor in
                             self.exportProgress = progress
+                            // Update speed tracker with estimated bytes processed
+                            let bytesProcessed = Int64(Double(self.estimatedTotalBytes) * progress)
+                            self.speedTracker.update(bytesProcessed: bytesProcessed, totalBytes: self.estimatedTotalBytes)
                         }
                     }
                 )
 
                 self.isExporting = false
+                self.speedTracker.reset()
                 AppLogger.export.info("Export success: \(outputURL)")
 
                 if uploadToYouTube {
@@ -304,6 +312,7 @@ extension ExportView {
                 }
             } catch {
                 self.isExporting = false
+                self.speedTracker.reset()
                 AppLogger.export.error("Export failed: \(error)")
                 self.exportError = error
                 self.showingError = true

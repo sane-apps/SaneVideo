@@ -400,8 +400,6 @@ open fastlane/coverage/index.html    # View report
 | **XcodeBuildMCP** | Programmatic Xcode builds | CI/CD integration, test runs, signing |
 
 > **Note**: `.cursor/mcp.json` has `imagesorcery` MCP because Cursor lacks native image viewing (Claude Code has it built-in).
->
-> **TestSprite**: Not loaded — will be enabled when iOS/iPad companion app development begins.
 
 ### Plugins (3 active)
 
@@ -421,7 +419,7 @@ open fastlane/coverage/index.html    # View report
 | **CI/CD programmatic builds** | `XcodeBuildMCP` | Granular control, automation |
 | **Generate mock classes** | `gen_mock` (Mockolo) | Fast protocol→mock generation |
 | **Generate test templates** | `gen_test` | Creates structured unit/UI tests |
-| **iOS companion app testing** | `TestSprite` (future) | Enable when mobile dev begins |
+| **iOS companion app testing** | XcodeBuildMCP + manual | Enable additional tools when mobile dev begins |
 | **GitHub issues/PRs** | `github` MCP | Create issues, review PRs |
 | **Cross-session context** | `memory` MCP | Persistent knowledge graph |
 | **Code intelligence** | `swift-lsp` plugin | Completions, go-to-definition |
@@ -430,7 +428,6 @@ open fastlane/coverage/index.html    # View report
 
 > **Current Focus**: macOS app until rock solid. iOS/iPad work comes later.
 
-- **TestSprite** — Add to `.mcp.json` when mobile development begins (primary UI testing tool for iOS)
 - **XcodeBuildMCP** — Can target iOS simulators/devices
 - Shared code in Swift Package for cross-platform
 - Use `apple-docs` for UIKit vs AppKit differences

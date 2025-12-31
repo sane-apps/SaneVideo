@@ -195,6 +195,20 @@ struct EditorLayoutView: View {
                 .keyboardShortcut(.rightArrow, modifiers: [])
                 .accessibilityIdentifier("shortcut.step_forward")
 
+                // Shift + Left Arrow = Seek backward 10 seconds
+                Button("") {
+                    appState.playbackState.seekBackward10Seconds()
+                }
+                .keyboardShortcut(.leftArrow, modifiers: [.shift])
+                .accessibilityIdentifier("shortcut.seek_backward_10s")
+
+                // Shift + Right Arrow = Seek forward 10 seconds
+                Button("") {
+                    appState.playbackState.seekForward10Seconds()
+                }
+                .keyboardShortcut(.rightArrow, modifiers: [.shift])
+                .accessibilityIdentifier("shortcut.seek_forward_10s")
+
                 // Command + B = Split Clip
                 Button("") {
                     if let clip = selectedClip {

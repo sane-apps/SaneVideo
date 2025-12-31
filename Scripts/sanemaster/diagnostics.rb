@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+# rubocop:disable Metrics/ModuleLength
 module SaneMasterModules
   # Crash analysis, xcresult diagnosis, log analysis
   module Diagnostics
@@ -137,7 +138,7 @@ module SaneMasterModules
 
     def find_app_log
       logs = Dir.glob(File.join(@diagnostics_dir, '**', 'StandardOutputAndStandardError*.txt'))
-      logs.find { |f| f.include?('com.sanevideo.SaneVideo') } || logs.first
+      logs.find { |f| f.include?('com.sanevideo.app') || f.include?('SaneVideo') } || logs.first
     end
 
     def find_test_log
@@ -321,3 +322,4 @@ module SaneMasterModules
     end
   end
 end
+# rubocop:enable Metrics/ModuleLength

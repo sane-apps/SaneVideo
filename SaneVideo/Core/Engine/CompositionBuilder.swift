@@ -120,6 +120,10 @@ enum CompositionBuilder {
         let audioMix = AVMutableAudioMix()
         audioMix.inputParameters = audioMixParams
 
+        // 4c. Apply audio limiter to prevent clipping when tracks are mixed
+        // This uses MTAudioProcessingTap to apply soft-knee limiting
+        let limitedAudioMix = AudioLimiter.applyLimiter(to: audioMix)
+
         // 5. Build Video Composition
         let totalDuration = timeline.duration
         var videoComposition: AVVideoComposition?
@@ -133,7 +137,7 @@ enum CompositionBuilder {
                  return CompositionResult(
                      composition: composition,
                      videoComposition: nil,
-                     audioMix: audioMix
+                     audioMix: limitedAudioMix
                  )
             }
 
@@ -174,7 +178,7 @@ enum CompositionBuilder {
         return CompositionResult(
             composition: composition,
             videoComposition: videoComposition,
-            audioMix: audioMix
+            audioMix: limitedAudioMix
         )
     }
 }

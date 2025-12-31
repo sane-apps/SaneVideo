@@ -10,6 +10,8 @@ import SwiftUI
 
 /// Centralized error presenter for SwiftUI views
 /// CRITICAL FIX: Implements error queueing to prevent overwriting errors
+/// SWIFT 6 FIX: @MainActor required for UI-driving state (error queue accessed from SwiftUI)
+@MainActor
 @Observable
 class ErrorPresenter {
     init() {}

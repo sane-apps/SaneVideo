@@ -23,7 +23,57 @@ struct SaliencyResult: Sendable {
 /// Note: Does not conform to SaliencyServiceProtocol due to Swift 6 actor isolation rules.
 actor SaliencyService {
 
+    // SMOOTHING: EMA filter state for temporal smoothing of saliency
+    // Reduces jitter in attention point tracking between frames
+    private var smoothingAlpha: CGFloat = 0.3
+    private var smoothedPoint: CGPoint?
+    private var smoothedRect: CGRect?
+
     init() {}
+
+    /// Configure the smoothing factor for saliency tracking.
+    /// - Parameter alpha: 0.0-1.0, lower = smoother but more latency, higher = more responsive
+    func setSmoothing(alpha: CGFloat) {
+        smoothingAlpha = max(0.05, min(1.0, alpha))
+    }
+
+    /// Reset smoothing state for fresh analysis
+    func resetSmoothing() {
+        smoothedPoint = nil
+        smoothedRect = nil
+    }
+
+    /// Apply EMA smoothing to attention point
+    private func smoothPoint(_ newPoint: CGPoint) -> CGPoint {
+        guard let previous = smoothedPoint else {
+            smoothedPoint = newPoint
+            return newPoint
+        }
+
+        let smoothed = CGPoint(
+            x: smoothingAlpha * newPoint.x + (1 - smoothingAlpha) * previous.x,
+            y: smoothingAlpha * newPoint.y + (1 - smoothingAlpha) * previous.y
+        )
+        smoothedPoint = smoothed
+        return smoothed
+    }
+
+    /// Apply EMA smoothing to attention rect
+    private func smoothAttentionRect(_ newRect: CGRect) -> CGRect {
+        guard let previous = smoothedRect else {
+            smoothedRect = newRect
+            return newRect
+        }
+
+        let smoothed = CGRect(
+            x: smoothingAlpha * newRect.origin.x + (1 - smoothingAlpha) * previous.origin.x,
+            y: smoothingAlpha * newRect.origin.y + (1 - smoothingAlpha) * previous.origin.y,
+            width: smoothingAlpha * newRect.width + (1 - smoothingAlpha) * previous.width,
+            height: smoothingAlpha * newRect.height + (1 - smoothingAlpha) * previous.height
+        )
+        smoothedRect = smoothed
+        return smoothed
+    }
 
     /// Detect the most attention-grabbing region in an image
     /// Uses Apple's attention-based saliency model
@@ -139,6 +189,9 @@ actor SaliencyService {
         sampleInterval: TimeInterval = 1.0,
         progressHandler: (@Sendable (Int, Int) -> Void)? = nil
     ) async throws -> [CMTime: SaliencyResult] {
+        // Reset smoothing for fresh analysis
+        resetSmoothing()
+
         let asset = AVURLAsset(url: videoURL)
         let duration = try await asset.load(.duration)
         let totalFrames = Int(duration.seconds / sampleInterval)
@@ -165,10 +218,24 @@ actor SaliencyService {
             do {
                 let (cgImage, _) = try await generator.image(at: currentTime)
                 let ciImage = CIImage(cgImage: cgImage)
-                let saliency = try await detectAttention(in: ciImage)
-                results[currentTime] = saliency
+                let rawSaliency = try await detectAttention(in: ciImage)
+
+                // SMOOTHING: Apply EMA filter to reduce jitter between frames
+                let smoothedAttentionPoint = smoothPoint(rawSaliency.attentionPoint)
+                let smoothedAttentionRect = smoothAttentionRect(rawSaliency.attentionRect)
+
+                let smoothedSaliency = SaliencyResult(
+                    attentionPoint: smoothedAttentionPoint,
+                    attentionRect: smoothedAttentionRect,
+                    objectnessRect: rawSaliency.objectnessRect,
+                    confidence: rawSaliency.confidence
+                )
+
+                results[currentTime] = smoothedSaliency
             } catch {
                 // Track skipped frames instead of silently ignoring
+                // Reset smoothing on errors to prevent stale data
+                resetSmoothing()
                 skippedFrames += 1
             }
 

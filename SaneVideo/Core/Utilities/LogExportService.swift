@@ -30,12 +30,16 @@ final class LogExportService: Sendable {
             logText += "[\(timestamp)] [\(entry.category)] [\(level)] \(entry.composedMessage)\n"
         }
         
-        let fileName = "SaneVideo_Debug.log"
-        
-        // Save to Downloads folder (requires com.apple.security.files.downloads.read-write entitlement)
-        // This allows the AI agent to easily find and read the file.
-        let downloadsURL = FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first!
-        let fileURL = downloadsURL.appendingPathComponent(fileName)
+        let fileName = "SaneVideo_Export.log"
+
+        // Save to ~/Library/Logs/SaneVideo/ (standard log location, no entitlement needed)
+        // External tools like Claude Code can read from this location easily.
+        guard let libraryDir = FileManager.default.urls(for: .libraryDirectory, in: .userDomainMask).first else {
+            throw NSError(domain: "LogExportService", code: -1, userInfo: [NSLocalizedDescriptionKey: "Library directory not found"])
+        }
+        let logDir = libraryDir.appendingPathComponent("Logs/SaneVideo")
+        try FileManager.default.createDirectory(at: logDir, withIntermediateDirectories: true)
+        let fileURL = logDir.appendingPathComponent(fileName)
         
         try logText.write(to: fileURL, atomically: true, encoding: .utf8)
         return fileURL

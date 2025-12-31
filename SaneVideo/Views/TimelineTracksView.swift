@@ -26,6 +26,10 @@ struct TimelineTracksView: View {
 
     @Environment(AppState.self) var appState
 
+    // SWIFT 6 FIX: Track async tasks to prevent fire-and-forget pile-up
+    @State private var captionTask: Task<Void, Never>?
+    @State private var highlightTask: Task<Void, Never>?
+
     private let timelineHeight: CGFloat = AppConstants.timelineHeight
 
     // CRITICAL: Compute filtered tracks ONCE to ensure headers and rows stay in sync
@@ -119,12 +123,16 @@ struct TimelineTracksView: View {
                         appState.projectState.removeFillerWords(from: clip)
                     },
                     onGenerateCaptions: {
-                        Task {
+                        // SWIFT 6 FIX: Cancel previous task to prevent pile-up
+                        captionTask?.cancel()
+                        captionTask = Task {
                             _ = try? await appState.projectState.generateCaptions(for: clip)
                         }
                     },
                     onFindHighlights: {
-                        Task {
+                        // SWIFT 6 FIX: Cancel previous task to prevent pile-up
+                        highlightTask?.cancel()
+                        highlightTask = Task {
                             await appState.projectState.findHighlights(in: clip)
                         }
                     },

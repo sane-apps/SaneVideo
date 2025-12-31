@@ -29,6 +29,8 @@ struct GIFExportSheet: View {
     @State private var exportProgress: Double = 0
     @State private var estimatedSize: String = "~1-3 MB"
     @State private var errorMessage: String?
+    // SWIFT 6 FIX: Track export task to prevent concurrent exports
+    @State private var exportTask: Task<Void, Never>?
 
     private let fpsOptions = [5, 10, 15, 20, 25]
     private let widthOptions = [320, 480, 640, 720, 1080]
@@ -222,10 +224,14 @@ struct GIFExportSheet: View {
     }
 
     private func exportGIF() {
+        // SWIFT 6 FIX: Prevent concurrent exports
+        guard !isExporting else { return }
         isExporting = true
         errorMessage = nil
 
-        Task {
+        // Cancel any previous export task
+        exportTask?.cancel()
+        exportTask = Task {
             do {
                 let savePanel = NSSavePanel()
                 savePanel.allowedContentTypes = [.gif]

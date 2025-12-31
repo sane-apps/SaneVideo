@@ -9,31 +9,8 @@ import AVFoundation
 import CoreMedia
 import SwiftUI
 
-// Import new modifiers
-// AnimationModifiers
-
-// MARK: - Video Display Modes
-enum VideoDisplayMode: String, CaseIterable {
-    case fit      // Fit entire video (may have letterboxing)
-    case fill     // Fill container (may crop edges)
-    case actual   // Actual size (1:1 pixels, scrollable if larger)
-
-    var label: String {
-        switch self {
-        case .fit: return "Fit"
-        case .fill: return "Fill"
-        case .actual: return "Actual Size"
-        }
-    }
-
-    var icon: String {
-        switch self {
-        case .fit: return "rectangle.arrowtriangle.2.inward"
-        case .fill: return "rectangle.arrowtriangle.2.outward"
-        case .actual: return "1.square"
-        }
-    }
-}
+// VideoDisplayMode, GridPattern, CollapseButton, TimelineKeyboardModifier
+// are in EditorLayoutHelpers.swift
 
 struct EditorLayoutView: View {
     @Environment(AppState.self) var appState
@@ -47,6 +24,12 @@ struct EditorLayoutView: View {
 
     // Video display mode - persisted per user preference
     @AppStorage("editor.videoDisplayMode") private var videoDisplayMode: VideoDisplayMode = .fit
+
+    // SWIFT 6 FIX: Track async tasks to prevent fire-and-forget pile-up
+    // Cancels previous task when new one starts (e.g., rapid hotkey presses)
+    @State private var magicFixTask: Task<Void, Never>?
+    @State private var captionTask: Task<Void, Never>?
+    @State private var audioCleanTask: Task<Void, Never>?
 
     // Layout constants
     private let sidebarExpandedWidth: CGFloat = 260
@@ -114,27 +97,35 @@ struct EditorLayoutView: View {
                 isInspectorCollapsed = false
             }
             // Trigger Magic Fix for selected clip
+            // SWIFT 6 FIX: Cancel previous task to prevent pile-up from rapid hotkey presses
             if let clip = selectedClip {
-                Task {
+                magicFixTask?.cancel()
+                magicFixTask = Task {
                     await appState.projectState.performMagicFix(for: clip, options: appState.projectState.magicFixOptions)
                 }
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("TriggerMagicFixAll"))) { _ in
             // Batch Magic Fix for all clips (parallelized via BatchCoordinator)
-            Task {
+            // SWIFT 6 FIX: Cancel previous task to prevent pile-up
+            magicFixTask?.cancel()
+            magicFixTask = Task {
                 _ = await appState.projectState.performMagicFixAll(options: appState.projectState.magicFixOptions)
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("GenerateAllCaptions"))) { _ in
             // Batch generate captions for all clips (parallelized via BatchCoordinator)
-            Task {
+            // SWIFT 6 FIX: Cancel previous task to prevent pile-up
+            captionTask?.cancel()
+            captionTask = Task {
                 _ = await appState.projectState.generateCaptionsAll()
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("CleanAllAudio"))) { _ in
             // Clean all audio (remove silence/fillers)
-            Task {
+            // SWIFT 6 FIX: Cancel previous task to prevent pile-up
+            audioCleanTask?.cancel()
+            audioCleanTask = Task {
                 await appState.projectState.cleanProjectAudio()
             }
         }
@@ -363,15 +354,31 @@ struct EditorLayoutView: View {
                     // PERFORMANCE: Show thumbnail until player is ready, then show AVPlayer
                     if let player = appState.playbackState.player {
                         // PLAYER READY: Show AVPlayer (playing or paused)
-                        videoPlayerView(player: player, availableSize: geometry.size)
+                        EditorVideoPlayerView(
+                            player: player,
+                            availableSize: geometry.size,
+                            displayMode: videoDisplayMode,
+                            selectedClip: selectedClip,
+                            projectState: appState.projectState,
+                            captionData: currentCaption(for: selectedClip, at: appState.playbackState.currentTime),
+                            project: appState.projectState.currentProject
+                        )
                     } else if let project = appState.projectState.currentProject,
                               project.timeline.tracks.contains(where: { !$0.clips.isEmpty }) {
                         // HAS CONTENT BUT NO PLAYER: Show thumbnail with play button
                         // This makes project switching instant - no composition until play
-                        thumbnailPreviewView(for: project, availableSize: geometry.size)
+                        EditorThumbnailPreviewView(
+                            project: project,
+                            availableSize: geometry.size,
+                            selectedClip: selectedClip,
+                            currentTime: appState.playbackState.currentTime,
+                            onPlay: { appState.playbackState.play() },
+                            isPlayerReady: appState.playbackState.player != nil,
+                            captionData: currentCaption(for: selectedClip, at: appState.playbackState.currentTime)
+                        )
                     } else {
                         // EMPTY STATE: No project or no clips
-                        magicFixEmptyState
+                        EditorEmptyStateView(onImport: { appState.importVideo() })
                     }
                 }
             }
@@ -702,323 +709,6 @@ struct EditorLayoutView: View {
         return nil
     }
 
-    // MARK: - Thumbnail Preview (Instant Project Switching)
-
-    /// Show a static thumbnail instead of AVPlayer until user clicks play
-    /// This makes project switching instant - no composition needed until playback
-    @ViewBuilder
-    private func thumbnailPreviewView(for project: VideoProject, availableSize: CGSize) -> some View {
-        let videoSize = calculateVideoSize(availableSize: availableSize)
-
-        ZStack {
-            // Background
-            Color.black
-
-            // Show thumbnail from first clip
-            if let firstClip = project.timeline.tracks.flatMap({ $0.clips }).first {
-                ThumbnailPreviewImage(clip: firstClip, size: videoSize)
-            }
-
-            // Play button overlay
-            Button {
-                appState.playbackState.play()
-            } label: {
-                ZStack {
-                    Circle()
-                        .fill(.black.opacity(0.5))
-                        .frame(width: 80, height: 80)
-
-                    Image(systemName: "play.fill")
-                        .font(.system(size: 32))
-                        .foregroundColor(.white)
-                }
-            }
-            .buttonStyle(.plain)
-            .opacity(appState.playbackState.player == nil ? 0.9 : 0.7)
-
-            // Loading indicator if composition is in progress
-            if appState.playbackState.player == nil {
-                VStack {
-                    Spacer()
-                    HStack {
-                        ProgressView()
-                            .scaleEffect(0.7)
-                            .tint(.white)
-                        Text("Loading...")
-                            .font(.caption)
-                            .foregroundColor(.white.opacity(0.8))
-                    }
-                    .padding(8)
-                    .background(.black.opacity(0.6), in: Capsule())
-                    .padding(.bottom, 16)
-                }
-            }
-
-            // Caption overlay (if applicable)
-            if let captionData = currentCaption(for: selectedClip, at: appState.playbackState.currentTime) {
-                CaptionOverlayView(
-                    caption: captionData.0,
-                    currentTime: captionData.1,
-                    style: project.captionStyle,
-                    offset: Binding(
-                        get: { project.captionOffset },
-                        set: { appState.projectState.updateCaptionOffset($0) }
-                    )
-                )
-            }
-        }
-        .frame(width: videoSize.width, height: videoSize.height)
-        .clipShape(RoundedRectangle(cornerRadius: 8))
-    }
-
-    // MARK: - Video Player with Display Mode Support
-
-    /// Calculate optimal video size to fill available space while maintaining 16:9 aspect ratio
-    private func calculateVideoSize(availableSize: CGSize) -> CGSize {
-        let videoAspect: CGFloat = 16.0 / 9.0
-        let containerAspect = availableSize.width / availableSize.height
-
-        // Video size calculation: fit 16:9 video into available space with minimal padding
-        let padding: CGFloat = 16 // Total padding (8 per side)
-        let usableWidth = availableSize.width - padding
-        let usableHeight = availableSize.height - padding
-
-        if containerAspect > videoAspect {
-            // Container is wider than video - height constrained
-            let height = usableHeight
-            let width = height * videoAspect
-            return CGSize(width: width, height: height)
-        } else {
-            // Container is taller than video - width constrained
-            let width = usableWidth
-            let height = width / videoAspect
-            return CGSize(width: width, height: height)
-        }
-    }
-
-    @ViewBuilder
-    private func videoPlayerView(player: AVPlayer, availableSize: CGSize) -> some View {
-        let videoSize = calculateVideoSize(availableSize: availableSize)
-        let usableWidth = availableSize.width - 16
-        let usableHeight = availableSize.height - 16
-
-        Group {
-            switch videoDisplayMode {
-            case .fit:
-                // Fit: Show entire video at maximum size while maintaining aspect ratio
-                AdvancedVideoPlayer(player: player)
-                    .overlay {
-                        CanvasOverlay(clip: selectedClip, projectState: appState.projectState)
-                        // CRITICAL FIX: Add caption overlay with project style
-                        if let project = appState.projectState.currentProject,
-                           let captionData = currentCaption(for: selectedClip, at: appState.playbackState.currentTime) {
-                            CaptionOverlayView(
-                                caption: captionData.0,
-                                currentTime: captionData.1,
-                                style: project.captionStyle,
-                                offset: Binding(
-                                    get: { project.captionOffset },
-                                    set: { appState.projectState.updateCaptionOffset($0) }
-                                )
-                            )
-                        }
-                    }
-                    .frame(width: videoSize.width, height: videoSize.height)
-
-            case .fill:
-                // Fill: Fill the container, may crop edges
-                AdvancedVideoPlayer(player: player)
-                    .overlay {
-                        CanvasOverlay(clip: selectedClip, projectState: appState.projectState)
-                        // CRITICAL FIX: Add caption overlay with project style
-                        if let project = appState.projectState.currentProject,
-                           let captionData = currentCaption(for: selectedClip, at: appState.playbackState.currentTime) {
-                            CaptionOverlayView(
-                                caption: captionData.0,
-                                currentTime: captionData.1,
-                                style: project.captionStyle,
-                                offset: Binding(
-                                    get: { project.captionOffset },
-                                    set: { appState.projectState.updateCaptionOffset($0) }
-                                )
-                            )
-                        }
-                    }
-                    .frame(width: usableWidth, height: usableHeight)
-                    .clipped()
-
-            case .actual:
-                // Actual: 1:1 pixel mapping, scrollable if larger
-                ScrollView([.horizontal, .vertical], showsIndicators: true) {
-                    AdvancedVideoPlayer(player: player)
-                        .overlay {
-                            CanvasOverlay(clip: selectedClip, projectState: appState.projectState)
-                            // CRITICAL FIX: Add caption overlay with project style
-                            if let project = appState.projectState.currentProject,
-                               let captionData = currentCaption(for: selectedClip, at: appState.playbackState.currentTime) {
-                                CaptionOverlayView(
-                                    caption: captionData.0,
-                                    currentTime: captionData.1,
-                                    style: project.captionStyle,
-                                    offset: Binding(
-                                        get: { project.captionOffset },
-                                        set: { appState.projectState.updateCaptionOffset($0) }
-                                    )
-                                )
-                            }
-                        }
-                        .frame(minWidth: 640, minHeight: 360) // Minimum reasonable size
-                }
-                .frame(width: usableWidth, height: usableHeight)
-            }
-        }
-        .clipShape(RoundedRectangle(cornerRadius: 8))
-        .shadow(color: .black.opacity(0.25), radius: 8, y: 3)
-        .overlay {
-            RoundedRectangle(cornerRadius: 8)
-                .stroke(Color.white.opacity(0.08), lineWidth: 1)
-        }
-    }
-
-    @ViewBuilder
-    private var magicFixEmptyState: some View {
-        VStack(spacing: 32) {
-            Image(systemName: "wand.and.stars")
-                .font(.system(size: 64))
-                .foregroundStyle(.secondary)
-
-            VStack(spacing: 12) {
-                Text("Let's Make Some Magic")
-                    .font(.system(size: 28, weight: .bold))
-
-                Text(String(localized: "editor.empty.subtitle", defaultValue: "Drop a video here or record to see the magic."))
-                    .font(.system(size: 15))
-                    .foregroundColor(.secondary)
-                    .multilineTextAlignment(.center)
-                    .frame(maxWidth: 300)
-            }
-
-            Button(
-                action: { appState.importVideo() },
-                label: {
-                    Label("Import Your First Video", systemImage: "plus.circle.fill")
-                        .font(.headline)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                }
-            )
-            .buttonStyle(.borderedProminent)
-            .tint(.accentColor)
-            .controlSize(.large)
-        }
-    }
-}
-
-// MARK: - Helper Components
-
-struct GridPattern: Shape {
-    func path(in rect: CGRect) -> Path {
-        var path = Path()
-        let step: CGFloat = 40
-
-        for x in stride(from: 0, through: rect.width, by: step) {
-            path.move(to: CGPoint(x: x, y: 0))
-            path.addLine(to: CGPoint(x: x, y: rect.height))
-        }
-
-        for y in stride(from: 0, through: rect.height, by: step) {
-            path.move(to: CGPoint(x: 0, y: y))
-            path.addLine(to: CGPoint(x: rect.width, y: y))
-        }
-
-        return path
-    }
-}
-
-// MARK: - Collapse Button
-
-struct CollapseButton: View {
-    @Binding var isCollapsed: Bool
-    let edge: HorizontalEdge
-
-    var body: some View {
-        Button {
-            withAnimation(.easeInOut(duration: 0.2)) {
-                isCollapsed.toggle()
-            }
-        } label: {
-            Image(systemName: chevronName)
-                .font(.system(size: 10, weight: .semibold))
-                .foregroundColor(.secondary)
-                .frame(width: 16, height: 44)
-                .background(Color(nsColor: .controlBackgroundColor))
-                .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .help(isCollapsed ? String(localized: "action.show_panel", defaultValue: "Show Panel") : String(localized: "action.hide_panel", defaultValue: "Hide Panel"))
-    }
-
-    private var chevronName: String {
-        switch edge {
-        case .leading:
-            return isCollapsed ? "chevron.right" : "chevron.left"
-        case .trailing:
-            return isCollapsed ? "chevron.left" : "chevron.right"
-        }
-    }
-}
-
-// MARK: - Timeline Keyboard Modifier
-// Extracted to help compiler type-check the complex EditorLayoutView body
-
-struct TimelineKeyboardModifier: ViewModifier {
-    let onPrevBoundary: () -> Void
-    let onNextBoundary: () -> Void
-    let onExtendPrev: () -> Void
-    let onExtendNext: () -> Void
-    let onSelectAll: () -> Void
-    let onDeselectAll: () -> Void
-    let onSelectAtPlayhead: () -> Void
-
-    func body(content: Content) -> some View {
-        content
-            .focusable()
-            .focusEffectDisabled()
-            // Up Arrow: Shift = extend selection, plain = previous boundary
-            .onKeyPress(.upArrow, phases: .down) { press in
-                if press.modifiers.contains(.shift) {
-                    onExtendPrev()
-                } else {
-                    onPrevBoundary()
-                }
-                return .handled
-            }
-            // Down Arrow: Shift = extend selection, plain = next boundary
-            .onKeyPress(.downArrow, phases: .down) { press in
-                if press.modifiers.contains(.shift) {
-                    onExtendNext()
-                } else {
-                    onNextBoundary()
-                }
-                return .handled
-            }
-            // Cmd+A = select all
-            .onKeyPress(KeyEquivalent("a"), phases: .down) { press in
-                if press.modifiers.contains(.command) {
-                    onSelectAll()
-                    return .handled
-                }
-                return .ignored
-            }
-            // Escape = deselect all
-            .onKeyPress(.escape) {
-                onDeselectAll()
-                return .handled
-            }
-            // D = select clip at playhead
-            .onKeyPress(KeyEquivalent("d")) {
-                onSelectAtPlayhead()
-                return .handled
-            }
-    }
+    // Video views (thumbnailPreviewView, videoPlayerView, magicFixEmptyState)
+    // are in EditorLayoutView+VideoViews.swift
 }

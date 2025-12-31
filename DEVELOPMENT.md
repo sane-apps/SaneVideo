@@ -86,6 +86,28 @@ This runs automatically when you open the project. If bootstrap fails:
 
 ---
 
+## ⚠️ SOP Internalization Protocol
+
+**The #1 failure mode: skimming this SOP instead of internalizing it.**
+
+**Before coding, explicitly map rules to your task:**
+```
+"For this task:
+- Rule #1 applies because [reason]
+- Rule #7 applies because [reason]"
+```
+
+**While working, actively ask:** "Which rule applies here?"
+- Using an Apple API? → Rule #1 (SDK verification)
+- Failed twice? → Rule #2 (stop guessing, investigate)
+- New file? → xcodegen generate
+
+**The key insight:** The difference between 8/10 and 5/10 sessions is NOT knowing the rules—it's **structuring work around which rules apply to each task**.
+
+Skimming = "I know there are rules" → Internalizing = "Rule #3 applies HERE"
+
+---
+
 ## 0. Critical System Context: macOS 26.2 (Tahoe)
 
 - **OS**: macOS 26.2 (Tahoe). APIs differ from older versions.
@@ -1112,6 +1134,22 @@ The Memory MCP persists valuable knowledge across sessions. Bootstrap automatica
 
 **Post-Fix Checklist Addition:**
 - [ ] Memory updated? (If pattern worth remembering across sessions)
+
+### Session Reviews (MANDATORY)
+
+At session end, store learnings to memory for cross-session improvement.
+
+**Query past learnings at session start:**
+```
+mcp__memory__search_nodes("SaneVideo mistakes patterns")
+```
+
+**Store new learnings at session end** (naming: `SessionReview_YYYY-MM-DD_TaskName`):
+- Tasks completed, build failures, self-rating (1-10)
+- Mistakes made with root cause
+- Patterns discovered (API gotchas, codebase quirks)
+
+This prevents repeating mistakes and builds institutional knowledge.
 
 ### Documentation Priority
 

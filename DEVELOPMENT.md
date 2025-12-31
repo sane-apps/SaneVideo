@@ -528,6 +528,11 @@ log stream --predicate 'subsystem == "com.sanevideo.SaneVideo"' --level debug
 
 # NOTE: macOS filters debug/info logs by default - they're NOT persisted to disk!
 # Use file-based logging above for reliable log capture.
+
+# IMPORTANT: Bundle IDs vs. Logger Subsystem
+# - App bundle ID:      com.sanevideo.app (used for tccutil, signing, permissions)
+# - Logger subsystem:   com.sanevideo.SaneVideo (used for log stream predicate)
+# These are intentionally different!
 ```
 
 #### Common Crash Patterns & Fixes

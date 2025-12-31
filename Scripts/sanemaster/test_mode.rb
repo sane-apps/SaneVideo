@@ -73,7 +73,7 @@ module SaneMasterModules
       puts ''
 
       screenshots_dir = File.join(Dir.pwd, 'Screenshots')
-      log_file = File.expand_path('~/Movies/SaneVideo/SaneVideo_Debug.log')
+      log_file = File.expand_path('~/Library/Containers/com.sanevideo.SaneVideo/Data/Library/Logs/SaneVideo/SaneVideo_Debug.log')
       crash_dir = File.expand_path('~/Library/Logs/DiagnosticReports')
 
       kill_existing_processes
@@ -90,7 +90,7 @@ module SaneMasterModules
     def show_app_logs(args)
       puts '📋 --- [ APPLICATION LOGS ] ---'
 
-      log_file = File.expand_path('~/Movies/SaneVideo/SaneVideo_Debug.log')
+      log_file = File.expand_path('~/Library/Containers/com.sanevideo.SaneVideo/Data/Library/Logs/SaneVideo/SaneVideo_Debug.log')
       tail_count = 50
       follow_mode = args.include?('--follow') || args.include?('-f')
 
@@ -99,7 +99,7 @@ module SaneMasterModules
       end
 
       unless File.exist?(log_file)
-        puts '❌ No log file found at: ~/Movies/SaneVideo/SaneVideo_Debug.log'
+        puts '❌ No log file found at: ~/Library/Containers/com.sanevideo.SaneVideo/Data/Library/Logs/SaneVideo/SaneVideo_Debug.log'
         puts "\nTo generate logs:"
         puts '  1. Rebuild the app: ./Scripts/SaneMaster.rb verify'
         puts '  2. Launch the app: ./Scripts/SaneMaster.rb launch'
@@ -108,7 +108,7 @@ module SaneMasterModules
 
       mtime = File.mtime(log_file)
       size = File.size(log_file) / 1024.0
-      puts '📁 Log file: ~/Movies/SaneVideo/SaneVideo_Debug.log'
+      puts '📁 Log file: ~/Library/Containers/com.sanevideo.SaneVideo/Data/Library/Logs/SaneVideo/SaneVideo_Debug.log'
       puts "   Last updated: #{mtime.strftime('%Y-%m-%d %H:%M:%S')} (#{size.round(1)}KB)"
       puts '─' * 60
 
@@ -197,7 +197,7 @@ module SaneMasterModules
       puts "   📊 Latest test result: #{File.basename(latest)} (#{mtime})"
     end
 
-    def build_app
+    def build_app # rubocop:disable Naming/PredicateMethod -- performs action, not just a query
       puts '4️⃣  Building app...'
       build_success = system('xcodebuild -scheme SaneVideo -destination "platform=macOS" build 2>&1 | grep -E "(BUILD|error:)" | tail -5')
       unless build_success
@@ -234,7 +234,7 @@ module SaneMasterModules
       puts '  ./Scripts/SaneMaster.rb diagnose         # Analyze latest xcresult'
       puts ''
       puts 'All diagnostic locations:'
-      puts '  📋 Debug log:    ~/Movies/SaneVideo/SaneVideo_Debug.log'
+      puts '  📋 Debug log:    ~/Library/Containers/com.sanevideo.SaneVideo/Data/Library/Logs/SaneVideo/SaneVideo_Debug.log'
       puts '  📸 Screenshots:  Screenshots/'
       puts '  💥 Crashes:      ~/Library/Logs/DiagnosticReports/SaneVideo-*.ips'
       puts ''

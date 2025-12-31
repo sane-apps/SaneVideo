@@ -43,16 +43,21 @@ final class SaneAudioEnhancementService {
                           userInfo: [NSLocalizedDescriptionKey: "Audio file too large for enhancement (\(sizeMB)MB exceeds \(limitMB)MB limit)"])
         }
 
-        // Get voice isolation unit on MainActor first (before background work)
+        // Get voice isolation unit if already ready (don't wait - it can hang on some macOS versions)
         let isolationService = ServiceContainer.shared.voiceIsolationService
-        AppLogger.recording.info("🎙️ AudioEnhancement: Preparing Isolation Unit...")
-        await isolationService.prepareIsolationUnit()
-        let isolationUnit: AVAudioUnit? = isolationService.getAudioUnit()
-        if isolationUnit != nil {
-            AppLogger.recording.info("🎙️ AudioEnhancement: Isolation Unit Ready")
-            isolationService.setIntensity(1.0)
+        let isolationUnit: AVAudioUnit?
+        if isolationService.isReady {
+            isolationUnit = isolationService.getAudioUnit()
+            if isolationUnit != nil {
+                AppLogger.recording.info("🎙️ AudioEnhancement: Using pre-initialized Isolation Unit")
+                isolationService.setIntensity(1.0)
+            } else {
+                AppLogger.recording.warning("⚠️ AudioEnhancement: Isolation marked ready but unit is nil")
+            }
         } else {
-            AppLogger.recording.warning("⚠️ AudioEnhancement: Voice isolation unavailable, continuing without it")
+            // Don't wait for isolation - it can hang indefinitely on macOS 15+
+            AppLogger.recording.warning("⚠️ AudioEnhancement: Voice isolation not ready, proceeding without it")
+            isolationUnit = nil
         }
 
         // Run heavy audio processing on background thread to avoid UI freeze
@@ -127,17 +132,13 @@ final class SaneAudioEnhancementService {
 
         engine.attach(eq)
 
-        // B. Voice Isolation (if available)
-        // CRITICAL FIX: Check if unit is already attached before attaching
-        // AVAudioUnit instances can only be attached to one engine at a time
-        // Attempting to attach an already-attached unit will crash
-        if let unit = isolationUnit {
-            if unit.engine != nil {
-                AppLogger.recording.warning("🎙️ AudioEnhancement: Isolation unit already attached to another engine, skipping voice isolation")
-                // Skip voice isolation for this processing - unit is in use elsewhere
-            } else {
-                engine.attach(unit)
-            }
+        // B. Voice Isolation - SKIP for offline rendering
+        // CRITICAL FIX (2025-12-31): AUSoundIsolation does NOT support offline/manual rendering mode.
+        // It's designed for real-time audio processing only. Using it in offline mode causes
+        // scheduleSegment() to hang indefinitely on macOS 15+.
+        // Voice isolation is applied during real-time playback, not during export.
+        if isolationUnit != nil {
+            AppLogger.recording.info("🎙️ AudioEnhancement: Skipping voice isolation (not compatible with offline rendering)")
         }
 
         AppLogger.recording.debug("🎙️ AudioEnhancement: Creating dynamics processor...")
@@ -165,18 +166,10 @@ final class SaneAudioEnhancementService {
         let file = try AVAudioFile(forReading: sourceURL)
         AppLogger.recording.debug("🎙️ AudioEnhancement: Audio file loaded, connecting nodes...")
 
-        // Connect: player -> eq always
+        // Connect: player -> eq -> dynamics (no voice isolation in offline mode)
+        // Voice isolation is only for real-time playback, not offline rendering
         engine.connect(player, to: eq, format: file.processingFormat)
-
-        // Conditionally include voice isolation in the chain
-        // CRITICAL FIX: Only use isolation if it was successfully attached (not already in use)
-        if let unit = isolationUnit, unit.engine == engine {
-            engine.connect(eq, to: unit, format: file.processingFormat)
-            engine.connect(unit, to: dynamics, format: file.processingFormat)
-        } else {
-            // Skip voice isolation: EQ -> Dynamics directly
-            engine.connect(eq, to: dynamics, format: file.processingFormat)
-        }
+        engine.connect(eq, to: dynamics, format: file.processingFormat)
 
         engine.connect(dynamics, to: engine.mainMixerNode, format: file.processingFormat)
 
@@ -204,10 +197,12 @@ final class SaneAudioEnhancementService {
             throw EnhancementError.processingFailed("Audio file has zero length")
         }
 
-        // CRITICAL FIX: Use scheduleSegment instead of scheduleFile for manual rendering
-        // scheduleFile can hang; scheduleSegment is more reliable for offline rendering
+        // CRITICAL FIX (2025-12-31): Use completion-handler version for offline rendering
+        // The async version (await scheduleSegment) waits for playback completion, which never
+        // happens in manual rendering mode, causing an infinite hang.
+        // Use completionHandler: nil to schedule immediately without waiting.
         AppLogger.recording.debug("🎙️ AudioEnhancement: File length: \(file.length) frames, format: \(file.processingFormat)")
-        await player.scheduleSegment(file, startingFrame: 0, frameCount: AVAudioFrameCount(file.length), at: nil)
+        player.scheduleSegment(file, startingFrame: 0, frameCount: AVAudioFrameCount(file.length), at: nil, completionHandler: nil)
         AppLogger.recording.debug("🎙️ AudioEnhancement: Audio segment scheduled")
 
         // CRITICAL FIX: Use defer to ensure engine is ALWAYS stopped and cleaned up
@@ -216,12 +211,9 @@ final class SaneAudioEnhancementService {
             AppLogger.recording.debug("🎙️ AudioEnhancement: Cleaning up engine...")
             player.stop()
             engine.stop()
-            // Detach nodes before stopping engine
+            // Detach nodes (voice isolation is not used in offline rendering)
             engine.detach(player)
             engine.detach(eq)
-            if let unit = isolationUnit {
-                engine.detach(unit)
-            }
             engine.detach(dynamics)
             AppLogger.recording.debug("🎙️ AudioEnhancement: Engine cleanup complete")
         }

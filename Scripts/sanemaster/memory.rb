@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-# rubocop:disable Metrics/ModuleLength
-
 module SaneMasterModules
   # Memory MCP integration for cross-session knowledge
   module Memory
@@ -238,4 +236,3 @@ module SaneMasterModules
     end
   end
 end
-# rubocop:enable Metrics/ModuleLength

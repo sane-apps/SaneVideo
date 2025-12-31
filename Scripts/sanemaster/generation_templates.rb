@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-# rubocop:disable Metrics/ModuleLength
-
 module SaneMasterModules
   # Template management: save, apply, list project configurations
   module GenerationTemplates
@@ -171,4 +169,3 @@ module SaneMasterModules
     end
   end
 end
-# rubocop:enable Metrics/ModuleLength

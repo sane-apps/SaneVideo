@@ -1,5 +1,7 @@
 # SaneVideo Development Guide (SOP)
 
+**Version 2.0** | Last updated: 2025-12-31
+
 > **SINGLE SOURCE OF TRUTH** for all Developers and AI Agents.
 >
 > **SOP = Standard Operating Procedure = This File (DEVELOPMENT.md)**
@@ -132,50 +134,61 @@ While working, ask: "Which rule applies here?"
    - Don't try a third approach — you're likely missing information
    - Go back to Rule #1: verify the API exists in SDK
    - Check documentation or ask user
-   - Why: Third-attempt guessing wastes tokens and often makes things worse
+   - **Context flush**: If 3+ failed attempts pollute the conversation, tell user: "Let's restart fresh — this context may be anchoring me to bad patterns."
 
-3. **WEB SEARCH IS SECONDARY**: Only use web search for understanding *why* or *how* after verifying API exists with SDK. Never use web search to confirm if an API exists.
+3. **VERIFY BEFORE SHIP (NO OVERRIDE)**: If `verify` fails, DO NOT ship.
+   - Explain the failure to user clearly
+   - If user says "just ship it anyway" — require explicit acknowledgment: "Understood, shipping with failing tests at your request"
+   - Document the override in commit message
+
+4. **WEB SEARCH IS SECONDARY**: Only use web search for understanding *why* or *how* after verifying API exists with SDK. Never use web search to confirm if an API exists.
 
 ### Tier 2: Core Workflow (Do these every session)
 
-4. **USE SaneMaster.rb (NOT raw xcodebuild)**: Use `./Scripts/SaneMaster.rb` for verification, setup, and diagnostics. Never use raw `xcodebuild` commands.
+5. **USE SaneMaster.rb (NOT raw xcodebuild)**: Use `./Scripts/SaneMaster.rb` for verification, setup, and diagnostics. Never use raw `xcodebuild` commands.
 
-5. **AUTOMATIC BUILD & LAUNCH WITH LOGGING (CRITICAL)**: After making code changes, you **MUST**:
+6. **AUTOMATIC BUILD & LAUNCH WITH LOGGING (CRITICAL)**: After making code changes, you **MUST**:
    - Build the app: `./Scripts/SaneMaster.rb verify`
    - Kill any running instances: `killall -9 SaneVideo`
    - Launch with live logging: `./Scripts/SaneMaster.rb launch` followed by `./Scripts/SaneMaster.rb logs --follow`
    - **Rationale**: Old instances can hold stale state, and live logs are essential for debugging
 
-6. **VERIFY LOGS ALWAYS**: Run `./Scripts/SaneMaster.rb diagnose --dump` after every build/test to see runtime logs (e.g. `ProjectStore initialized at...`).
+7. **VERIFY LOGS ALWAYS**: Run `./Scripts/SaneMaster.rb diagnose --dump` after every build/test to see runtime logs (e.g. `ProjectStore initialized at...`).
 
 ### Tier 3: Code Quality (Maintain standards)
 
-7. **SAFETY FIRST**: Every bug fix **MUST** have a regression test. Create tests as you go using `./Scripts/SaneMaster.rb gen_test`.
+8. **SAFETY FIRST**: Every bug fix **MUST** have a regression test. Create tests as you go using `./Scripts/SaneMaster.rb gen_test`.
    - **Test Quality**: Tests must verify **actual behavior**, not just that code doesn't crash.
    - **NEVER use placeholders**: `#expect(true)` or `#expect(true, "message")` verify nothing and are forbidden.
    - **NEVER use tautologies**: `#expect(a == true || a == false)` always passes and provides zero value.
    - **Verify specific outcomes**: Test return values, state changes, error types, not just "does not crash".
 
-8. **BUG TRACKING (CRITICAL)**: Document ALL bugs in `BUG_TRACKING.md` immediately when discovered.
+9. **BUG TRACKING (CRITICAL)**: Document ALL bugs in `BUG_TRACKING.md` immediately when discovered.
    - **During session**: Use TodoWrite to track active work (ephemeral)
    - **After session**: Update BUG_TRACKING.md for permanent record
    - Include: Status (🔴 OPEN → 🟡 IN PROGRESS → ✅ FIXED), Screenshot filename, Symptom, File(s), Root cause
    - **Flow**: User reports bug → TodoWrite entry → Fix → Mark complete → Update BUG_TRACKING.md
 
-9. **FILE CREATION = XCODEGEN**: If you create a new file, run `xcodegen generate` immediately.
+10. **FILE CREATION = XCODEGEN**: New file? First identify correct subdirectory:
+   - `Core/` - Models, Protocols, Utilities, Extensions, Engine
+   - `Services/` - Business logic (Audio/, Vision/, Export/, Project/, etc.)
+   - `Views/` - SwiftUI views and components
+   - `State/` - App state management (AppState, ProjectState, etc.)
 
-10. **FILE SIZE LIMITS**: Soft limit **500 lines** (warning), hard limit **800 lines** (error).
+   Then run `xcodegen generate`. Never dump files in root.
+
+11. **FILE SIZE LIMITS**: Soft limit **500 lines** (warning), hard limit **800 lines** (error).
     - **Split by responsibility, not by line count.** A well-constructed 650-line file is preferable to two files that break logical cohesion.
     - **Good splits**: Protocol conformances, feature domains, lifecycle concerns.
     - **Bad splits**: Arbitrary cuts just to hit a number.
 
 ### Tier 4: Meta/System (System improvement)
 
-11. **FIX THE TOOL, NOT THE SYMPTOM**: If you encounter persistent errors or repetitive manual work, STOP. Fix or upgrade `SaneMaster.rb` instead of working around the issue.
+12. **FIX THE TOOL, NOT THE SYMPTOM**: If you encounter persistent errors or repetitive manual work, STOP. Fix or upgrade `SaneMaster.rb` instead of working around the issue.
 
-12. **MISSING TOOL = UPGRADE SANEMASTER**: Do not create separate scripts. Add functionality to `SaneMaster.rb`.
+13. **MISSING TOOL = UPGRADE SANEMASTER**: Do not create separate scripts. Add functionality to `SaneMaster.rb`.
 
-13. **ALWAYS VERIFY CURRENT STATE**: Do NOT rely on training data for project specifics (window names, view hierarchies, API signatures). Use `grep`/`find` to discover the actual codebase state. The codebase changes; training data is stale.
+14. **ALWAYS VERIFY CURRENT STATE**: Do NOT rely on training data for project specifics (window names, view hierarchies, API signatures). Use `grep`/`find` to discover the actual codebase state. The codebase changes; training data is stale.
 
 ---
 
@@ -469,77 +482,19 @@ App problem?
             └─ Then check logs and relaunch
 ```
 
-#### Step 0: The "Nuclear" Relaunch (CRITICAL)
+#### Step 0: Nuclear Relaunch
 
-If the app is malfunctioning or crashing, do NOT just re-launch it. Old zombie processes can pollute logs and hold resources.
+If app is malfunctioning, follow Rule #6 (kill → launch → logs). Don't just re-launch—zombie processes pollute logs.
 
-1. **KILL**: `killall -9 SaneVideo`
-2. **LAUNCH**: `./Scripts/SaneMaster.rb launch`
-3. **LOGS**: Immediately run `log show --predicate 'process == "SaneVideo"' --last 1m` or stream with `log stream`.
-
-#### Step 1: Collect Crash Reports
+#### Step 1: Analyze Crashes
 
 ```bash
-# List all SaneVideo crash reports
-ls -la ~/Library/Logs/DiagnosticReports/ | grep -i sane
-
-# Analyze crash type distribution (PATTERN DETECTION)
-for f in ~/Library/Logs/DiagnosticReports/SaneVideo-*.ips; do
-  grep -o '"type":"[^"]*"' "$f" | head -1
-done | sort | uniq -c | sort -rn
-
-# Get crash signatures (top 4 frames) to identify patterns
-for f in ~/Library/Logs/DiagnosticReports/SaneVideo-*.ips; do
-  python3 -c "
-import json
-import sys
-
-lines = open('$f').read().split('\n')
-for i, line in enumerate(lines):
-    if line.strip() == '{':
-        json_start = i
-        break
-try:
-    data = json.loads('\n'.join(lines[json_start:]))
-    for t in data.get('threads', []):
-        if t.get('triggered'):
-            sig = ' -> '.join([f.get('symbol', '?')[:40] for f in t.get('frames', [])[:4]])
-            print(sig)
-            break
-except: pass
-" 2>/dev/null
-done | sort | uniq -c | sort -rn | head -10
+./Scripts/SaneMaster.rb crashes           # Summary of recent crashes
+./Scripts/SaneMaster.rb crashes --details  # Full stack traces
+./Scripts/SaneMaster.rb crashes --recent   # Most recent crash only
 ```
 
-#### Step 2: Analyze Specific Crash
-
-```bash
-# Detailed analysis of most recent crash
-CRASH=$(ls -t ~/Library/Logs/DiagnosticReports/SaneVideo-*.ips | head -1)
-python3 -c "
-import json
-lines = open('$CRASH').read().split('\n')
-for i, line in enumerate(lines):
-    if line.strip() == '{':
-        json_start = i
-        break
-data = json.loads('\n'.join(lines[json_start:]))
-print('Exception:', data.get('exception', {}))
-print()
-for t in data.get('threads', []):
-    if t.get('triggered'):
-        print('Queue:', t.get('queue', 'unknown'))
-        for i, f in enumerate(t.get('frames', [])[:15]):
-            sym = f.get('symbol', '?')
-            src = f.get('sourceFile', '')
-            line = f.get('sourceLine', '')
-            print(f'  {i}: {sym}')
-            if src: print(f'      {src}:{line}')
-        break
-"
-```
-
-#### Step 3: Check Application Logs
+#### Step 2: Check Application Logs
 
 **File-based logs** (recommended - always available):
 
@@ -770,6 +725,7 @@ SOP: verify passes, logs checked, self-rating provided.
 - **Goal**: Verify system stability and functional output.
 - **Excluded**: Visual test classes (see above) - these require manual inspection
 - **Run**: `./Scripts/SaneMaster.rb verify --ui` (includes functional UI tests, excludes visual tests)
+- **ASSUME NOTHING**: Do not assume UI elements exist just because you wrote the View code. View hierarchies are complex. If element not found: `print(app.debugDescription)` to see actual hierarchy.
 
 ### Tier 3: Performance & Robustness
 

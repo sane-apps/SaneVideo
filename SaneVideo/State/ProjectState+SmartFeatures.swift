@@ -109,7 +109,6 @@ extension ProjectState {
 
             AppLogger.project.info(
                 "✨ Magic Fix: Starting for clip \(clip.id) (\(clip.url.lastPathComponent))")
-            ServiceContainer.shared.toastManager.show("✨ Starting Magic Fix...")
 
             defer {
                 let duration = Date().timeIntervalSince(startTime)
@@ -156,7 +155,6 @@ extension ProjectState {
 
             if options.enhanceAudio {
                 try Task.checkCancellation()
-                processingStatus = "🎙️ Enhancing audio first..."
                 do {
                     // CRITICAL FIX: Add timeout and proper error handling for audio enhancement
                     try await withTimeout(seconds: 600.0) {
@@ -311,7 +309,7 @@ extension ProjectState {
         // CRITICAL FIX: Check for cancellation before starting audio enhancement
         try Task.checkCancellation()
 
-        processingStatus = "🎙️ Enhancing audio..."
+        // Note: processingStatus is updated with progress % in enhanceAudio's callback
         await enhanceAudio(for: clip)
 
         // CRITICAL FIX: Verify enhancement succeeded by checking if enhancedAudioURL was set

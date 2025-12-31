@@ -171,6 +171,9 @@ class ExportEngine: ExportServiceProtocol {
     }
 
     let writer = try AVAssetWriter(outputURL: outputURL, fileType: .mp4)
+    // CRITICAL: Move moov atom to start of file for web streaming fast-start
+    // Without this, the entire file must download before playback begins
+    writer.shouldOptimizeForNetworkUse = true
 
     // Video Input
     let compressionProps: [String: Any] = [

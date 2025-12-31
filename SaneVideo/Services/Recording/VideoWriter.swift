@@ -58,14 +58,21 @@ final class VideoWriter: VideoWriterProtocol {
         assetWriter = try AVAssetWriter(outputURL: outputURL, fileType: .mp4)
         assetWriter?.shouldOptimizeForNetworkUse = true
 
-        // Create format hint for 32BGRA pixel format
+        // Create format hint with NCLC color space metadata for proper playback
+        // Without these tags, videos may appear "washed out" in some players
         var pixelFormatDescription: CMFormatDescription?
+        let colorExtensions: [CFString: Any] = [
+            // ITU-R BT.709 - Standard for HD video (sRGB compatible)
+            kCMFormatDescriptionExtension_ColorPrimaries: kCMFormatDescriptionColorPrimaries_ITU_R_709_2,
+            kCMFormatDescriptionExtension_TransferFunction: kCMFormatDescriptionTransferFunction_ITU_R_709_2,
+            kCMFormatDescriptionExtension_YCbCrMatrix: kCMFormatDescriptionYCbCrMatrix_ITU_R_709_2
+        ]
         CMVideoFormatDescriptionCreate(
             allocator: kCFAllocatorDefault,
             codecType: kCVPixelFormatType_32BGRA,
             width: Int32(targetSize.width),
             height: Int32(targetSize.height),
-            extensions: nil,
+            extensions: colorExtensions as CFDictionary,
             formatDescriptionOut: &pixelFormatDescription
         )
 

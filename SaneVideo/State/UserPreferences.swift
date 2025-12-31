@@ -10,6 +10,8 @@ import Combine
 import SwiftUI
 
 /// Manages persistent user preferences using UserDefaults
+/// SWIFT 6 FIX: @MainActor required for UI-driving state (SwiftUI views read preferences)
+@MainActor
 @Observable
 class UserPreferences {
 

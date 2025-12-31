@@ -361,3 +361,52 @@
 ---
 
 *Last Updated: 2025-12-29 18:00*
+
+---
+
+# Swift 6 Modernization Tracking
+
+## @preconcurrency Imports (11 total)
+
+These imports suppress Swift 6 strict concurrency warnings for Apple frameworks not yet annotated with Sendable. Remove when Apple updates these frameworks.
+
+| File | Import | Reason |
+|------|--------|--------|
+| `State/PlaybackState.swift` | `@preconcurrency import AVFoundation` | AVPlayer, AVPlayerItem not Sendable |
+| `Core/Protocols/ScreenRecorderProtocol.swift` | `@preconcurrency import ScreenCaptureKit` | SCContentFilter, SCStream not Sendable |
+| `Core/Rendering/SaneVideoCompositor.swift` | `@preconcurrency import AVFoundation` | AVAsynchronousVideoCompositionRequest |
+| `Services/Audio/AudioService.swift` | `@preconcurrency import AVFoundation` | AVAudioEngine, AVAudioSession |
+| `Services/Audio/VoiceIsolationService.swift` | `@preconcurrency import AVFoundation` | AVAudioPCMBuffer not Sendable |
+| `Services/Camera/CameraManager.swift` | `@preconcurrency import AVFoundation` | AVCaptureSession not Sendable |
+| `Services/Recording/AudioResampler.swift` | `@preconcurrency import AVFoundation` | AVAudioConverter not Sendable |
+| `Services/Recording/ScreenRecorder+Delegates.swift` | `@preconcurrency import ScreenCaptureKit` | SCStreamOutput delegate callbacks |
+| `Services/Recording/ScreenRecorder.swift` | `@preconcurrency import ScreenCaptureKit` | SCStream, SCContentSharingPicker |
+| `Services/Camera/CameraFramePublisher.swift` | `@preconcurrency import AVFoundation` | AVCaptureVideoDataOutput |
+| `SaneVideoTests/.../CameraConcurrencyRegressionTests.swift` | `@preconcurrency import Combine` | PassthroughSubject edge cases |
+
+**When to remove**: Check Apple release notes for each major Xcode/Swift version. When AVFoundation/ScreenCaptureKit gain Sendable annotations, remove @preconcurrency and fix any new warnings.
+
+**Last audited**: 2025-12-31
+
+---
+
+## Sparkle Auto-Update Configuration
+
+**Status**: ✅ Configured (2025-12-31)
+
+**Public Key**: `QwXgCpqQfcdZJ6BIzLRrBmn2D7cwkNbaniuIkm/DJyQ=`
+**Private Key**: Stored in macOS Keychain (generated via Sparkle's generate_keys)
+
+**Current Settings**:
+- `startingUpdater: false` - Manual checks only (user clicks "Check for Updates")
+- Feed URL: `https://www.sanevideo.app/appcast.xml`
+
+**Before Release**:
+1. ✅ EdDSA key pair generated and configured
+2. ⬜ Set up appcast.xml at https://www.sanevideo.app/appcast.xml
+3. ⬜ Sign updates using `sign_update` tool from Sparkle
+4. ⬜ Optionally re-enable `startingUpdater: true` for automatic checks
+
+**Files**:
+- `SaneVideo/Info.plist` (SUPublicEDKey)
+- `SaneVideo/Services/Update/UpdaterService.swift` (startingUpdater flag)

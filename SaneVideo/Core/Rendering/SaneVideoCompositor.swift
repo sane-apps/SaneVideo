@@ -325,20 +325,7 @@ final class SaneVideoCompositor: NSObject, AVVideoCompositing {
     }
   }
 
-  // MARK: - Kernels
-
-  private static let chromaKeyKernel: CIColorKernel? = {
-    return CIColorKernel(
-      source:
-        """
-        kernel vec4 chromaKey(__sample s, vec3 targetColor, float threshold) {
-          float dist = distance(s.rgb, targetColor);
-          float alpha = step(threshold, dist);
-          return vec4(s.rgb * alpha, alpha);
-        }
-        """
-    )
-  }()
+  // MARK: - Background Effects
 
   private func applyBackgroundEffect(
     _ bgEffect: BackgroundEffect, to image: inout CIImage, visionService: PersonSegmentationService?
@@ -365,16 +352,12 @@ final class SaneVideoCompositor: NSObject, AVVideoCompositing {
         }
       }
     case .chromaKey(let r, let g, let b, let sensitivity):
-      // GPU-accelerated Chroma Key using CIColorKernel to avoid expensive CPU Lut generation
-      if let kernel = SaneVideoCompositor.chromaKeyKernel {
-        let targetVector = CIVector(x: CGFloat(r), y: CGFloat(g), z: CGFloat(b))
-        let threshold = CGFloat(sensitivity)  // Sensitivity is normalized 0-1
-
-        if let output = kernel.apply(
-          extent: image.extent, arguments: [image, targetVector, threshold]) {
-          image = output
-        }
-      }
+      // GPU-accelerated Chroma Key using shared ChromaKeyKernel
+      image = ChromaKeyKernel.apply(
+        to: image,
+        targetColor: (r: Float(r), g: Float(g), b: Float(b)),
+        threshold: sensitivity
+      )
     }
   }
 }

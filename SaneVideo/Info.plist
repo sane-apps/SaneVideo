@@ -36,8 +36,8 @@
 	<key>SUFeedURL</key>
 	<string>https://www.sanevideo.app/appcast.xml</string>
 	<key>SUPublicEDKey</key>
-	<string>REPLACE_WITH_GENERATED_PUBLIC_KEY</string>
-	<!-- NOTE: Run ./bin/generate_keys from Sparkle package to generate the actual EdDSA key -->
+	<string>QwXgCpqQfcdZJ6BIzLRrBmn2D7cwkNbaniuIkm/DJyQ=</string>
+	<!-- Private key stored in macOS Keychain (generated 2025-12-31) -->
 	<!-- For launch: Manual check only (no automatic checks enabled) -->
 </dict>
 </plist>

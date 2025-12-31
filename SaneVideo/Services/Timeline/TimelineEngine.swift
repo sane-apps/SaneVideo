@@ -12,6 +12,8 @@ import Metal
 
 /// A service responsible for composing multiple VideoClips into a single playable asset.
 /// Inspired by the "Cabbage" library concept of a timeline composition.
+/// SWIFT 6 FIX: @MainActor for consistent isolation (composePlayerItem already @MainActor)
+@MainActor
 class TimelineEngine {
 
     // Default transition duration (reserved for future use)
@@ -20,7 +22,6 @@ class TimelineEngine {
     /// Composes a project's timeline into a single AVPlayerItem with transitions and overlays.
     /// - Parameter project: The project containing the timeline to compose.
     /// - Returns: An AVPlayerItem ready for playback.
-    @MainActor
     func composePlayerItem(for project: VideoProject) async throws -> AVPlayerItem {
         // Guard: Empty timeline (no tracks or no clips in tracks)
         let hasClips = project.timeline.tracks.contains { !$0.clips.isEmpty }

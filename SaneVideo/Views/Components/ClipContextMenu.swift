@@ -9,6 +9,10 @@ import SwiftUI
 import AppKit
 
 /// Context menu for TimelineClipView
+/// 2025-12-31: Simplified to remove duplicates. Use canonical locations instead:
+/// - Smart Crop → VideoSection in inspector
+/// - Auto-Framing → VideoSection in inspector
+/// - Find Highlights → AudioSection in inspector
 struct ClipContextMenu: View {
     let clip: VideoClip
 
@@ -17,11 +21,8 @@ struct ClipContextMenu: View {
     var onRemoveSilence: (() -> Void)?
     var onRemoveFillers: (() -> Void)?
     var onGenerateCaptions: (() -> Void)?
-    var onSmartCrop: ((CGFloat) -> Void)?
-    var onAutoFrame: (() -> Void)?
     var onFindGestures: (() -> Void)?
     var onPrivacyBlur: (() -> Void)?
-    var onFindHighlights: (() -> Void)?
     var onRelink: (() -> Void)?
     var onDeleteFile: (() -> Void)?
     var onSetTransition: ((TransitionType) -> Void)?
@@ -40,41 +41,22 @@ struct ClipContextMenu: View {
 
             Divider()
 
-            // MARK: - Audio Submenu
+            // MARK: - Quick Cleanup (Simplified - 2025-12-31)
+            // Full options available in Magic Fix inspector section
+            Button(action: { onRemoveSilence?() }, label: {
+                Label(String(localized: "clip.menu.remove_silence", defaultValue: "Remove Silence"), systemImage: "waveform.path")
+            })
+            .accessibilityIdentifier("clip.menu.remove_silence")
+
+            Button(action: { onRemoveFillers?() }, label: {
+                Label(String(localized: "clip.menu.remove_fillers", defaultValue: "Remove Filler Words"), systemImage: "text.badge.minus")
+            })
+            .disabled(clip.captions.isEmpty)
+            .accessibilityIdentifier("clip.menu.remove_fillers")
+
+            // MARK: - Vision Analysis (unique features only)
+            // Smart Crop & Auto-Framing moved to VideoSection inspector
             Menu {
-                Button(action: { onRemoveSilence?() }, label: {
-                    Label(String(localized: "clip.menu.remove_silence", defaultValue: "Remove Silence (Sane Cut)"), systemImage: "waveform.path")
-                })
-                .accessibilityIdentifier("clip.menu.remove_silence")
-
-                Button(action: { onRemoveFillers?() }, label: {
-                    Label(String(localized: "clip.menu.remove_fillers", defaultValue: "Remove Filler Words"), systemImage: "text.badge.minus")
-                })
-                .disabled(clip.captions.isEmpty)
-                .accessibilityIdentifier("clip.menu.remove_fillers")
-
-                Button(action: {
-                    onFindHighlights?()
-                    AppLogger.project.info("Find Highlights requested for clip")
-                }, label: {
-                    Label(String(localized: "clip.menu.find_highlights", defaultValue: "Find Highlights"), systemImage: "hands.clap")
-                })
-                .accessibilityIdentifier("clip.menu.find_highlights")
-            } label: {
-                Label(String(localized: "clip.menu.audio", defaultValue: "Audio"), systemImage: "waveform")
-            }
-
-            // MARK: - Vision Submenu
-            Menu {
-                smartCropSubmenu
-                Button(action: {
-                    onAutoFrame?()
-                    AppLogger.project.info("Auto-Frame requested for clip")
-                }, label: {
-                    Label(String(localized: "clip.menu.center_face", defaultValue: "Center Face"), systemImage: "person.crop.rectangle")
-                })
-                .accessibilityIdentifier("clip.menu.center_face")
-
                 Button(action: {
                     onFindGestures?()
                     AppLogger.project.info("Find Gestures requested for clip")
@@ -91,7 +73,7 @@ struct ClipContextMenu: View {
                 })
                 .accessibilityIdentifier("clip.menu.privacy_blur")
             } label: {
-                Label(String(localized: "clip.menu.vision", defaultValue: "Vision"), systemImage: "eye")
+                Label(String(localized: "clip.menu.vision", defaultValue: "Vision Analysis"), systemImage: "eye")
             }
 
             // MARK: - Captions
@@ -120,45 +102,6 @@ struct ClipContextMenu: View {
                 Label(String(localized: "clip.menu.delete_disk", defaultValue: "Delete from Disk..."), systemImage: "trash.slash")
             })
             .accessibilityIdentifier("clip.menu.delete_disk")
-        }
-    }
-
-    private var smartCropSubmenu: some View {
-        Menu {
-            Button(action: {
-                onSmartCrop?(9.0 / 16.0)
-                AppLogger.project.info("Smart Crop 9:16 requested")
-            }, label: {
-                Label(String(localized: "clip.menu.smart_crop.9_16", defaultValue: "9:16 (TikTok/Reels)"), systemImage: "rectangle.portrait")
-            })
-            .accessibilityIdentifier("clip.menu.smart_crop.9_16")
-
-            Button(action: {
-                onSmartCrop?(1.0)
-                AppLogger.project.info("Smart Crop 1:1 requested")
-            }, label: {
-                Label(String(localized: "clip.menu.smart_crop.1_1", defaultValue: "1:1 (Instagram)"), systemImage: "square")
-            })
-            .accessibilityIdentifier("clip.menu.smart_crop.1_1")
-
-            Button(action: {
-                onSmartCrop?(16.0 / 9.0)
-                AppLogger.project.info("Smart Crop 16:9 requested")
-            }, label: {
-                Label(String(localized: "clip.menu.smart_crop.16_9", defaultValue: "16:9 (YouTube)"), systemImage: "rectangle")
-            })
-            .accessibilityIdentifier("clip.menu.smart_crop.16_9")
-
-            Button(action: {
-                onSmartCrop?(21.0 / 9.0)
-                AppLogger.project.info("Smart Crop 21:9 requested")
-            }, label: {
-                Label(String(localized: "clip.menu.smart_crop.21_9", defaultValue: "21:9 (Cinematic)"), systemImage: "rectangle.ratio.16.to.9")
-            })
-            .accessibilityIdentifier("clip.menu.smart_crop.21_9")
-
-        } label: {
-            Label(String(localized: "clip.menu.smart_crop", defaultValue: "Smart Crop"), systemImage: "crop.rotate")
         }
     }
 

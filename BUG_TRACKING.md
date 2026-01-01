@@ -38,6 +38,21 @@ Files approaching limits (monitor for refactoring):
 - **Files**: `Services/Audio/SaneAudioEnhancementService.swift`
 - **Result**: Audio enhancement now completes in ~1 second (was hanging indefinitely)
 
+### Incomplete UI Refactor - Version Mismatch
+- **Status**: FIXED (2025-12-31)
+- **Symptom**: Running app shows old UI (Video/Audio tabs) instead of new UI (Media/Transcript/Projects tabs)
+- **Root Cause**: UI refactor was partially done but NEVER COMMITTED to git:
+  - `CaptionsSection.swift` - Simplified to quick access (uncommitted)
+  - `TranscriptionEditorView.swift` - Became "Unified Captions Hub" (uncommitted)
+  - `SidebarView.swift` - NOT changed (Magic Fix still on left)
+  - `StylesInspectorView.swift` - NOT changed (Captions still on right)
+- **Intended Refactor**:
+  1. Move full caption editing from RIGHT inspector → LEFT sidebar (Transcript tab)
+  2. Remove Magic Fix button from LEFT sidebar Quick Actions
+  3. Simplify Captions section in RIGHT inspector to quick-access only
+- **Fix Applied**: Complete the refactor and commit all changes
+- **Files**: `SidebarView.swift`, `StylesInspectorView.swift`, `CaptionsSection.swift`, `TranscriptionEditorView.swift`
+
 ### Screen Recording Permission Dialog Regression
 - **Status**: FIXED (2025-12-31)
 - **Symptom**: Permission dialog appears on every clean build despite permission being granted
@@ -46,16 +61,260 @@ Files approaching limits (monitor for refactoring):
 - **Files**: `Services/Permissions/PermissionManager.swift`, `Services/Recording/ScreenRecorder.swift`
 
 ### Project File Corruption
-- **Status**: ENHANCED LOGGING ACTIVE
-- **Last Occurrence**: 2025-12-30
-- **Root Cause**: Missing vs corrupted files not distinguished
-- **Applied Fixes**:
-  - JSON structure validation on save
-  - Toast notification on backup recovery
-  - Enhanced error logging
-- **Remaining Work**:
-  - [ ] Distinguish "missing" vs "corrupted" in user messaging
-  - [ ] Clean stale project references on startup
+- **Status**: FIXED (2025-12-31)
+- **Last Occurrence**: 2025-12-30 (specific file: 3054218B-9F22-439E-A9FC-D2980ED22749.svproj)
+- **Root Cause**: Corrupted `.svproj` files with invalid JSON remained in the projects folder, causing error toast on every app launch
+- **Applied Fixes** (in `Services/Project/ProjectStore.swift`):
+  1. JSON structure validation on save (atomic write + verify decode)
+  2. Backup creation before overwrite (`.svproj.backup`)
+  3. Enhanced error logging to distinguish "missing" vs "corrupted"
+  4. Automatic backup recovery when main file is corrupted
+  5. **NEW**: `quarantineCorruptedFile()` function (lines 382-415) - moves corrupted files to `.quarantine/` folder with timestamp, prevents repeated error toasts
+  6. Silent skip for missing files (no error toast for deleted files)
+- **Verification** (2025-12-31):
+  - All 11 current `.svproj` files validated as valid JSON
+  - The specific corrupted file (3054218B) is no longer present (quarantined or deleted)
+  - No `.quarantine/` directory exists (no recent quarantines)
+  - 176 legacy `.sanevideoproject` files exist but are ignored by ProjectStore (only loads `.svproj`)
+- **Architecture Note**: Two file extensions in use:
+  - `.svproj` - Local project files (loaded by ProjectStore)
+  - `.sanevideoproject` - iCloud sync/backup files (managed by SyncManager)
+
+### Audio/Video Timeline Desync After Magic Fix
+- **Status**: FIXED (2025-12-31)
+- **Symptom**: Video and audio playhead completely out of sync after running Magic Fix
+- **Root Cause**: `AudioTrackBuilder` used enhanced audio file's duration for segment timing, but enhanced audio may have slightly different duration than original video due to 44100Hz AAC encoding. The `removedRanges` are defined in original video timing, causing cumulative drift.
+- **Fix Applied**: Use `clip.duration` (original video duration) for segment timing in AudioTrackBuilder, not the enhanced audio's duration
+- **Files**: `Core/Engine/AudioTrackBuilder.swift:44-49`
+
+### Captions Not Showing in Transcript Tab
+- **Status**: FIXED (2025-12-31)
+- **Symptom**: Magic Fix generates captions successfully, but Transcript sidebar tab shows empty state
+- **Root Cause**: `TranscriptionEditorView` used `@Binding var selectedClip` which pointed to a stale copy. When captions were updated via `ProjectState.applyCaptions()`, the binding wasn't refreshed.
+- **Fix Applied**: Added `currentClip` computed property that fetches fresh clip from project by ID (matches pattern in `StylesInspectorView.validatedClip`)
+- **Files**: `Views/Components/TranscriptionEditorView.swift:19-35`
+
+### Duplicate Toast Notifications
+- **Status**: FIXED (2025-12-31)
+- **Symptom**: Multiple duplicate toast notifications appearing during Magic Fix operations
+- **Root Cause**: Both `ProjectState+Analysis.swift` and `ProjectState+Audio.swift` were showing toasts for the same events (transcription start, progress)
+- **Fix Applied**: Removed redundant toasts, keep only `processingStatus` for progress updates (reduces notification spam)
+- **Files**: `State/ProjectState+Analysis.swift:229-252`, `State/ProjectState+Audio.swift:259`
+
+### GlobalHotkeyManager Memory Leak
+- **Status**: FIXED (2025-12-31)
+- **Symptom**: GlobalHotkeyManager never deallocates, event handlers remain active after window closes
+- **Root Cause**: `Unmanaged.passRetained(self)` at line 32 increments retain count, but deinit never calls `retainedSelf?.release()` to balance it
+- **File(s)**: `Core/GlobalHotkeyManager.swift:32, 113-116`
+- **Fix Applied**: Added `retainedSelf?.release()` in deinit before `RemoveEventHandler`
+
+### Audio Click on Short Clips (0.05-0.15s)
+- **Status**: FIXED (2025-12-31)
+- **Symptom**: Audible click/pop at the end of short audio clips
+- **Root Cause**: Fade-out logic at line 104 only applies if `playDuration > 3 * fadeDuration (0.15s)`. Clips between 0.05-0.15s get fade-in but NO fade-out, causing abrupt cutoff.
+- **File(s)**: `Core/Engine/AudioTrackBuilder.swift:104-111, 222-237`
+- **Fix Applied**: Changed threshold from 3x to 2x fadeDuration, added proportional fade-out calculation for clips just above threshold. Now clips > 0.10s get proper fade-out.
+- **Regression Test**: `SaneVideoTests/Regression/AudioClickRegressionTests.swift`
+
+### ServiceContainer Synchronous Init (Startup Bottleneck)
+- **Status**: ARCHITECTURAL DEBT (2025-12-31)
+- **Symptom**: Slow app launch, memory spike on first ServiceContainer access
+- **Root Cause**: `private init()` at lines 123-205 initializes **40+ services synchronously**. First access to ANY service (even just permissions) loads VisionOrchestrator, CameraManager, ALL ML services.
+- **File(s)**: `Core/DI/ServiceContainer.swift:123-205`
+- **Fix Required**: Lazy initialization - only initialize services when first accessed
+
+### ControlsKit UI/Architecture Coupling
+- **Status**: ARCHITECTURAL DEBT (2025-12-31)
+- **Symptom**: SwiftUI Previews crash or hang for any view using IconCircleButton
+- **Root Cause**: `IconCircleButtonStyle` directly accesses `ServiceContainer.shared.hapticsManager` at lines 157, 162. UI component depends on global service container.
+- **File(s)**: `Core/ControlsKit.swift:157, 162`
+- **Fix Required**: Inject haptics via environment or make it optional for previews
+
+### Project File Corrupted Toast on Launch
+- **Status**: FIXED (2025-12-31)
+- **Screenshot**: Screenshot 2025-12-31 at 6.05.41 PM.png
+- **Symptom**: Toast shows "Project file corrupted: 3054218B-9F22-439E-A9FC-D2980ED22749.svproj" on app launch
+- **Root Cause**: A `.svproj` file existed on disk but contained invalid JSON. After showing the corrupted toast, the file remained in place, causing the toast to reappear on every launch.
+- **File(s)**: `Services/Project/ProjectStore.swift:382-415`
+- **Fix Applied**: Added `quarantineCorruptedFile()` function that moves corrupted files to `.quarantine/` folder after showing the error toast. This prevents repeated toasts on subsequent launches. Files are moved (not deleted) so users can attempt manual recovery if needed.
+- **Note**: Missing files (file doesn't exist) are already handled gracefully and silently skipped (line 101-106).
+
+### Pipeline Audit Fixes (2025-12-31)
+- **Status**: FIXED (2025-12-31)
+- **Origin**: PIPELINE_AUDIT.md "Fix-these-first" claims verified and fixed
+
+#### P0: Privacy Blur Leaks Across Clips
+- **Symptom**: Privacy blur regions from one clip appear on adjacent clips
+- **Root Cause**: Privacy regions weren't filtered by composition time in SaneVideoCompositor
+- **Fix Applied**: Added `where range.containsTime(request.compositionTime)` filter
+- **File**: `Core/Rendering/SaneVideoCompositor.swift:210`
+
+#### P0: Wrong Clip Transform Selection
+- **Symptom**: Transform from wrong clip applied, causing incorrect positioning/scaling
+- **Root Cause**: `.first(where:)` found matching trackID but not for correct time range
+- **Fix Applied**: Iterate and use `getTransformRamp(for: request.compositionTime)` to find valid instruction
+- **File**: `Core/Rendering/SaneVideoCompositor.swift:218-230`
+
+#### P1: Enhanced Audio Temp File Cleanup
+- **Symptom**: Enhanced audio URL persisted in project but temp file deleted, causing playback errors
+- **Root Cause**: Project hydration didn't validate enhancedAudioURL existence
+- **Fix Applied**: Added validation in `hydrateProject()` - clears URL if file missing, falls back to original
+- **File**: `Services/Project/ProjectFileManager.swift:297-305`
+
+#### P1: 4K Export Transform Mismatch
+- **Symptom**: 4K exports have incorrect transforms baked at 1080p resolution
+- **Root Cause**: `CompositionBuilder.build()` hardcoded 1080p renderSize, not export resolution
+- **Fix Applied**: Added `renderSize` parameter, `ExportCompositor` now passes export resolution
+- **Files**: `Core/Engine/CompositionBuilder.swift:26`, `Services/Export/ExportCompositor.swift:17-19`
+
+#### P2: Semantic Gating Mis-timed
+- **Symptom**: Gating (mute non-speech) regions applied at wrong times after cuts
+- **Root Cause**: Gating computed per-segment instead of once per clip, file time not mapped to composition time
+- **Fix Applied**: Pre-compute gating once per clip, map file time to composition time with speed scaling
+- **File**: `Core/Engine/AudioTrackBuilder.swift:57-61, 123-184`
+
+#### P2: Batch Magic Fix Cancel/Undo Confusion
+- **Symptom**: Cancel only stops latest operation, undo creates many small entries
+- **Root Cause**: Each `performMagicFix` created own undo group and overwrote `currentProcessingTask`
+- **Fix Applied**: Added `isBatchOperation` flag - batch uses single "Magic Fix All" undo group
+- **Files**: `State/ProjectState+SmartFeatures.swift:92-113, 262-266`, `State/ProjectState+Timeline.swift:203-206, 223`
+
+---
+
+### Pipeline Audit - Additional Findings (2026-01-01)
+
+#### P2: Waveform vs Enhanced Audio Mismatch
+- **Status**: OPEN
+- **Symptom**: Waveform visualization shows original audio, but playback/export uses enhanced audio (if available)
+- **Root Cause**: `WaveformService.generateWaveform()` uses `clip.url` only (line 94), but `AudioTrackBuilder` uses `clip.enhancedAudioURL ?? clip.url` (line 38)
+- **Impact**: UI shows waveform for original audio, but user hears enhanced audio → confusing mismatch
+- **Files**: `Services/Audio/WaveformService.swift:94`, `Core/Engine/AudioTrackBuilder.swift:38`
+- **Fix Required**: WaveformService should use `clip.enhancedAudioURL ?? clip.url` to match playback/export behavior
+
+#### P3: Sample Rate Assumptions Across App
+- **Status**: ARCHITECTURAL DEBT
+- **Observation**: Mixed sample rate assumptions (48k for recording/system audio, 44.1k for enhancement/export/waveform)
+- **Potential Impact**: Subtle A/V drift, duration mismatches, gating window misalignment
+- **Files**: `Services/Recording/VideoWriter.swift`, `Services/Recording/ScreenRecorder.swift`, `Services/Audio/SaneAudioEnhancementService.swift`, `Services/Audio/WaveformService.swift:126`
+- **Fix Required**: Audit and standardize sample rates, or document intentional differences
+
+#### P3: Multiple Export Implementations Divergence Risk
+- **Status**: MONITOR
+- **Observation**: `ExportEngine` (AVAssetReader/Writer) and `BatchExportService` (AVAssetExportSession) both use `ExportCompositor`, but could diverge if one is modified
+- **Potential Impact**: "Export A looks different than Export B" if implementations drift
+- **Files**: `Services/Export/ExportEngine.swift`, `Services/Export/BatchExportService.swift`, `Services/Export/ExportCompositor.swift`
+- **Fix Required**: Ensure both paths use same composition/transform logic (currently both use ExportCompositor, so risk is low)
+
+#### P3: NotificationCenter Magic Fix Triggers (Multi-Window Risk)
+- **Status**: MONITOR
+- **Observation**: Magic Fix triggered via `NotificationCenter` ("TriggerMagicFix", "TriggerMagicFixAll"). Multiple views/windows subscribe
+- **Potential Impact**: If multiple windows exist, same operation could run multiple times
+- **Files**: `SaneVideoApp.swift:109`, `Views/EditorLayoutView.swift:95, 108`, `Views/SidebarView.swift:34`
+- **Fix Required**: Verify if ProjectState operations are idempotent or add guard to prevent duplicate execution
+
+---
+
+### No Audio on Playback (Volume = 0)
+- **Status**: FIXED (2025-12-31)
+- **Symptom**: Recording captures audio (verified with ffprobe: aac, 48kHz, 2 channels), but playback is silent
+- **Root Causes Identified**:
+  1. `RealTimeAudioProcessor` (commit 1be93b5, Dec 24) sets `videoPlayer.volume = 0.0` during recording, never restores it
+  2. `AudioLimiter` MTAudioProcessingTap (commit 6dededa, Dec 31) is not compatible with AVPlayer playback
+- **Fixes Applied**:
+  - **Primary Fix**: Bypassed `AudioLimiter.applyLimiter()` in `CompositionBuilder.swift:131`
+    - MTAudioProcessingTap only works reliably for export, not AVPlayer playback
+  - Added diagnostic logging for clip volume in `AudioTrackBuilder.swift:84`
+  - Previous fix: `newPlayer.volume = 1.0` in `PlaybackState.setupPlayer()` at line 252
+- **Files**: `Core/Engine/CompositionBuilder.swift:131`, `Core/Engine/AudioTrackBuilder.swift:84`, `State/PlaybackState.swift:252`
+- **User Verified**: "very good I can hear the audio again!"
+- **Regression Test**: `SaneVideoTests/Regression/AudioPlaybackRegressionTests.swift`
+
+### Test Isolation - Toast During Tests
+- **Status**: FIXED (2025-12-31)
+- **Symptom**: Tests for corrupted project recovery were triggering production toast notifications
+- **Root Cause**: `ProjectStore.swift` showed toasts on corrupted files without checking for test mode
+- **Fix Applied**: Added `isInTestMode` property to ProjectStore, guard toast calls with `if !self.isInTestMode`
+- **Files**: `Services/Project/ProjectStore.swift:14, 19, 37, 52, 219-223, 231-235`
+
+### Test Stale - MagicFixOptions Preset
+- **Status**: FIXED (2025-12-31)
+- **Symptom**: 2 test failures in MagicFixServiceTests for "Pro Clean preset has expected values"
+- **Root Cause**: Test expected `autoEnhance=true, findHighlights=true` but preset was updated to `false` for both (2025-12-31 simplification to 5 core features)
+- **Fix Applied**: Updated test to match current preset values
+- **Files**: `SaneVideoTests/MagicFixServiceTests.swift:507-517`
+
+### Recording Frame Rate Drops to 15fps
+- **Status**: PARTIALLY FIXED (2025-12-31) - Portrait filter fixed, hardware limitation remains
+- **Symptom**: Video recorded at 15fps despite user preference set to 30/60fps (default is 60fps)
+- **Investigation Results** (2025-12-31):
+  - Camera hardware only supports **30fps max** at 1080p (not 60fps)
+  - Log: `Current format: 1920x1080 @ 30fps (max: 30fps)` - camera physically cannot do 60fps
+  - Yet CameraFramePublisher only receives ~15fps from hardware
+- **Root Causes**:
+  1. **FIXED**: Commit 626956d (Dec 25) - format selection only on initial session creation
+  2. **FIXED**: Portrait filter was removing ALL formats (Mac Studio camera only has portrait-capable formats)
+     - All 7 formats had `isPortraitEffectSupported = true`
+     - Filter removed ALL formats, forcing preset fallback which ignores frame duration settings
+     - Fix: Check `isPortraitEffectEnabled` (device active state) instead of `isPortraitEffectSupported` (format capability)
+  3. **REMAINING**: Mac Studio FaceTime HD camera delivers ~15fps despite 30fps configuration
+     - Format correctly selected: 1920x1080 @ 30fps
+     - Frame duration correctly set: `activeVideoMinFrameDuration = 1/30`
+     - Hardware still delivers only ~15fps - may be hardware/driver limitation
+- **Fixes Applied**:
+  - Removed `isPortraitEffectSupported` filter - now uses all camera formats
+  - Format selection now works correctly (not falling back to preset)
+  - Added diagnostic logging in `CameraFramePublisher.swift`
+- **Files**:
+  - `Services/Camera/CameraManager.swift:408-420, 561-575` (portrait filter removed)
+  - `Services/Camera/CameraFramePublisher.swift:16-52` (FPS tracking diagnostics)
+- **Next Steps**:
+  - Test on different Mac hardware to confirm if 15fps is Mac Studio specific
+  - Investigate if Center Stage or other camera effects are reducing frame rate
+  - Check System Preferences > Camera for any active effects
+
+---
+
+### Audio/Video Playback Desync (Lag)
+- **Status**: FIXED (2025-12-31)
+- **Symptom**: Noticeable lag between video and audio during playback, even before any Magic Fix processing
+- **Root Cause**: **DUAL AUDIO PLAYBACK ARCHITECTURE FLAW**
+  1. `AVPlayer` plays composition audio (from CompositionBuilder with AudioTrackBuilder)
+  2. `RealTimeAudioProcessor` plays SAME audio via AVAudioEngine simultaneously
+  3. `setupForPlayerItem()` called in `Task {}` WITHOUT await - race condition
+  4. `videoPlayer.volume = 0.0` happens async AFTER engine starts - brief double audio
+  5. No playback rate sync - `setPlaybackRate()` only affects video, not audio engine
+- **Fix Applied**: Disabled `RealTimeAudioProcessor` entirely in `PlaybackState.swift`
+  - Commented out setup, play, pause, seek, and cleanup calls
+  - Audio now comes from composition only (properly synced with video)
+  - Effects still applied during export via AudioMix
+- **Files**: `State/PlaybackState.swift:255-274, 303-305, 353-354, 360-361, 375-376`
+- **TODO**: Re-implement RealTimeAudioProcessor properly with single audio source architecture
+
+### Recording Disappears (Error -16364)
+- **Status**: FIXED (2025-12-31)
+- **Symptom**: Recording a video results in it "disappearing" - doesn't launch into editor, toast shows "Recording cancelled or empty"
+- **Root Cause**: `AVAssetWriter` error -16364 ("invalid timestamp") caused by timestamp discontinuities during screen recording with presenter overlay. macOS 14+ can cause timestamps to go backwards when presenter overlay toggles on/off.
+- **Fix Applied**: Added monotonic timestamp enforcement in `VideoWriter.swift`:
+  - Track `lastWrittenVideoTime`, `lastWrittenMicTime`, `lastWrittenSystemAudioTime`
+  - Drop frames with timestamps <= last written time (prevents -16364)
+  - Log warning if too many frames are dropped
+- **Files**: `Services/Recording/VideoWriter.swift`
+- **Reference**: [Apple Developer Forums - Presenter overlay causes AVAssetWriter failure](https://developer.apple.com/forums/thread/738846)
+
+### UI Feature Duplication
+- **Status**: FIXED (2025-12-31)
+- **Symptom**: Same features appearing in multiple places (Smart Crop in 3 places, Find Highlights in 2 places, Auto-Framing in 2 places)
+- **Root Cause**: Organic feature growth without consolidation
+- **Fix Applied**:
+  - Magic Fix simplified to 5 core features (Remove Silence, Remove Fillers, Generate Captions, Enhance Speech, Smooth Cuts)
+  - Removed duplicates from ClipContextMenu (Smart Crop, Auto-Framing, Find Highlights)
+  - TranscriptionEditorView expanded as PRIMARY captions location with style picker
+  - CaptionsSection simplified to redirect to Transcript sidebar tab
+- **Canonical Locations**:
+  - Smart Crop, Auto-Framing → VideoSection
+  - Find Highlights → AudioSection
+  - Caption Styling → TranscriptionEditorView (sidebar)
+  - Core Cleanup → SmartToolsSection (Magic Fix)
 
 ---
 

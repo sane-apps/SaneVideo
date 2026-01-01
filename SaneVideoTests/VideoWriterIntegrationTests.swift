@@ -54,7 +54,7 @@ struct VideoWriterIntegrationTests {
         let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("test_\(UUID().uuidString).mp4")
 
         // Act
-        try await writer.start(outputURL: tempURL)
+        try await writer.start(outputURL: tempURL, targetFrameRate: 30.0)
 
         // Assert
         let isWriting = await writer.isWriting
@@ -88,7 +88,7 @@ struct VideoWriterIntegrationTests {
         // Arrange
         let writer = await VideoWriter()
         let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("test_\(UUID().uuidString).mp4")
-        try await writer.start(outputURL: tempURL)
+        try await writer.start(outputURL: tempURL, targetFrameRate: 30.0)
         // Note: We don't call startSession
 
         // Act
@@ -106,7 +106,7 @@ struct VideoWriterIntegrationTests {
         // Arrange
         let writer = await VideoWriter()
         let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("test_\(UUID().uuidString).mp4")
-        try await writer.start(outputURL: tempURL)
+        try await writer.start(outputURL: tempURL, targetFrameRate: 30.0)
         let time = CMTime(value: 0, timescale: 600)
         await writer.startSession(at: time)
 
@@ -126,7 +126,7 @@ struct VideoWriterIntegrationTests {
         // Arrange
         let writer = await VideoWriter()
         let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("test_\(UUID().uuidString).mp4")
-        try await writer.start(outputURL: tempURL)
+        try await writer.start(outputURL: tempURL, targetFrameRate: 30.0)
         let time = CMTime(value: 0, timescale: 600)
         await writer.startSession(at: time)
 
@@ -236,7 +236,7 @@ struct VideoWriterIntegrationTests {
         let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("test_\(UUID().uuidString).mp4")
 
         // Act
-        try await writer.start(outputURL: tempURL)
+        try await writer.start(outputURL: tempURL, targetFrameRate: 30.0)
 
         // Assert - writer is configured
         let isWriting = await writer.isWriting

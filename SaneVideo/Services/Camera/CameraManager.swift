@@ -190,6 +190,12 @@ final class CameraManager: NSObject, CameraServiceProtocol {
     }
 
     if let existingSession = session {
+      // FIX (2025-12-31): Reconfigure format if preferences changed since session was created
+      // Previously, format was only set on initial session creation, causing FPS mismatch
+      let resolution = ServiceContainer.shared.userPreferences.recordingResolution
+      let fps = ServiceContainer.shared.userPreferences.recordingFPS
+      AppLogger.camera.info("📷 Existing session found, checking format matches prefs: \(Int(fps))fps @ \(resolution.displayName)")
+      await reconfigureFormatIfNeeded(session: existingSession, resolution: resolution, fps: fps)
       try await startSessionInternal(existingSession)
       return
     }
@@ -390,12 +396,21 @@ final class CameraManager: NSObject, CameraServiceProtocol {
     AppLogger.camera.info(
       "🎯 Looking for format: \(targetResolution.displayName) @ \(Int(targetFPS))fps")
 
-    let safeFormats = camera.formats.filter { format in
-      if #available(macOS 12.0, *) {
-        return !format.isPortraitEffectSupported
-      }
-      return true
+    // DIAGNOSTIC: Log all available formats to understand what's available
+    AppLogger.camera.info("📷 Camera has \(camera.formats.count) total formats")
+    for (index, format) in camera.formats.enumerated() {
+      let dims = CMVideoFormatDescriptionGetDimensions(format.formatDescription)
+      let maxFps = format.videoSupportedFrameRateRanges.map { $0.maxFrameRate }.max() ?? 0
+      let isPortrait = format.isPortraitEffectSupported
+      AppLogger.camera.debug("  Format \(index): \(dims.width)x\(dims.height) @ max \(Int(maxFps))fps, portrait=\(isPortrait)")
     }
+
+    // NOTE: isPortraitEffectSupported means format CAN do portrait, not that it's ACTIVE.
+    // Modern Mac cameras have ALL formats supporting portrait effect (it's a software feature).
+    // Filtering by isPortraitEffectSupported removes ALL formats on Mac Studio camera.
+    // Use all formats - portrait effect overhead is negligible when not actively enabled.
+    let safeFormats = camera.formats
+    AppLogger.camera.info("📷 Using all \(safeFormats.count) camera formats (portrait filter removed)")
 
     // Sort to find the CLOSEST match to target resolution and FPS
     let sortedSafeFormats = safeFormats.sorted { (f1, f2) -> Bool in
@@ -430,16 +445,24 @@ final class CameraManager: NSObject, CameraServiceProtocol {
       if let safeFormat = bestSafeFormat {
         camera.activeFormat = safeFormat
 
-        // Configure Frame Rate
-        let fpsInt = Int32(targetFPS)
+        // Configure Frame Rate - Check what the format actually supports
+        let supportedRanges = safeFormat.videoSupportedFrameRateRanges
+        let maxSupportedFPS = supportedRanges.map { $0.maxFrameRate }.max() ?? 0
+        let actualFPS = min(targetFPS, maxSupportedFPS)
+
+        let fpsInt = Int32(actualFPS)
         let duration = CMTime(value: 1, timescale: fpsInt)
         camera.activeVideoMinFrameDuration = duration
         camera.activeVideoMaxFrameDuration = duration
 
         let dims = CMVideoFormatDescriptionGetDimensions(safeFormat.formatDescription)
         AppLogger.camera.info(
-          "✅ Selected SAFE format: \(dims.width)x\(dims.height) @ \(targetFPS)fps (No Portrait Support)"
+          "✅ Selected SAFE format: \(dims.width)x\(dims.height) @ \(actualFPS)fps (max supported: \(maxSupportedFPS)fps, requested: \(targetFPS)fps)"
         )
+
+        if actualFPS < targetFPS {
+          AppLogger.camera.warning("⚠️ Camera format only supports \(actualFPS)fps, not requested \(targetFPS)fps")
+        }
       } else {
         AppLogger.camera.warning(
           "⚠️ No specific 'safe' format found. Falling back to standard presets.")
@@ -448,6 +471,18 @@ final class CameraManager: NSObject, CameraServiceProtocol {
         } else {
           session.sessionPreset = .high
         }
+
+        // FIX (2025-12-31): Even with presets, we MUST set frame duration!
+        // Without this, camera defaults to low FPS (often 15fps)
+        let currentFormat = camera.activeFormat
+        let supportedRanges = currentFormat.videoSupportedFrameRateRanges
+        let maxSupportedFPS = supportedRanges.map { $0.maxFrameRate }.max() ?? 30.0
+        let actualFPS = min(targetFPS, maxSupportedFPS)
+        let fpsInt = Int32(actualFPS)
+        let duration = CMTime(value: 1, timescale: fpsInt)
+        camera.activeVideoMinFrameDuration = duration
+        camera.activeVideoMaxFrameDuration = duration
+        AppLogger.camera.info("📷 Preset fallback: configured frame rate to \(Int(actualFPS))fps (max: \(Int(maxSupportedFPS))fps)")
       }
 
       // Note: macOS HDR camera support is handled automatically via format selection
@@ -485,5 +520,98 @@ final class CameraManager: NSObject, CameraServiceProtocol {
     }
 
     return session
+  }
+
+  // MARK: - Format Reconfiguration
+
+  /// Reconfigure camera format if preferences have changed since session was created.
+  /// FIX (2025-12-31): Previously format was only set on initial session creation,
+  /// causing recordings to use wrong FPS (e.g., 15fps instead of 60fps).
+  private func reconfigureFormatIfNeeded(
+    session: AVCaptureSession,
+    resolution: SaneExportSettings.ExportResolution,
+    fps: Double
+  ) async {
+    guard let camera = session.inputs.compactMap({ $0 as? AVCaptureDeviceInput }).first?.device else {
+      AppLogger.camera.warning("⚠️ No camera device found for format reconfiguration")
+      return
+    }
+
+    // Check if current format already matches desired settings
+    let currentFormat = camera.activeFormat
+    let currentDims = CMVideoFormatDescriptionGetDimensions(currentFormat.formatDescription)
+    let currentMaxFPS = currentFormat.videoSupportedFrameRateRanges.map { $0.maxFrameRate }.max() ?? 0
+    let currentMinDuration = camera.activeVideoMinFrameDuration
+    let currentFPS = currentMinDuration.timescale > 0 ? Double(currentMinDuration.timescale) / Double(currentMinDuration.value) : 0
+
+    let targetWidth = Int32(resolution.size.width)
+    let targetHeight = Int32(resolution.size.height)
+
+    AppLogger.camera.info("📷 Current format: \(currentDims.width)x\(currentDims.height) @ \(Int(currentFPS))fps (max: \(Int(currentMaxFPS))fps)")
+    AppLogger.camera.info("📷 Target format: \(targetWidth)x\(targetHeight) @ \(Int(fps))fps")
+
+    // If already at target, skip reconfiguration
+    if currentDims.width == targetWidth && currentDims.height == targetHeight && abs(currentFPS - fps) < 1.0 {
+      AppLogger.camera.info("✅ Camera format already matches preferences, skipping reconfiguration")
+      return
+    }
+
+    AppLogger.camera.info("🔧 Reconfiguring camera format to match preferences...")
+
+    // Find best matching format (same logic as setupSession)
+    // Use all formats - portrait filter was removing ALL formats on Mac Studio
+    let safeFormats = camera.formats
+
+    let sortedFormats = safeFormats.sorted { (f1, f2) -> Bool in
+      let dim1 = CMVideoFormatDescriptionGetDimensions(f1.formatDescription)
+      let dim2 = CMVideoFormatDescriptionGetDimensions(f2.formatDescription)
+      let res1 = Int(dim1.width) * Int(dim1.height)
+      let res2 = Int(dim2.width) * Int(dim2.height)
+      let targetRes = Int(targetWidth) * Int(targetHeight)
+
+      let delta1 = abs(res1 - targetRes)
+      let delta2 = abs(res2 - targetRes)
+
+      if delta1 != delta2 { return delta1 < delta2 }
+
+      let maxFps1 = f1.videoSupportedFrameRateRanges.map { $0.maxFrameRate }.max() ?? 0
+      let maxFps2 = f2.videoSupportedFrameRateRanges.map { $0.maxFrameRate }.max() ?? 0
+
+      if maxFps1 >= fps && maxFps2 < fps { return true }
+      if maxFps2 >= fps && maxFps1 < fps { return false }
+
+      return maxFps1 > maxFps2
+    }
+
+    guard let bestFormat = sortedFormats.first else {
+      AppLogger.camera.warning("⚠️ No suitable format found for reconfiguration")
+      return
+    }
+
+    do {
+      try camera.lockForConfiguration()
+
+      camera.activeFormat = bestFormat
+
+      let supportedRanges = bestFormat.videoSupportedFrameRateRanges
+      let maxSupportedFPS = supportedRanges.map { $0.maxFrameRate }.max() ?? 0
+      let actualFPS = min(fps, maxSupportedFPS)
+
+      let fpsInt = Int32(actualFPS)
+      let duration = CMTime(value: 1, timescale: fpsInt)
+      camera.activeVideoMinFrameDuration = duration
+      camera.activeVideoMaxFrameDuration = duration
+
+      let dims = CMVideoFormatDescriptionGetDimensions(bestFormat.formatDescription)
+      AppLogger.camera.info("✅ Reconfigured format: \(dims.width)x\(dims.height) @ \(Int(actualFPS))fps (max supported: \(Int(maxSupportedFPS))fps)")
+
+      if actualFPS < fps {
+        AppLogger.camera.warning("⚠️ Camera only supports \(Int(actualFPS))fps, not requested \(Int(fps))fps")
+      }
+
+      camera.unlockForConfiguration()
+    } catch {
+      AppLogger.camera.error("❌ Failed to reconfigure camera format: \(error)")
+    }
   }
 }

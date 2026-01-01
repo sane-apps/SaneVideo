@@ -89,14 +89,28 @@ extension ProjectState {
                clip.transform != .identity // Smart crop/auto-framing modify transform
     }
 
-    func performMagicFix(for clip: VideoClip, options: MagicFixOptions) async {
+    /// Performs Magic Fix on a single clip
+    /// - Parameters:
+    ///   - clip: The video clip to process
+    ///   - options: Magic Fix options
+    ///   - isBatchOperation: When true, skips creating undo groups and setting currentProcessingTask
+    ///                       (batch caller handles these at the batch level)
+    func performMagicFix(for clip: VideoClip, options: MagicFixOptions, isBatchOperation: Bool = false) async {
         guard currentProject != nil else { return }
 
         let transactionId = beginTransaction()
         defer { endTransaction(transactionId) }
 
-        beginUndoGroup("Magic Fix")
-        defer { endUndoGroup() }
+        // Only create undo group for standalone operations, not batch
+        // Batch operations use a single "Magic Fix All" undo group at the batch level
+        if !isBatchOperation {
+            beginUndoGroup("Magic Fix")
+        }
+        defer {
+            if !isBatchOperation {
+                endUndoGroup()
+            }
+        }
 
         let task = Task { @MainActor [weak self] in
             guard let self = self else { return }
@@ -245,7 +259,11 @@ extension ProjectState {
             }
         }
 
-        setProcessingTask(task)
+        // Only set currentProcessingTask for standalone operations
+        // Batch operations are cancelled at the batch level (EditorLayoutView.magicFixTask)
+        if !isBatchOperation {
+            setProcessingTask(task)
+        }
 
         do {
             try await task.value

@@ -228,7 +228,7 @@ extension ProjectState {
 
         self.processingStatus = "Transcribing audio..."
         self.processingProgress = 0.0
-        ServiceContainer.shared.toastManager.show("Transcribing audio...")
+        // NOTE: Only use processingStatus for progress - no toast for start (reduces notification spam)
 
         AppLogger.project.info(
             "ProjectState: Requesting caption generation for clip \(clip.id)")
@@ -244,12 +244,11 @@ extension ProjectState {
 
                         if chunk == total {
                             self.processingStatus = "Finishing transcription..."
-                            ServiceContainer.shared.toastManager.show("Finishing transcription...")
+                            // No toast for progress - use processingStatus only
                         } else {
                             let etaText = eta > 60 ? "\(eta / 60)m \(eta % 60)s" : "\(eta)s"
-                            self.processingStatus = "Transcribing... \(chunk)/\(total)"
-                            ServiceContainer.shared.toastManager.show(
-                                "Transcribing... \(chunk)/\(total) (~\(etaText) remaining)")
+                            self.processingStatus = "Transcribing... \(chunk)/\(total) (~\(etaText) remaining)"
+                            // No toast for progress - use processingStatus only
                         }
                     }
                 }

@@ -111,6 +111,10 @@ class GlobalHotkeyManager {
     }
 
     deinit {
+        // CRITICAL FIX (2025-12-31): Release the retained self to balance passRetained in setupHotkeys()
+        // Without this, GlobalHotkeyManager never deallocates (memory leak)
+        retainedSelf?.release()
+
         if let handler = eventHandler {
             RemoveEventHandler(handler)
         }

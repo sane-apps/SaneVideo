@@ -18,7 +18,7 @@ protocol VideoWriterProtocol: AnyObject, Sendable {
     var isReadyForData: Bool { get }
 
     // MARK: - Lifecycle
-    func start(outputURL: URL) throws
+    func start(outputURL: URL, targetFrameRate: Double) throws
     func startSession(at sourceTime: CMTime)
     func finish() async -> URL?
 

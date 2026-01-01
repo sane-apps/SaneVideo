@@ -79,13 +79,14 @@ final class RealTimeAudioProcessor: RealTimeAudioProcessorProtocol {
         do {
             // Start engine
             try newEngine.start()
-            
+
             // Mute AVPlayer audio (we'll play through engine instead)
             videoPlayer.volume = 0.0
-            
-            // Schedule and play audio file
-            await newPlayerNode.scheduleFile(file, at: nil)
-            
+
+            // CRITICAL FIX (2025-12-31): Use completionHandler:nil instead of await
+            // The async version waits for PLAYBACK COMPLETION, not scheduling
+            newPlayerNode.scheduleFile(file, at: nil, completionHandler: nil)
+
             // Sync with video player
             syncWithVideoPlayer()
             
@@ -100,24 +101,25 @@ final class RealTimeAudioProcessor: RealTimeAudioProcessorProtocol {
     /// Sync audio playback with video player
     private func syncWithVideoPlayer() {
         guard let videoPlayer = videoPlayer, let playerNode = playerNode, let audioFile = audioFile else { return }
-        
+
         // Get current video time
         let videoTime = videoPlayer.currentTime()
-        
+
         // Calculate frame position to match video
         let sampleRate = audioFile.processingFormat.sampleRate
         let framePosition = AVAudioFramePosition(videoTime.seconds * sampleRate)
-        
+
         // Schedule from current video position
         let remainingFrames = max(0, AVAudioFrameCount(audioFile.length - framePosition))
         if remainingFrames > 0 {
-            Task {
-                await playerNode.scheduleSegment(audioFile, startingFrame: framePosition, frameCount: remainingFrames, at: nil)
-                
-                // Start if video is playing
-                if videoPlayer.rate != 0 {
-                    playerNode.play()
-                }
+            // CRITICAL FIX (2025-12-31): Use completionHandler:nil instead of await
+            // The async version waits for PLAYBACK COMPLETION, not scheduling completion
+            // This was causing audio to be delayed until the previous segment finished
+            playerNode.scheduleSegment(audioFile, startingFrame: framePosition, frameCount: remainingFrames, at: nil, completionHandler: nil)
+
+            // Start immediately if video is playing
+            if videoPlayer.rate != 0 {
+                playerNode.play()
             }
         }
     }
@@ -135,24 +137,23 @@ final class RealTimeAudioProcessor: RealTimeAudioProcessorProtocol {
     /// Seek audio to match video
     func seek(to time: CMTime) {
         guard let playerNode = playerNode, let audioFile = audioFile, let videoPlayer = videoPlayer else { return }
-        
+
         // Stop current playback
         playerNode.stop()
-        
+
         // Calculate frame position
         let sampleRate = audioFile.processingFormat.sampleRate
         let framePosition = AVAudioFramePosition(time.seconds * sampleRate)
         // FIX: max() BEFORE converting to UInt32 to prevent negative-to-unsigned crash
         let remainingFrames = AVAudioFrameCount(max(0, audioFile.length - framePosition))
-        
-        // Schedule from new position
-        Task {
-            await playerNode.scheduleSegment(audioFile, startingFrame: framePosition, frameCount: remainingFrames, at: nil)
-            
-            // Resume if video is playing
-            if videoPlayer.rate != 0 {
-                playerNode.play()
-            }
+
+        // CRITICAL FIX (2025-12-31): Use completionHandler:nil instead of await
+        // The async version waits for PLAYBACK COMPLETION, causing audio desync
+        playerNode.scheduleSegment(audioFile, startingFrame: framePosition, frameCount: remainingFrames, at: nil, completionHandler: nil)
+
+        // Resume immediately if video is playing
+        if videoPlayer.rate != 0 {
+            playerNode.play()
         }
     }
     

@@ -54,7 +54,7 @@ final class VideoWriterTests: XCTestCase {
         var receivedURL: URL?
 
         await Task { @RecordingActor in
-            sut.startHandler = { url in
+            sut.startHandler = { url, frameRate in
                 startCalled = true
                 receivedURL = url
             }
@@ -63,7 +63,7 @@ final class VideoWriterTests: XCTestCase {
         let outputURL = URL(fileURLWithPath: "/tmp/test_video.mp4")
 
         // Act
-        try await sut.start(outputURL: outputURL)
+        try await sut.start(outputURL: outputURL, targetFrameRate: 30.0)
 
         // Assert
         XCTAssertTrue(startCalled)
@@ -209,7 +209,7 @@ final class VideoWriterTests: XCTestCase {
         let finishedURL = URL(fileURLWithPath: "/tmp/finished.mp4")
 
         await Task { @RecordingActor in
-            sut.startHandler = { _ in states.append("started") }
+            sut.startHandler = { _, _ in states.append("started") }
             sut.startSessionHandler = { _ in states.append("session") }
             sut.finishHandler = {
                 states.append("finished")
@@ -218,7 +218,7 @@ final class VideoWriterTests: XCTestCase {
         }.value
 
         // Act
-        try await sut.start(outputURL: outputURL)
+        try await sut.start(outputURL: outputURL, targetFrameRate: 30.0)
         await sut.startSession(at: .zero)
         let result = await sut.finish()
 

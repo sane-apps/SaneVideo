@@ -302,15 +302,18 @@ struct ComprehensiveFeatureTests {
   func testFilterTypes() {
     // Verify filter-related services are accessible
     let renderingService = ServiceContainer.shared.renderingService
-    // Verify service is accessible by checking it has expected properties
-    // RenderingService has a ciContext property that should be accessible
+
+    // RenderingService must have a valid CIContext for rendering
     let ciContext = renderingService.ciContext
-    // Verify context is accessible (tests runtime behavior, not compilation)
-    // The fact that we can access ciContext means the service is initialized
-    _ = ciContext  // Access to verify it exists
-    // Verify service has expected properties (mtlDevice may be nil on some systems)
-    _ = renderingService.mtlDevice
-    // Test passes if we get here (service is accessible)
+    #expect(ciContext != nil, "RenderingService must have a valid CIContext")
+
+    // mtlDevice may be nil on some systems (software rendering fallback)
+    // but the service itself should be functional
+    let mtlDevice = renderingService.mtlDevice
+    // Log device status for debugging but don't fail - software rendering is valid
+    if mtlDevice == nil {
+      print("Note: RenderingService using software rendering (no Metal device)")
+    }
   }
 
   // MARK: - Audio Feature Tests
@@ -318,12 +321,15 @@ struct ComprehensiveFeatureTests {
   @Test("Audio: Audio service is accessible")
   func testAudioServiceInit() {
     let audioService = ServiceContainer.shared.audioService
-    // Verify service is accessible by checking initial state
-    // AudioService has isRunning property
-    let isRunning = audioService.isRunning
-    // Verify state is accessible (tests runtime behavior, not compilation)
-    // Note: State may vary depending on test order and previous tests
-    #expect(isRunning == true || isRunning == false, "Audio service state should be accessible")
+    // Verify service is accessible via ServiceContainer
+    // AudioService properties per AudioService.swift:17-19:
+    // - isRunning: Bool (default false, may change during tests)
+    // - permissionGranted: Bool (default false)
+    // - currentMicID: String? (default nil)
+
+    // Use permissionGranted as it has a stable default value
+    // In test environment without mic permission, this should be false
+    #expect(audioService.permissionGranted == false, "Audio permission should not be granted by default in test environment")
   }
 
   // MARK: - Camera Feature Tests

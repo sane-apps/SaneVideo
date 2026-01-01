@@ -26,6 +26,15 @@ extension ProjectState {
                 var cumulativeTime = CMTime.zero
                 for clipIndex in 0..<mutableTrack.clips.count {
                     mutableTrack.clips[clipIndex].startTime = cumulativeTime
+
+                    // DEBUG: Catch negative timestamps at creation point
+                    #if DEBUG
+                    if cumulativeTime.seconds < 0 {
+                        AppLogger.project.error("🚨 DEBUG: Negative cumulativeTime \(cumulativeTime.seconds)s at clip \(clipIndex)")
+                        assertionFailure("Negative timestamp detected in recalculateStartTimes - investigate source")
+                    }
+                    #endif
+
                     cumulativeTime = CMTimeAdd(
                         cumulativeTime, mutableTrack.clips[clipIndex].effectiveDuration)
                 }
@@ -62,6 +71,9 @@ extension ProjectState {
 
                 if clip.startTime.seconds < 0 {
                     AppLogger.project.error("Clip has negative startTime: \(clip.id)")
+                    #if DEBUG
+                    assertionFailure("Clip has negative startTime \(clip.startTime.seconds)s - investigate timeline operations")
+                    #endif
                     return false
                 }
 

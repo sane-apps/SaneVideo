@@ -57,23 +57,13 @@ struct ExportEngineTests {
         // Try second export - should throw an error
         // Note: May be alreadyExporting if first export is still running,
         // or compositionFailed if first export already completed (timing-dependent)
-        do {
+        await #expect(throws: (any Error).self, "Concurrent export should throw an error") {
             _ = try await engine.export(
                 project: project,
                 settings: settings,
                 outputURL: outputURL,
                 progressHandler: { _ in }
             )
-            #expect(Bool(false), "Should throw error")
-        } catch let error as ExportError {
-            // ExportError is expected (likely alreadyExporting or other)
-            #expect(true, "Correctly threw ExportError: \(error)")
-        } catch let error as AppError {
-            // AppError is also valid (compositionFailed if first export completed)
-            #expect(true, "Correctly threw AppError: \(error)")
-        } catch {
-            // Any error is acceptable for this timing-dependent test
-            #expect(true, "Threw error: \(error)")
         }
 
         // Cleanup
@@ -124,29 +114,19 @@ struct ExportEngineTests {
 
         // Act & Assert - Should throw error for empty project
         // Can be ExportError.invalidProject or AppError.compositionFailed depending on code path
-        do {
+        await #expect(throws: (any Error).self, "Empty project export should throw an error") {
             _ = try await engine.export(
                 project: project,
                 settings: settings,
                 outputURL: outputURL,
                 progressHandler: { _ in }
             )
-            #expect(Bool(false), "Should throw error for empty project")
-        } catch let error as ExportError {
-            // ExportError is expected
-            #expect(true, "Correctly threw ExportError: \(error)")
-        } catch let error as AppError {
-            // AppError.compositionFailed is also valid for empty projects
-            #expect(true, "Correctly threw AppError: \(error)")
-        } catch {
-            // Any error is acceptable for empty project export
-            #expect(true, "Threw error for empty project: \(error)")
         }
     }
 
     // MARK: - Export Settings Tests
 
-    @Test("Export respects export settings")
+    @Test("Export with settings on empty project throws error")
     func exportRespectsSettings() async {
         // Arrange
         let engine = sut
@@ -156,25 +136,14 @@ struct ExportEngineTests {
         settings.frameRate = 30.0
         let outputURL = FileManager.default.temporaryDirectory.appendingPathComponent("test_export.mp4")
 
-        // Act & Assert - Should attempt export with settings
-        // Note: Will fail due to empty project, but should throw an error
-        do {
+        // Act & Assert - Should throw error for project without clips
+        await #expect(throws: (any Error).self, "Project without clips should throw an error") {
             _ = try await engine.export(
                 project: project,
                 settings: settings,
                 outputURL: outputURL,
                 progressHandler: { _ in }
             )
-            #expect(Bool(false), "Should throw error for empty project")
-        } catch let error as ExportError {
-            // ExportError is expected
-            #expect(true, "Correctly threw ExportError: \(error)")
-        } catch let error as AppError {
-            // AppError.compositionFailed is also valid for empty projects
-            #expect(true, "Correctly threw AppError: \(error)")
-        } catch {
-            // Any error is acceptable for empty project export
-            #expect(true, "Threw error for empty project: \(error)")
         }
     }
 }

@@ -3,7 +3,6 @@
 # ==============================================================================
 # SOP Loop Module - Two-Fix Rule Compliant Auto-Verification
 # ==============================================================================
-# rubocop:disable Metrics/ModuleLength
 
 require 'json'
 require 'fileutils'

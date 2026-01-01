@@ -153,8 +153,8 @@ final class PiPRegressionTests: XCTestCase {
     // Wait a moment for any async cleanup
     try? await Task.sleep(nanoseconds: 100_000_000)
 
-    // If we get here without crashing, the test passes
-    XCTAssertTrue(true, "PiP window close should not crash")
+    // Verify window is no longer visible after close
+    XCTAssertFalse(pipWindow.isVisible, "PiP window should not be visible after close")
   }
 
   /// Regression Test for: "onContentSelected callback chain"

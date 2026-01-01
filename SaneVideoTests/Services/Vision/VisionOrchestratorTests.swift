@@ -191,27 +191,9 @@ struct VisionOrchestratorTests {
         #expect(result1.privacyRegions.count == 2)
     }
 
-    // MARK: - VisionOrchestrator Initialization Tests
-
-    @Test("VisionOrchestrator can be initialized")
-    func orchestratorInitialization() async {
-        // Arrange & Act
-        let orchestrator = VisionOrchestrator()
-
-        // Assert - no crash
-        _ = orchestrator
-        #expect(Bool(true))
-    }
-
-    @Test("VisionOrchestrator warmup completes without error")
-    func orchestratorWarmup() async {
-        // Arrange
-        let orchestrator = VisionOrchestrator()
-
-        // Act - warmup is fire-and-forget, just verify no crash
-        await orchestrator.warmup()
-
-        // Assert - if we get here, warmup didn't crash
-        #expect(Bool(true))
-    }
+    // MARK: - VisionOrchestrator Tests
+    // Note: VisionOrchestrator is an actor with minimal testable state.
+    // Real integration testing requires actual video analysis (see Phase 2 tests).
+    // The data structure tests above (VisionAnalysisConfig, VisionAnalysisResult)
+    // provide meaningful coverage of the orchestrator's data contracts.
 }

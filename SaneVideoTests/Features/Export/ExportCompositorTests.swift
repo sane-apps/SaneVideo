@@ -29,43 +29,23 @@ struct ExportCompositorTests {
         let settings = SaneExportSettings()
 
         // Act & Assert - Should throw error for empty project
-        // Can be ExportError or AppError.compositionFailed depending on code path
-        do {
+        // Can be ExportError or AppError depending on code path
+        await #expect(throws: (any Error).self, "Empty project should throw an error") {
             _ = try await compositor.createComposition(from: project, settings: settings)
-            #expect(Bool(false), "Should throw error for empty project")
-        } catch let error as ExportError {
-            // ExportError is expected
-            #expect(true, "Correctly threw ExportError: \(error)")
-        } catch let error as AppError {
-            // AppError.compositionFailed is also valid
-            #expect(true, "Correctly threw AppError: \(error)")
-        } catch {
-            // Any error is acceptable for empty project
-            #expect(true, "Threw error for empty project: \(error)")
         }
     }
 
-    @Test("Create composition from empty project throws error")
-    func createComposition() async {
+    @Test("Create composition from project without clips throws error")
+    func createCompositionNoClips() async {
         // Arrange
         let compositor = sut
         let project = VideoProject(name: "Test Project")
         let settings = SaneExportSettings()
-        // Note: Empty project will fail, should throw error
+        // Note: Project without clips should fail
 
         // Act & Assert
-        do {
+        await #expect(throws: (any Error).self, "Project without clips should throw an error") {
             _ = try await compositor.createComposition(from: project, settings: settings)
-            #expect(Bool(false), "Should throw error for empty project")
-        } catch let error as ExportError {
-            // ExportError is expected
-            #expect(true, "Correctly threw ExportError: \(error)")
-        } catch let error as AppError {
-            // AppError.compositionFailed is also valid
-            #expect(true, "Correctly threw AppError: \(error)")
-        } catch {
-            // Any error is acceptable for empty project
-            #expect(true, "Threw error for empty project: \(error)")
         }
     }
 
@@ -114,11 +94,9 @@ struct ExportCompositorTests {
         )
 
         // Assert
-        if let videoComposition {
-            #expect(videoComposition.frameDuration.value == 1, "Should set frame duration")
-            #expect(videoComposition.frameDuration.timescale == 60, "Should set 60fps")
-        } else {
-            #expect(Bool(false), "Video composition should not be nil")
-        }
+        // Assert video composition exists and has correct frame rate
+        let unwrappedComposition = try #require(videoComposition, "Video composition should not be nil")
+        #expect(unwrappedComposition.frameDuration.value == 1, "Should set frame duration")
+        #expect(unwrappedComposition.frameDuration.timescale == 60, "Should set 60fps")
     }
 }

@@ -15,32 +15,33 @@ struct ProjectStateUndoRedoTests {
 
     // MARK: - Basic Undo/Redo Tests
 
-    @Test("UndoManager nil does not crash on registerUndo")
-    func undoManagerNilDoesNotCrash() {
+    @Test("registerUndo with nil UndoManager preserves project state")
+    func registerUndoWithNilUndoManager() {
         // Arrange
         let projectState = ProjectState()
         projectState.currentProject = VideoProject(name: "Test")
         // undoManager is nil by default
 
-        // Act - should not crash
+        // Act - call registerUndo when undoManager is nil
         projectState.registerUndo("Test Action")
 
-        // Assert - no crash occurred, project still valid
+        // Assert - project state should be preserved (not corrupted)
         #expect(projectState.currentProject?.name == "Test")
     }
 
-    @Test("UndoManager nil does not crash on beginUndoGroup")
-    func undoManagerNilDoesNotCrashOnGroup() {
+    @Test("beginUndoGroup with nil UndoManager preserves project state")
+    func beginUndoGroupWithNilUndoManager() {
         // Arrange
         let projectState = ProjectState()
         projectState.currentProject = VideoProject(name: "Test")
 
-        // Act - should not crash
+        // Act - call beginUndoGroup/endUndoGroup when undoManager is nil
         projectState.beginUndoGroup("Test Group")
         projectState.endUndoGroup()
 
-        // Assert - no crash occurred
+        // Assert - project state should be preserved
         #expect(projectState.currentProject != nil)
+        #expect(projectState.currentProject?.name == "Test")
     }
 
     @Test("Basic undo restores previous state")
@@ -157,19 +158,21 @@ struct ProjectStateUndoRedoTests {
 
     // MARK: - Edge Cases
 
-    @Test("Undo with no project does not crash")
-    func undoWithNoProjectDoesNotCrash() {
+    @Test("registerUndo with nil project leaves project nil")
+    func registerUndoWithNilProject() {
         // Arrange
         let projectState = ProjectState()
         // currentProject is nil
         let undoManager = UndoManager()
         projectState.undoManager = undoManager
 
-        // Act - should not crash
+        // Act - register undo when no project exists
         projectState.registerUndo("Test")
 
-        // Assert
+        // Assert - project should remain nil (not corrupted or created)
         #expect(projectState.currentProject == nil)
+        // And undo manager should not have anything to undo
+        #expect(undoManager.canUndo == false)
     }
 
     @Test("Rapid sequential edits all tracked for undo")

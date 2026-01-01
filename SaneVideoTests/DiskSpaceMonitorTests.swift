@@ -45,26 +45,31 @@ struct DiskSpaceMonitorTests {
         #expect(monitor.onLowDiskSpace != nil)
     }
 
-    // MARK: - Start/Stop Tests
+    // MARK: - Start/Stop Lifecycle Tests
+    // Note: DiskSpaceMonitor.monitoringTask is private, so we test through observable behavior.
+    // For lifecycle tests, completion without crash/hang IS the assertion.
 
-    @Test("Start begins monitoring")
-    func startBeginsMonitoring() async throws {
+    @Test("Start and stop complete without error")
+    func startAndStopLifecycle() async throws {
         // Arrange
         let monitor = sut
+        var callbackInvoked = false
+        monitor.onLowDiskSpace = { _ in callbackInvoked = true }
 
-        // Act
+        // Act - start monitoring
         monitor.start()
+        try await Task.sleep(nanoseconds: 100_000_000) // 100ms for task to spin up
 
-        // Give time for task to start
-        try await Task.sleep(nanoseconds: 50_000_000)
+        // Assert - verifyDiskSpace should not throw during monitoring
+        // If it throws, the test fails; if it completes, the test passes
+        try monitor.verifyDiskSpace()
 
-        // Assert - monitor should be running (no crash, no immediate error)
-        // We can't easily inspect the private task, but we can stop it
+        // Cleanup
         monitor.stop()
     }
 
-    @Test("Stop halts monitoring")
-    func stopHaltsMonitoring() async throws {
+    @Test("Double stop is idempotent")
+    func doubleStopIsIdempotent() async throws {
         // Arrange
         let monitor = sut
         monitor.start()
@@ -72,37 +77,28 @@ struct DiskSpaceMonitorTests {
 
         // Act
         monitor.stop()
+        monitor.stop() // Second stop should be no-op
 
-        // Assert - should not crash, task should be cancelled
-        // Give time for cancellation to propagate
-        try await Task.sleep(nanoseconds: 50_000_000)
+        // Assert - verifyDiskSpace should not throw after double stop
+        try monitor.verifyDiskSpace()
     }
 
-    @Test("Double stop is safe")
-    func doubleStopIsSafe() async throws {
-        // Arrange
-        let monitor = sut
-        monitor.start()
-
-        // Act
-        monitor.stop()
-        monitor.stop() // Should not crash
-
-        // Assert - no crash
-    }
-
-    @Test("Start after stop restarts monitoring")
+    @Test("Start after stop restarts cleanly")
     func startAfterStopRestarts() async throws {
         // Arrange
         let monitor = sut
         monitor.start()
+        try await Task.sleep(nanoseconds: 50_000_000)
         monitor.stop()
 
-        // Act
+        // Act - restart
         monitor.start()
         try await Task.sleep(nanoseconds: 50_000_000)
 
-        // Assert - should be running again
+        // Assert - verifyDiskSpace should not throw after restart
+        try monitor.verifyDiskSpace()
+
+        // Cleanup
         monitor.stop()
     }
 
@@ -137,18 +133,25 @@ struct DiskSpaceMonitorTests {
     }
 
     // MARK: - Deallocation Tests
+    // Note: This tests deinit behavior - completion without crash IS the assertion.
 
-    @Test("Monitor stops on deallocation")
-    func monitorStopsOnDeallocation() async throws {
+    @Test("Monitor cleans up on deallocation")
+    func monitorCleansUpOnDeallocation() async throws {
         // Arrange
         var monitor: DiskSpaceMonitor? = DiskSpaceMonitor()
         monitor?.start()
         try await Task.sleep(nanoseconds: 50_000_000)
 
-        // Act
+        // Act - deallocate
         monitor = nil
 
-        // Assert - should not crash, task should be cancelled in deinit
+        // Assert - deinit should cancel task without crash
+        // After deallocation, the system should be stable
         try await Task.sleep(nanoseconds: 50_000_000)
+
+        // Verify system is still functional by creating a new monitor
+        // If verifyDiskSpace throws, the test fails
+        let newMonitor = DiskSpaceMonitor()
+        try newMonitor.verifyDiskSpace()
     }
 }

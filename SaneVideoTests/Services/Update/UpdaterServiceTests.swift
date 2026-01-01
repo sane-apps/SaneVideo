@@ -15,39 +15,27 @@ struct UpdaterServiceTests {
     // MARK: - Initialization Tests
 
     @MainActor
-    @Test("UpdaterService initializes without crashing")
+    @Test("UpdaterService initializes with canCheckForUpdates false")
     func updaterServiceInitializes() {
         // Arrange & Act
         let service = UpdaterService()
 
-        // Assert - if we get here, initialization succeeded
-        // canCheckForUpdates starts false until Sparkle is ready
-        #expect(service.canCheckForUpdates == false || service.canCheckForUpdates == true)
+        // Assert - canCheckForUpdates starts false until Sparkle is ready
+        // This is the expected initial state per UpdaterService.swift:21
+        #expect(service.canCheckForUpdates == false, "canCheckForUpdates should be false initially")
     }
 
     @MainActor
-    @Test("UpdaterService canCheckForUpdates is published property")
-    func canCheckForUpdatesIsPublished() {
+    @Test("UpdaterService checkForUpdates can be called")
+    func checkForUpdatesCanBeCalled() {
         // Arrange
         let service = UpdaterService()
 
-        // Assert - canCheckForUpdates should be accessible as a published property
-        // Initial state depends on Sparkle's internal state
-        _ = service.canCheckForUpdates
-        // If we get here without crash, the property exists and is accessible
-    }
-
-    // MARK: - Method Existence Tests
-
-    @MainActor
-    @Test("UpdaterService has checkForUpdates method")
-    func checkForUpdatesMethodExists() {
-        // Arrange
-        let service = UpdaterService()
-
-        // Act & Assert - just verify the method can be called without crashing
-        // In test environment, Sparkle may not have valid appcast
-        // The method should still execute without throwing
+        // Act - call checkForUpdates (in test environment, no actual update check happens)
         service.checkForUpdates()
+
+        // Assert - after calling checkForUpdates, canCheckForUpdates should still be accessible
+        // In test environment without valid appcast, it remains false
+        #expect(service.canCheckForUpdates == false, "canCheckForUpdates should remain false in test environment")
     }
 }

@@ -450,5 +450,29 @@ module SaneMasterModules
       else '⚠️'
       end
     end
+
+    # Check Memory MCP configuration
+    def check_memory_health
+      return { status: :warning, message: 'No .mcp.json' } unless File.exist?('.mcp.json')
+
+      begin
+        mcp = JSON.parse(File.read('.mcp.json'))
+        memory_config = mcp.dig('mcpServers', 'memory')
+
+        return { status: :warning, message: 'Memory MCP not configured' } unless memory_config
+
+        # Memory is MCP-managed (in-process), can't check file directly
+        # Just verify configuration exists
+        { status: :ok, message: 'MCP configured (use mcp__memory__read_graph to check content)' }
+      rescue JSON::ParserError
+        { status: :warning, message: '.mcp.json parse error' }
+      end
+    end
+
+    # Full health check - consolidates quick checks + meta audit
+    def run_health(args = [])
+      # Just run meta - it covers everything
+      run_meta(args)
+    end
   end
 end

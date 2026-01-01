@@ -28,6 +28,8 @@ require_relative 'sanemaster/verify'
 require_relative 'sanemaster/quality'
 require_relative 'sanemaster/sop_loop'
 require_relative 'sanemaster/export'
+require_relative 'sanemaster/meta'
+require_relative 'sanemaster/session'
 
 class SaneMaster
   include SaneMasterModules::Base
@@ -41,6 +43,8 @@ class SaneMaster
   include SaneMasterModules::Quality
   include SaneMasterModules::SOPLoop
   include SaneMasterModules::Export
+  include SaneMasterModules::Meta
+  include SaneMasterModules::Session
 
   # ═══════════════════════════════════════════════════════════════════════════
   # COMMAND REFERENCE - Organized by category for easy discovery
@@ -89,6 +93,8 @@ class SaneMaster
       desc: 'Environment and setup',
       commands: {
         'doctor' => { args: '', desc: 'Check environment health' },
+        'health' => { args: '', desc: 'Quick health check (< 100ms)' },
+        'meta' => { args: '', desc: 'Audit SaneMaster tooling itself' },
         'bootstrap' => { args: '[--check-only]', desc: 'Full environment setup' },
         'setup' => { args: '', desc: 'Install gems and dependencies' },
         'versions' => { args: '', desc: 'Check tool versions' },
@@ -101,7 +107,8 @@ class SaneMaster
       commands: {
         'mc' => { args: '', desc: 'Show memory context' },
         'mr' => { args: '<type> <name>', desc: 'Record new entity' },
-        'mp' => { args: '[--dry-run]', desc: 'Prune stale entities' }
+        'mp' => { args: '[--dry-run]', desc: 'Prune stale entities' },
+        'session_end' => { args: '[--skip-prompts]', desc: 'End session with insight extraction' }
       }
     },
     export: {
@@ -167,6 +174,10 @@ class SaneMaster
     # Environment & Health
     when 'doctor'
       doctor
+    when 'health', 'h'
+      run_health(args)
+    when 'meta', 'tooling', 'audit-self'
+      run_meta(args)
     when 'bootstrap', 'preflight', 'env'
       run_bootstrap(args)
     when 'setup'
@@ -249,6 +260,8 @@ class SaneMaster
       record_memory_entity(args)
     when 'memory_prune', 'mp'
       prune_memory_entities(args)
+    when 'session_end', 'se'
+      session_end(args)
 
     # SOP Loop (Two-Fix Rule Compliant)
     when 'verify_gate', 'vg'
@@ -527,6 +540,14 @@ class SaneMaster
         '--dot' => 'Output in DOT format for visualization'
       },
       examples: ['deps', 'deps --dot > graph.dot']
+    },
+    'session_end' => {
+      usage: 'session_end [--skip-prompts]',
+      description: 'End session with insight extraction (inspired by Auto-Claude)',
+      flags: {
+        '--skip-prompts' => 'Skip interactive prompts, show summary only'
+      },
+      examples: ['session_end', 'se', 'session_end --skip-prompts']
     }
   }.freeze
   # rubocop:enable Lint/UselessConstantScoping

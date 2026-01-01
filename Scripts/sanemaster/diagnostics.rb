@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-# rubocop:disable Metrics/ModuleLength
 module SaneMasterModules
   # Crash analysis, xcresult diagnosis, log analysis
   module Diagnostics

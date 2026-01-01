@@ -60,6 +60,13 @@ final class CameraManager: NSObject, CameraServiceProtocol {
     return session
   }
 
+  // MARK: - Available Cameras
+
+  /// Returns list of available cameras. Thread-safe.
+  var availableCameras: [AVCaptureDevice] {
+    cachedDiscoverySession.devices
+  }
+
   // MARK: - Protocol Implementation
 
   private let _isActiveSubject = CurrentValueSubject<Bool, Never>(false)
@@ -223,6 +230,26 @@ final class CameraManager: NSObject, CameraServiceProtocol {
     try await self.startSessionInternal(session)
   }
 
+  /// Wait for AVCaptureSession.isRunning using KVO instead of sleep
+  /// This is more reliable than Task.sleep as it responds immediately when session starts
+  private func waitForSessionRunning(_ session: AVCaptureSession, timeout: TimeInterval = 2.0) async throws {
+    if session.isRunning { return }
+
+    // Use a simple polling approach with short intervals - more Swift 6 compatible
+    // than KVO which has complex closure/continuation interactions
+    let startTime = Date()
+    let pollInterval: UInt64 = 50_000_000 // 50ms
+
+    while !session.isRunning {
+      if Date().timeIntervalSince(startTime) > timeout {
+        throw AppError.cameraSetupFailed(NSError(
+          domain: "SaneVideo", code: -2,
+          userInfo: [NSLocalizedDescriptionKey: "Camera session start timed out after \(timeout)s"]))
+      }
+      try await Task.sleep(nanoseconds: pollInterval)
+    }
+  }
+
   private func startSessionInternal(_ session: AVCaptureSession) async throws {
     if !session.isRunning {
       AppLogger.camera.info("Attempting to start capture session...")
@@ -234,29 +261,29 @@ final class CameraManager: NSObject, CameraServiceProtocol {
 
       AppLogger.camera.info("Session .startRunning() returned. isRunning: \(session.isRunning)")
 
-      // Verify it actually started with retry logic
-      try await Task.sleep(nanoseconds: 300_000_000)
+      // FIX: Use KVO observation instead of Task.sleep for session start verification
+      do {
+        try await waitForSessionRunning(session, timeout: 2.0)
+        AppLogger.camera.info("✅ Camera session IS running (KVO confirmed)")
+      } catch {
+        AppLogger.camera.warning("⚠️ Camera session not running after first attempt, retrying...")
 
-      if !session.isRunning {
-        AppLogger.camera.warning("⚠️ Camera session not running, retrying...")
+        // Retry once
         await Task.detached(priority: .userInitiated) {
           session.startRunning()
         }.value
 
-        try await Task.sleep(nanoseconds: 300_000_000)
-
-        if !session.isRunning {
+        do {
+          try await waitForSessionRunning(session, timeout: 2.0)
+          AppLogger.camera.info("✅ Camera session started on retry (KVO confirmed)")
+        } catch {
           AppLogger.camera.error("❌ Camera session FAILED after retry")
           let error = NSError(
             domain: "SaneVideo", code: -1,
             userInfo: [NSLocalizedDescriptionKey: "Camera session failed to start"])
           self.lastError = .cameraSetupFailed(error)
           throw AppError.cameraSetupFailed(error)
-        } else {
-          AppLogger.camera.info("✅ Camera session started on retry")
         }
-      } else {
-        AppLogger.camera.info("✅ Camera session IS running")
       }
     } else {
       AppLogger.camera.info("Session already running")

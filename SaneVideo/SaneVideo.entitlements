@@ -18,17 +18,5 @@
 	<array>
 		<string>com.apple.screenCaptureUI</string>
 	</array>
-	<key>com.apple.developer.icloud-container-identifiers</key>
-	<array>
-		<string>iCloud.com.sanevideo.SaneVideo</string>
-	</array>
-	<key>com.apple.developer.icloud-services</key>
-	<array>
-		<string>CloudDocuments</string>
-	</array>
-	<key>com.apple.developer.ubiquity-container-identifiers</key>
-	<array>
-		<string>iCloud.com.sanevideo.SaneVideo</string>
-	</array>
 </dict>
 </plist>

@@ -84,6 +84,7 @@ targets:
       base:
         INFOPLIST_FILE: SaneVideo/Info.plist
         PRODUCT_NAME: SaneVideo
+        PRODUCT_BUNDLE_IDENTIFIER: com.sanevideo.app
         ENABLE_PREVIEWS: YES
         SWIFT_VERSION: 6.2
         SWIFT_STRICT_CONCURRENCY: complete
@@ -92,7 +93,7 @@ targets:
         VALID_ARCHS: arm64
         MTL_ENABLE_APPLE_SILICON_ONLY_OPTIMIZATIONS: YES
         ENABLE_USER_SCRIPT_SANDBOXING: NO
-        CODE_SIGN_IDENTITY: "-"
+        DEVELOPMENT_TEAM: M78L6FXD48
         CODE_SIGN_STYLE: Manual
         CODE_SIGN_INJECT_BASE_ENTITLEMENTS: YES
         # Enforce recommended settings
@@ -108,8 +109,10 @@ targets:
         GCC_PREPROCESSOR_DEFINITIONS: CI_SILENCE_GL_DEPRECATION=1
       configs:
         Debug:
+          CODE_SIGN_IDENTITY: "-"
           CODE_SIGN_ENTITLEMENTS: SaneVideo/SaneVideo.debug.entitlements
         Release:
+          CODE_SIGN_IDENTITY: "Developer ID Application: Stephan Joseph (M78L6FXD48)"
           CODE_SIGN_ENTITLEMENTS: SaneVideo/SaneVideo.entitlements
     preCompileScripts:
       - script: |

@@ -4,6 +4,20 @@ You are working on **SaneVideo**. The following rules are MANDATORY.
 
 ---
 
+## On Session Start (IMMEDIATE - Before anything else)
+
+When you see the bootstrap hook succeeded, **immediately output a brief confirmation toast** to the user:
+
+```
+✅ Ready — Ruby, tools, hooks, MCP servers checked. Memory loaded.
+
+What would you like to work on today?
+```
+
+This confirms you completed startup. Do NOT run health check or memory load silently - the user should see this toast FIRST.
+
+---
+
 ## Before ANY Code Change
 
 - [ ] Verify current state with `grep`/`find` (NOT memory - Rule #13)

@@ -134,6 +134,7 @@ While working, ask: "Which rule applies here?"
    - Don't try a third approach — you're likely missing information
    - Go back to Rule #1: verify the API exists in SDK
    - Check documentation or ask user
+   - **Stopping to investigate IS the win**: The rule prevents tail-chasing (trying the same broken approach 5+ times). Pivoting after failure = compliance, not failure.
    - **Context flush**: If 3+ failed attempts pollute the conversation, tell user: "Let's restart fresh — this context may be anchoring me to bad patterns."
 
 3. **VERIFY BEFORE SHIP (NO OVERRIDE)**: If `verify` fails, DO NOT ship.
@@ -687,6 +688,29 @@ SOP: verify passes, logs checked, self-rating provided.
 - Complex bug fixes requiring multiple verification steps
 - Feature implementations with many requirements
 - Any task where Claude tends to skip SOP steps
+
+**QA Criteria Pattern** (inspired by Auto-Claude):
+
+For structured verification, use explicit acceptance criteria in your prompt:
+
+```bash
+/ralph-loop "TASK: [description]
+
+ACCEPTANCE CRITERIA:
+1. [ ] Build passes: ./Scripts/SaneMaster.rb verify
+2. [ ] App launches without errors: killall -9 SaneVideo && ./Scripts/SaneMaster.rb launch
+3. [ ] No warnings in logs: ./Scripts/SaneMaster.rb logs --follow
+4. [ ] Regression test added (if bug fix)
+5. [ ] Feature works as specified: [specific behavior to verify]
+
+VERIFY EACH CRITERION with actual commands before outputting <promise>QA-PASS</promise>." --completion-promise "QA-PASS" --max-iterations 10
+```
+
+**Key principles**:
+- Each criterion must be verifiable with a command
+- Check boxes `[ ]` make status explicit
+- Don't claim done until ALL boxes can be checked
+- Max iterations prevents infinite loops
 
 **Auto-injection**: SOP context is automatically injected at session start via `.claude/SOP_CONTEXT.md`.
 

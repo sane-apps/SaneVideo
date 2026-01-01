@@ -128,6 +128,45 @@
 
 ---
 
+## Pre-Launch: Hardware Testing Plan
+
+**Date Discussed**: 2025-12-31
+
+**Problem**: Camera records at 15fps on Mac Studio despite 30fps config. Unknown if this is hardware-specific or widespread bug.
+
+**Critical Question**: Does the app work reliably on different Mac hardware?
+
+**Testing Strategy**:
+
+| Approach | Pros | Cons |
+|----------|------|------|
+| Wife's M1 Mac | Free, trusted, immediate | Need signed build, limited sample |
+| Friends (5-10 people) | Diverse hardware, real feedback | Need installer, support burden |
+| Open source repo | Free testing, contributors | **Competitors clone Magic Fix, hard to close** |
+| Paid beta service (BetaFamily) | Professional, diverse hardware | Costs money |
+| TestFlight-style closed beta | Controlled, NDA possible | Need distribution infrastructure |
+
+**Recommended Path**:
+1. Build Release archive with diagnostic logging
+2. Export unsigned .app (right-click → Open bypasses Gatekeeper)
+3. Test on wife's M1 Mac first - check if 15fps issue exists
+4. If M1 works at 30fps → Mac Studio specific (document limitation)
+5. If M1 also 15fps → app bug, needs deeper investigation
+6. Recruit 3-5 friends with different Macs for broader testing
+7. Create simple feedback form (Google Form?) for hardware specs + issues
+
+**Diagnostic Mode Needed**:
+- Log camera model, supported formats, configured FPS, actual FPS
+- Log mic model, sample rate, buffer sizes
+- Write to visible file (~/Desktop/SaneVideo_Diagnostics.txt)
+- Show hardware summary in Settings or Help menu
+
+**DO NOT open source** — Magic Fix audio pipeline is your differentiator.
+
+**Decision**: Next action item when ready to test
+
+---
+
 ## Quick Reference
 
 | Feature | Status | Effort | Notes |

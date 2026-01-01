@@ -3,7 +3,7 @@
 module SaneMasterModules
   # PDF export using Prawn (pure Ruby, no external dependencies)
   # Generates compact, readable code PDFs for review
-  module Export # rubocop:disable Metrics/ModuleLength
+  module Export
     EXCLUDE_DIRS = %w[build .build DerivedData Pods .git SourcePackages checkouts artifacts .swiftpm].freeze
     EXCLUDE_PATTERNS = %w[Mock Generated Stub .generated. Package.swift XCTestManifests LinuxMain].freeze
 

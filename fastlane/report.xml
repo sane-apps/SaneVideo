@@ -5,12 +5,12 @@
     
     
       
-      <testcase classname="fastlane.lanes" name="0: default_platform" time="0.000498">
+      <testcase classname="fastlane.lanes" name="0: default_platform" time="0.000139">
         
       </testcase>
     
       
-      <testcase classname="fastlane.lanes" name="1: swiftlint" time="0.152521">
+      <testcase classname="fastlane.lanes" name="1: cd .. &amp;&amp; bundle exec rubocop Scripts/ --format html --out fastlane/reports/rubocop.html || true" time="1.411815">
         
       </testcase>
     

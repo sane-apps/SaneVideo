@@ -30,7 +30,7 @@ This is the **SINGLE SOURCE OF TRUTH** for architecture, style, and workflows.
    grep "APIName" /Applications/Xcode.app/.../MacOSX26.2.sdk/.../Framework.swiftinterface
    ```
 
-7. **TWO-FIX RULE**: If you don't get something right twice in a row, STOP guessing. Search SDK, then web.
+7. **TWO-FIX RULE**: If you don't get something right twice in a row, STOP guessing. Search SDK, then web. Stopping to investigate IS the win — prevents tail-chasing.
 
 ---
 

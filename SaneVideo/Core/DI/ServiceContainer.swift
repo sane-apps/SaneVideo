@@ -121,6 +121,8 @@ final class ServiceContainer {
     // MARK: - Initialization
 
     private init() {
+        let startTime = CFAbsoluteTimeGetCurrent()
+
         // Core Services
         self.cameraService = CameraManager()
         self.projectStore = ProjectStore()
@@ -200,7 +202,15 @@ final class ServiceContainer {
         // Configuration
         self.pricingConfiguration = PricingConfiguration()
         
-        // Warm up critical heavy systems
+        // Warm up critical heavy systems in background
         Task { await self.visionOrchestrator.warmup() }
+
+        // Log initialization time
+        let elapsed = CFAbsoluteTimeGetCurrent() - startTime
+        if elapsed > 0.1 {
+            AppLogger.general.warning("⚠️ ServiceContainer init took \(String(format: "%.3f", elapsed))s - consider lazy loading")
+        } else {
+            AppLogger.general.info("✅ ServiceContainer init completed in \(String(format: "%.3f", elapsed))s")
+        }
     }
 }

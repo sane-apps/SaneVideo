@@ -33,13 +33,14 @@ class ToastManager {
                 AppLogger.uiLog.debug("Toast: \(message)")
             }
 
-            // If already showing, queue this message
+            // If already showing, queue this message (max 3 to prevent buildup)
             if isShowingToast {
-                // Replace queued message with latest to avoid buildup
-                if messageQueue.isEmpty {
+                if messageQueue.count < 3 {
                     messageQueue.append(message)
                 } else {
+                    // Replace last queued message with latest
                     messageQueue[messageQueue.count - 1] = message
+                    AppLogger.uiLog.debug("Toast queue full, replaced last with: \(message)")
                 }
                 return
             }

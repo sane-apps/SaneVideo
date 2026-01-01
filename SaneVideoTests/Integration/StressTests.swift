@@ -112,8 +112,10 @@ final class StressTests: XCTestCase {
       }
     }
 
-    // If we reach here without crash/deadlock, it's a pass for basic actor reentrancy
-    XCTAssertTrue(true)
+    // Verify actor is still accessible after concurrent access
+    let finalState = await machine.isRecording
+    // State should be deterministic: 100 toggles from false = false (even count)
+    XCTAssertFalse(finalState, "After 100 toggles from false, state should be false")
   }
 
   // MARK: - Memory Pressure Simulation

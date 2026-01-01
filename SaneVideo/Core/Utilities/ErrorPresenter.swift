@@ -100,15 +100,16 @@ class ErrorPresenter {
         }
         
         // CRITICAL FIX: Limit queue size to prevent memory issues
+        // When queue is full, remove oldest non-critical error to make room
         if errorQueue.count > maxQueueSize {
-            // Remove oldest non-critical errors first
-            let criticalCount = errorQueue.prefix { isCriticalError($0) }.count
-            if criticalCount < maxQueueSize {
-                // Remove oldest non-critical error
-                errorQueue.removeLast()
+            // Find first non-critical error to remove (prefer removing older ones)
+            if let indexToRemove = errorQueue.firstIndex(where: { !isCriticalError($0) }) {
+                let removed = errorQueue.remove(at: indexToRemove)
+                AppLogger.general.warning("⚠️ Error queue full, dropped: \(removed.localizedDescription)")
             } else {
-                // All errors are critical, remove oldest
-                errorQueue.removeLast()
+                // All errors are critical - remove the oldest one
+                let removed = errorQueue.removeFirst()
+                AppLogger.general.warning("⚠️ Error queue full (all critical), dropped oldest: \(removed.localizedDescription)")
             }
         }
         

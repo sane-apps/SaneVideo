@@ -2,11 +2,10 @@
 //  StylesInspectorView.swift
 //  SaneVideo
 //
-//  Main inspector orchestrator. Sub-views extracted to:
-//  - InspectorHelpers.swift (CollapsibleSection, SubsectionHeader, etc.)
-//  - VideoSection.swift (Transform, Speed, Smart Crop)
-//  - AudioSection.swift (Volume, Highlights, Analysis)
-//  - CaptionsSection.swift (Style, OCR, Mood, ClipInfo, CursorEnhancements)
+//  2025-12-31: Simplified inspector layout
+//  - Captions moved to Transcript tab (left sidebar)
+//  - Sections: Magic Fix, Reframe, Background, Effects, Audio Analysis, Clip Info
+//  - Fresh start each launch (all collapsed, no persistence)
 //
 
 import SwiftUI
@@ -15,14 +14,13 @@ struct StylesInspectorView: View {
     @Environment(AppState.self) var appState
     @Binding var selectedClip: VideoClip?
 
-    // UX FIX: All sections collapsed by default so users can see all available tools
-    @AppStorage("inspector.showSmartTools") private var showSmartTools = false
-    @AppStorage("inspector.showCaptions") private var showCaptions = false
-    @AppStorage("inspector.showVideo") private var showVideo = false
-    @AppStorage("inspector.showBackground") private var showBackground = false
-    @AppStorage("inspector.showEffects") private var showEffects = false
-    @AppStorage("inspector.showAudio") private var showAudio = false
-    @AppStorage("inspector.showClipInfo") private var showClipInfo = false
+    // UX: All sections collapsed by default, fresh start each launch (no @AppStorage)
+    @State private var showMagicFix = false
+    @State private var showReframe = false
+    @State private var showBackground = false
+    @State private var showEffects = false
+    @State private var showAudioAnalysis = false
+    @State private var showClipInfo = false
 
     // CRITICAL FIX: Track if operation is in progress to prevent mode switching
     @State private var isOperationInProgress = false
@@ -45,11 +43,6 @@ struct StylesInspectorView: View {
         return nil
     }
 
-    /// Does this clip have captions? (affects section priority)
-    private var hasCaptions: Bool {
-        validatedClip?.captions.isEmpty == false
-    }
-
     var body: some View {
         @Bindable var projectState = appState.projectState
 
@@ -68,13 +61,12 @@ struct StylesInspectorView: View {
                     // P0 FIX: Add keyboard navigation support
                     LazyVStack(spacing: 0) {
                         // ═══════════════════════════════════════════
-                        // PRIORITY 0: SMART TOOLS (Magic Fix)
-                        // Always Visible
+                        // MAGIC FIX (Core Feature)
                         // ═══════════════════════════════════════════
                         CollapsibleSection(
-                            title: "Smart Tools",
+                            title: "Magic Fix",
                             icon: "wand.and.stars",
-                            isExpanded: $showSmartTools
+                            isExpanded: $showMagicFix
                         ) {
                             SmartToolsSection(clip: clip, options: $projectState.magicFixOptions, isOperationInProgress: $isOperationInProgress)
                         }
@@ -82,24 +74,13 @@ struct StylesInspectorView: View {
                         Divider().padding(.horizontal)
 
                         // ═══════════════════════════════════════════
-                        // CAPTIONS (with badge if present)
+                        // REFRAME (Auto-Zoom, Smart Crop)
                         // ═══════════════════════════════════════════
                         CollapsibleSection(
-                            title: "Captions",
-                            icon: "captions.bubble",
-                            isExpanded: $showCaptions,
-                            // UX FIX: Show simple "Ready" instead of count - users don't need to see numbers
-                            badge: hasCaptions ? "Ready" : nil
+                            title: "Reframe",
+                            icon: "crop",
+                            isExpanded: $showReframe
                         ) {
-                            CaptionsSection(clip: clip, isOperationInProgress: $isOperationInProgress)
-                        }
-
-                        Divider().padding(.horizontal)
-
-                        // ═══════════════════════════════════════════
-                        // VIDEO (Transform, Speed, Crop)
-                        // ═══════════════════════════════════════════
-                        CollapsibleSection(title: "Video", icon: "film", isExpanded: $showVideo) {
                             VideoSection(clip: clip, isOperationInProgress: $isOperationInProgress)
                         }
 
@@ -126,7 +107,6 @@ struct StylesInspectorView: View {
                             title: "Effects",
                             icon: "sparkles",
                             isExpanded: $showEffects,
-                            // UX FIX: Show simple indicator instead of count
                             badge: clip.effects.isEmpty ? nil : "Active"
                         ) {
                             EffectsPickerView(clip: clip, isOperationInProgress: $isOperationInProgress)
@@ -135,9 +115,13 @@ struct StylesInspectorView: View {
                         Divider().padding(.horizontal)
 
                         // ═══════════════════════════════════════════
-                        // AUDIO (Volume, EQ, Voice Isolation)
+                        // AUDIO ANALYSIS (Find Highlights, Analyze)
                         // ═══════════════════════════════════════════
-                        CollapsibleSection(title: "Audio", icon: "waveform", isExpanded: $showAudio) {
+                        CollapsibleSection(
+                            title: "Audio Analysis",
+                            icon: "waveform.badge.magnifyingglass",
+                            isExpanded: $showAudioAnalysis
+                        ) {
                             AudioSection(clip: clip, isOperationInProgress: $isOperationInProgress)
                         }
 
@@ -146,7 +130,11 @@ struct StylesInspectorView: View {
                         // ═══════════════════════════════════════════
                         // CLIP INFO (Metadata, Locate File)
                         // ═══════════════════════════════════════════
-                        CollapsibleSection(title: "Clip Info", icon: "info.circle", isExpanded: $showClipInfo) {
+                        CollapsibleSection(
+                            title: "Clip Info",
+                            icon: "info.circle",
+                            isExpanded: $showClipInfo
+                        ) {
                             ClipInfoSection(clip: clip)
                         }
 

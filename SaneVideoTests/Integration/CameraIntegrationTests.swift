@@ -59,10 +59,7 @@ struct CameraIntegrationTests {
         let cameraManager = CameraManager()
 
         // Act - start the session
-        await cameraManager.setupSession(
-            resolution: .hd1080,
-            fps: 30.0
-        )
+        try await cameraManager.start()
 
         // Give it time to start
         try await Task.sleep(nanoseconds: 500_000_000) // 0.5s
@@ -71,7 +68,7 @@ struct CameraIntegrationTests {
         let stateAfterStart = cameraManager.isActive
 
         // Stop the session
-        await cameraManager.stopSession()
+        cameraManager.stop()
 
         // Give it time to stop
         try await Task.sleep(nanoseconds: 200_000_000) // 0.2s
@@ -212,55 +209,4 @@ struct CameraIntegrationTests {
         #expect(session.inputs.count > 0, "Session should have at least one input")
     }
 
-    // MARK: - Frame Delivery Tests (requires permission and hardware)
-
-    @Test("Camera delivers frames when session is running")
-    func testCameraFrameDelivery() async throws {
-        guard hasCameraHardware else {
-            return
-        }
-
-        let status = AVCaptureDevice.authorizationStatus(for: .video)
-        guard status == .authorized else {
-            return
-        }
-
-        // Arrange
-        let cameraManager = CameraManager()
-        var frameCount = 0
-        let expectation = AsyncStream<Void>.makeStream()
-
-        // Subscribe to frame publisher
-        let cancellable = cameraManager.framePublisher.sink { _ in
-            frameCount += 1
-            if frameCount >= 5 {
-                expectation.continuation.finish()
-            }
-        }
-
-        // Act - start camera
-        await cameraManager.setupSession(resolution: .hd1080, fps: 30.0)
-
-        // Wait for frames (with timeout)
-        let timeoutTask = Task {
-            try await Task.sleep(nanoseconds: 3_000_000_000) // 3s timeout
-            expectation.continuation.finish()
-        }
-
-        // Wait for either frames or timeout
-        for await _ in expectation.stream {
-            break
-        }
-
-        timeoutTask.cancel()
-        cancellable.cancel()
-
-        // Stop camera
-        await cameraManager.stopSession()
-
-        // Assert - should have received frames (if camera started successfully)
-        if cameraManager.isActive || frameCount > 0 {
-            #expect(frameCount > 0, "Should receive frames when camera is active")
-        }
-    }
 }

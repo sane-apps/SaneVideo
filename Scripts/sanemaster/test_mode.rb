@@ -73,7 +73,7 @@ module SaneMasterModules
       puts ''
 
       screenshots_dir = File.join(Dir.pwd, 'Screenshots')
-      log_file = File.expand_path('~/Library/Containers/com.sanevideo.SaneVideo/Data/Library/Logs/SaneVideo/SaneVideo_Debug.log')
+      log_file = File.expand_path('~/Library/Containers/com.sanevideo.app/Data/Library/Logs/SaneVideo/SaneVideo_Debug.log')
       crash_dir = File.expand_path('~/Library/Logs/DiagnosticReports')
 
       kill_existing_processes
@@ -83,14 +83,18 @@ module SaneMasterModules
 
       launch_app([])
       sleep 2
-      show_log_status(log_file)
-      print_test_mode_ready
+      print_test_mode_ready(log_file)
+
+      # Stream logs in background so conversation can continue
+      puts '📡 Streaming live logs in background...'
+      puts '─' * 60
+      spawn("tail -f '#{log_file}'")
     end
 
     def show_app_logs(args)
       puts '📋 --- [ APPLICATION LOGS ] ---'
 
-      log_file = File.expand_path('~/Library/Containers/com.sanevideo.SaneVideo/Data/Library/Logs/SaneVideo/SaneVideo_Debug.log')
+      log_file = File.expand_path('~/Library/Containers/com.sanevideo.app/Data/Library/Logs/SaneVideo/SaneVideo_Debug.log')
       tail_count = 50
       follow_mode = args.include?('--follow') || args.include?('-f')
 
@@ -99,7 +103,7 @@ module SaneMasterModules
       end
 
       unless File.exist?(log_file)
-        puts '❌ No log file found at: ~/Library/Containers/com.sanevideo.SaneVideo/Data/Library/Logs/SaneVideo/SaneVideo_Debug.log'
+        puts '❌ No log file found at: ~/Library/Containers/com.sanevideo.app/Data/Library/Logs/SaneVideo/SaneVideo_Debug.log'
         puts "\nTo generate logs:"
         puts '  1. Rebuild the app: ./Scripts/SaneMaster.rb verify'
         puts '  2. Launch the app: ./Scripts/SaneMaster.rb launch'
@@ -108,7 +112,7 @@ module SaneMasterModules
 
       mtime = File.mtime(log_file)
       size = File.size(log_file) / 1024.0
-      puts '📁 Log file: ~/Library/Containers/com.sanevideo.SaneVideo/Data/Library/Logs/SaneVideo/SaneVideo_Debug.log'
+      puts '📁 Log file: ~/Library/Containers/com.sanevideo.app/Data/Library/Logs/SaneVideo/SaneVideo_Debug.log'
       puts "   Last updated: #{mtime.strftime('%Y-%m-%d %H:%M:%S')} (#{size.round(1)}KB)"
       puts '─' * 60
 
@@ -222,29 +226,21 @@ module SaneMasterModules
       puts ''
     end
 
-    def print_test_mode_ready
+    def print_test_mode_ready(log_file)
       puts '═' * 60
       puts '🧪 TEST MODE READY'
       puts '═' * 60
       puts ''
-      puts 'Diagnostic commands:'
-      puts '  ./Scripts/SaneMaster.rb logs --follow    # Watch debug log live'
-      puts '  ./Scripts/SaneMaster.rb logs             # Show recent debug log'
-      puts '  ./Scripts/SaneMaster.rb crashes          # Analyze crash reports'
-      puts '  ./Scripts/SaneMaster.rb diagnose         # Analyze latest xcresult'
+      if File.exist?(log_file)
+        mtime = File.mtime(log_file).strftime('%Y-%m-%d %H:%M:%S')
+        size = (File.size(log_file) / 1024.0).round(1)
+        puts "📋 Log file: #{log_file}"
+        puts "   Last updated: #{mtime} (#{size}KB)"
+      else
+        puts '📋 Log file will be created when app writes first log'
+      end
       puts ''
-      puts 'All diagnostic locations:'
-      puts '  📋 Debug log:    ~/Library/Containers/com.sanevideo.SaneVideo/Data/Library/Logs/SaneVideo/SaneVideo_Debug.log'
-      puts '  📸 Screenshots:  Screenshots/'
-      puts '  💥 Crashes:      ~/Library/Logs/DiagnosticReports/SaneVideo-*.ips'
-      puts ''
-      puts "  🕐 Session started: #{Time.now.strftime('%Y-%m-%d %H:%M:%S')}"
-      puts ''
-      puts '⚠️  POST-FIX CHECKLIST (after each bug fix):'
-      puts '  [ ] Regression test added?'
-      puts '  [ ] Similar bugs checked elsewhere?'
-      puts '  [ ] Changes committed to git?'
-      puts '  [ ] Can explain fix in plain English?'
+      puts "🕐 Session started: #{Time.now.strftime('%Y-%m-%d %H:%M:%S')}"
       puts ''
     end
   end

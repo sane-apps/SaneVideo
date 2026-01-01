@@ -303,8 +303,8 @@ struct TimelineControls: View {
                 Text("Remove '\(clip.url.lastPathComponent)' from project or move file to Trash?")
             }
         }
-        .padding(4)
-        .subtleGlass(radius: 8)
+        // 2025-12-31: Removed .subtleGlass for consistent toolbar styling
+        // All toolbar icons now have uniform appearance (no special containers)
     }
 
     // MARK: - Timeline Section

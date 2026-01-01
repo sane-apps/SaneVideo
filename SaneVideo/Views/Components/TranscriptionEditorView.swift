@@ -8,16 +8,38 @@
 import SwiftUI
 import CoreMedia
 
+/// Unified Captions Hub (2025-12-31)
+/// PRIMARY location for caption editing, styling, and generation.
+/// Combines transcription editing with style controls.
 struct TranscriptionEditorView: View {
     @Environment(AppState.self) var appState
     @Binding var selectedClip: VideoClip?
-    
+
     @State private var searchText = ""
     @State private var isRefining = false
     @State private var isTranslating = false
-    
+    @State private var showStylePicker = false
+
+    // CRITICAL FIX (2025-12-31): Get fresh clip from project to ensure we have latest captions
+    // The binding may point to a stale clip value. When captions are updated via ProjectState,
+    // the project is updated but the binding may not refresh until the parent re-renders.
+    // This mirrors the pattern used in StylesInspectorView.validatedClip.
+    private var currentClip: VideoClip? {
+        guard let clip = selectedClip,
+              let project = appState.projectState.currentProject else {
+            return nil
+        }
+        // Get fresh clip from project by ID
+        for track in project.timeline.tracks {
+            if let freshClip = track.clips.first(where: { $0.id == clip.id }) {
+                return freshClip
+            }
+        }
+        return nil
+    }
+
     var filteredCaptions: [Caption] {
-        guard let clip = selectedClip else { return [] }
+        guard let clip = currentClip else { return [] }
         if searchText.isEmpty {
             return clip.captions
         }
@@ -26,24 +48,29 @@ struct TranscriptionEditorView: View {
     
     var body: some View {
         VStack(spacing: 0) {
+            // MARK: - Style Picker Bar (2025-12-31: Unified caption styling)
+            stylePickerBar
+
+            Divider()
+
             // Search & Tools Bar
             HStack {
                 Image(systemName: "magnifyingglass")
                     .foregroundColor(.secondary)
                 TextField(String(localized: "transcript.search", defaultValue: "Search transcript..."), text: $searchText)
                     .textFieldStyle(.plain)
-                
+
                 if !filteredCaptions.isEmpty {
                     Button {
                         refineCaptions()
                     } label: {
-                        Image(systemName: "magicmouse")
+                        Image(systemName: "sparkles")
                             .foregroundColor(.accentColor)
                     }
                     .buttonStyle(.plain)
                     .help(String(localized: "transcript.refine.help", defaultValue: "AI Refine Grammar & Punctuation"))
                     .disabled(isRefining)
-                    
+
                     if #available(macOS 15.0, *) {
                         Button {
                             translateCaptions()
@@ -59,10 +86,10 @@ struct TranscriptionEditorView: View {
             }
             .padding(10)
             .background(Color.black.opacity(0.2))
-            
+
             Divider()
             
-            if let clip = selectedClip {
+            if let clip = currentClip {
                 if clip.captions.isEmpty {
                     emptyStateView(for: clip)
                 } else {
@@ -122,30 +149,30 @@ struct TranscriptionEditorView: View {
     }
     
     private func updateCaptionText(_ caption: Caption, _ newText: String) {
-        guard let clip = selectedClip else { return }
-        
+        guard let clip = currentClip else { return }
+
         // Update caption text while preserving timestamps
         var updatedCaptions = clip.captions
         if let index = updatedCaptions.firstIndex(where: { $0.id == caption.id }) {
             var updatedCaption = updatedCaptions[index]
             updatedCaption.text = newText
             updatedCaptions[index] = updatedCaption
-            
+
             // Apply changes to project
             appState.projectState.updateCaptions(updatedCaptions, for: clip)
-            
+
             AppLogger.project.info("📝 Updated caption \(caption.id): '\(newText)'")
         }
     }
-    
+
     private func deleteCaptionSegment(_ caption: Caption, in clip: VideoClip) {
         // Text-based editing: deleting a segment adds it to removedRanges
         let range = CMTimeRange(start: caption.startTime, end: caption.endTime)
         appState.projectState.removeRange(range, from: clip)
     }
-    
+
     private func refineCaptions() {
-        guard let clip = selectedClip else { return }
+        guard let clip = currentClip else { return }
         isRefining = true
         Task {
             do {
@@ -166,7 +193,7 @@ struct TranscriptionEditorView: View {
     }
 
     private func translateCaptions() {
-        guard let clip = selectedClip else { return }
+        guard let clip = currentClip else { return }
         isTranslating = true
         Task {
             if #available(macOS 26.0, *) {
@@ -178,11 +205,11 @@ struct TranscriptionEditorView: View {
                         newCaption.text = translatedText
                         translatedCaptions.append(newCaption)
                     }
-                    
+
                     await MainActor.run {
                         appState.projectState.updateCaptions(translatedCaptions, for: clip)
                         isTranslating = false
-                        ServiceContainer.shared.toastManager.show(String(localized: "toast.transcript.translated", defaultValue: "🌍 Transcript translated to Spanish!"))
+                        ServiceContainer.shared.toastManager.show(String(localized: "toast.transcript.translated", defaultValue: "Transcript translated to Spanish!"))
                     }
                 } catch {
                     await MainActor.run {
@@ -192,6 +219,90 @@ struct TranscriptionEditorView: View {
                 }
             }
         }
+    }
+
+    // MARK: - Style Picker (2025-12-31: Unified caption styling)
+
+    private var stylePickerBar: some View {
+        VStack(spacing: 0) {
+            // Compact header with expand/collapse
+            HStack {
+                Label("Caption Style", systemImage: "textformat")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(.secondary)
+
+                Spacer()
+
+                // Current style indicator
+                if let project = appState.projectState.currentProject {
+                    Text(project.captionStyle.name)
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundColor(.accentColor)
+                }
+
+                Button {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        showStylePicker.toggle()
+                    }
+                } label: {
+                    Image(systemName: showStylePicker ? "chevron.up" : "chevron.down")
+                        .font(.system(size: 10, weight: .semibold))
+                        .foregroundColor(.secondary)
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(Color.black.opacity(0.1))
+            .contentShape(Rectangle())
+            .onTapGesture {
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    showStylePicker.toggle()
+                }
+            }
+
+            // Expandable style grid
+            if showStylePicker {
+                styleGrid
+                    .transition(.opacity.combined(with: .move(edge: .top)))
+            }
+        }
+    }
+
+    private var styleGrid: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                // Show first 8 popular styles for quick access
+                ForEach(Array(CaptionStyle.allPresets.prefix(8))) { style in
+                    let isSelected = appState.projectState.currentProject?.captionStyle.name == style.name
+
+                    Button {
+                        appState.projectState.updateCaptionStyle(style)
+                    } label: {
+                        VStack(spacing: 4) {
+                            CaptionStylePreview(style: style)
+                                .frame(width: 60, height: 40)
+
+                            Text(style.name)
+                                .font(.system(size: 9, weight: isSelected ? .bold : .regular))
+                                .foregroundColor(isSelected ? .accentColor : .secondary)
+                                .lineLimit(1)
+                        }
+                        .padding(4)
+                        .background(isSelected ? Color.accentColor.opacity(0.15) : Color.clear)
+                        .cornerRadius(6)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 6)
+                                .stroke(isSelected ? Color.accentColor : Color.clear, lineWidth: 1.5)
+                        )
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 8)
+        }
+        .background(Color.black.opacity(0.15))
     }
 }
 

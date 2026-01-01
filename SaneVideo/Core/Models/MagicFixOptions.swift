@@ -31,22 +31,26 @@ struct MagicFixOptions: Codable, Equatable {
     var silenceThreshold: Double = -45.0 // dB (-60 sensitive, -30 aggressive)
     var minSilenceDuration: Double = 0.3 // seconds (0.1-2.0)
     
-    // Presets
+    // Presets (2025-12-31: Simplified to focus on 5 core cleanup features)
+    // Core features: removeSilence, removeFillers, generateCaptions, enhanceAudio, smoothJumpCuts
+    // Other features (smartCrop, autoFraming, etc.) are accessed via their canonical UI locations
+
     static let proClean = MagicFixOptions(
         removeSilence: true,
         removeFillers: true,
         generateCaptions: true,
         enhanceAudio: true,
-        autoEnhance: true,
-        findHighlights: true,
-        smartCrop: false,
-        autoFraming: false,
-        scanForText: true,
-        analyzeMood: true,
+        autoEnhance: false,  // Use VideoSection for effects
+        findHighlights: false,  // Use AudioSection
+        smartCrop: false,  // Use VideoSection
+        autoFraming: false,  // Use VideoSection
+        scanForText: false,
+        analyzeMood: false,
         applyHighlightCursor: true,
         smoothJumpCuts: true
     )
-    
+
+    // Keep socialMedia for API compatibility but it's no longer in UI presets
     static let socialMedia = MagicFixOptions(
         removeSilence: true,
         removeFillers: true,
@@ -106,16 +110,15 @@ struct MagicFixOptions: Codable, Equatable {
         !scanForText && !analyzeMood && !magicRemovePeople && !generativeStyle
     }
     
-    // P0 FIX: Get human-readable summary of selected options
+    // Get human-readable summary of selected core cleanup options
     var summary: String {
         var parts: [String] = []
+        // Only show the 5 core features in summary (2025-12-31)
         if removeSilence { parts.append("Silence") }
         if removeFillers { parts.append("Fillers") }
         if generateCaptions { parts.append("Captions") }
-        if enhanceAudio { parts.append("Audio") }
-        if autoEnhance { parts.append("Color") }
-        if smartCrop { parts.append("Crop") }
-        if autoFraming { parts.append("Frame") }
+        if enhanceAudio { parts.append("Speech") }
+        if smoothJumpCuts { parts.append("Cuts") }
         if parts.isEmpty {
             return "No options selected"
         }

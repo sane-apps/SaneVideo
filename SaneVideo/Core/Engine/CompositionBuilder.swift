@@ -19,8 +19,11 @@ enum CompositionBuilder {
     }
 
     /// Builds a composition and returns it along with the video composition and audio mix for playback
+    /// - Parameters:
+    ///   - project: The video project to build composition from
+    ///   - renderSize: Target render size for transforms. Defaults to 1080p for playback. Export should pass actual export resolution.
     @MainActor
-    static func build(from project: VideoProject) async throws -> CompositionResult {
+    static func build(from project: VideoProject, renderSize: CGSize = CGSize(width: 1920, height: 1080)) async throws -> CompositionResult {
         let timeline = project.timeline
 
         // CRITICAL: Early validation for empty timeline to prevent Signal 10 crash
@@ -80,7 +83,7 @@ enum CompositionBuilder {
         // MEMORY OPTIMIZATION: Cache assets to avoid loading the same video multiple times
         var assetCache: [URL: AVURLAsset] = [:]
 
-        let renderSize = CGSize(width: 1920, height: 1080)
+        // renderSize is now a parameter - transforms will be computed for the target resolution
 
         // 1. Sort tracks by z-index
         let sortedTracks = timeline.tracks.sorted { $0.zIndex > $1.zIndex } // Top z-index first
@@ -122,7 +125,11 @@ enum CompositionBuilder {
 
         // 4c. Apply audio limiter to prevent clipping when tracks are mixed
         // This uses MTAudioProcessingTap to apply soft-knee limiting
-        let limitedAudioMix = AudioLimiter.applyLimiter(to: audioMix)
+        // FIX (2025-12-31): BYPASS limiter for now - MTAudioProcessingTap may cause silent audio
+        // The tap may not be compatible with AVPlayer playback (works for export only)
+        // TODO: Investigate if limiter should only be applied during export, not playback
+        let limitedAudioMix = audioMix  // AudioLimiter.applyLimiter(to: audioMix)
+        AppLogger.timeline.info("🔊 CompositionBuilder: Using audioMix WITHOUT limiter (limiter bypassed for debugging)")
 
         // 5. Build Video Composition
         let totalDuration = timeline.duration

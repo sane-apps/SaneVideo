@@ -256,7 +256,7 @@ extension ProjectState {
         }) == true else { return }
 
         if clip.captions.isEmpty {
-            ServiceContainer.shared.toastManager.show("Transcribing audio...")
+            // NOTE: generateCaptions handles its own status updates
             Task {
                 do {
                     _ = try await generateCaptions(for: clip)

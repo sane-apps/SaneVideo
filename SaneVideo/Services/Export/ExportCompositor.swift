@@ -12,8 +12,10 @@ import Metal
 
 @MainActor
 class ExportCompositor {
-    func createComposition(from project: VideoProject) async throws -> CompositionBuilder.CompositionResult {
-        return try await CompositionBuilder.build(from: project)
+    /// Creates composition with transforms computed for the target export resolution
+    /// This ensures 4K exports have correctly scaled transforms, not 1080p-baked transforms
+    func createComposition(from project: VideoProject, settings: SaneExportSettings) async throws -> CompositionBuilder.CompositionResult {
+        return try await CompositionBuilder.build(from: project, renderSize: settings.resolution.size)
     }
 
     func createVideoComposition(

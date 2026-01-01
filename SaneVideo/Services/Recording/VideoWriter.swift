@@ -9,6 +9,33 @@ import AVFoundation
 import CoreImage
 import CoreMedia
 
+// DIAGNOSTIC: Frame rate tracking helper
+private class FrameRateTracker {
+    private let targetFPS: Double
+    private var frameTimes: [CMTime] = []
+    private let windowSize: Int = 60  // Track last 60 frames
+
+    init(targetFPS: Double) {
+        self.targetFPS = targetFPS
+    }
+
+    func recordFrame(at time: CMTime) {
+        frameTimes.append(time)
+        if frameTimes.count > windowSize {
+            frameTimes.removeFirst()
+        }
+    }
+
+    var currentFPS: Double? {
+        guard frameTimes.count >= 2 else { return nil }
+        let first = frameTimes.first!
+        let last = frameTimes.last!
+        let duration = CMTimeSubtract(last, first).seconds
+        guard duration > 0 else { return nil }
+        return Double(frameTimes.count - 1) / duration
+    }
+}
+
 @RecordingActor
 final class VideoWriter: VideoWriterProtocol {
     private var assetWriter: AVAssetWriter?
@@ -24,6 +51,21 @@ final class VideoWriter: VideoWriterProtocol {
 
     // Use shared CIContext from RenderingService to prevent VFX corruption
     private let ciContext: CIContext
+
+    // CRITICAL FIX (2025-12-31): Monotonic timestamp tracking to prevent error -16364
+    // When presenter overlay toggles during screen recording, timestamps can go backwards
+    // causing AVAssetWriter to fail. We track the last written time and reject out-of-order frames.
+    private var lastWrittenVideoTime: CMTime = .invalid
+    private var lastWrittenMicTime: CMTime = .invalid
+    private var lastWrittenSystemAudioTime: CMTime = .invalid
+    private var droppedFrameCount: Int = 0
+    private let maxDroppedFramesBeforeWarning = 30  // Log warning if we drop too many
+
+    // DIAGNOSTIC: Frame rate tracking
+    private var frameRateTracker: FrameRateTracker?
+    private var notReadyForDataCount: Int = 0
+    private var totalFramesReceived: Int = 0
+    private var totalFramesWritten: Int = 0
 
     // PiP Camera Overlay: Latest camera frame for compositing into screen recordings
     private var latestCameraFrame: CVPixelBuffer?
@@ -53,7 +95,7 @@ final class VideoWriter: VideoWriterProtocol {
         self.ciContext = renderingService.ciContext
     }
 
-    func start(outputURL: URL) throws {
+    func start(outputURL: URL, targetFrameRate: Double = 30.0) throws {
         sessionStarted = false
         assetWriter = try AVAssetWriter(outputURL: outputURL, fileType: .mp4)
         assetWriter?.shouldOptimizeForNetworkUse = true
@@ -77,11 +119,20 @@ final class VideoWriter: VideoWriterProtocol {
         )
 
         // Video Settings
-        let videoSettings: [String: Any] = [
+        // CRITICAL FIX: Add frame rate to video settings to prevent AVAssetWriter from defaulting to low rate
+        var videoSettings: [String: Any] = [
             AVVideoCodecKey: AVVideoCodecType.h264,
             AVVideoWidthKey: targetSize.width,
             AVVideoHeightKey: targetSize.height
         ]
+
+        // Add compression properties with frame rate
+        var compressionProperties: [String: Any] = [:]
+        compressionProperties[AVVideoExpectedSourceFrameRateKey] = targetFrameRate
+        compressionProperties[AVVideoAverageBitRateKey] = 10_000_000  // 10 Mbps for 1080p
+        videoSettings[AVVideoCompressionPropertiesKey] = compressionProperties
+
+        AppLogger.recording.info("📹 VideoWriter: Configuring for \(targetFrameRate) fps, \(Int(targetSize.width))x\(Int(targetSize.height))")
 
         let vInput = AVAssetWriterInput(
             mediaType: .video,
@@ -90,6 +141,9 @@ final class VideoWriter: VideoWriterProtocol {
         )
         vInput.expectsMediaDataInRealTime = true
         videoInput = vInput
+
+        // DIAGNOSTIC: Initialize frame rate tracker
+        frameRateTracker = FrameRateTracker(targetFPS: targetFrameRate)
 
         // Pixel Buffer Adaptor
         let sourcePixelBufferAttributes: [String: Any] = [
@@ -169,12 +223,37 @@ final class VideoWriter: VideoWriterProtocol {
     }
 
     func writeVideo(sampleBuffer: CMSampleBuffer, presentationTime: CMTime, source: RecordingSource = .camera) {
+        totalFramesReceived += 1
 
-        guard let input = videoInput, input.isReadyForMoreMediaData else { return }
+        guard let input = videoInput else {
+            AppLogger.recording.warning("⚠️ VideoWriter: videoInput is nil")
+            return
+        }
+
+        guard input.isReadyForMoreMediaData else {
+            notReadyForDataCount += 1
+            if notReadyForDataCount % 30 == 0 {  // Log every 30 skipped frames
+                AppLogger.recording.warning("⚠️ VideoWriter: input not ready for data (skipped \(notReadyForDataCount) frames so far)")
+            }
+            return
+        }
         guard let writer = assetWriter, writer.status == .writing else { return }
         guard let adaptor = pixelBufferAdaptor else {
             AppLogger.recording.error("writeVideo: No pixel buffer adaptor!")
             return
+        }
+
+        // CRITICAL FIX (2025-12-31): Monotonic timestamp enforcement to prevent error -16364
+        // Presenter overlay on macOS 14+ can cause timestamp discontinuities
+        if lastWrittenVideoTime.isValid {
+            if presentationTime <= lastWrittenVideoTime {
+                // Timestamp going backwards - drop frame to prevent -16364
+                droppedFrameCount += 1
+                if droppedFrameCount == maxDroppedFramesBeforeWarning {
+                    AppLogger.recording.warning("⚠️ VideoWriter: Dropped \(droppedFrameCount) out-of-order frames (timestamp regression detected)")
+                }
+                return
+            }
         }
 
         // CRITICAL FIX: Auto-start session if needed.
@@ -279,7 +358,19 @@ final class VideoWriter: VideoWriterProtocol {
 
             if writer.status == .writing {
                 let success = adaptor.append(destBuffer, withPresentationTime: presentationTime)
-                if !success {
+                if success {
+                    totalFramesWritten += 1
+                    // Track last successful write time for monotonic enforcement
+                    lastWrittenVideoTime = presentationTime
+
+                    // DIAGNOSTIC: Track frame rate
+                    frameRateTracker?.recordFrame(at: presentationTime)
+                    if totalFramesWritten % 60 == 0 {  // Log every 60 frames (~2 seconds at 30fps)
+                        if let actualFPS = frameRateTracker?.currentFPS {
+                            AppLogger.recording.info("📊 VideoWriter: Written \(totalFramesWritten)/\(totalFramesReceived) frames, actual FPS: \(String(format: "%.2f", actualFPS)), dropped: \(droppedFrameCount), notReady: \(notReadyForDataCount)")
+                        }
+                    }
+                } else {
                     AppLogger.recording.error("Adaptor append failed: \(writer.error?.localizedDescription ?? "unknown")")
                 }
             }
@@ -288,12 +379,28 @@ final class VideoWriter: VideoWriterProtocol {
 
     func writeMicAudio(sampleBuffer: CMSampleBuffer) {
         guard let input = micInput, input.isReadyForMoreMediaData else { return }
+
+        // CRITICAL FIX (2025-12-31): Monotonic timestamp enforcement for audio
+        let pts = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
+        if lastWrittenMicTime.isValid && pts <= lastWrittenMicTime {
+            return  // Skip out-of-order audio sample
+        }
+
         input.append(sampleBuffer)
+        lastWrittenMicTime = pts
     }
 
     func writeSystemAudio(sampleBuffer: CMSampleBuffer) {
         guard let input = systemAudioInput, input.isReadyForMoreMediaData else { return }
+
+        // CRITICAL FIX (2025-12-31): Monotonic timestamp enforcement for audio
+        let pts = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
+        if lastWrittenSystemAudioTime.isValid && pts <= lastWrittenSystemAudioTime {
+            return  // Skip out-of-order audio sample
+        }
+
         input.append(sampleBuffer)
+        lastWrittenSystemAudioTime = pts
     }
 
     // Concurrency Safety: Ensure finish() is only executed once
@@ -410,6 +517,29 @@ final class VideoWriter: VideoWriterProtocol {
         systemAudioInput = nil
         pixelBufferAdaptor = nil
         sessionStarted = false
+
+        // CRITICAL FIX (2025-12-31): Reset timestamp tracking
+        lastWrittenVideoTime = .invalid
+        lastWrittenMicTime = .invalid
+        lastWrittenSystemAudioTime = .invalid
+
+        // DIAGNOSTIC: Log final statistics before cleanup
+        if droppedFrameCount > 0 {
+            AppLogger.recording.info("VideoWriter: Total dropped frames due to timestamp regression: \(droppedFrameCount)")
+        }
+        if notReadyForDataCount > 0 {
+            AppLogger.recording.info("VideoWriter: Total frames skipped (input not ready): \(notReadyForDataCount)")
+        }
+        if let finalFPS = frameRateTracker?.currentFPS {
+            AppLogger.recording.info("VideoWriter: Final statistics - Written: \(totalFramesWritten)/\(totalFramesReceived), Final FPS: \(String(format: "%.2f", finalFPS)), Dropped: \(droppedFrameCount), NotReady: \(notReadyForDataCount)")
+        }
+
+        // Reset diagnostic counters
+        droppedFrameCount = 0
+        notReadyForDataCount = 0
+        totalFramesReceived = 0
+        totalFramesWritten = 0
+        frameRateTracker = nil
 
         // CRITICAL FIX: Clear the latest camera frame to free high-resolution pixel buffer
         cameraFrameLock.lock()

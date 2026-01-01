@@ -69,7 +69,7 @@ final class ExportServiceProtocolMock: ExportServiceProtocol, @unchecked Sendabl
         if let cancelExportHandler = cancelExportHandler {
             cancelExportHandler()
         }
-        
+
     }
 }
 
@@ -117,7 +117,7 @@ final class ProjectStoreProtocolMock: ProjectStoreProtocol, @unchecked Sendable 
         if let saveProjectHandler = saveProjectHandler {
             try await saveProjectHandler(project)
         }
-        
+
     }
 
     private let deleteProjectState = MockoloMutex(MockoloHandlerState<VideoProject, @Sendable (VideoProject) async throws -> ()>())
@@ -141,7 +141,7 @@ final class ProjectStoreProtocolMock: ProjectStoreProtocol, @unchecked Sendable 
         if let deleteProjectHandler = deleteProjectHandler {
             try await deleteProjectHandler(project)
         }
-        
+
     }
 
     private let recentProjectsState = MockoloMutex(MockoloHandlerState<Int, @Sendable (Int) async throws -> [VideoProject]>())
@@ -218,7 +218,7 @@ actor WaveformServiceProtocolMock: WaveformServiceProtocol {
         if let cancelLoadHandler = cancelLoadHandler {
             cancelLoadHandler(clip)
         }
-        
+
     }
 
     private(set) var clearCacheCallCount = 0
@@ -228,7 +228,7 @@ actor WaveformServiceProtocolMock: WaveformServiceProtocol {
         if let clearCacheHandler = clearCacheHandler {
             clearCacheHandler()
         }
-        
+
     }
 }
 
@@ -287,7 +287,7 @@ final class CameraServiceProtocolMock: CameraServiceProtocol, @unchecked Sendabl
         if let startHandler = startHandler {
             try await startHandler()
         }
-        
+
     }
 
     private let stopState = MockoloMutex(MockoloHandlerState<Never, @Sendable () -> ()>())
@@ -306,7 +306,7 @@ final class CameraServiceProtocolMock: CameraServiceProtocol, @unchecked Sendabl
         if let stopHandler = stopHandler {
             stopHandler()
         }
-        
+
     }
 
     private let toggleState = MockoloMutex(MockoloHandlerState<Never, @Sendable () -> ()>())
@@ -325,7 +325,7 @@ final class CameraServiceProtocolMock: CameraServiceProtocol, @unchecked Sendabl
         if let toggleHandler = toggleHandler {
             toggleHandler()
         }
-        
+
     }
 
     private let requestPermissionAgainState = MockoloMutex(MockoloHandlerState<Never, @Sendable () -> ()>())
@@ -344,7 +344,7 @@ final class CameraServiceProtocolMock: CameraServiceProtocol, @unchecked Sendabl
         if let requestPermissionAgainHandler = requestPermissionAgainHandler {
             requestPermissionAgainHandler()
         }
-        
+
     }
 
     private let restartSessionState = MockoloMutex(MockoloHandlerState<Never, @Sendable () -> ()>())
@@ -363,7 +363,7 @@ final class CameraServiceProtocolMock: CameraServiceProtocol, @unchecked Sendabl
         if let restartSessionHandler = restartSessionHandler {
             restartSessionHandler()
         }
-        
+
     }
 }
 
@@ -464,7 +464,7 @@ final class ProjectFileManagerProtocolMock: ProjectFileManagerProtocol, @uncheck
         if let deleteFileHandler = deleteFileHandler {
             try await deleteFileHandler(url)
         }
-        
+
     }
 
     private let hydrateProjectState = MockoloMutex(MockoloHandlerState<VideoProject, @Sendable (VideoProject) -> (VideoProject, Bool)>())
@@ -571,7 +571,7 @@ final class PermissionManagerProtocolMock: PermissionManagerProtocol, @unchecked
         if let checkAllPermissionsHandler = checkAllPermissionsHandler {
             checkAllPermissionsHandler()
         }
-        
+
     }
 
     private let checkCameraPermissionState = MockoloMutex(MockoloHandlerState<Never, @Sendable () -> ()>())
@@ -590,7 +590,7 @@ final class PermissionManagerProtocolMock: PermissionManagerProtocol, @unchecked
         if let checkCameraPermissionHandler = checkCameraPermissionHandler {
             checkCameraPermissionHandler()
         }
-        
+
     }
 
     private let checkMicrophonePermissionState = MockoloMutex(MockoloHandlerState<Never, @Sendable () -> ()>())
@@ -609,7 +609,7 @@ final class PermissionManagerProtocolMock: PermissionManagerProtocol, @unchecked
         if let checkMicrophonePermissionHandler = checkMicrophonePermissionHandler {
             checkMicrophonePermissionHandler()
         }
-        
+
     }
 
     private let checkScreenRecordingPermissionState = MockoloMutex(MockoloHandlerState<Never, @Sendable () -> ()>())
@@ -628,7 +628,7 @@ final class PermissionManagerProtocolMock: PermissionManagerProtocol, @unchecked
         if let checkScreenRecordingPermissionHandler = checkScreenRecordingPermissionHandler {
             checkScreenRecordingPermissionHandler()
         }
-        
+
     }
 
     private let requestCameraPermissionState = MockoloMutex(MockoloHandlerState<Never, @Sendable () async -> Bool>())
@@ -685,7 +685,7 @@ final class PermissionManagerProtocolMock: PermissionManagerProtocol, @unchecked
         if let requestScreenRecordingPermissionHandler = requestScreenRecordingPermissionHandler {
             requestScreenRecordingPermissionHandler()
         }
-        
+
     }
 
     private let requestAllPermissionsState = MockoloMutex(MockoloHandlerState<Never, @Sendable () async -> [String: Bool]>())
@@ -723,7 +723,7 @@ final class PermissionManagerProtocolMock: PermissionManagerProtocol, @unchecked
         if let openSystemSettingsHandler = openSystemSettingsHandler {
             openSystemSettingsHandler()
         }
-        
+
     }
 
     private let openScreenRecordingSettingsState = MockoloMutex(MockoloHandlerState<Never, @Sendable () -> ()>())
@@ -742,7 +742,7 @@ final class PermissionManagerProtocolMock: PermissionManagerProtocol, @unchecked
         if let openScreenRecordingSettingsHandler = openScreenRecordingSettingsHandler {
             openScreenRecordingSettingsHandler()
         }
-        
+
     }
 
     private let verifyPermissionsForRecordingState = MockoloMutex(MockoloHandlerState<(requiresCamera: Bool, requiresMicrophone: Bool, requiresScreenRecording: Bool), @Sendable (Bool, Bool, Bool) -> Bool>())
@@ -788,28 +788,27 @@ final class VideoWriterProtocolMock: VideoWriterProtocol, @unchecked Sendable {
 
     var isReadyForData: Bool = false
 
-    private let startState = MockoloMutex(MockoloHandlerState<URL, @Sendable (URL) throws -> ()>())
+    private let startState = MockoloMutex(MockoloHandlerState<(URL, Double), @Sendable (URL, Double) throws -> ()>())
     var startCallCount: Int {
         return startState.withLock(\.callCount)
     }
-    var startArgValues: [URL] {
+    var startArgValues: [(URL, Double)] {
         return startState.withLock(\.argValues).map(\.value)
     }
-    var startHandler: (@Sendable (URL) throws -> ())? {
+    var startHandler: (@Sendable (URL, Double) throws -> ())? {
         get { startState.withLock(\.handler) }
         set { startState.withLock { $0.handler = newValue } }
     }
-    func start(outputURL: URL) throws {
+    func start(outputURL: URL, targetFrameRate: Double) throws {
         warnIfNotSendable(outputURL)
         let startHandler = startState.withLock { state in
             state.callCount += 1
-            state.argValues.append(.init((outputURL)))
+            state.argValues.append(.init((outputURL, targetFrameRate)))
             return state.handler
         }
         if let startHandler = startHandler {
-            try startHandler(outputURL)
+            try startHandler(outputURL, targetFrameRate)
         }
-        
     }
 
     private let startSessionState = MockoloMutex(MockoloHandlerState<CMTime, @Sendable (CMTime) -> ()>())
@@ -833,7 +832,7 @@ final class VideoWriterProtocolMock: VideoWriterProtocol, @unchecked Sendable {
         if let startSessionHandler = startSessionHandler {
             startSessionHandler(sourceTime)
         }
-        
+
     }
 
     private let finishState = MockoloMutex(MockoloHandlerState<Never, @Sendable () async -> URL?>())
@@ -876,7 +875,7 @@ final class VideoWriterProtocolMock: VideoWriterProtocol, @unchecked Sendable {
         if let writeVideoHandler = writeVideoHandler {
             writeVideoHandler(sampleBuffer, presentationTime, source)
         }
-        
+
     }
 
     private let writeMicAudioState = MockoloMutex(MockoloHandlerState<CMSampleBuffer, @Sendable (CMSampleBuffer) -> ()>())
@@ -900,7 +899,7 @@ final class VideoWriterProtocolMock: VideoWriterProtocol, @unchecked Sendable {
         if let writeMicAudioHandler = writeMicAudioHandler {
             writeMicAudioHandler(sampleBuffer)
         }
-        
+
     }
 
     private let writeSystemAudioState = MockoloMutex(MockoloHandlerState<CMSampleBuffer, @Sendable (CMSampleBuffer) -> ()>())
@@ -924,7 +923,7 @@ final class VideoWriterProtocolMock: VideoWriterProtocol, @unchecked Sendable {
         if let writeSystemAudioHandler = writeSystemAudioHandler {
             writeSystemAudioHandler(sampleBuffer)
         }
-        
+
     }
 
     private let updateCameraFrameState = MockoloMutex(MockoloHandlerState<CVPixelBuffer?, @Sendable (CVPixelBuffer?) -> ()>())
@@ -948,7 +947,7 @@ final class VideoWriterProtocolMock: VideoWriterProtocol, @unchecked Sendable {
         if let updateCameraFrameHandler = updateCameraFrameHandler {
             updateCameraFrameHandler(pixelBuffer)
         }
-        
+
     }
 
     private let updatePiPFrameState = MockoloMutex(MockoloHandlerState<(frame: CGRect?, screenFrame: CGRect?), @Sendable (CGRect?, CGRect?) -> ()>())
@@ -972,7 +971,7 @@ final class VideoWriterProtocolMock: VideoWriterProtocol, @unchecked Sendable {
         if let updatePiPFrameHandler = updatePiPFrameHandler {
             updatePiPFrameHandler(frame, screenFrame)
         }
-        
+
     }
 }
 
@@ -999,7 +998,7 @@ actor ThumbnailServiceProtocolMock: ThumbnailServiceProtocol {
         if let clearCacheHandler = clearCacheHandler {
             clearCacheHandler()
         }
-        
+
     }
 
     private(set) var generateBestThumbnailCallCount = 0
@@ -1052,7 +1051,7 @@ final class RealTimeAudioProcessorProtocolMock: RealTimeAudioProcessorProtocol, 
         if let setupForPlayerItemHandler = setupForPlayerItemHandler {
             try await setupForPlayerItemHandler(item, clip, videoPlayer)
         }
-        
+
     }
 
     private let playState = MockoloMutex(MockoloHandlerState<Never, @Sendable () -> ()>())
@@ -1071,7 +1070,7 @@ final class RealTimeAudioProcessorProtocolMock: RealTimeAudioProcessorProtocol, 
         if let playHandler = playHandler {
             playHandler()
         }
-        
+
     }
 
     private let pauseState = MockoloMutex(MockoloHandlerState<Never, @Sendable () -> ()>())
@@ -1090,7 +1089,7 @@ final class RealTimeAudioProcessorProtocolMock: RealTimeAudioProcessorProtocol, 
         if let pauseHandler = pauseHandler {
             pauseHandler()
         }
-        
+
     }
 
     private let seekState = MockoloMutex(MockoloHandlerState<CMTime, @Sendable (CMTime) -> ()>())
@@ -1114,7 +1113,7 @@ final class RealTimeAudioProcessorProtocolMock: RealTimeAudioProcessorProtocol, 
         if let seekHandler = seekHandler {
             seekHandler(time)
         }
-        
+
     }
 
     private let updateEffectsState = MockoloMutex(MockoloHandlerState<VideoClip, @Sendable (VideoClip) async throws -> ()>())
@@ -1138,7 +1137,7 @@ final class RealTimeAudioProcessorProtocolMock: RealTimeAudioProcessorProtocol, 
         if let updateEffectsHandler = updateEffectsHandler {
             try await updateEffectsHandler(clip)
         }
-        
+
     }
 
     private let cleanupState = MockoloMutex(MockoloHandlerState<Never, @Sendable () -> ()>())
@@ -1157,7 +1156,7 @@ final class RealTimeAudioProcessorProtocolMock: RealTimeAudioProcessorProtocol, 
         if let cleanupHandler = cleanupHandler {
             cleanupHandler()
         }
-        
+
     }
 }
 
@@ -1194,7 +1193,7 @@ actor TranscriptionServiceProtocolMock: TranscriptionServiceProtocol {
         if let cancelHandler = cancelHandler {
             await cancelHandler()
         }
-        
+
     }
 }
 
@@ -1250,7 +1249,7 @@ final class AudioServiceProtocolMock: AudioServiceProtocol, @unchecked Sendable 
         if let refreshMicrophonesHandler = refreshMicrophonesHandler {
             refreshMicrophonesHandler()
         }
-        
+
     }
 
     private let ensureMicrophonesDiscoveredState = MockoloMutex(MockoloHandlerState<Never, @Sendable () -> ()>())
@@ -1269,7 +1268,7 @@ final class AudioServiceProtocolMock: AudioServiceProtocol, @unchecked Sendable 
         if let ensureMicrophonesDiscoveredHandler = ensureMicrophonesDiscoveredHandler {
             ensureMicrophonesDiscoveredHandler()
         }
-        
+
     }
 
     private let checkPermissionState = MockoloMutex(MockoloHandlerState<Never, @Sendable () -> ()>())
@@ -1288,7 +1287,7 @@ final class AudioServiceProtocolMock: AudioServiceProtocol, @unchecked Sendable 
         if let checkPermissionHandler = checkPermissionHandler {
             checkPermissionHandler()
         }
-        
+
     }
 
     private let requestPermissionState = MockoloMutex(MockoloHandlerState<Never, @Sendable () -> ()>())
@@ -1307,7 +1306,7 @@ final class AudioServiceProtocolMock: AudioServiceProtocol, @unchecked Sendable 
         if let requestPermissionHandler = requestPermissionHandler {
             requestPermissionHandler()
         }
-        
+
     }
 
     private let startState = MockoloMutex(MockoloHandlerState<Never, @Sendable () -> ()>())
@@ -1326,7 +1325,7 @@ final class AudioServiceProtocolMock: AudioServiceProtocol, @unchecked Sendable 
         if let startHandler = startHandler {
             startHandler()
         }
-        
+
     }
 
     private let stopState = MockoloMutex(MockoloHandlerState<Never, @Sendable () -> ()>())
@@ -1345,7 +1344,7 @@ final class AudioServiceProtocolMock: AudioServiceProtocol, @unchecked Sendable 
         if let stopHandler = stopHandler {
             stopHandler()
         }
-        
+
     }
 
     private let switchMicrophoneState = MockoloMutex(MockoloHandlerState<AVCaptureDevice, @Sendable (AVCaptureDevice) -> ()>())
@@ -1369,7 +1368,7 @@ final class AudioServiceProtocolMock: AudioServiceProtocol, @unchecked Sendable 
         if let switchMicrophoneHandler = switchMicrophoneHandler {
             switchMicrophoneHandler(device)
         }
-        
+
     }
 }
 
@@ -1547,7 +1546,7 @@ final class ScreenRecorderProtocolMock: ScreenRecorderProtocol, @unchecked Senda
         if let startHandler = startHandler {
             try await startHandler(outputURL)
         }
-        
+
     }
 
     private let stopState = MockoloMutex(MockoloHandlerState<Never, @Sendable () async -> ()>())
@@ -1566,7 +1565,7 @@ final class ScreenRecorderProtocolMock: ScreenRecorderProtocol, @unchecked Senda
         if let stopHandler = stopHandler {
             await stopHandler()
         }
-        
+
     }
 
     private let teardownState = MockoloMutex(MockoloHandlerState<Never, @Sendable () -> ()>())
@@ -1585,7 +1584,7 @@ final class ScreenRecorderProtocolMock: ScreenRecorderProtocol, @unchecked Senda
         if let teardownHandler = teardownHandler {
             teardownHandler()
         }
-        
+
     }
 
     private let updateContentFilterState = MockoloMutex(MockoloHandlerState<Never, @Sendable () async -> ()>())
@@ -1604,7 +1603,7 @@ final class ScreenRecorderProtocolMock: ScreenRecorderProtocol, @unchecked Senda
         if let updateContentFilterHandler = updateContentFilterHandler {
             await updateContentFilterHandler()
         }
-        
+
     }
 
     private let handleContentSelectedState = MockoloMutex(MockoloHandlerState<SCContentFilter, @Sendable (SCContentFilter) async -> ()>())
@@ -1628,7 +1627,7 @@ final class ScreenRecorderProtocolMock: ScreenRecorderProtocol, @unchecked Senda
         if let handleContentSelectedHandler = handleContentSelectedHandler {
             await handleContentSelectedHandler(filter)
         }
-        
+
     }
 }
 
@@ -1690,7 +1689,7 @@ final class TranscriptionCoordinatorProtocolMock: TranscriptionCoordinatorProtoc
         if let resetFailureCountsHandler = resetFailureCountsHandler {
             resetFailureCountsHandler()
         }
-        
+
     }
 
     private let setEngineState = MockoloMutex(MockoloHandlerState<TranscriptionEngine, @Sendable (TranscriptionEngine) -> ()>())
@@ -1714,7 +1713,7 @@ final class TranscriptionCoordinatorProtocolMock: TranscriptionCoordinatorProtoc
         if let setEngineHandler = setEngineHandler {
             setEngineHandler(engine)
         }
-        
+
     }
 }
 
@@ -1746,7 +1745,7 @@ final class SoundAnalysisServiceProtocolMock: SoundAnalysisServiceProtocol, @unc
         if let analyzeHandler = analyzeHandler {
             analyzeHandler(sampleBuffer)
         }
-        
+
     }
 
     private let startRealTimeAnalysisState = MockoloMutex(MockoloHandlerState<AVAudioFormat, @Sendable (AVAudioFormat) -> ()>())
@@ -1770,7 +1769,7 @@ final class SoundAnalysisServiceProtocolMock: SoundAnalysisServiceProtocol, @unc
         if let startRealTimeAnalysisHandler = startRealTimeAnalysisHandler {
             startRealTimeAnalysisHandler(format)
         }
-        
+
     }
 
     private let stopRealTimeAnalysisState = MockoloMutex(MockoloHandlerState<Never, @Sendable () -> ()>())
@@ -1789,7 +1788,7 @@ final class SoundAnalysisServiceProtocolMock: SoundAnalysisServiceProtocol, @unc
         if let stopRealTimeAnalysisHandler = stopRealTimeAnalysisHandler {
             stopRealTimeAnalysisHandler()
         }
-        
+
     }
 }
 
@@ -1938,7 +1937,7 @@ final class PersonSegmentationServiceProtocolMock: PersonSegmentationServiceProt
         if let clearCacheHandler = clearCacheHandler {
             await clearCacheHandler()
         }
-        
+
     }
 
     private let applyBackgroundBlurState = MockoloMutex(MockoloHandlerState<(image: CIImage, blurRadius: Float, reuseRequest: Bool), @Sendable (CIImage, Float, Bool) async throws -> CIImage>())
@@ -2212,7 +2211,7 @@ final class VisionOrchestratorProtocolMock: VisionOrchestratorProtocol, @uncheck
         if let warmupHandler = warmupHandler {
             warmupHandler()
         }
-        
+
     }
 }
 
@@ -2257,4 +2256,3 @@ fileprivate struct MockoloHandlerState<Arg, Handler> {
     var handler: Handler? = nil
     var callCount: Int = 0
 }
-

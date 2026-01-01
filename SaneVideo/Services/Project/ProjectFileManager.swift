@@ -293,7 +293,17 @@ final class ProjectFileManager: Sendable, ProjectFileManagerProtocol {
                             clip.trimEnd = clip.duration
                             needsSave = true
                         }
-                        
+
+                        // CRITICAL FIX: Validate enhancedAudioURL (temp file may have been cleaned up)
+                        // If enhanced audio file is missing, clear the URL so playback falls back to original
+                        if let enhancedURL = clip.enhancedAudioURL {
+                            if !FileManager.default.fileExists(atPath: enhancedURL.path) {
+                                AppLogger.project.warning("⚠️ Enhanced audio missing: \(enhancedURL.lastPathComponent), reverting to original audio")
+                                clip.enhancedAudioURL = nil
+                                needsSave = true
+                            }
+                        }
+
                         updatedClips.append(clip)
 
                     } catch {

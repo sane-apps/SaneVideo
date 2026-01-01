@@ -23,17 +23,12 @@ struct SidebarView: View {
                 Divider()
                     .padding(.vertical, 8)
 
-                // Quick Actions (commonly hidden features)
+                // Quick Actions (2025-12-31: Magic Fix moved to Inspector Smart Tools)
                 Text("QUICK")
                     .font(.system(size: 7, weight: .bold))
                     .foregroundStyle(.tertiary)
                     .textCase(.uppercase)
                     .padding(.top, 4)
-
-                QuickActionButton(icon: "wand.and.stars", label: "Magic Fix", action: {
-                    NotificationCenter.default.post(name: NSNotification.Name("TriggerMagicFix"), object: nil)
-                })
-                .help("Magic Fix Selected Clip (⇧⌘M)")
 
                 QuickActionButton(icon: "photo", label: "Thumbnail", action: {
                     NotificationCenter.default.post(name: NSNotification.Name("GenerateThumbnail"), object: nil)

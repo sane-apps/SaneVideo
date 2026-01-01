@@ -11,10 +11,12 @@ import OSLog
 final class ProjectStore: ProjectStoreProtocol {
     private let projectsDirectory: URL
     private let loadState = OSAllocatedUnfairLock<Task<[VideoProject], Error>?>(initialState: nil)
+    private let isInTestMode: Bool  // Suppress toasts during tests
 
     init(rootDirectory: URL? = nil) {
         if let rootDirectory {
             projectsDirectory = rootDirectory
+            isInTestMode = true  // Custom root = test mode
         } else {
             // Check for Test Mode / Editor Mode via UserDefaults (which we confirmed works)
             let isTesting = UserDefaults.standard.bool(forKey: "ui_testing") ||
@@ -32,6 +34,7 @@ final class ProjectStore: ProjectStoreProtocol {
                 projectsDirectory = FileManager.default.temporaryDirectory
                     .appendingPathComponent("SaneVideo_Test_Projects")
                     .appendingPathComponent(UUID().uuidString)
+                isInTestMode = true
             } else {
                 // Projects directory in user's Movies folder
                 if let moviesDir = FileManager.default.urls(for: .moviesDirectory, in: .userDomainMask).first {
@@ -46,6 +49,7 @@ final class ProjectStore: ProjectStoreProtocol {
                         projectsDirectory = FileManager.default.temporaryDirectory.appendingPathComponent("SaneVideo/Projects")
                     }
                 }
+                isInTestMode = false
             }
         }
 
@@ -211,18 +215,26 @@ final class ProjectStore: ProjectStoreProtocol {
                                 let backupError = "\(error.localizedDescription) (type: \(type(of: error)))"
                                 AppLogger.project.error("Backup also failed to load: \(backupError)")
                                 AppLogger.uiLog.error("Project recovery failed: \(fileURL.lastPathComponent) - backup also corrupted: \(backupError)")
-                                // CRITICAL: Show warning to user about corrupted project
-                                await MainActor.run {
-                                    ServiceContainer.shared.toastManager.show("⚠️ Project file corrupted: \(fileURL.lastPathComponent)", type: .error)
+                                // CRITICAL: Show warning to user about corrupted project (skip in tests)
+                                if !self.isInTestMode {
+                                    await MainActor.run {
+                                        ServiceContainer.shared.toastManager.show("⚠️ Project file corrupted: \(fileURL.lastPathComponent)", type: .error)
+                                    }
                                 }
+                                // FIX: Quarantine corrupted file to prevent repeated toast on every launch
+                                quarantineCorruptedFile(fileURL)
                             }
                         } else {
                             // No backup available - show warning
                             AppLogger.project.warning("No backup available for corrupted project: \(fileURL.lastPathComponent)")
                             AppLogger.uiLog.error("Project corruption (no backup): \(fileURL.lastPathComponent) - \(errorDetails)")
-                            await MainActor.run {
-                                ServiceContainer.shared.toastManager.show("⚠️ Project file corrupted (no backup): \(fileURL.lastPathComponent)", type: .error)
+                            if !self.isInTestMode {
+                                await MainActor.run {
+                                    ServiceContainer.shared.toastManager.show("⚠️ Project file corrupted (no backup): \(fileURL.lastPathComponent)", type: .error)
+                                }
                             }
+                            // FIX: Quarantine corrupted file to prevent repeated toast on every launch
+                            quarantineCorruptedFile(fileURL)
                         }
                     }
                 }
@@ -369,5 +381,44 @@ final class ProjectStore: ProjectStoreProtocol {
 
     func fileURL(for project: VideoProject) -> URL {
         return projectsDirectory.appendingPathComponent("\(project.id.uuidString).svproj")
+    }
+
+    // MARK: - Corruption Handling
+
+    /// Moves a corrupted project file to a quarantine folder to prevent repeated error toasts on launch.
+    /// The file is moved (not deleted) so users can attempt manual recovery if needed.
+    private func quarantineCorruptedFile(_ fileURL: URL) {
+        let fileManager = FileManager.default
+        let quarantineDir = projectsDirectory.appendingPathComponent(".quarantine", isDirectory: true)
+
+        do {
+            // Create quarantine directory if it doesn't exist
+            if !fileManager.fileExists(atPath: quarantineDir.path) {
+                try fileManager.createDirectory(at: quarantineDir, withIntermediateDirectories: true)
+            }
+
+            // Generate unique quarantine filename with timestamp
+            let timestamp = ISO8601DateFormatter().string(from: Date())
+                .replacingOccurrences(of: ":", with: "-")
+            let quarantineName = "\(timestamp)_\(fileURL.lastPathComponent)"
+            let quarantineURL = quarantineDir.appendingPathComponent(quarantineName)
+
+            // Move corrupted file to quarantine
+            try fileManager.moveItem(at: fileURL, to: quarantineURL)
+            AppLogger.project.info("✅ Quarantined corrupted project: \(fileURL.lastPathComponent) → .quarantine/\(quarantineName)")
+
+            // Also quarantine the backup if it exists
+            let backupURL = fileURL.appendingPathExtension("backup")
+            if fileManager.fileExists(atPath: backupURL.path) {
+                let quarantineBackupURL = quarantineDir.appendingPathComponent("\(quarantineName).backup")
+                try? fileManager.moveItem(at: backupURL, to: quarantineBackupURL)
+            }
+        } catch {
+            // If quarantine fails, try to just delete the file to prevent repeated toasts
+            AppLogger.project.warning("Failed to quarantine, attempting delete: \(error.localizedDescription)")
+            try? fileManager.removeItem(at: fileURL)
+            let backupURL = fileURL.appendingPathExtension("backup")
+            try? fileManager.removeItem(at: backupURL)
+        }
     }
 }

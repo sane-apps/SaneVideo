@@ -104,8 +104,8 @@ class ExportEngine: ExportServiceProtocol {
       "🚀 Starting AVAssetWriter export: \(settings.resolution.displayName) @ \(settings.bitrate/1_000_000) Mbps"
     )
 
-    // 1. Prepare Composition
-    let compositionResult = try await compositor.createComposition(from: project)
+    // 1. Prepare Composition (with export resolution for correct transform scaling)
+    let compositionResult = try await compositor.createComposition(from: project, settings: settings)
     let composition = compositionResult.composition
     let videoComposition = try await compositor.createVideoComposition(
       for: composition,

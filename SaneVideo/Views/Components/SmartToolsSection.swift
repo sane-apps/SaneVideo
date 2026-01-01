@@ -29,39 +29,10 @@ struct SmartToolsSection: View {
       // MARK: - Header & Presets
       headerView
 
-      // MARK: - Action Card logic
-      // UX FIX: Compact spacing to keep button visible
-      VStack(spacing: Theme.Dimensions.spacingSM) {
-        // Responsive Layout: Stacks vertically when width is constrained
-        ViewThatFits(in: .horizontal) {
-          // Option 1: Side-by-side (Wide)
-          HStack(alignment: .top, spacing: Theme.Dimensions.spacingMD) {
-            audioCard
-            videoCard
-          }
-
-          // Option 2: Stacked (Narrow)
-          VStack(spacing: Theme.Dimensions.spacingMD) {
-            audioCard
-            videoCard
-          }
-        }
-
-        // Generative Card (full width)
-        ToolCard(title: "Generative AI", icon: "sparkles", color: .orange) {
-          ViewThatFits(in: .horizontal) {
-            // Option 1: Side-by-side (Wide)
-            HStack(spacing: Theme.Dimensions.spacingMD) {
-              generativeToggles
-            }
-
-            // Option 2: Stacked (Narrow)
-            VStack(spacing: Theme.Dimensions.spacingMD) {
-              generativeToggles
-            }
-          }
-        }
-      }
+      // MARK: - Core Cleanup Card (simplified UI - 2025-12-31)
+      // Only 5 core features: Remove Silence, Remove Fillers, Generate Captions, Enhance Speech, Smooth Cuts
+      // Other features (Smart Crop, Auto-Framing, Find Highlights) are in their canonical locations
+      coreCleanupCard
 
       // Global Action Button
       magicButton
@@ -88,23 +59,27 @@ struct SmartToolsSection: View {
         Button {
           options = .minimal
         } label: {
-          Label("Minimal Fix", systemImage: "scissors")
+          Label("Quick Fix", systemImage: "hare")
         }
         .accessibilityIdentifier(AccessibilityIdentifiers.presetMinimal)
+        .help("Remove silence only - fastest option")
 
         Button {
           options = .proClean
         } label: {
-          Label("Pro Clean-up", systemImage: "sparkles")
+          Label("Full Cleanup", systemImage: "sparkles")
         }
         .accessibilityIdentifier(AccessibilityIdentifiers.presetProClean)
+        .help("All 5 core cleanup features enabled")
+
+        Divider()
 
         Button {
-          options = .socialMedia
+          // Reset to defaults
+          options = MagicFixOptions()
         } label: {
-          Label("Social Media Ready", systemImage: "square.stack.3d.up")
+          Label("Reset to Defaults", systemImage: "arrow.counterclockwise")
         }
-        .accessibilityIdentifier(AccessibilityIdentifiers.presetSocialMedia)
       } label: {
         Label("Presets", systemImage: "slider.horizontal.3")
           .font(.system(size: Theme.Typography.fontSizeSM, weight: .semibold))
@@ -123,18 +98,25 @@ struct SmartToolsSection: View {
     }
   }
 
-  private var audioCard: some View {
-    ToolCard(title: "Audio Cleanup", icon: "waveform", color: .blue) {
+  // MARK: - Core Cleanup Card (5 features only - 2025-12-31 refactor)
+  // Features removed from Magic Fix UI (use canonical locations instead):
+  // - Smart Crop → VideoSection.swift
+  // - Auto-Framing → VideoSection.swift
+  // - Auto Color → VideoSection.swift (Effects)
+  // - Find Highlights → AudioSection.swift
+  // - Magic Remove / Cinematic Styles → Future generative features
+
+  private var coreCleanupCard: some View {
+    ToolCard(title: "Core Cleanup", icon: "waveform.badge.magnifyingglass", color: .blue) {
       VStack(spacing: Theme.Dimensions.spacingMD) {
+        // 1. Remove Silence
         InspectorToggle(
           title: "Remove Silence",
           subtitle: "Cut non-speech gaps",
           isOn: Binding(
             get: { options.removeSilence },
             set: { [clip] newValue in
-              // CRITICAL FIX: Capture clip by value to prevent stale reference crash
               options.removeSilence = newValue
-              // LIVE PREVIEW: Use Gating as proxy for silence removal preview
               let clipId = clip.id
               Task { @MainActor in
                 appState.projectState.updateClipGating(clipId: clipId, enabled: newValue)
@@ -145,10 +127,9 @@ struct SmartToolsSection: View {
           color: .blue,
           identifier: "Toggle_RemoveSilence"
         )
-        .help(
-          "Automatically cuts segments of the video where no speech is detected (Timeline Edit).")
+        .help("Automatically cuts segments where no speech is detected.")
 
-        // UX FIX: Improved spacing and typography for advanced settings
+        // Silence threshold slider (shown when enabled)
         if options.removeSilence {
           VStack(alignment: .leading, spacing: Theme.Dimensions.spacingSM) {
             HStack {
@@ -157,15 +138,12 @@ struct SmartToolsSection: View {
                 .foregroundColor(.secondary)
               Spacer()
               Text("\(Int(options.silenceThreshold)) dB")
-                .font(
-                  .system(size: Theme.Typography.fontSizeSM, weight: .semibold, design: .monospaced)
-                )
+                .font(.system(size: Theme.Typography.fontSizeSM, weight: .semibold, design: .monospaced))
                 .foregroundColor(.primary)
             }
             Slider(value: $options.silenceThreshold, in: -60 ... -20, step: 1)
               .controlSize(.small)
               .tint(.accentColor)
-              .help("Audio levels below this threshold will be considered silence.")
           }
           .padding(.vertical, Theme.Dimensions.paddingXS)
           .padding(.horizontal, Theme.Dimensions.paddingXS)
@@ -173,6 +151,7 @@ struct SmartToolsSection: View {
           .cornerRadius(Theme.Dimensions.smallCornerRadius)
         }
 
+        // 2. Remove Fillers
         InspectorToggle(
           title: "Remove Fillers",
           subtitle: "Cut 'um', 'uh', stutters",
@@ -181,17 +160,27 @@ struct SmartToolsSection: View {
           color: .blue,
           identifier: "Toggle_RemoveFillers"
         )
-        .help("Detects and removes hesitation words like 'um' and 'uh' from the timeline.")
+        .help("Removes hesitation words like 'um' and 'uh' from the timeline.")
 
+        // 3. Generate Captions
+        InspectorToggle(
+          title: "Generate Captions",
+          subtitle: "AI transcription",
+          isOn: $options.generateCaptions,
+          icon: "captions.bubble",
+          color: .blue,
+          identifier: "Toggle_GenerateCaptions"
+        )
+        .help("Transcribe speech to text captions. Edit in the Transcript sidebar tab.")
+
+        // 4. Enhance Speech
         InspectorToggle(
           title: "Enhance Speech",
           subtitle: "Isolate voice & remove noise",
           isOn: Binding(
             get: { options.enhanceAudio },
             set: { [clip] newValue in
-              // CRITICAL FIX: Capture clip by value to prevent stale reference crash
               options.enhanceAudio = newValue
-              // LIVE PREVIEW: Use Voice Isolation for enhancement preview
               let clipId = clip.id
               Task { @MainActor in
                 appState.projectState.updateClipVoiceIsolation(clipId: clipId, enabled: newValue)
@@ -202,80 +191,21 @@ struct SmartToolsSection: View {
           color: .blue,
           identifier: "Toggle_EnhanceSpeech"
         )
-        .help("Applies EQ, Compression, and AI Voice Isolation to clean up background noise.")
+        .help("AI voice isolation and noise reduction.")
+
+        // 5. Smooth Cuts
+        InspectorToggle(
+          title: "Smooth Cuts",
+          subtitle: "Blend jump cuts",
+          isOn: $options.smoothJumpCuts,
+          icon: "scissors",
+          color: .blue,
+          identifier: "Toggle_SmoothCuts"
+        )
+        .help("Apply morph-cut style smoothing to jump cuts created by silence/filler removal.")
       }
     }
     .frame(maxWidth: .infinity)
-  }
-
-  private var videoCard: some View {
-    ToolCard(title: "Video & Framing", icon: "video", color: .purple) {
-      VStack(spacing: Theme.Dimensions.spacingMD) {
-        InspectorToggle(
-          title: "Auto Color",
-          subtitle: "Light & color fix",
-          isOn: Binding(
-            get: { options.autoEnhance },
-            set: { newValue in
-              options.autoEnhance = newValue
-              // LIVE PREVIEW: Apply or remove effect immediately
-              if newValue {
-                appState.projectState.applyEffect(to: clip, effect: VideoEffect(type: .autoEnhance))
-              } else {
-                appState.projectState.removeEffect(from: clip, type: .autoEnhance)
-              }
-            }
-          ),
-          icon: "paintpalette",
-          color: .purple,
-          identifier: "Toggle_AutoColor"
-        )
-        .help("Automatically adjusts brightness, contrast, and saturation (Instant Preview).")
-
-        InspectorToggle(
-          title: "Smart Crop (9:16)",
-          subtitle: "Auto vertical reframe",
-          isOn: $options.smartCrop,
-          icon: "iphone",
-          color: .purple
-        )
-        .help("Reframes horizontal video to vertical (9:16) keeping the subject centered.")
-
-        InspectorToggle(
-          title: "Auto-Framing",
-          subtitle: "Track faces & focus",
-          isOn: $options.autoFraming,
-          icon: "target",
-          color: .purple
-        )
-        .help("Keeps the subject centered in the frame even if they move.")
-      }
-    }
-    .frame(maxWidth: .infinity)
-  }
-
-  // Helper to avoid duplication in ViewThatFits
-  @ViewBuilder
-  private var generativeToggles: some View {
-    InspectorToggle(
-      title: "Magic Remove",
-      subtitle: "AI object removal",
-      isOn: $options.magicRemovePeople,
-      icon: "person.badge.minus",
-      color: .orange
-    )
-    .help("Automatically detects and removes people or distracting objects from the background.")
-
-    InspectorToggle(
-      title: "Cinematic Styles",
-      subtitle: "Prompt-based restyling",
-      isOn: $options.generativeStyle,
-      icon: "camera.filters",
-      color: .orange
-    )
-    .help(
-      "Applies generative filters to give your video a specific look (e.g. 'Vintage', 'Cyberpunk')."
-    )
   }
 
   private var magicButton: some View {

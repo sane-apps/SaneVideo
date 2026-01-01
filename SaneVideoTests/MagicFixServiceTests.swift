@@ -504,11 +504,15 @@ struct MagicFixServiceTests {
             // Arrange & Act
             let options = MagicFixOptions.proClean
 
-            // Assert
+            // Assert - 5 core cleanup features (2025-12-31 simplification)
             #expect(options.removeSilence == true)
             #expect(options.removeFillers == true)
-            #expect(options.autoEnhance == true)
-            #expect(options.findHighlights == true)
+            #expect(options.generateCaptions == true)
+            #expect(options.enhanceAudio == true)
+            #expect(options.smoothJumpCuts == true)
+            // autoEnhance and findHighlights moved to canonical UI locations
+            #expect(options.autoEnhance == false)
+            #expect(options.findHighlights == false)
             #expect(options.presetName == "Pro Clean-up")
         }
 

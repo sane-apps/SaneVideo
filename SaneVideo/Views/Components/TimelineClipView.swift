@@ -22,11 +22,10 @@ struct TimelineClipView: View {
     var onRemoveSilence: (() -> Void)?
     var onRemoveFillers: (() -> Void)?
     var onGenerateCaptions: (() -> Void)?
-    var onSmartCrop: ((CGFloat) -> Void)?
-    var onAutoFrame: (() -> Void)?
+    // 2025-12-31: Removed onSmartCrop, onAutoFrame, onFindHighlights
+    // These features are accessed via their canonical locations in the inspector
     var onFindGestures: (() -> Void)?
     var onPrivacyBlur: (() -> Void)?
-    var onFindHighlights: (() -> Void)?
     var onDeleteFile: (() -> Void)?
     var onRelink: (() -> Void)?
     var onSetTransition: ((TransitionType) -> Void)?
@@ -140,10 +139,13 @@ struct TimelineClipView: View {
         .contextMenu {
             ClipContextMenu(
                 clip: clip,
-                onSplit: onSplit, onDelete: onDelete, onRemoveSilence: onRemoveSilence,
-                onRemoveFillers: onRemoveFillers, onGenerateCaptions: onGenerateCaptions,
-                onSmartCrop: onSmartCrop, onAutoFrame: onAutoFrame, onFindGestures: onFindGestures,
-                onPrivacyBlur: onPrivacyBlur, onFindHighlights: onFindHighlights,
+                onSplit: onSplit,
+                onDelete: onDelete,
+                onRemoveSilence: onRemoveSilence,
+                onRemoveFillers: onRemoveFillers,
+                onGenerateCaptions: onGenerateCaptions,
+                onFindGestures: onFindGestures,
+                onPrivacyBlur: onPrivacyBlur,
                 onRelink: onRelink,
                 onDeleteFile: { showingDeleteFileConfirmation = true },
                 onSetTransition: onSetTransition

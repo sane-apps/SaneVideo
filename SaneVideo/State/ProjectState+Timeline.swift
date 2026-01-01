@@ -200,6 +200,11 @@ extension ProjectState {
         let batchTransactionId = beginTransaction()
         defer { endTransaction(batchTransactionId) }
 
+        // BATCH FIX: Use a single undo group for the entire batch operation
+        // This allows user to undo/redo all changes from Magic Fix All with one action
+        beginUndoGroup("Magic Fix All")
+        defer { endUndoGroup() }
+
         processingStatus = "✨ Magic Fix All: Processing \(allClips.count) clips..."
         processingProgress = 0.0
 
@@ -213,7 +218,9 @@ extension ProjectState {
                     self.processingProgress = Double(index) / Double(allClips.count)
                 }
 
-                await self.performMagicFix(for: clip, options: options)
+                // BATCH FIX: Pass isBatchOperation=true to skip nested undo groups
+                // and avoid overwriting currentProcessingTask
+                await self.performMagicFix(for: clip, options: options, isBatchOperation: true)
             },
             progressHandler: { @Sendable completed, total in
                 Task { @MainActor in

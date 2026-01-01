@@ -205,27 +205,32 @@ final class SaneVideoCompositor: NSObject, AVVideoCompositing {
     guard let sourceBuffer = request.sourceFrame(byTrackID: trackID) else { return nil }
     var layerImage = CIImage(cvPixelBuffer: sourceBuffer)
 
-    // 0. Apply Privacy Blur
+    // 0. Apply Privacy Blur (time-filtered to prevent leak across clips)
     if let privacyRanges = instruction.trackPrivacyRegions[trackID] {
-      for (_, regions) in privacyRanges {  // Range check simplified, assuming pre-filtered or checking inside
-        // In production, verify range contains time
+      for (range, regions) in privacyRanges where range.containsTime(request.compositionTime) {
         for region in regions {
           applyPrivacyRegion(region, to: &layerImage)
         }
       }
     }
 
-    // Find corresponding layer instruction
-    guard
-      let layerInstruction = instruction.layerInstructions.first(where: { $0.trackID == trackID })
-    else { return layerImage }
-
-    // A. Apply Transform (Base Layer Instruction)
+    // Find the layer instruction valid for current composition time
+    // Multiple clips on same track create separate instructions; find the one with valid transform ramp
     var startTransform = CGAffineTransform.identity
-    if layerInstruction.getTransformRamp(
-      for: request.compositionTime, start: &startTransform, end: nil, timeRange: nil) {
-      layerImage = layerImage.transformed(by: startTransform)
+    var foundValidInstruction = false
+
+    for layerInstruction in instruction.layerInstructions where layerInstruction.trackID == trackID {
+      if layerInstruction.getTransformRamp(
+        for: request.compositionTime, start: &startTransform, end: nil, timeRange: nil) {
+        layerImage = layerImage.transformed(by: startTransform)
+        foundValidInstruction = true
+        break  // Found the correct instruction for this time
+      }
     }
+
+    // If no valid instruction found, return image without transform
+    guard foundValidInstruction || instruction.layerInstructions.contains(where: { $0.trackID == trackID })
+    else { return layerImage }
 
     // A.2. Apply Keyframe Animation Transforms
     if let keyframeRanges = instruction.trackKeyframes[trackID] {

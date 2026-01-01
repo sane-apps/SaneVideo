@@ -226,8 +226,13 @@ class RecordingEngine: NSObject {
     let renderingService = RenderingService.shared
     self.videoWriter = VideoWriter(renderingService: renderingService)
 
+    // Get target frame rate from user preferences
+    let targetFPS = await MainActor.run {
+      ServiceContainer.shared.userPreferences.recordingFPS
+    }
+
     do {
-      try self.videoWriter?.start(outputURL: url)
+      try self.videoWriter?.start(outputURL: url, targetFrameRate: targetFPS)
     } catch {
       AppLogger.recording.error("Failed to start video writer: \(error)")
       // CRITICAL: Cleanup on failure

@@ -246,31 +246,36 @@ class PlaybackState {
 
     private func setupPlayer(with item: AVPlayerItem, duration: CMTime) {
         let newPlayer = AVPlayer(playerItem: item)
+        // CRITICAL FIX: Ensure player volume is set to 1.0
+        // When RealTimeAudioProcessor was active, it set volume = 0.0
+        // Now that it's disabled, we must ensure audio plays from composition
+        newPlayer.volume = 1.0
         player = newPlayer
         self.duration = duration
 
         // Update token holder
         tokenHolder.player = newPlayer
 
-        // Setup real-time audio processing for instant effects
-        // Get the current clip from the project to setup audio effects
-        Task {
-            if let project = ServiceContainer.shared.appState.projectState.currentProject {
-                // Find the first clip that's currently playing (or first clip if none playing)
-                let clips = project.timeline.tracks.flatMap { $0.clips }
-                if let clip = clips.first {
-                    do {
-                        try await ServiceContainer.shared.realTimeAudioProcessor.setupForPlayerItem(
-                            item,
-                            clip: clip,
-                            videoPlayer: newPlayer
-                        )
-                    } catch {
-                        AppLogger.audio.warning("Failed to setup real-time audio processing: \(error.localizedDescription)")
-                    }
-                }
-            }
-        }
+        // CRITICAL FIX (2025-12-31): DISABLED RealTimeAudioProcessor to fix audio/video desync
+        // ROOT CAUSE: Dual audio playback - AVPlayer composition has audio tracks AND
+        // RealTimeAudioProcessor plays same audio via AVAudioEngine = double audio + desync
+        // The Task{} setup was async (not awaited) causing race conditions where:
+        // 1. Both audio sources play simultaneously
+        // 2. videoPlayer.volume = 0.0 happens AFTER engine starts
+        // 3. No playback rate synchronization between video and audio engine
+        //
+        // FIX: Use composition audio only. Effects are applied during export via AudioMix.
+        // TODO: Re-enable when proper audio architecture is implemented (single source)
+        //
+        // Original code (disabled):
+        // Task {
+        //     if let project = ServiceContainer.shared.appState.projectState.currentProject {
+        //         let clips = project.timeline.tracks.flatMap { $0.clips }
+        //         if let clip = clips.first {
+        //             try await ServiceContainer.shared.realTimeAudioProcessor.setupForPlayerItem(...)
+        //         }
+        //     }
+        // }
 
         // Add time observer
         // PERFORMANCE: Use 0.1s interval (10fps) instead of 0.05s (20fps) for UI updates
@@ -300,7 +305,8 @@ class PlaybackState {
             tokenHolder.observer = nil
         }
         player?.pause()
-        ServiceContainer.shared.realTimeAudioProcessor.cleanup()
+        // DISABLED: RealTimeAudioProcessor causes desync (see setupPlayer comment)
+        // ServiceContainer.shared.realTimeAudioProcessor.cleanup()
         player = nil
         tokenHolder.player = nil
 
@@ -349,13 +355,15 @@ class PlaybackState {
             player.seek(to: .zero)
         }
         player.play()
-        ServiceContainer.shared.realTimeAudioProcessor.play()
+        // DISABLED: RealTimeAudioProcessor causes desync (see setupPlayer comment)
+        // ServiceContainer.shared.realTimeAudioProcessor.play()
         isPlaying = true
     }
 
     func pause() {
         player?.pause()
-        ServiceContainer.shared.realTimeAudioProcessor.pause()
+        // DISABLED: RealTimeAudioProcessor causes desync (see setupPlayer comment)
+        // ServiceContainer.shared.realTimeAudioProcessor.pause()
         isPlaying = false
     }
 
@@ -369,7 +377,8 @@ class PlaybackState {
 
     func seek(to time: CMTime) {
         player?.seek(to: time, toleranceBefore: .zero, toleranceAfter: .zero)
-        ServiceContainer.shared.realTimeAudioProcessor.seek(to: time)
+        // DISABLED: RealTimeAudioProcessor causes desync (see setupPlayer comment)
+        // ServiceContainer.shared.realTimeAudioProcessor.seek(to: time)
         currentTime = time
     }
 

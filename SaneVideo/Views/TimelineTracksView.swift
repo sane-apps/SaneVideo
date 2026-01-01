@@ -28,7 +28,6 @@ struct TimelineTracksView: View {
 
     // SWIFT 6 FIX: Track async tasks to prevent fire-and-forget pile-up
     @State private var captionTask: Task<Void, Never>?
-    @State private var highlightTask: Task<Void, Never>?
 
     private let timelineHeight: CGFloat = AppConstants.timelineHeight
 
@@ -129,13 +128,7 @@ struct TimelineTracksView: View {
                             _ = try? await appState.projectState.generateCaptions(for: clip)
                         }
                     },
-                    onFindHighlights: {
-                        // SWIFT 6 FIX: Cancel previous task to prevent pile-up
-                        highlightTask?.cancel()
-                        highlightTask = Task {
-                            await appState.projectState.findHighlights(in: clip)
-                        }
-                    },
+                    // 2025-12-31: onFindHighlights removed - use AudioSection in inspector
                     onDeleteFile: {
                         // CRITICAL FIX: Clear selection BEFORE deletion to prevent stale reference
                         if selectedClip?.id == clip.id {

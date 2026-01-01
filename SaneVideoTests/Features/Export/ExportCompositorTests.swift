@@ -26,11 +26,12 @@ struct ExportCompositorTests {
         // Arrange
         let compositor = sut
         let project = VideoProject(name: "Empty Project")
+        let settings = SaneExportSettings()
 
         // Act & Assert - Should throw error for empty project
         // Can be ExportError or AppError.compositionFailed depending on code path
         do {
-            _ = try await compositor.createComposition(from: project)
+            _ = try await compositor.createComposition(from: project, settings: settings)
             #expect(Bool(false), "Should throw error for empty project")
         } catch let error as ExportError {
             // ExportError is expected
@@ -49,11 +50,12 @@ struct ExportCompositorTests {
         // Arrange
         let compositor = sut
         let project = VideoProject(name: "Test Project")
+        let settings = SaneExportSettings()
         // Note: Empty project will fail, should throw error
 
         // Act & Assert
         do {
-            _ = try await compositor.createComposition(from: project)
+            _ = try await compositor.createComposition(from: project, settings: settings)
             #expect(Bool(false), "Should throw error for empty project")
         } catch let error as ExportError {
             // ExportError is expected

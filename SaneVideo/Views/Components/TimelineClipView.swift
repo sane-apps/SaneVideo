@@ -210,7 +210,6 @@ struct TimelineClipView: View {
         .clipped()
         .background(Color.black)
         .cornerRadius(4)
-        .overlay(alignment: .topTrailing) { hoverButtons }
     }
 
     // MARK: - Components
@@ -284,34 +283,12 @@ struct TimelineClipView: View {
         }
     }
 
-    @ViewBuilder
-    private var hoverButtons: some View {
-        if isHovering || isSelected {
-            HStack(spacing: 8) {
-                Button(action: { onSplit?() }, label: {
-                    Image(systemName: "scissors").font(.system(size: 12)).foregroundColor(.white)
-                        .frame(width: 28, height: 28).background(Color.accentColor).clipShape(Circle())
-                        .shadow(color: .black.opacity(0.3), radius: 2)
-                })
-                .buttonStyle(.plain)
-                .hoverScale(1.15)
-                .pressScale()
-                .accessibilityIdentifier("timeline.clip.action.split")
-                .help(KeyboardShortcutHelper.helpWithShortcut(String(localized: "timeline.clip.action.split.help", defaultValue: "Split clip at playhead"), key: "b", modifiers: [.command]))
-
-                Button(action: { onDelete?() }, label: {
-                    Image(systemName: "trash").font(.system(size: 12)).foregroundColor(.white)
-                        .frame(width: 28, height: 28).background(Color.red).clipShape(Circle())
-                        .shadow(color: .black.opacity(0.3), radius: 2)
-                })
-                .buttonStyle(.plain)
-                .hoverScale(1.15)
-                .pressScale()
-                .accessibilityIdentifier("timeline.clip.action.delete")
-                .help(KeyboardShortcutHelper.helpWithShortcut(String(localized: "timeline.clip.action.delete.help", defaultValue: "Delete clip"), key: .delete))
-            }.padding(8)
-        }
-    }
+    // 2025-12-31: Removed hover buttons (scissors/trash) from timeline clips
+    // These actions are available via:
+    // - Toolbar below video (scissors, trash icons)
+    // - Context menu (right-click)
+    // - Keyboard shortcuts (⌘B split, ⌫ delete)
+    // Removing them declutters the timeline and follows industry standard (FCP, Premiere)
 
     // MARK: - Data Loading
 

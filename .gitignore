@@ -35,8 +35,12 @@ vendor/
 
 # Gemini/Agentic
 .gemini/
-.claude/
 .mcp.json
+
+# Claude Code - track project config, ignore user/transient files
+.claude/settings.local.json
+.claude/edit_state.json
+.claude/memory.json
 
 # IDE - Keep shared settings, ignore user-specific files
 .cursor/settings.json

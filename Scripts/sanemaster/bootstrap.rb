@@ -439,6 +439,7 @@ module SaneMasterModules
         puts '💾 Rollback available: ./Scripts/SaneMaster.rb sop --rollback'
       end
 
+      puts "\n🧠 REMEMBER: Call mcp__memory__read_graph to load cross-session context!"
       puts "\n🎯 Ready to work!"
     end
 

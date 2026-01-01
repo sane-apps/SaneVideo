@@ -439,8 +439,12 @@ module SaneMasterModules
         puts '💾 Rollback available: ./Scripts/SaneMaster.rb sop --rollback'
       end
 
-      puts "\n🧠 REMEMBER: Call mcp__memory__read_graph to load cross-session context!"
-      puts "\n🎯 Ready to work!"
+      # Session-ready toast (SOP requirement)
+      puts "\n#{'─' * 50}"
+      puts '✅ Ready — Ruby, tools, hooks, MCP servers checked.'
+      puts '🧠 Memory will load on first response.'
+      puts "\nWhat would you like to work on today?"
+      puts '─' * 50
     end
 
     def status_icon(status)

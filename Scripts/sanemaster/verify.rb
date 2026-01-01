@@ -76,7 +76,7 @@ module SaneMasterModules
         diagnostics_dir = File.join(Dir.tmpdir, 'SaneVideo_Diagnostics')
         FileUtils.rm_rf(diagnostics_dir)
         # Clear any test project leftovers in container
-        system('rm -rf ~/Library/Containers/com.sanevideo.SaneVideo/Data/tmp/SaneVideo_Test_Projects 2>/dev/null')
+        system('rm -rf ~/Library/Containers/com.sanevideo.app/Data/tmp/SaneVideo_Test_Projects 2>/dev/null')
         system('rm -f test_output.txt')
         puts '✅ Nuclear clean complete.'
       else

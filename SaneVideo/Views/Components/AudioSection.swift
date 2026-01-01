@@ -2,77 +2,25 @@
 //  AudioSection.swift
 //  SaneVideo
 //
-//  Extracted from StylesInspectorView.swift
-//  Contains audio-related inspector controls (Volume, Highlights, Analysis)
+//  2025-12-31: Simplified - Volume moved to toolbar. Kept: Smart Audio Tools
 //
 
 import CoreMedia
 import SwiftUI
 
-// MARK: - AUDIO Section (Volume + Highlights + Analysis)
+// MARK: - AUDIO Section (Smart Tools Only)
 
 struct AudioSection: View {
     @Environment(AppState.self) var appState
     let clip: VideoClip
     @Binding var isOperationInProgress: Bool
 
-    // CRITICAL FIX: Sync state with clip properties
-    @State private var volume: Float
     @State private var analysisResult: String?
-    
-    // P0 FIX: Separate loading states for each operation
     @State private var isFindingHighlights = false
     @State private var isAnalyzingAudio = false
-    
-    init(clip: VideoClip, isOperationInProgress: Binding<Bool>) {
-        self.clip = clip
-        self._isOperationInProgress = isOperationInProgress
-        _volume = State(initialValue: clip.volume)
-    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            // P1 FIX: Enhanced Volume Control with mute button
-            SubsectionHeader(title: String(localized: "audio.volume.header", defaultValue: "Volume"))
-            HStack(spacing: 8) {
-                // P1 FIX: Mute button
-                Button {
-                    let newVolume: Float = volume > 0 ? 0 : 1.0
-                    volume = newVolume
-                    appState.projectState.updateClipVolume(clipId: clip.id, volume: newVolume)
-                } label: {
-                    Image(systemName: volume == 0 ? "speaker.slash.fill" : "speaker.wave.2.fill")
-                        .foregroundColor(volume == 0 ? .red : .secondary)
-                        .font(.system(size: 14))
-                        .frame(width: 28, height: 28)
-                        .background(volume == 0 ? Color.red.opacity(0.1) : Color.secondary.opacity(0.1))
-                        .cornerRadius(6)
-                }
-                .buttonStyle(.plain)
-                .help(volume == 0 ? "Unmute" : "Mute")
-                .accessibilityIdentifier("audio.mute_button")
-
-                // P1 FIX: Wider slider with debounced updates
-                DebouncedSlider(value: $volume, in: 0...1, step: 0.05) { newValue in
-                  appState.projectState.updateClipVolume(clipId: clip.id, volume: newValue)
-                }
-                .accessibilityIdentifier("audio.volume.slider")
-
-                // P1 FIX: Larger percentage display
-                Text(String(format: "%.0f%%", volume * 100))
-                    .font(.system(size: 11, design: .monospaced))
-                    .foregroundColor(.secondary)
-                    .frame(width: 40)
-            }
-            // CRITICAL FIX: Sync volume when clip changes externally
-            .onChange(of: clip.volume) { _, newVolume in
-                if abs(volume - newVolume) > 0.01 { // Only update if significantly different
-                    volume = newVolume
-                }
-            }
-
-            Divider().padding(.vertical, 4)
-
             // Smart Audio Tools
             SubsectionHeader(title: String(localized: "audio.smart_tools.header", defaultValue: "Smart Tools"))
 
@@ -87,9 +35,8 @@ struct AudioSection: View {
             ) {
                 Task { await findHighlights() }
             }
-            .disabled(clip.isMissing) // CRITICAL FIX: Disable if clip is missing
-            .help(clip.isMissing ? "Clip file is missing. Use 'Locate File' in Clip Info to relink the file." : "Find highlights (applause, laughter) in audio")
-            .accessibilityHint(clip.isMissing ? "Clip file is missing. Use 'Locate File' in Clip Info to relink the file." : "Find highlights (applause, laughter) in audio")
+            .disabled(clip.isMissing)
+            .help(clip.isMissing ? "Clip file is missing" : "Find highlights in audio")
 
             // Analyze Audio
             SmartToolButton(
@@ -102,9 +49,8 @@ struct AudioSection: View {
             ) {
                 Task { await analyzeAudio() }
             }
-            .disabled(clip.isMissing) // CRITICAL FIX: Disable if clip is missing
-            .help(clip.isMissing ? "Clip file is missing. Use 'Locate File' in Clip Info to relink the file." : "Analyze audio to detect speech, music, and silence")
-            .accessibilityHint(clip.isMissing ? "Clip file is missing. Use 'Locate File' in Clip Info to relink the file." : "Analyze audio to detect speech, music, and silence")
+            .disabled(clip.isMissing)
+            .help(clip.isMissing ? "Clip file is missing" : "Analyze audio content")
 
             if let result = analysisResult {
                 Text(result)
@@ -113,99 +59,85 @@ struct AudioSection: View {
                     .padding(6)
                     .background(Color.secondary.opacity(0.1))
                     .cornerRadius(4)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 4)
-                            .stroke(Color.secondary.opacity(0.2), lineWidth: 0.5)
-                    )
                     .transition(.smoothScale)
                     .smoothAppear()
             }
 
-            // UX FIX: Removed duplicate AI Audio toggles (Voice Isolation, AI Gating)
-            // These features are already accessible in Smart Tools section as:
-            // - "Enhance Speech" = Voice Isolation
-            // - "Remove Silence" preview = AI Gating
-            // Having them in two places was confusing users
+            // Hint: Volume in toolbar
+            HStack(spacing: 4) {
+                Image(systemName: "info.circle")
+                    .font(.caption2)
+                Text("Volume control in toolbar below video")
+                    .font(.caption2)
+            }
+            .foregroundColor(.secondary)
+            .padding(.top, 4)
         }
     }
 
     // MARK: - Actions
 
     private func findHighlights() async {
-        // CRITICAL FIX: Validate clip before operation
         guard !clip.isMissing else {
             await MainActor.run {
-                analysisResult = "Cannot analyze: Clip file is missing. Use 'Locate File' in Clip Info to relink the file."
-                ServiceContainer.shared.toastManager.show(
-                    "Clip file is missing. Check Clip Info section to relink the file.",
-                    type: .error
-                )
+                analysisResult = "Clip file is missing"
+                ServiceContainer.shared.toastManager.show("Clip file is missing", type: .error)
             }
             return
         }
-        
+
         isFindingHighlights = true
         defer {
             Task { @MainActor in
                 isFindingHighlights = false
             }
         }
-        
+
         do {
             let highlights = try await ServiceContainer.shared.soundAnalysisService.findHighlights(in: clip.url)
             await MainActor.run {
                 if highlights.isEmpty {
-                    analysisResult = String(localized: "audio.analysis.no_highlights", defaultValue: "No highlights (applause/laughter) detected")
+                    analysisResult = "No highlights detected"
                 } else {
                     let times = highlights.prefix(3).map { formatTime($0.timeRange.start) }
-                    analysisResult = String(localized: "audio.analysis.found_highlights", defaultValue: "🎉 Found highlights") + " (\(highlights.count)) at: \(times.joined(separator: ", "))"
+                    analysisResult = "🎉 Found \(highlights.count) highlights at: \(times.joined(separator: ", "))"
                 }
             }
         } catch {
             await MainActor.run {
-                analysisResult = String(localized: "audio.analysis.failed", defaultValue: "❌ Audio analysis failed") + ": \(error.localizedDescription)"
-                ServiceContainer.shared.toastManager.show(
-                    "Audio analysis failed: \(error.localizedDescription)",
-                    type: .error
-                )
+                analysisResult = "❌ Analysis failed: \(error.localizedDescription)"
+                ServiceContainer.shared.toastManager.show("Audio analysis failed", type: .error)
             }
         }
     }
 
     private func analyzeAudio() async {
-        // CRITICAL FIX: Validate clip before operation
         guard !clip.isMissing else {
             await MainActor.run {
-                analysisResult = "Cannot analyze: Clip file is missing. Use 'Locate File' in Clip Info to relink the file."
-                ServiceContainer.shared.toastManager.show(
-                    "Clip file is missing. Check Clip Info section to relink the file.",
-                    type: .error
-                )
+                analysisResult = "Clip file is missing"
+                ServiceContainer.shared.toastManager.show("Clip file is missing", type: .error)
             }
             return
         }
-        
+
         isAnalyzingAudio = true
         defer {
             Task { @MainActor in
                 isAnalyzingAudio = false
             }
         }
-        
+
         do {
             let classifications = try await ServiceContainer.shared.soundAnalysisService.analyzeAudio(in: clip.url)
             let grouped = Dictionary(grouping: classifications, by: { $0.label })
             let summary = grouped.map { "\($0.key.displayName): \($0.value.count)" }.joined(separator: ", ")
             await MainActor.run {
-                analysisResult = String(localized: "audio.analysis.summary", defaultValue: "🎵 Audio summary") + ": \(summary)"
+                analysisResult = "🎵 \(summary)"
             }
         } catch {
             await MainActor.run {
-                analysisResult = String(localized: "audio.analysis.failed", defaultValue: "❌ Audio analysis failed") + ": \(error.localizedDescription)"
-                ServiceContainer.shared.toastManager.show(
-                    "Audio analysis failed: \(error.localizedDescription)",
-                    type: .error
-                )
+                analysisResult = "❌ Analysis failed: \(error.localizedDescription)"
+                ServiceContainer.shared.toastManager.show("Audio analysis failed", type: .error)
             }
         }
     }

@@ -40,6 +40,10 @@ public struct SaneExportSettings: Codable, Sendable {
     /// Used by vertical platform presets (TikTok, Reels, Shorts)
     var aspectRatio: ShortAspectRatio?
 
+    /// Smart crop settings for AI-powered reframing
+    /// When enabled, uses face/saliency tracking to keep subjects in frame
+    var smartCrop: SmartCropSettings = SmartCropSettings()
+
     public enum ExportResolution: String, Codable, Sendable {
         case hd720 = "720p"
         case hd1080 = "1080p"
@@ -58,7 +62,7 @@ public struct SaneExportSettings: Codable, Sendable {
 
     // Custom Codable to handle AVVideoCodecType
     enum CodingKeys: String, CodingKey {
-        case codec, resolution, bitrate, frameRate, aspectRatio
+        case codec, resolution, bitrate, frameRate, aspectRatio, smartCrop
     }
 
     public init(
@@ -66,13 +70,15 @@ public struct SaneExportSettings: Codable, Sendable {
         resolution: ExportResolution = .uhd4K,
         bitrate: Int = 20_000_000,
         frameRate: Float = 60.0,
-        aspectRatio: ShortAspectRatio? = nil
+        aspectRatio: ShortAspectRatio? = nil,
+        smartCrop: SmartCropSettings = SmartCropSettings()
     ) {
         self.codec = codec
         self.resolution = resolution
         self.bitrate = bitrate
         self.frameRate = frameRate
         self.aspectRatio = aspectRatio
+        self.smartCrop = smartCrop
     }
 
     public init(from decoder: Decoder) throws {
@@ -83,6 +89,7 @@ public struct SaneExportSettings: Codable, Sendable {
         bitrate = try container.decode(Int.self, forKey: .bitrate)
         frameRate = try container.decode(Float.self, forKey: .frameRate)
         aspectRatio = try container.decodeIfPresent(ShortAspectRatio.self, forKey: .aspectRatio)
+        smartCrop = try container.decodeIfPresent(SmartCropSettings.self, forKey: .smartCrop) ?? SmartCropSettings()
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -92,6 +99,7 @@ public struct SaneExportSettings: Codable, Sendable {
         try container.encode(bitrate, forKey: .bitrate)
         try container.encode(frameRate, forKey: .frameRate)
         try container.encodeIfPresent(aspectRatio, forKey: .aspectRatio)
+        try container.encode(smartCrop, forKey: .smartCrop)
     }
 
     /// Computed render size based on resolution and aspect ratio

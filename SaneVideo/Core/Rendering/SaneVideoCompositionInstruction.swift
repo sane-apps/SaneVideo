@@ -75,6 +75,10 @@ class SaneVideoCompositionInstruction: NSObject, AVVideoCompositionInstructionPr
   /// Main Layer Instructions (for transforms/opacity)
   let layerInstructions: [AVVideoCompositionLayerInstruction]
 
+  /// Smart crop keyframes for AI-powered reframing (from SmartCropService)
+  /// Maps composition time -> crop suggestion (center X/Y, scale)
+  let smartCropKeyframes: [CMTime: SuggestedCrop]?
+
   init(
     timeRange: CMTimeRange, layerInstructions: [AVVideoCompositionLayerInstruction],
     trackEffects: [CMPersistentTrackID: [(CMTimeRange, [VideoEffect])]] = [:],
@@ -82,7 +86,8 @@ class SaneVideoCompositionInstruction: NSObject, AVVideoCompositionInstructionPr
     trackBackgroundEffects: [CMPersistentTrackID: [(CMTimeRange, [BackgroundEffect])]] = [:],
     trackPrivacyRegions: [CMPersistentTrackID: [(CMTimeRange, [PrivacyRegion])]] = [:],
     activeTransitions: [TransitionMetadata] = [], textLayers: [TextLayerItem] = [],
-    visionService: PersonSegmentationService? = nil
+    visionService: PersonSegmentationService? = nil,
+    smartCropKeyframes: [CMTime: SuggestedCrop]? = nil
   ) {
     self.timeRange = timeRange
     self.layerInstructions = layerInstructions
@@ -93,6 +98,7 @@ class SaneVideoCompositionInstruction: NSObject, AVVideoCompositionInstructionPr
     self.activeTransitions = activeTransitions
     self.textLayers = textLayers
     self.visionService = visionService
+    self.smartCropKeyframes = smartCropKeyframes
 
     // Extract required track IDs from layer instructions
     requiredSourceTrackIDs = layerInstructions.map { NSNumber(value: $0.trackID) }

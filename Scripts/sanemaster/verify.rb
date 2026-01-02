@@ -249,7 +249,7 @@ module SaneMasterModules
       require 'open3'
 
       cmd = build_test_command(include_ui)
-      state = { start_time: Time.now, tests_run: 0, current_test: nil, last_update: Time.now,
+      state = { start_time: Time.now, tests_run: 0, swift_testing_total: 0, current_test: nil, last_update: Time.now,
                 spinner_chars: ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'], spinner_idx: 0 }
 
       result = execute_with_logging(cmd, timeout_seconds) { |line| handle_progress_update(line, state) }
@@ -257,7 +257,9 @@ module SaneMasterModules
       print "\r"
       cleanup_test_processes
 
-      { success: result[:success], tests_run: state[:tests_run], duration: (Time.now - state[:start_time]).to_i, timeout: result[:timeout] }
+      # Use Swift Testing total if available (more accurate), otherwise fall back to incremental count
+      total_tests = state[:swift_testing_total].positive? ? state[:swift_testing_total] : state[:tests_run]
+      { success: result[:success], tests_run: total_tests, duration: (Time.now - state[:start_time]).to_i, timeout: result[:timeout] }
     end
 
     def build_test_command(include_ui)
@@ -299,12 +301,37 @@ module SaneMasterModules
 
     def handle_progress_update(line, state)
       case line
+      # XCTest pattern: Test Case '-[TestClass testMethod]' passed
       when /Test Case.*'(.+)'/
         state[:current_test] = ::Regexp.last_match(1)
         state[:tests_run] += 1
         elapsed = (Time.now - state[:start_time]).to_i
         spinner = state[:spinner_chars][state[:spinner_idx] % state[:spinner_chars].length]
         print "\r#{spinner} Running: #{state[:current_test]} (#{state[:tests_run]} tests, #{elapsed}s)    "
+        state[:spinner_idx] += 1
+        state[:last_update] = Time.now
+      # Swift Testing pattern: ✔ Test "test name" passed after X.XXX seconds
+      # rubocop:disable Lint/DuplicateBranch -- intentional: same update logic for test progress
+      when /[✔✓] Test "(.+)" passed/
+        state[:current_test] = ::Regexp.last_match(1)
+        state[:tests_run] += 1
+        elapsed = (Time.now - state[:start_time]).to_i
+        spinner = state[:spinner_chars][state[:spinner_idx] % state[:spinner_chars].length]
+        print "\r#{spinner} Running: #{state[:current_test]} (#{state[:tests_run]} tests, #{elapsed}s)    "
+        state[:spinner_idx] += 1
+        state[:last_update] = Time.now
+      # rubocop:enable Lint/DuplicateBranch
+      # Swift Testing summary: ✔ Test run with 27 tests in 4 suites passed after X.XXX seconds
+      when /[✔✓] Test run with (\d+) tests? in (\d+) suites? passed/
+        state[:swift_testing_total] = ::Regexp.last_match(1).to_i
+        suites = ::Regexp.last_match(2).to_i
+        puts "   ✅ Swift Testing: #{state[:swift_testing_total]} tests in #{suites} suites passed"
+      # Swift Testing suite start: ◇ Suite "SuiteName" started
+      when /◇ Suite "(.+)" started/
+        suite_name = ::Regexp.last_match(1)
+        elapsed = (Time.now - state[:start_time]).to_i
+        spinner = state[:spinner_chars][state[:spinner_idx] % state[:spinner_chars].length]
+        print "\r#{spinner} Suite: #{suite_name} (#{state[:tests_run]} tests, #{elapsed}s)    "
         state[:spinner_idx] += 1
         state[:last_update] = Time.now
       when /Test Suite.*passed|Test Suite.*failed/, /BUILD (SUCCEEDED|FAILED)/, /error:|warning:|❌|✅/

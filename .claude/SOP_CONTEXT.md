@@ -4,6 +4,18 @@ You are working on **SaneVideo**. The following rules are MANDATORY.
 
 ---
 
+## Communication Style
+
+**PLAIN ENGLISH ALWAYS** - Explain jargon in simple terms. No technical gatekeeping.
+
+❌ Wrong: "The actor isolation semantics require nonisolated(unsafe)"
+❌ Wrong: "The Sendable conformance is violated across actor boundaries"
+
+✅ Right: "Swift thinks this code might run on different threads at once. We need to tell it 'trust me, I know what I'm doing' with nonisolated(unsafe)"
+✅ Right: "You can't pass a Notification directly into a background task because Swift can't guarantee it won't change. Extract the values first, then pass those."
+
+---
+
 ## On Session Start (IMMEDIATE - Before anything else)
 
 The bootstrap hook outputs a ready toast automatically:

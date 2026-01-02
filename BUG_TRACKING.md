@@ -353,6 +353,50 @@ Apple frameworks not yet Sendable-annotated. Remove when Apple updates:
 
 ---
 
+## Infrastructure Fixes (2026-01-02)
+
+Tooling improvements to prevent recurring friction across SaneBar and SaneVideo:
+
+### INFRA-001: Stale Diagnostics Logs
+
+**Root Cause**: `find_app_log()` in `diagnostics.rb` searched entire `@diagnostics_dir` with `**` glob, picking up historical exports instead of current one.
+
+**Fix**:
+- Changed to accept `export_path` parameter and scope search to current export only
+- Added `cleanup_old_exports()` to keep only last 3 diagnostic exports
+- Made diagnostics.rb project-aware using `project_name` method
+
+**Files**: `Scripts/sanemaster/diagnostics.rb:38-47, 159-164`
+
+---
+
+### INFRA-002: Stale Build Detection
+
+**Root Cause**: Could launch old app binary after source changes without rebuilding.
+
+**Fix**: Added stale build detection to `launch_app()`:
+- Compares binary mtime vs newest source file mtime
+- Auto-rebuilds if stale (unless `--force` flag)
+- Made test_mode.rb project-aware using `project_name` method
+
+**Files**: `Scripts/sanemaster/test_mode.rb:17-47`
+
+---
+
+### INFRA-003: Project-Aware Tooling
+
+**Root Cause**: Hardcoded "SaneBar"/"SaneVideo" strings required maintaining separate file versions.
+
+**Fix**: Added `project_name` method that detects from current directory (`File.basename(Dir.pwd)`):
+- Diagnostics directory: `#{project_name}_Diagnostics`
+- Crash file globs: `#{project_name}-*.ips`
+- DerivedData paths: `#{project_name}-*/...`
+- Process names for `log` command: `process == "#{project_name}"`
+
+**Result**: Both `diagnostics.rb` and `test_mode.rb` are now identical in both projects.
+
+---
+
 ## Resolved Sessions
 
 <details>
@@ -398,4 +442,4 @@ All items resolved:
 
 ---
 
-*Last Updated: 2025-12-31*
+*Last Updated: 2026-01-02*

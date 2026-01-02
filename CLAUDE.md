@@ -6,14 +6,14 @@
 
 ## Screenshots
 
-**Screenshots are saved to the project folder, not Desktop.**
+**Screenshots are saved to a global location, shared across all projects.**
 
 ```bash
 # ALWAYS check here FIRST for user screenshots:
-ls -lat /Users/sj/SaneVideo/Screenshots/ | head -5
+ls -lat ~/.claude/screenshots/ | head -5
 ```
 
-Do NOT check `~/Desktop` or other default locations.
+Do NOT check `~/Desktop` or project-specific folders.
 
 ---
 
@@ -22,7 +22,6 @@ Do NOT check `~/Desktop` or other default locations.
 | Path | Purpose |
 |------|---------|
 | `Scripts/SaneMaster.rb` | Build tool - use instead of raw xcodebuild |
-| `Screenshots/` | User screenshots (macOS default configured here) |
 | `SaneVideoTests/Regression/` | Regression tests for bug fixes |
 | `BUG_TRACKING.md` | Persistent bug documentation |
 
@@ -50,6 +49,24 @@ Do NOT check `~/Desktop` or other default locations.
 ./Scripts/SaneMaster.rb session_end     # End session + memory prompt
 ./Scripts/SaneMaster.rb compliance      # Show session compliance report
 ```
+
+---
+
+## Mac Development Context
+
+**CRITICAL**: Before writing any Mac-specific code, review `.claude/mac_context.md`
+
+This file contains 373 lines of Mac development patterns:
+- Info.plist keys and permission descriptions
+- Entitlements (sandboxed vs non-sandboxed)
+- Notarization requirements
+- Common crash patterns and fixes
+- Menu bar app gotchas
+- Accessibility API patterns
+- Swift concurrency rules
+- XcodeGen templates
+
+Regenerate with: `./Scripts/SaneMaster.rb mac_context`
 
 ---
 

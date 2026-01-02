@@ -6,7 +6,7 @@
 
 ---
 
-## ⚠️ THESE WILL BURN YOU
+## ⚠️ THIS HAS BURNED YOU
 
 Real failures from past sessions. Don't repeat them.
 

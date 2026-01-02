@@ -3,15 +3,52 @@
 module SaneMasterModules
   # Interactive debugging workflow, app launching, logs
   module TestMode
+    # Detect project name from current directory (context-specific)
+    def project_name
+      @project_name ||= File.basename(Dir.pwd)
+    end
+
     def launch_app(args)
       puts '🚀 --- [ SANEMASTER LAUNCH ] ---'
 
-      dd_path = File.expand_path('~/Library/Developer/Xcode/DerivedData/SaneVideo-*/Build/Products/Debug')
-      app_path = Dir.glob(File.join(dd_path, 'SaneVideo.app')).first
+      dd_path = File.expand_path("~/Library/Developer/Xcode/DerivedData/#{project_name}-*/Build/Products/Debug")
+      app_path = Dir.glob(File.join(dd_path, "#{project_name}.app")).first
 
       unless app_path && File.exist?(app_path)
         puts '❌ App binary not found. Run ./Scripts/SaneMaster.rb verify to build.'
         return
+      end
+
+      # STALE BUILD DETECTION - prevents launching outdated binaries
+      binary_time = File.mtime(app_path)
+      source_files = Dir.glob("{#{project_name},#{project_name}Tests}/**/*.swift")
+      newest_source = source_files.max_by { |f| File.mtime(f) }
+
+      if newest_source && File.mtime(newest_source) > binary_time
+        age_seconds = (Time.now - binary_time).to_i
+        age_str = age_seconds > 3600 ? "#{age_seconds / 3600}h ago" : "#{age_seconds / 60}m ago"
+        stale_file = File.basename(newest_source)
+
+        puts ''
+        puts '⚠️  STALE BUILD DETECTED!'
+        puts "   Binary built: #{age_str}"
+        puts "   Source newer: #{stale_file} (#{File.mtime(newest_source).strftime('%H:%M:%S')})"
+        puts ''
+
+        if args.include?('--force')
+          puts '   --force flag set, launching anyway...'
+        else
+          puts '   Rebuilding to ensure fresh binary...'
+          build_success = system("xcodebuild -scheme #{project_name} -destination \"platform=macOS\" build 2>&1 | grep -E \"(BUILD|error:)\" | tail -3")
+          unless build_success
+            puts '   ❌ Rebuild failed!'
+            return
+          end
+          puts '   ✅ Rebuilt successfully'
+          # Refresh app_path after rebuild
+          app_path = Dir.glob(File.join(dd_path, "#{project_name}.app")).first
+        end
+        puts ''
       end
 
       puts "📱 Launching: #{app_path}"
@@ -21,11 +58,11 @@ module SaneMasterModules
 
       if capture_logs
         puts '📝 Capturing logs to stdout...'
-        pid = spawn(env_vars, "#{app_path}/Contents/MacOS/SaneVideo")
+        pid = spawn(env_vars, "#{app_path}/Contents/MacOS/#{project_name}")
         Process.wait(pid)
       else
         system(env_vars, "open '#{app_path}'")
-        puts '✅ App launched'
+        puts '✅ App launched (fresh build verified)'
       end
     end
 
@@ -73,7 +110,6 @@ module SaneMasterModules
       puts ''
 
       screenshots_dir = File.join(Dir.pwd, 'Screenshots')
-      log_file = File.expand_path('~/Library/Containers/com.sanevideo.app/Data/Library/Logs/SaneVideo/SaneVideo_Debug.log')
       crash_dir = File.expand_path('~/Library/Logs/DiagnosticReports')
 
       kill_existing_processes
@@ -83,61 +119,49 @@ module SaneMasterModules
 
       launch_app([])
       sleep 2
-      print_test_mode_ready(log_file)
+      print_test_mode_ready
 
-      # Stream logs in background so conversation can continue
+      # Stream logs in background - non-sandboxed app uses unified logging
       puts '📡 Streaming live logs in background...'
+      puts '   (Non-sandboxed app - using unified logging)'
       puts '─' * 60
-      spawn("tail -f '#{log_file}'")
+      spawn('log', 'stream', '--predicate', "process == \"#{project_name}\"", '--style', 'compact')
     end
 
     def show_app_logs(args)
       puts '📋 --- [ APPLICATION LOGS ] ---'
 
-      log_file = File.expand_path('~/Library/Containers/com.sanevideo.app/Data/Library/Logs/SaneVideo/SaneVideo_Debug.log')
-      tail_count = 50
       follow_mode = args.include?('--follow') || args.include?('-f')
+      last_minutes = 5
 
       args.each_with_index do |arg, i|
-        tail_count = args[i + 1].to_i if arg == '--tail' && args[i + 1]
+        last_minutes = args[i + 1].to_i if arg == '--last' && args[i + 1]
       end
 
-      unless File.exist?(log_file)
-        puts '❌ No log file found at: ~/Library/Containers/com.sanevideo.app/Data/Library/Logs/SaneVideo/SaneVideo_Debug.log'
-        puts "\nTo generate logs:"
-        puts '  1. Rebuild the app: ./Scripts/SaneMaster.rb verify'
-        puts '  2. Launch the app: ./Scripts/SaneMaster.rb launch'
-        return
-      end
-
-      mtime = File.mtime(log_file)
-      size = File.size(log_file) / 1024.0
-      puts '📁 Log file: ~/Library/Containers/com.sanevideo.app/Data/Library/Logs/SaneVideo/SaneVideo_Debug.log'
-      puts "   Last updated: #{mtime.strftime('%Y-%m-%d %H:%M:%S')} (#{size.round(1)}KB)"
+      # App is NOT sandboxed (requires Accessibility API)
+      # Use unified logging via `log` command instead of file-based logs
+      puts "📡 #{project_name} logs from unified logging system"
+      puts '   (Non-sandboxed app - stdout goes to unified logs)'
       puts '─' * 60
 
       if follow_mode
-        puts 'Following log file (Ctrl+C to stop)...'
+        puts 'Following live logs (Ctrl+C to stop)...'
         puts ''
-        # Use Kernel.exec for tail -f
-        Kernel.exec("tail -f '#{log_file}'")
+        # Stream live logs - process name from project_name
+        Kernel.exec('log', 'stream', '--predicate', "process == \"#{project_name}\"", '--style', 'compact')
       else
-        lines = File.readlines(log_file)
-        if lines.length > tail_count
-          puts "(showing last #{tail_count} of #{lines.length} lines)"
-          puts ''
-          puts lines.last(tail_count).join
-        else
-          puts lines.join
-        end
+        puts "(showing last #{last_minutes} minutes)"
+        puts ''
+        # Show recent logs - last_minutes is sanitized via .to_i
+        system('log', 'show', '--predicate', "process == \"#{project_name}\"", '--last', "#{last_minutes}m", '--style', 'compact')
       end
     end
 
     private
 
     def kill_existing_processes
-      puts '1️⃣  Killing existing SaneVideo processes...'
-      system('killall -9 SaneVideo 2>/dev/null')
+      puts "1️⃣  Killing existing #{project_name} processes..."
+      system("killall -9 #{project_name} 2>/dev/null")
       puts '   ✅ Done'
       puts ''
     end
@@ -165,8 +189,8 @@ module SaneMasterModules
 
     def show_diagnostic_reports(crash_dir)
       puts '3️⃣  Recent diagnostic reports:'
-      crash_files = Dir.glob(File.join(crash_dir, 'SaneVideo-*.ips')).sort_by { |f| File.mtime(f) }.reverse
-      hang_files = Dir.glob(File.join(crash_dir, 'SaneVideo-*.{spin,hang}')).sort_by { |f| File.mtime(f) }.reverse
+      crash_files = Dir.glob(File.join(crash_dir, "#{project_name}-*.ips")).sort_by { |f| File.mtime(f) }.reverse
+      hang_files = Dir.glob(File.join(crash_dir, "#{project_name}-*.{spin,hang}")).sort_by { |f| File.mtime(f) }.reverse
 
       if crash_files.any?
         puts '   Crashes:'
@@ -193,7 +217,7 @@ module SaneMasterModules
 
     def show_xcresult_status
       xcresult_dir = File.expand_path('~/Library/Developer/Xcode/DerivedData')
-      xcresults = Dir.glob(File.join(xcresult_dir, 'SaneVideo-*/Logs/Test/*.xcresult')).sort_by { |f| File.mtime(f) }.reverse
+      xcresults = Dir.glob(File.join(xcresult_dir, "#{project_name}-*/Logs/Test/*.xcresult")).sort_by { |f| File.mtime(f) }.reverse
       return unless xcresults.any?
 
       latest = xcresults.first
@@ -203,7 +227,7 @@ module SaneMasterModules
 
     def build_app # rubocop:disable Naming/PredicateMethod -- performs action, not just a query
       puts '4️⃣  Building app...'
-      build_success = system('xcodebuild -scheme SaneVideo -destination "platform=macOS" build 2>&1 | grep -E "(BUILD|error:)" | tail -5')
+      build_success = system("xcodebuild -scheme #{project_name} -destination \"platform=macOS\" build 2>&1 | grep -E \"(BUILD|error:)\" | tail -5")
       unless build_success
         puts '   ❌ Build failed! Fix errors before continuing.'
         return false
@@ -226,19 +250,13 @@ module SaneMasterModules
       puts ''
     end
 
-    def print_test_mode_ready(log_file)
+    def print_test_mode_ready
       puts '═' * 60
       puts '🧪 TEST MODE READY'
       puts '═' * 60
       puts ''
-      if File.exist?(log_file)
-        mtime = File.mtime(log_file).strftime('%Y-%m-%d %H:%M:%S')
-        size = (File.size(log_file) / 1024.0).round(1)
-        puts "📋 Log file: #{log_file}"
-        puts "   Last updated: #{mtime} (#{size}KB)"
-      else
-        puts '📋 Log file will be created when app writes first log'
-      end
+      puts '📋 Logs: Using unified logging (non-sandboxed app)'
+      puts '   View with: ./Scripts/SaneMaster.rb logs --follow'
       puts ''
       puts "🕐 Session started: #{Time.now.strftime('%Y-%m-%d %H:%M:%S')}"
       puts ''

@@ -122,10 +122,10 @@ This runs automatically when you open the project. If bootstrap fails:
 ✅ DO: State which rules apply before writing code
 ❌ DON'T: Start coding without thinking about rules
 
-🟢 GOOD: "This uses AVFoundation API → Rule #2: VERIFY BEFORE YOU TRY"
-🟢 GOOD: "New file needed → Rule #9: NEW FILE? GEN THAT PILE"
-🔴 BAD: "Let me just start coding..."
-🔴 BAD: "I'll figure out the rules as I go"
+🟢 RIGHT: "This uses AVFoundation API → Rule #2: VERIFY BEFORE YOU TRY"
+🟢 RIGHT: "New file needed → Rule #9: NEW FILE? GEN THAT PILE"
+🔴 WRONG: "Let me just start coding..."
+🔴 WRONG: "I'll figure out the rules as I go"
 
 ---
 
@@ -134,10 +134,10 @@ This runs automatically when you open the project. If bootstrap fails:
 ✅ DO: Save all files inside `/Users/sj/SaneVideo/`
 ❌ DON'T: Create files outside project without asking
 
-🟢 GOOD: `/Users/sj/SaneVideo/Scripts/new_helper.rb`
-🟢 GOOD: `/Users/sj/SaneVideo/Core/Models/NewModel.swift`
-🔴 BAD: `~/.claude/plans/my-plan.md`
-🔴 BAD: `/tmp/scratch.swift`
+🟢 RIGHT: `/Users/sj/SaneVideo/Scripts/new_helper.rb`
+🟢 RIGHT: `/Users/sj/SaneVideo/Core/Models/NewModel.swift`
+🔴 WRONG: `~/.claude/plans/my-plan.md`
+🔴 WRONG: `/tmp/scratch.swift`
 
 If file must go elsewhere → ask user where.
 
@@ -148,10 +148,10 @@ If file must go elsewhere → ask user where.
 ✅ DO: Run verify_api before using any Apple API
 ❌ DON'T: Assume an API exists from memory or web search
 
-🟢 GOOD: `./Scripts/SaneMaster.rb verify_api AVCaptureDevice AVFoundation`
-🟢 GOOD: `./Scripts/SaneMaster.rb verify_api kAXExtrasMenuBarAttribute Accessibility`
-🔴 BAD: "I remember AVCaptureDevice has a .zoom property"
-🔴 BAD: "Stack Overflow says use .preferredCamera"
+🟢 RIGHT: `./Scripts/SaneMaster.rb verify_api AVCaptureDevice AVFoundation`
+🟢 RIGHT: `./Scripts/SaneMaster.rb verify_api kAXExtrasMenuBarAttribute Accessibility`
+🔴 WRONG: "I remember AVCaptureDevice has a .zoom property"
+🔴 WRONG: "Stack Overflow says use .preferredCamera"
 
 ---
 
@@ -160,10 +160,10 @@ If file must go elsewhere → ask user where.
 ✅ DO: After 2 failures → stop, run verify_api, check docs
 ❌ DON'T: Guess a third time without researching
 
-🟢 GOOD: "Failed twice. Running verify_api to check if this API exists."
-🟢 GOOD: "Two attempts failed. Checking apple-docs MCP for correct usage."
-🔴 BAD: "Let me try a slightly different approach..." (attempt #3)
-🔴 BAD: "Maybe if I change this one thing..." (attempt #4)
+🟢 RIGHT: "Failed twice. Running verify_api to check if this API exists."
+🟢 RIGHT: "Two attempts failed. Checking apple-docs MCP for correct usage."
+🔴 WRONG: "Let me try a slightly different approach..." (attempt #3)
+🔴 WRONG: "Maybe if I change this one thing..." (attempt #4)
 
 ---
 
@@ -172,10 +172,10 @@ If file must go elsewhere → ask user where.
 ✅ DO: Fix all verify failures before claiming done
 ❌ DON'T: Ship with failing tests
 
-🟢 GOOD: "verify failed → fixing the error → running verify again"
-🟢 GOOD: "Tests pass. Ready to ship."
-🔴 BAD: "verify failed but it's probably fine"
-🔴 BAD: "I'll fix that test later"
+🟢 RIGHT: "verify failed → fixing the error → running verify again"
+🟢 RIGHT: "Tests pass. Ready to ship."
+🔴 WRONG: "verify failed but it's probably fine"
+🔴 WRONG: "I'll fix that test later"
 
 ---
 
@@ -184,10 +184,10 @@ If file must go elsewhere → ask user where.
 ✅ DO: Use `./Scripts/SaneMaster.rb` for all build/test operations
 ❌ DON'T: Use raw xcodebuild or xcode commands
 
-🟢 GOOD: `./Scripts/SaneMaster.rb verify`
-🟢 GOOD: `./Scripts/SaneMaster.rb verify_api MyAPI`
-🔴 BAD: `xcodebuild -scheme SaneVideo build`
-🔴 BAD: `xcrun xcodebuild test`
+🟢 RIGHT: `./Scripts/SaneMaster.rb verify`
+🟢 RIGHT: `./Scripts/SaneMaster.rb verify_api MyAPI`
+🔴 WRONG: `xcodebuild -scheme SaneVideo build`
+🔴 WRONG: `xcrun xcodebuild test`
 
 ---
 
@@ -196,16 +196,16 @@ If file must go elsewhere → ask user where.
 ✅ DO: Run full sequence after every code change
 ❌ DON'T: Skip steps or assume it works
 
-🟢 GOOD:
+🟢 RIGHT:
 ```bash
 ./Scripts/SaneMaster.rb verify    # BUILD
 killall -9 SaneVideo              # KILL
 ./Scripts/SaneMaster.rb launch    # LAUNCH
 ./Scripts/SaneMaster.rb logs --follow  # LOG
 ```
-🟢 GOOD: `./Scripts/SaneMaster.rb test_mode` (runs all steps)
-🔴 BAD: `./Scripts/SaneMaster.rb verify` then "done!"
-🔴 BAD: Launch without killing old instance first
+🟢 RIGHT: `./Scripts/SaneMaster.rb test_mode` (runs all steps)
+🔴 WRONG: `./Scripts/SaneMaster.rb verify` then "done!"
+🔴 WRONG: Launch without killing old instance first
 
 ---
 
@@ -214,10 +214,10 @@ killall -9 SaneVideo              # KILL
 ✅ DO: Every bug fix gets a test that verifies the fix
 ❌ DON'T: Use placeholder or tautology assertions
 
-🟢 GOOD: `#expect(error.code == .invalidInput)`
-🟢 GOOD: `#expect(result.count == 3)`
-🔴 BAD: `#expect(true)`
-🔴 BAD: `#expect(value == true || value == false)`
+🟢 RIGHT: `#expect(error.code == .invalidInput)`
+🟢 RIGHT: `#expect(result.count == 3)`
+🔴 WRONG: `#expect(true)`
+🔴 WRONG: `#expect(value == true || value == false)`
 
 ---
 
@@ -226,10 +226,10 @@ killall -9 SaneVideo              # KILL
 ✅ DO: Document bugs in TodoWrite immediately, BUG_TRACKING.md after
 ❌ DON'T: Try to remember bugs or skip documentation
 
-🟢 GOOD: TodoWrite: "BUG: Camera - black screen on launch"
-🟢 GOOD: Update BUG_TRACKING.md with root cause after fix
-🔴 BAD: "I'll remember to fix that later"
-🔴 BAD: Fix bug without documenting what caused it
+🟢 RIGHT: TodoWrite: "BUG: Camera - black screen on launch"
+🟢 RIGHT: Update BUG_TRACKING.md with root cause after fix
+🔴 WRONG: "I'll remember to fix that later"
+🔴 WRONG: Fix bug without documenting what caused it
 
 ---
 
@@ -238,10 +238,10 @@ killall -9 SaneVideo              # KILL
 ✅ DO: Run `xcodegen generate` after creating any new file
 ❌ DON'T: Create files without updating project
 
-🟢 GOOD: Create `NewService.swift` → run `xcodegen generate`
-🟢 GOOD: Create `NewView.swift` in Views/ → run `xcodegen generate`
-🔴 BAD: Create file and wonder why Xcode can't find it
-🔴 BAD: Manually edit project.pbxproj
+🟢 RIGHT: Create `NewService.swift` → run `xcodegen generate`
+🟢 RIGHT: Create `NewView.swift` in Views/ → run `xcodegen generate`
+🔴 WRONG: Create file and wonder why Xcode can't find it
+🔴 WRONG: Manually edit project.pbxproj
 
 ---
 
@@ -250,10 +250,10 @@ killall -9 SaneVideo              # KILL
 ✅ DO: Keep files under 500 lines, split by responsibility
 ❌ DON'T: Exceed 800 lines or split arbitrarily
 
-🟢 GOOD: Split `CameraManager.swift` → `CameraManager.swift` + `CameraManager+Capture.swift`
-🟢 GOOD: 650-line file with clear single responsibility = OK
-🔴 BAD: 900-line file "because it's all related"
-🔴 BAD: Split at line 400 mid-function to hit a number
+🟢 RIGHT: Split `CameraManager.swift` → `CameraManager.swift` + `CameraManager+Capture.swift`
+🟢 RIGHT: 650-line file with clear single responsibility = OK
+🔴 WRONG: 900-line file "because it's all related"
+🔴 WRONG: Split at line 400 mid-function to hit a number
 
 ---
 
@@ -262,10 +262,10 @@ killall -9 SaneVideo              # KILL
 ✅ DO: If SaneMaster fails, fix the tool itself
 ❌ DON'T: Work around broken tools
 
-🟢 GOOD: "Nuclear clean doesn't clear cache → fix verify.rb"
-🟢 GOOD: "Logs path wrong → fix test_mode.rb"
-🔴 BAD: "Nuclear clean doesn't work → run raw xcodebuild"
-🔴 BAD: "Logs broken → just skip checking logs"
+🟢 RIGHT: "Nuclear clean doesn't clear cache → fix verify.rb"
+🟢 RIGHT: "Logs path wrong → fix test_mode.rb"
+🔴 WRONG: "Nuclear clean doesn't work → run raw xcodebuild"
+🔴 WRONG: "Logs broken → just skip checking logs"
 
 Working around broken tools creates invisible debt. Fix once, benefit forever.
 
@@ -276,10 +276,10 @@ Working around broken tools creates invisible debt. Fix once, benefit forever.
 ✅ DO: Use subagents for heavy lifting, stay responsive to user
 ❌ DON'T: Block on long operations
 
-🟢 GOOD: "User asked question → answer while subagent keeps working"
-🟢 GOOD: "Long task → spawn subagent, stay responsive"
-🔴 BAD: "Hold on, let me finish this first..."
-🔴 BAD: "Running verify... (blocks for 2 minutes)"
+🟢 RIGHT: "User asked question → answer while subagent keeps working"
+🟢 RIGHT: "Long task → spawn subagent, stay responsive"
+🔴 WRONG: "Hold on, let me finish this first..."
+🔴 WRONG: "Running verify... (blocks for 2 minutes)"
 
 User talks, you listen, work continues uninterrupted.
 
@@ -358,20 +358,20 @@ Approve?
 ✅ DO: Rate 1-10 after every task with specific ✅/❌ items
 ❌ DON'T: Skip rating or give vague justification
 
-🟢 GOOD:
+🟢 RIGHT:
 ```
 **Self-rating: 7/10**
 ✅ Used SaneMaster, ran verify, added regression test
 ❌ Forgot to check logs after launch
 ```
-🟢 GOOD:
+🟢 RIGHT:
 ```
 **Self-rating: 9/10**
 ✅ Verified API before using, full test cycle, logs clean
 ❌ Minor: could have used TodoWrite for tracking
 ```
-🔴 BAD: "Self-rating: 10/10" (no explanation)
-🔴 BAD: "Self-rating: 8/10 - did good" (vague)
+🔴 WRONG: "Self-rating: 10/10" (no explanation)
+🔴 WRONG: "Self-rating: 8/10 - did good" (vague)
 
 | 9-10 | All rules followed | 5-6 | Notable gaps |
 | 7-8 | Minor miss | 1-4 | Multiple violations |

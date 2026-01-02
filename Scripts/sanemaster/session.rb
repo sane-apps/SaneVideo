@@ -19,6 +19,11 @@ module SaneMasterModules
         prompt: 'Any architecture decisions or patterns?',
         prefix: 'ArchPattern',
         example: 'e.g., "Use type erasure for macOS 26+ APIs"'
+      },
+      user_insight: {
+        prompt: 'Any user quotes, preferences, or feedback to remember?',
+        prefix: 'UserInsight',
+        example: 'e.g., "Plain English always" or "Two examples not one"'
       }
     }.freeze
 

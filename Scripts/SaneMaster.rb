@@ -32,6 +32,10 @@ require_relative 'sanemaster/md_export'
 require_relative 'sanemaster/meta'
 require_relative 'sanemaster/session'
 require_relative 'sanemaster/circuit_breaker_state'
+require_relative 'sanemaster/collab'
+require_relative 'sanemaster/hook_generator'
+require_relative 'sanemaster/mac_context'
+require_relative 'sanemaster/skills'
 
 class SaneMaster
   include SaneMasterModules::Base
@@ -48,6 +52,10 @@ class SaneMaster
   include SaneMasterModules::MdExport
   include SaneMasterModules::Meta
   include SaneMasterModules::Session
+  include SaneMasterModules::Collab
+  include SaneMasterModules::HookGenerator
+  include SaneMasterModules::MacContext
+  include SaneMasterModules::Skills
 
   # ═══════════════════════════════════════════════════════════════════════════
   # COMMAND REFERENCE - Organized by category for easy discovery
@@ -114,11 +122,24 @@ class SaneMaster
         'mh' => { args: '', desc: 'Memory health check (entity/token counts)' },
         'mcompact' => { args: '[--dry-run] [--aggressive]', desc: 'Compact memory (trim verbose, dedupe)' },
         'mcleanup' => { args: '(pipe JSON)', desc: 'Analyze MCP memory, generate cleanup commands' },
+        'mac_context' => { args: '', desc: 'Inject Mac development context for Claude' },
         'session_end' => { args: '[--skip-prompts]', desc: 'End session with insight extraction' },
         'reset_breaker' => { args: '', desc: 'Reset circuit breaker (unblock tools)' },
         'breaker_status' => { args: '', desc: 'Show circuit breaker status' },
         'breaker_errors' => { args: '', desc: 'Show recent failure messages' },
-        'compliance' => { args: '', desc: 'Show session compliance report' }
+        'compliance' => { args: '', desc: 'Show session compliance report' },
+        'skill' => { args: '<list|load|unload|status|show>', desc: 'Manage domain-specific knowledge skills' }
+      }
+    },
+    collab: {
+      desc: 'Collaboration observability',
+      commands: {
+        'collab' => { args: '[subcommand]', desc: 'Show collaboration dashboard' },
+        'collab interventions' => { args: '[limit]', desc: 'List detected interventions' },
+        'collab hooks' => { args: '[days]', desc: 'Show hook effectiveness metrics' },
+        'collab trends' => { args: '[days]', desc: 'Analyze collaboration trends' },
+        'collab suggestions' => { args: '', desc: 'Show automation suggestions' },
+        'generate_hook' => { args: '<pattern> [--dry-run]', desc: 'Generate hook from pattern' }
       }
     },
     export: {
@@ -135,8 +156,8 @@ class SaneMaster
   QUICK_START = [
     { cmd: 'verify', desc: 'Build + run tests' },
     { cmd: 'test_mode', desc: 'Kill → Build → Launch → Logs' },
-    { cmd: 'doctor', desc: 'Check environment health' },
-    { cmd: 'export', desc: 'Export code to PDF' }
+    { cmd: 'collab', desc: 'Collaboration observability' },
+    { cmd: 'doctor', desc: 'Check environment health' }
   ].freeze
 
   def initialize
@@ -277,6 +298,8 @@ class SaneMaster
       memory_compact(args)
     when 'memory_cleanup', 'mcleanup'
       memory_cleanup(args)
+    when 'mac_context', 'mac'
+      inject_mac_context(args)
     when 'session_end', 'se'
       session_end(args)
     when 'reset_breaker', 'rb'
@@ -288,6 +311,29 @@ class SaneMaster
     when 'compliance', 'cr'
       require_relative 'sanemaster/compliance_report'
       SaneMasterModules::ComplianceReport.generate
+
+    when 'skill', 'sk'
+      subcommand = args.shift || 'status'
+      case subcommand
+      when 'list', 'ls', 'l' then skill_list
+      when 'load', 'add' then skill_load(args)
+      when 'unload', 'remove', 'rm' then skill_unload(args)
+      when 'status', 's' then skill_status
+      when 'show', 'preview' then skill_show(args.first)
+      else puts "Unknown skill subcommand: #{subcommand}"
+      end
+
+    # Collaboration Observability
+    when 'collab', 'collaboration'
+      SaneMasterModules::Collab.run(args)
+    when 'generate_hook', 'gh'
+      pattern = args.shift
+      if pattern.nil?
+        SaneMasterModules::HookGenerator.list_patterns
+      else
+        options = { dry_run: args.include?('--dry-run'), force: args.include?('--force') }
+        SaneMasterModules::HookGenerator.generate(pattern, options)
+      end
 
     # SOP Loop (Two-Fix Rule Compliant)
     when 'verify_gate', 'vg'

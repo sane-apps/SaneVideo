@@ -168,7 +168,7 @@ final class ExportEdgeCaseIntegrationTests: XCTestCase {
         let exportedAsset = try await verifyExportedFile(at: outputURL)
         let exportedDuration = try await exportedAsset.load(.duration)
 
-        let frameTolerance = 1.0 / settings.frameRate
+        let frameTolerance = 1.0 / Double(settings.frameRate)
         XCTAssertEqual(
             exportedDuration.seconds,
             1.0,
@@ -378,7 +378,7 @@ final class ExportEdgeCaseIntegrationTests: XCTestCase {
 
         XCTAssertEqual(
             Double(nominalFrameRate),
-            settings.frameRate,
+            Double(settings.frameRate),
             accuracy: 1.0,
             "Frame rate should match settings. Expected \(settings.frameRate), got \(nominalFrameRate)"
         )

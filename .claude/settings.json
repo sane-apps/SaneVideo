@@ -1,4 +1,13 @@
 {
+  "permissions": {
+    "allow": [
+      "mcp__memory__*",
+      "mcp__apple-docs__*",
+      "mcp__context7__*",
+      "mcp__github__*",
+      "mcp__XcodeBuildMCP__*"
+    ]
+  },
   "hooks": {
     "SessionStart": [
       {

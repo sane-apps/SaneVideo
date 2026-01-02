@@ -90,6 +90,11 @@ struct CollapseButton: View {
 // Extracted to help compiler type-check the complex EditorLayoutView body
 
 struct TimelineKeyboardModifier: ViewModifier {
+    @Environment(AppState.self) var appState
+
+    // J/K/L shuttle rate tracking (stacks: 1x → 2x → 4x)
+    @State private var shuttleRate: Float = 1.0
+
     let onPrevBoundary: () -> Void
     let onNextBoundary: () -> Void
     let onExtendPrev: () -> Void
@@ -120,6 +125,24 @@ struct TimelineKeyboardModifier: ViewModifier {
                 }
                 return .handled
             }
+            // Left Arrow: Shift = 10s back, plain = frame back (2026-01-01)
+            .onKeyPress(.leftArrow, phases: .down) { press in
+                if press.modifiers.contains(.shift) {
+                    appState.playbackState.seekBackward10Seconds()
+                } else {
+                    appState.playbackState.stepBackward()
+                }
+                return .handled
+            }
+            // Right Arrow: Shift = 10s forward, plain = frame forward (2026-01-01)
+            .onKeyPress(.rightArrow, phases: .down) { press in
+                if press.modifiers.contains(.shift) {
+                    appState.playbackState.seekForward10Seconds()
+                } else {
+                    appState.playbackState.stepForward()
+                }
+                return .handled
+            }
             // Cmd+A = select all
             .onKeyPress(KeyEquivalent("a"), phases: .down) { press in
                 if press.modifiers.contains(.command) {
@@ -136,6 +159,32 @@ struct TimelineKeyboardModifier: ViewModifier {
             // D = select clip at playhead
             .onKeyPress(KeyEquivalent("d")) {
                 onSelectAtPlayhead()
+                return .handled
+            }
+            // J = Shuttle backward (stack: -1x → -2x → -4x) (2026-01-01)
+            .onKeyPress(KeyEquivalent("j")) {
+                if shuttleRate > 0 {
+                    shuttleRate = -1.0
+                } else {
+                    shuttleRate = max(-4.0, shuttleRate * 2)
+                }
+                appState.playbackState.setPlaybackRate(shuttleRate)
+                return .handled
+            }
+            // K = Pause (2026-01-01)
+            .onKeyPress(KeyEquivalent("k")) {
+                shuttleRate = 1.0 // Reset for next J/L press
+                appState.playbackState.pause()
+                return .handled
+            }
+            // L = Shuttle forward (stack: 1x → 2x → 4x) (2026-01-01)
+            .onKeyPress(KeyEquivalent("l")) {
+                if shuttleRate <= 0 {
+                    shuttleRate = 1.0
+                } else {
+                    shuttleRate = min(4.0, shuttleRate * 2)
+                }
+                appState.playbackState.setPlaybackRate(shuttleRate)
                 return .handled
             }
     }

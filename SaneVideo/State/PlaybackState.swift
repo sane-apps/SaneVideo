@@ -44,6 +44,7 @@ class PlaybackState {
     // MARK: - Internal Properties
 
     private var timeObserver: Any?
+    private var playbackEndedObserver: NSObjectProtocol?
     private var cancellables = Set<AnyCancellable>()
 
     // MARK: - Initialization
@@ -292,12 +293,37 @@ class PlaybackState {
 
         timeObserver = observer
         tokenHolder.observer = observer
+
+        // CRITICAL FIX (2026-01-01): Add end-of-playback notification observer
+        // Without this, isPlaying stays true and playhead stays at end when video finishes
+        playbackEndedObserver = NotificationCenter.default.addObserver(
+            forName: AVPlayerItem.didPlayToEndTimeNotification,
+            object: item,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in
+                self?.handlePlaybackEnded()
+            }
+        }
+    }
+
+    /// Handle natural end of playback - reset state for standard video player behavior
+    private func handlePlaybackEnded() {
+        isPlaying = false
+        seek(to: .zero)
+        AppLogger.playback.debug("Playback ended naturally - reset to start")
     }
 
     func unload() {
         // CRITICAL FIX: Cancel loading task before unloading
         loadingTask?.cancel()
         loadingTask = nil
+
+        // Remove end-of-playback observer
+        if let observer = playbackEndedObserver {
+            NotificationCenter.default.removeObserver(observer)
+            playbackEndedObserver = nil
+        }
 
         if let observer = timeObserver {
             player?.removeTimeObserver(observer)

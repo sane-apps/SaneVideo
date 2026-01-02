@@ -246,6 +246,16 @@ extension ProjectState {
                 processingStatus = "✅ Magic Fix Completed"
                 ServiceContainer.shared.toastManager.show("✨ Magic Fix Completed", type: .info)
                 AppLogger.project.info("✨ Magic Fix: One-click flow finished successfully")
+
+                // CRITICAL FIX (2026-01-01): Force composition reload to apply cuts
+                // StateChangePipeline only watches timeline.tracks structure changes,
+                // but clip.removedRanges is a property WITHIN a clip. Without this reload,
+                // the old composition stays active without the cuts applied.
+                if let project = self.currentProject {
+                    ServiceContainer.shared.appState.playbackState.loadProject(project, forceReload: true)
+                    // Reset playhead to start for better UX - user expects to review from beginning
+                    ServiceContainer.shared.appState.playbackState.seek(to: .zero)
+                }
             } catch is CancellationError {
                 AppLogger.project.info("✨ Magic Fix: Cancelled by user")
                 self.processingStatus = nil

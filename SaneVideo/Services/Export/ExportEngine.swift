@@ -16,6 +16,7 @@ class ExportEngine: ExportServiceProtocol {
   // MARK: - Properties
 
   private let compositor = ExportCompositor()
+  private let smartCropService = SmartCropService()
   private let progressTracker = ExportProgressTracker()
   private var exportCancellables = Set<AnyCancellable>()
   private var permanentCancellables = Set<AnyCancellable>()
@@ -104,13 +105,30 @@ class ExportEngine: ExportServiceProtocol {
       "🚀 Starting AVAssetWriter export: \(settings.resolution.displayName) @ \(settings.bitrate/1_000_000) Mbps"
     )
 
+    // 0. Run Smart Crop analysis if enabled (before composition to get keyframes)
+    var smartCropKeyframes: [CMTime: SuggestedCrop]?
+    if settings.smartCrop.enabled, let firstClip = project.timeline.tracks.first?.clips.first {
+      AppLogger.export.info("📐 Running smart crop analysis...")
+      do {
+        let cropResult = try await smartCropService.analyzeVideo(
+          sourceURL: firstClip.url,
+          settings: settings.smartCrop
+        )
+        smartCropKeyframes = cropResult.keyframes
+        AppLogger.export.info("📐 Smart crop: \(cropResult.keyframes.count) keyframes generated")
+      } catch {
+        AppLogger.export.warning("⚠️ Smart crop analysis failed: \(error). Continuing without smart crop.")
+      }
+    }
+
     // 1. Prepare Composition (with export resolution for correct transform scaling)
     let compositionResult = try await compositor.createComposition(from: project, settings: settings)
     let composition = compositionResult.composition
     let videoComposition = try await compositor.createVideoComposition(
       for: composition,
       baseVideoComposition: compositionResult.videoComposition,
-      settings: settings
+      settings: settings,
+      smartCropKeyframes: smartCropKeyframes
     )
     let audioMix = compositionResult.audioMix
 

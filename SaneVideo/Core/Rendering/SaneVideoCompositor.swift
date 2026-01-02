@@ -232,6 +232,16 @@ final class SaneVideoCompositor: NSObject, AVVideoCompositing {
     guard foundValidInstruction || instruction.layerInstructions.contains(where: { $0.trackID == trackID })
     else { return layerImage }
 
+    // A.1.5. Apply Smart Crop Transform (reframing for vertical/square export)
+    if let keyframes = instruction.smartCropKeyframes, !keyframes.isEmpty {
+      applySmartCrop(
+        keyframes: keyframes,
+        compositionTime: request.compositionTime,
+        renderSize: request.renderContext.size,
+        to: &layerImage
+      )
+    }
+
     // A.2. Apply Keyframe Animation Transforms
     if let keyframeRanges = instruction.trackKeyframes[trackID] {
       for (range, animations) in keyframeRanges where range.containsTime(request.compositionTime) {
@@ -364,5 +374,95 @@ final class SaneVideoCompositor: NSObject, AVVideoCompositing {
         threshold: sensitivity
       )
     }
+  }
+
+  // MARK: - Smart Crop
+
+  /// Applies smart crop transform based on keyframes
+  /// Uses nearest-neighbor interpolation between keyframes for smooth reframing
+  private func applySmartCrop(
+    keyframes: [CMTime: SuggestedCrop],
+    compositionTime: CMTime,
+    renderSize: CGSize,
+    to image: inout CIImage
+  ) {
+    // Find the crop suggestion for this time (interpolate between keyframes)
+    let crop = interpolateCrop(at: compositionTime, from: keyframes)
+
+    let imageExtent = image.extent
+
+    // Calculate the transform to:
+    // 1. Scale the image by the crop's scale factor (zoom in)
+    // 2. Translate to center the crop point in the output
+
+    // The crop center is normalized (0-1), convert to image coordinates
+    let cropCenterX = crop.centerX * imageExtent.width
+    let cropCenterY = (1.0 - crop.centerY) * imageExtent.height  // Flip Y for CIImage coords
+
+    // Output center
+    let outputCenterX = renderSize.width / 2.0
+    let outputCenterY = renderSize.height / 2.0
+
+    // Build transform: scale around image center, then translate to position crop center at output center
+    let scale = crop.scale
+
+    // Translation needed after scaling to center the crop point
+    let translateX = outputCenterX - (cropCenterX * scale)
+    let translateY = outputCenterY - (cropCenterY * scale)
+
+    let transform = CGAffineTransform.identity
+      .scaledBy(x: scale, y: scale)
+      .translatedBy(x: translateX / scale, y: translateY / scale)
+
+    image = image.transformed(by: transform)
+  }
+
+  /// Interpolates crop suggestion at given time between keyframes
+  private func interpolateCrop(at time: CMTime, from keyframes: [CMTime: SuggestedCrop]) -> SuggestedCrop {
+    // Sort keyframes by time
+    let sortedTimes = keyframes.keys.sorted { $0 < $1 }
+
+    guard !sortedTimes.isEmpty else {
+      return .default
+    }
+
+    // Find surrounding keyframes
+    var beforeTime: CMTime?
+    var afterTime: CMTime?
+
+    for keyTime in sortedTimes {
+      if keyTime <= time {
+        beforeTime = keyTime
+      } else if afterTime == nil {
+        afterTime = keyTime
+        break
+      }
+    }
+
+    // If only one side available, use it directly
+    guard let before = beforeTime, let beforeCrop = keyframes[before] else {
+      if let after = afterTime, let afterCrop = keyframes[after] {
+        return afterCrop
+      }
+      return .default
+    }
+
+    guard let after = afterTime, let afterCrop = keyframes[after] else {
+      return beforeCrop
+    }
+
+    // Interpolate between before and after
+    let beforeSec = before.seconds
+    let afterSec = after.seconds
+    let currentSec = time.seconds
+
+    let t = (currentSec - beforeSec) / (afterSec - beforeSec)
+    let clampedT = max(0, min(1, t))
+
+    return SuggestedCrop(
+      centerX: beforeCrop.centerX + (afterCrop.centerX - beforeCrop.centerX) * clampedT,
+      centerY: beforeCrop.centerY + (afterCrop.centerY - beforeCrop.centerY) * clampedT,
+      scale: beforeCrop.scale + (afterCrop.scale - beforeCrop.scale) * clampedT
+    )
   }
 }

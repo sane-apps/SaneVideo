@@ -11,23 +11,29 @@ import Foundation
 
 /// Settings for AI-powered smart cropping during export
 /// Uses face detection and/or saliency analysis to keep subjects in frame
-struct SmartCropSettings: Codable, Sendable, Equatable {
+public struct SmartCropSettings: Codable, Sendable, Equatable {
     /// Enable smart cropping
-    var enabled: Bool = false
+    public var enabled: Bool = false
 
     /// What to track for cropping
-    var trackingMode: TrackingMode = .face
+    public var trackingMode: TrackingMode = .face
 
     /// Keyframe smoothing factor (0.0-1.0, higher = smoother but less responsive)
-    var smoothing: Double = 0.3
+    public var smoothing: Double = 0.3
+
+    public init(enabled: Bool = false, trackingMode: TrackingMode = .face, smoothing: Double = 0.3) {
+        self.enabled = enabled
+        self.trackingMode = trackingMode
+        self.smoothing = smoothing
+    }
 
     /// Tracking mode options
-    enum TrackingMode: String, Codable, Sendable, CaseIterable {
+    public enum TrackingMode: String, Codable, Sendable, CaseIterable {
         case face       // Track faces (best for talking head videos)
         case saliency   // Track visual interest (best for action/product videos)
         case combined   // Use both, prefer faces when present
 
-        var displayName: String {
+        public var displayName: String {
             switch self {
             case .face: return "Face Tracking"
             case .saliency: return "Visual Interest"
@@ -35,7 +41,7 @@ struct SmartCropSettings: Codable, Sendable, Equatable {
             }
         }
 
-        var icon: String {
+        public var icon: String {
             switch self {
             case .face: return "person.crop.rectangle"
             case .saliency: return "sparkle.magnifyingglass"

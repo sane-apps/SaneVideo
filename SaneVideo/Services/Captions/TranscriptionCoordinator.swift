@@ -23,10 +23,35 @@ class TranscriptionCoordinator: TranscriptionCoordinatorProtocol {
     private var failureCount: Int = 0
     private var lastFailureTime: Date?
 
+    // MARK: - Model State (for UI feedback)
+
+    /// Current WhisperKit model state - for UI progress indication
+    var modelState: WhisperKitService.ModelState {
+        get async { await whisperKitService.modelState }
+    }
+
     // MARK: - Initialization
 
     init() {
         self.whisperKitService = WhisperKitService()
+    }
+
+    // MARK: - Background Preload
+
+    /// Preload WhisperKit model in background (call from ServiceContainer on app launch)
+    /// Non-blocking, shows toast when ready
+    func preloadWhisperKit(toastManager: ToastManager) {
+        Task {
+            // Set up state change handler for toast
+            await whisperKitService.setStateChangeHandler { @MainActor [weak toastManager] state in
+                if state == .ready {
+                    toastManager?.show("AI captions ready", type: .success)
+                }
+            }
+
+            // Trigger background preload
+            await whisperKitService.preloadModelInBackground()
+        }
     }
 
     // MARK: - Transcription

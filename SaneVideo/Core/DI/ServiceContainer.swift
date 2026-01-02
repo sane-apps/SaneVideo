@@ -205,6 +205,10 @@ final class ServiceContainer {
         // Warm up critical heavy systems in background
         Task { await self.visionOrchestrator.warmup() }
 
+        // Preload WhisperKit model in background (non-blocking)
+        // User won't wait 5-15 minutes on first caption generation
+        transcriptionCoordinator.preloadWhisperKit(toastManager: toastManager)
+
         // Log initialization time
         let elapsed = CFAbsoluteTimeGetCurrent() - startTime
         if elapsed > 0.1 {

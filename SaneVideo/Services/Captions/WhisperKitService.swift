@@ -17,6 +17,27 @@ import WhisperKit
 /// Best for: accents, technical jargon, noisy audio, multiple speakers
 actor WhisperKitService: TranscriptionServiceProtocol {
 
+    // MARK: - Model State
+
+    /// Observable state for UI feedback during model loading
+    enum ModelState: Sendable, Equatable {
+        case notLoaded
+        case downloading
+        case ready
+        case failed(String)
+
+        static func == (lhs: ModelState, rhs: ModelState) -> Bool {
+            switch (lhs, rhs) {
+            case (.notLoaded, .notLoaded), (.downloading, .downloading), (.ready, .ready):
+                return true
+            case (.failed(let a), .failed(let b)):
+                return a == b
+            default:
+                return false
+            }
+        }
+    }
+
     // MARK: - Properties
 
     // WhisperKit is not Sendable, so we need nonisolated(unsafe) for actor storage.
@@ -29,10 +50,80 @@ actor WhisperKitService: TranscriptionServiceProtocol {
     private var isInitialized = false
     private var initializationTask: Task<Void, Error>?
 
+    /// Current model loading state - observable for UI
+    private(set) var modelState: ModelState = .notLoaded
+
+    /// Callback for state changes (called on MainActor)
+    private var stateChangeHandler: (@MainActor (ModelState) -> Void)?
+
     // MARK: - Initialization
 
     init() {
-        // Lazy initialization - model loads on first use
+        // Lazy initialization - model loads on first use or via preload
+    }
+
+    /// Set a handler to be called when model state changes
+    func setStateChangeHandler(_ handler: @escaping @MainActor (ModelState) -> Void) {
+        stateChangeHandler = handler
+    }
+
+    /// Notify UI of state change
+    private func updateState(_ newState: ModelState) {
+        modelState = newState
+        if let handler = stateChangeHandler {
+            Task { @MainActor in
+                handler(newState)
+            }
+        }
+    }
+
+    // MARK: - Background Preload
+
+    /// Background preload - call from ServiceContainer on app launch
+    /// Non-blocking, non-fatal, uses low priority
+    func preloadModelInBackground() {
+        guard !isInitialized, initializationTask == nil else {
+            AppLogger.project.debug("🎤 WhisperKit: Skipping preload - already initialized or in progress")
+            return
+        }
+
+        AppLogger.project.info("🎤 WhisperKit: Starting background model preload...")
+        updateState(.downloading)
+
+        initializationTask = Task.detached(priority: .utility) { [weak self] in
+            guard let self else { return }
+            do {
+                try await self.initializeModel()
+                await self.updateState(.ready)
+                AppLogger.project.info("✅ WhisperKit: Model preloaded in background")
+            } catch {
+                await self.updateState(.failed(error.localizedDescription))
+                AppLogger.project.debug("⚠️ WhisperKit: Background preload failed: \(error.localizedDescription)")
+                // Non-fatal - will retry on first use
+            }
+        }
+    }
+
+    /// Shared model initialization logic
+    private func initializeModel() async throws {
+        AppLogger.project.info("🎤 WhisperKit: Initializing multilingual model (first time may download ~1GB)...")
+
+        let config = WhisperKitConfig()
+        // Use large-v3-turbo for multilingual support (100+ languages)
+        // 6x faster than large-v3, comparable accuracy, ~954MB download
+        config.model = "openai_whisper-large-v3_turbo_954MB"
+        config.computeOptions = ModelComputeOptions()
+        config.verbose = true
+        config.logLevel = .debug
+        config.prewarm = true  // Prewarm for faster first transcription
+
+        AppLogger.project.info("🎤 WhisperKit: Requesting model: \(config.model ?? "auto")")
+
+        let model = try await WhisperKit(config)
+
+        self.whisperKit = model
+        self.isInitialized = true
+        AppLogger.project.info("✅ WhisperKit: Model initialized successfully")
     }
 
     // MARK: - Availability
@@ -45,45 +136,28 @@ actor WhisperKitService: TranscriptionServiceProtocol {
 
     // MARK: - Model Initialization
 
-    /// Initialize WhisperKit with a model
-    /// Uses "openai/whisper-small" by default (good balance of speed/accuracy)
+    /// Initialize WhisperKit with a model - waits for background preload if in progress
     private func ensureInitialized() async throws {
         if isInitialized, whisperKit != nil {
             return
         }
 
-        // Cancel any existing initialization
-        initializationTask?.cancel()
-
-        // Start new initialization
-        let task = Task {
-            do {
-                AppLogger.project.info("🎤 WhisperKit: Initializing model (first time may download ~800MB)...")
-
-                let config = WhisperKitConfig()
-                // Use distil-large-v3 for optimal balance of accuracy and performance on Apple Silicon
-                // ~50% faster than full large-v3, <1-2% WER drop, better M1 8GB RAM compatibility
-                config.model = "distil-whisper_distil-large-v3"
-                config.computeOptions = ModelComputeOptions()
-                config.verbose = true // Enable verbose logging to debug issues
-                config.logLevel = .debug
-                config.prewarm = false
-
-                AppLogger.project.info("🎤 WhisperKit: Requesting model: \(config.model ?? "auto")")
-
-                let model = try await WhisperKit(config)
-
-                self.whisperKit = model
-                self.isInitialized = true
-                AppLogger.project.info("✅ WhisperKit: Model initialized successfully")
-            } catch {
-                AppLogger.project.error("❌ WhisperKit: Failed to initialize: \(error.localizedDescription)")
-                throw TranscriptionError.initializationFailed("WhisperKit: \(error.localizedDescription)")
-            }
+        // If background preload is in progress, wait for it
+        if let existingTask = initializationTask {
+            try await existingTask.value
+            return
         }
 
-        initializationTask = task
-        try await task.value
+        // No preload in progress - initialize synchronously
+        updateState(.downloading)
+        do {
+            try await initializeModel()
+            updateState(.ready)
+        } catch {
+            updateState(.failed(error.localizedDescription))
+            AppLogger.project.error("❌ WhisperKit: Failed to initialize: \(error.localizedDescription)")
+            throw TranscriptionError.initializationFailed("WhisperKit: \(error.localizedDescription)")
+        }
     }
 
     // MARK: - Transcription

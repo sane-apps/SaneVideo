@@ -43,8 +43,8 @@ struct FirstLaunchView: View {
         ),
         OnboardingStep(
             icon: "text.bubble.fill",
-            title: "Auto-Captions with AI",
-            description: "Generate highly accurate captions in 99 languages. Perfect for technical jargon, accents, and background noise. Download now (~1.5GB) or use Apple's built-in transcription (ready now).",
+            title: "Auto-Captions in 100+ Languages",
+            description: "Industry-leading accuracy powered by Whisper AI. Handles accents, technical jargon, multiple speakers, and noisy audio—all processed on-device. Download now (~1GB) or skip and download later.",
             color: .cyan
         )
     ]
@@ -140,13 +140,13 @@ struct FirstLaunchView: View {
 
         do {
             // Initialize WhisperKit which triggers model download
-            // Using distil-large-v3 for optimal accuracy/performance on Apple Silicon
+            // Using large-v3-turbo for multilingual support (100+ languages)
             let config = WhisperKitConfig()
-            config.model = "distil-whisper_distil-large-v3"
+            config.model = "openai_whisper-large-v3_turbo_954MB"
             config.verbose = false
             config.prewarm = true
 
-            AppLogger.project.info("🎤 Onboarding: Starting WhisperKit distil-large-v3 model download (~800MB)...")
+            AppLogger.project.info("🎤 Onboarding: Starting WhisperKit multilingual model download (~1GB)...")
             _ = try await WhisperKit(config)
             AppLogger.project.info("✅ Onboarding: WhisperKit model download complete")
             whisperKitDownloadComplete = true

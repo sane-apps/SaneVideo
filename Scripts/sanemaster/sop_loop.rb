@@ -135,8 +135,8 @@ module SaneMasterModules
       puts 'Starting SOP loop with Two-Fix Rule enforcement...'
       puts ''
 
-      # Create Ralph loop state file
-      create_ralph_state(sop_prompt, max_iterations)
+      # Create SaneLoop loop state file
+      create_sane_loop_state(sop_prompt, max_iterations)
 
       puts '✅ SOP loop activated'
       puts ''
@@ -228,8 +228,8 @@ module SaneMasterModules
       PROMPT
     end
 
-    def create_ralph_state(prompt, max_iterations)
-      ralph_state = <<~STATE
+    def create_sane_loop_state(prompt, max_iterations)
+      sane_loop_state = <<~STATE
         ---
         active: true
         iteration: 1
@@ -243,7 +243,7 @@ module SaneMasterModules
       STATE
 
       FileUtils.mkdir_p('.claude')
-      File.write('.claude/ralph-loop.local.md', ralph_state)
+      File.write('.claude/sane-loop.local.md', sane_loop_state)
     end
   end
 end

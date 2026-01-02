@@ -17,7 +17,7 @@ module SaneMasterModules
       '#6:FULL_CYCLE' => 'Full Verification Cycle',
       '#7:TEST_QUALITY' => 'No Tautology Tests',
       '#10:FILE_SIZE' => 'File Size Limits',
-      '#RALPH:EXIT_CONDITION' => 'Ralph Loop Safety'
+      '#RALPH:EXIT_CONDITION' => 'SaneLoop Safety'
     }.freeze
 
     def self.generate(session_id: nil)

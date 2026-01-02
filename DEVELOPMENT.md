@@ -21,6 +21,7 @@
 3. **Know the Self-Rating requirement** - After every change, rate yourself 1-10 on SOP adherence
 4. **Use SaneMaster.rb**: All tools are in `./Scripts/SaneMaster.rb` — never use raw `xcodebuild`
 5. **Tests are working**: Unit tests run with `verify`, UI tests with `verify --ui`
+6. **Stay inside the project folder**: NEVER save files outside `/Users/sj/SaneVideo/` unless explicitly requested by user. No plan files in `~/.claude/`, no temp files elsewhere.
 
 **Your first action when user says "check our SOP" or "use our SOP":**
 ```bash

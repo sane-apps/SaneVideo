@@ -28,8 +28,10 @@ require_relative 'sanemaster/verify'
 require_relative 'sanemaster/quality'
 require_relative 'sanemaster/sop_loop'
 require_relative 'sanemaster/export'
+require_relative 'sanemaster/md_export'
 require_relative 'sanemaster/meta'
 require_relative 'sanemaster/session'
+require_relative 'sanemaster/circuit_breaker_state'
 
 class SaneMaster
   include SaneMasterModules::Base
@@ -43,6 +45,7 @@ class SaneMaster
   include SaneMasterModules::Quality
   include SaneMasterModules::SOPLoop
   include SaneMasterModules::Export
+  include SaneMasterModules::MdExport
   include SaneMasterModules::Meta
   include SaneMasterModules::Session
 
@@ -108,13 +111,21 @@ class SaneMaster
         'mc' => { args: '', desc: 'Show memory context' },
         'mr' => { args: '<type> <name>', desc: 'Record new entity' },
         'mp' => { args: '[--dry-run]', desc: 'Prune stale entities' },
-        'session_end' => { args: '[--skip-prompts]', desc: 'End session with insight extraction' }
+        'mh' => { args: '', desc: 'Memory health check (entity/token counts)' },
+        'mcompact' => { args: '[--dry-run] [--aggressive]', desc: 'Compact memory (trim verbose, dedupe)' },
+        'mcleanup' => { args: '(pipe JSON)', desc: 'Analyze MCP memory, generate cleanup commands' },
+        'session_end' => { args: '[--skip-prompts]', desc: 'End session with insight extraction' },
+        'reset_breaker' => { args: '', desc: 'Reset circuit breaker (unblock tools)' },
+        'breaker_status' => { args: '', desc: 'Show circuit breaker status' },
+        'breaker_errors' => { args: '', desc: 'Show recent failure messages' },
+        'compliance' => { args: '', desc: 'Show session compliance report' }
       }
     },
     export: {
       desc: 'Export and documentation',
       commands: {
         'export' => { args: '[--highlight]', desc: 'Export code to PDF (~/Downloads)' },
+        'md_export' => { args: '<file.md>', desc: 'Convert markdown to PDF' },
         'deps' => { args: '[--dot]', desc: 'Show dependency graph' },
         'quality' => { args: '', desc: 'Generate Ruby quality report' }
       }
@@ -260,8 +271,23 @@ class SaneMaster
       record_memory_entity(args)
     when 'memory_prune', 'mp'
       prune_memory_entities(args)
+    when 'memory_health', 'mh'
+      memory_health(args)
+    when 'memory_compact', 'mcompact'
+      memory_compact(args)
+    when 'memory_cleanup', 'mcleanup'
+      memory_cleanup(args)
     when 'session_end', 'se'
       session_end(args)
+    when 'reset_breaker', 'rb'
+      SaneMasterModules::CircuitBreakerState.reset!
+    when 'breaker_status', 'bs'
+      show_breaker_status
+    when 'breaker_errors', 'be'
+      show_breaker_errors
+    when 'compliance', 'cr'
+      require_relative 'sanemaster/compliance_report'
+      SaneMasterModules::ComplianceReport.generate
 
     # SOP Loop (Two-Fix Rule Compliant)
     when 'verify_gate', 'vg'
@@ -281,11 +307,63 @@ class SaneMaster
     # Export
     when 'export', 'pdf', 'export_pdf'
       export_pdf(args)
+    when 'md_export', 'mdpdf'
+      export_markdown(args)
 
     else
       puts "❌ Unknown command: #{command}"
       print_help
     end
+  end
+
+  def show_breaker_status
+    status = SaneMasterModules::CircuitBreakerState.status
+    puts '🔌 --- [ CIRCUIT BREAKER STATUS ] ---'
+    puts ''
+    if status[:status] == 'OPEN'
+      puts "   Status: 🔴 #{status[:status]} (TOOLS BLOCKED)"
+      puts "   #{status[:message]}"
+      puts "   Reason: #{status[:trip_reason]}" if status[:trip_reason]
+      puts "   Blocked: #{status[:blocked_tools].join(', ')}"
+      puts ''
+      puts '   To see errors: ./Scripts/SaneMaster.rb breaker_errors'
+      puts '   To reset: ./Scripts/SaneMaster.rb reset_breaker'
+    else
+      puts "   Status: 🟢 #{status[:status]}"
+      puts "   #{status[:message]}"
+    end
+    puts ''
+  end
+
+  def show_breaker_errors
+    state = SaneMasterModules::CircuitBreakerState.load_state
+    puts '🔌 --- [ CIRCUIT BREAKER ERRORS ] ---'
+    puts ''
+
+    messages = state[:failure_messages] || []
+    if messages.empty?
+      puts '   No failure messages recorded.'
+    else
+      puts "   Recent failures (#{messages.count}):"
+      puts ''
+      messages.each_with_index do |msg, i|
+        puts "   #{i + 1}. #{msg}"
+      end
+    end
+
+    # Show error signatures if any
+    signatures = state[:error_signatures] || {}
+    if signatures.any?
+      puts ''
+      puts '   Error patterns detected:'
+      signatures.sort_by { |_, v| -v }.first(5).each do |sig, count|
+        puts "   - #{count}x: #{sig[0, 60]}#{'...' if sig.length > 60}"
+      end
+    end
+
+    puts ''
+    puts '   Use this information to research the problem and create a plan.'
+    puts ''
   end
 
   def parse_diagnose_args(args)

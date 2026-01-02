@@ -22,6 +22,7 @@ What would you like to work on today?
 
 ## Before ANY Code Change
 
+- [ ] **EXPLORE FIRST** - Read relevant files, grep patterns, understand context BEFORE editing. No edits until you have a clear picture. If unsure, say "I need to explore X before making changes."
 - [ ] Verify current state with `grep`/`find` (NOT memory - Rule #13)
 - [ ] If API involved: `./Scripts/SaneMaster.rb verify_api <API> [Framework]` (Rule #1)
 - [ ] Two-Fix Rule: If you fail twice, STOP and investigate — that's the win, not the failure (Rule #2)

@@ -189,8 +189,8 @@ class ExportEngine: ExportServiceProtocol {
 
     let writerVideoSettings: [String: Any] = [
       AVVideoCodecKey: settings.codec,
-      AVVideoWidthKey: settings.resolution.size.width,
-      AVVideoHeightKey: settings.resolution.size.height,
+      AVVideoWidthKey: settings.renderSize.width,
+      AVVideoHeightKey: settings.renderSize.height,
       AVVideoCompressionPropertiesKey: compressionProps
     ]
 

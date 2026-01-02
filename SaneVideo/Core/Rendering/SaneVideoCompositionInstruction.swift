@@ -28,7 +28,12 @@ struct TextLayerItem: Sendable {
   let isCaption: Bool
   var rotation: Double = 0.0
   var scale: CGFloat = 1.0
-  // Future: Font, color, etc.
+
+  // Styling (from CaptionStyle)
+  let style: CaptionStyle?
+
+  // Word-level timing for karaoke highlighting
+  let words: [CaptionWord]?
 }
 
 // MARK: - Instruction Class

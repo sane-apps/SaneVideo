@@ -63,19 +63,11 @@ struct LibraryView: View {
     }
 
     private var importHeader: some View {
+        // NOTE: Processing progress is shown in the Inspector panel (Magic Fix section)
+        // where the user initiates operations - single source of truth for progress
         HStack(spacing: 8) {
             ImportButtonGroup()
-            
             Spacer()
-
-            if appState.projectState.isProcessing {
-                LoadingIndicator(
-                    message: appState.projectState.processingStatus,
-                    progress: appState.projectState.processingProgress
-                )
-                .frame(width: 200)
-                .transition(.smoothScale)
-            }
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 8)

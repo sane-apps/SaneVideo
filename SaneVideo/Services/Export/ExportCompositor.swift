@@ -15,7 +15,7 @@ class ExportCompositor {
     /// Creates composition with transforms computed for the target export resolution
     /// This ensures 4K exports have correctly scaled transforms, not 1080p-baked transforms
     func createComposition(from project: VideoProject, settings: SaneExportSettings) async throws -> CompositionBuilder.CompositionResult {
-        return try await CompositionBuilder.build(from: project, renderSize: settings.resolution.size)
+        return try await CompositionBuilder.build(from: project, renderSize: settings.renderSize)
     }
 
     func createVideoComposition(
@@ -38,7 +38,7 @@ class ExportCompositor {
             // macOS 26+: Use modern Configuration API
             var config = AVVideoComposition.Configuration()
             config.instructions = base.instructions
-            config.renderSize = settings.resolution.size
+            config.renderSize = settings.renderSize
             config.frameDuration = CMTime(value: 1, timescale: CMTimeScale(settings.frameRate))
             config.sourceTrackIDForFrameTiming = base.sourceTrackIDForFrameTiming
             config.animationTool = base.animationTool
@@ -48,7 +48,7 @@ class ExportCompositor {
             // macOS 15-25: Use mutable video composition
             let mutableVideoComposition = AVMutableVideoComposition()
             mutableVideoComposition.instructions = base.instructions
-            mutableVideoComposition.renderSize = settings.resolution.size
+            mutableVideoComposition.renderSize = settings.renderSize
             mutableVideoComposition.frameDuration = CMTime(value: 1, timescale: CMTimeScale(settings.frameRate))
             mutableVideoComposition.sourceTrackIDForFrameTiming = base.sourceTrackIDForFrameTiming
             mutableVideoComposition.animationTool = base.animationTool

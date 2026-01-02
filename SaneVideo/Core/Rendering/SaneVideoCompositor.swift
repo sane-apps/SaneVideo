@@ -176,7 +176,7 @@ final class SaneVideoCompositor: NSObject, AVVideoCompositing {
         }
 
         if let textImage = TextLayerRenderer.renderTextLayers(
-          activeTextLayers, size: renderSize, faceRects: faceRects) {
+          activeTextLayers, size: renderSize, faceRects: faceRects, compositionTime: request.compositionTime) {
           currentImage = textImage.composited(over: resultImage)
         }
       }

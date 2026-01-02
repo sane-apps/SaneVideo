@@ -123,21 +123,40 @@ struct ExportConfigurationView: View {
             exportSettings.codec = .hevc
             exportSettings.bitrate = 20_000_000
             exportSettings.frameRate = 60.0
+            exportSettings.aspectRatio = nil  // Use source aspect (horizontal)
         case .youtube1080:
             exportSettings.resolution = .hd1080
             exportSettings.codec = .h264
             exportSettings.bitrate = 12_000_000
             exportSettings.frameRate = 30.0
-        case .social1080, .tiktok, .instagram, .twitter, .facebook:
+            exportSettings.aspectRatio = nil  // Use source aspect (horizontal)
+        case .tiktok, .instagram:
+            // Vertical 9:16 for short-form social platforms
             exportSettings.resolution = .hd1080
             exportSettings.codec = .h264
             exportSettings.bitrate = 8_000_000
             exportSettings.frameRate = 30.0
+            exportSettings.aspectRatio = .vertical9x16
+        case .twitter:
+            // Twitter/X supports vertical but square also common
+            exportSettings.resolution = .hd1080
+            exportSettings.codec = .h264
+            exportSettings.bitrate = 8_000_000
+            exportSettings.frameRate = 30.0
+            exportSettings.aspectRatio = .vertical9x16
+        case .social1080, .facebook:
+            // General social - keep horizontal
+            exportSettings.resolution = .hd1080
+            exportSettings.codec = .h264
+            exportSettings.bitrate = 8_000_000
+            exportSettings.frameRate = 30.0
+            exportSettings.aspectRatio = nil  // Use source aspect
         case .compressed:
             exportSettings.resolution = .hd1080
             exportSettings.codec = .hevc
             exportSettings.bitrate = 5_000_000
             exportSettings.frameRate = 30.0
+            exportSettings.aspectRatio = nil  // Use source aspect
         case .custom:
             break
         }

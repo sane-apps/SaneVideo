@@ -102,6 +102,14 @@ struct TimeRulerView: View {
             let tappedTime = max(0, Double(location.x / pixelsPerSecond))
             onSeek?(min(tappedTime, duration))
         }
+        // Drag-to-scrub: Continuous seeking while dragging (2026-01-01)
+        .gesture(
+            DragGesture(minimumDistance: 0)
+                .onChanged { value in
+                    let draggedTime = max(0, Double(value.location.x / pixelsPerSecond))
+                    onSeek?(min(draggedTime, duration))
+                }
+        )
     }
 
     private func formatTime(_ seconds: TimeInterval) -> String {

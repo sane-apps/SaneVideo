@@ -7,6 +7,46 @@
 
 import Foundation
 
+// MARK: - Smart Crop Settings
+
+/// Settings for AI-powered smart cropping during export
+/// Uses face detection and/or saliency analysis to keep subjects in frame
+struct SmartCropSettings: Codable, Sendable, Equatable {
+    /// Enable smart cropping
+    var enabled: Bool = false
+
+    /// What to track for cropping
+    var trackingMode: TrackingMode = .face
+
+    /// Keyframe smoothing factor (0.0-1.0, higher = smoother but less responsive)
+    var smoothing: Double = 0.3
+
+    /// Tracking mode options
+    enum TrackingMode: String, Codable, Sendable, CaseIterable {
+        case face       // Track faces (best for talking head videos)
+        case saliency   // Track visual interest (best for action/product videos)
+        case combined   // Use both, prefer faces when present
+
+        var displayName: String {
+            switch self {
+            case .face: return "Face Tracking"
+            case .saliency: return "Visual Interest"
+            case .combined: return "Smart (Combined)"
+            }
+        }
+
+        var icon: String {
+            switch self {
+            case .face: return "person.crop.rectangle"
+            case .saliency: return "sparkle.magnifyingglass"
+            case .combined: return "brain.head.profile"
+            }
+        }
+    }
+}
+
+// MARK: - Export Presets
+
 enum ExportPreset: String, CaseIterable, Identifiable {
     var id: String { rawValue }
     case custom = "Custom"
@@ -30,9 +70,9 @@ enum ExportPreset: String, CaseIterable, Identifiable {
         case .tiktok:
             return "1080p HD, H.264 • 9:16 vertical format"
         case .instagram:
-            return "1080p HD, H.264 • 1:1 square or 4:5"
+            return "1080p HD, H.264 • 9:16 vertical (Reels)"
         case .twitter:
-            return "1080p HD, H.264 • Twitter/X optimized"
+            return "1080p HD, H.264 • 9:16 vertical format"
         case .facebook:
             return "1080p HD, H.264 • Facebook optimized"
         case .social1080:

@@ -738,12 +738,12 @@ This generates specific MCP commands to delete stale entities and trim verbose o
 
 ---
 
-## 5D. Ralph Wiggum: SOP Enforcement Loop
+## 5D. SaneLoop: SOP Enforcement Loop
 
 **Purpose**: Forces Claude to complete ALL SOP requirements before claiming a task is done.
 
 **How it works**:
-1. Run `/ralph-loop` with a prompt containing SOP requirements
+1. Run `/sane-loop` with a prompt containing SOP requirements
 2. Claude works on the task
 3. When Claude tries to exit, a Stop hook intercepts and feeds the prompt back
 4. Claude sees previous work and iterates until completion criteria are met
@@ -759,20 +759,20 @@ This generates specific MCP commands to delete stale entities and trim verbose o
 
 ✅ DO:
 ```bash
-/ralph-loop "Fix bug X" --completion-promise "BUG-FIXED" --max-iterations 15
-/ralph-loop "Add feature Y" --completion-promise "FEATURE-COMPLETE" --max-iterations 20
+/sane-loop "Fix bug X" --completion-promise "BUG-FIXED" --max-iterations 15
+/sane-loop "Add feature Y" --completion-promise "FEATURE-COMPLETE" --max-iterations 20
 ```
 
 ❌ DON'T:
 ```bash
-/ralph-loop "Fix bug X"  # NO! Missing both required flags
-/ralph-loop "Fix bug X" --max-iterations 0  # NO! Unlimited = infinite loop
+/sane-loop "Fix bug X"  # NO! Missing both required flags
+/sane-loop "Fix bug X" --max-iterations 0  # NO! Unlimited = infinite loop
 ```
 
 **Usage for bug fixes**:
 
 ```bash
-/ralph-loop "Fix: [describe bug]
+/sane-loop "Fix: [describe bug]
 
 SOP Requirements (verify before completing):
 1. ./Scripts/SaneMaster.rb verify passes
@@ -786,7 +786,7 @@ Output <promise>SOP-COMPLETE</promise> ONLY when ALL verified." --completion-pro
 ```
 
 **Commands**:
-- `/ralph-loop "<prompt>" --completion-promise "<text>" --max-iterations N` - Start loop
+- `/sane-loop "<prompt>" --completion-promise "<text>" --max-iterations N` - Start loop
 - `/cancel-ralph` - Cancel active loop
 
 ---
@@ -921,7 +921,7 @@ log stream --predicate 'subsystem == "com.sanevideo.SaneVideo"' --level debug
     - **swift-lsp@claude-plugins-official**: ✅ Enabled - Provides Swift code intelligence (completion, go-to-definition, diagnostics)
     - **code-review@claude-plugins-official**: ✅ Enabled - Automated PR review with 4 parallel agents
     - **security-guidance@claude-plugins-official**: ✅ Enabled - Security vulnerability alerts during editing
-    - **ralph-wiggum@claude-plugins-official**: ✅ Enabled - **SOP Enforcement Loop** - Prevents task completion until verification criteria are met (see below)
+    - **sane-loop@claude-plugins-official**: ✅ Enabled - **SOP Enforcement Loop** - Prevents task completion until verification criteria are met (see below)
 5. **MCP Servers** (configured in `.mcp.json`):
     - **Note**: Ensure `enableAllProjectMcpServers: true` is set in `.claude/settings.local.json` and no restrictive `enabledMcpjsonServers` array exists.
     - **apple-docs**: ✅ Enabled - Apple Developer Documentation & WWDC transcripts (1,260+ sessions, 2012-2025). Use for API examples, related APIs, and understanding "why" behind APIs.
@@ -981,12 +981,12 @@ When developing the iPhone/iPad companion apps:
 
 **See:** `TEST_CREATION_WORKFLOW.md` for test creation workflow and best practices.
 
-### Ralph Wiggum: SOP Enforcement Loop
+### SaneLoop: SOP Enforcement Loop
 
 **Purpose**: Forces Claude to complete ALL SOP requirements before claiming a task is done.
 
 **How it works**:
-1. You run `/ralph-loop` with a prompt containing SOP requirements
+1. You run `/sane-loop` with a prompt containing SOP requirements
 2. Claude works on the task
 3. When Claude tries to exit, a Stop hook intercepts and feeds the prompt back
 4. Claude sees previous work and iterates until completion criteria are met
@@ -995,7 +995,7 @@ When developing the iPhone/iPad companion apps:
 **Usage for bug fixes**:
 
 ```bash
-/ralph-loop "Fix: [describe bug]
+/sane-loop "Fix: [describe bug]
 
 SOP Requirements (verify before completing):
 1. ./Scripts/SaneMaster.rb verify passes
@@ -1010,7 +1010,7 @@ Output <promise>SOP-COMPLETE</promise> ONLY when ALL verified." --completion-pro
 **Usage for features**:
 
 ```bash
-/ralph-loop "Implement: [describe feature]
+/sane-loop "Implement: [describe feature]
 
 Requirements: [list requirements]
 
@@ -1020,7 +1020,7 @@ SOP: verify passes, logs checked, self-rating provided.
 ```
 
 **Commands**:
-- `/ralph-loop "<prompt>" --completion-promise "<text>" --max-iterations N` - Start loop
+- `/sane-loop "<prompt>" --completion-promise "<text>" --max-iterations N` - Start loop
 - `/cancel-ralph` - Cancel active loop
 
 **When to use**:
@@ -1033,7 +1033,7 @@ SOP: verify passes, logs checked, self-rating provided.
 For structured verification, use explicit acceptance criteria in your prompt:
 
 ```bash
-/ralph-loop "TASK: [description]
+/sane-loop "TASK: [description]
 
 ACCEPTANCE CRITERIA:
 1. [ ] Build passes: ./Scripts/SaneMaster.rb verify

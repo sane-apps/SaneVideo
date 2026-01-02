@@ -45,16 +45,16 @@ enum ShortDuration: Int, CaseIterable, Identifiable, Codable, Sendable {
 }
 
 /// Target aspect ratio for short-form clips
-enum ShortAspectRatio: String, CaseIterable, Identifiable, Codable, Sendable {
+public enum ShortAspectRatio: String, CaseIterable, Identifiable, Codable, Sendable {
     case vertical9x16 = "9:16"
     case square1x1 = "1:1"
     case portrait4x5 = "4:5"
 
-    var id: String { rawValue }
+    public var id: String { rawValue }
 
-    var label: String { rawValue }
+    public var label: String { rawValue }
 
-    var description: String {
+    public var description: String {
         switch self {
         case .vertical9x16: return "TikTok, Reels, Shorts"
         case .square1x1: return "Instagram Feed"
@@ -62,7 +62,7 @@ enum ShortAspectRatio: String, CaseIterable, Identifiable, Codable, Sendable {
         }
     }
 
-    var icon: String {
+    public var icon: String {
         switch self {
         case .vertical9x16: return "rectangle.portrait.fill"
         case .square1x1: return "square.fill"
@@ -70,7 +70,7 @@ enum ShortAspectRatio: String, CaseIterable, Identifiable, Codable, Sendable {
         }
     }
 
-    var widthRatio: CGFloat {
+    public var widthRatio: CGFloat {
         switch self {
         case .vertical9x16: return 9
         case .square1x1: return 1
@@ -78,7 +78,7 @@ enum ShortAspectRatio: String, CaseIterable, Identifiable, Codable, Sendable {
         }
     }
 
-    var heightRatio: CGFloat {
+    public var heightRatio: CGFloat {
         switch self {
         case .vertical9x16: return 16
         case .square1x1: return 1
@@ -87,7 +87,7 @@ enum ShortAspectRatio: String, CaseIterable, Identifiable, Codable, Sendable {
     }
 
     /// Calculate output dimensions for a given height
-    func dimensions(forHeight height: Int) -> (width: Int, height: Int) {
+    public func dimensions(forHeight height: Int) -> (width: Int, height: Int) {
         let aspectRatio = widthRatio / heightRatio
         let width = Int(CGFloat(height) * aspectRatio)
         // Ensure even dimensions for video encoding

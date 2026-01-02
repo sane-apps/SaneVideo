@@ -55,13 +55,15 @@ enum TextLayerBuilder {
                     let compStart = CMTimeAdd(clipStart, scaledOffset)
                     let compRange = CMTimeRange(start: compStart, duration: scaledDuration)
 
-                    // Create Item
+                    // Create Item with style and word-level timing
                     let item = TextLayerItem(
                         id: caption.id,
                         text: caption.text,
                         frame: CGRect(x: captionX, y: captionY, width: defaultCaptionW, height: defaultCaptionH),
                         timeRange: compRange,
-                        isCaption: true
+                        isCaption: true,
+                        style: project.captionStyle,
+                        words: caption.words
                     )
                     textLayers.append(item)
                 }
@@ -98,7 +100,9 @@ enum TextLayerBuilder {
                         timeRange: compRange,
                         isCaption: false,
                         rotation: overlay.rotation,
-                        scale: overlay.scale
+                        scale: overlay.scale,
+                        style: nil,  // Overlays don't use caption styling
+                        words: nil   // Overlays don't have word-level timing
                     )
                     textLayers.append(item)
                 }

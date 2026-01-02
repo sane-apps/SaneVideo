@@ -174,24 +174,34 @@ struct SmartToolsSection: View {
         .help("Transcribe speech to text captions. Edit in the Transcript sidebar tab.")
 
         // 4. Enhance Speech
-        InspectorToggle(
-          title: "Enhance Speech",
-          subtitle: "Isolate voice & remove noise",
-          isOn: Binding(
-            get: { options.enhanceAudio },
-            set: { [clip] newValue in
-              options.enhanceAudio = newValue
-              let clipId = clip.id
-              Task { @MainActor in
-                appState.projectState.updateClipVoiceIsolation(clipId: clipId, enabled: newValue)
+        VStack(alignment: .leading, spacing: Theme.Dimensions.spacingXS) {
+          InspectorToggle(
+            title: "Enhance Speech",
+            subtitle: "EQ boost & noise reduction",
+            isOn: Binding(
+              get: { options.enhanceAudio },
+              set: { [clip] newValue in
+                options.enhanceAudio = newValue
+                let clipId = clip.id
+                Task { @MainActor in
+                  appState.projectState.updateClipVoiceIsolation(clipId: clipId, enabled: newValue)
+                }
               }
-            }
-          ),
-          icon: "mic.fill",
-          color: .blue,
-          identifier: "Toggle_EnhanceSpeech"
-        )
-        .help("AI voice isolation and noise reduction.")
+            ),
+            icon: "mic.fill",
+            color: .blue,
+            identifier: "Toggle_EnhanceSpeech"
+          )
+          .help("Vocal presence EQ and noise reduction. Voice isolation is applied during playback only.")
+
+          // Limitation note: Voice isolation is real-time only (AUSoundIsolation limitation)
+          if options.enhanceAudio {
+            Text("Voice isolation applies during playback only")
+              .font(.system(size: Theme.Typography.fontSizeXS))
+              .foregroundStyle(.secondary)
+              .padding(.leading, 28) // Align with toggle text
+          }
+        }
 
         // 5. Smooth Cuts
         InspectorToggle(

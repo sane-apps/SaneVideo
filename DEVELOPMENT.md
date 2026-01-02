@@ -16,12 +16,12 @@
 
 **New to this project? Start here:**
 
-1. **Bootstrap runs automatically** - The `.claude/settings.json` SessionStart hook runs `./Scripts/SaneMaster.rb bootstrap` when you open this project
-2. **Read Rule #0 first** (Section 1) - It's about HOW to use all other rules. Then read Tier 1 rules (#1-3)
-3. **Know the Self-Rating requirement** - After every change, rate yourself 1-10 on SOP adherence
-4. **Use SaneMaster.rb**: All tools are in `./Scripts/SaneMaster.rb` — never use raw `xcodebuild`
-5. **Tests are working**: Unit tests run with `verify`, UI tests with `verify --ui`
-6. **Stay inside the project folder**: NEVER save files outside `/Users/sj/SaneVideo/` unless explicitly requested by user. No plan files in `~/.claude/`, no temp files elsewhere.
+1. **Read Rule #0 first** (Section 1) - It's about HOW to use all other rules
+2. **All files stay in project** - NEVER write files outside `/Users/sj/SaneVideo/` unless user explicitly requests it
+3. **Use SaneMaster.rb for everything** - `./Scripts/SaneMaster.rb verify` for build+test, never raw `xcodebuild`
+4. **Self-rate after every task** - Rate yourself 1-10 on SOP adherence (see Section 1)
+
+Bootstrap runs automatically via SessionStart hook. If it fails, run `./Scripts/SaneMaster.rb doctor`.
 
 **Your first action when user says "check our SOP" or "use our SOP":**
 ```bash

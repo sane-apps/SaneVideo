@@ -21,6 +21,12 @@ Real failures from past sessions. Don't repeat them.
 
 **The #1 differentiator**: Skimming this SOP = 5/10 sessions. Internalizing it = 8+/10.
 
+### Why Catchy Rule Names?
+
+Memorable rules + clear tool names = **human can audit in real-time**.
+
+Names like "SANEMASTER OR DISASTER" aren't just mnemonics—they're a **shared vocabulary**. When I say "Rule #5" you instantly know whether I'm complying or drifting. This lets you catch mistakes as they happen instead of after 20 minutes of debugging.
+
 ---
 
 ## 🚀 Quick Start for AI Agents
@@ -111,19 +117,19 @@ This runs automatically when you open the project. If bootstrap fails:
 
 ## 1. The Golden Rules
 
-### Rule #0: MAP RULES BEFORE CODING
+### #0: NAME THE RULE BEFORE YOU CODE
 
 ✅ DO: State which rules apply before writing code
 ❌ DON'T: Start coding without thinking about rules
 
-🟢 GOOD: "This uses AVFoundation API → verify_api first (Rule #2)"
-🟢 GOOD: "New file needed → run xcodegen after (Rule #9)"
+🟢 GOOD: "This uses AVFoundation API → Rule #2: VERIFY BEFORE YOU TRY"
+🟢 GOOD: "New file needed → Rule #9: NEW FILE? GEN THAT PILE"
 🔴 BAD: "Let me just start coding..."
 🔴 BAD: "I'll figure out the rules as I go"
 
 ---
 
-### Rule #1: FILES STAY IN PROJECT
+### #1: STAY IN YOUR LANE
 
 ✅ DO: Save all files inside `/Users/sj/SaneVideo/`
 ❌ DON'T: Create files outside project without asking
@@ -137,7 +143,7 @@ If file must go elsewhere → ask user where.
 
 ---
 
-### Rule #2: SDK IS SOURCE OF TRUTH
+### #2: VERIFY BEFORE YOU TRY
 
 ✅ DO: Run verify_api before using any Apple API
 ❌ DON'T: Assume an API exists from memory or web search
@@ -149,7 +155,7 @@ If file must go elsewhere → ask user where.
 
 ---
 
-### Rule #3: INVESTIGATE-AFTER-TWO
+### #3: TWO STRIKES? INVESTIGATE
 
 ✅ DO: After 2 failures → stop, run verify_api, check docs
 ❌ DON'T: Guess a third time without researching
@@ -161,7 +167,7 @@ If file must go elsewhere → ask user where.
 
 ---
 
-### Rule #4: VERIFY BEFORE SHIP
+### #4: GREEN MEANS GO
 
 ✅ DO: Fix all verify failures before claiming done
 ❌ DON'T: Ship with failing tests
@@ -173,7 +179,7 @@ If file must go elsewhere → ask user where.
 
 ---
 
-### Rule #5: USE SANEMASTER.RB
+### #5: SANEMASTER OR DISASTER
 
 ✅ DO: Use `./Scripts/SaneMaster.rb` for all build/test operations
 ❌ DON'T: Use raw xcodebuild or xcode commands
@@ -185,17 +191,17 @@ If file must go elsewhere → ask user where.
 
 ---
 
-### Rule #6: BUILD → KILL → LAUNCH → LOGS
+### #6: BUILD, KILL, LAUNCH, LOG
 
 ✅ DO: Run full sequence after every code change
 ❌ DON'T: Skip steps or assume it works
 
 🟢 GOOD:
 ```bash
-./Scripts/SaneMaster.rb verify
-killall -9 SaneVideo
-./Scripts/SaneMaster.rb launch
-./Scripts/SaneMaster.rb logs --follow
+./Scripts/SaneMaster.rb verify    # BUILD
+killall -9 SaneVideo              # KILL
+./Scripts/SaneMaster.rb launch    # LAUNCH
+./Scripts/SaneMaster.rb logs --follow  # LOG
 ```
 🟢 GOOD: `./Scripts/SaneMaster.rb test_mode` (runs all steps)
 🔴 BAD: `./Scripts/SaneMaster.rb verify` then "done!"
@@ -203,7 +209,7 @@ killall -9 SaneVideo
 
 ---
 
-### Rule #7: REGRESSION TESTS REQUIRED
+### #7: NO TEST? NO REST
 
 ✅ DO: Every bug fix gets a test that verifies the fix
 ❌ DON'T: Use placeholder or tautology assertions
@@ -215,7 +221,7 @@ killall -9 SaneVideo
 
 ---
 
-### Rule #8: BUG TRACKING
+### #8: BUG FOUND? WRITE IT DOWN
 
 ✅ DO: Document bugs in TodoWrite immediately, BUG_TRACKING.md after
 ❌ DON'T: Try to remember bugs or skip documentation
@@ -227,7 +233,7 @@ killall -9 SaneVideo
 
 ---
 
-### Rule #9: FILE CREATION = XCODEGEN
+### #9: NEW FILE? GEN THAT PILE
 
 ✅ DO: Run `xcodegen generate` after creating any new file
 ❌ DON'T: Create files without updating project
@@ -239,7 +245,7 @@ killall -9 SaneVideo
 
 ---
 
-### Rule #10: FILE SIZE LIMITS (500 soft / 800 hard)
+### #10: FIVE HUNDRED'S FINE, EIGHT'S THE LINE
 
 ✅ DO: Keep files under 500 lines, split by responsibility
 ❌ DON'T: Exceed 800 lines or split arbitrarily
@@ -248,6 +254,102 @@ killall -9 SaneVideo
 🟢 GOOD: 650-line file with clear single responsibility = OK
 🔴 BAD: 900-line file "because it's all related"
 🔴 BAD: Split at line 400 mid-function to hit a number
+
+---
+
+### #11: TOOL BROKE? FIX THE YOKE
+
+✅ DO: If SaneMaster fails, fix the tool itself
+❌ DON'T: Work around broken tools
+
+🟢 GOOD: "Nuclear clean doesn't clear cache → fix verify.rb"
+🟢 GOOD: "Logs path wrong → fix test_mode.rb"
+🔴 BAD: "Nuclear clean doesn't work → run raw xcodebuild"
+🔴 BAD: "Logs broken → just skip checking logs"
+
+Working around broken tools creates invisible debt. Fix once, benefit forever.
+
+---
+
+### #12: TALK WHILE I WALK
+
+✅ DO: Use subagents for heavy lifting, stay responsive to user
+❌ DON'T: Block on long operations
+
+🟢 GOOD: "User asked question → answer while subagent keeps working"
+🟢 GOOD: "Long task → spawn subagent, stay responsive"
+🔴 BAD: "Hold on, let me finish this first..."
+🔴 BAD: "Running verify... (blocks for 2 minutes)"
+
+User talks, you listen, work continues uninterrupted.
+
+---
+
+### PLAN FORMAT (MANDATORY)
+
+Every plan must cite which rule justifies each step. No exceptions.
+
+**Format**: `[Rule #X: NAME] - specific action with file:line or command`
+
+#### ❌ DISAPPROVED PLAN (Real Example - Magic Fix Bug)
+
+```
+## Plan: Fix Magic Fix Playback
+
+### Problem
+Play button doesn't reset after Magic Fix completes.
+
+### Steps
+1. Find where Magic Fix updates state
+2. Add loadProject call after completion
+3. Rebuild and test
+
+Approve?
+```
+
+**Why rejected:**
+- No `[Rule #X]` citations - can't verify SOP compliance
+- No test specified (violates Rule #5: Regression Tests)
+- No BUG_TRACKING.md update (violates Rule #8)
+- "Find where" is vague - should have file:line
+
+#### ✅ APPROVED PLAN (Same Task, Correct Format)
+
+```
+## Plan: Fix Magic Fix Playback Reset
+
+### Bug Details
+| Symptom | File:Line | Root Cause |
+|---------|-----------|------------|
+| Play button stuck after Magic Fix | ProjectState+SmartFeatures.swift:250 | StateChangePipeline doesn't see removedRanges change |
+
+### Steps
+
+[Rule #5: REGRESSION TEST] - Create test:
+  - SaneVideoTests/Regression/MagicFixRegressionTests.swift
+  - `testPlaybackResetsAfterMagicFix()`
+
+[Rule #8: DOCUMENT BUG] - Update BUG_TRACKING.md:
+  - BUG-XXX: Magic Fix doesn't trigger timeline reload
+
+[Rule #6: FULL CYCLE] - Fix and verify:
+  - Edit ProjectState+SmartFeatures.swift:254
+  - Add `loadProject(forceReload: true)` + `seek(to: .zero)`
+  - `./Scripts/SaneMaster.rb verify`
+  - `killall -9 SaneVideo && ./Scripts/SaneMaster.rb launch`
+  - `./Scripts/SaneMaster.rb logs --follow`
+
+[Rule #4: VERIFY BEFORE SHIP] - All tests pass, logs clean
+
+Approve?
+```
+
+**Why approved:**
+- Every step cites its justifying rule
+- Regression test specified with exact file path
+- BUG_TRACKING.md update included
+- Specific file:line references
+- Clear verification sequence
 
 ---
 
@@ -487,6 +589,205 @@ Monitor these resources while user tests:
 - **Debug log**: `~/Movies/SaneVideo/SaneVideo_Debug.log`
 - **Screenshots**: `Screenshots/` in project root
 - **Crash reports**: `~/Library/Logs/DiagnosticReports/SaneVideo-*.ips`
+
+---
+
+## 5A. Research Protocol
+
+This is the standard protocol for investigating problems. Used by Rule #3, Circuit Breaker, and any time you're stuck.
+
+### Tools to Use (ALL of them)
+
+| Tool | Purpose | When to Use |
+|------|---------|-------------|
+| **Task agents** | Explore codebase, analyze patterns | "Where is X used?", "How does Y work?" |
+| **apple-docs MCP** | Verify Apple APIs exist and usage | Any Apple framework API |
+| **context7 MCP** | Library documentation | Third-party packages (WhisperKit, KeyboardShortcuts) |
+| **WebSearch/WebFetch** | Solutions, patterns, best practices | Error messages, architectural questions |
+| **Grep/Glob/Read** | Local investigation | Find similar patterns, check implementations |
+| **memory MCP** | Past bug patterns, architecture decisions | "Have we seen this before?" |
+| **verify_api** | SDK symbol verification | Before using any unfamiliar API |
+
+### Research Output → Plan
+
+After research, present findings in this format:
+
+```
+## Research Findings
+
+### What I Found
+- [Tool used]: [What it revealed]
+- [Tool used]: [What it revealed]
+
+### Root Cause
+[Clear explanation of why the problem occurs]
+
+### Proposed Fix
+
+[Rule #X: NAME] - specific action
+[Rule #Y: NAME] - specific action
+...
+
+### Verification
+- [ ] ./Scripts/SaneMaster.rb verify passes
+- [ ] Manual test: [specific check]
+```
+
+### When to Use This Protocol
+
+| Trigger | Action |
+|---------|--------|
+| **Rule #3**: 2 failures on same problem | STOP → Research Protocol → Plan |
+| **Circuit Breaker**: Blocked by 3x same error or 5 total | STOP → Research Protocol → Plan → User approves reset |
+| **Unfamiliar API** | Research Protocol (lighter: just verify_api + docs) |
+| **Architectural question** | Research Protocol → discuss with user |
+
+---
+
+## 5B. Circuit Breaker Protocol
+
+The circuit breaker is an automated safety mechanism that **blocks Edit/Bash/Write tools** after repeated failures. This prevents runaway loops.
+
+### When It Triggers
+
+| Condition | Threshold | Meaning |
+|-----------|-----------|---------|
+| **Same error 3x** | 3 identical | Stuck in loop, repeating same mistake |
+| **Total failures** | 5 any errors | Flailing, time to step back |
+
+Success resets the counter. Normal iterative development (fail → fix → fail → fix → succeed) works fine.
+
+### Commands
+
+```bash
+./Scripts/SaneMaster.rb breaker_status  # Check if tripped
+./Scripts/SaneMaster.rb breaker_errors  # See what failed
+./Scripts/SaneMaster.rb reset_breaker   # Unblock (after plan approved)
+```
+
+### Recovery Flow
+
+When blocked, follow the **Research Protocol** (section above). Start with `breaker_errors` to see what failed.
+
+```
+🔴 CIRCUIT BREAKER TRIPS
+         │
+         ▼
+┌─────────────────────────────────────────────┐
+│  1. READ ERRORS                             │
+│     ./Scripts/SaneMaster.rb breaker_errors  │
+├─────────────────────────────────────────────┤
+│  2. RESEARCH (use ALL tools above)          │
+│     - What API am I misusing?               │
+│     - Has this bug pattern happened before? │
+│     - What does the documentation say?      │
+├─────────────────────────────────────────────┤
+│  3. PRESENT SOP-COMPLIANT PLAN              │
+│     - State which rules apply               │
+│     - Show what research revealed           │
+│     - Propose specific fix steps            │
+├─────────────────────────────────────────────┤
+│  4. USER APPROVES PLAN                      │
+│     User runs: ./Scripts/SaneMaster.rb      │
+│                reset_breaker                │
+└─────────────────────────────────────────────┘
+         │
+         ▼
+    🟢 EXECUTE APPROVED PLAN
+```
+
+**Key insight**: Being blocked is not failure—it's the system working. The research phase often reveals the root cause that guessing would never find.
+
+---
+
+## 5C. Memory Health & Maintenance
+
+The Memory MCP can bloat and fill context window. Monitor and maintain regularly.
+
+### Commands
+
+```bash
+./Scripts/SaneMaster.rb mh              # Check entity/token counts
+./Scripts/SaneMaster.rb mcompact --dry-run  # Preview compaction
+./Scripts/SaneMaster.rb mcleanup        # Generate MCP cleanup commands (pipe memory JSON)
+```
+
+### Thresholds
+
+| Metric | Warn | Critical |
+|--------|------|----------|
+| Entities | 60 | 80 |
+| Tokens | 8000 | 12000 |
+| Observations per entity | 15 | 25 |
+
+### Auto-Maintenance
+
+At session end, if thresholds are exceeded:
+1. Old entities (>60 days) are archived to `.claude/memory_archive.jsonl`
+2. Verbose entities get trimmed (keep first 5 + last 3 observations)
+3. Cleanup commands are printed for manual execution
+
+### When Memory Is Large
+
+Run `mcp__memory__read_graph` and pipe to cleanup analysis:
+```
+"Read the memory graph and run ./Scripts/SaneMaster.rb mcleanup"
+```
+
+This generates specific MCP commands to delete stale entities and trim verbose ones.
+
+---
+
+## 5D. Ralph Wiggum: SOP Enforcement Loop
+
+**Purpose**: Forces Claude to complete ALL SOP requirements before claiming a task is done.
+
+**How it works**:
+1. Run `/ralph-loop` with a prompt containing SOP requirements
+2. Claude works on the task
+3. When Claude tries to exit, a Stop hook intercepts and feeds the prompt back
+4. Claude sees previous work and iterates until completion criteria are met
+5. Loop exits when `<promise>COMPLETE</promise>` appears or max iterations hit
+
+**MANDATORY Rules** (learned from 700+ iteration failure on 2026-01-02):
+
+| Rule | Requirement | Why |
+|------|-------------|-----|
+| **Always set `--max-iterations`** | Use 10-20, NEVER 0 or omit | Prevents infinite loops |
+| **Always set `--completion-promise`** | Clear, verifiable text | Loop needs exit condition |
+| **Promise must be TRUE** | Only output when genuinely complete | Don't lie to escape loop |
+
+✅ DO:
+```bash
+/ralph-loop "Fix bug X" --completion-promise "BUG-FIXED" --max-iterations 15
+/ralph-loop "Add feature Y" --completion-promise "FEATURE-COMPLETE" --max-iterations 20
+```
+
+❌ DON'T:
+```bash
+/ralph-loop "Fix bug X"  # NO! Missing both required flags
+/ralph-loop "Fix bug X" --max-iterations 0  # NO! Unlimited = infinite loop
+```
+
+**Usage for bug fixes**:
+
+```bash
+/ralph-loop "Fix: [describe bug]
+
+SOP Requirements (verify before completing):
+1. ./Scripts/SaneMaster.rb verify passes
+2. killall -9 SaneVideo && ./Scripts/SaneMaster.rb launch
+3. ./Scripts/SaneMaster.rb logs --follow (check for errors)
+4. Regression test added in SaneVideoTests/Regression/
+5. BUG_TRACKING.md updated
+6. Self-rating 1-10 provided
+
+Output <promise>SOP-COMPLETE</promise> ONLY when ALL verified." --completion-promise "SOP-COMPLETE" --max-iterations 10
+```
+
+**Commands**:
+- `/ralph-loop "<prompt>" --completion-promise "<text>" --max-iterations N` - Start loop
+- `/cancel-ralph` - Cancel active loop
 
 ---
 

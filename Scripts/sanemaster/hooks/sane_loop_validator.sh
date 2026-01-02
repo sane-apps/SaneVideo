@@ -1,6 +1,6 @@
 #!/bin/bash
-# Ralph Loop Validator - Enforces exit conditions
-# Called by wrapper before ralph-loop starts
+# SaneLoop Validator - Enforces exit conditions
+# Called by wrapper before sane-loop starts
 
 set -euo pipefail
 
@@ -32,14 +32,14 @@ done
 
 # Enforce: Must have at least one real exit condition
 if [[ "$HAS_MAX_ITER" == "false" ]] && [[ "$HAS_PROMISE" == "false" ]]; then
-  echo "❌ BLOCKED: Ralph loop requires an exit condition!" >&2
+  echo "❌ BLOCKED: SaneLoop requires an exit condition!" >&2
   echo "" >&2
   echo "   You must provide at least ONE of:" >&2
   echo "     --max-iterations N    (where N > 0)" >&2
   echo "     --completion-promise 'TEXT'" >&2
   echo "" >&2
   echo "   Example:" >&2
-  echo "     /ralph-loop \"Fix bug\" --max-iterations 15 --completion-promise \"BUG-FIXED\"" >&2
+  echo "     /sane-loop \"Fix bug\" --max-iterations 15 --completion-promise \"BUG-FIXED\"" >&2
   echo "" >&2
   echo "   This prevents infinite loops (learned from 700+ iteration failure)." >&2
   exit 1
@@ -61,5 +61,5 @@ if [[ "$MAX_ITER_VALUE" -gt 30 ]]; then
   echo "⚠️  WARNING: --max-iterations $MAX_ITER_VALUE is high. 10-20 is recommended." >&2
 fi
 
-echo "✅ Ralph loop validated: exit conditions present"
+echo "✅ SaneLoop validated: exit conditions present"
 exit 0

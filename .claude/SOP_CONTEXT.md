@@ -61,12 +61,12 @@ killall -9 SaneVideo                   # Kill old instances
 
 ---
 
-## Ralph Loop Usage
+## SaneLoop Usage
 
 For complex tasks requiring iteration, wrap in Ralph:
 
 ```bash
-/ralph-loop "TASK: [description]
+/sane-loop "TASK: [description]
 
 SOP Requirements:
 1. verify passes

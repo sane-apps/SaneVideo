@@ -1,14 +1,25 @@
 # SaneVideo Development Guide (SOP)
 
-**Version 2.0** | Last updated: 2025-12-31
+**Version 2.1** | Last updated: 2026-01-01
 
 > **SINGLE SOURCE OF TRUTH** for all Developers and AI Agents.
->
-> **SOP = Standard Operating Procedure = This File (DEVELOPMENT.md)**
->
-> When you see "SOP", "use our SOP", or "follow the SOP", this is the document.
->
-> **Read this entirely before touching code.**
+
+---
+
+## ⚠️ THESE WILL BURN YOU
+
+Real failures from past sessions. Don't repeat them.
+
+| Mistake | What Happened | Prevention |
+|---------|---------------|------------|
+| **Guessed API** | `await scheduleSegment` blocks forever (waits for playback, not scheduling) | `verify_api` first |
+| **Assumed Swift binding** | MTAudioProcessingTap C API ≠ Swift API. Hours wasted. | Check `apple-docs` MCP |
+| **Wrong parameter** | `onKeyPress` does NOT have a `modifiers:` parameter. 30 min wasted. | Check docs first |
+| **Kept guessing** | Hidden Button + keyboardShortcut = EXC_BAD_ACCESS. 4 attempts. | Stop at 2, investigate |
+| **Deleted "unused" file** | Periphery said unused, but ServiceContainer needed it | Grep before delete |
+| **Skipped xcodegen** | Created file, "file not found" for 20 minutes | `xcodegen generate` after new files |
+
+**The #1 differentiator**: Skimming this SOP = 5/10 sessions. Internalizing it = 8+/10.
 
 ---
 
@@ -98,157 +109,183 @@ This runs automatically when you open the project. If bootstrap fails:
 
 ---
 
-## 1. The Golden Rules (CRITICAL)
+## 1. The Golden Rules
 
-Rules are ordered by priority. **Rule #0 is meta** — it's about how to use all other rules.
+### Rule #0: MAP RULES BEFORE CODING
 
-### Rule #0: INTERNALIZE, DON'T SKIM (META)
+✅ DO: State which rules apply before writing code
+❌ DON'T: Start coding without thinking about rules
 
-**The #1 failure mode: skimming this SOP instead of internalizing it.**
-
-Before coding, explicitly map rules to your task:
-```
-"For this task: Rule #1 applies because [X], Rule #7 applies because [Y]"
-```
-
-While working, ask: "Which rule applies here?"
-- Using an Apple API? → Rule #1 (SDK verification)
-- Failed twice? → Rule #2 (stop guessing)
-- New file? → Rule #9 (xcodegen)
-
-**The key insight:** 8/10 vs 5/10 sessions is NOT knowing rules—it's **structuring work around which rules apply**.
+🟢 GOOD: "This uses AVFoundation API → verify_api first (Rule #2)"
+🟢 GOOD: "New file needed → run xcodegen after (Rule #9)"
+🔴 BAD: "Let me just start coding..."
+🔴 BAD: "I'll figure out the rules as I go"
 
 ---
 
-### Tier 1: Anti-Hallucination
+### Rule #1: FILES STAY IN PROJECT
 
-1. **SDK IS THE SOURCE OF TRUTH (CRITICAL)**:
-   - **NEVER trust web search for API existence or signatures**.
-   - **ALWAYS query the SDK directly** before assuming an API exists or is deprecated.
-   - The SDK `.swiftinterface` files are the **authoritative source**.
-   - **Verification flow**:
-     1. `./Scripts/SaneMaster.rb verify_api <APIName> [Framework]` — Verify API exists in SDK
-     2. `apple-docs` MCP server — Get usage examples, related APIs, WWDC context
-   - Example: `./Scripts/SaneMaster.rb verify_api faceCaptureQuality Vision`
+✅ DO: Save all files inside `/Users/sj/SaneVideo/`
+❌ DON'T: Create files outside project without asking
 
-2. **TWO-FIX RULE (CRITICAL)**: If you fail twice in a row, **STOP GUESSING**.
-   - Don't try a third approach — you're likely missing information
-   - Go back to Rule #1: verify the API exists in SDK
-   - Check documentation or ask user
-   - **Stopping to investigate IS the win**: The rule prevents tail-chasing (trying the same broken approach 5+ times). Pivoting after failure = compliance, not failure.
-   - **Context flush**: If 3+ failed attempts pollute the conversation, tell user: "Let's restart fresh — this context may be anchoring me to bad patterns."
+🟢 GOOD: `/Users/sj/SaneVideo/Scripts/new_helper.rb`
+🟢 GOOD: `/Users/sj/SaneVideo/Core/Models/NewModel.swift`
+🔴 BAD: `~/.claude/plans/my-plan.md`
+🔴 BAD: `/tmp/scratch.swift`
 
-3. **VERIFY BEFORE SHIP (NO OVERRIDE)**: If `verify` fails, DO NOT ship.
-   - Explain the failure to user clearly
-   - If user says "just ship it anyway" — require explicit acknowledgment: "Understood, shipping with failing tests at your request"
-   - Document the override in commit message
-
-4. **WEB SEARCH IS SECONDARY**: Only use web search for understanding *why* or *how* after verifying API exists with SDK. Never use web search to confirm if an API exists.
-
-### Tier 2: Core Workflow (Do these every session)
-
-5. **USE SaneMaster.rb (NOT raw xcodebuild)**: Use `./Scripts/SaneMaster.rb` for verification, setup, and diagnostics. Never use raw `xcodebuild` commands.
-
-6. **AUTOMATIC BUILD & LAUNCH WITH LOGGING (CRITICAL)**: After making code changes, you **MUST**:
-   - Build the app: `./Scripts/SaneMaster.rb verify`
-   - Kill any running instances: `killall -9 SaneVideo`
-   - Launch with live logging: `./Scripts/SaneMaster.rb launch` followed by `./Scripts/SaneMaster.rb logs --follow`
-   - **Rationale**: Old instances can hold stale state, and live logs are essential for debugging
-
-7. **VERIFY LOGS ALWAYS**: Run `./Scripts/SaneMaster.rb diagnose --dump` after every build/test to see runtime logs (e.g. `ProjectStore initialized at...`).
-
-### Tier 3: Code Quality (Maintain standards)
-
-8. **SAFETY FIRST**: Every bug fix **MUST** have a regression test. Create tests as you go using `./Scripts/SaneMaster.rb gen_test`.
-   - **Test Quality**: Tests must verify **actual behavior**, not just that code doesn't crash.
-   - **NEVER use placeholders**: `#expect(true)` or `#expect(true, "message")` verify nothing and are forbidden.
-   - **NEVER use tautologies**: `#expect(a == true || a == false)` always passes and provides zero value.
-   - **Verify specific outcomes**: Test return values, state changes, error types, not just "does not crash".
-
-9. **BUG TRACKING (CRITICAL)**: Document ALL bugs in `BUG_TRACKING.md` immediately when discovered.
-   - **During session**: Use TodoWrite to track active work (ephemeral)
-   - **After session**: Update BUG_TRACKING.md for permanent record
-   - Include: Status (🔴 OPEN → 🟡 IN PROGRESS → ✅ FIXED), Screenshot filename, Symptom, File(s), Root cause
-   - **Flow**: User reports bug → TodoWrite entry → Fix → Mark complete → Update BUG_TRACKING.md
-
-10. **FILE CREATION = XCODEGEN**: New file? First identify correct subdirectory:
-   - `Core/` - Models, Protocols, Utilities, Extensions, Engine
-   - `Services/` - Business logic (Audio/, Vision/, Export/, Project/, etc.)
-   - `Views/` - SwiftUI views and components
-   - `State/` - App state management (AppState, ProjectState, etc.)
-
-   Then run `xcodegen generate`. Never dump files in root.
-
-11. **FILE SIZE LIMITS**: Soft limit **500 lines** (warning), hard limit **800 lines** (error).
-    - **Split by responsibility, not by line count.** A well-constructed 650-line file is preferable to two files that break logical cohesion.
-    - **Good splits**: Protocol conformances, feature domains, lifecycle concerns.
-    - **Bad splits**: Arbitrary cuts just to hit a number.
-
-### Tier 4: Meta/System (System improvement)
-
-12. **FIX THE TOOL, NOT THE SYMPTOM**: If you encounter persistent errors or repetitive manual work, STOP. Fix or upgrade `SaneMaster.rb` instead of working around the issue.
-
-13. **MISSING TOOL = UPGRADE SANEMASTER**: Do not create separate scripts. Add functionality to `SaneMaster.rb`.
-
-14. **ALWAYS VERIFY CURRENT STATE**: Do NOT rely on training data for project specifics (window names, view hierarchies, API signatures). Use `grep`/`find` to discover the actual codebase state. The codebase changes; training data is stale.
+If file must go elsewhere → ask user where.
 
 ---
 
-### Self-Rating After Changes (MANDATORY)
+### Rule #2: SDK IS SOURCE OF TRUTH
 
-After completing ANY code change, fix, or task, you **MUST** rate yourself 1-10 on SOP adherence:
+✅ DO: Run verify_api before using any Apple API
+❌ DON'T: Assume an API exists from memory or web search
 
+🟢 GOOD: `./Scripts/SaneMaster.rb verify_api AVCaptureDevice AVFoundation`
+🟢 GOOD: `./Scripts/SaneMaster.rb verify_api kAXExtrasMenuBarAttribute Accessibility`
+🔴 BAD: "I remember AVCaptureDevice has a .zoom property"
+🔴 BAD: "Stack Overflow says use .preferredCamera"
+
+---
+
+### Rule #3: INVESTIGATE-AFTER-TWO
+
+✅ DO: After 2 failures → stop, run verify_api, check docs
+❌ DON'T: Guess a third time without researching
+
+🟢 GOOD: "Failed twice. Running verify_api to check if this API exists."
+🟢 GOOD: "Two attempts failed. Checking apple-docs MCP for correct usage."
+🔴 BAD: "Let me try a slightly different approach..." (attempt #3)
+🔴 BAD: "Maybe if I change this one thing..." (attempt #4)
+
+---
+
+### Rule #4: VERIFY BEFORE SHIP
+
+✅ DO: Fix all verify failures before claiming done
+❌ DON'T: Ship with failing tests
+
+🟢 GOOD: "verify failed → fixing the error → running verify again"
+🟢 GOOD: "Tests pass. Ready to ship."
+🔴 BAD: "verify failed but it's probably fine"
+🔴 BAD: "I'll fix that test later"
+
+---
+
+### Rule #5: USE SANEMASTER.RB
+
+✅ DO: Use `./Scripts/SaneMaster.rb` for all build/test operations
+❌ DON'T: Use raw xcodebuild or xcode commands
+
+🟢 GOOD: `./Scripts/SaneMaster.rb verify`
+🟢 GOOD: `./Scripts/SaneMaster.rb verify_api MyAPI`
+🔴 BAD: `xcodebuild -scheme SaneVideo build`
+🔴 BAD: `xcrun xcodebuild test`
+
+---
+
+### Rule #6: BUILD → KILL → LAUNCH → LOGS
+
+✅ DO: Run full sequence after every code change
+❌ DON'T: Skip steps or assume it works
+
+🟢 GOOD:
+```bash
+./Scripts/SaneMaster.rb verify
+killall -9 SaneVideo
+./Scripts/SaneMaster.rb launch
+./Scripts/SaneMaster.rb logs --follow
 ```
-**Self-rating: X/10**
-- ✅ What you did well (SOP compliance)
-- ❌ What you missed or could improve
+🟢 GOOD: `./Scripts/SaneMaster.rb test_mode` (runs all steps)
+🔴 BAD: `./Scripts/SaneMaster.rb verify` then "done!"
+🔴 BAD: Launch without killing old instance first
+
+---
+
+### Rule #7: REGRESSION TESTS REQUIRED
+
+✅ DO: Every bug fix gets a test that verifies the fix
+❌ DON'T: Use placeholder or tautology assertions
+
+🟢 GOOD: `#expect(error.code == .invalidInput)`
+🟢 GOOD: `#expect(result.count == 3)`
+🔴 BAD: `#expect(true)`
+🔴 BAD: `#expect(value == true || value == false)`
+
+---
+
+### Rule #8: BUG TRACKING
+
+✅ DO: Document bugs in TodoWrite immediately, BUG_TRACKING.md after
+❌ DON'T: Try to remember bugs or skip documentation
+
+🟢 GOOD: TodoWrite: "BUG: Camera - black screen on launch"
+🟢 GOOD: Update BUG_TRACKING.md with root cause after fix
+🔴 BAD: "I'll remember to fix that later"
+🔴 BAD: Fix bug without documenting what caused it
+
+---
+
+### Rule #9: FILE CREATION = XCODEGEN
+
+✅ DO: Run `xcodegen generate` after creating any new file
+❌ DON'T: Create files without updating project
+
+🟢 GOOD: Create `NewService.swift` → run `xcodegen generate`
+🟢 GOOD: Create `NewView.swift` in Views/ → run `xcodegen generate`
+🔴 BAD: Create file and wonder why Xcode can't find it
+🔴 BAD: Manually edit project.pbxproj
+
+---
+
+### Rule #10: FILE SIZE LIMITS (500 soft / 800 hard)
+
+✅ DO: Keep files under 500 lines, split by responsibility
+❌ DON'T: Exceed 800 lines or split arbitrarily
+
+🟢 GOOD: Split `CameraManager.swift` → `CameraManager.swift` + `CameraManager+Capture.swift`
+🟢 GOOD: 650-line file with clear single responsibility = OK
+🔴 BAD: 900-line file "because it's all related"
+🔴 BAD: Split at line 400 mid-function to hit a number
+
+---
+
+### SELF-RATING (MANDATORY)
+
+✅ DO: Rate 1-10 after every task with specific ✅/❌ items
+❌ DON'T: Skip rating or give vague justification
+
+🟢 GOOD:
 ```
+**Self-rating: 7/10**
+✅ Used SaneMaster, ran verify, added regression test
+❌ Forgot to check logs after launch
+```
+🟢 GOOD:
+```
+**Self-rating: 9/10**
+✅ Verified API before using, full test cycle, logs clean
+❌ Minor: could have used TodoWrite for tracking
+```
+🔴 BAD: "Self-rating: 10/10" (no explanation)
+🔴 BAD: "Self-rating: 8/10 - did good" (vague)
 
-**Rating Guide:**
-| Score | Meaning | Example |
-|-------|---------|---------|
-| 9-10 | Flawless SOP execution | Used SaneMaster, ran verify, killed processes, checked logs, added regression test |
-| 7-8 | Good, minor misses | Did most things right but forgot to check logs |
-| 5-6 | Acceptable, notable gaps | Built with xcodebuild directly (should use SaneMaster), skipped logs |
-| 3-4 | Poor, multiple violations | Guessed at APIs without SDK verification, no tests |
-| 1-2 | Failed to follow SOP | Ignored most rules, made random changes |
+| 9-10 | All rules followed | 5-6 | Notable gaps |
+| 7-8 | Minor miss | 1-4 | Multiple violations |
 
-**Key SOP items to self-check:**
-- [ ] Used SaneMaster.rb (not raw xcodebuild)?
-- [ ] Ran verify after code changes?
-- [ ] Killed old instances before launch?
-- [ ] Checked logs after changes?
-- [ ] Added regression test for bug fixes?
-- [ ] Used SDK verification before assuming API exists (Rule #1)?
-- [ ] Followed Two-Fix Rule (stopped guessing after 2 failures)?
-- [ ] Documented bugs appropriately?
+---
 
-### Comprehensive Reviews (Use Subagents)
+### COMPREHENSIVE REVIEWS
 
-When the user requests a **full app review**, **codebase audit**, or **comprehensive check**, use **parallel subagents** to maximize coverage:
+When user asks for "full review" or "audit", launch parallel subagents:
 
 ```bash
-# Launch these in parallel (all at once, not sequentially):
-Task(subagent_type=Explore): "Analyze file size violations and recommend splits"
-Task(subagent_type=Explore): "Analyze test coverage gaps"
-Task(subagent_type=Explore): "Check dead code and deprecations"
-Task(subagent_type=Explore): "Review architecture patterns"
-Task(subagent_type=Explore): "Check security and crash patterns"
+Task(Explore): "file size violations"
+Task(Explore): "test coverage gaps"
+Task(Explore): "dead code"
+Task(Explore): "crash patterns"
 ```
-
-**Why subagents:**
-- Each agent explores deeply in its domain (doesn't miss things)
-- Parallel execution = faster results
-- User doesn't have to catch things you missed
-
-**Expected outputs:**
-- File size agent: Specific split recommendations with line numbers
-- Coverage agent: Missing test areas ranked by risk/priority
-- Dead code agent: Safe-to-delete vs false positives
-- Architecture agent: Race conditions, anti-patterns, DI issues
-- Security agent: Crash patterns, memory leaks, force unwraps
-
-**Self-Rating impact:** If user has to catch issues you missed → lower rating.
 
 ---
 

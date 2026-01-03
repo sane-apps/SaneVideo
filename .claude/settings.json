@@ -71,6 +71,11 @@
             "type": "command",
             "command": "ruby \"$CLAUDE_PROJECT_DIR\"/Scripts/sanemaster/hooks/circuit_breaker.rb",
             "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "ruby \"$CLAUDE_PROJECT_DIR\"/Scripts/sanemaster/hooks/version_mismatch.rb",
+            "timeout": 5
           }
         ]
       },
@@ -131,6 +136,11 @@
           },
           {
             "type": "command",
+            "command": "ruby \"$CLAUDE_PROJECT_DIR\"/Scripts/sanemaster/hooks/verify_reminder.rb",
+            "timeout": 5
+          },
+          {
+            "type": "command",
             "command": "ruby \"$CLAUDE_PROJECT_DIR\"/Scripts/sanemaster/hooks/audit_logger.rb",
             "timeout": 5
           }
@@ -147,6 +157,26 @@
           {
             "type": "command",
             "command": "ruby \"$CLAUDE_PROJECT_DIR\"/Scripts/sanemaster/hooks/audit_logger.rb",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "Grep",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "ruby \"$CLAUDE_PROJECT_DIR\"/Scripts/sanemaster/hooks/deeper_look_trigger.rb",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "Read",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "ruby \"$CLAUDE_PROJECT_DIR\"/Scripts/sanemaster/hooks/deeper_look_trigger.rb",
             "timeout": 5
           }
         ]

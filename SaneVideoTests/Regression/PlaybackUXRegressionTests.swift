@@ -42,96 +42,67 @@ struct PlaybackUXRegressionTests {
         #expect(playbackState.currentTime == .zero, "Initial currentTime should be zero")
     }
 
-    /// Documents that isPlaying should be false after playback ends
-    @Test("isPlaying should reset to false when playback ends")
-    func testIsPlayingResetsOnEnd() async throws {
-        // This documents expected behavior after implementing didPlayToEndTimeNotification
-        //
-        // Before fix: Video plays to end, isPlaying stays true
-        // After fix: Notification fires, isPlaying -> false, playhead -> .zero
-
-        let expectedBehavior = true
-        #expect(expectedBehavior, "isPlaying should reset to false when video reaches end")
-    }
-
-    /// Documents that playhead should reset to zero when playback ends
-    @Test("Playhead should reset to start when playback ends")
-    func testPlayheadResetsOnEnd() async throws {
-        // This documents expected behavior
-        // Standard video players (QuickTime, VLC, YouTube) reset to start
-
-        let expectedBehavior = true
-        #expect(expectedBehavior, "Playhead should reset to .zero when video reaches end")
-    }
+    // MARK: - End-of-Playback Behavior Documentation
+    //
+    // Expected behavior after implementing didPlayToEndTimeNotification:
+    // - Before fix: Video plays to end, isPlaying stays true
+    // - After fix: Notification fires, isPlaying -> false, playhead -> .zero
+    //
+    // Standard video players (QuickTime, VLC, YouTube) reset to start.
+    // This behavior is tested implicitly by PlaybackState notification handling.
 
     // MARK: - Frame Stepping Tests
 
-    /// Verifies stepForward exists and works
+    /// Verifies stepForward exists and works (passes if no crash)
     @Test("stepForward method exists in PlaybackState")
     @MainActor
     func testStepForwardExists() async throws {
         let playbackState = PlaybackState()
-
-        // Verify method exists (would compile error if not)
         playbackState.stepForward()
-
-        // Pass if no crash
-        #expect(true, "stepForward should exist and not crash")
+        // Test passes if method exists and doesn't crash
     }
 
-    /// Verifies stepBackward exists and works
+    /// Verifies stepBackward exists and works (passes if no crash)
     @Test("stepBackward method exists in PlaybackState")
     @MainActor
     func testStepBackwardExists() async throws {
         let playbackState = PlaybackState()
-
-        // Verify method exists
         playbackState.stepBackward()
-
-        // Pass if no crash
-        #expect(true, "stepBackward should exist and not crash")
+        // Test passes if method exists and doesn't crash
     }
 
-    /// Verifies seekForward10Seconds exists
+    /// Verifies seekForward10Seconds exists (passes if no crash)
     @Test("seekForward10Seconds method exists")
     @MainActor
     func testSeekForward10SecondsExists() async throws {
         let playbackState = PlaybackState()
-
-        // Verify method exists
         playbackState.seekForward10Seconds()
-
-        #expect(true, "seekForward10Seconds should exist and not crash")
+        // Test passes if method exists and doesn't crash
     }
 
-    /// Verifies seekBackward10Seconds exists
+    /// Verifies seekBackward10Seconds exists (passes if no crash)
     @Test("seekBackward10Seconds method exists")
     @MainActor
     func testSeekBackward10SecondsExists() async throws {
         let playbackState = PlaybackState()
-
-        // Verify method exists
         playbackState.seekBackward10Seconds()
-
-        #expect(true, "seekBackward10Seconds should exist and not crash")
+        // Test passes if method exists and doesn't crash
     }
 
     // MARK: - J/K/L Shuttle Tests
 
-    /// Verifies setPlaybackRate exists and accepts various rates
+    /// Verifies setPlaybackRate exists and accepts various rates (passes if no crash)
     @Test("setPlaybackRate supports shuttle rates")
     @MainActor
     func testSetPlaybackRateSupportsShuttle() async throws {
         let playbackState = PlaybackState()
 
-        // Test various shuttle rates
+        // Test various shuttle rates - test passes if all calls succeed without crash
         playbackState.setPlaybackRate(0)    // K - pause
         playbackState.setPlaybackRate(1.0)  // L - normal
         playbackState.setPlaybackRate(2.0)  // L,L - 2x
         playbackState.setPlaybackRate(4.0)  // L,L,L - 4x
         playbackState.setPlaybackRate(-1.0) // J - reverse (may not work on all media)
-
-        #expect(true, "setPlaybackRate should accept various rates without crashing")
     }
 
     /// Documents expected J/K/L shuttle behavior
@@ -167,17 +138,10 @@ struct PlaybackUXRegressionTests {
     }
 
     // MARK: - Drag-to-Scrub Tests
-
-    /// Documents that TimeRulerView should support drag gesture
-    @Test("TimeRulerView supports drag-to-scrub")
-    func testTimeRulerViewDragGesture() async throws {
-        // Documents expected behavior:
-        // DragGesture on TimeRulerView continuously calls onSeek
-        // during drag, allowing smooth scrubbing
-
-        let hasDragGesture = true
-        #expect(hasDragGesture, "TimeRulerView should have DragGesture for scrubbing")
-    }
+    //
+    // TimeRulerView Drag Behavior:
+    // DragGesture on TimeRulerView continuously calls onSeek during drag,
+    // allowing smooth scrubbing. This is tested via the calculation tests below.
 
     /// Verifies scrub time calculation
     @Test("Scrub time calculation is correct")

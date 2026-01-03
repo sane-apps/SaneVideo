@@ -78,19 +78,11 @@ struct VoiceIsolationOfflineRegressionTests {
         #expect(options.enhanceAudio == false, "Minimal preset should not enable audio enhancement")
     }
 
-    // MARK: - Documentation Tests
-
-    /// Verifies the limitation is documented in code comments
-    /// This is a static test - we verify the fix exists by checking code patterns
-    @Test("Voice isolation offline limitation is documented")
-    func testVoiceIsolationLimitationDocumented() {
-        // The fix is documented in SaneAudioEnhancementService.swift:135-142
-        // This test serves as a reminder that:
-        // 1. AUSoundIsolation does NOT work in offline/manual rendering mode
-        // 2. Voice isolation is skipped in SaneAudioEnhancementService.processAudioInBackground()
-        // 3. UI shows "Voice isolation applies during playback only" when enhanced
-
-        // This is a documentation/reminder test - always passes
-        #expect(true, "Voice isolation offline limitation is documented in code")
-    }
+    // MARK: - Documentation: Voice Isolation Offline Limitation
+    //
+    // The fix is documented in SaneAudioEnhancementService.swift:135-142
+    // Key points:
+    // 1. AUSoundIsolation does NOT work in offline/manual rendering mode
+    // 2. Voice isolation is skipped in SaneAudioEnhancementService.processAudioInBackground()
+    // 3. UI shows "Voice isolation applies during playback only" when enhanced
 }

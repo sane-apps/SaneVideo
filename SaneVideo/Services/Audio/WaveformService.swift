@@ -137,14 +137,14 @@ actor WaveformService: WaveformServiceProtocol {
         // This prevents memory explosion and processing delays for 2+ hour clips
         let targetSampleCount = 2000
         // Prefer reading sample rate from the track's format description (avoid hardcoded 44.1k assumptions).
-        let sampleRate: Double = {
-            if let formatDescriptions = try? await track.load(.formatDescriptions),
-               let formatDesc = formatDescriptions.first,
-               let asbd = CMAudioFormatDescriptionGetStreamBasicDescription(formatDesc) {
-                return asbd.pointee.mSampleRate
-            }
-            return 44_100
-        }()
+        let sampleRate: Double
+        if let formatDescriptions = try? await track.load(.formatDescriptions),
+           let formatDesc = formatDescriptions.first,
+           let asbd = CMAudioFormatDescriptionGetStreamBasicDescription(formatDesc) {
+            sampleRate = asbd.pointee.mSampleRate
+        } else {
+            sampleRate = 44_100
+        }
         let totalAudioSamples = durationSeconds * sampleRate
 
         // Calculate how many audio samples to skip per output sample

@@ -102,20 +102,34 @@ enum VideoTrackBuilder {
         var segmentCompTrack = useTrackA ? trackA : trackB
 
         // Define overlap for smooth cuts (internal to clip)
-        let smoothCutOverlap = CMTime(seconds: 0.15, preferredTimescale: 600)
+        // NOTE: Overlap must be expressed in PLAYED time, and mapped to SOURCE time based on clip speed.
+        // This prevents mismatched overlap ranges (and potential A/V sync drift) when speed != 1.0.
+        let overlap = TimeUtils.smoothCutOverlap(clipSpeed: clip.speed, overlapPlayedSeconds: 0.15)
 
         for (segIndex, segment) in validSegments.enumerated() {
           var finalSegment = segment
           var finalInsertStart = currentInsertStart
+          var actualOverlapPlayed = CMTime.zero
 
           // Logic for internal transitions if enabled
           if clip.useSmoothCutForRemovals && validSegments.count > 1 {
             // Extend segments to overlap for transition
             if segIndex > 0 {
-              // Start earlier to overlap with previous
-              finalSegment.start = CMTimeSubtract(finalSegment.start, smoothCutOverlap)
-              finalSegment.duration = CMTimeAdd(finalSegment.duration, smoothCutOverlap)
-              finalInsertStart = CMTimeSubtract(finalInsertStart, smoothCutOverlap)
+              // Start earlier to overlap with previous.
+              // Clamp overlap so we never extend before the trimmed start.
+              let maxBackwards = CMTimeSubtract(segment.start, clip.trimStart)
+              let actualOverlapSource = CMTimeMinimum(overlap.source, maxBackwards)
+
+              if actualOverlapSource > .zero {
+                // Convert the actual clamped SOURCE overlap back into PLAYED overlap.
+                // played = source / speed
+                actualOverlapPlayed = CMTimeMultiplyByFloat64(
+                  actualOverlapSource, multiplier: 1.0 / max(clip.speed, 0.000_001))
+
+                finalSegment.start = CMTimeSubtract(finalSegment.start, actualOverlapSource)
+                finalSegment.duration = CMTimeAdd(finalSegment.duration, actualOverlapSource)
+                finalInsertStart = CMTimeSubtract(finalInsertStart, actualOverlapPlayed)
+              }
             }
           }
 
@@ -130,12 +144,12 @@ enum VideoTrackBuilder {
           }
 
           // Add Internal Transition Metadata
-          if clip.useSmoothCutForRemovals && segIndex > 0 {
+          if clip.useSmoothCutForRemovals && segIndex > 0 && actualOverlapPlayed > .zero {
             let fromTrackID = (segmentCompTrack === trackA) ? trackB.trackID : trackA.trackID
             let toTrackID = segmentCompTrack.trackID
 
             // Transition happens during the overlap
-            let transitionRange = CMTimeRange(start: finalInsertStart, duration: smoothCutOverlap)
+            let transitionRange = CMTimeRange(start: finalInsertStart, duration: actualOverlapPlayed)
             activeTransitions.append(
               TransitionMetadata(
                 timeRange: transitionRange,

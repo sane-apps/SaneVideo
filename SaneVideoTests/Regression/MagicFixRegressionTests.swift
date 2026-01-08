@@ -307,4 +307,21 @@ final class MagicFixRegressionTests: XCTestCase {
         XCTAssertEqual(clipWithEnhanced.removedRanges.count, 1)
         XCTAssertEqual(clipWithEnhanced.removedRanges.first?.start ?? 0, 2.0, accuracy: 0.01)
     }
+
+    /// Regression Test for: A/V sync drift when Smooth Jump Cuts are enabled (2026-01-08)
+    /// Root Cause: Smooth-cut overlap must be applied in PLAYED time and mapped to SOURCE time by speed.
+    /// Fix implemented: Centralized overlap math in TimeUtils.smoothCutOverlap and used by both audio/video builders.
+    func testSmoothCutOverlapScalesWithSpeed() {
+        let normal = TimeUtils.smoothCutOverlap(clipSpeed: 1.0, overlapPlayedSeconds: 0.15)
+        XCTAssertEqual(normal.played.seconds, 0.15, accuracy: 0.000_1)
+        XCTAssertEqual(normal.source.seconds, 0.15, accuracy: 0.000_1)
+
+        let faster = TimeUtils.smoothCutOverlap(clipSpeed: 2.0, overlapPlayedSeconds: 0.15)
+        XCTAssertEqual(faster.played.seconds, 0.15, accuracy: 0.000_1)
+        XCTAssertEqual(faster.source.seconds, 0.30, accuracy: 0.000_1)
+
+        let slower = TimeUtils.smoothCutOverlap(clipSpeed: 0.5, overlapPlayedSeconds: 0.15)
+        XCTAssertEqual(slower.played.seconds, 0.15, accuracy: 0.000_1)
+        XCTAssertEqual(slower.source.seconds, 0.075, accuracy: 0.000_1)
+    }
 }

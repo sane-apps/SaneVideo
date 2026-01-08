@@ -38,4 +38,32 @@ struct TimeUtils {
             return "\(minutes)m \(seconds)s"
         }
     }
+
+    // MARK: - Timeline / Composition Helpers
+
+    /// Returns a "played-time" overlap and the corresponding "source-time" overlap for smooth jump cuts.
+    ///
+    /// Why: We want a constant perceptual overlap window (played time), but we must extend source segments
+    /// by `played * speed` so that after time-scaling the overlap still equals `played`.
+    ///
+    /// - Parameters:
+    ///   - clipSpeed: The clip playback speed. `1.0` = normal. Must be `> 0` to be meaningful.
+    ///   - overlapPlayedSeconds: Desired overlap in *played* seconds. Defaults to 0.15s.
+    ///
+    /// - Returns: `(played, source)` where:
+    ///   - `played` is the overlap duration in composition/playback time
+    ///   - `source` is the overlap duration in the original asset timeline
+    static func smoothCutOverlap(
+        clipSpeed: Double,
+        overlapPlayedSeconds: Double = 0.15
+    ) -> (played: CMTime, source: CMTime) {
+        let played = CMTime(seconds: overlapPlayedSeconds, preferredTimescale: 600)
+        guard clipSpeed > 0 else {
+            // Defensive fallback: if speed is invalid, keep math stable (no scaling)
+            return (played: played, source: played)
+        }
+        let sourceSeconds = overlapPlayedSeconds * clipSpeed
+        let source = CMTime(seconds: sourceSeconds, preferredTimescale: 600)
+        return (played: played, source: source)
+    }
 }

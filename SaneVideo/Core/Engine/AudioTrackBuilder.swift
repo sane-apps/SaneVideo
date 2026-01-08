@@ -57,6 +57,10 @@ enum AudioTrackBuilder {
                 // Compute Valid Segments (Copied from Video Logic for Sync)
                 let audioValidSegments = VideoTrackBuilder.computeValidSegments(clip: clip, sourceDuration: sourceDuration)
 
+                // Smooth cut overlap (internal to clip) must be expressed in PLAYED time, and mapped to SOURCE time.
+                // This keeps audio and video using the same overlap window, preventing perceived A/V desync at jump cuts.
+                let overlap = TimeUtils.smoothCutOverlap(clipSpeed: clip.speed, overlapPlayedSeconds: 0.15)
+
                 // SEMANTIC GATING: Pre-compute gating metadata ONCE per clip (not per segment)
                 // This prevents wasteful recomputation and ensures consistent timing
                 let gatingSegments: [SoundAnalysisService.GatingSegment]? = clip.isGatingEnabled
@@ -65,16 +69,37 @@ enum AudioTrackBuilder {
 
                 // Insert Audio Segments
                 var currentAudioInsertStart = insertStart
+                var segmentAudioTrack: AVMutableCompositionTrack = targetAudioTrack
+                var previousSegmentAudioTrack: AVMutableCompositionTrack?
 
-                for segment in audioValidSegments {
-                    try? targetAudioTrack.insertTimeRange(segment, of: assetAudioTrack, at: currentAudioInsertStart)
+                for (segIndex, segment) in audioValidSegments.enumerated() {
+                    var finalSegment = segment
+                    var segmentInsertStart = currentAudioInsertStart
+                    var actualOverlapPlayed = CMTime.zero
 
-                    let segmentDuration = segment.duration
+                    if clip.useSmoothCutForRemovals && audioValidSegments.count > 1 && segIndex > 0 {
+                        // Clamp overlap so we never extend before trimmed start.
+                        let maxBackwards = CMTimeSubtract(segment.start, clip.trimStart)
+                        let actualOverlapSource = CMTimeMinimum(overlap.source, maxBackwards)
+
+                        if actualOverlapSource > .zero {
+                            actualOverlapPlayed = CMTimeMultiplyByFloat64(
+                                actualOverlapSource, multiplier: 1.0 / max(clip.speed, 0.000_001))
+
+                            finalSegment.start = CMTimeSubtract(finalSegment.start, actualOverlapSource)
+                            finalSegment.duration = CMTimeAdd(finalSegment.duration, actualOverlapSource)
+                            segmentInsertStart = CMTimeSubtract(segmentInsertStart, actualOverlapPlayed)
+                        }
+                    }
+
+                    try? segmentAudioTrack.insertTimeRange(finalSegment, of: assetAudioTrack, at: segmentInsertStart)
+
+                    let segmentDuration = finalSegment.duration
                     let playDuration = CMTimeMultiplyByFloat64(segmentDuration, multiplier: 1.0 / clip.speed)
 
                     if clip.speed != 1.0 {
-                        let scaleRange = CMTimeRange(start: currentAudioInsertStart, duration: segmentDuration)
-                        targetAudioTrack.scaleTimeRange(scaleRange, toDuration: playDuration)
+                        let scaleRange = CMTimeRange(start: segmentInsertStart, duration: segmentDuration)
+                        segmentAudioTrack.scaleTimeRange(scaleRange, toDuration: playDuration)
                     }
 
                     // Volume Automation per segment
@@ -84,45 +109,87 @@ enum AudioTrackBuilder {
                     AppLogger.timeline.info("🔊 AudioTrackBuilder: clip \(clip.url.lastPathComponent) - isMuted=\(clip.isMuted), volume=\(clip.volume), finalVolume=\(finalVolume)")
 
                     // Find or create params
-                    var trackParams = audioMixParams.first(where: { $0.trackID == targetAudioTrack.trackID })
-                    if trackParams == nil {
-                        trackParams = AVMutableAudioMixInputParameters(track: targetAudioTrack)
-                        audioMixParams.append(trackParams!)
+                    func getOrCreateParams(for track: AVMutableCompositionTrack) -> AVMutableAudioMixInputParameters {
+                        if let existing = audioMixParams.first(where: { $0.trackID == track.trackID }) {
+                            return existing
+                        }
+                        let created = AVMutableAudioMixInputParameters(track: track)
+                        audioMixParams.append(created)
+                        return created
                     }
 
-                    // CRITICAL FIX: Add fade ramp to prevent audio clicks at clip boundaries
-                    // Use 50ms (0.05s) fade in/out at clip edges
-                    let fadeDuration = CMTime(seconds: 0.05, preferredTimescale: 600)
+                    let currentParams = getOrCreateParams(for: segmentAudioTrack)
+                    let outgoingParams: AVMutableAudioMixInputParameters? = {
+                        guard let prev = previousSegmentAudioTrack else { return nil }
+                        return getOrCreateParams(for: prev)
+                    }()
 
-                    // CRITICAL FIX: Validate time range before calling setVolumeRamp to prevent crashes
-                    // Ensure fade duration doesn't exceed segment duration
-                    let safeFadeDuration = CMTimeMinimum(fadeDuration, playDuration)
-                    guard CMTimeCompare(safeFadeDuration, .zero) > 0 else {
-                        // Skip fade if segment is too short
-                        trackParams?.setVolume(finalVolume, at: currentAudioInsertStart)
-                        currentAudioInsertStart = CMTimeAdd(currentAudioInsertStart, playDuration)
-                        continue
-                    }
+                    // Click prevention:
+                    // - Always fade-in at clip start
+                    // - If smooth cuts are enabled, crossfade at each internal cut using the overlap window
+                    // - Always fade-out at clip end
+                    let fadeDuration = CMTime(seconds: 0.05, preferredTimescale: 600) // 50ms
 
-                    let fadeInRange = CMTimeRange(start: currentAudioInsertStart, duration: safeFadeDuration)
-                    trackParams?.setVolumeRamp(fromStartVolume: 0.0, toEndVolume: finalVolume, timeRange: fadeInRange)
+                    let isFirstSegment = segIndex == 0
+                    let isLastSegment = segIndex == audioValidSegments.count - 1
+                    let segmentEnd = CMTimeAdd(segmentInsertStart, playDuration)
 
-                    // Set steady volume after fade-in
-                    let afterFadeIn = CMTimeAdd(currentAudioInsertStart, fadeDuration)
-                    trackParams?.setVolume(finalVolume, at: afterFadeIn)
+                    if clip.useSmoothCutForRemovals && segIndex > 0 && actualOverlapPlayed > .zero {
+                        // Crossfade the overlap region: outgoing ramps down while incoming ramps up.
+                        let safeOverlap = CMTimeMinimum(actualOverlapPlayed, playDuration)
+                        if safeOverlap > .zero {
+                            // Incoming ramp up
+                            let rampUpRange = CMTimeRange(start: segmentInsertStart, duration: safeOverlap)
+                            currentParams.setVolumeRamp(fromStartVolume: 0.0, toEndVolume: finalVolume, timeRange: rampUpRange)
+                            currentParams.setVolume(finalVolume, at: CMTimeAdd(segmentInsertStart, safeOverlap))
 
-                    // Add fade-out at segment end
-                    // FIX: Apply fade-out for any clip > 2x fadeDuration (was 3x, caused clicks on 0.05-0.15s clips)
-                    let segmentEnd = CMTimeAdd(currentAudioInsertStart, playDuration)
-                    if CMTimeCompare(playDuration, CMTimeMultiply(safeFadeDuration, multiplier: 2)) > 0 {
-                        // Calculate proportional fade-out duration for short clips
-                        let availableForFadeOut = CMTimeSubtract(playDuration, safeFadeDuration)
-                        let actualFadeOutDuration = CMTimeMinimum(safeFadeDuration, availableForFadeOut)
-                        let fadeOutStart = CMTimeSubtract(segmentEnd, actualFadeOutDuration)
-                        // Validate fade-out range doesn't overlap with fade-in
-                        if CMTimeCompare(fadeOutStart, CMTimeAdd(currentAudioInsertStart, safeFadeDuration)) > 0 {
-                            let fadeOutRange = CMTimeRange(start: fadeOutStart, duration: actualFadeOutDuration)
-                            trackParams?.setVolumeRamp(fromStartVolume: finalVolume, toEndVolume: 0.0, timeRange: fadeOutRange)
+                            // Outgoing ramp down (ends at the cursor boundary = currentAudioInsertStart)
+                            if let outgoingParams = outgoingParams {
+                                let rampDownStart = CMTimeSubtract(currentAudioInsertStart, safeOverlap)
+                                if rampDownStart >= .zero {
+                                    let rampDownRange = CMTimeRange(start: rampDownStart, duration: safeOverlap)
+                                    outgoingParams.setVolumeRamp(fromStartVolume: finalVolume, toEndVolume: 0.0, timeRange: rampDownRange)
+                                }
+                            }
+                        }
+
+                        // Always fade out at the very end of the clip to avoid an abrupt cutoff.
+                        if isLastSegment {
+                            let safeFadeDuration = CMTimeMinimum(fadeDuration, playDuration)
+                            if safeFadeDuration > .zero,
+                               CMTimeCompare(playDuration, CMTimeMultiply(safeFadeDuration, multiplier: 2)) > 0 {
+                                let availableForFadeOut = CMTimeSubtract(playDuration, safeFadeDuration)
+                                let actualFadeOutDuration = CMTimeMinimum(safeFadeDuration, availableForFadeOut)
+                                let fadeOutStart = CMTimeSubtract(segmentEnd, actualFadeOutDuration)
+                                if CMTimeCompare(fadeOutStart, CMTimeAdd(segmentInsertStart, safeFadeDuration)) > 0 {
+                                    let fadeOutRange = CMTimeRange(start: fadeOutStart, duration: actualFadeOutDuration)
+                                    currentParams.setVolumeRamp(fromStartVolume: finalVolume, toEndVolume: 0.0, timeRange: fadeOutRange)
+                                }
+                            }
+                        }
+                    } else {
+                        // Non-smooth path: use short fade in/out to prevent clicks at segment edges.
+                        let safeFadeDuration = CMTimeMinimum(fadeDuration, playDuration)
+                        if safeFadeDuration > .zero {
+                            if isFirstSegment {
+                                let fadeInRange = CMTimeRange(start: segmentInsertStart, duration: safeFadeDuration)
+                                currentParams.setVolumeRamp(fromStartVolume: 0.0, toEndVolume: finalVolume, timeRange: fadeInRange)
+                                currentParams.setVolume(finalVolume, at: CMTimeAdd(segmentInsertStart, safeFadeDuration))
+                            } else {
+                                currentParams.setVolume(finalVolume, at: segmentInsertStart)
+                            }
+
+                            if isLastSegment && CMTimeCompare(playDuration, CMTimeMultiply(safeFadeDuration, multiplier: 2)) > 0 {
+                                let availableForFadeOut = CMTimeSubtract(playDuration, safeFadeDuration)
+                                let actualFadeOutDuration = CMTimeMinimum(safeFadeDuration, availableForFadeOut)
+                                let fadeOutStart = CMTimeSubtract(segmentEnd, actualFadeOutDuration)
+                                if CMTimeCompare(fadeOutStart, CMTimeAdd(segmentInsertStart, safeFadeDuration)) > 0 {
+                                    let fadeOutRange = CMTimeRange(start: fadeOutStart, duration: actualFadeOutDuration)
+                                    currentParams.setVolumeRamp(fromStartVolume: finalVolume, toEndVolume: 0.0, timeRange: fadeOutRange)
+                                }
+                            }
+                        } else {
+                            currentParams.setVolume(finalVolume, at: segmentInsertStart)
                         }
                     }
 
@@ -137,9 +204,9 @@ enum AudioTrackBuilder {
                             let gatingStart = gatingSegment.timeRange.start
                             let gatingEnd = gatingSegment.timeRange.end
 
-                            // Audio segment range in file time (from computeValidSegments)
-                            let audioSegmentStart = segment.start
-                            let audioSegmentEnd = segment.end
+                            // Audio segment range in file time (from computeValidSegments, with optional overlap extension)
+                            let audioSegmentStart = finalSegment.start
+                            let audioSegmentEnd = finalSegment.end
 
                             // Skip if gating doesn't overlap with this audio segment
                             guard CMTimeCompare(gatingEnd, audioSegmentStart) > 0,
@@ -158,12 +225,12 @@ enum AudioTrackBuilder {
                             let scaledOffsetStart = CMTimeMultiplyByFloat64(offsetFromSegmentStart, multiplier: 1.0 / clip.speed)
                             let scaledOffsetEnd = CMTimeMultiplyByFloat64(offsetFromSegmentEnd, multiplier: 1.0 / clip.speed)
 
-                            let compositionStart = CMTimeAdd(currentAudioInsertStart, scaledOffsetStart)
-                            let compositionEnd = CMTimeAdd(currentAudioInsertStart, scaledOffsetEnd)
+                            let compositionStart = CMTimeAdd(segmentInsertStart, scaledOffsetStart)
+                            let compositionEnd = CMTimeAdd(segmentInsertStart, scaledOffsetEnd)
                             let gatingDuration = CMTimeSubtract(compositionEnd, compositionStart)
 
                             // Validate within playback segment
-                            let segmentEnd = CMTimeAdd(currentAudioInsertStart, playDuration)
+                            let segmentEnd = CMTimeAdd(segmentInsertStart, playDuration)
                             guard CMTimeCompare(compositionStart, segmentEnd) < 0,
                                   CMTimeCompare(gatingDuration, .zero) > 0 else {
                                 continue
@@ -175,7 +242,7 @@ enum AudioTrackBuilder {
 
                             let rampDownRange = CMTimeRange(start: compositionStart, duration: safeGateRampDuration)
                             if CMTimeCompare(CMTimeAdd(compositionStart, safeGateRampDuration), segmentEnd) <= 0 {
-                                trackParams?.setVolumeRamp(fromStartVolume: finalVolume, toEndVolume: 0.0, timeRange: rampDownRange)
+                                currentParams.setVolumeRamp(fromStartVolume: finalVolume, toEndVolume: 0.0, timeRange: rampDownRange)
                             }
 
                             // Ramp up at gate open
@@ -183,13 +250,23 @@ enum AudioTrackBuilder {
                                 let rampUpStart = CMTimeSubtract(compositionEnd, safeGateRampDuration)
                                 if CMTimeCompare(rampUpStart, CMTimeAdd(compositionStart, safeGateRampDuration)) > 0 {
                                     let rampUpRange = CMTimeRange(start: rampUpStart, duration: safeGateRampDuration)
-                                    trackParams?.setVolumeRamp(fromStartVolume: 0.0, toEndVolume: finalVolume, timeRange: rampUpRange)
+                                    currentParams.setVolumeRamp(fromStartVolume: 0.0, toEndVolume: finalVolume, timeRange: rampUpRange)
                                 }
                             }
                         }
                     }
 
-                    currentAudioInsertStart = CMTimeAdd(currentAudioInsertStart, playDuration)
+                    // Preserve timeline timing: advance by the ORIGINAL (non-extended) segment duration.
+                    let originalPlayDuration = CMTimeMultiplyByFloat64(segment.duration, multiplier: 1.0 / clip.speed)
+                    currentAudioInsertStart = CMTimeAdd(currentAudioInsertStart, originalPlayDuration)
+
+                    // Track switching for internal smooth cuts (matches video behavior).
+                    if clip.useSmoothCutForRemovals {
+                        previousSegmentAudioTrack = segmentAudioTrack
+                        segmentAudioTrack = (segmentAudioTrack === ata) ? atb : ata
+                    } else {
+                        previousSegmentAudioTrack = segmentAudioTrack
+                    }
                 }
             }
         }

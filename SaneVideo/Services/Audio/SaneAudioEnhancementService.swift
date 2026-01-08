@@ -225,10 +225,19 @@ final class SaneAudioEnhancementService {
 
         // 7. Render Loop
         // Output format: M4A AAC
+        //
+        // CRITICAL A/V SYNC:
+        // Preserve the *source sample rate* to keep the enhanced file duration aligned with the original asset.
+        // If we write 44.1kHz AAC from a 48kHz source without carefully mapping frames↔time,
+        // the enhanced audio can end up with a slightly different duration, which causes sync drift
+        // when the timeline is defined in the original video timebase.
+        let outputSampleRate = file.processingFormat.sampleRate
+        let outputChannels = Int(file.processingFormat.channelCount)
+
         let settings: [String: Any] = [
             AVFormatIDKey: kAudioFormatMPEG4AAC,
-            AVSampleRateKey: 44100.0,
-            AVNumberOfChannelsKey: 2,
+            AVSampleRateKey: outputSampleRate,
+            AVNumberOfChannelsKey: max(1, outputChannels),
             AVEncoderBitRateKey: 192000
         ]
 

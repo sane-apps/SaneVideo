@@ -6,7 +6,7 @@ require 'fileutils'
 module SaneMasterModules
   # Circuit Breaker State Management
   # Tracks consecutive failures and trips breaker after threshold
-  # Learned from 700+ iteration SaneLoop loop failure on 2026-01-02
+  # Learned from 700+ iteration Ralph loop failure on 2026-01-02
   #
   # Two conditions to trip:
   # 1. 5+ total consecutive failures, OR

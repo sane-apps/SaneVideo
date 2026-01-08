@@ -104,7 +104,7 @@ module SaneMasterModules
 
       puts section_header('HOOK EFFECTIVENESS', subtitle: 'last 7 days')
       puts '   Rule                  Fire Rate   Block %   Trend'
-      puts '   ' + ('-' * 50)
+      puts "   #{'-' * 50}"
 
       rules.each do |rule, stats|
         name = rule.ljust(20)[0, 20]

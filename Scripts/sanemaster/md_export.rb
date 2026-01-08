@@ -16,7 +16,12 @@ module SaneMasterModules
       end
 
       output_file = args.find { |a| a.start_with?('--output=') }&.split('=', 2)&.last
-      output_file ||= input_file.sub('.md', '.pdf')
+      unless output_file
+        # Default to project Output/ folder
+        project_output = File.join(Dir.pwd, 'Output')
+        FileUtils.mkdir_p(project_output)
+        output_file = File.join(project_output, File.basename(input_file).sub('.md', '.pdf'))
+      end
 
       puts "📄 Converting: #{File.basename(input_file)}"
       content = File.read(input_file)

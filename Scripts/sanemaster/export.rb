@@ -32,8 +32,10 @@ module SaneMasterModules
       puts '🎨 Generating PDF with Prawn...'
 
       timestamp = Time.now.strftime('%Y%m%d_%H%M')
-      output_dir = options[:output] || File.expand_path('~/Downloads')
-      pdf_path = File.join(output_dir, "SaneVideo_Code_#{timestamp}.pdf")
+      project_output = File.join(Dir.pwd, 'Output')
+      FileUtils.mkdir_p(project_output)
+      output_dir = options[:output] || project_output
+      pdf_path = File.join(output_dir, "__PROJECT_NAME___Code_#{timestamp}.pdf")
 
       generate_pdf(files, pdf_path, highlight: options[:highlight])
 
@@ -127,7 +129,7 @@ module SaneMasterModules
         pdf.move_down 180
 
         pdf.font('Helvetica', size: 42, style: :bold)
-        pdf.text 'SaneVideo', align: :center, color: '1a1a1a'
+        pdf.text '__PROJECT_NAME__', align: :center, color: '1a1a1a'
 
         pdf.move_down 8
         pdf.font('Helvetica', size: 14)
@@ -286,7 +288,7 @@ module SaneMasterModules
       end
     end
 
-    # rubocop:disable Naming/PredicateMethod -- returns success, not a predicate
+    # -- returns success, not a predicate
     def compress_pdf(pdf_path)
       gs = ['/opt/homebrew/bin/gs', '/usr/local/bin/gs'].find { |p| File.exist?(p) }
       return false unless gs

@@ -87,6 +87,19 @@ Files approaching limits (monitor for refactoring):
 - **Fix Applied**: Use `clip.duration` (original video duration) for segment timing in AudioTrackBuilder, not the enhanced audio's duration
 - **Files**: `Core/Engine/AudioTrackBuilder.swift:44-49`
 
+### Smooth Jump Cuts Cause Perceived A/V Drift (Magic Fix)
+- **Status**: FIXED (2026-01-08)
+- **Symptom**: After running Magic Fix (default includes **Smooth Cuts**), audio feels “late/early” around jump cuts, especially after multiple silence/filler removals.
+- **Root Cause**:
+  1. Video path applied an internal overlap window for smooth cuts, but audio path did not mirror that overlap/crossfade, so the visual transition timing diverged from the audio timing at cut boundaries.
+  2. Video overlap math treated the overlap as a fixed time in composition while also time-scaling segments, which makes overlap durations inconsistent when `clip.speed != 1.0`.
+- **Fix Applied**:
+  - Centralized overlap math in `TimeUtils.smoothCutOverlap(clipSpeed:)` (played-time overlap + speed-scaled source-time overlap).
+  - Updated `VideoTrackBuilder` to clamp overlap to trimStart and use the correct played/source mapping (speed-safe).
+  - Updated `AudioTrackBuilder` to apply the same overlap window and crossfade across internal smooth cuts, keeping A/V aligned.
+- **Files**: `Core/Utilities/TimeUtils.swift`, `Core/Engine/VideoTrackBuilder.swift`, `Core/Engine/AudioTrackBuilder.swift`
+- **Regression Test**: `SaneVideoTests/Regression/MagicFixRegressionTests.swift:testSmoothCutOverlapScalesWithSpeed`
+
 ### Captions Not Showing in Transcript Tab
 - **Status**: FIXED (2025-12-31)
 - **Symptom**: Magic Fix generates captions successfully, but Transcript sidebar tab shows empty state

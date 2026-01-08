@@ -324,4 +324,32 @@ final class MagicFixRegressionTests: XCTestCase {
         XCTAssertEqual(slower.played.seconds, 0.15, accuracy: 0.000_1)
         XCTAssertEqual(slower.source.seconds, 0.075, accuracy: 0.000_1)
     }
+
+    /// Regression Test: Enhanced audio must be duration-aligned or we fall back to original audio.
+    func testEnhancedAudioDurationAlignmentGuard() {
+        let clipDuration = CMTime(seconds: 10, preferredTimescale: 600)
+
+        XCTAssertTrue(
+            AudioTrackBuilder.shouldUseEnhancedAudio(
+                clipDuration: clipDuration,
+                enhancedDuration: CMTime(seconds: 10.0, preferredTimescale: 600)
+            )
+        )
+
+        XCTAssertTrue(
+            AudioTrackBuilder.shouldUseEnhancedAudio(
+                clipDuration: clipDuration,
+                enhancedDuration: CMTime(seconds: 10.04, preferredTimescale: 600)
+            ),
+            "Small container rounding differences should be allowed"
+        )
+
+        XCTAssertFalse(
+            AudioTrackBuilder.shouldUseEnhancedAudio(
+                clipDuration: clipDuration,
+                enhancedDuration: CMTime(seconds: 9.8, preferredTimescale: 600)
+            ),
+            "Large mismatches should fall back to original audio to avoid drift"
+        )
+    }
 }

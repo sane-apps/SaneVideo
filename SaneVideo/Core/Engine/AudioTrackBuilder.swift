@@ -11,6 +11,16 @@ import CoreMedia
 /// Helper for building audio tracks from timeline clips
 enum AudioTrackBuilder {
 
+    /// Enhanced audio files must be duration-aligned with the clip's original timeline.
+    /// If they drift (e.g., resample-induced duration mismatch), we fall back to original audio to prevent A/V desync.
+    ///
+    /// Internal for tests.
+    static func shouldUseEnhancedAudio(clipDuration: CMTime, enhancedDuration: CMTime) -> Bool {
+        guard clipDuration > .zero, enhancedDuration > .zero else { return false }
+        let toleranceSeconds = 0.05
+        return abs(enhancedDuration.seconds - clipDuration.seconds) <= toleranceSeconds
+    }
+
     /// Build audio tracks with A/B roll architecture for visual timeline tracks
     static func buildVisualAudio(
         from visualTimelineTracks: [Track],
@@ -34,9 +44,23 @@ enum AudioTrackBuilder {
                 let targetAudioTrack = useTrackA ? ata : atb
                 useTrackA.toggle()
 
-                // AUDIO POLISH: Use enhanced audio if available
-                let audioURL = clip.enhancedAudioURL ?? clip.url
-                let asset = getAsset(for: audioURL, cache: &assetCache)
+                // AUDIO POLISH: Use enhanced audio if available (but only if duration-aligned).
+                // If the enhanced file's duration differs from the clip's duration, using it can cause
+                // insertTimeRange failures or perceived A/V desync. In that case, fall back to original audio.
+                var selectedAudioURL = clip.enhancedAudioURL ?? clip.url
+                var asset = getAsset(for: selectedAudioURL, cache: &assetCache)
+
+                if clip.enhancedAudioURL != nil {
+                    let enhancedDuration = (try? await asset.load(.duration)) ?? .zero
+                    if !shouldUseEnhancedAudio(clipDuration: clip.duration, enhancedDuration: enhancedDuration) {
+                        AppLogger.timeline.warning(
+                            "⚠️ AudioTrackBuilder: Enhanced audio duration mismatch for \(clip.url.lastPathComponent). " +
+                                "clip=\(clip.duration.seconds)s enhanced=\(enhancedDuration.seconds)s. Falling back to original audio."
+                        )
+                        selectedAudioURL = clip.url
+                        asset = getAsset(for: selectedAudioURL, cache: &assetCache)
+                    }
+                }
 
                 // Check for audio
                 guard let assetAudioTrack = try? await asset.load(.tracks).first(where: { $0.mediaType == .audio }) else {
@@ -64,7 +88,7 @@ enum AudioTrackBuilder {
                 // SEMANTIC GATING: Pre-compute gating metadata ONCE per clip (not per segment)
                 // This prevents wasteful recomputation and ensures consistent timing
                 let gatingSegments: [SoundAnalysisService.GatingSegment]? = clip.isGatingEnabled
-                    ? try? await ServiceContainer.shared.soundAnalysisService.generateGatingMetadata(for: audioURL)
+                    ? try? await ServiceContainer.shared.soundAnalysisService.generateGatingMetadata(for: selectedAudioURL)
                     : nil
 
                 // Insert Audio Segments

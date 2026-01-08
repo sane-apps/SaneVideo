@@ -86,6 +86,9 @@ Files approaching limits (monitor for refactoring):
 - **Root Cause**: `AudioTrackBuilder` used enhanced audio file's duration for segment timing, but enhanced audio may have slightly different duration than original video due to 44100Hz AAC encoding. The `removedRanges` are defined in original video timing, causing cumulative drift.
 - **Fix Applied**: Use `clip.duration` (original video duration) for segment timing in AudioTrackBuilder, not the enhanced audio's duration
 - **Files**: `Core/Engine/AudioTrackBuilder.swift:44-49`
+- **Update (2026-01-08)**:
+  - `SaneAudioEnhancementService` now preserves source sample rate when writing enhanced audio (prevents duration drift).
+  - `AudioTrackBuilder` now validates enhanced-audio duration vs `clip.duration` and falls back to original audio if mismatched (prevents desync/missing-audio edge cases).
 
 ### Smooth Jump Cuts Cause Perceived A/V Drift (Magic Fix)
 - **Status**: FIXED (2026-01-08)
@@ -209,7 +212,8 @@ Files approaching limits (monitor for refactoring):
 - **Observation**: Mixed sample rate assumptions (48k for recording/system audio, 44.1k for enhancement/export/waveform)
 - **Potential Impact**: Subtle A/V drift, duration mismatches, gating window misalignment
 - **Files**: `Services/Recording/VideoWriter.swift`, `Services/Recording/ScreenRecorder.swift`, `Services/Audio/SaneAudioEnhancementService.swift`, `Services/Audio/WaveformService.swift:126`
-- **Fix Required**: Audit and standardize sample rates, or document intentional differences
+- **Update (2026-01-08)**: `SaneAudioEnhancementService` now preserves the source sample rate when writing enhanced AAC to keep durations aligned.
+- **Fix Required**: Continue audit/standardization (WaveformService still needs to mirror enhanced-audio selection).
 
 #### P3: Multiple Export Implementations Divergence Risk
 - **Status**: MONITOR

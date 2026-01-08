@@ -537,3 +537,5 @@
 {"timestamp":"2026-01-03T16:02:21Z","session":"4f2fc391-0953-4048-86de-3ef6c4b0fb07","tool":"Edit","file":"/Users/sj/SaneVideo/.github/workflows/verify.yml","rules_checked":["#1:STAY_IN_LANE","#10:FILE_SIZE"],"result":"pass"}
 {"timestamp":"2026-01-03T16:02:39Z","session":"4f2fc391-0953-4048-86de-3ef6c4b0fb07","tool":"Bash","command":"rm /Users/sj/SaneVideo/.github/workflows/ci.yml /Users/sj/SaneVideo/.github/workflows/verify.yml && ","rules_checked":["#6:FULL_CYCLE"],"result":"pass"}
 {"timestamp":"2026-01-03T16:02:43Z","session":"4f2fc391-0953-4048-86de-3ef6c4b0fb07","tool":"Bash","command":"ls -la /Users/sj/SaneVideo/.github/workflows/ 2>/dev/null || echo \"Directory empty or gone\"","rules_checked":[],"result":"pass"}
+{"timestamp":"2026-01-03T16:02:52Z","session":"4f2fc391-0953-4048-86de-3ef6c4b0fb07","tool":"Bash","command":"git add -A && git commit -m \"chore: remove broken CI workflows\n\nThese were a failed workaround when ","rules_checked":["#6:FULL_CYCLE"],"result":"pass"}
+{"timestamp":"2026-01-03T16:02:59Z","session":"4f2fc391-0953-4048-86de-3ef6c4b0fb07","tool":"Bash","command":"git push origin main","rules_checked":[],"result":"pass"}

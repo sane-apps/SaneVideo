@@ -1,11 +1,36 @@
 {
   "permissions": {
     "allow": [
+      "Bash(./Scripts/SaneMaster.rb:*)",
+      "Bash(xcodegen:*)",
+      "Bash(bundle exec:*)",
+      "Bash(killall:*)",
+      "Bash(git:*)",
+      "Bash(ls:*)",
+      "Bash(brew:*)",
+      "Bash(swiftlint:*)",
+      "Bash(mockolo:*)",
+      "Bash(periphery:*)",
+      "Bash(lefthook:*)",
+      "Bash(xcodebuild:*)",
+      "Bash(xcrun:*)",
+      "Bash(open:*)",
+      "Bash(cat:*)",
+      "Bash(head:*)",
+      "Bash(tail:*)",
+      "Bash(wc:*)",
+      "Bash(du:*)",
+      "Bash(df:*)",
+      "Bash(pgrep:*)",
+      "Bash(pkill:*)",
+      "Bash(curl:*)",
+      "Bash(which:*)",
+      "Bash(ruby:*)",
+      "Bash(/opt/homebrew/opt/ruby/bin/*:*)",
       "mcp__memory__*",
       "mcp__apple-docs__*",
       "mcp__context7__*",
-      "mcp__github__*",
-      "mcp__XcodeBuildMCP__*"
+      "mcp__github__*"
     ]
   },
   "hooks": {
@@ -14,97 +39,29 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"$CLAUDE_PROJECT_DIR\"/Scripts/SaneMaster.rb bootstrap"
-          },
-          {
-            "type": "command",
-            "command": "cat \"$CLAUDE_PROJECT_DIR\"/.claude/SOP_CONTEXT.md"
+            "command": "[ -f ./scripts/hooks/session_start.rb ] && ruby ./scripts/hooks/session_start.rb || true",
+            "timeout": 5
           }
         ]
       }
     ],
-    "SessionEnd": [
+    "UserPromptSubmit": [
       {
         "hooks": [
           {
             "type": "command",
-            "command": "\"$CLAUDE_PROJECT_DIR\"/Scripts/SaneMaster.rb session_end --skip-prompts"
+            "command": "[ -f ./scripts/hooks/saneprompt.rb ] && ruby ./scripts/hooks/saneprompt.rb || true",
+            "timeout": 5
           }
         ]
       }
     ],
     "PreToolUse": [
       {
-        "matcher": "Edit",
         "hooks": [
           {
             "type": "command",
-            "command": "ruby \"$CLAUDE_PROJECT_DIR\"/Scripts/sanemaster/hooks/sop_mapper.rb",
-            "timeout": 5
-          },
-          {
-            "type": "command",
-            "command": "ruby \"$CLAUDE_PROJECT_DIR\"/Scripts/sanemaster/hooks/circuit_breaker.rb",
-            "timeout": 5
-          },
-          {
-            "type": "command",
-            "command": "ruby \"$CLAUDE_PROJECT_DIR\"/Scripts/sanemaster/hooks/edit_validator.rb",
-            "timeout": 5
-          },
-          {
-            "type": "command",
-            "command": "ruby \"$CLAUDE_PROJECT_DIR\"/Scripts/sanemaster/hooks/two_fix_reminder.rb",
-            "timeout": 5
-          },
-          {
-            "type": "command",
-            "command": "ruby \"$CLAUDE_PROJECT_DIR\"/Scripts/sanemaster/hooks/path_rules.rb",
-            "timeout": 5
-          }
-        ]
-      },
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "ruby \"$CLAUDE_PROJECT_DIR\"/Scripts/sanemaster/hooks/circuit_breaker.rb",
-            "timeout": 5
-          },
-          {
-            "type": "command",
-            "command": "ruby \"$CLAUDE_PROJECT_DIR\"/Scripts/sanemaster/hooks/version_mismatch.rb",
-            "timeout": 5
-          }
-        ]
-      },
-      {
-        "matcher": "Write",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "ruby \"$CLAUDE_PROJECT_DIR\"/Scripts/sanemaster/hooks/sop_mapper.rb",
-            "timeout": 5
-          },
-          {
-            "type": "command",
-            "command": "ruby \"$CLAUDE_PROJECT_DIR\"/Scripts/sanemaster/hooks/circuit_breaker.rb",
-            "timeout": 5
-          },
-          {
-            "type": "command",
-            "command": "ruby \"$CLAUDE_PROJECT_DIR\"/Scripts/sanemaster/hooks/path_rules.rb",
-            "timeout": 5
-          }
-        ]
-      },
-      {
-        "matcher": "Skill",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "ruby \"$CLAUDE_PROJECT_DIR\"/Scripts/sanemaster/hooks/skill_validator.rb",
+            "command": "[ -f ./scripts/hooks/sanetools.rb ] && ruby ./scripts/hooks/sanetools.rb || true",
             "timeout": 5
           }
         ]
@@ -112,80 +69,32 @@
     ],
     "PostToolUse": [
       {
-        "matcher": "Bash",
         "hooks": [
           {
             "type": "command",
-            "command": "ruby \"$CLAUDE_PROJECT_DIR\"/Scripts/sanemaster/hooks/failure_tracker.rb",
-            "timeout": 5
-          },
-          {
-            "type": "command",
-            "command": "ruby \"$CLAUDE_PROJECT_DIR\"/Scripts/sanemaster/hooks/deeper_look_trigger.rb",
-            "timeout": 5
-          },
-          {
-            "type": "command",
-            "command": "ruby \"$CLAUDE_PROJECT_DIR\"/Scripts/sanemaster/hooks/audit_logger.rb",
+            "command": "[ -f ./scripts/hooks/sanetrack.rb ] && ruby ./scripts/hooks/sanetrack.rb || true",
             "timeout": 5
           }
         ]
-      },
+      }
+    ],
+    "Stop": [
       {
-        "matcher": "Edit",
         "hooks": [
           {
             "type": "command",
-            "command": "ruby \"$CLAUDE_PROJECT_DIR\"/Scripts/sanemaster/hooks/test_quality_checker.rb",
-            "timeout": 5
-          },
-          {
-            "type": "command",
-            "command": "ruby \"$CLAUDE_PROJECT_DIR\"/Scripts/sanemaster/hooks/verify_reminder.rb",
-            "timeout": 5
-          },
-          {
-            "type": "command",
-            "command": "ruby \"$CLAUDE_PROJECT_DIR\"/Scripts/sanemaster/hooks/audit_logger.rb",
-            "timeout": 5
-          }
-        ]
-      },
-      {
-        "matcher": "Write",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "ruby \"$CLAUDE_PROJECT_DIR\"/Scripts/sanemaster/hooks/test_quality_checker.rb",
-            "timeout": 5
-          },
-          {
-            "type": "command",
-            "command": "ruby \"$CLAUDE_PROJECT_DIR\"/Scripts/sanemaster/hooks/audit_logger.rb",
-            "timeout": 5
-          }
-        ]
-      },
-      {
-        "matcher": "Grep",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "ruby \"$CLAUDE_PROJECT_DIR\"/Scripts/sanemaster/hooks/deeper_look_trigger.rb",
-            "timeout": 5
-          }
-        ]
-      },
-      {
-        "matcher": "Read",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "ruby \"$CLAUDE_PROJECT_DIR\"/Scripts/sanemaster/hooks/deeper_look_trigger.rb",
+            "command": "[ -f ./scripts/hooks/sanestop.rb ] && ruby ./scripts/hooks/sanestop.rb || true",
             "timeout": 5
           }
         ]
       }
     ]
+  },
+  "enabledPlugins": {
+    "swift-lsp@claude-plugins-official": true,
+    "code-review@claude-plugins-official": true,
+    "security-guidance@claude-plugins-official": true,
+    "ralph-wiggum@claude-plugins-official": true,
+    "claude-mem@thedotmack": true
   }
 }

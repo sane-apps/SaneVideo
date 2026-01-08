@@ -310,8 +310,7 @@ module SaneMasterModules
         print "\r#{spinner} Running: #{state[:current_test]} (#{state[:tests_run]} tests, #{elapsed}s)    "
         state[:spinner_idx] += 1
         state[:last_update] = Time.now
-      # Swift Testing pattern: ✔ Test "test name" passed after X.XXX seconds
-      # rubocop:disable Lint/DuplicateBranch -- intentional: same update logic for test progress
+      # Swift Testing pattern: ✔ Test "test name" passed after X.XXX seconds # -- intentional: same update logic for test progress
       when /[✔✓] Test "(.+)" passed/
         state[:current_test] = ::Regexp.last_match(1)
         state[:tests_run] += 1
@@ -457,8 +456,14 @@ module SaneMasterModules
       puts "\n🔄 Stuck Processes:"
       stuck = `pgrep -f 'xcodebuild|xctest' 2>/dev/null`.strip
       stuck_pids = stuck.split.reject do |pid|
-        cmd = `ps -p #{pid} -o comm= 2>/dev/null`.strip
-        cmd.include?('testmanagerd') || cmd.include?('/usr/libexec/')
+        # Get full command to check what this process actually is
+        cmd = `ps -p #{pid} -o command= 2>/dev/null`.strip
+        # Exclude: system processes, MCP servers, and npm processes
+        cmd.include?('testmanagerd') ||
+          cmd.include?('/usr/libexec/') ||
+          cmd.include?('xcodebuildmcp') ||
+          cmd.include?('mcp') ||
+          cmd.include?('npm exec')
       end
       if stuck_pids.empty?
         puts '  ✅ No stuck test processes'

@@ -40,14 +40,14 @@ module SaneMasterModules
         puts '   🔪 Killing stuck xcodebuild/xctest processes...'
         system('killall -9 xcodebuild 2>/dev/null')
         system('killall -9 xctest 2>/dev/null')
-        system('killall -9 SaneVideo 2>/dev/null')
+        system('killall -9 __PROJECT_NAME__ 2>/dev/null')
         fixed << 'Killed stuck processes'
         sop_log('Auto-fix: killed stuck build processes')
       end
 
       if issues.any? { |i| i.include?('DerivedData') }
-        puts '   🧹 Clearing SaneVideo DerivedData...'
-        dd_path = File.expand_path('~/Library/Developer/Xcode/DerivedData/SaneVideo-*')
+        puts '   🧹 Clearing __PROJECT_NAME__ DerivedData...'
+        dd_path = File.expand_path('~/Library/Developer/Xcode/DerivedData/__PROJECT_NAME__-*')
         Dir.glob(dd_path).each { |d| FileUtils.rm_rf(d) }
         fixed << 'Cleared DerivedData'
         sop_log('Auto-fix: cleared DerivedData')
@@ -443,8 +443,41 @@ module SaneMasterModules
       puts "\n#{'─' * 50}"
       puts '✅ Ready — Ruby, tools, hooks, MCP servers checked.'
       puts '🧠 Memory will load on first response.'
+
+      # Show handoff if exists
+      show_session_handoff
+
+      # Show recent git activity
+      show_git_summary
+
       puts "\nWhat would you like to work on today?"
       puts '─' * 50
+    end
+
+    def show_session_handoff
+      handoff_path = File.join(Dir.pwd, '.claude', 'SESSION_HANDOFF.md')
+      return unless File.exist?(handoff_path)
+
+      puts ''
+      puts '📋 Previous Session Handoff:'
+      content = File.read(handoff_path)
+      # Show just the key sections
+      content.lines.each do |line|
+        next if line.strip.empty? || line.start_with?('---') || line.start_with?('*Generated')
+
+        puts "   #{line.rstrip}"
+        break if line.include?('## Next Steps') # Stop after showing structure
+      end
+      puts '   (see .claude/SESSION_HANDOFF.md for full details)'
+    end
+
+    def show_git_summary
+      commits = `git log --oneline -5 --format='%h %s (%cr)' 2>/dev/null`.strip
+      return if commits.empty?
+
+      puts ''
+      puts '📜 Recent Git Activity:'
+      commits.split("\n").each { |c| puts "   #{c}" }
     end
 
     def status_icon(status)

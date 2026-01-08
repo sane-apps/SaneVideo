@@ -29,6 +29,44 @@ enum AudioTrackBuilder {
     ) async throws -> [AVMutableAudioMixInputParameters] {
 
         var audioMixParams: [AVMutableAudioMixInputParameters] = []
+        var scheduledRampRangesByTrackID: [CMPersistentTrackID: [CMTimeRange]] = [:]
+
+        func rangesOverlap(_ a: CMTimeRange, _ b: CMTimeRange, toleranceSeconds: Double = 0.000_5) -> Bool {
+            let aStart = a.start.seconds
+            let aEnd = (CMTimeAdd(a.start, a.duration)).seconds
+            let bStart = b.start.seconds
+            let bEnd = (CMTimeAdd(b.start, b.duration)).seconds
+
+            // Treat touching edges as non-overlapping (with a tiny tolerance to avoid floating-point fuzz).
+            if abs(aEnd - bStart) <= toleranceSeconds || abs(bEnd - aStart) <= toleranceSeconds {
+                return false
+            }
+
+            return aStart < bEnd && bStart < aEnd
+        }
+
+        func setVolumeRampSafely(
+            _ params: AVMutableAudioMixInputParameters,
+            trackID: CMPersistentTrackID,
+            fromStartVolume: Float,
+            toEndVolume: Float,
+            timeRange: CMTimeRange,
+            label: String
+        ) {
+            guard CMTimeCompare(timeRange.duration, .zero) > 0 else { return }
+
+            let existing = scheduledRampRangesByTrackID[trackID, default: []]
+            if existing.contains(where: { rangesOverlap($0, timeRange) }) {
+                AppLogger.timeline.warning(
+                    "⚠️ AudioTrackBuilder: Skipping overlapping volume ramp (\(label)) on trackID=\(trackID) " +
+                        "range=[\(timeRange.start.seconds)s .. \(CMTimeAdd(timeRange.start, timeRange.duration).seconds)s]"
+                )
+                return
+            }
+
+            params.setVolumeRamp(fromStartVolume: fromStartVolume, toEndVolume: toEndVolume, timeRange: timeRange)
+            scheduledRampRangesByTrackID[trackID, default: []].append(timeRange)
+        }
 
         // A/B Audio Tracks
         let audioTrackA = composition.addMutableTrack(withMediaType: .audio, preferredTrackID: kCMPersistentTrackID_Invalid)
@@ -104,7 +142,10 @@ enum AudioTrackBuilder {
                     if clip.useSmoothCutForRemovals && audioValidSegments.count > 1 && segIndex > 0 {
                         // Clamp overlap so we never extend before trimmed start.
                         let maxBackwards = CMTimeSubtract(segment.start, clip.trimStart)
-                        let actualOverlapSource = CMTimeMinimum(overlap.source, maxBackwards)
+                        var actualOverlapSource = CMTimeMinimum(overlap.source, maxBackwards)
+                        // Clamp overlap so we never exceed the previous segment length (prevents triple-overlap on A/B tracks).
+                        let prevSegment = audioValidSegments[segIndex - 1]
+                        actualOverlapSource = CMTimeMinimum(actualOverlapSource, prevSegment.duration)
 
                         if actualOverlapSource > .zero {
                             actualOverlapPlayed = CMTimeMultiplyByFloat64(
@@ -164,7 +205,14 @@ enum AudioTrackBuilder {
                         if safeOverlap > .zero {
                             // Incoming ramp up
                             let rampUpRange = CMTimeRange(start: segmentInsertStart, duration: safeOverlap)
-                            currentParams.setVolumeRamp(fromStartVolume: 0.0, toEndVolume: finalVolume, timeRange: rampUpRange)
+                            setVolumeRampSafely(
+                                currentParams,
+                                trackID: segmentAudioTrack.trackID,
+                                fromStartVolume: 0.0,
+                                toEndVolume: finalVolume,
+                                timeRange: rampUpRange,
+                                label: "smooth-cut incoming ramp up"
+                            )
                             currentParams.setVolume(finalVolume, at: CMTimeAdd(segmentInsertStart, safeOverlap))
 
                             // Outgoing ramp down (ends at the cursor boundary = currentAudioInsertStart)
@@ -172,7 +220,14 @@ enum AudioTrackBuilder {
                                 let rampDownStart = CMTimeSubtract(currentAudioInsertStart, safeOverlap)
                                 if rampDownStart >= .zero {
                                     let rampDownRange = CMTimeRange(start: rampDownStart, duration: safeOverlap)
-                                    outgoingParams.setVolumeRamp(fromStartVolume: finalVolume, toEndVolume: 0.0, timeRange: rampDownRange)
+                                    setVolumeRampSafely(
+                                        outgoingParams,
+                                        trackID: previousSegmentAudioTrack?.trackID ?? segmentAudioTrack.trackID,
+                                        fromStartVolume: finalVolume,
+                                        toEndVolume: 0.0,
+                                        timeRange: rampDownRange,
+                                        label: "smooth-cut outgoing ramp down"
+                                    )
                                 }
                             }
                         }
@@ -187,7 +242,14 @@ enum AudioTrackBuilder {
                                 let fadeOutStart = CMTimeSubtract(segmentEnd, actualFadeOutDuration)
                                 if CMTimeCompare(fadeOutStart, CMTimeAdd(segmentInsertStart, safeFadeDuration)) > 0 {
                                     let fadeOutRange = CMTimeRange(start: fadeOutStart, duration: actualFadeOutDuration)
-                                    currentParams.setVolumeRamp(fromStartVolume: finalVolume, toEndVolume: 0.0, timeRange: fadeOutRange)
+                                    setVolumeRampSafely(
+                                        currentParams,
+                                        trackID: segmentAudioTrack.trackID,
+                                        fromStartVolume: finalVolume,
+                                        toEndVolume: 0.0,
+                                        timeRange: fadeOutRange,
+                                        label: "clip end fade out (smooth)"
+                                    )
                                 }
                             }
                         }
@@ -197,7 +259,14 @@ enum AudioTrackBuilder {
                         if safeFadeDuration > .zero {
                             if isFirstSegment {
                                 let fadeInRange = CMTimeRange(start: segmentInsertStart, duration: safeFadeDuration)
-                                currentParams.setVolumeRamp(fromStartVolume: 0.0, toEndVolume: finalVolume, timeRange: fadeInRange)
+                                setVolumeRampSafely(
+                                    currentParams,
+                                    trackID: segmentAudioTrack.trackID,
+                                    fromStartVolume: 0.0,
+                                    toEndVolume: finalVolume,
+                                    timeRange: fadeInRange,
+                                    label: "clip start fade in"
+                                )
                                 currentParams.setVolume(finalVolume, at: CMTimeAdd(segmentInsertStart, safeFadeDuration))
                             } else {
                                 currentParams.setVolume(finalVolume, at: segmentInsertStart)
@@ -209,7 +278,14 @@ enum AudioTrackBuilder {
                                 let fadeOutStart = CMTimeSubtract(segmentEnd, actualFadeOutDuration)
                                 if CMTimeCompare(fadeOutStart, CMTimeAdd(segmentInsertStart, safeFadeDuration)) > 0 {
                                     let fadeOutRange = CMTimeRange(start: fadeOutStart, duration: actualFadeOutDuration)
-                                    currentParams.setVolumeRamp(fromStartVolume: finalVolume, toEndVolume: 0.0, timeRange: fadeOutRange)
+                                    setVolumeRampSafely(
+                                        currentParams,
+                                        trackID: segmentAudioTrack.trackID,
+                                        fromStartVolume: finalVolume,
+                                        toEndVolume: 0.0,
+                                        timeRange: fadeOutRange,
+                                        label: "clip end fade out"
+                                    )
                                 }
                             }
                         } else {
@@ -266,7 +342,14 @@ enum AudioTrackBuilder {
 
                             let rampDownRange = CMTimeRange(start: compositionStart, duration: safeGateRampDuration)
                             if CMTimeCompare(CMTimeAdd(compositionStart, safeGateRampDuration), segmentEnd) <= 0 {
-                                currentParams.setVolumeRamp(fromStartVolume: finalVolume, toEndVolume: 0.0, timeRange: rampDownRange)
+                                setVolumeRampSafely(
+                                    currentParams,
+                                    trackID: segmentAudioTrack.trackID,
+                                    fromStartVolume: finalVolume,
+                                    toEndVolume: 0.0,
+                                    timeRange: rampDownRange,
+                                    label: "gating ramp down"
+                                )
                             }
 
                             // Ramp up at gate open
@@ -274,7 +357,14 @@ enum AudioTrackBuilder {
                                 let rampUpStart = CMTimeSubtract(compositionEnd, safeGateRampDuration)
                                 if CMTimeCompare(rampUpStart, CMTimeAdd(compositionStart, safeGateRampDuration)) > 0 {
                                     let rampUpRange = CMTimeRange(start: rampUpStart, duration: safeGateRampDuration)
-                                    currentParams.setVolumeRamp(fromStartVolume: 0.0, toEndVolume: finalVolume, timeRange: rampUpRange)
+                                    setVolumeRampSafely(
+                                        currentParams,
+                                        trackID: segmentAudioTrack.trackID,
+                                        fromStartVolume: 0.0,
+                                        toEndVolume: finalVolume,
+                                        timeRange: rampUpRange,
+                                        label: "gating ramp up"
+                                    )
                                 }
                             }
                         }

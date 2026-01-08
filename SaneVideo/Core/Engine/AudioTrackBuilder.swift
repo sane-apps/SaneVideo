@@ -79,8 +79,11 @@ enum AudioTrackBuilder {
             let sortedClips = timelineTrack.clips.sorted { $0.startTime < $1.startTime }
 
             for clip in sortedClips {
+                // NOTE: Must mirror VideoTrackBuilder's A/B track selection semantics.
+                // When smooth cuts are enabled, we also alternate tracks *within* a clip.
+                // If we only toggle per-clip, audio can end up on a different A/B track pattern than video,
+                // which causes perceived A/V sync issues and can create overlapping segments on the same track.
                 let targetAudioTrack = useTrackA ? ata : atb
-                useTrackA.toggle()
 
                 // AUDIO POLISH: Use enhanced audio if available (but only if duration-aligned).
                 // If the enhanced file's duration differs from the clip's duration, using it can cause
@@ -382,6 +385,13 @@ enum AudioTrackBuilder {
                         previousSegmentAudioTrack = segmentAudioTrack
                     }
                 }
+
+                // Mirror VideoTrackBuilder:
+                // `segmentAudioTrack` has already been toggled for the next segment, so it represents
+                // the "next track" after finishing the clip's internal segments.
+                // Update `useTrackA` so the next clip continues on the expected track parity.
+                useTrackA = (segmentAudioTrack === ata)
+                useTrackA.toggle()
             }
         }
 

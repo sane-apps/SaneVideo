@@ -118,7 +118,10 @@ enum VideoTrackBuilder {
               // Start earlier to overlap with previous.
               // Clamp overlap so we never extend before the trimmed start.
               let maxBackwards = CMTimeSubtract(segment.start, clip.trimStart)
-              let actualOverlapSource = CMTimeMinimum(overlap.source, maxBackwards)
+              var actualOverlapSource = CMTimeMinimum(overlap.source, maxBackwards)
+              // Clamp overlap so we never exceed the previous segment length (prevents triple-overlap on A/B tracks).
+              let prevSegment = validSegments[segIndex - 1]
+              actualOverlapSource = CMTimeMinimum(actualOverlapSource, prevSegment.duration)
 
               if actualOverlapSource > .zero {
                 // Convert the actual clamped SOURCE overlap back into PLAYED overlap.

@@ -1,0 +1,10 @@
+# Claude Code state files (session-specific, don't commit)
+circuit_breaker.json
+failure_state.json
+audit.jsonl
+state.json
+state.json.lock
+
+# Keep rules and settings
+!rules/
+!settings.json

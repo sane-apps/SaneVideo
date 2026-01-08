@@ -198,6 +198,7 @@ struct TimelineClipView: View {
                 ZStack(alignment: .bottom) {
                     Rectangle().fill(Color(white: 0.15))
                     waveformDisplay
+                    smoothCutOverlay
                     stitchMarkerOverlay
                     durationLabel
                 }
@@ -272,6 +273,29 @@ struct TimelineClipView: View {
         ForEach(stitchMarkers, id: \.self) { progress in
             Rectangle().fill(Color.accentColor).frame(width: 1)
                 .offset(x: CGFloat(progress) * max(0, clipWidth - handleWidth * 2))
+        }
+    }
+
+    /// Visualizes the crossfade region used by Smooth Cuts so the timeline is WYSIWYG.
+    private var smoothCutOverlay: some View {
+        let innerWidth = max(0, clipWidth - handleWidth * 2)
+        let overlap = TimeUtils.smoothCutOverlap(clipSpeed: clip.speed, overlapPlayedSeconds: 0.15)
+        let overlapWidth = CGFloat(overlap.played.seconds) * pixelsPerSecond
+
+        return Group {
+            if clip.useSmoothCutForRemovals, !stitchMarkers.isEmpty, overlapWidth > 0, innerWidth > 0 {
+                ForEach(stitchMarkers, id: \.self) { progress in
+                    // Center overlay on the cut marker, clamp to the clip bounds.
+                    let markerX = CGFloat(progress) * innerWidth
+                    let unclampedX = markerX - (overlapWidth / 2)
+                    let clampedX = max(0, min(innerWidth - overlapWidth, unclampedX))
+
+                    Rectangle()
+                        .fill(Color.accentColor.opacity(0.12))
+                        .frame(width: overlapWidth, height: clipHeight * 0.45)
+                        .offset(x: clampedX)
+                }
+            }
         }
     }
 

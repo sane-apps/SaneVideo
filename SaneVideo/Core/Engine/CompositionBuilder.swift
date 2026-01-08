@@ -131,6 +131,9 @@ enum CompositionBuilder {
         let limitedAudioMix = audioMix  // AudioLimiter.applyLimiter(to: audioMix)
         AppLogger.timeline.info("🔊 CompositionBuilder: Using audioMix WITHOUT limiter (limiter bypassed for debugging)")
 
+        // 4d. Guardrails: Validate per-clip timing invariants (catches subtle A/V drift bugs early).
+        validateClipTimingInvariants(in: timeline)
+
         // 5. Build Video Composition
         let totalDuration = timeline.duration
         var videoComposition: AVVideoComposition?
@@ -187,5 +190,34 @@ enum CompositionBuilder {
             videoComposition: videoComposition,
             audioMix: limitedAudioMix
         )
+    }
+
+    private static func validateClipTimingInvariants(in timeline: Timeline) {
+        // Keep this lightweight: no asset I/O; rely on clip.duration + trim info.
+        let tolerance = CMTime(seconds: 0.02, preferredTimescale: 600)
+
+        for track in timeline.tracks {
+            for clip in track.clips {
+                guard clip.speed > 0 else {
+                    AppLogger.timeline.warning("⚠️ Timing invariant: clip has invalid speed (\(clip.speed)) \(clip.url.lastPathComponent)")
+                    continue
+                }
+
+                let sourceDuration = CMTimeSubtract(min(clip.trimEnd, clip.duration), clip.trimStart)
+                guard sourceDuration > .zero else { continue }
+
+                let segments = VideoTrackBuilder.computeValidSegments(clip: clip, sourceDuration: sourceDuration)
+                let totalSource = segments.reduce(CMTime.zero) { CMTimeAdd($0, $1.duration) }
+                let expectedPlayed = CMTimeMultiplyByFloat64(totalSource, multiplier: 1.0 / clip.speed)
+
+                if abs(expectedPlayed.seconds - clip.effectiveDuration.seconds) > tolerance.seconds {
+                    AppLogger.timeline.warning(
+                        "⚠️ Timing invariant mismatch for \(clip.url.lastPathComponent): " +
+                            "expectedPlayed=\(expectedPlayed.seconds)s effective=\(clip.effectiveDuration.seconds)s " +
+                            "speed=\(clip.speed) removals=\(clip.removedRanges.count)"
+                    )
+                }
+            }
+        }
     }
 }

@@ -200,12 +200,15 @@ Files approaching limits (monitor for refactoring):
 ### Pipeline Audit - Additional Findings (2026-01-01)
 
 #### P2: Waveform vs Enhanced Audio Mismatch
-- **Status**: OPEN
+- **Status**: FIXED (2026-01-08)
 - **Symptom**: Waveform visualization shows original audio, but playback/export uses enhanced audio (if available)
 - **Root Cause**: `WaveformService.generateWaveform()` uses `clip.url` only (line 94), but `AudioTrackBuilder` uses `clip.enhancedAudioURL ?? clip.url` (line 38)
 - **Impact**: UI shows waveform for original audio, but user hears enhanced audio → confusing mismatch
 - **Files**: `Services/Audio/WaveformService.swift:94`, `Core/Engine/AudioTrackBuilder.swift:38`
-- **Fix Required**: WaveformService should use `clip.enhancedAudioURL ?? clip.url` to match playback/export behavior
+- **Fix Applied**:
+  - WaveformService now selects the same audio source as playback/export (enhanced audio when duration-aligned).
+  - Cache now invalidates automatically when the chosen audio URL changes (prevents stale waveforms after enhancement).
+  - If enhanced audio duration is mismatched, both waveform + playback fall back to original audio to avoid drift.
 
 #### P3: Sample Rate Assumptions Across App
 - **Status**: ARCHITECTURAL DEBT

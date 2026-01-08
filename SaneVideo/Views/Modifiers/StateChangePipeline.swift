@@ -137,7 +137,9 @@ struct UnifiedStateChangeModifier: ViewModifier {
             // Tracks changed - reload player
             if let project = change.project {
                 appState.playbackState.loadProject(project)
-                appState.projectState.saveProject(project)
+                // PERFORMANCE: Avoid redundant disk writes during rapid timeline edits.
+                // ProjectState mutation entrypoints are responsible for persistence; this coordinator
+                // exists to keep playback composition in sync, not to persist state on every reload.
             }
         }
     }

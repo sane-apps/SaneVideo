@@ -135,7 +135,8 @@ class PlaybackState {
     private var isCompositionReady: Bool = false
 
     // PERFORMANCE: Debounce delay for project switching (ms)
-    private let compositionDebounceDelay: UInt64 = 300_000_000 // 300ms
+    private let projectSwitchDebounceDelay: UInt64 = 300_000_000 // 300ms
+    private let editDebounceDelay: UInt64 = 120_000_000 // 120ms (keeps timeline edits feeling responsive)
 
     /// Reset playback state - call when switching projects
     func reset() {
@@ -183,6 +184,15 @@ class PlaybackState {
         // Cancel any in-progress loading
         loadingTask?.cancel()
 
+        // PERFORMANCE: Adaptive debounce
+        // - Timeline edits on the same project should feel responsive (short debounce)
+        // - Project switching benefits from a slightly longer debounce to avoid thrash while browsing
+        let isSameProject = (lastLoadedProjectID == project.id)
+        let debounceDelay: UInt64 = {
+            if forceReload { return 0 }
+            return isSameProject ? editDebounceDelay : projectSwitchDebounceDelay
+        }()
+
         // PERFORMANCE: Set duration immediately from timeline (no composition needed)
         // This makes the UI responsive while composition happens in background
         self.duration = project.timeline.duration
@@ -194,10 +204,12 @@ class PlaybackState {
         lastLoadedClipsHash = currentClipsHash
 
         // PERFORMANCE: Debounced composition - wait for user to stop clicking
-        // If user clicks another project within 300ms, this task gets cancelled
+        // If user triggers another load within the debounce window, this task gets cancelled
         loadingTask = Task {
             // Wait for debounce period
-            try? await Task.sleep(nanoseconds: compositionDebounceDelay)
+            if debounceDelay > 0 {
+                try? await Task.sleep(nanoseconds: debounceDelay)
+            }
 
             // Check if cancelled during debounce
             guard !Task.isCancelled else { return }

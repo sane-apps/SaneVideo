@@ -114,7 +114,7 @@ begin
   # ==========================================================================
 
   result = simulate_tool('Edit', {
-                           'file_path' => '/Users/sj/SaneProcess/README.md',
+                           'file_path' => '/tmp/test_project/README.md',
                            'old_string' => 'old',
                            'new_string' => 'new'
                          })
@@ -127,11 +127,11 @@ begin
         "Fine, I'll read ONE file. Happy now?")
   # ==========================================================================
 
-  result = simulate_tool('Read', { 'file_path' => '/Users/sj/SaneProcess/README.md' }, 'file contents')
+  result = simulate_tool('Read', { 'file_path' => '/tmp/test_project/README.md' }, 'file contents')
   puts "   Read: #{result[:blocked] ? "#{RED}BLOCKED" : "#{GREEN}allowed"}#{RESET}"
 
   result = simulate_tool('Edit', {
-                           'file_path' => '/Users/sj/SaneProcess/README.md',
+                           'file_path' => '/tmp/test_project/README.md',
                            'old_string' => 'old',
                            'new_string' => 'new'
                          })
@@ -158,10 +158,10 @@ begin
   # ==========================================================================
 
   # Try with different input formats
-  result = simulate_tool('Edit', { 'path' => '/Users/sj/SaneProcess/README.md' }) # wrong key
+  result = simulate_tool('Edit', { 'path' => '/tmp/test_project/README.md' }) # wrong key
   puts "   Edit (wrong key): #{result[:blocked] ? "#{RED}BLOCKED" : "#{GREEN}allowed"}#{RESET}"
 
-  result = simulate_tool('Write', { 'file_path' => '/Users/sj/SaneProcess/README.md', 'content' => 'new' })
+  result = simulate_tool('Write', { 'file_path' => '/tmp/test_project/README.md', 'content' => 'new' })
   puts "   Write tool: #{result[:blocked] ? "#{RED}BLOCKED" : "#{GREEN}allowed"}#{RESET}"
 
   show_state
@@ -199,7 +199,7 @@ begin
   # ==========================================================================
 
   result = simulate_tool('Edit', {
-                           'file_path' => '/Users/sj/SaneProcess/README.md',
+                           'file_path' => '/tmp/test_project/README.md',
                            'old_string' => 'old',
                            'new_string' => 'new'
                          })

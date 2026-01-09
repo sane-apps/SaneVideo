@@ -347,8 +347,8 @@ module TestData
 
   # 15 allowed paths
   ALLOWED_PATHS = [
-    { input: '/Users/sj/SaneProcess/test.swift', expected: :allowed },
-    { input: '/Users/sj/SaneProcess/src/main.rb', expected: :allowed },
+    { input: '/tmp/test_project/test.swift', expected: :allowed },
+    { input: '/tmp/test_project/src/main.rb', expected: :allowed },
     { input: '/tmp/test.txt', expected: :allowed },
     { input: '/project/README.md', expected: :allowed },
     { input: '/project/package.json', expected: :allowed },

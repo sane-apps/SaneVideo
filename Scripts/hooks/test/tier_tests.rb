@@ -494,7 +494,7 @@ def test_sanetools
   t.test(:hard, 'ALLOW: project file with .env.example', expected_exit: 0) do
     t.run_hook({
                  'tool_name' => 'Read',
-                 'tool_input' => { 'file_path' => '/Users/sj/SaneProcess/.env.example' }
+                 'tool_input' => { 'file_path' => '/tmp/test_project/.env.example' }
                })
   end
 
@@ -545,7 +545,7 @@ def test_sanetools
     'cat << EOF > file.rb',
     'tee file.rb',
     "printf 'code' >> file.rb",
-    "echo 'hack' > /Users/sj/SaneProcess/test.swift",
+    "echo 'hack' > /tmp/test_project/test.swift",
     'cat input.txt > output.swift',
     'dd if=/dev/zero of=file.rb',
     # M8 additions
@@ -567,7 +567,7 @@ def test_sanetools
   # Path traversal (6)
   [
     '../../../etc/passwd',
-    '/Users/sj/SaneProcess/../../../etc/passwd',
+    '/tmp/test_project/../../../etc/passwd',
     './test/../.ssh/key',
     '~/../../etc/shadow',
     '/tmp/../etc/hosts',

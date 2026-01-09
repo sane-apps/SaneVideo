@@ -1,4 +1,4 @@
-# SaneProcess Hooks
+# Hooks
 
 Production-ready hooks for Claude Code SOP enforcement.
 

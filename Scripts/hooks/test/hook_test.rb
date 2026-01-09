@@ -14,7 +14,7 @@ require 'open3'
 require 'fileutils'
 
 HOOKS_DIR = File.expand_path('..', __dir__)
-TEST_PROJECT = '/tmp/saneprocess_hook_test'
+TEST_PROJECT = '/tmp/hook_test'
 PASS = '✅'
 FAIL = '❌'
 
@@ -414,7 +414,7 @@ end
 # =============================================================================
 
 puts '=' * 60
-puts 'SaneProcess Hook Unit Tests'
+puts 'Hook Unit Tests'
 puts '=' * 60
 
 setup

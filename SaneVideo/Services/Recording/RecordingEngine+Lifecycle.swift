@@ -420,6 +420,12 @@ extension RecordingEngine {
       }
 
       do {
+        // Re-apply prefs right before switching to screen so SCStream + VideoWriter stay aligned
+        await MainActor.run {
+          let prefs = ServiceContainer.shared.userPreferences
+          self.screenRecorder.targetFrameRate = prefs.recordingFPS
+          self.screenRecorder.targetSize = prefs.recordingResolution.size
+        }
         try await screenRecorder.start()
         AppLogger.recording.info("Screen recorder started, smooth transition to screen mode")
 

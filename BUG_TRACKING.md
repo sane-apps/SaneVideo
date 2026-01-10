@@ -60,6 +60,13 @@ Files approaching limits (monitor for refactoring):
 - **Fix Applied**: Persist `screenRecordingEverGranted` flag in UserDefaults when capture succeeds, check it before re-requesting
 - **Files**: `Services/Permissions/PermissionManager.swift`, `Services/Recording/ScreenRecorder.swift`
 
+### Recording Ignores User Resolution/FPS (Unnecessary Scaling)
+- **Status**: FIXED (2026-01-10)
+- **Symptom**: Screen recordings captured at 1080p@60 and recordings encoded at 1080p regardless of `UserPreferences.recordingResolution` / `recordingFPS`, causing unnecessary scaling and CPU work.
+- **Root Cause**: `ScreenRecorder` and `VideoWriter` used hardcoded `targetSize`, and `ScreenRecorder` used hardcoded 60fps.
+- **Fix Applied**: `RecordingEngine` now reads recording prefs once at start (and re-applies on screen switches), sets `ScreenRecorder.targetSize/targetFrameRate`, and constructs `VideoWriter` with the preferred `targetSize`.
+- **Files**: `Services/Recording/RecordingEngine.swift`, `Services/Recording/RecordingEngine+Lifecycle.swift`, `Services/Recording/ScreenRecorder.swift`, `Services/Recording/VideoWriter.swift`
+
 ### Project File Corruption
 - **Status**: FIXED (2025-12-31)
 - **Last Occurrence**: 2025-12-30 (specific file: 3054218B-9F22-439E-A9FC-D2980ED22749.svproj)
@@ -212,10 +219,11 @@ Files approaching limits (monitor for refactoring):
 
 #### P3: Sample Rate Assumptions Across App
 - **Status**: ARCHITECTURAL DEBT
-- **Observation**: Mixed sample rate assumptions (48k for recording/system audio, 44.1k for enhancement/export/waveform)
+- **Observation**: Mixed sample rate assumptions (48k for recording/system audio, some 44.1k defaults in offline paths)
 - **Potential Impact**: Subtle A/V drift, duration mismatches, gating window misalignment
 - **Files**: `Services/Recording/VideoWriter.swift`, `Services/Recording/ScreenRecorder.swift`, `Services/Audio/SaneAudioEnhancementService.swift`, `Services/Audio/WaveformService.swift:126`
 - **Update (2026-01-08)**: `SaneAudioEnhancementService` now preserves the source sample rate when writing enhanced AAC to keep durations aligned.
+- **Update (2026-01-10)**: Recording/export paths standardized on 48k where possible (mic resampled to 48k for writing; ExportEngine AAC output set to 48k).
 - **Fix Required**: Continue audit/standardization (WaveformService still needs to mirror enhanced-audio selection).
 
 #### P3: Multiple Export Implementations Divergence Risk

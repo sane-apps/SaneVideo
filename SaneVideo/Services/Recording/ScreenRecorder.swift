@@ -25,7 +25,13 @@ class ScreenRecorder: NSObject, ScreenRecorderProtocol, SCContentSharingPickerOb
   var activeStream: SCStream?
   private var recordingOutput: SCRecordingOutput?
   var isStopping = false
-  private let targetSize = CGSize(width: 1920, height: 1080)
+  /// Target output resolution for ScreenCaptureKit frames.
+  /// Set by RecordingEngine from UserPreferences before starting capture.
+  var targetSize: CGSize = CGSize(width: 1920, height: 1080)
+
+  /// Target output FPS for ScreenCaptureKit frames.
+  /// Set by RecordingEngine from UserPreferences before starting capture.
+  var targetFrameRate: Double = 60.0
   nonisolated(unsafe) var loggedScreenAudioFormat = false
 
   /// The original filter selected by the user (usually a display capture)
@@ -391,12 +397,13 @@ class ScreenRecorder: NSObject, ScreenRecorderProtocol, SCContentSharingPickerOb
       // Create stream configuration (Apple Silicon optimized)
       let config = SCStreamConfiguration()
 
-      // Resolution - 1080p for good quality/performance balance
+      // Resolution - match user preference to avoid unnecessary scaling work
       config.width = Int(targetSize.width)
       config.height = Int(targetSize.height)
 
-      // Frame rate - 60fps for smooth recording
-      config.minimumFrameInterval = CMTime(value: 1, timescale: 60)
+      // Frame rate - match user preference to avoid capturing excess frames
+      let fps = max(1, min(240, Int(targetFrameRate.rounded())))
+      config.minimumFrameInterval = CMTime(value: 1, timescale: CMTimeScale(fps))
 
       // Pixel format - BGRA for best M1 performance
       config.pixelFormat = kCVPixelFormatType_32BGRA

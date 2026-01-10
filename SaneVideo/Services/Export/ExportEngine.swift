@@ -226,7 +226,7 @@ class ExportEngine: ExportServiceProtocol {
       let writerAudioSettings: [String: Any] = [
         AVFormatIDKey: kAudioFormatMPEG4AAC,
         AVNumberOfChannelsKey: 2,
-        AVSampleRateKey: 44100,
+        AVSampleRateKey: 48000,
         AVEncoderBitRateKey: 192000
       ]
       let input = AVAssetWriterInput(mediaType: .audio, outputSettings: writerAudioSettings)
@@ -349,24 +349,30 @@ class ExportEngine: ExportServiceProtocol {
       let audioInput = uncheckedAudioIn.input
       let audioOutput = uncheckedAudioOut.output
 
-      while audioInput.isReadyForMoreMediaData {
-        if sessionState?.isCancelled == true {
-          audioInput.markAsFinished()
-          group.leave()
-          return
-        }
-
-        if let buffer = audioOutput.copyNextSampleBuffer() {
-          if !audioInput.append(buffer) {
-            progressState.exportError = uncheckedWriter.writer.error
+      var shouldContinue = true
+      while audioInput.isReadyForMoreMediaData && shouldContinue {
+        autoreleasepool {
+          if sessionState?.isCancelled == true {
             audioInput.markAsFinished()
             group.leave()
+            shouldContinue = false
             return
           }
-        } else {
-          audioInput.markAsFinished()
-          group.leave()
-          return
+
+          if let buffer = audioOutput.copyNextSampleBuffer() {
+            if !audioInput.append(buffer) {
+              progressState.exportError = uncheckedWriter.writer.error
+              audioInput.markAsFinished()
+              group.leave()
+              shouldContinue = false
+              return
+            }
+          } else {
+            audioInput.markAsFinished()
+            group.leave()
+            shouldContinue = false
+            return
+          }
         }
       }
     }

@@ -319,17 +319,19 @@ struct ComprehensiveFeatureTests {
   // MARK: - Audio Feature Tests
 
   @Test("Audio: Audio service is accessible")
-  func testAudioServiceInit() {
+  @MainActor
+  func testAudioServiceInit() async {
     let audioService = ServiceContainer.shared.audioService
-    // Verify service is accessible via ServiceContainer
-    // AudioService properties per AudioService.swift:17-19:
-    // - isRunning: Bool (default false, may change during tests)
-    // - permissionGranted: Bool (default false)
-    // - currentMicID: String? (default nil)
+    let expectedGranted = ServiceContainer.shared.permissionManager.microphoneStatus == .granted
 
-    // Use permissionGranted as it has a stable default value
-    // In test environment without mic permission, this should be false
-    #expect(audioService.permissionGranted == false, "Audio permission should not be granted by default in test environment")
+    // AudioService.permissionGranted is updated via a Combine subscription delivered on the main queue.
+    // Yield once to allow the initial CurrentValueSubject value to propagate.
+    await Task.yield()
+
+    #expect(
+      audioService.permissionGranted == expectedGranted,
+      "AudioService.permissionGranted should mirror PermissionManager.microphoneStatus"
+    )
   }
 
   // MARK: - Camera Feature Tests

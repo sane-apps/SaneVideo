@@ -1,4 +1,4 @@
-# SaneProcess - Claude Code Instructions
+# SaneVideo - Claude Code Instructions
 
 > **PRIME DIRECTIVE: READ THE PROMPTS**
 > Hook fires → Read the message → Find the answer → Succeed first try.
@@ -7,9 +7,9 @@
 ## Quick Start
 
 ```bash
-ruby scripts/qa.rb                    # Full QA check
-ruby scripts/hooks/test/tier_tests.rb # Run 234 hook tests
-ruby scripts/sync_check.rb ~/SaneBar  # Cross-project sync
+./Scripts/SaneMaster.rb verify          # Build + unit tests
+ruby ./Scripts/qa.rb                   # Tooling QA checks (hooks + scripts)
+ruby ./Scripts/hooks/test/tier_tests.rb # Run hook test tiers
 ```
 
 ## The 5 Core Rules
@@ -85,7 +85,7 @@ The hooks are helping, not fighting you:
 ## Project Structure
 
 ```
-scripts/
+Scripts/
 ├── hooks/           # 4 enforcement hooks
 │   ├── saneprompt.rb   # UserPromptSubmit
 │   ├── sanetools.rb    # PreToolUse
@@ -93,12 +93,4 @@ scripts/
 │   └── sanestop.rb     # Stop
 ├── SaneMaster.rb    # Main CLI
 └── qa.rb            # Quality checks
-```
-
-## Cross-Project Sync
-
-This syncs with SaneBar, SaneVideo, SaneSync. After changes:
-```bash
-ruby scripts/sync_check.rb ~/SaneBar
-ruby scripts/sync_check.rb ~/SaneVideo
 ```

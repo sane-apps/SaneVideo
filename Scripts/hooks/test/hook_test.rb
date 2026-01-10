@@ -2,7 +2,7 @@
 # frozen_string_literal: true
 
 # Hook Unit Tests
-# Run with: ruby scripts/hooks/test/hook_test.rb
+# Run with: ruby ./Scripts/hooks/test/hook_test.rb
 #
 # Tests all hooks for correct behavior:
 # - Proper exit codes (0 = allow, 2 = block)

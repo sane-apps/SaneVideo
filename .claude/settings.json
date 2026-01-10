@@ -39,7 +39,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "[ -f ./scripts/hooks/session_start.rb ] && ruby ./scripts/hooks/session_start.rb || true",
+            "command": "[ -f ./Scripts/hooks/session_start.rb ] && ruby ./Scripts/hooks/session_start.rb || true",
             "timeout": 5
           }
         ]
@@ -50,7 +50,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "[ -f ./scripts/hooks/saneprompt.rb ] && ruby ./scripts/hooks/saneprompt.rb || true",
+            "command": "[ -f ./Scripts/hooks/saneprompt.rb ] && ruby ./Scripts/hooks/saneprompt.rb || true",
             "timeout": 5
           }
         ]
@@ -61,7 +61,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "[ -f ./scripts/hooks/sanetools.rb ] && ruby ./scripts/hooks/sanetools.rb || true",
+            "command": "[ -f ./Scripts/hooks/sanetools.rb ] && ruby ./Scripts/hooks/sanetools.rb || true",
             "timeout": 5
           }
         ]
@@ -72,7 +72,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "[ -f ./scripts/hooks/sanetrack.rb ] && ruby ./scripts/hooks/sanetrack.rb || true",
+            "command": "[ -f ./Scripts/hooks/sanetrack.rb ] && ruby ./Scripts/hooks/sanetrack.rb || true",
             "timeout": 5
           }
         ]
@@ -83,7 +83,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "[ -f ./scripts/hooks/sanestop.rb ] && ruby ./scripts/hooks/sanestop.rb || true",
+            "command": "[ -f ./Scripts/hooks/sanestop.rb ] && ruby ./Scripts/hooks/sanestop.rb || true",
             "timeout": 5
           }
         ]

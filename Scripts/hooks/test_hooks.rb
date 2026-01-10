@@ -5,7 +5,7 @@
 # Hook System Integration Tests
 # ==============================================================================
 # Comprehensive tests for the consolidated hook architecture.
-# Run: ruby scripts/hooks/test_hooks.rb
+# Run: ruby ./Scripts/hooks/test_hooks.rb
 # ==============================================================================
 
 require 'json'
@@ -190,7 +190,7 @@ class HookTests
   end
 
   def test_coordinator_allows_bootstrap
-    run_hook('Bash', './scripts/SaneMaster.rb saneloop start "test"', command: true).zero?
+    run_hook('Bash', './Scripts/SaneMaster.rb saneloop start "test"', command: true).zero?
   end
 
   # Entry point syntax tests

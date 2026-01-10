@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Skills Module - Manage domain-specific knowledge contexts
-# Synced from SaneProcess ecosystem
+# Synced from shared Sane ecosystem
 
 module SaneMasterModules
   module Skills

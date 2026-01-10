@@ -256,7 +256,7 @@ if requested.include?('verify') && !is_satisfied?(:verify) && %w[Edit Write].inc
     blocks << {
       rule: 'VERIFY_BEFORE_DONE',
       message: 'Claiming "done" but verification not run.',
-      fix: 'Run: ./Scripts/SaneMaster.rb verify (or ruby scripts/qa.rb) before claiming done.'
+      fix: 'Run: ./Scripts/SaneMaster.rb verify (or ruby ./Scripts/qa.rb) before claiming done.'
     }
   end
 end

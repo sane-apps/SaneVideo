@@ -19,10 +19,10 @@ Production-ready hooks for Claude Code SOP enforcement.
 
 ```bash
 # Run all tests
-ruby scripts/hooks/saneprompt.rb --self-test
-ruby scripts/hooks/sanetools.rb --self-test
-ruby scripts/hooks/sanetrack.rb --self-test
-ruby scripts/hooks/sanestop.rb --self-test
+ruby ./Scripts/hooks/saneprompt.rb --self-test
+ruby ./Scripts/hooks/sanetools.rb --self-test
+ruby ./Scripts/hooks/sanetrack.rb --self-test
+ruby ./Scripts/hooks/sanestop.rb --self-test
 ```
 
 ## User Commands
@@ -39,7 +39,7 @@ ruby scripts/hooks/sanestop.rb --self-test
 ## Core Modules
 
 ```
-scripts/hooks/core/
+Scripts/hooks/core/
 ├── config.rb         # Paths, thresholds, settings
 └── state_manager.rb  # Read/write state.json (signed)
 ```
@@ -95,4 +95,4 @@ Reset with `rb-` command.
 
 ## Legacy
 
-Old hooks in `scripts/hooks/legacy/` - archived, not active.
+Old hooks in `Scripts/hooks/legacy/` - archived, not active.

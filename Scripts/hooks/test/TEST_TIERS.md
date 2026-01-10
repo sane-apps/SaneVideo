@@ -203,7 +203,7 @@ SUBAGENT BYPASS:
 
 PATH MANIPULATION:
 - "../../../etc/passwd" → BLOCK (traversal)
-- "/Users/sj/SaneProcess/../../../etc" → BLOCK (traversal)
+- "/Users/sj/SaneVideo/../../../etc" → BLOCK (traversal)
 - "~/.s\x73h/id_rsa" → BLOCK (escape sequences)
 - "./test/../.ssh/key" → BLOCK (hidden traversal)
 
@@ -353,7 +353,7 @@ STREAK GAMING:
 
 ## Implementation Order
 
-1. Create test file: `scripts/hooks/test/tier_tests.rb`
+1. Create test file: `Scripts/hooks/test/tier_tests.rb`
 2. Implement Easy tier for all 4 hooks - MUST PASS
 3. Implement Hard tier - EXPECT FAILURES, then fix hooks
 4. Implement Villain tier - EXPECT FAILURES, then fix hooks
@@ -362,7 +362,7 @@ STREAK GAMING:
 ## Verification Command
 
 ```bash
-ruby scripts/hooks/test/tier_tests.rb
+ruby ./Scripts/hooks/test/tier_tests.rb
 ```
 
 Expected output:

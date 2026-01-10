@@ -44,9 +44,9 @@ module SaneToolsChecks
   ).freeze
 
   SIGNIFICANT_FILE_PATTERNS = [
-    %r{scripts/hooks/.*\.rb$},
-    %r{scripts/sanemaster/.*\.rb$},
-    %r{scripts/SaneMaster\.rb$},
+    %r{scripts/hooks/.*\.rb$}i,
+    %r{scripts/sanemaster/.*\.rb$}i,
+    %r{scripts/SaneMaster\.rb$}i,
     %r{docs/.*\.md$}
   ].freeze
 

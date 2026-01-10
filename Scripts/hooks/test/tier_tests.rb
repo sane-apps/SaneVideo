@@ -4,7 +4,7 @@
 # Tier Tests: Easy, Hard, Villain
 # Tests ACTUAL hook behavior, not just helper functions
 #
-# Run: ruby scripts/hooks/test/tier_tests.rb
+# Run: ruby ./Scripts/hooks/test/tier_tests.rb
 
 require 'json'
 require 'open3'

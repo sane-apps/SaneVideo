@@ -150,7 +150,7 @@ begin
   edit_input = {
     'tool_name' => 'Edit',
     'tool_input' => {
-      'file_path' => '/tmp/test_project/scripts/hooks/sanetools.rb',
+      'file_path' => '/tmp/test_project/Scripts/hooks/sanetools.rb',
       'old_string' => 'def check',
       'new_string' => 'def check_fixed'
     }
@@ -169,7 +169,7 @@ begin
   read_input = {
     'tool_name' => 'Read',
     'tool_input' => {
-      'file_path' => '/tmp/test_project/scripts/hooks/sanetools.rb'
+      'file_path' => '/tmp/test_project/Scripts/hooks/sanetools.rb'
     }
   }
 
@@ -201,7 +201,7 @@ begin
     'tool_name' => 'Grep',
     'tool_input' => {
       'pattern' => 'def check',
-      'path' => '/tmp/test_project/scripts/hooks/'
+      'path' => '/tmp/test_project/Scripts/hooks/'
     }
   }
 
@@ -232,7 +232,7 @@ begin
   bash_input = {
     'tool_name' => 'Bash',
     'tool_input' => {
-      'command' => 'echo "# fixed" >> /tmp/test_project/scripts/hooks/sanetools.rb'
+      'command' => 'echo "# fixed" >> /tmp/test_project/Scripts/hooks/sanetools.rb'
     }
   }
 

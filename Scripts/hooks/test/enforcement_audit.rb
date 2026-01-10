@@ -7,7 +7,7 @@
 # Tests whether our hooks ACTUALLY catch Claude bypassing processes.
 # This is a brutally honest audit of what's enforced vs what's just suggested.
 #
-# Run: ruby scripts/hooks/test/enforcement_audit.rb
+# Run: ruby ./Scripts/hooks/test/enforcement_audit.rb
 # ==============================================================================
 
 require 'json'

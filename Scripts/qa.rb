@@ -2,17 +2,15 @@
 # frozen_string_literal: true
 
 #
-# SaneProcess QA Script
+# SaneVideo QA Script
 # Automated product verification before release
 #
-# Usage: ruby scripts/qa.rb
+# Usage: ruby ./Scripts/qa.rb
 #
 # Checks:
 # - All hooks exist and have valid Ruby syntax
-# - init.sh downloads all hooks
-# - README matches actual hook count
-# - docs/SaneProcess.md matches rule count
-# - All URLs in docs are reachable
+# - README/DEVELOPMENT docs exist
+# - .claude/settings.json registers the expected hook entrypoints
 # - All hooks use stdin pattern (not ENV vars)
 # - SaneMaster CLI and modules have valid syntax
 # - Hook tests pass
@@ -23,45 +21,34 @@ require 'net/http'
 require 'uri'
 require 'json'
 
-class SaneProcessQA
+class SaneVideoQA
   HOOKS_DIR = File.join(__dir__, 'hooks')
-  INIT_SCRIPT = File.join(__dir__, 'init.sh')
   README = File.join(__dir__, '..', 'README.md')
-  SOP_DOC = File.join(__dir__, '..', 'docs', 'SaneProcess.md')
+  SOP_DOC = File.join(__dir__, '..', 'DEVELOPMENT.md')
   HOOKS_README = File.join(__dir__, 'hooks', 'README.md')
   SETTINGS_JSON = File.join(__dir__, '..', '.claude', 'settings.json')
 
+  AI_AGENT_QUICK_START = File.join(__dir__, '..', 'AI_AGENT_QUICK_START.md')
+
   # Hooks that get registered in settings.json
   EXPECTED_HOOKS = %w[
-    circuit_breaker.rb
-    edit_validator.rb
-    failure_tracker.rb
-    test_quality_checker.rb
-    path_rules.rb
     session_start.rb
-    audit_logger.rb
-    sop_mapper.rb
-    two_fix_reminder.rb
-    verify_reminder.rb
-    version_mismatch.rb
-    deeper_look_trigger.rb
-    skill_validator.rb
-    saneloop_enforcer.rb
-    session_summary_validator.rb
-    prompt_analyzer.rb
-    pattern_learner.rb
-    process_enforcer.rb
+    saneprompt.rb
+    sanetools.rb
+    sanetrack.rb
+    sanestop.rb
   ].freeze
 
   # Shared modules that hooks require (not registered, but must exist)
   SHARED_MODULES = %w[
     rule_tracker.rb
+    saneprompt_intelligence.rb
+    sanetools_checks.rb
+    state_signer.rb
   ].freeze
 
   # All hook files that should exist
   ALL_HOOK_FILES = (EXPECTED_HOOKS + SHARED_MODULES).freeze
-
-  EXPECTED_RULE_COUNT = 13
 
   SANEMASTER_CLI = File.join(__dir__, 'SaneMaster.rb')
   SANEMASTER_DIR = File.join(__dir__, 'sanemaster')
@@ -95,7 +82,7 @@ class SaneProcessQA
 
   def run
     puts '═══════════════════════════════════════════════════════════════'
-    puts '                  SaneProcess QA Check'
+    puts '                   SaneVideo QA Check'
     puts '═══════════════════════════════════════════════════════════════'
     puts
 
@@ -104,12 +91,9 @@ class SaneProcessQA
     check_hooks_use_stdin
     check_hooks_registered
     check_sanemaster_syntax
-    check_init_script
-    check_readme_hook_count
-    check_sop_doc_rule_count
+    check_docs_exist
+    check_sop_doc
     check_hooks_readme
-    check_version_consistency
-    check_urls
     run_hook_tests
 
     puts
@@ -226,7 +210,7 @@ class SaneProcessQA
         hook_list = entry['hooks'] || []
         hook_list.each do |hook|
           command = hook['command'] || ''
-          # Extract hook filename from command like: ruby "$CLAUDE_PROJECT_DIR"/scripts/hooks/circuit_breaker.rb
+          # Extract hook filename from command like: ruby ./Scripts/hooks/saneprompt.rb
           if (match = command.match(%r{hooks/([^/\s"]+\.rb)}))
             registered_hooks << match[1]
           end
@@ -291,36 +275,7 @@ class SaneProcessQA
 
   def check_init_script
     print 'Checking init.sh... '
-
-    unless File.exist?(INIT_SCRIPT)
-      @errors << 'init.sh not found'
-      puts '❌ Missing'
-      return
-    end
-
-    content = File.read(INIT_SCRIPT)
-
-    # Extract hooks from the HOOKS array in init.sh
-    hooks_match = content.match(/HOOKS=\(\s*([\s\S]*?)\s*\)/)
-    unless hooks_match
-      @errors << 'init.sh: Cannot find HOOKS array'
-      puts '❌ HOOKS array not found'
-      return
-    end
-
-    # Parse the hooks list
-    init_hooks = hooks_match[1].scan(/"([^"]+)"/).flatten
-
-    missing = ALL_HOOK_FILES - init_hooks
-    extra = init_hooks - ALL_HOOK_FILES
-
-    if missing.empty? && extra.empty?
-      puts "✅ init.sh lists all #{ALL_HOOK_FILES.count} hooks"
-    else
-      @errors << "init.sh missing: #{missing.join(', ')}" unless missing.empty?
-      @warnings << "init.sh has extra: #{extra.join(', ')}" unless extra.empty?
-      puts "❌ Mismatch (missing: #{missing.count}, extra: #{extra.count})"
-    end
+    puts '⚠️  Not used in SaneVideo (skipping)'
   end
 
   def check_readme_hook_count
@@ -352,32 +307,37 @@ class SaneProcessQA
     end
   end
 
-  def check_sop_doc_rule_count
-    print 'Checking docs/SaneProcess.md rule count... '
+  def check_docs_exist
+    print 'Checking required docs exist... '
+
+    missing = []
+    missing << 'README.md' unless File.exist?(README)
+    missing << 'DEVELOPMENT.md' unless File.exist?(SOP_DOC)
+    missing << 'AI_AGENT_QUICK_START.md' unless File.exist?(AI_AGENT_QUICK_START)
+
+    if missing.empty?
+      puts '✅ OK'
+    else
+      @errors << "Missing docs: #{missing.join(', ')}"
+      puts "❌ Missing: #{missing.join(', ')}"
+    end
+  end
+
+  def check_sop_doc
+    print 'Checking DEVELOPMENT.md (SOP)... '
 
     unless File.exist?(SOP_DOC)
-      @warnings << 'docs/SaneProcess.md not found'
-      puts '⚠️  Not found'
+      @errors << 'DEVELOPMENT.md not found'
+      puts '❌ Missing'
       return
     end
 
     content = File.read(SOP_DOC)
-
-    # Look for "13 Golden Rules" or "11 Golden Rules"
-    rule_counts = content.scan(/(\d+)\s+Golden Rules?/i).flatten.map(&:to_i)
-
-    if rule_counts.empty?
-      @warnings << 'docs/SaneProcess.md: No rule count found'
-      puts '⚠️  No count found'
-      return
-    end
-
-    wrong_counts = rule_counts.reject { |c| c == EXPECTED_RULE_COUNT }
-    if wrong_counts.empty?
-      puts "✅ Rule count correct (#{EXPECTED_RULE_COUNT})"
+    if content.include?('## 1. The Golden Rules')
+      puts '✅ Found Golden Rules section'
     else
-      @errors << "SaneProcess.md says #{wrong_counts.first} rules, should be #{EXPECTED_RULE_COUNT}"
-      puts "❌ Says #{wrong_counts.first}, should be #{EXPECTED_RULE_COUNT}"
+      @warnings << 'DEVELOPMENT.md: Golden Rules section not found'
+      puts '⚠️  Golden Rules section not found'
     end
   end
 
@@ -392,10 +352,8 @@ class SaneProcessQA
 
     content = File.read(HOOKS_README)
 
-    # Check each expected hook is mentioned
-    missing = ALL_HOOK_FILES.reject do |hook|
-      content.include?(hook)
-    end
+    # Check each expected hook entrypoint is mentioned
+    missing = EXPECTED_HOOKS.reject { |hook| content.include?(hook) }
 
     if missing.empty?
       puts '✅ All hooks documented'
@@ -408,46 +366,7 @@ class SaneProcessQA
   def check_version_consistency
     print 'Checking version consistency... '
 
-    versions = {}
-
-    # Check README.md
-    if File.exist?(README)
-      content = File.read(README)
-      if (match = content.match(/SaneProcess v(\d+\.\d+)/i))
-        versions['README.md'] = match[1]
-      end
-    end
-
-    # Check docs/SaneProcess.md
-    if File.exist?(SOP_DOC)
-      content = File.read(SOP_DOC)
-      if (match = content.match(/SaneProcess v(\d+\.\d+)/i))
-        versions['SaneProcess.md'] = match[1]
-      end
-    end
-
-    # Check init.sh
-    if File.exist?(INIT_SCRIPT)
-      content = File.read(INIT_SCRIPT)
-      if (match = content.match(/Version (\d+\.\d+)/i))
-        versions['init.sh'] = match[1]
-      end
-    end
-
-    if versions.empty?
-      @warnings << 'No version strings found'
-      puts '⚠️  No versions found'
-      return
-    end
-
-    unique_versions = versions.values.uniq
-    if unique_versions.one?
-      puts "✅ All files at v#{unique_versions.first}"
-    else
-      details = versions.map { |f, v| "#{f}=v#{v}" }.join(', ')
-      @errors << "Version mismatch: #{details}"
-      puts "❌ Mismatch: #{details}"
-    end
+    puts '⚠️  Not enforced in SaneVideo (skipping)'
   end
 
   def check_urls
@@ -456,7 +375,7 @@ class SaneProcessQA
     urls_to_check = []
 
     # Collect URLs from key files
-    [README, SOP_DOC, File.join(__dir__, '..', '.claude', 'SOP_CONTEXT.md')].each do |file|
+    [README, SOP_DOC, AI_AGENT_QUICK_START, File.join(__dir__, '..', '.claude', 'SOP_CONTEXT.md')].each do |file|
       next unless File.exist?(file)
 
       content = File.read(file)
@@ -529,4 +448,4 @@ class SaneProcessQA
 end
 
 # Run if executed directly
-SaneProcessQA.new.run if __FILE__ == $PROGRAM_NAME
+SaneVideoQA.new.run if __FILE__ == $PROGRAM_NAME

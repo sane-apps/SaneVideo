@@ -6,6 +6,7 @@
 //
 
 import AVFoundation
+import CoreGraphics
 import CoreImage
 import CoreMedia
 
@@ -44,13 +45,15 @@ final class VideoWriter: VideoWriterProtocol {
     private var systemAudioInput: AVAssetWriterInput?
     private var pixelBufferAdaptor: AVAssetWriterInputPixelBufferAdaptor?
 
-    private let targetSize = CGSize(width: 1920, height: 1080)
+    private let targetSize: CGSize
 
     private var sessionStarted = false
     private var finishingTask: Task<URL?, Never>?
 
     // Use shared CIContext from RenderingService to prevent VFX corruption
     private let ciContext: CIContext
+
+    private let srgbColorSpace = CGColorSpaceCreateDeviceRGB()
 
     // CRITICAL FIX (2025-12-31): Monotonic timestamp tracking to prevent error -16364
     // When presenter overlay toggles during screen recording, timestamps can go backwards
@@ -91,8 +94,12 @@ final class VideoWriter: VideoWriterProtocol {
         return videoInput?.isReadyForMoreMediaData == true
     }
 
-    init(renderingService: RenderingService = .shared) {
+    init(
+        renderingService: RenderingService = .shared,
+        targetSize: CGSize = CGSize(width: 1920, height: 1080)
+    ) {
         self.ciContext = renderingService.ciContext
+        self.targetSize = targetSize
     }
 
     func start(outputURL: URL, targetFrameRate: Double = 30.0) throws {
@@ -127,12 +134,24 @@ final class VideoWriter: VideoWriterProtocol {
         ]
 
         // Add compression properties with frame rate
+        let averageBitrate: Int
+        switch max(targetSize.width, targetSize.height) {
+        case 0..<1920:
+            averageBitrate = 6_000_000
+        case 1920..<3840:
+            averageBitrate = 10_000_000
+        default:
+            averageBitrate = 20_000_000
+        }
+
         var compressionProperties: [String: Any] = [:]
         compressionProperties[AVVideoExpectedSourceFrameRateKey] = targetFrameRate
-        compressionProperties[AVVideoAverageBitRateKey] = 10_000_000  // 10 Mbps for 1080p
+        compressionProperties[AVVideoAverageBitRateKey] = averageBitrate
         videoSettings[AVVideoCompressionPropertiesKey] = compressionProperties
 
-        AppLogger.recording.info("📹 VideoWriter: Configuring for \(targetFrameRate) fps, \(Int(targetSize.width))x\(Int(targetSize.height))")
+        AppLogger.recording.info(
+            "📹 VideoWriter: Configuring for \(targetFrameRate) fps, \(Int(targetSize.width))x\(Int(targetSize.height)) @ \(averageBitrate / 1_000_000) Mbps"
+        )
 
         let vInput = AVAssetWriterInput(
             mediaType: .video,
@@ -353,7 +372,6 @@ final class VideoWriter: VideoWriterProtocol {
                 }
             }
 
-            let srgbColorSpace = CGColorSpaceCreateDeviceRGB()
             ciContext.render(finalImage, to: destBuffer, bounds: finalImage.extent, colorSpace: srgbColorSpace)
 
             if writer.status == .writing {

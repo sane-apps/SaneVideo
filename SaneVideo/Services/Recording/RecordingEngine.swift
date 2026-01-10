@@ -57,6 +57,9 @@ class RecordingEngine: NSObject {
   // Components
   @RecordingActor let timeCoordinator = RecordingTimeCoordinator()
 
+  // Normalize mic audio to match VideoWriter AAC configuration (48 kHz)
+  @RecordingActor private let micAudioResampler = AudioResampler(targetSampleRate: 48_000)
+
   // PiP Frame Sync: Cached frame for compositing into screen recordings
   @RecordingActor private var cachedPiPFrame: CGRect?
   @RecordingActor private var cachedScreenFrame: CGRect?
@@ -221,15 +224,23 @@ class RecordingEngine: NSObject {
       return
     }
 
+    // Capture recording prefs once so all capture paths (camera/screen/writer) agree.
+    let (targetFPS, recordingResolution) = await MainActor.run {
+      (ServiceContainer.shared.userPreferences.recordingFPS,
+       ServiceContainer.shared.userPreferences.recordingResolution)
+    }
+    let targetSize = recordingResolution.size
+
+    // Ensure ScreenRecorder respects prefs (also used for seamless switches later)
+    await MainActor.run {
+      self.screenRecorder.targetFrameRate = targetFPS
+      self.screenRecorder.targetSize = targetSize
+    }
+
     // CRITICAL: Create videoWriter but don't set isRecording until ALL services start successfully
     // This prevents partial failure states where isRecording=true but no input source
     let renderingService = RenderingService.shared
-    self.videoWriter = VideoWriter(renderingService: renderingService)
-
-    // Get target frame rate from user preferences
-    let targetFPS = await MainActor.run {
-      ServiceContainer.shared.userPreferences.recordingFPS
-    }
+    self.videoWriter = VideoWriter(renderingService: renderingService, targetSize: targetSize)
 
     do {
       try self.videoWriter?.start(outputURL: url, targetFrameRate: targetFPS)
@@ -270,6 +281,12 @@ class RecordingEngine: NSObject {
         // We do this BEFORE starting the screen recorder to avoid flicker
         try await cameraService.start()
 
+        // Re-apply prefs in case they changed since recording started
+        await MainActor.run {
+          let prefs = ServiceContainer.shared.userPreferences
+          self.screenRecorder.targetFrameRate = prefs.recordingFPS
+          self.screenRecorder.targetSize = prefs.recordingResolution.size
+        }
         try await self.screenRecorder.start()
       } catch {
         // CRITICAL: Cleanup on failure - videoWriter was created but screen recorder failed
@@ -536,7 +553,13 @@ class RecordingEngine: NSObject {
       guard !isPaused, isRecording, let writer = videoWriter, writer.isWriting else { return }
       guard !timeCoordinator.startTimeNeedsRecalibration else { return }
 
-      let bufferToWrite = timeCoordinator.adjustBufferTime(sampleBuffer)
+      let adjusted = timeCoordinator.adjustBufferTime(sampleBuffer)
+      let bufferToWrite: CMSampleBuffer
+      if let resampled = micAudioResampler.resampleIfNeeded(adjusted) {
+        bufferToWrite = resampled
+      } else {
+        bufferToWrite = adjusted
+      }
 
       if timeCoordinator.startTime == .zero {
         let presentationTime = bufferToWrite.presentationTimeStamp

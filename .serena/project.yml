@@ -1,0 +1,21 @@
+# Serena configuration for SaneVideo
+# SaneVideo is a macOS video recording/editing app using SwiftUI and AVFoundation
+
+languages:
+- swift    # macOS SwiftUI application with AVFoundation
+
+encoding: "utf-8"
+
+ignore_all_files_in_gitignore: true
+
+ignored_paths: []
+
+read_only: false
+
+excluded_tools: []
+
+initial_prompt: ""
+
+project_name: "SaneVideo"
+
+included_optional_tools: []

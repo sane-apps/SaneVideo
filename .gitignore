@@ -87,3 +87,9 @@ project.yml.ci_backup
 
 # Ephemeral reports and analysis (AI-generated, test results, audits)
 reports/
+CLAUDE.md
+SESSION_HANDOFF.md
+SESSION_LOG.md
+DOCS_AUDIT_FINDINGS.md
+TESTING_RESULTS.md
+.claude/

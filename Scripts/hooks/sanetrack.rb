@@ -31,8 +31,8 @@ FAILURE_TOOLS = %w[Bash Edit Write].freeze # Tools that can fail and trigger cir
 
 # === MCP VERIFICATION TOOLS ===
 # Map MCP names to their read-only verification tools
+# NOTE: Memory MCP removed Jan 2026 - using Sane-Mem (localhost:37777) instead
 MCP_VERIFICATION_PATTERNS = {
-  memory: /^mcp__memory__(read_graph|search_nodes|open_nodes)$/,
   apple_docs: /^mcp__apple-docs__/,
   context7: /^mcp__context7__/,
   github: /^mcp__github__(search_|get_|list_)/
@@ -40,8 +40,8 @@ MCP_VERIFICATION_PATTERNS = {
 
 # === RESEARCH TRACKING ===
 # Patterns to detect which research category a Task agent is completing
+# NOTE: Memory category removed Jan 2026 - Sane-Mem handles auto-capture
 RESEARCH_PATTERNS = {
-  memory: /memory|mcp__memory/i,
   docs: /context7|apple-docs|documentation|mcp__context7|mcp__apple-docs/i,
   web: /web.*search|websearch|mcp__.*web/i,
   github: /github|mcp__github/i,
@@ -615,7 +615,8 @@ def self_test
   end
 
   # Test: MCP tool success is not a failure
-  result = detect_actual_failure('mcp__memory__read_graph', { 'entities' => [] })
+  # NOTE: Changed from mcp__memory__read_graph (Jan 2026) - memory MCP removed
+  result = detect_actual_failure('mcp__github__search_repositories', { 'items' => [] })
   if result.nil?
     passed += 1
     warn '  PASS: MCP success is not a failure'

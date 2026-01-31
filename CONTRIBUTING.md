@@ -8,7 +8,7 @@ Thanks for your interest in contributing to SaneVideo! This document explains ho
 
 ```bash
 # Clone the repo
-git clone https://github.com/stephanjoseph/SaneVideo.git
+git clone https://github.com/sane-apps/SaneVideo.git
 cd SaneVideo
 
 # Install dependencies
@@ -61,7 +61,7 @@ For detailed coding rules, see [.claude/rules/](.claude/rules/).
 
 ### Before You Start
 
-1. Check [GitHub Issues](https://github.com/stephanjoseph/SaneVideo/issues) for existing discussions
+1. Check [GitHub Issues](https://github.com/sane-apps/SaneVideo/issues) for existing discussions
 2. For significant changes, open an issue first to discuss the approach
 
 ### Pull Request Process
@@ -92,6 +92,6 @@ This project follows the [Contributor Covenant](CODE_OF_CONDUCT.md). Please be r
 
 ## Questions?
 
-- Open a [GitHub Issue](https://github.com/stephanjoseph/SaneVideo/issues)
+- Open a [GitHub Issue](https://github.com/sane-apps/SaneVideo/issues)
 
 Thank you for contributing!

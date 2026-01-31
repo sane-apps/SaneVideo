@@ -31,4 +31,4 @@ _"Not fear, but power, love, and sound mind" — 2 Timothy 1:7_
 - [ ] **Sound Mind**: Is the UI clear and calm? (No dark patterns, no cognitive overload)
 - [ ] **Grandma Test**: Would her life be better with this installed?
 
-→ Full philosophy: [NORTH_STAR.md](../../../meta/Brand/NORTH_STAR.md)
+→ Full philosophy: See `NORTH_STAR.md` in the SaneApps meta directory

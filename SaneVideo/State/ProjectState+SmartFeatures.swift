@@ -269,11 +269,9 @@ extension ProjectState {
             }
         }
 
-        // Only set currentProcessingTask for standalone operations
-        // Batch operations are cancelled at the batch level (EditorLayoutView.magicFixTask)
-        if !isBatchOperation {
-            setProcessingTask(task)
-        }
+        // Always store the task handle for cancellation support
+        // Batch callers can still override via EditorLayoutView.magicFixTask
+        setProcessingTask(task)
 
         do {
             try await task.value

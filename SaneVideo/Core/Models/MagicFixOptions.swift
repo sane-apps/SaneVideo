@@ -30,6 +30,8 @@ struct MagicFixOptions: Codable, Equatable {
     // Silence removal settings
     var silenceThreshold: Double = -45.0 // dB (-60 sensitive, -30 aggressive)
     var minSilenceDuration: Double = 0.3 // seconds (0.1-2.0)
+    var silenceMargin: Double = 0.1      // seconds of padding on each side of cuts
+    var silenceTolerance: Double = 0.1   // fraction of loud samples allowed in "silent" region (0.0-1.0)
     
     // Presets (2025-12-31: Simplified to focus on 5 core cleanup features)
     // Core features: removeSilence, removeFillers, generateCaptions, enhanceAudio, smoothJumpCuts

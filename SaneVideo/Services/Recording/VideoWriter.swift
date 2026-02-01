@@ -70,6 +70,9 @@ final class VideoWriter: VideoWriterProtocol {
     private var totalFramesReceived: Int = 0
     private var totalFramesWritten: Int = 0
 
+    // A/V drift tracking
+    private(set) var driftTracker: DriftTracker?
+
     // PiP Camera Overlay: Latest camera frame for compositing into screen recordings
     private var latestCameraFrame: CVPixelBuffer?
     private let cameraFrameLock = NSLock()
@@ -161,8 +164,9 @@ final class VideoWriter: VideoWriterProtocol {
         vInput.expectsMediaDataInRealTime = true
         videoInput = vInput
 
-        // DIAGNOSTIC: Initialize frame rate tracker
+        // DIAGNOSTIC: Initialize frame rate tracker and drift tracker
         frameRateTracker = FrameRateTracker(targetFPS: targetFrameRate)
+        driftTracker = DriftTracker()
 
         // Pixel Buffer Adaptor
         let sourcePixelBufferAttributes: [String: Any] = [
@@ -381,6 +385,9 @@ final class VideoWriter: VideoWriterProtocol {
                     // Track last successful write time for monotonic enforcement
                     lastWrittenVideoTime = presentationTime
 
+                    // A/V drift tracking
+                    driftTracker?.recordVideoTimestamp(presentationTime)
+
                     // DIAGNOSTIC: Track frame rate
                     frameRateTracker?.recordFrame(at: presentationTime)
                     if totalFramesWritten % 60 == 0 {  // Log every 60 frames (~2 seconds at 30fps)
@@ -406,6 +413,7 @@ final class VideoWriter: VideoWriterProtocol {
 
         input.append(sampleBuffer)
         lastWrittenMicTime = pts
+        driftTracker?.recordAudioTimestamp(pts)
     }
 
     func writeSystemAudio(sampleBuffer: CMSampleBuffer) {
@@ -558,6 +566,8 @@ final class VideoWriter: VideoWriterProtocol {
         totalFramesReceived = 0
         totalFramesWritten = 0
         frameRateTracker = nil
+        driftTracker?.reset()
+        driftTracker = nil
 
         // CRITICAL FIX: Clear the latest camera frame to free high-resolution pixel buffer
         cameraFrameLock.lock()

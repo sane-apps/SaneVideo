@@ -105,10 +105,11 @@ final class ServiceContainer {
     let audioEnhancementService: SaneAudioEnhancementService
     
     // MARK: - Diagnostics Services
-    
+
     let performanceMetrics: PerformanceMetricsService
     let systemHealth: SystemHealthService
     let exportSpeedTracker: ExportSpeedTracker
+    let recordingBenchmark: RecordingBenchmark
     
     // MARK: - Configuration
     
@@ -198,6 +199,7 @@ final class ServiceContainer {
         self.performanceMetrics = PerformanceMetricsService()
         self.systemHealth = SystemHealthService()
         self.exportSpeedTracker = ExportSpeedTracker()
+        self.recordingBenchmark = RecordingBenchmark()
         
         // Configuration
         self.pricingConfiguration = PricingConfiguration()

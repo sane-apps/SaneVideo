@@ -234,7 +234,7 @@ SaneVideo embraces these principles:
 
 ## 📄 License
 
-Proprietary - © 2025 SaneVideo
+GPL v3 — see [LICENSE](LICENSE)
 
 ---
 

@@ -25,21 +25,27 @@ enum MagicFixService {
         
         // 1. Silence Detection
         if options.removeSilence {
-            do {
-                // ROBUSTNESS: Add timeout (5 minutes max for silence detection) with retry
-                let silenceRanges = try await retryOperation(maxAttempts: 2, initialDelay: 1.0) {
-                    try await withTimeout(seconds: 300.0) {
-                        try await detectSilence(
-                            in: clip,
-                            options: options,
-                            progressHandler: { p, _ in progressHandler(Int(Double(p)/100.0 * 30.0), 100) }
-                        )
+            let audioURL = clip.enhancedAudioURL ?? clip.url
+            let hasAudio = await SilenceDetector.hasAudioTrack(url: audioURL)
+            if !hasAudio {
+                AppLogger.project.warning("⚠️ Magic Fix: Skipping silence removal — no audio track")
+            } else {
+                do {
+                    // ROBUSTNESS: Add timeout (5 minutes max for silence detection) with retry
+                    let silenceRanges = try await retryOperation(maxAttempts: 2, initialDelay: 1.0) {
+                        try await withTimeout(seconds: 300.0) {
+                            try await detectSilence(
+                                in: clip,
+                                options: options,
+                                progressHandler: { p, _ in progressHandler(Int(Double(p)/100.0 * 30.0), 100) }
+                            )
+                        }
                     }
+                    rangesToRemove.append(contentsOf: silenceRanges)
+                } catch {
+                    AppLogger.project.error("⚠️ Magic Fix: Silence detection failed after retries: \(error.localizedDescription)")
+                    // Continue execution - do not fail the whole process (graceful degradation)
                 }
-                rangesToRemove.append(contentsOf: silenceRanges)
-            } catch {
-                AppLogger.project.error("⚠️ Magic Fix: Silence detection failed after retries: \(error.localizedDescription)")
-                // Continue execution - do not fail the whole process (graceful degradation)
             }
         }
         
@@ -157,7 +163,9 @@ enum MagicFixService {
         
         let config = SilenceDetector.Configuration(
             dbThreshold: Float(options.silenceThreshold),
-            minDuration: options.minSilenceDuration
+            minDuration: options.minSilenceDuration,
+            margin: options.silenceMargin,
+            tolerance: options.silenceTolerance
         )
         
         return try await silenceDetector.detectSilence(

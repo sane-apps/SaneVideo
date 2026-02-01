@@ -25,6 +25,14 @@ Files approaching limits (monitor for refactoring):
 
 **Rule**: Soft 500 lines, Hard 800 lines. Split by responsibility.
 
+### No-Audio-Track Clips Cut Entirely (Magic Fix)
+- **Status**: FIXED (2026-01-31)
+- **Symptom**: MagicFix on video-only files (no audio track) removes all content — clip becomes empty
+- **Root Cause**: `SilenceDetector.detectSilence` returned `[CMTimeRange(start: .zero, duration: clip.duration)]` when no audio track found, treating the entire clip as silent
+- **Fix**: Return `[]` (empty) when no audio track. Added `SilenceDetector.hasAudioTrack(url:)` pre-validation in `MagicFixService`. Also added margin (100ms padding) and tolerance (10% loud samples allowed) to improve cut quality.
+- **Files**: `SilenceDetector.swift`, `MagicFixService.swift`, `MagicFixOptions.swift`, `ProjectState+SmartFeatures.swift`
+- **Tests**: `SilenceDetectorTests.swift` (8 tests)
+
 ### Voice Isolation Hang (Magic Fix)
 - **Status**: FIXED (2025-12-31)
 - **Symptom**: Magic Fix stuck at 0% on "Starting Magic Fix..." - never progresses

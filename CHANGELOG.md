@@ -6,6 +6,13 @@ All notable changes to SaneVideo are documented here.
 
 ## [Unreleased]
 
+### Fixed
+- **Silence detection on video-only clips**: No-audio-track clips had all content cut because detector returned entire clip as silent. Now correctly returns no silence ranges and MagicFix skips silence removal with a warning.
+- **Batch Magic Fix cancel**: Cancel button now works for batch operations (task handle always stored).
+
+### Improved
+- **Silence cut quality**: Added 100ms margin padding on silence cut boundaries to preserve word beginnings/endings. Added 10% tolerance for loud samples within silent regions to prevent single-sample splits from breaking a pause into two cuts.
+
 ### Added
 - Initial project setup
 - Full-screen and window recording

@@ -55,6 +55,8 @@ enum EasingType: String, Codable, CaseIterable, Sendable {
     case easeOut
     case easeInOut
     case spring
+    /// Physics-based spring using SpringMassDamperSimulation (pre-baked into keyframes)
+    case springPhysics
 
     var displayName: String {
         switch self {
@@ -63,13 +65,17 @@ enum EasingType: String, Codable, CaseIterable, Sendable {
         case .easeOut: return "Ease Out"
         case .easeInOut: return "Ease In/Out"
         case .spring: return "Spring"
+        case .springPhysics: return "Spring Physics"
         }
     }
 
     /// Apply easing function to progress (0.0 to 1.0)
+    ///
+    /// Note: `.springPhysics` keyframes are pre-baked by `SpringMassDamperSimulation`,
+    /// so this method uses linear interpolation between the pre-computed positions.
     func apply(to t: Double) -> Double {
         switch self {
-        case .linear:
+        case .linear, .springPhysics:
             return t
         case .easeIn:
             return t * t

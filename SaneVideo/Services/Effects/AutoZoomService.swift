@@ -26,17 +26,41 @@ class AutoZoomService {
         static let `default` = AutoZoomConfig()
     }
     
-    /// Generate keyframes for auto-zoom based on click events
+    /// Generate keyframes for auto-zoom based on click events.
+    ///
+    /// When `cursorPath` is provided and non-empty, uses spring-physics zoom
+    /// via `ZoomInterpolator` for natural transitions and cursor-following viewport.
+    /// Falls back to legacy easeInOut keyframes when cursor data is unavailable.
+    ///
     /// - Parameters:
     ///   - clicks: Array of click events
     ///   - clipDuration: Duration of the video clip
+    ///   - cursorPath: Optional continuous cursor samples for viewport following
     ///   - config: Configuration for zoom behavior
     /// - Returns: KeyframeAnimation with position and scale keyframes
     static func generateAutoZoomKeyframes(
         from clicks: [ClickSample],
         clipDuration: CMTime,
+        cursorPath: [CursorSample]? = nil,
         config: AutoZoomConfig = .default
     ) -> KeyframeAnimation {
+        // When cursor data is available, use spring-physics interpolation
+        if let cursorPath, !cursorPath.isEmpty {
+            let zoomConfig = ZoomInterpolator.Config(
+                zoomScale: config.zoomScale,
+                minTimeBetweenZooms: config.minTimeBetweenZooms,
+                holdDuration: config.holdDuration,
+                keyframeRate: 30.0
+            )
+            let interpolator = ZoomInterpolator(config: zoomConfig)
+            return interpolator.generateZoomAnimation(
+                clicks: clicks,
+                cursorPath: cursorPath,
+                clipDuration: clipDuration
+            )
+        }
+
+        // Legacy path: easeInOut keyframes without cursor following
         var animation = KeyframeAnimation()
         
         guard !clicks.isEmpty else { return animation }

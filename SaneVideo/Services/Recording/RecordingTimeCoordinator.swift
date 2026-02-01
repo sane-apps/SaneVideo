@@ -25,6 +25,11 @@ class RecordingTimeCoordinator: @unchecked Sendable {
     private var _startTimeNeedsRecalibration = false
     private var _lastRecordedTime: CMTime = .zero
 
+    // MARK: - Drift Correction
+
+    /// Optional drift tracker for A/V sync correction
+    var driftTracker: DriftTracker?
+
     // Thread-safe accessors
     var startTime: CMTime {
         get { lock.withLock { _startTime } }
@@ -113,6 +118,15 @@ class RecordingTimeCoordinator: @unchecked Sendable {
             var presentationTime = samplePresentationTime
             if _timeOffset != .zero {
                 presentationTime = CMTimeSubtract(presentationTime, _timeOffset)
+            }
+
+            // Apply drift correction if tracker is active
+            if let driftTracker {
+                let correction = driftTracker.calculateCorrection()
+                if abs(correction) > 0.001 {
+                    let correctionTime = CMTime(seconds: correction, preferredTimescale: presentationTime.timescale)
+                    presentationTime = CMTimeSubtract(presentationTime, correctionTime)
+                }
             }
 
             // Track last recorded time

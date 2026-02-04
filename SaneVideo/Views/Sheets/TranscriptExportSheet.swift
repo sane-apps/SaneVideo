@@ -146,7 +146,7 @@ struct TranscriptExportSheet: View {
 
             Text(optionsDescription)
                 .font(.caption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.stone)
         }
     }
 
@@ -341,7 +341,7 @@ private struct FormatButton: View {
                         .font(.caption.weight(.medium))
                     Text(".\(format.fileExtension)")
                         .font(.caption2)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.stone)
                 }
 
                 Spacer()

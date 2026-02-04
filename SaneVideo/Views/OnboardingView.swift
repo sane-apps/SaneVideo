@@ -223,7 +223,7 @@ struct OnboardingPageView: View {
 
             Text(page.subtitle)
                 .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.stone)
 
             if page.isPermissionPage == true {
                 VStack(alignment: .leading, spacing: 16) {

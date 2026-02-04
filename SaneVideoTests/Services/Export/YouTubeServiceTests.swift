@@ -74,9 +74,9 @@ struct YouTubeServiceTests {
         let descriptions = errors.compactMap { $0.errorDescription }
 
         // Assert
-        #expect(descriptions.count == 4)
+        #expect(descriptions.count == errors.count)
         let uniqueDescriptions = Set(descriptions)
-        #expect(uniqueDescriptions.count == 4)
+        #expect(uniqueDescriptions.count == errors.count)
     }
 
     // MARK: - Initial State Tests

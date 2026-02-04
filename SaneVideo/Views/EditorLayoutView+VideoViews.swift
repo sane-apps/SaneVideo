@@ -19,7 +19,7 @@ struct EditorEmptyStateView: View {
         VStack(spacing: 32) {
             Image(systemName: "wand.and.stars")
                 .font(.system(size: 64))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.stone)
 
             VStack(spacing: 12) {
                 Text("Let's Make Some Magic")
@@ -27,7 +27,7 @@ struct EditorEmptyStateView: View {
 
                 Text(String(localized: "editor.empty.subtitle", defaultValue: "Drop a video here or record to see the magic."))
                     .font(.system(size: 15))
-                    .foregroundColor(.secondary)
+                    .foregroundColor(Color.stone)
                     .multilineTextAlignment(.center)
                     .frame(maxWidth: 300)
             }

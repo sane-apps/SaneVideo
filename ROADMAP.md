@@ -1,5 +1,7 @@
 # SaneVideo Feature Roadmap
 
+**Last updated:** 2026-02-04
+
 > **Purpose**: Track discussed features for future consideration. When user asks "what features have we discussed?" or similar, check this file.
 >
 > **Format**: Each entry includes context, feasibility assessment, and decision status.

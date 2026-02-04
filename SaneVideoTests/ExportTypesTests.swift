@@ -112,13 +112,13 @@ struct ExportTypesTests {
             ]
 
             // Act
-            let descriptions = errors.compactMap { $0.errorDescription }
+        let descriptions = errors.compactMap { $0.errorDescription }
 
-            // Assert
-            #expect(descriptions.count == 7)
-            let uniqueDescriptions = Set(descriptions)
-            #expect(uniqueDescriptions.count == 7)
-        }
+        // Assert
+        #expect(descriptions.count == errors.count)
+        let uniqueDescriptions = Set(descriptions)
+        #expect(uniqueDescriptions.count == errors.count)
+    }
     }
 
     // MARK: - SaneExportSettings Tests
@@ -214,30 +214,30 @@ struct ExportTypesTests {
         func hd720Size() {
             // Arrange & Act
             let resolution = SaneExportSettings.ExportResolution.hd720
+            let expectedSize = CGSize(width: 1280, height: 720)
 
             // Assert
-            #expect(resolution.size.width == 1280)
-            #expect(resolution.size.height == 720)
+            #expect(resolution.size == expectedSize)
         }
 
         @Test("1080p has correct size")
         func hd1080Size() {
             // Arrange & Act
             let resolution = SaneExportSettings.ExportResolution.hd1080
+            let expectedSize = CGSize(width: 1920, height: 1080)
 
             // Assert
-            #expect(resolution.size.width == 1920)
-            #expect(resolution.size.height == 1080)
+            #expect(resolution.size == expectedSize)
         }
 
         @Test("4K has correct size")
         func uhd4KSize() {
             // Arrange & Act
             let resolution = SaneExportSettings.ExportResolution.uhd4K
+            let expectedSize = CGSize(width: 3840, height: 2160)
 
             // Assert
-            #expect(resolution.size.width == 3840)
-            #expect(resolution.size.height == 2160)
+            #expect(resolution.size == expectedSize)
         }
 
         @Test("All resolutions have display names")

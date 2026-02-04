@@ -154,7 +154,7 @@ final class RepurposingTests: XCTestCase {
         XCTAssertEqual(decoded.titleSuggestion, original.titleSuggestion)
         XCTAssertEqual(decoded.highlights, original.highlights)
         XCTAssertEqual(decoded.hasFace, original.hasFace)
-        XCTAssertEqual(decoded.duration, 15.0, accuracy: 0.01)
+        XCTAssertEqual(decoded.duration, original.duration, accuracy: 0.01)
     }
 
     func testShortCandidateHashable() {
@@ -174,17 +174,22 @@ final class RepurposingTests: XCTestCase {
     // MARK: - ShortDuration Tests
 
     func testShortDurationValues() {
-        XCTAssertEqual(ShortDuration.fifteen.rawValue, 15)
-        XCTAssertEqual(ShortDuration.thirty.rawValue, 30)
-        XCTAssertEqual(ShortDuration.sixty.rawValue, 60)
-        XCTAssertEqual(ShortDuration.ninety.rawValue, 90)
+        let expectedValues: [ShortDuration: Int] = [
+            .fifteen: 15,
+            .thirty: 30,
+            .sixty: 60,
+            .ninety: 90
+        ]
+
+        for (duration, expectedValue) in expectedValues {
+            XCTAssertEqual(duration.rawValue, expectedValue)
+        }
     }
 
     func testShortDurationLabels() {
-        XCTAssertEqual(ShortDuration.fifteen.label, "15s")
-        XCTAssertEqual(ShortDuration.thirty.label, "30s")
-        XCTAssertEqual(ShortDuration.sixty.label, "60s")
-        XCTAssertEqual(ShortDuration.ninety.label, "90s")
+        for duration in ShortDuration.allCases {
+            XCTAssertEqual(duration.label, "\(duration.rawValue)s")
+        }
     }
 
     func testShortDurationDescriptions() {
@@ -202,13 +207,17 @@ final class RepurposingTests: XCTestCase {
     }
 
     func testShortAspectRatioDimensions() {
-        let vertical = ShortAspectRatio.vertical9x16.dimensions(forHeight: 1920)
-        XCTAssertEqual(vertical.height, 1920)
-        XCTAssertEqual(vertical.width, 1080)
+        let verticalHeight = 1920
+        let vertical = ShortAspectRatio.vertical9x16.dimensions(forHeight: verticalHeight)
+        let expectedVerticalWidth = Int(CGFloat(verticalHeight) * (ShortAspectRatio.vertical9x16.widthRatio /
+            ShortAspectRatio.vertical9x16.heightRatio))
+        XCTAssertEqual(vertical.height, verticalHeight)
+        XCTAssertEqual(vertical.width, expectedVerticalWidth)
 
-        let square = ShortAspectRatio.square1x1.dimensions(forHeight: 1080)
-        XCTAssertEqual(square.height, 1080)
-        XCTAssertEqual(square.width, 1080)
+        let squareHeight = 1080
+        let square = ShortAspectRatio.square1x1.dimensions(forHeight: squareHeight)
+        XCTAssertEqual(square.height, squareHeight)
+        XCTAssertEqual(square.width, squareHeight)
     }
 
     // MARK: - ShortPlatform Tests
@@ -225,22 +234,25 @@ final class RepurposingTests: XCTestCase {
 
     func testRepurposingSettingsDefault() {
         let settings = RepurposingSettings.default
+        let expectedMaxShorts = 5
 
         XCTAssertEqual(settings.targetDuration, .thirty)
         XCTAssertEqual(settings.aspectRatio, .vertical9x16)
         XCTAssertEqual(settings.platform, .tiktok)
-        XCTAssertEqual(settings.maxShorts, 5)
+        XCTAssertEqual(settings.maxShorts, expectedMaxShorts)
         XCTAssertTrue(settings.detectFaces)
         XCTAssertTrue(settings.detectHighlights)
         XCTAssertTrue(settings.smartCrop)
     }
 
     func testRepurposingSettingsMaxShortsClamping() {
+        let expectedMinShorts = 1
         let tooLow = RepurposingSettings(maxShorts: 0)
-        XCTAssertEqual(tooLow.maxShorts, 1, "Max shorts below 1 should be clamped")
+        XCTAssertEqual(tooLow.maxShorts, expectedMinShorts, "Max shorts below 1 should be clamped")
 
+        let expectedMaxShorts = 10
         let tooHigh = RepurposingSettings(maxShorts: 100)
-        XCTAssertEqual(tooHigh.maxShorts, 10, "Max shorts above 10 should be clamped")
+        XCTAssertEqual(tooHigh.maxShorts, expectedMaxShorts, "Max shorts above 10 should be clamped")
     }
 
     func testRepurposingSettingsApplyPlatformPreset() {

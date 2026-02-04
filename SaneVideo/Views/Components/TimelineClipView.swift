@@ -100,7 +100,7 @@ struct TimelineClipView: View {
         // CRITICAL FIX: Only offset entire clip for left handle drag
         // Right handle stays in place via its own offset
         .offset(x: isDraggingLeftHandle ? leftTrimOffset : 0)
-        .background(isSelected ? Color.accentColor : Color.secondary.opacity(0.3))
+        .background(isSelected ? Color.accentColor : Color.stone.opacity(0.3))
         .cornerRadius(Theme.Dimensions.cornerRadius)
         .shadow(color: .black.opacity(0.3), radius: 2, x: 0, y: 1)
         .overlay(RoundedRectangle(cornerRadius: 6).stroke(isSelected ? Color.accentColor : Color.clear, lineWidth: 2))
@@ -363,7 +363,7 @@ struct TimelineThumbnailCell: View {
                     .aspectRatio(contentMode: .fill)
             } else {
                 Rectangle()
-                    .fill(Color.secondary.opacity(0.1))
+                    .fill(Color.stone.opacity(0.1))
             }
         }
         .clipped()

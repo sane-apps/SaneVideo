@@ -55,7 +55,7 @@ struct FirstLaunchView: View {
             HStack {
                 ForEach(0..<steps.count, id: \.self) { index in
                     Circle()
-                        .fill(index <= currentStep ? Color.accentColor : Color.secondary.opacity(0.3))
+                        .fill(index <= currentStep ? Color.accentColor : Color.stone.opacity(0.3))
                         .frame(width: 8, height: 8)
                         .animation(.smoothUI, value: currentStep)
                 }
@@ -94,7 +94,7 @@ struct FirstLaunchView: View {
                             ProgressView()
                                 .scaleEffect(0.8)
                             Text("Downloading AI model...")
-                                .foregroundColor(.secondary)
+                                .foregroundColor(Color.stone)
                         }
                     } else if whisperKitDownloadComplete {
                         Button("Get Started") {
@@ -195,7 +195,7 @@ struct OnboardingStepView: View {
             
             Text(step.description)
                 .font(.body)
-                .foregroundColor(.secondary)
+                .foregroundColor(Color.stone)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 40)
                 .smoothAppear()

@@ -44,7 +44,7 @@ enum ChromaKeyKernel {
     /// - Returns: Keyed image with transparent background, or original if kernel unavailable
     static func apply(
         to image: CIImage,
-        targetColor: (r: Float, g: Float, b: Float),
+        targetColor: SIMD3<Float>,
         threshold: Float
     ) -> CIImage {
         guard let kernel = kernel else {
@@ -52,7 +52,7 @@ enum ChromaKeyKernel {
             return image
         }
 
-        let colorVector = CIVector(x: CGFloat(targetColor.r), y: CGFloat(targetColor.g), z: CGFloat(targetColor.b))
+        let colorVector = CIVector(x: CGFloat(targetColor.x), y: CGFloat(targetColor.y), z: CGFloat(targetColor.z))
 
         return kernel.apply(
             extent: image.extent,

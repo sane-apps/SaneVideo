@@ -30,8 +30,8 @@ struct MagicFixServiceTests {
 
             // Assert
             #expect(keepRanges.count == 1)
-            #expect(keepRanges[0].start.seconds == 0)
-            #expect(keepRanges[0].end.seconds == 60)
+            #expect(keepRanges[0].start == .zero)
+            #expect(keepRanges[0].end == duration)
         }
 
         @Test("Single removal at start")
@@ -44,14 +44,15 @@ struct MagicFixServiceTests {
                 )
             ]
             let duration = CMTime(seconds: 60, preferredTimescale: 600)
+            let removal = removals[0]
 
             // Act
             let keepRanges = MagicFixService.calculateKeepRanges(removals: removals, duration: duration)
 
             // Assert
             #expect(keepRanges.count == 1)
-            #expect(keepRanges[0].start.seconds == 5)
-            #expect(keepRanges[0].end.seconds == 60)
+            #expect(keepRanges[0].start == removal.end)
+            #expect(keepRanges[0].end == duration)
         }
 
         @Test("Single removal at end")
@@ -64,14 +65,15 @@ struct MagicFixServiceTests {
                 )
             ]
             let duration = CMTime(seconds: 60, preferredTimescale: 600)
+            let removal = removals[0]
 
             // Act
             let keepRanges = MagicFixService.calculateKeepRanges(removals: removals, duration: duration)
 
             // Assert
             #expect(keepRanges.count == 1)
-            #expect(keepRanges[0].start.seconds == 0)
-            #expect(keepRanges[0].end.seconds == 55)
+            #expect(keepRanges[0].start == .zero)
+            #expect(keepRanges[0].end == removal.start)
         }
 
         @Test("Single removal in middle")
@@ -84,16 +86,18 @@ struct MagicFixServiceTests {
                 )
             ]
             let duration = CMTime(seconds: 60, preferredTimescale: 600)
+            let removal = removals[0]
+            let expectedKeepCount = removals.count + 1
 
             // Act
             let keepRanges = MagicFixService.calculateKeepRanges(removals: removals, duration: duration)
 
             // Assert
-            #expect(keepRanges.count == 2)
-            #expect(keepRanges[0].start.seconds == 0)
-            #expect(keepRanges[0].end.seconds == 20)
-            #expect(keepRanges[1].start.seconds == 30)
-            #expect(keepRanges[1].end.seconds == 60)
+            #expect(keepRanges.count == expectedKeepCount)
+            #expect(keepRanges[0].start == .zero)
+            #expect(keepRanges[0].end == removal.start)
+            #expect(keepRanges[1].start == removal.end)
+            #expect(keepRanges[1].end == duration)
         }
 
         @Test("Multiple non-overlapping removals")
@@ -110,18 +114,21 @@ struct MagicFixServiceTests {
                 )
             ]
             let duration = CMTime(seconds: 60, preferredTimescale: 600)
+            let firstRemoval = removals[0]
+            let secondRemoval = removals[1]
+            let expectedKeepCount = removals.count + 1
 
             // Act
             let keepRanges = MagicFixService.calculateKeepRanges(removals: removals, duration: duration)
 
             // Assert
-            #expect(keepRanges.count == 3)
-            #expect(keepRanges[0].start.seconds == 0)
-            #expect(keepRanges[0].end.seconds == 10)
-            #expect(keepRanges[1].start.seconds == 15)
-            #expect(keepRanges[1].end.seconds == 30)
-            #expect(keepRanges[2].start.seconds == 35)
-            #expect(keepRanges[2].end.seconds == 60)
+            #expect(keepRanges.count == expectedKeepCount)
+            #expect(keepRanges[0].start == .zero)
+            #expect(keepRanges[0].end == firstRemoval.start)
+            #expect(keepRanges[1].start == firstRemoval.end)
+            #expect(keepRanges[1].end == secondRemoval.start)
+            #expect(keepRanges[2].start == secondRemoval.end)
+            #expect(keepRanges[2].end == duration)
         }
 
         @Test("Overlapping removals are consolidated")
@@ -138,16 +145,18 @@ struct MagicFixServiceTests {
                 )
             ]
             let duration = CMTime(seconds: 60, preferredTimescale: 600)
+            let firstRemoval = removals[0]
+            let secondRemoval = removals[1]
 
             // Act
             let keepRanges = MagicFixService.calculateKeepRanges(removals: removals, duration: duration)
 
             // Assert
-            #expect(keepRanges.count == 2)
-            #expect(keepRanges[0].start.seconds == 0)
-            #expect(keepRanges[0].end.seconds == 10)
-            #expect(keepRanges[1].start.seconds == 25)
-            #expect(keepRanges[1].end.seconds == 60)
+            #expect(keepRanges.count == removals.count)
+            #expect(keepRanges[0].start == .zero)
+            #expect(keepRanges[0].end == firstRemoval.start)
+            #expect(keepRanges[1].start == secondRemoval.end)
+            #expect(keepRanges[1].end == duration)
         }
 
         @Test("Adjacent removals are consolidated")
@@ -164,14 +173,16 @@ struct MagicFixServiceTests {
                 )
             ]
             let duration = CMTime(seconds: 60, preferredTimescale: 600)
+            let firstRemoval = removals[0]
+            let secondRemoval = removals[1]
 
             // Act
             let keepRanges = MagicFixService.calculateKeepRanges(removals: removals, duration: duration)
 
             // Assert
-            #expect(keepRanges.count == 2)
-            #expect(keepRanges[0].end.seconds == 10)
-            #expect(keepRanges[1].start.seconds == 30)
+            #expect(keepRanges.count == removals.count)
+            #expect(keepRanges[0].end == firstRemoval.start)
+            #expect(keepRanges[1].start == secondRemoval.end)
         }
 
         @Test("Removal covering full duration returns empty")
@@ -206,12 +217,13 @@ struct MagicFixServiceTests {
                 )
             ]
             let duration = CMTime(seconds: 60, preferredTimescale: 600)
+            let expectedKeepCount = removals.count + 1
 
             // Act
             let keepRanges = MagicFixService.calculateKeepRanges(removals: removals, duration: duration)
 
             // Assert - should still work correctly
-            #expect(keepRanges.count == 3)
+            #expect(keepRanges.count == expectedKeepCount)
         }
     }
 
@@ -231,8 +243,8 @@ struct MagicFixServiceTests {
 
             // Assert
             #expect(removedRanges.count == 1)
-            #expect(removedRanges[0].start.seconds == 0)
-            #expect(removedRanges[0].end.seconds == 60)
+            #expect(removedRanges[0].start == .zero)
+            #expect(removedRanges[0].end == duration)
         }
 
         @Test("Full keep range means nothing removed")
@@ -263,14 +275,15 @@ struct MagicFixServiceTests {
                 )
             ]
             let duration = CMTime(seconds: 60, preferredTimescale: 600)
+            let keepRange = keepRanges[0]
 
             // Act
             let removedRanges = MagicFixService.calculateRemovedRanges(from: keepRanges, duration: duration)
 
             // Assert
-            #expect(removedRanges.count == 1)
-            #expect(removedRanges[0].start.seconds == 0)
-            #expect(removedRanges[0].end.seconds == 10)
+            #expect(removedRanges.count == keepRanges.count)
+            #expect(removedRanges[0].start == .zero)
+            #expect(removedRanges[0].end == keepRange.start)
         }
 
         @Test("Gap at end is removed")
@@ -283,14 +296,15 @@ struct MagicFixServiceTests {
                 )
             ]
             let duration = CMTime(seconds: 60, preferredTimescale: 600)
+            let keepRange = keepRanges[0]
 
             // Act
             let removedRanges = MagicFixService.calculateRemovedRanges(from: keepRanges, duration: duration)
 
             // Assert
-            #expect(removedRanges.count == 1)
-            #expect(removedRanges[0].start.seconds == 50)
-            #expect(removedRanges[0].end.seconds == 60)
+            #expect(removedRanges.count == keepRanges.count)
+            #expect(removedRanges[0].start == keepRange.end)
+            #expect(removedRanges[0].end == duration)
         }
 
         @Test("Gap in middle is removed")
@@ -307,14 +321,17 @@ struct MagicFixServiceTests {
                 )
             ]
             let duration = CMTime(seconds: 60, preferredTimescale: 600)
+            let firstKeepRange = keepRanges[0]
+            let secondKeepRange = keepRanges[1]
+            let expectedRemovedCount = keepRanges.count - 1
 
             // Act
             let removedRanges = MagicFixService.calculateRemovedRanges(from: keepRanges, duration: duration)
 
             // Assert
-            #expect(removedRanges.count == 1)
-            #expect(removedRanges[0].start.seconds == 20)
-            #expect(removedRanges[0].end.seconds == 40)
+            #expect(removedRanges.count == expectedRemovedCount)
+            #expect(removedRanges[0].start == firstKeepRange.end)
+            #expect(removedRanges[0].end == secondKeepRange.start)
         }
 
         @Test("Multiple gaps are all removed")
@@ -335,24 +352,25 @@ struct MagicFixServiceTests {
                 )
             ]
             let duration = CMTime(seconds: 60, preferredTimescale: 600)
+            let expectedRemovedCount = keepRanges.count + 1
 
             // Act
             let removedRanges = MagicFixService.calculateRemovedRanges(from: keepRanges, duration: duration)
 
             // Assert
-            #expect(removedRanges.count == 4)
-            // Gap at start: 0-5
-            #expect(removedRanges[0].start.seconds == 0)
-            #expect(removedRanges[0].end.seconds == 5)
-            // Gap between first and second: 15-25
-            #expect(removedRanges[1].start.seconds == 15)
-            #expect(removedRanges[1].end.seconds == 25)
-            // Gap between second and third: 35-45
-            #expect(removedRanges[2].start.seconds == 35)
-            #expect(removedRanges[2].end.seconds == 45)
-            // Gap at end: 55-60
-            #expect(removedRanges[3].start.seconds == 55)
-            #expect(removedRanges[3].end.seconds == 60)
+            #expect(removedRanges.count == expectedRemovedCount)
+            // Gap at start
+            #expect(removedRanges[0].start == .zero)
+            #expect(removedRanges[0].end == keepRanges[0].start)
+            // Gap between first and second
+            #expect(removedRanges[1].start == keepRanges[0].end)
+            #expect(removedRanges[1].end == keepRanges[1].start)
+            // Gap between second and third
+            #expect(removedRanges[2].start == keepRanges[1].end)
+            #expect(removedRanges[2].end == keepRanges[2].start)
+            // Gap at end
+            #expect(removedRanges[3].start == keepRanges[2].end)
+            #expect(removedRanges[3].end == duration)
         }
     }
 
@@ -417,19 +435,21 @@ struct MagicFixServiceTests {
                 )
             ]
             let duration = CMTime(seconds: 60, preferredTimescale: 600)
+            let expectedKeepCount = removals.count + 1
 
             // Act
             let keepRanges = MagicFixService.calculateKeepRanges(removals: removals, duration: duration)
 
             // Assert
-            #expect(keepRanges.count == 2)
+            #expect(keepRanges.count == expectedKeepCount)
         }
 
         @Test("Many small removals")
         func manySmallRemovals() {
             // Arrange - 10 small removals
             var removals: [CMTimeRange] = []
-            for i in 0..<10 {
+            let removalCount = 10
+            for i in 0..<removalCount {
                 let start = Double(i * 6)
                 removals.append(CMTimeRange(
                     start: CMTime(seconds: start, preferredTimescale: 600),
@@ -442,7 +462,7 @@ struct MagicFixServiceTests {
             let keepRanges = MagicFixService.calculateKeepRanges(removals: removals, duration: duration)
 
             // Assert - should have 10 keep ranges (between each removal) + 1 at end
-            #expect(keepRanges.count == 10)
+            #expect(keepRanges.count == removalCount)
         }
 
         @Test("Removal extending beyond duration is clipped")
@@ -455,14 +475,15 @@ struct MagicFixServiceTests {
                 )
             ]
             let duration = CMTime(seconds: 60, preferredTimescale: 600)
+            let removal = removals[0]
 
             // Act
             let keepRanges = MagicFixService.calculateKeepRanges(removals: removals, duration: duration)
 
             // Assert - should keep 0-50
             #expect(keepRanges.count == 1)
-            #expect(keepRanges[0].start.seconds == 0)
-            #expect(keepRanges[0].end.seconds == 50)
+            #expect(keepRanges[0].start == .zero)
+            #expect(keepRanges[0].end == removal.start)
         }
     }
 

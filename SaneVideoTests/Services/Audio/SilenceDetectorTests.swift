@@ -63,14 +63,15 @@ struct SilenceDetectorTests {
                     end: CMTime(seconds: 15, preferredTimescale: 600)
                 )
             ]
+            let expectedRange = ranges[0]
 
             // Act
             let result = SilenceDetector.applyMargin(ranges, margin: 0.0)
 
             // Assert
-            #expect(result.count == 1)
-            #expect(result[0].start.seconds == 5)
-            #expect(result[0].end.seconds == 15)
+            #expect(result.count == ranges.count)
+            #expect(result[0].start == expectedRange.start)
+            #expect(result[0].end == expectedRange.end)
         }
 
         @Test("Multiple ranges with margin")

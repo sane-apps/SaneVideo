@@ -29,7 +29,7 @@ struct EnhancedLoadingIndicator: View {
                 if let operation = currentOperation {
                     Text(operation)
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.stone)
                 }
                 
                 // Speed and time remaining
@@ -37,13 +37,13 @@ struct EnhancedLoadingIndicator: View {
                     if let speed = speedMBps, speed > 0 {
                         Label("\(String(format: "%.1f", speed)) MB/s", systemImage: "speedometer")
                             .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color.stone)
                     }
                     
                     if let remaining = timeRemaining, remaining > 0 {
                         Label(formatTime(remaining), systemImage: "clock")
                             .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color.stone)
                     }
                 }
             }

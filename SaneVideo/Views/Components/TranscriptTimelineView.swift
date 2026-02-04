@@ -134,7 +134,7 @@ struct TranscriptTimelineView: View {
             HStack {
                 Text("Synced with timeline")
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(Color.stone)
                 Spacer()
                 if let selectedRange = selectedTextRange {
                     Text("Selected: \(selectedRange.length) characters")
@@ -275,7 +275,7 @@ struct TranscriptSentenceView: View {
             // Timestamp
             Text(formatTime(sentence.startTime))
                 .font(.caption2.monospaced())
-                .foregroundColor(isActive ? .accentColor : .secondary)
+                .foregroundColor(isActive ? .accentColor : Color.stone)
                 .frame(width: 50, alignment: .leading)
             
             // Sentence text with word-level highlighting

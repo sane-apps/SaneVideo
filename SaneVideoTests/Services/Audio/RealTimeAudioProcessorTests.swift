@@ -6,6 +6,7 @@
 //
 
 import AVFoundation
+import Foundation
 import XCTest
 
 @testable import SaneVideo
@@ -27,9 +28,9 @@ final class RealTimeAudioProcessorTests: XCTestCase {
 
     func testSetupForPlayerItem_CallsHandler() async throws {
         // Arrange
-        var setupCalled = false
+        let setupCalled = ThreadSafeBox(false)
         sut.setupForPlayerItemHandler = { _, _, _ in
-            setupCalled = true
+            setupCalled.set(true)
         }
 
         let playerItem = AVPlayerItem(url: URL(fileURLWithPath: "/tmp/test.mp4"))
@@ -43,7 +44,7 @@ final class RealTimeAudioProcessorTests: XCTestCase {
         try await sut.setupForPlayerItem(playerItem, clip: clip, videoPlayer: player)
 
         // Assert
-        XCTAssertTrue(setupCalled)
+        XCTAssertTrue(setupCalled.get())
         XCTAssertEqual(sut.setupForPlayerItemCallCount, 1)
     }
 
@@ -74,39 +75,39 @@ final class RealTimeAudioProcessorTests: XCTestCase {
 
     func testPlay_CallsHandler() {
         // Arrange
-        var playCalled = false
+        let playCalled = ThreadSafeBox(false)
         sut.playHandler = {
-            playCalled = true
+            playCalled.set(true)
         }
 
         // Act
         sut.play()
 
         // Assert
-        XCTAssertTrue(playCalled)
+        XCTAssertTrue(playCalled.get())
         XCTAssertEqual(sut.playCallCount, 1)
     }
 
     func testPause_CallsHandler() {
         // Arrange
-        var pauseCalled = false
+        let pauseCalled = ThreadSafeBox(false)
         sut.pauseHandler = {
-            pauseCalled = true
+            pauseCalled.set(true)
         }
 
         // Act
         sut.pause()
 
         // Assert
-        XCTAssertTrue(pauseCalled)
+        XCTAssertTrue(pauseCalled.get())
         XCTAssertEqual(sut.pauseCallCount, 1)
     }
 
     func testSeek_CallsHandlerWithCorrectTime() {
         // Arrange
-        var receivedTime: CMTime?
+        let receivedTime = ThreadSafeBox<CMTime?>(nil)
         sut.seekHandler = { time in
-            receivedTime = time
+            receivedTime.set(time)
         }
 
         let seekTime = CMTime(seconds: 5.5, preferredTimescale: 600)
@@ -115,7 +116,7 @@ final class RealTimeAudioProcessorTests: XCTestCase {
         sut.seek(to: seekTime)
 
         // Assert
-        XCTAssertEqual(receivedTime, seekTime)
+        XCTAssertEqual(receivedTime.get(), seekTime)
         XCTAssertEqual(sut.seekCallCount, 1)
     }
 
@@ -143,9 +144,9 @@ final class RealTimeAudioProcessorTests: XCTestCase {
 
     func testUpdateEffects_CallsHandler() async throws {
         // Arrange
-        var updateCalled = false
+        let updateCalled = ThreadSafeBox(false)
         sut.updateEffectsHandler = { clip in
-            updateCalled = true
+            updateCalled.set(true)
         }
 
         let clip = VideoClip(
@@ -157,7 +158,7 @@ final class RealTimeAudioProcessorTests: XCTestCase {
         try await sut.updateEffects(for: clip)
 
         // Assert
-        XCTAssertTrue(updateCalled)
+        XCTAssertTrue(updateCalled.get())
         XCTAssertEqual(sut.updateEffectsCallCount, 1)
     }
 
@@ -196,7 +197,7 @@ final class RealTimeAudioProcessorTests: XCTestCase {
             try await sut.updateEffects(for: clip)
             XCTFail("Should have thrown an error")
         } catch {
-            XCTAssertEqual((error as NSError).code, 200)
+            XCTAssertEqual((error as NSError).code, expectedError.code)
         }
     }
 
@@ -204,16 +205,16 @@ final class RealTimeAudioProcessorTests: XCTestCase {
 
     func testCleanup_CallsHandler() {
         // Arrange
-        var cleanupCalled = false
+        let cleanupCalled = ThreadSafeBox(false)
         sut.cleanupHandler = {
-            cleanupCalled = true
+            cleanupCalled.set(true)
         }
 
         // Act
         sut.cleanup()
 
         // Assert
-        XCTAssertTrue(cleanupCalled)
+        XCTAssertTrue(cleanupCalled.get())
         XCTAssertEqual(sut.cleanupCallCount, 1)
     }
 
@@ -233,12 +234,12 @@ final class RealTimeAudioProcessorTests: XCTestCase {
 
     func testFullPlaybackLifecycle() async throws {
         // Arrange
-        var states: [String] = []
-        sut.setupForPlayerItemHandler = { _, _, _ in states.append("setup") }
-        sut.playHandler = { states.append("play") }
-        sut.seekHandler = { _ in states.append("seek") }
-        sut.pauseHandler = { states.append("pause") }
-        sut.cleanupHandler = { states.append("cleanup") }
+        let states = ThreadSafeBox<[String]>([])
+        sut.setupForPlayerItemHandler = { _, _, _ in states.update { $0.append("setup") } }
+        sut.playHandler = { states.update { $0.append("play") } }
+        sut.seekHandler = { _ in states.update { $0.append("seek") } }
+        sut.pauseHandler = { states.update { $0.append("pause") } }
+        sut.cleanupHandler = { states.update { $0.append("cleanup") } }
 
         let playerItem = AVPlayerItem(url: URL(fileURLWithPath: "/tmp/test.mp4"))
         let clip = VideoClip(
@@ -255,6 +256,33 @@ final class RealTimeAudioProcessorTests: XCTestCase {
         sut.cleanup()
 
         // Assert
-        XCTAssertEqual(states, ["setup", "play", "seek", "pause", "cleanup"])
+        XCTAssertEqual(states.get(), ["setup", "play", "seek", "pause", "cleanup"])
+    }
+}
+
+private final class ThreadSafeBox<Value>: @unchecked Sendable {
+    private let lock = NSLock()
+    private var value: Value
+
+    init(_ value: Value) {
+        self.value = value
+    }
+
+    func set(_ newValue: Value) {
+        lock.lock()
+        value = newValue
+        lock.unlock()
+    }
+
+    func get() -> Value {
+        lock.lock()
+        defer { lock.unlock() }
+        return value
+    }
+
+    func update(_ transform: (inout Value) -> Void) {
+        lock.lock()
+        transform(&value)
+        lock.unlock()
     }
 }

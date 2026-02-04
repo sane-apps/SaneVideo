@@ -8,7 +8,7 @@ description: Build the app, run tests (to generate logs), and dump the full runt
    // turbo
 
    ```bash
-   mcp_XcodeBuildMCP_test_macos({ "scheme": "SaneVideo", "derivedDataPath": "/Users/sj/SaneVideo/.derivedData" })
+   mcp__xcode__RunAllTests  # Requires Xcode running with SaneVideo open, get tabIdentifier from XcodeListWindows first
    ```
 
 2. Extract and Dump Logs

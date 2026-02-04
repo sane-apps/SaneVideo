@@ -33,7 +33,7 @@ struct BuildTimestampView: View {
   var body: some View {
     Text("Build: \(buildTimestamp)")
       .font(.system(size: 10, weight: .regular, design: .monospaced))
-      .foregroundStyle(.secondary)
+      .foregroundStyle(Color.stone)
       .padding(.horizontal, 8)
       .padding(.vertical, 4)
       .background {

@@ -788,7 +788,7 @@ func createCompositionEmptyProject() async {
 2. **Review source code** for each service to understand what should be tested
 3. **Write proper assertions** that verify actual behavior
 4. **Run tests** to ensure fixes don't break existing functionality
-5. **Self-rate** each fix against TEST_CREATION_WORKFLOW.md checklist
+5. **Self-rate** each fix against DEVELOPMENT.md test standards checklist
 
 ---
 

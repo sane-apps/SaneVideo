@@ -29,7 +29,7 @@ struct CollapsibleSection<Content: View>: View {
                 HStack(spacing: Theme.Dimensions.spacingSM) {
                     Image(systemName: icon)
                         .font(.system(size: isPrimary ? Theme.Typography.iconSizeSM : Theme.Typography.iconSizeXS, weight: isPrimary ? .bold : .regular))
-                        .foregroundColor(isPrimary ? Theme.Colors.accent : .secondary)
+                        .foregroundColor(isPrimary ? Theme.Colors.accent : Color.stone)
                         .frame(width: isPrimary ? 22 : 20)
                     Text(title)
                         .font(.system(size: isPrimary ? Theme.Typography.fontSizeMD : Theme.Typography.fontSizeSM, weight: isPrimary ? .bold : .semibold))
@@ -48,11 +48,11 @@ struct CollapsibleSection<Content: View>: View {
                     Spacer()
                     Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
                         .font(.system(size: Theme.Typography.fontSizeXS, weight: .semibold))
-                        .foregroundColor(.secondary)
+                        .foregroundColor(Color.stone)
                 }
                 .padding(.horizontal, Theme.Dimensions.paddingMD)
                 .padding(.vertical, isPrimary ? Theme.Dimensions.paddingMD : Theme.Dimensions.paddingSM)
-                .background(isPrimary ? Theme.Colors.accent.opacity(Theme.Opacity.subtle) : Color.secondary.opacity(Theme.Opacity.subtle))
+                .background(isPrimary ? Theme.Colors.accent.opacity(Theme.Opacity.subtle) : Color.stone.opacity(Theme.Opacity.subtle))
             })
             .buttonStyle(.plain)
             // P0 FIX: Enhanced accessibility
@@ -83,7 +83,7 @@ struct SubsectionHeader: View {
     var body: some View {
         Text(title.uppercased())
             .font(.system(size: Theme.Typography.fontSizeXS, weight: .semibold))
-            .foregroundColor(.secondary)
+            .foregroundColor(Color.stone)
             .tracking(0.5)
     }
 }
@@ -113,7 +113,7 @@ struct SmartToolButton: View {
                         .foregroundColor(.primary)
                     Text(subtitle)
                         .font(.system(size: Theme.Typography.fontSizeXS))
-                        .foregroundColor(.secondary)
+                        .foregroundColor(Color.stone)
                 }
 
                 Spacer()
@@ -173,7 +173,7 @@ struct AIToolButton: View {
                         .foregroundColor(.primary)
                     Text(subtitle)
                         .font(.system(size: Theme.Typography.fontSizeXS))
-                        .foregroundColor(.secondary)
+                        .foregroundColor(Color.stone)
                 }
 
                 Spacer()
@@ -232,7 +232,7 @@ struct EmptySelectionView: View {
             
             Image(systemName: "selection.pin.in.out")
                 .font(.system(size: 40))
-                .foregroundColor(.secondary.opacity(0.3))
+                .foregroundColor(Color.stone.opacity(0.3))
             
             VStack(spacing: 12) {
                 Text("Nothing Selected")
@@ -240,7 +240,7 @@ struct EmptySelectionView: View {
                 
                 Text("Select a clip in the timeline\nto view and edit properties.")
                     .font(.system(size: 12))
-                    .foregroundColor(.secondary)
+                    .foregroundColor(Color.stone)
                     .multilineTextAlignment(.center)
                     .lineSpacing(4)
                 
@@ -249,19 +249,19 @@ struct EmptySelectionView: View {
                     HStack(spacing: 4) {
                         Image(systemName: "hand.point.up.left.fill")
                             .font(.caption2)
-                            .foregroundColor(.secondary)
+                            .foregroundColor(Color.stone)
                         Text("Click a clip in the timeline")
                             .font(.caption2)
-                            .foregroundColor(.secondary)
+                            .foregroundColor(Color.stone)
                     }
                     
                     HStack(spacing: 4) {
                         Image(systemName: "keyboard")
                             .font(.caption2)
-                            .foregroundColor(.secondary)
+                            .foregroundColor(Color.stone)
                         Text("Or use Cmd+Click to select")
                             .font(.caption2)
-                            .foregroundColor(.secondary)
+                            .foregroundColor(Color.stone)
                     }
                 }
                 .padding(.top, 8)
@@ -282,7 +282,7 @@ struct InfoRow: View {
     var body: some View {
         HStack {
             Text(label)
-                .foregroundColor(.secondary)
+                .foregroundColor(Color.stone)
             Spacer()
             Text(value)
                 .font(.caption)

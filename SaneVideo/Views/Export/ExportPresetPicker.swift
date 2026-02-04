@@ -123,7 +123,7 @@ struct TemplateQuickApplyButton: View {
             .cornerRadius(6)
             .overlay(
                 RoundedRectangle(cornerRadius: 6)
-                    .stroke(isSelected ? Color.accentColor : Color.secondary.opacity(0.2), lineWidth: 1)
+                    .stroke(isSelected ? Color.accentColor : Color.stone.opacity(0.2), lineWidth: 1)
             )
         }
         .buttonStyle(.plain)

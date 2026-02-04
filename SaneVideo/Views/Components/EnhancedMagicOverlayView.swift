@@ -28,7 +28,7 @@ struct EnhancedMagicOverlayView: View {
                         if let status = appState.projectState.processingStatus {
                             Text(status)
                                 .font(.subheadline)
-                                .foregroundColor(.secondary)
+                                .foregroundColor(Color.stone)
                         }
                     }
                     
@@ -39,7 +39,7 @@ struct EnhancedMagicOverlayView: View {
                         showCancelConfirmation = true
                     } label: {
                         Image(systemName: "xmark.circle.fill")
-                            .foregroundColor(.secondary)
+                            .foregroundColor(Color.stone)
                     }
                     .buttonStyle(.plain)
                     .help("Cancel Magic Fix")
@@ -52,7 +52,7 @@ struct EnhancedMagicOverlayView: View {
                     
                     Text("\(Int(appState.projectState.processingProgress * 100))%")
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(Color.stone)
                 } else {
                     ProgressView()
                         .progressViewStyle(.circular)
@@ -62,7 +62,7 @@ struct EnhancedMagicOverlayView: View {
                 if appState.projectState.processingProgress > 0.1 {
                     Text("This may take a few minutes...")
                         .font(.caption2)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(Color.stone)
                 }
             }
             .padding(20)

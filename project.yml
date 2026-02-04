@@ -80,6 +80,8 @@ targets:
       macOS: 15.0
     sources:
       - path: SaneVideo
+        excludes:
+          - "**/CLAUDE.md"
     settings:
       base:
         INFOPLIST_FILE: SaneVideo/Info.plist
@@ -147,7 +149,9 @@ targets:
     deploymentTarget:
       macOS: 15.0
     sources:
-      - SaneVideoTests
+      - path: SaneVideoTests
+        excludes:
+          - "**/CLAUDE.md"
       - path: Tests/Assets
         namespaced: true
       - path: SaneVideoTests/Mocks

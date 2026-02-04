@@ -18,7 +18,7 @@ struct RecordingSettingsView: View {
           "These settings apply to camera recordings. Screen recording resolution is determined by the screen source."
         )
         .font(.caption)
-        .foregroundColor(.secondary)
+        .foregroundColor(Color.stone)
         .padding(.bottom, 8)
 
         Picker("Resolution", selection: $prefs.recordingResolution) {
@@ -40,7 +40,7 @@ struct RecordingSettingsView: View {
           .accessibilityIdentifier("settings.recording.exclude_app")
         Text("When enabled, the SaneVideo window will not appear in screen recordings.")
           .font(.caption)
-          .foregroundColor(.secondary)
+          .foregroundColor(Color.stone)
       }
     }
     .padding()

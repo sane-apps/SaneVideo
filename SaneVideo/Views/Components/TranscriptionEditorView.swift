@@ -56,7 +56,7 @@ struct TranscriptionEditorView: View {
             // Search & Tools Bar
             HStack {
                 Image(systemName: "magnifyingglass")
-                    .foregroundColor(.secondary)
+                    .foregroundColor(Color.stone)
                 TextField(String(localized: "transcript.search", defaultValue: "Search transcript..."), text: $searchText)
                     .textFieldStyle(.plain)
 
@@ -116,7 +116,7 @@ struct TranscriptionEditorView: View {
                 VStack {
                     Spacer()
                     Text(String(localized: "transcript.no_clip", defaultValue: "Select a clip to edit transcript"))
-                        .foregroundColor(.secondary)
+                        .foregroundColor(Color.stone)
                     Spacer()
                 }
             }
@@ -128,7 +128,7 @@ struct TranscriptionEditorView: View {
             Spacer()
             Image(systemName: "captions.bubble")
                 .font(.system(size: 32))
-                .foregroundColor(.secondary)
+                .foregroundColor(Color.stone)
             Text(String(localized: "transcript.empty.title", defaultValue: "No Transcript"))
                 .font(.headline)
             Button(String(localized: "transcript.action.generate", defaultValue: "Generate AI Transcript")) {
@@ -229,7 +229,7 @@ struct TranscriptionEditorView: View {
             HStack {
                 Label("Caption Style", systemImage: "textformat")
                     .font(.system(size: 12, weight: .medium))
-                    .foregroundColor(.secondary)
+                    .foregroundColor(Color.stone)
 
                 Spacer()
 
@@ -247,7 +247,7 @@ struct TranscriptionEditorView: View {
                 } label: {
                     Image(systemName: showStylePicker ? "chevron.up" : "chevron.down")
                         .font(.system(size: 10, weight: .semibold))
-                        .foregroundColor(.secondary)
+                        .foregroundColor(Color.stone)
                 }
                 .buttonStyle(.plain)
             }
@@ -285,7 +285,7 @@ struct TranscriptionEditorView: View {
 
                             Text(style.name)
                                 .font(.system(size: 9, weight: isSelected ? .bold : .regular))
-                                .foregroundColor(isSelected ? .accentColor : .secondary)
+                                .foregroundColor(isSelected ? .accentColor : Color.stone)
                                 .lineLimit(1)
                         }
                         .padding(4)
@@ -329,7 +329,7 @@ struct CaptionEditorRow: View {
             // Timestamp
             Text(formatTime(caption.startTime))
                 .font(.system(.caption2, design: .monospaced))
-                .foregroundColor(isCurrent ? .accentColor : .secondary)
+                .foregroundColor(isCurrent ? .accentColor : Color.stone)
                 .frame(width: 45, alignment: .leading)
             
             // Editable Text

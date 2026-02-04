@@ -28,12 +28,12 @@ struct ShortCandidateCard: View {
                         .clipped()
                 } else {
                     Rectangle()
-                        .fill(Color.secondary.opacity(0.2))
+                        .fill(Color.stone.opacity(0.2))
                         .frame(height: 120)
                         .overlay {
                             Image(systemName: "film")
                                 .font(.title)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(Color.stone)
                         }
                 }
 
@@ -77,7 +77,7 @@ struct ShortCandidateCard: View {
                 // Time
                 Text(formatTime(candidate.startTime))
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.stone)
 
                 Spacer()
             }
@@ -88,13 +88,13 @@ struct ShortCandidateCard: View {
                     ForEach(candidate.highlights, id: \.self) { highlight in
                         Image(systemName: highlight.icon)
                             .font(.caption2)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color.stone)
                     }
                 }
             }
         }
         .padding(8)
-        .background(isSelected ? Color.accentColor.opacity(0.1) : Color.secondary.opacity(0.05))
+        .background(isSelected ? Color.accentColor.opacity(0.1) : Color.stone.opacity(0.05))
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)

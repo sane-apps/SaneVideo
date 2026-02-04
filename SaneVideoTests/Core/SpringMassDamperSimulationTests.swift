@@ -108,12 +108,17 @@ struct SpringMassDamperSimulationTests {
 
     @Test("Custom profile parameters are respected")
     func customProfileWorks() {
+        let expectedStiffness = 500.0
+        let expectedDamping = 50.0
+        let expectedMass = 1.0
         let profile = SpringMassDamperSimulation.Profile.custom(
-            stiffness: 500, damping: 50, mass: 1.0
+            stiffness: expectedStiffness,
+            damping: expectedDamping,
+            mass: expectedMass
         )
-        #expect(profile.stiffness == 500)
-        #expect(profile.damping == 50)
-        #expect(profile.mass == 1.0)
+        #expect(profile.stiffness == expectedStiffness)
+        #expect(profile.damping == expectedDamping)
+        #expect(profile.mass == expectedMass)
 
         var spring = SpringMassDamperSimulation(
             value: 0, target: 1.0, profile: profile

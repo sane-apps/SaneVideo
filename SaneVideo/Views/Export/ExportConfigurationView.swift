@@ -23,7 +23,7 @@ struct ExportConfigurationView: View {
                     HStack {
                         Text(String(localized: "export.preset.label", defaultValue: "Preset"))
                             .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color.stone)
                         Spacer()
                         ExportPresetPicker(
                             exportSettings: $exportSettings,
@@ -39,7 +39,7 @@ struct ExportConfigurationView: View {
                             ExportPresetButton(preset: .youtube1080, icon: ExportPreset.youtube1080.icon, title: "YouTube 1080p", selected: selectedPreset == .youtube1080, id: "export.preset.youtube1080") { applyPreset(.youtube1080) }
                             ExportPresetButton(preset: .compressed, icon: ExportPreset.compressed.icon, title: "Small File", selected: selectedPreset == .compressed, id: "export.preset.small") { applyPreset(.compressed) }
                         }
-                        
+
                         // Social media presets row (Creator-friendly)
                         HStack(spacing: 8) {
                             ExportPresetButton(preset: .tiktok, icon: ExportPreset.tiktok.icon, title: "TikTok", selected: selectedPreset == .tiktok, id: "export.preset.tiktok") { applyPreset(.tiktok) }
@@ -51,7 +51,7 @@ struct ExportConfigurationView: View {
                     if let description = selectedPreset?.description {
                         Text(description)
                             .font(.caption2)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color.stone)
                     }
                 }
                 .padding(.leading, 4)
@@ -63,7 +63,7 @@ struct ExportConfigurationView: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Label(String(localized: "export.quality.label", defaultValue: "Quality"), systemImage: "dial.high")
                             .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color.stone)
 
                         Picker("", selection: $exportSettings.resolution) {
                             Text(String(localized: "export.res.uhd", defaultValue: "4K (2160p)")).tag(SaneExportSettings.ExportResolution.uhd4K)
@@ -73,34 +73,36 @@ struct ExportConfigurationView: View {
                         .pickerStyle(.menu)
                         .frame(maxWidth: 120)
                         .accessibilityIdentifier("export.resolution_picker")
+                        .accessibilityLabel("Export resolution")
                         .onChange(of: exportSettings.resolution) { _, _ in selectedPreset = .custom }
                     }
 
                     VStack(alignment: .leading, spacing: 4) {
                         Label(String(localized: "export.format.label", defaultValue: "Format"), systemImage: "film")
                             .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color.stone)
 
                         Picker("", selection: $exportSettings.codec) {
-                            Text(String(localized: "export.codec.h264", defaultValue: "H.264 (Compat)")).tag(AVVideoCodecType.h264)
-                            Text(String(localized: "export.codec.hevc", defaultValue: "HEVC (Small)")).tag(AVVideoCodecType.hevc)
-                            Text(String(localized: "export.codec.hevc_alpha", defaultValue: "HEVC+Alpha")).tag(AVVideoCodecType.hevcWithAlpha)
-                            Text(String(localized: "export.codec.prores", defaultValue: "ProRes (Edit)")).tag(AVVideoCodecType.proRes422)
+                            Text(String(localized: "export.codec.h264", defaultValue: "H.264 (Most Compatible)")).tag(AVVideoCodecType.h264)
+                            Text(String(localized: "export.codec.hevc", defaultValue: "HEVC (Smaller File)")).tag(AVVideoCodecType.hevc)
+                            Text(String(localized: "export.codec.hevc_alpha", defaultValue: "HEVC + Transparency")).tag(AVVideoCodecType.hevcWithAlpha)
+                            Text(String(localized: "export.codec.prores", defaultValue: "ProRes (Best for Editing)")).tag(AVVideoCodecType.proRes422)
                         }
                         .pickerStyle(.menu)
                         .frame(maxWidth: 120)
                         .accessibilityIdentifier("export.format_picker")
+                        .accessibilityLabel("Export format")
                         .onChange(of: exportSettings.codec) { _, _ in selectedPreset = .custom }
                     }
 
                     VStack(alignment: .leading, spacing: 4) {
                         Label(String(localized: "export.size.label", defaultValue: "Est. Size"), systemImage: "externaldrive")
                             .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color.stone)
 
                         Text("\(Int(exportSettings.bitrate / 1_000_000)) Mbps")
                             .font(.caption2)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color.stone)
                         Text(estimateFileSize())
                             .font(.caption.monospaced())
                     }
@@ -123,13 +125,13 @@ struct ExportConfigurationView: View {
             exportSettings.codec = .hevc
             exportSettings.bitrate = 20_000_000
             exportSettings.frameRate = 60.0
-            exportSettings.aspectRatio = nil  // Use source aspect (horizontal)
+            exportSettings.aspectRatio = nil // Use source aspect (horizontal)
         case .youtube1080:
             exportSettings.resolution = .hd1080
             exportSettings.codec = .h264
             exportSettings.bitrate = 12_000_000
             exportSettings.frameRate = 30.0
-            exportSettings.aspectRatio = nil  // Use source aspect (horizontal)
+            exportSettings.aspectRatio = nil // Use source aspect (horizontal)
         case .tiktok, .instagram:
             // Vertical 9:16 for short-form social platforms
             exportSettings.resolution = .hd1080
@@ -150,13 +152,13 @@ struct ExportConfigurationView: View {
             exportSettings.codec = .h264
             exportSettings.bitrate = 8_000_000
             exportSettings.frameRate = 30.0
-            exportSettings.aspectRatio = nil  // Use source aspect
+            exportSettings.aspectRatio = nil // Use source aspect
         case .compressed:
             exportSettings.resolution = .hd1080
             exportSettings.codec = .hevc
             exportSettings.bitrate = 5_000_000
             exportSettings.frameRate = 30.0
-            exportSettings.aspectRatio = nil  // Use source aspect
+            exportSettings.aspectRatio = nil // Use source aspect
         case .custom:
             break
         }
@@ -188,10 +190,11 @@ struct ExportPresetButton: View {
             .cornerRadius(6)
             .overlay(
                 RoundedRectangle(cornerRadius: 6)
-                    .stroke(selected ? Color.accentColor : Color.secondary.opacity(0.2), lineWidth: 1)
+                    .stroke(selected ? Color.accentColor : Color.stone.opacity(0.2), lineWidth: 1)
             )
         }
         .buttonStyle(.plain)
         .accessibilityIdentifier(id)
+        .accessibilityLabel("\(title) preset\(selected ? ", selected" : "")")
     }
 }

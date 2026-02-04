@@ -88,7 +88,7 @@ struct ThumbnailPickerSheet: View {
             ProgressView()
             Text(String(localized: "thumbnail.loading", defaultValue: "Analyzing video for best frames..."))
                 .font(.caption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.stone)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
@@ -299,7 +299,7 @@ struct ThumbnailPickerSheet: View {
                 .accessibilityIdentifier("thumbnail.overlay.text")
                 Text(String(localized: "thumbnail.overlay.footer", defaultValue: "Text will appear at bottom of thumbnail"))
                     .font(.caption2)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.stone)
             }
         }
     }

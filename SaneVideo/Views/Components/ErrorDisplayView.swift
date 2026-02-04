@@ -12,43 +12,54 @@ struct ErrorDisplayView: View {
     let error: Error
     let onDismiss: () -> Void
     let onRetry: (() -> Void)?
-    
+
     @State private var showingDetails = false
-    
+
+    private var isPermissionError: Bool {
+        guard let appError = error as? AppError else { return false }
+        switch appError {
+        case .cameraPermissionDenied, .cameraPermissionRestricted,
+             .microphonePermissionDenied, .microphonePermissionRestricted:
+            return true
+        default:
+            return false
+        }
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Image(systemName: errorIcon)
                     .font(.title2)
                     .foregroundColor(errorColor)
-                
+
                 VStack(alignment: .leading, spacing: 4) {
                     Text(errorTitle)
                         .font(.headline)
                     Text(errorMessage)
                         .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(Color.stone)
                 }
-                
+
                 Spacer()
-                
+
                 Button {
                     onDismiss()
                 } label: {
                     Image(systemName: "xmark.circle.fill")
-                        .foregroundColor(.secondary)
+                        .foregroundColor(Color.stone)
                 }
                 .buttonStyle(.plain)
             }
-            
+
             // Recovery suggestions
             if let suggestions = recoverySuggestions, !suggestions.isEmpty {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Try this:")
                         .font(.caption)
                         .fontWeight(.semibold)
-                        .foregroundColor(.secondary)
-                    
+                        .foregroundColor(Color.stone)
+
                     ForEach(suggestions, id: \.self) { suggestion in
                         HStack(alignment: .top, spacing: 8) {
                             Image(systemName: "checkmark.circle.fill")
@@ -56,27 +67,32 @@ struct ErrorDisplayView: View {
                                 .foregroundColor(.green)
                             Text(suggestion)
                                 .font(.caption)
-                                .foregroundColor(.secondary)
+                                .foregroundColor(Color.stone)
                         }
                     }
                 }
                 .padding(.leading, 32)
             }
-            
+
             // Action buttons
             HStack {
-                if let onRetry = onRetry {
+                if isPermissionError {
+                    Button("Open System Settings") {
+                        ServiceContainer.shared.permissionManager.openSystemSettings()
+                    }
+                    .buttonStyle(.borderedProminent)
+                } else if let onRetry {
                     Button("Retry") {
                         onRetry()
                     }
                     .buttonStyle(.borderedProminent)
                 }
-                
+
                 Button("Dismiss") {
                     onDismiss()
                 }
                 .buttonStyle(.bordered)
-                
+
                 if showingDetails {
                     Button("Hide Details") {
                         withAnimation {
@@ -94,21 +110,21 @@ struct ErrorDisplayView: View {
                 }
             }
             .padding(.top, 8)
-            
+
             // Technical details (collapsible)
             if showingDetails {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Technical Details:")
                         .font(.caption)
                         .fontWeight(.semibold)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(Color.stone)
                     Text(error.localizedDescription)
                         .font(.system(.caption, design: .monospaced))
-                        .foregroundColor(.secondary)
+                        .foregroundColor(Color.stone)
                         .textSelection(.enabled)
                 }
                 .padding()
-                .background(Color.secondary.opacity(0.1))
+                .background(Color.stone.opacity(0.1))
                 .cornerRadius(8)
                 .transition(.opacity.combined(with: .move(edge: .top)))
             }
@@ -118,7 +134,7 @@ struct ErrorDisplayView: View {
         .cornerRadius(12)
         .shadow(radius: 8)
     }
-    
+
     private var errorIcon: String {
         if let appError = error as? AppError {
             switch appError {
@@ -134,7 +150,7 @@ struct ErrorDisplayView: View {
         }
         return "exclamationmark.triangle.fill"
     }
-    
+
     private var errorColor: Color {
         if let appError = error as? AppError {
             switch appError {
@@ -150,21 +166,21 @@ struct ErrorDisplayView: View {
         }
         return .orange
     }
-    
+
     private var errorTitle: String {
         if let appError = error as? AppError {
             return appError.userFacingTitle
         }
         return "An Error Occurred"
     }
-    
+
     private var errorMessage: String {
         if let appError = error as? AppError {
             return appError.userFacingMessage
         }
         return error.localizedDescription
     }
-    
+
     private var recoverySuggestions: [String]? {
         if let appError = error as? AppError {
             return appError.recoverySuggestions

@@ -24,18 +24,14 @@
         "@upstash/context7-mcp@latest"
       ]
     },
-    "XcodeBuildMCP": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "xcodebuildmcp@latest"
-      ],
-      "env": {
-        "XCODEBUILDMCP_ENABLED_WORKFLOWS": "project-discovery,doctor"
-      }
-    },
     "imagesorcery": {
       "command": "/Users/sj/Library/Python/3.13/bin/imagesorcery-mcp"
+    },
+    "xcode": {
+      "command": "xcrun",
+      "args": [
+        "mcpbridge"
+      ]
     }
   }
 }

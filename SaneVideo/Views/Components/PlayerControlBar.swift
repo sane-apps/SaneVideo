@@ -23,9 +23,9 @@ struct PlayerControlBar: View {
                     .foregroundColor(.primary)
                     .fontWeight(.medium)
                 Text("/")
-                    .foregroundColor(.secondary)
+                    .foregroundColor(Color.stone)
                 Text(timecodeString(from: projectState.currentProject?.timeline.duration ?? .zero))
-                    .foregroundColor(.secondary)
+                    .foregroundColor(Color.stone)
             }
             .font(.system(size: 11, design: .monospaced))
 
@@ -44,6 +44,7 @@ struct PlayerControlBar: View {
                 .pressScale()
                 .help(String(localized: "player.help.step_backward", defaultValue: "Previous frame (←)"))
                 .accessibilityIdentifier("player.step_backward")
+                .accessibilityLabel("Previous frame")
 
                 // Play/Pause Button (main control)
                 Button(
@@ -61,9 +62,10 @@ struct PlayerControlBar: View {
                 .pressScale()
                 .animation(.smoothUI, value: playbackState.isPlaying)
                 .keyboardShortcut(.space, modifiers: [])
-                .disabled(projectState.currentProject?.timeline.tracks.allSatisfy { $0.clips.isEmpty } ?? true)
+                .disabled(projectState.currentProject?.timeline.tracks.allSatisfy(\.clips.isEmpty) ?? true)
                 .help(String(localized: "player.help.play_pause", defaultValue: "Play/Pause (Space) • J/K/L for shuttle control"))
                 .accessibilityIdentifier("player.toggle_play_pause")
+                .accessibilityLabel(playbackState.isPlaying ? "Pause" : "Play")
 
                 // Step forward button
                 Button(action: { playbackState.stepForward() }, label: {
@@ -76,6 +78,7 @@ struct PlayerControlBar: View {
                 .pressScale()
                 .help(String(localized: "player.help.step_forward", defaultValue: "Next frame (→)"))
                 .accessibilityIdentifier("player.step_forward")
+                .accessibilityLabel("Next frame")
             }
 
             Spacer()
@@ -101,37 +104,39 @@ struct PlayerControlBar: View {
                     .help("Rotate 90° clockwise (R)")
                     .keyboardShortcut("r", modifiers: [])
                     .accessibilityIdentifier("player.rotate")
+                    .accessibilityLabel("Rotate clip 90 degrees")
                 }
-                
+
                 // Divider between quick actions and display modes
                 if selectedClip != nil {
                     Divider()
                         .frame(height: 16)
                 }
-                
+
                 // Video display mode picker
                 HStack(spacing: 2) {
-                ForEach(VideoDisplayMode.allCases, id: \.self) { mode in
-                    Button(action: {
-                        withAnimation(.easeInOut(duration: 0.15)) {
-                            displayMode = mode
-                        }
-                    }, label: {
-                        Image(systemName: mode.icon)
-                            .font(.system(size: 12, weight: .medium))
-                            .foregroundColor(displayMode == mode ? .white : .accentColor)
-                            .frame(width: 28, height: 24)
-                            .background(
-                                displayMode == mode
-                                    ? Color.accentColor
-                                    : Color.accentColor.opacity(0.1)
-                            )
-                            .cornerRadius(4)
-                    })
-                    .buttonStyle(.plain)
-                    .help(mode.label)
-                    .accessibilityIdentifier("player.displayMode.\(mode.rawValue)")
-                }
+                    ForEach(VideoDisplayMode.allCases, id: \.self) { mode in
+                        Button(action: {
+                            withAnimation(.easeInOut(duration: 0.15)) {
+                                displayMode = mode
+                            }
+                        }, label: {
+                            Image(systemName: mode.icon)
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundColor(displayMode == mode ? .white : .accentColor)
+                                .frame(width: 28, height: 24)
+                                .background(
+                                    displayMode == mode
+                                        ? Color.accentColor
+                                        : Color.accentColor.opacity(0.1)
+                                )
+                                .cornerRadius(4)
+                        })
+                        .buttonStyle(.plain)
+                        .help(mode.label)
+                        .accessibilityIdentifier("player.displayMode.\(mode.rawValue)")
+                        .accessibilityLabel("Display mode: \(mode.label)")
+                    }
                 }
                 .padding(3)
                 .background(Color.primary.opacity(0.05), in: RoundedRectangle(cornerRadius: 8))
@@ -163,9 +168,9 @@ struct PlayerControlBar: View {
             nsView.material = material
             nsView.blendingMode = blendingMode
         }
-        
+
         // CRITICAL FIX: Proper cleanup to prevent use-after-free during autorelease
-        static func dismantleNSView(_ nsView: NSVisualEffectView, coordinator: ()) {
+        static func dismantleNSView(_ nsView: NSVisualEffectView, coordinator _: ()) {
             nsView.state = .inactive
             nsView.removeFromSuperview()
         }

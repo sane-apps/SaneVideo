@@ -62,7 +62,7 @@ struct EffectsPickerView: View {
                         .fontWeight(selectedCategory == category ? .bold : .regular)
                         .padding(.horizontal, 10)
                         .padding(.vertical, 5)
-                        .background(selectedCategory == category ? Color.accentColor : Color.secondary.opacity(0.2))
+                        .background(selectedCategory == category ? Color.accentColor : Color.stone.opacity(0.2))
                         .foregroundColor(selectedCategory == category ? .white : .primary)
                         .cornerRadius(12)
                         .overlay(
@@ -225,13 +225,13 @@ struct EffectTile: View {
                             .clipShape(RoundedRectangle(cornerRadius: 8))
                             .overlay(
                                 RoundedRectangle(cornerRadius: 8)
-                                    .stroke(isActive ? Color.accentColor : Color.secondary.opacity(0.3), lineWidth: isActive ? 2 : 1)
+                                    .stroke(isActive ? Color.accentColor : Color.stone.opacity(0.3), lineWidth: isActive ? 2 : 1)
                             )
                             .saturation(isActive ? 1.0 : 0.8)  // Slight desaturation when inactive
                     } else {
                         // Fallback to icon-based tile
                         RoundedRectangle(cornerRadius: 8)
-                            .fill(isActive ? Color.accentColor.opacity(0.2) : Color.secondary.opacity(0.15))
+                            .fill(isActive ? Color.accentColor.opacity(0.2) : Color.stone.opacity(0.15))
                             .frame(width: 64, height: 64)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 8)
@@ -263,7 +263,7 @@ struct EffectTile: View {
                 Text(effectType.displayName)
                     .font(.system(size: 10))
                     .fontWeight(isActive ? .bold : .regular)
-                    .foregroundColor(isActive ? .accentColor : .secondary)
+                    .foregroundColor(isActive ? .accentColor : Color.stone)
                     .lineLimit(1)
             }
         })
@@ -351,14 +351,14 @@ struct ActiveEffectRow: View {
                 Spacer()
                 Text(String(localized: "effects.active.status.on", defaultValue: "On"))
                     .font(.caption2)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(Color.stone)
             }
 
             // Remove button
             Button(action: onRemove, label: {
                 Image(systemName: "xmark")
                     .font(.system(size: 9, weight: .bold))
-                    .foregroundColor(.secondary)
+                    .foregroundColor(Color.stone)
             })
             .buttonStyle(.plain)
             .accessibilityIdentifier("effects.active.\(effect.type.rawValue).remove")

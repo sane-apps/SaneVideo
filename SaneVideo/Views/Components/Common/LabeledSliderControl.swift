@@ -46,7 +46,7 @@ struct LabeledSliderControl: View {
                 Spacer()
                 Text(valueFormatter(value))
                     .font(.caption.monospacedDigit())
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.stone)
             }
 
             Slider(value: $value, in: range, step: step)
@@ -109,7 +109,7 @@ struct LabeledIntSliderControl: View {
                 Spacer()
                 Text(valueFormatter(value))
                     .font(.caption.monospacedDigit())
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.stone)
             }
 
             Slider(

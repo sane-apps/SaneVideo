@@ -25,6 +25,5 @@
 ## Tooling (hooks)
 
 ```bash
-ruby ./Scripts/hooks/test/tier_tests.rb
-ruby ./Scripts/qa.rb
+./Scripts/SaneMaster.rb verify
 ```

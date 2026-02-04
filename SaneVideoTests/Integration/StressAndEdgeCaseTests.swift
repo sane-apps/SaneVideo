@@ -374,7 +374,8 @@ final class StressAndEdgeCaseTests: XCTestCase {
     @MainActor
     func testClipWithSpecialCharactersInPath() async throws {
         // Arrange
-        let specialPath = URL(fileURLWithPath: "/tmp/test video (1) [final] 'copy'.mp4")
+        let expectedFileName = "test video (1) [final] 'copy'.mp4"
+        let specialPath = URL(fileURLWithPath: "/tmp/\(expectedFileName)")
 
         projectState.startNewProject()
         projectState.addTrack(type: .video, name: "Video Track 1")
@@ -389,7 +390,7 @@ final class StressAndEdgeCaseTests: XCTestCase {
 
         // Assert - should not crash with special characters
         let addedClip = projectState.currentProject?.timeline.tracks.first?.clips.first
-        XCTAssertEqual(addedClip?.url.lastPathComponent, "test video (1) [final] 'copy'.mp4")
+        XCTAssertEqual(addedClip?.url.lastPathComponent, expectedFileName)
     }
 
     @MainActor

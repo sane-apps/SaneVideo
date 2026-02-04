@@ -39,12 +39,12 @@ struct LibraryClipRow: View {
                         .cornerRadius(Theme.Dimensions.smallCornerRadius)
                 } else {
                     Rectangle()
-                        .fill(Color.secondary.opacity(0.3))
+                        .fill(Color.stone.opacity(0.3))
                         .frame(width: 60, height: 34)
                         .cornerRadius(4)
                         .overlay(
                             Image(systemName: "film")
-                                .foregroundColor(.secondary)
+                                .foregroundColor(Color.stone)
                         )
                 }
             }
@@ -57,7 +57,7 @@ struct LibraryClipRow: View {
                 HStack(spacing: 4) {
                     Text(formatDuration(clip.duration))
                         .font(.caption2)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(Color.stone)
 
                     // Caption badge - simple indicator without count
                     if !clip.captions.isEmpty {

@@ -196,7 +196,7 @@ struct GIFExportSheet: View {
 
             Text("Duration: \(formatTime(useFullVideo ? clipDuration : endTime - startTime))")
                 .font(.caption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.stone)
         }
     }
 
@@ -302,12 +302,12 @@ private struct PresetButton: View {
                 Text(title)
                     .fontWeight(.semibold)
                 Text(subtitle)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.stone)
             }
             .font(.caption2)
         }
         .buttonStyle(.bordered)
-        .tint(isSelected ? .blue : .secondary)
+        .tint(isSelected ? .blue : Color.stone)
         .accessibilityIdentifier(id)
     }
 }

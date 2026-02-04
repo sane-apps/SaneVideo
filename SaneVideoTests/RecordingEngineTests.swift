@@ -6,14 +6,13 @@
 //  Follow AAA pattern: Arrange-Act-Assert
 //
 
-import Testing
 import AVFoundation
 @testable import SaneVideo
+import Testing
 
 @Suite("Recording Engine Tests")
 @MainActor
 struct RecordingEngineTests {
-
     // MARK: - Test Setup
 
     var sut: RecordingEngine {
@@ -38,22 +37,21 @@ struct RecordingEngineTests {
         #expect(currentSource == .camera)
     }
 
-    @Test("Disk space monitor is initialized")
+    @Test("Disk space monitor can verify space on init")
     func diskSpaceMonitorInitialized() async throws {
-        // Arrange & Act
+        // Arrange
         let engine = sut
 
-        // Assert
-        #expect(engine.diskSpaceMonitor != nil)
+        // Act & Assert - monitor should allow space verification immediately
+        try engine.diskSpaceMonitor.verifyDiskSpace()
     }
 
-    @Test("Screen preview layer is initialized")
+    @Test("Screen preview layer has correct video gravity")
     func screenPreviewLayerInitialized() async throws {
         // Arrange & Act
         let engine = sut
 
-        // Assert
-        #expect(engine.screenPreviewLayer != nil)
+        // Assert - verify the configured gravity, not just existence
         #expect(engine.screenPreviewLayer.videoGravity == .resizeAspectFill)
     }
 
@@ -183,7 +181,7 @@ struct RecordingEngineTests {
         let engine = sut
 
         // Act
-        engine.onContentSelected = { }
+        engine.onContentSelected = {}
 
         // Assert
         #expect(engine.onContentSelected != nil)
@@ -367,7 +365,7 @@ struct RecordingEngineTests {
     // MARK: - TestEnvironment Mode Tests
 
     @Test("Test mode generates mock file URL")
-    func testModeGeneratesMockURL() async throws {
+    func modeGeneratesMockURL() async throws {
         // Note: This tests the TestEnvironment.isTesting path
         // When isTesting is true, a mock URL is generated instead of real recording
 

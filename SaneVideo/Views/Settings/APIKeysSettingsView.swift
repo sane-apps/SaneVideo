@@ -36,7 +36,7 @@ struct APIKeysSettingsView: View {
 
                     Text(String(localized: "settings.youtube.description", defaultValue: "Required for uploading videos directly to YouTube. Get credentials from [Google Cloud Console](https://console.cloud.google.com/apis/credentials)."))
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(Color.stone)
 
                     VStack(spacing: 8) {
                         HStack {
@@ -99,7 +99,7 @@ struct APIKeysSettingsView: View {
 
                     Text(String(localized: "settings.security.description", defaultValue: "All API keys are stored securely in your Mac's Keychain. They never leave your device and are encrypted at rest."))
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(Color.stone)
 
                     Button(String(localized: "settings.action.clear_all", defaultValue: "Clear All API Keys"), role: .destructive) {
                         showingClearAlert = true
@@ -144,7 +144,7 @@ struct APIKeysSettingsView: View {
                 .cornerRadius(Theme.Dimensions.cornerRadius)
                 .overlay(
                     RoundedRectangle(cornerRadius: Theme.Dimensions.cornerRadius)
-                        .stroke(Color.secondary.opacity(0.2), lineWidth: 1)
+                        .stroke(Color.stone.opacity(0.2), lineWidth: 1)
                 ).onAppear {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
                         withAnimation {
@@ -168,7 +168,7 @@ struct APIKeysSettingsView: View {
         } else {
             Label(String(localized: "settings.status.not_set", defaultValue: "Not Set"), systemImage: "circle.dashed")
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundColor(Color.stone)
         }
     }
 

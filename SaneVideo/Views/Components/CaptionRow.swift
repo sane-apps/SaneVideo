@@ -34,7 +34,7 @@ struct CaptionRow: View {
                 // Timecode
                 Text(formatTime(caption.startTime))
                     .font(.caption2.monospaced())
-                    .foregroundColor(.secondary)
+                    .foregroundColor(Color.stone)
                     .padding(.top, 6)
                     .onTapGesture {
                         onSeek()
@@ -61,7 +61,7 @@ struct CaptionRow: View {
                 if isFocused {
                     Button(action: onDelete) {
                         Image(systemName: "xmark.circle.fill")
-                            .foregroundColor(.secondary)
+                            .foregroundColor(Color.stone)
                     }
                     .buttonStyle(.plain)
                     .padding(.top, 4)
@@ -113,7 +113,7 @@ struct CaptionPreview: View {
         VStack(alignment: .leading, spacing: 4) {
             Text("Preview")
                 .font(.caption2)
-                .foregroundColor(.secondary)
+                .foregroundColor(Color.stone)
             
             // Render caption with current style (simplified version of CaptionOverlayView)
             Text(text)

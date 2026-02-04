@@ -72,8 +72,9 @@ struct CaptionExportRegressionTests {
     func testCaptionStylePresets() async throws {
         // TikTok preset
         let tikTok = CaptionStyle.tikTok
+        let expectedFontSize: CGFloat = 56
         #expect(tikTok.fontName == "Futura")
-        #expect(tikTok.fontSize == 56)
+        #expect(tikTok.fontSize == expectedFontSize)
         #expect(tikTok.isBold == true)
         #expect(tikTok.strokeWidth == 4)
 

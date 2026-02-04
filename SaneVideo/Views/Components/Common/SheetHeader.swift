@@ -21,14 +21,14 @@ struct SheetHeader: View {
                     .font(.headline)
                 Text(subtitle)
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.stone)
             }
             Spacer()
             Button {
                 dismissAction()
             } label: {
                 Image(systemName: "xmark.circle.fill")
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.stone)
             }
             .buttonStyle(.plain)
             .keyboardShortcut(.cancelAction)

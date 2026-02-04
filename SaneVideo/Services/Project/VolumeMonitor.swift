@@ -77,12 +77,10 @@ final class VolumeMonitor {
     /// Register clip URLs to monitor for availability.
     /// Call this when loading a project to track which clips might become unavailable.
     func registerClipURLs(_ urls: [URL]) {
-        for url in urls {
-            if isOnExternalVolume(url) {
-                let volumePath = extractVolumePath(from: url)
-                if !mountedVolumes.contains(volumePath) {
-                    unavailableClipURLs.insert(url)
-                }
+        for url in urls where isOnExternalVolume(url) {
+            let volumePath = extractVolumePath(from: url)
+            if !mountedVolumes.contains(volumePath) {
+                unavailableClipURLs.insert(url)
             }
         }
     }

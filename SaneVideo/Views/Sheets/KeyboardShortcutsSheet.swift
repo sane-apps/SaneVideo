@@ -21,7 +21,7 @@ struct KeyboardShortcutsSheet: View {
                     dismiss()
                 } label: {
                     Image(systemName: "xmark.circle.fill")
-                        .foregroundColor(.secondary)
+                        .foregroundColor(Color.stone)
                 }
                 .buttonStyle(.plain)
                 .keyboardShortcut(.cancelAction)
@@ -127,7 +127,7 @@ struct ShortcutSection: View {
             Text(title)
                 .font(.subheadline)
                 .fontWeight(.bold)
-                .foregroundColor(.secondary)
+                .foregroundColor(Color.stone)
 
             ForEach(shortcuts, id: \.0) { label, key in
                 HStack {
@@ -138,7 +138,7 @@ struct ShortcutSection: View {
                         .font(.system(.body, design: .monospaced))
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
-                        .background(Color.secondary.opacity(0.1))
+                        .background(Color.stone.opacity(0.1))
                         .cornerRadius(4)
                 }
             }

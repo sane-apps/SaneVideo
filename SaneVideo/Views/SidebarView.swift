@@ -55,7 +55,7 @@ struct SidebarView: View {
                 } label: {
                     Image(systemName: "questionmark.circle")
                         .font(.system(size: 16))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.stone)
                 }
                 .buttonStyle(.plain)
                 .help("Get Help")
@@ -112,11 +112,11 @@ private struct SidebarRailItem: View {
             VStack(spacing: 4) {
                 Image(systemName: isSelected ? "\(icon).fill" : icon)
                     .font(.system(size: 18))
-                    .foregroundStyle(isSelected ? Color.accentColor : Color.secondary)
+                    .foregroundStyle(isSelected ? Color.accentColor : Color.stone)
 
                 Text(label)
                     .font(.system(size: 9, weight: .medium))
-                    .foregroundColor(isSelected ? Color.accentColor : .secondary)
+                    .foregroundColor(isSelected ? Color.accentColor : Color.stone)
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 8)
@@ -152,7 +152,7 @@ private struct QuickActionButton: View {
 
                 Text(label)
                     .font(.system(size: 8, weight: .medium))
-                    .foregroundColor(.secondary)
+                    .foregroundColor(Color.stone)
                     .lineLimit(1)
             }
             .frame(maxWidth: .infinity)

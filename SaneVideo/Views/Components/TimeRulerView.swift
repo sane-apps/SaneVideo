@@ -33,7 +33,7 @@ struct TimeRulerView: View {
                 path.move(to: CGPoint(x: 0, y: height))
                 path.addLine(to: CGPoint(x: width, y: height))
             }
-            context.stroke(borderPath, with: .color(Color.secondary.opacity(0.5)), lineWidth: 1)
+            context.stroke(borderPath, with: .color(Color.stone.opacity(0.5)), lineWidth: 1)
 
             // Calculate ticks
             // Major tick every 1 second (50px)
@@ -56,7 +56,7 @@ struct TimeRulerView: View {
                     path.move(to: CGPoint(x: x, y: height - majorTickHeight))
                     path.addLine(to: CGPoint(x: x, y: height))
                 }
-                context.stroke(majorPath, with: .color(Color.secondary), lineWidth: 1)
+                context.stroke(majorPath, with: .color(Color.stone), lineWidth: 1)
 
                 // Draw Label - adaptive based on zoom level
                 // When zoomed in (high pixelsPerSecond), show more frequent labels
@@ -73,7 +73,7 @@ struct TimeRulerView: View {
                     let timeString = formatTime(TimeInterval(second))
                     let text = Text(timeString)
                         .font(.system(size: labelFontSize))
-                        .foregroundColor(.secondary)
+                        .foregroundColor(Color.stone)
 
                     // Position labels at y=12 (from top) - gives 12px for text, 8px gap, then 20px for ticks
                     // First label (00:00) starts exactly at x=0 (left edge); others offset from tick
@@ -90,7 +90,7 @@ struct TimeRulerView: View {
                         path.move(to: CGPoint(x: minorX, y: height - minorTickHeight))
                         path.addLine(to: CGPoint(x: minorX, y: height))
                     }
-                    context.stroke(minorPath, with: .color(Color.secondary.opacity(0.5)), lineWidth: 1)
+                    context.stroke(minorPath, with: .color(Color.stone.opacity(0.5)), lineWidth: 1)
                 }
             }
         }

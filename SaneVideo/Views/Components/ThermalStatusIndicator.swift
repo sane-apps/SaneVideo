@@ -27,7 +27,7 @@ struct ThermalStatusIndicator: View {
                         .fontWeight(.semibold)
                     Text(thermalMessage)
                         .font(.caption2)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(Color.stone)
                 }
                 
                 Spacer()
@@ -111,7 +111,7 @@ struct CompactThermalIndicator: View {
                     .foregroundColor(.orange)
                 Text("Optimizing")
                     .font(.caption2)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(Color.stone)
             }
             .padding(.horizontal, 6)
             .padding(.vertical, 2)

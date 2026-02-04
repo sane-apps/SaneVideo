@@ -41,10 +41,10 @@ struct ThumbnailPreviewImage: View {
                         VStack(spacing: 8) {
                             Image(systemName: "film")
                                 .font(.system(size: 40))
-                                .foregroundColor(.secondary)
+                                .foregroundColor(Color.stone)
                             Text(clip.url.lastPathComponent)
                                 .font(.caption)
-                                .foregroundColor(.secondary)
+                                .foregroundColor(Color.stone)
                                 .lineLimit(1)
                         }
                     }

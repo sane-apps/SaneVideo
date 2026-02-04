@@ -340,7 +340,8 @@ struct ProjectStoreBackupRecoveryTests {
 
         // Assert
         let loaded = loadedProjects.first(where: { $0.id == project.id })
-        #expect(loaded?.name == "Test: \"Special\" <chars> & more!")
+        let expectedName = "Test: \"Special\" <chars> & more!"
+        #expect(loaded?.name == expectedName)
     }
 
     @Test("Save empty project name")
@@ -367,13 +368,14 @@ struct ProjectStoreBackupRecoveryTests {
 
         let store = ProjectStore(rootDirectory: tempDir)
         let project = VideoProject(name: "URL Test")
+        let expectedFilename = "\(project.id.uuidString).svproj"
 
         // Act
         let fileURL = store.fileURL(for: project)
 
         // Assert
         #expect(fileURL.pathExtension == "svproj")
-        #expect(fileURL.lastPathComponent == "\(project.id.uuidString).svproj")
+        #expect(fileURL.lastPathComponent == expectedFilename)
         // Compare paths to avoid trailing slash issues
         #expect(fileURL.deletingLastPathComponent().path == tempDir.path)
     }

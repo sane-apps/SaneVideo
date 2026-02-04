@@ -48,7 +48,7 @@ struct QuickAccessOverlay: View {
 
                     Text("What would you like to do?")
                         .font(.system(size: 14))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.stone)
                 }
                 .padding(.top, 32)
 
@@ -212,7 +212,7 @@ struct QuickAccessButton: View {
 
                     Text(subtitle)
                         .font(.system(size: 12))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.stone)
                 }
             }
             .frame(maxWidth: .infinity)

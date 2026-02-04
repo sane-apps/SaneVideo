@@ -414,9 +414,10 @@ struct VideoEffect: Identifiable, Codable, Equatable, Sendable {
     // Handle Kernel-based effects
     if type == .chromaKey {
       let keyColor = color != nil ? CIColor(string: color!) : CIColor.green
+      let targetColor = SIMD3(Float(keyColor.red), Float(keyColor.green), Float(keyColor.blue))
       return ChromaKeyKernel.apply(
         to: image,
-        targetColor: (r: Float(keyColor.red), g: Float(keyColor.green), b: Float(keyColor.blue)),
+        targetColor: targetColor,
         threshold: intensity
       )
     }

@@ -20,7 +20,7 @@ struct PricingBadge: View {
                     .font(.caption.bold())
                 Text("Launch")
                     .font(.caption2)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(Color.stone)
             }
             .padding(.horizontal, 8)
             .padding(.vertical, 4)
@@ -41,7 +41,7 @@ struct PricingBadge: View {
                     .font(.caption.bold())
                 Text("one-time")
                     .font(.caption2)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(Color.stone)
             }
             .padding(.horizontal, 8)
             .padding(.vertical, 4)
@@ -71,7 +71,7 @@ struct ValuePropositionView: View {
                 HStack(spacing: 8) {
                     Text(pricingConfig.pricingMessage())
                         .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(Color.stone)
                     
                     Spacer()
                     
@@ -80,7 +80,7 @@ struct ValuePropositionView: View {
             } else {
                 Text(pricingConfig.pricingMessage())
                     .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(Color.stone)
             }
         }
         .padding()

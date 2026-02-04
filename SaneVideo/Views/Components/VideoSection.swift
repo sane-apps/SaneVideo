@@ -35,7 +35,7 @@ struct VideoSection: View {
                         Spacer()
                         Image(systemName: "sparkles")
                             .font(.caption2)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color.stone)
                     }
                     .padding(8)
                     .background(Color.accentColor.opacity(0.15))
@@ -85,7 +85,7 @@ struct VideoSection: View {
                     } else {
                         Text(selectedAspectRatio.localizedLabel)
                             .font(.caption2)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color.stone)
                     }
                 }
                 .padding(8)
@@ -110,7 +110,7 @@ struct VideoSection: View {
                         .foregroundColor(.orange)
                     Text(error)
                         .font(.caption2)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(Color.stone)
                 }
                 .padding(6)
                 .background(Color.orange.opacity(0.1))
@@ -121,7 +121,7 @@ struct VideoSection: View {
             if let result = cropResult {
                 Text(result)
                     .font(.caption2)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(Color.stone)
             }
 
             // Hint: Basic controls in toolbar
@@ -131,7 +131,7 @@ struct VideoSection: View {
                 Text("Rotate & Speed in toolbar below video")
                     .font(.caption2)
             }
-            .foregroundColor(.secondary)
+            .foregroundColor(Color.stone)
             .padding(.top, 4)
         }
     }
@@ -239,8 +239,8 @@ struct AspectRatioButton: View {
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 6)
-            .background(isSelected ? Color.accentColor.opacity(0.2) : Color.secondary.opacity(0.1))
-            .foregroundColor(isSelected ? .accentColor : .secondary)
+            .background(isSelected ? Color.accentColor.opacity(0.2) : Color.stone.opacity(0.1))
+            .foregroundColor(isSelected ? .accentColor : Color.stone)
             .cornerRadius(6)
             .overlay(
                 RoundedRectangle(cornerRadius: 6)

@@ -7,462 +7,483 @@
 //  Refactored to use helper renderers.
 //
 
-@preconcurrency import AVFoundation
 import AppKit
+@preconcurrency import AVFoundation
 import CoreImage
 import CoreMedia
 import Vision
 
 /// The Custom Compositor that renders frames
 final class SaneVideoCompositor: NSObject, AVVideoCompositing {
-  // MARK: - Configuration
+    // MARK: - Configuration
 
-  private static let pixelBufferAttributes: [String: any Sendable] = [
-    kCVPixelBufferPixelFormatTypeKey as String: [
-      kCVPixelFormatType_32BGRA, kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange
-    ],
-    kCVPixelBufferMetalCompatibilityKey as String: true
-  ]
+    private static let pixelBufferAttributes: [String: any Sendable] = [
+        kCVPixelBufferPixelFormatTypeKey as String: [
+            kCVPixelFormatType_32BGRA, kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange
+        ],
+        kCVPixelBufferMetalCompatibilityKey as String: true
+    ]
 
-  // Concurrency: AVVideoCompositing protocol requires [String: any Sendable] in Swift 6.
-  var sourcePixelBufferAttributes: [String: any Sendable]? {
-    return SaneVideoCompositor.pixelBufferAttributes
-  }
-
-  var requiredPixelBufferAttributesForRenderContext: [String: any Sendable] {
-    return SaneVideoCompositor.pixelBufferAttributes
-  }
-
-  // Render Context (Shared Metal-backed CIContext)
-  // Note: RenderingService.shared.ciContext is now dynamic based on thermal state
-  private var ciContext: CIContext { RenderingService.shared.ciContext }
-  private let commandQueue: MTLCommandQueue? = RenderingService.shared.commandQueue
-
-  // MARK: - Render Loop
-
-  func renderContextChanged(_: AVVideoCompositionRenderContext) {}
-
-  func startRequest(_ request: AVAsynchronousVideoCompositionRequest) {
-    // High-Performance rendering: Detach from caller context to avoid MainActor bottlenecks
-    Task.detached(priority: .userInitiated) {
-      await self.render(request)
+    // Concurrency: AVVideoCompositing protocol requires [String: any Sendable] in Swift 6.
+    var sourcePixelBufferAttributes: [String: any Sendable]? {
+        SaneVideoCompositor.pixelBufferAttributes
     }
-  }
 
-  private func render(_ request: AVAsynchronousVideoCompositionRequest) async {
-    // CRITICAL FIX: Ensure request is always finished, even on error
-    // Use defer to guarantee finish() is called on all paths
-    var outputPixelBuffer: CVPixelBuffer?
-    var renderError: Error?
-    
-    defer {
-      // CRITICAL FIX: Always finish the request, even if error occurred
-      if let error = renderError {
-        request.finish(with: error)
-      } else if let buffer = outputPixelBuffer {
-        request.finish(withComposedVideoFrame: buffer)
-      } else {
-        // Fallback: try to create empty buffer or finish with error
-        if let emptyBuffer = request.renderContext.newPixelBuffer() {
-          request.finish(withComposedVideoFrame: emptyBuffer)
-        } else {
-          request.finish(
-            with: NSError(
-              domain: "SaneVideoCompositor", code: -3,
-              userInfo: [NSLocalizedDescriptionKey: "Failed to finish render request"]))
+    var requiredPixelBufferAttributesForRenderContext: [String: any Sendable] {
+        SaneVideoCompositor.pixelBufferAttributes
+    }
+
+    // Render Context (Shared Metal-backed CIContext)
+    // Note: RenderingService.shared.ciContext is now dynamic based on thermal state
+    private var ciContext: CIContext { RenderingService.shared.ciContext }
+    private let commandQueue: MTLCommandQueue? = RenderingService.shared.commandQueue
+
+    // Frame ordering and caching
+    // TODO: Restore RenderQueue and FaceDetectionCache once implemented
+    // private let renderQueue = RenderQueue()
+    // private let faceCache = FaceDetectionCache()
+
+    // MARK: - Render Loop
+
+    func renderContextChanged(_: AVVideoCompositionRenderContext) {}
+
+    func startRequest(_ request: AVAsynchronousVideoCompositionRequest) {
+        Task {
+            // TODO: Restore renderQueue once implemented
+            // await renderQueue.enqueue { [self] in
+            await render(request)
+            // }
         }
-      }
     }
-    
-    guard let instruction = request.videoCompositionInstruction as? SaneVideoCompositionInstruction,
-      !instruction.layerInstructions.isEmpty
-    else {
-      // If instructions are empty (transient state), return an empty buffer or handle gracefully
-      if let buffer = request.renderContext.newPixelBuffer() {
+
+    private func render(_ request: AVAsynchronousVideoCompositionRequest) async {
+        // CRITICAL FIX: Ensure request is always finished, even on error
+        // Use defer to guarantee finish() is called on all paths
+        var outputPixelBuffer: CVPixelBuffer?
+        var renderError: Error?
+
+        defer {
+            // CRITICAL FIX: Always finish the request, even if error occurred
+            if let error = renderError {
+                request.finish(with: error)
+            } else if let buffer = outputPixelBuffer {
+                request.finish(withComposedVideoFrame: buffer)
+            } else {
+                // Fallback: try to create empty buffer or finish with error
+                if let emptyBuffer = request.renderContext.newPixelBuffer() {
+                    request.finish(withComposedVideoFrame: emptyBuffer)
+                } else {
+                    request.finish(
+                        with: NSError(
+                            domain: "SaneVideoCompositor", code: -3,
+                            userInfo: [NSLocalizedDescriptionKey: "Failed to finish render request"]
+                        ))
+                }
+            }
+        }
+
+        guard let instruction = request.videoCompositionInstruction as? SaneVideoCompositionInstruction,
+              !instruction.layerInstructions.isEmpty
+        else {
+            // If instructions are empty (transient state), return an empty buffer or handle gracefully
+            if let buffer = request.renderContext.newPixelBuffer() {
+                outputPixelBuffer = buffer
+                return
+            } else {
+                renderError = NSError(
+                    domain: "SaneVideoCompositor", code: -1,
+                    userInfo: [NSLocalizedDescriptionKey: "Empty instructions"]
+                )
+                return
+            }
+        }
+
+        guard let buffer = request.renderContext.newPixelBuffer() else {
+            renderError = NSError(
+                domain: "SaneVideoCompositor", code: -2,
+                userInfo: [NSLocalizedDescriptionKey: "Failed to create output buffer"]
+            )
+            return
+        }
+
         outputPixelBuffer = buffer
-        return
-      } else {
-        renderError = NSError(
-          domain: "SaneVideoCompositor", code: -1,
-          userInfo: [NSLocalizedDescriptionKey: "Empty instructions"])
-        return
-      }
-    }
 
-    guard let buffer = request.renderContext.newPixelBuffer() else {
-      renderError = NSError(
-        domain: "SaneVideoCompositor", code: -2,
-        userInfo: [NSLocalizedDescriptionKey: "Failed to create output buffer"])
-      return
-    }
-    
-    outputPixelBuffer = buffer
+        // 2. Composite Layers (Video Tracks)
+        var currentImage: CIImage?
+        var processedTrackIDs = Set<CMPersistentTrackID>()
 
-    // 2. Composite Layers (Video Tracks)
-    var currentImage: CIImage?
-    var processedTrackIDs = Set<CMPersistentTrackID>()
+        for layerInstruction in instruction.layerInstructions.reversed() {
+            let trackID = layerInstruction.trackID
+            if processedTrackIDs.contains(trackID) { continue }
 
-    for layerInstruction in instruction.layerInstructions.reversed() {
-      let trackID = layerInstruction.trackID
-      if processedTrackIDs.contains(trackID) { continue }
+            var layerOutput: CIImage?
 
-      var layerOutput: CIImage?
+            // Transitions
+            if let transitionMeta = instruction.activeTransitions.first(where: {
+                $0.fromTrackID == trackID || $0.toTrackID == trackID
+            }) {
+                processedTrackIDs.insert(transitionMeta.fromTrackID)
+                processedTrackIDs.insert(transitionMeta.toTrackID)
 
-      // Transitions
-      if let transitionMeta = instruction.activeTransitions.first(where: {
-        $0.fromTrackID == trackID || $0.toTrackID == trackID
-      }) {
-        processedTrackIDs.insert(transitionMeta.fromTrackID)
-        processedTrackIDs.insert(transitionMeta.toTrackID)
+                if let fromImage = await getLayerImage(
+                    for: transitionMeta.fromTrackID, request: request, instruction: instruction
+                ),
+                    let toImage = await getLayerImage(
+                        for: transitionMeta.toTrackID, request: request, instruction: instruction
+                    ) {
+                    let duration = transitionMeta.timeRange.duration.seconds
+                    let elapsed = request.compositionTime.seconds - transitionMeta.timeRange.start.seconds
+                    let progress = max(0, min(1, elapsed / duration))
 
-        if let fromImage = await getLayerImage(
-          for: transitionMeta.fromTrackID, request: request, instruction: instruction),
-          let toImage = await getLayerImage(
-            for: transitionMeta.toTrackID, request: request, instruction: instruction) {
-          let duration = transitionMeta.timeRange.duration.seconds
-          let elapsed = request.compositionTime.seconds - transitionMeta.timeRange.start.seconds
-          let progress = max(0, min(1, elapsed / duration))
+                    // Direct VideoTransition usage or helper
+                    let transitionModel = VideoTransition(type: transitionMeta.type)
+                    layerOutput = transitionModel.apply(
+                        from: fromImage, to: toImage, progress: CGFloat(progress)
+                    )
+                } else {
+                    if let toImg = await getLayerImage(
+                        for: transitionMeta.toTrackID, request: request, instruction: instruction
+                    ) {
+                        layerOutput = toImg
+                    } else {
+                        layerOutput = await getLayerImage(
+                            for: transitionMeta.fromTrackID, request: request, instruction: instruction
+                        )
+                    }
+                }
 
-          // Direct VideoTransition usage or helper
-          let transitionModel = VideoTransition(type: transitionMeta.type)
-          layerOutput = transitionModel.apply(
-            from: fromImage, to: toImage, progress: CGFloat(progress))
-        } else {
-          if let toImg = await getLayerImage(
-            for: transitionMeta.toTrackID, request: request, instruction: instruction) {
-            layerOutput = toImg
-          } else {
-            layerOutput = await getLayerImage(
-              for: transitionMeta.fromTrackID, request: request, instruction: instruction)
-          }
+            } else {
+                processedTrackIDs.insert(trackID)
+                layerOutput = await getLayerImage(for: trackID, request: request, instruction: instruction)
+            }
+
+            if let newLayer = layerOutput {
+                if let background = currentImage {
+                    currentImage = newLayer.composited(over: background)
+                } else {
+                    currentImage = newLayer
+                }
+            }
         }
 
-      } else {
-        processedTrackIDs.insert(trackID)
-        layerOutput = await getLayerImage(for: trackID, request: request, instruction: instruction)
-      }
+        // 3. Render Text Overlays
+        if let resultImage = currentImage {
+            let activeTextLayers = instruction.textLayers.filter {
+                $0.timeRange.containsTime(request.compositionTime)
+            }
+            if !activeTextLayers.isEmpty {
+                let renderSize = request.renderContext.size
 
-      if let newLayer = layerOutput {
-        if let background = currentImage {
-          currentImage = newLayer.composited(over: background)
-        } else {
-          currentImage = newLayer
-        }
-      }
-    }
+                // Pro Feature: Face Detection for safe zone positioning
+                var faceRects: [CGRect] = []
 
-    // 3. Render Text Overlays
-    if let resultImage = currentImage {
-      let activeTextLayers = instruction.textLayers.filter {
-        $0.timeRange.containsTime(request.compositionTime)
-      }
-      if !activeTextLayers.isEmpty {
-        let renderSize = request.renderContext.size
+                // THERMAL OPTIMIZATION: Skip face detection if system is throttled
+                let shouldDetectFaces =
+                    activeTextLayers.contains(where: \.isCaption) && !ThermalManager.isThrottled
 
-        // Pro Feature: Face Detection for safe zone positioning
-        var faceRects: [CGRect] = []
+                if shouldDetectFaces {
+                    // TODO: Restore faceCache once implemented
+                    // faceRects = await faceCache.getFaceRects(for: resultImage, at: request.compositionTime)
+                    faceRects = [] // Temporary: no face detection
+                }
 
-        // THERMAL OPTIMIZATION: Skip face detection if system is throttled
-        let shouldDetectFaces =
-          activeTextLayers.contains(where: { $0.isCaption }) && !ThermalManager.isThrottled
-
-        if shouldDetectFaces {
-          let request = VNDetectFaceRectanglesRequest()
-          let handler = VNImageRequestHandler(ciImage: resultImage, options: [:])
-          try? handler.perform([request])
-          if let results = request.results {
-            faceRects = results.map { $0.boundingBox }
-          }
+                if let textImage = TextLayerRenderer.renderTextLayers(
+                    activeTextLayers, size: renderSize, faceRects: faceRects, compositionTime: request.compositionTime
+                ) {
+                    currentImage = textImage.composited(over: resultImage)
+                }
+            }
         }
 
-        if let textImage = TextLayerRenderer.renderTextLayers(
-          activeTextLayers, size: renderSize, faceRects: faceRects, compositionTime: request.compositionTime) {
-          currentImage = textImage.composited(over: resultImage)
+        // 4. Render Final
+        guard let buffer = outputPixelBuffer else {
+            renderError = NSError(
+                domain: "SaneVideoCompositor", code: -4,
+                userInfo: [NSLocalizedDescriptionKey: "Output buffer lost during rendering"]
+            )
+            return
         }
-      }
-    }
 
-    // 4. Render Final
-    guard let buffer = outputPixelBuffer else {
-      renderError = NSError(
-        domain: "SaneVideoCompositor", code: -4,
-        userInfo: [NSLocalizedDescriptionKey: "Output buffer lost during rendering"])
-      return
-    }
-    
-    if let finalImage = currentImage {
-      // Render directly to the output pixel buffer
-      ciContext.render(finalImage, to: buffer)
-    }
-    // defer block will finish the request with the buffer
-  }
-
-  // Helper to render a single track layer
-  private func getLayerImage(
-    for trackID: CMPersistentTrackID, request: AVAsynchronousVideoCompositionRequest,
-    instruction: SaneVideoCompositionInstruction
-  ) async -> CIImage? {
-    guard let sourceBuffer = request.sourceFrame(byTrackID: trackID) else { return nil }
-    var layerImage = CIImage(cvPixelBuffer: sourceBuffer)
-
-    // 0. Apply Privacy Blur (time-filtered to prevent leak across clips)
-    if let privacyRanges = instruction.trackPrivacyRegions[trackID] {
-      for (range, regions) in privacyRanges where range.containsTime(request.compositionTime) {
-        for region in regions {
-          applyPrivacyRegion(region, to: &layerImage)
+        if let finalImage = currentImage {
+            // Render directly to the output pixel buffer
+            ciContext.render(finalImage, to: buffer)
         }
-      }
+        // defer block will finish the request with the buffer
     }
 
-    // Find the layer instruction valid for current composition time
-    // Multiple clips on same track create separate instructions; find the one with valid transform ramp
-    var startTransform = CGAffineTransform.identity
-    var foundValidInstruction = false
+    // Helper to render a single track layer
+    private func getLayerImage(
+        for trackID: CMPersistentTrackID, request: AVAsynchronousVideoCompositionRequest,
+        instruction: SaneVideoCompositionInstruction
+    ) async -> CIImage? {
+        guard let sourceBuffer = request.sourceFrame(byTrackID: trackID) else { return nil }
+        var layerImage = CIImage(cvPixelBuffer: sourceBuffer)
 
-    for layerInstruction in instruction.layerInstructions where layerInstruction.trackID == trackID {
-      if layerInstruction.getTransformRamp(
-        for: request.compositionTime, start: &startTransform, end: nil, timeRange: nil) {
-        layerImage = layerImage.transformed(by: startTransform)
-        foundValidInstruction = true
-        break  // Found the correct instruction for this time
-      }
-    }
-
-    // If no valid instruction found, return image without transform
-    guard foundValidInstruction || instruction.layerInstructions.contains(where: { $0.trackID == trackID })
-    else { return layerImage }
-
-    // A.1.5. Apply Smart Crop Transform (reframing for vertical/square export)
-    if let keyframes = instruction.smartCropKeyframes, !keyframes.isEmpty {
-      applySmartCrop(
-        keyframes: keyframes,
-        compositionTime: request.compositionTime,
-        renderSize: request.renderContext.size,
-        to: &layerImage
-      )
-    }
-
-    // A.2. Apply Keyframe Animation Transforms
-    if let keyframeRanges = instruction.trackKeyframes[trackID] {
-      for (range, animations) in keyframeRanges where range.containsTime(request.compositionTime) {
-        let relativeTime = request.compositionTime - range.start
-        for animation in animations {
-          applyKeyframes(
-            animation, relativeTime: relativeTime, renderSize: request.renderContext.size,
-            to: &layerImage)
+        // 0. Apply Privacy Blur (time-filtered to prevent leak across clips)
+        if let privacyRanges = instruction.trackPrivacyRegions[trackID] {
+            for (range, regions) in privacyRanges where range.containsTime(request.compositionTime) {
+                for region in regions {
+                    applyPrivacyRegion(region, to: &layerImage)
+                }
+            }
         }
-      }
-    }
 
-    // B. Apply Effects
-    if let effectRanges = instruction.trackEffects[trackID] {
-      for (range, effects) in effectRanges where range.containsTime(request.compositionTime) {
-        for effect in effects {
-          applyVideoEffect(effect, to: &layerImage)
+        // Find the layer instruction valid for current composition time
+        // Multiple clips on same track create separate instructions; find the one with valid transform ramp
+        var startTransform = CGAffineTransform.identity
+        var foundValidInstruction = false
+
+        for layerInstruction in instruction.layerInstructions where layerInstruction.trackID == trackID {
+            if layerInstruction.getTransformRamp(
+                for: request.compositionTime, start: &startTransform, end: nil, timeRange: nil
+            ) {
+                layerImage = layerImage.transformed(by: startTransform)
+                foundValidInstruction = true
+                break // Found the correct instruction for this time
+            }
         }
-      }
-    }
 
-    // C. Apply Background Effects
-    if let bgEffectRanges = instruction.trackBackgroundEffects[trackID] {
-      // THERMAL OPTIMIZATION: Skip background removal/blur if system is in emergency state
-      if !ThermalManager.isEmergency {
-        for (range, bgEffects) in bgEffectRanges where range.containsTime(request.compositionTime) {
-          for bgEffect in bgEffects {
-            await applyBackgroundEffect(
-              bgEffect, to: &layerImage, visionService: instruction.visionService)
-          }
+        // If no valid instruction found, return image without transform
+        guard foundValidInstruction || instruction.layerInstructions.contains(where: { $0.trackID == trackID })
+        else { return layerImage }
+
+        // A.1.5. Apply Smart Crop Transform (reframing for vertical/square export)
+        if let keyframes = instruction.smartCropKeyframes, !keyframes.isEmpty {
+            applySmartCrop(
+                keyframes: keyframes,
+                compositionTime: request.compositionTime,
+                renderSize: request.renderContext.size,
+                to: &layerImage
+            )
         }
-      } else {
-        AppLogger.general.warning("🧊 Thermal Emergency: Skipping background effects")
-      }
-    }
 
-    return layerImage
-  }
-
-  private func applyPrivacyRegion(_ region: PrivacyRegion, to image: inout CIImage) {
-    let extent = image.extent
-    let rect = CGRect(
-      x: region.frame.origin.x * extent.width,
-      y: (1.0 - region.frame.origin.y - region.frame.height) * extent.height,
-      width: region.frame.width * extent.width,
-      height: region.frame.height * extent.height
-    )
-    let crop = image.cropped(to: rect)
-    let pixelate = CIFilter(name: "CIPixellate")!
-    pixelate.setValue(crop, forKey: kCIInputImageKey)
-    pixelate.setValue(max(5.0, extent.width / 50.0), forKey: "inputScale")
-    if let output = pixelate.outputImage {
-      image = output.composited(over: image)
-    }
-  }
-
-  private func applyKeyframes(
-    _ animation: KeyframeAnimation, relativeTime: CMTime, renderSize: CGSize,
-    to image: inout CIImage
-  ) {
-    let scale = animation.value(for: .scale, at: relativeTime)
-    let posX = animation.value(for: .positionX, at: relativeTime)
-    let posY = animation.value(for: .positionY, at: relativeTime)
-    let rotation = animation.value(for: .rotation, at: relativeTime)
-
-    if scale != 1.0 || posX != 0 || posY != 0 || rotation != 0 {
-      let centerX = image.extent.width / 2.0
-      let centerY = image.extent.height / 2.0
-      let moveX = CGFloat(posX) * renderSize.width
-      let moveY = CGFloat(posY) * renderSize.height
-
-      let kfTransform = CGAffineTransform.identity
-        .translatedBy(x: centerX, y: centerY)
-        .translatedBy(x: moveX, y: moveY)
-        .scaledBy(x: CGFloat(scale), y: CGFloat(scale))
-        .rotated(by: CGFloat(rotation) * .pi / 180.0)
-        .translatedBy(x: -centerX, y: -centerY)
-
-      image = image.transformed(by: kfTransform)
-    }
-  }
-
-  private func applyVideoEffect(_ effect: VideoEffect, to image: inout CIImage) {
-    if effect.type == .autoEnhance {
-      let options: [CIImageAutoAdjustmentOption: Any] = [
-        .enhance: true, .redEye: false, .features: []
-      ]
-      let filters = image.autoAdjustmentFilters(options: options)
-      for filter in filters {
-        filter.setValue(image, forKey: kCIInputImageKey)
-        if let output = filter.outputImage { image = output }
-      }
-    } else if let filter = effect.createFilter() {
-      filter.setValue(image, forKey: kCIInputImageKey)
-      if let output = filter.outputImage { image = output }
-    }
-  }
-
-  // MARK: - Background Effects
-
-  private func applyBackgroundEffect(
-    _ bgEffect: BackgroundEffect, to image: inout CIImage, visionService: PersonSegmentationService?
-  ) async {
-    guard let visionService = visionService else { return }
-
-    switch bgEffect {
-    case .blur(let radius):
-      if let blurred = try? await visionService.applyBackgroundBlur(
-        to: image, blurRadius: radius, reuseRequest: true) {
-        image = blurred
-      }
-    case .solidColor(let r, let g, let b, let a):
-      let color = NSColor(red: r, green: g, blue: b, alpha: a)
-      if let replaced = try? await visionService.replaceBackground(
-        in: image, with: color, reuseRequest: true) {
-        image = replaced
-      }
-    case .image(let url):
-      if let bgCI = CIImage(contentsOf: url) {
-        if let replaced = try? await visionService.replaceBackground(
-          in: image, with: bgCI, reuseRequest: true) {
-          image = replaced
+        // A.2. Apply Keyframe Animation Transforms
+        if let keyframeRanges = instruction.trackKeyframes[trackID] {
+            for (range, animations) in keyframeRanges where range.containsTime(request.compositionTime) {
+                let relativeTime = request.compositionTime - range.start
+                for animation in animations {
+                    applyKeyframes(
+                        animation, relativeTime: relativeTime, renderSize: request.renderContext.size,
+                        to: &layerImage
+                    )
+                }
+            }
         }
-      }
-    case .chromaKey(let r, let g, let b, let sensitivity):
-      // GPU-accelerated Chroma Key using shared ChromaKeyKernel
-      image = ChromaKeyKernel.apply(
-        to: image,
-        targetColor: (r: Float(r), g: Float(g), b: Float(b)),
-        threshold: sensitivity
-      )
-    }
-  }
 
-  // MARK: - Smart Crop
+        // B. Apply Effects
+        if let effectRanges = instruction.trackEffects[trackID] {
+            for (range, effects) in effectRanges where range.containsTime(request.compositionTime) {
+                for effect in effects {
+                    applyVideoEffect(effect, to: &layerImage)
+                }
+            }
+        }
 
-  /// Applies smart crop transform based on keyframes
-  /// Uses nearest-neighbor interpolation between keyframes for smooth reframing
-  private func applySmartCrop(
-    keyframes: [CMTime: SuggestedCrop],
-    compositionTime: CMTime,
-    renderSize: CGSize,
-    to image: inout CIImage
-  ) {
-    // Find the crop suggestion for this time (interpolate between keyframes)
-    let crop = interpolateCrop(at: compositionTime, from: keyframes)
+        // C. Apply Background Effects
+        if let bgEffectRanges = instruction.trackBackgroundEffects[trackID] {
+            // THERMAL OPTIMIZATION: Skip background removal/blur if system is in emergency state
+            if !ThermalManager.isEmergency {
+                for (range, bgEffects) in bgEffectRanges where range.containsTime(request.compositionTime) {
+                    for bgEffect in bgEffects {
+                        await applyBackgroundEffect(
+                            bgEffect, to: &layerImage, visionService: instruction.visionService
+                        )
+                    }
+                }
+            } else {
+                AppLogger.general.warning("🧊 Thermal Emergency: Skipping background effects")
+            }
+        }
 
-    let imageExtent = image.extent
-
-    // Calculate the transform to:
-    // 1. Scale the image by the crop's scale factor (zoom in)
-    // 2. Translate to center the crop point in the output
-
-    // The crop center is normalized (0-1), convert to image coordinates
-    let cropCenterX = crop.centerX * imageExtent.width
-    let cropCenterY = (1.0 - crop.centerY) * imageExtent.height  // Flip Y for CIImage coords
-
-    // Output center
-    let outputCenterX = renderSize.width / 2.0
-    let outputCenterY = renderSize.height / 2.0
-
-    // Build transform: scale around image center, then translate to position crop center at output center
-    let scale = crop.scale
-
-    // Translation needed after scaling to center the crop point
-    let translateX = outputCenterX - (cropCenterX * scale)
-    let translateY = outputCenterY - (cropCenterY * scale)
-
-    let transform = CGAffineTransform.identity
-      .scaledBy(x: scale, y: scale)
-      .translatedBy(x: translateX / scale, y: translateY / scale)
-
-    image = image.transformed(by: transform)
-  }
-
-  /// Interpolates crop suggestion at given time between keyframes
-  private func interpolateCrop(at time: CMTime, from keyframes: [CMTime: SuggestedCrop]) -> SuggestedCrop {
-    // Sort keyframes by time
-    let sortedTimes = keyframes.keys.sorted { $0 < $1 }
-
-    guard !sortedTimes.isEmpty else {
-      return .default
+        return layerImage
     }
 
-    // Find surrounding keyframes
-    var beforeTime: CMTime?
-    var afterTime: CMTime?
-
-    for keyTime in sortedTimes {
-      if keyTime <= time {
-        beforeTime = keyTime
-      } else if afterTime == nil {
-        afterTime = keyTime
-        break
-      }
+    private func applyPrivacyRegion(_ region: PrivacyRegion, to image: inout CIImage) {
+        let extent = image.extent
+        let rect = CGRect(
+            x: region.frame.origin.x * extent.width,
+            y: (1.0 - region.frame.origin.y - region.frame.height) * extent.height,
+            width: region.frame.width * extent.width,
+            height: region.frame.height * extent.height
+        )
+        let crop = image.cropped(to: rect)
+        let pixelate = CIFilter(name: "CIPixellate")!
+        pixelate.setValue(crop, forKey: kCIInputImageKey)
+        pixelate.setValue(max(5.0, extent.width / 50.0), forKey: "inputScale")
+        if let output = pixelate.outputImage {
+            image = output.composited(over: image)
+        }
     }
 
-    // If only one side available, use it directly
-    guard let before = beforeTime, let beforeCrop = keyframes[before] else {
-      if let after = afterTime, let afterCrop = keyframes[after] {
-        return afterCrop
-      }
-      return .default
+    private func applyKeyframes(
+        _ animation: KeyframeAnimation, relativeTime: CMTime, renderSize: CGSize,
+        to image: inout CIImage
+    ) {
+        let scale = animation.value(for: .scale, at: relativeTime)
+        let posX = animation.value(for: .positionX, at: relativeTime)
+        let posY = animation.value(for: .positionY, at: relativeTime)
+        let rotation = animation.value(for: .rotation, at: relativeTime)
+
+        if scale != 1.0 || posX != 0 || posY != 0 || rotation != 0 {
+            let centerX = image.extent.width / 2.0
+            let centerY = image.extent.height / 2.0
+            let moveX = CGFloat(posX) * renderSize.width
+            let moveY = CGFloat(posY) * renderSize.height
+
+            let kfTransform = CGAffineTransform.identity
+                .translatedBy(x: centerX, y: centerY)
+                .translatedBy(x: moveX, y: moveY)
+                .scaledBy(x: CGFloat(scale), y: CGFloat(scale))
+                .rotated(by: CGFloat(rotation) * .pi / 180.0)
+                .translatedBy(x: -centerX, y: -centerY)
+
+            image = image.transformed(by: kfTransform)
+        }
     }
 
-    guard let after = afterTime, let afterCrop = keyframes[after] else {
-      return beforeCrop
+    private func applyVideoEffect(_ effect: VideoEffect, to image: inout CIImage) {
+        if effect.type == .autoEnhance {
+            let options: [CIImageAutoAdjustmentOption: Any] = [
+                .enhance: true, .redEye: false, .features: []
+            ]
+            let filters = image.autoAdjustmentFilters(options: options)
+            for filter in filters {
+                filter.setValue(image, forKey: kCIInputImageKey)
+                if let output = filter.outputImage { image = output }
+            }
+        } else if let filter = effect.createFilter() {
+            filter.setValue(image, forKey: kCIInputImageKey)
+            if let output = filter.outputImage { image = output }
+        }
     }
 
-    // Interpolate between before and after
-    let beforeSec = before.seconds
-    let afterSec = after.seconds
-    let currentSec = time.seconds
+    // MARK: - Background Effects
 
-    let t = (currentSec - beforeSec) / (afterSec - beforeSec)
-    let clampedT = max(0, min(1, t))
+    private func applyBackgroundEffect(
+        _ bgEffect: BackgroundEffect, to image: inout CIImage, visionService: PersonSegmentationService?
+    ) async {
+        guard let visionService else { return }
 
-    return SuggestedCrop(
-      centerX: beforeCrop.centerX + (afterCrop.centerX - beforeCrop.centerX) * clampedT,
-      centerY: beforeCrop.centerY + (afterCrop.centerY - beforeCrop.centerY) * clampedT,
-      scale: beforeCrop.scale + (afterCrop.scale - beforeCrop.scale) * clampedT
-    )
-  }
+        switch bgEffect {
+        case let .blur(radius):
+            if let blurred = try? await visionService.applyBackgroundBlur(
+                to: image, blurRadius: radius, reuseRequest: true
+            ) {
+                image = blurred
+            }
+        case let .solidColor(r, g, b, a):
+            let color = NSColor(red: r, green: g, blue: b, alpha: a)
+            if let replaced = try? await visionService.replaceBackground(
+                in: image, with: color, reuseRequest: true
+            ) {
+                image = replaced
+            }
+        case let .image(url):
+            if let bgCI = CIImage(contentsOf: url) {
+                if let replaced = try? await visionService.replaceBackground(
+                    in: image, with: bgCI, reuseRequest: true
+                ) {
+                    image = replaced
+                }
+            }
+        case let .chromaKey(r, g, b, sensitivity):
+            // GPU-accelerated Chroma Key using shared ChromaKeyKernel
+            let targetColor = SIMD3(Float(r), Float(g), Float(b))
+            image = ChromaKeyKernel.apply(
+                to: image,
+                targetColor: targetColor,
+                threshold: sensitivity
+            )
+        }
+    }
+
+    // MARK: - Smart Crop
+
+    /// Applies smart crop transform based on keyframes
+    /// Uses nearest-neighbor interpolation between keyframes for smooth reframing
+    private func applySmartCrop(
+        keyframes: [CMTime: SuggestedCrop],
+        compositionTime: CMTime,
+        renderSize: CGSize,
+        to image: inout CIImage
+    ) {
+        // Find the crop suggestion for this time (interpolate between keyframes)
+        let crop = interpolateCrop(at: compositionTime, from: keyframes)
+
+        let imageExtent = image.extent
+
+        // Calculate the transform to:
+        // 1. Scale the image by the crop's scale factor (zoom in)
+        // 2. Translate to center the crop point in the output
+
+        // The crop center is normalized (0-1), convert to image coordinates
+        let cropCenterX = crop.centerX * imageExtent.width
+        let cropCenterY = (1.0 - crop.centerY) * imageExtent.height // Flip Y for CIImage coords
+
+        // Output center
+        let outputCenterX = renderSize.width / 2.0
+        let outputCenterY = renderSize.height / 2.0
+
+        // Build transform: scale around image center, then translate to position crop center at output center
+        let scale = crop.scale
+
+        // Translation needed after scaling to center the crop point
+        let translateX = outputCenterX - (cropCenterX * scale)
+        let translateY = outputCenterY - (cropCenterY * scale)
+
+        let transform = CGAffineTransform.identity
+            .scaledBy(x: scale, y: scale)
+            .translatedBy(x: translateX / scale, y: translateY / scale)
+
+        image = image.transformed(by: transform)
+    }
+
+    /// Interpolates crop suggestion at given time between keyframes
+    private func interpolateCrop(at time: CMTime, from keyframes: [CMTime: SuggestedCrop]) -> SuggestedCrop {
+        // Sort keyframes by time
+        let sortedTimes = keyframes.keys.sorted { $0 < $1 }
+
+        guard !sortedTimes.isEmpty else {
+            return .default
+        }
+
+        // Find surrounding keyframes
+        var beforeTime: CMTime?
+        var afterTime: CMTime?
+
+        for keyTime in sortedTimes {
+            if keyTime <= time {
+                beforeTime = keyTime
+            } else if afterTime == nil {
+                afterTime = keyTime
+                break
+            }
+        }
+
+        // If only one side available, use it directly
+        guard let before = beforeTime, let beforeCrop = keyframes[before] else {
+            if let after = afterTime, let afterCrop = keyframes[after] {
+                return afterCrop
+            }
+            return .default
+        }
+
+        guard let after = afterTime, let afterCrop = keyframes[after] else {
+            return beforeCrop
+        }
+
+        // Interpolate between before and after
+        let beforeSec = before.seconds
+        let afterSec = after.seconds
+        let currentSec = time.seconds
+
+        let t = (currentSec - beforeSec) / (afterSec - beforeSec)
+        let clampedT = max(0, min(1, t))
+
+        return SuggestedCrop(
+            centerX: beforeCrop.centerX + (afterCrop.centerX - beforeCrop.centerX) * clampedT,
+            centerY: beforeCrop.centerY + (afterCrop.centerY - beforeCrop.centerY) * clampedT,
+            scale: beforeCrop.scale + (afterCrop.scale - beforeCrop.scale) * clampedT
+        )
+    }
 }

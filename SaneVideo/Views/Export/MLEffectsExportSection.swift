@@ -61,7 +61,7 @@ struct MLEffectsExportSection: View {
                                 .font(.caption.weight(.medium))
                             Text(String(localized: "export.ml.superres.desc", defaultValue: "ML upscaling for sharper video"))
                                 .font(.caption2)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(Color.stone)
                         }
                     }
                 }
@@ -96,7 +96,7 @@ struct MLEffectsExportSection: View {
                                 .font(.caption.weight(.medium))
                             Text(String(localized: "export.ml.denoise.desc", defaultValue: "Temporal noise filter for cleaner video"))
                                 .font(.caption2)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(Color.stone)
                         }
                     }
                 }
@@ -131,7 +131,7 @@ struct MLEffectsExportSection: View {
                                 .font(.caption.weight(.medium))
                             Text(String(localized: "export.ml.interpolation.desc", defaultValue: "Smooth motion with ML-generated frames"))
                                 .font(.caption2)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(Color.stone)
                         }
                     }
                 }
@@ -179,7 +179,7 @@ struct MLEffectsExportSection: View {
             }
         }
         .padding(12)
-        .background(Color.secondary.opacity(0.05))
+        .background(Color.stone.opacity(0.05))
         .cornerRadius(8)
         .task {
             updateModelStatus()

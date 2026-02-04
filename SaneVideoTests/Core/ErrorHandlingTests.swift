@@ -138,18 +138,16 @@ final class ErrorHandlingTests: XCTestCase {
     // MARK: - Disk Space Tests
 
     @MainActor
-    func testDiskSpaceCheck() {
-        // This test verifies the disk space check exists
-        // We can't easily simulate a full disk, but we can verify the check runs
-
+    func testDiskSpaceCheck() throws {
+        // Verify that the disk space monitor can actually check available space
         let engine = RecordingEngine(
             cameraService: ServiceContainer.shared.cameraService,
             audioService: ServiceContainer.shared.audioService
         )
 
-        // The engine should have a way to check available space
-        // This is more of a smoke test to ensure the infrastructure exists
-        XCTAssertNotNil(engine, "RecordingEngine should initialize")
+        // Act - actually verify disk space (throws if insufficient)
+        XCTAssertNoThrow(try engine.diskSpaceMonitor.verifyDiskSpace(),
+                         "Disk space verification should succeed on test machine")
     }
 
     // MARK: - Concurrent Access Tests
@@ -158,24 +156,17 @@ final class ErrorHandlingTests: XCTestCase {
         let project1 = VideoProject(name: "Concurrent 1")
         let project2 = VideoProject(name: "Concurrent 2")
 
-        let expectation1 = expectation(description: "Save 1")
-        let expectation2 = expectation(description: "Save 2")
+        // Save concurrently — errors must propagate (no try?)
+        async let save1: Void = store.saveProject(project1)
+        async let save2: Void = store.saveProject(project2)
+        try await save1
+        try await save2
 
-        // Try to save two projects simultaneously
-        Task {
-            try? await self.store.saveProject(project1)
-            expectation1.fulfill()
-        }
-
-        Task {
-            try? await self.store.saveProject(project2)
-            expectation2.fulfill()
-        }
-
-        await fulfillment(of: [expectation1, expectation2], timeout: 5.0)
-
-        // Both projects should be saved successfully
+        // Both projects should be saved with correct names
         let loaded = try await store.loadProjects()
-        XCTAssertEqual(loaded.count, 2, "Both projects should be saved despite concurrent access")
+        XCTAssertGreaterThanOrEqual(loaded.count, 2, "Both projects should be saved despite concurrent access")
+        let names = loaded.map(\.name)
+        XCTAssertTrue(names.contains("Concurrent 1"), "First project should be saved")
+        XCTAssertTrue(names.contains("Concurrent 2"), "Second project should be saved")
     }
 }

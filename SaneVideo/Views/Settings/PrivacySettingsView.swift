@@ -14,14 +14,14 @@ struct PrivacySettingsView: View {
                 VStack(alignment: .leading, spacing: 12) {
                     Text(String(localized: "settings.privacy.description", defaultValue: "SaneVideo prioritizes your privacy. All core AI features run 100% on your Mac, ensuring your data never leaves your device."))
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(Color.stone)
                     
                     PrivacyBadge()
                         .padding(.vertical, 4)
                     
                     Text(String(localized: "settings.privacy.cloud_note", defaultValue: "All AI features run 100% on-device using Apple Intelligence. No cloud services required."))
                         .font(.caption2)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(Color.stone)
 
                     Divider()
                         .padding(.vertical, 4)

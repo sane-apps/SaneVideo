@@ -101,7 +101,7 @@ struct TemplateBrowserSheet: View {
             ProgressView()
             Text(String(localized: "templates.loading", defaultValue: "Loading templates..."))
                 .font(.caption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.stone)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
@@ -185,14 +185,14 @@ struct TemplateBrowserSheet: View {
         VStack(spacing: 12) {
             Image(systemName: "folder.badge.plus")
                 .font(.system(size: 40))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.stone)
 
             Text(String(localized: "templates.empty.title", defaultValue: "No custom templates yet"))
                 .font(.subheadline)
 
             Text(String(localized: "templates.empty.subtitle", defaultValue: "Create templates from your current project settings"))
                 .font(.caption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.stone)
                 .multilineTextAlignment(.center)
 
             if currentSettings != nil {
@@ -251,7 +251,7 @@ private struct BuiltInTemplateCard: View {
                         .font(.caption.weight(.semibold))
                     Text(template.description)
                         .font(.caption2)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.stone)
                         .lineLimit(2)
                 }
 
@@ -304,7 +304,7 @@ private struct CustomTemplateCard: View {
                         .font(.caption.weight(.semibold))
                     Text("\(template.resolutionString) • \(template.codecString)")
                         .font(.caption2)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.stone)
                 }
 
                 Spacer()
@@ -475,7 +475,7 @@ private struct TemplateEditorSheet: View {
                                 Label("\(Int(settings.frameRate)) fps", systemImage: "speedometer")
                             }
                             .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color.stone)
                         }
                     }
                 }

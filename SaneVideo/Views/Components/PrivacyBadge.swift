@@ -43,7 +43,7 @@ struct CompactPrivacyBadge: View {
                 .foregroundColor(.green)
             Text("On-Device")
                 .font(.caption2)
-                .foregroundColor(.secondary)
+                .foregroundColor(Color.stone)
         }
     }
 }

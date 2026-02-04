@@ -151,7 +151,8 @@ struct AIServiceTests {
             let types: [MagicFixAnalysis.Segment.SegmentType] = [.filler, .topic, .highlight, .silence]
 
             // Assert
-            #expect(types.count == 4)
+            let expectedTypes: Set<MagicFixAnalysis.Segment.SegmentType> = [.filler, .topic, .highlight, .silence]
+            #expect(Set(types) == expectedTypes)
         }
 
         @Test("SegmentType rawValues are correct")
@@ -272,8 +273,9 @@ struct AIServiceTests {
         @Test("MagicFixAnalysis handles many segments")
         func handlesManySegments() {
             // Arrange
+            let segmentCount = 100
             var segments: [MagicFixAnalysis.Segment] = []
-            for i in 0..<100 {
+            for i in 0..<segmentCount {
                 segments.append(MagicFixAnalysis.Segment(
                     startTime: Double(i),
                     endTime: Double(i) + 0.5,
@@ -286,7 +288,7 @@ struct AIServiceTests {
             let analysis = MagicFixAnalysis(segments: segments)
 
             // Assert
-            #expect(analysis.segments.count == 100)
+            #expect(analysis.segments.count == segmentCount)
         }
 
         @Test("Segment with zero duration is valid")
@@ -306,15 +308,17 @@ struct AIServiceTests {
         @Test("AIGeneratedContent handles long text")
         func handlesLongText() {
             // Arrange
-            let longTitle = String(repeating: "A", count: 1000)
-            let longDescription = String(repeating: "B", count: 5000)
+            let titleLength = 1_000
+            let descriptionLength = 5_000
+            let longTitle = String(repeating: "A", count: titleLength)
+            let longDescription = String(repeating: "B", count: descriptionLength)
 
             // Act
             let content = AIGeneratedContent(title: longTitle, description: longDescription)
 
             // Assert
-            #expect(content.title.count == 1000)
-            #expect(content.description.count == 5000)
+            #expect(content.title.count == titleLength)
+            #expect(content.description.count == descriptionLength)
         }
     }
 }

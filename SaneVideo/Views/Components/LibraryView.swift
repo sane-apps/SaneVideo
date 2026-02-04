@@ -29,7 +29,7 @@ struct LibraryView: View {
             HStack {
                 Text(String(localized: "sidebar.clips.header", defaultValue: "Project Clips"))
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(Color.stone)
                 Spacer()
                 Text("\(clipCount) clips")
                     .font(.caption2)
@@ -101,10 +101,10 @@ struct LibraryView: View {
                 .foregroundStyle(.tertiary)
             Text(String(localized: "sidebar.empty.title", defaultValue: "No clips yet"))
                 .font(.headline)
-                .foregroundColor(.secondary)
+                .foregroundColor(Color.stone)
             Text(String(localized: "sidebar.empty.message", defaultValue: "Import video or record to get started"))
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundColor(Color.stone)
             Spacer()
         }
         .padding()

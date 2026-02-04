@@ -236,7 +236,7 @@ module SaneMasterModules
       system("pkill -f 'grant_permissions.applescript' 2>/dev/null")
       system("pkill -f 'xcodebuild test' 2>/dev/null")
       system("pkill -f 'SaneVideo.*test' 2>/dev/null")
-      # Use -x for exact match to avoid killing xcodebuildmcp MCP server
+      # Use -x for exact match to avoid killing helper processes
       system('pkill -9 -x xcodebuild 2>/dev/null')
       sleep(0.5)
       system('killall -9 xcodebuild 2>/dev/null')
@@ -353,7 +353,7 @@ module SaneMasterModules
       puts '🔪 Force killing all test processes...'
 
       3.times do |attempt|
-        # Use -x for exact match to avoid killing xcodebuildmcp MCP server
+        # Use -x for exact match to avoid killing helper processes
         system("pkill -9 -f 'xcodebuild test' 2>/dev/null")
         system('pkill -9 -x xcodebuild 2>/dev/null')
         system('killall -9 xcodebuild 2>/dev/null')
@@ -462,7 +462,6 @@ module SaneMasterModules
         # Exclude: system processes, MCP servers, and npm processes
         cmd.include?('testmanagerd') ||
           cmd.include?('/usr/libexec/') ||
-          cmd.include?('xcodebuildmcp') ||
           cmd.include?('mcp') ||
           cmd.include?('npm exec')
       end

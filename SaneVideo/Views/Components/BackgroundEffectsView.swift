@@ -47,7 +47,7 @@ struct BackgroundEffectsView: View {
             .foregroundColor(.orange)
           Text("Clip file is missing. Background effects require the video file.")
             .font(.caption2)
-            .foregroundColor(.secondary)
+            .foregroundColor(Color.stone)
         }
         .padding(8)
         .background(Color.orange.opacity(0.1))
@@ -261,7 +261,7 @@ struct BackgroundEffectsView: View {
     VStack(alignment: .leading, spacing: 4) {
       Text(String(localized: "background.blur.intensity", defaultValue: "Blur Intensity"))
         .font(.caption2)
-        .foregroundColor(.secondary)
+        .foregroundColor(Color.stone)
 
       HStack {
         Slider(value: $blurRadius, in: 5...50, step: 1)
@@ -303,7 +303,7 @@ struct BackgroundEffectsView: View {
     VStack(alignment: .leading, spacing: 4) {
       Text(String(localized: "background.color.label", defaultValue: "Background Color"))
         .font(.caption2)
-        .foregroundColor(.secondary)
+        .foregroundColor(Color.stone)
 
       ColorPicker("", selection: $selectedColor, supportsOpacity: false)
         .labelsHidden()
@@ -350,7 +350,7 @@ struct BackgroundEffectsView: View {
     VStack(alignment: .leading, spacing: 4) {
       Text(String(localized: "background.chroma.key_color", defaultValue: "Key Color"))
         .font(.caption2)
-        .foregroundColor(.secondary)
+        .foregroundColor(Color.stone)
 
       HStack {
         ColorPicker("", selection: $selectedColor, supportsOpacity: false)
@@ -376,7 +376,7 @@ struct BackgroundEffectsView: View {
 
       Text(String(localized: "background.chroma.sensitivity", defaultValue: "Sensitivity"))
         .font(.caption2)
-        .foregroundColor(.secondary)
+        .foregroundColor(Color.stone)
 
       HStack {
         Slider(
@@ -402,7 +402,7 @@ struct BackgroundEffectsView: View {
         String(localized: "background.image.virtual", defaultValue: "Virtual Background")
       )
       .font(.caption2)
-      .foregroundColor(.secondary)
+      .foregroundColor(Color.stone)
 
       if let url = selectedImageURL {
         HStack {
@@ -410,7 +410,7 @@ struct BackgroundEffectsView: View {
             image.resizable()
               .aspectRatio(contentMode: .fill)
           } placeholder: {
-            Rectangle().fill(Color.secondary.opacity(0.3))
+            Rectangle().fill(Color.stone.opacity(0.3))
           }
           .frame(width: 60, height: 34)
           .cornerRadius(4)
@@ -441,7 +441,7 @@ struct BackgroundEffectsView: View {
           .font(.caption)
           .frame(maxWidth: .infinity)
           .padding(8)
-          .background(Color.secondary.opacity(0.15))
+          .background(Color.stone.opacity(0.15))
           .cornerRadius(6)
         }
         .buttonStyle(.plain)
@@ -482,8 +482,8 @@ private struct EffectTypeButton: View {
       }
       .frame(maxWidth: .infinity)
       .padding(.vertical, 8)
-      .background(isSelected ? Color.accentColor.opacity(0.2) : Color.secondary.opacity(0.1))
-      .foregroundColor(isSelected ? .accentColor : .secondary)
+      .background(isSelected ? Color.accentColor.opacity(0.2) : Color.stone.opacity(0.1))
+      .foregroundColor(isSelected ? .accentColor : Color.stone)
       .cornerRadius(6)
       .overlay(
         RoundedRectangle(cornerRadius: 6)

@@ -26,10 +26,10 @@ struct ExportProgressView: View {
                     HStack(spacing: 4) {
                         Image(systemName: "speedometer")
                             .font(.caption2)
-                            .foregroundColor(.secondary)
+                            .foregroundColor(Color.stone)
                         Text(speedTracker?.formatSpeed(metrics.averageSpeedMBps) ?? "Calculating...")
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundColor(Color.stone)
                     }
                     
                     // Time remaining
@@ -37,10 +37,10 @@ struct ExportProgressView: View {
                         HStack(spacing: 4) {
                             Image(systemName: "clock")
                                 .font(.caption2)
-                                .foregroundColor(.secondary)
+                                .foregroundColor(Color.stone)
                             Text(speedTracker?.formatTimeRemaining(metrics.estimatedTimeRemaining) ?? "")
                                 .font(.caption)
-                                .foregroundColor(.secondary)
+                                .foregroundColor(Color.stone)
                         }
                     }
                     
@@ -54,7 +54,7 @@ struct ExportProgressView: View {
             // Progress percentage
             Text("\(Int(progress * 100))%")
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundColor(Color.stone)
         }
     }
 }

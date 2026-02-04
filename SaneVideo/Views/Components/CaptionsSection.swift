@@ -29,10 +29,10 @@ struct CaptionsSection: View {
                 if let project = appState.projectState.currentProject {
                     Text(project.captionStyle.name)
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(Color.stone)
                         .padding(.horizontal, 6)
                         .padding(.vertical, 2)
-                        .background(Color.secondary.opacity(0.1))
+                        .background(Color.stone.opacity(0.1))
                         .cornerRadius(4)
                 }
             }
@@ -52,10 +52,10 @@ struct CaptionsSection: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 6) {
                 Image(systemName: "info.circle")
-                    .foregroundColor(.secondary)
+                    .foregroundColor(Color.stone)
                 Text("No captions yet")
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(Color.stone)
             }
 
             Button {
@@ -81,7 +81,7 @@ struct CaptionsSection: View {
 
             Text("Or use Magic Fix for full cleanup")
                 .font(.caption2)
-                .foregroundColor(.secondary)
+                .foregroundColor(Color.stone)
         }
         .padding(10)
         .background(Color.accentColor.opacity(0.05))
@@ -106,11 +106,11 @@ struct CaptionsSection: View {
                     .foregroundColor(.accentColor)
                 Text("Edit in **Transcript** sidebar tab")
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(Color.stone)
             }
             .padding(8)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color.secondary.opacity(0.1))
+            .background(Color.stone.opacity(0.1))
             .cornerRadius(6)
         }
     }

@@ -12,11 +12,11 @@ struct TimelineEmptyStateView: View {
         VStack(spacing: 8) {
             Image(systemName: "square.app.dashed")
                 .font(.system(size: 24))
-                .foregroundColor(.secondary.opacity(0.5))
+                .foregroundColor(Color.stone.opacity(0.5))
             
             Text("Drop media clips here to start your project")
                 .font(.system(size: 13))
-                .foregroundColor(.secondary)
+                .foregroundColor(Color.stone)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color(white: 0.08))

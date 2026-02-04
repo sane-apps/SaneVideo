@@ -25,13 +25,13 @@ struct LoadingIndicator: View {
                     if let message = message {
                         Text(message)
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundColor(Color.stone)
                     }
                     
                     GeometryReader { geo in
                         ZStack(alignment: .leading) {
                             Capsule()
-                                .fill(Color.secondary.opacity(0.1))
+                                .fill(Color.stone.opacity(0.1))
                                 .frame(height: 4)
                             
                             Capsule()
@@ -44,7 +44,7 @@ struct LoadingIndicator: View {
                     
                     Text("\(Int(progress * 100))%")
                         .font(.caption2.monospacedDigit())
-                        .foregroundColor(.secondary)
+                        .foregroundColor(Color.stone)
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 12)
@@ -57,7 +57,7 @@ struct LoadingIndicator: View {
                     if let message = message {
                         Text(message)
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundColor(Color.stone)
                     }
                 }
                 .padding(.horizontal, 16)

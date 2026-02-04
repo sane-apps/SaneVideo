@@ -2,19 +2,32 @@
 
 **The Professional Video Recording & Editing App for macOS**
 
-SaneVideo is a modern, native macOS application built with SwiftUI and AVFoundation for recording, editing, and exporting high-quality videos. Designed for creators who want powerful tools with an elegant, native interface.
+SaneVideo is a native macOS video recording and editing app. No subscriptions. No telemetry. Everything runs on your Mac.
 
-**Built for the future**: SaneVideo leverages the latest macOS 26.2+ features including Apple Intelligence (FoundationModels) for on-device AI processing. We prioritize cutting-edge capabilities while maintaining performant fallbacks that don't degrade the user experience.
+**Last updated:** 2026-02-04
 
-> **🚨 FOR DEVELOPERS & AI AGENTS 🚨**
-> 
-> **SOP (Standard Operating Procedure)**: [DEVELOPMENT.md](DEVELOPMENT.md) is the **SINGLE SOURCE OF TRUTH**.
-> 
-> When you see "SOP", "use our SOP", or "follow the SOP", that means [DEVELOPMENT.md](DEVELOPMENT.md).
-> 
-> **Quick Reference**: See [AI_AGENT_QUICK_START.md](AI_AGENT_QUICK_START.md) for a TL;DR version.
-> 
-> **DO NOT** use other documentation files as primary sources - they are historical/archive only.
+---
+
+## Why SaneVideo?
+
+Video editing shouldn't require a subscription, a PhD, or surrendering your privacy.
+
+Most tools fall into two traps: **bloated professionals** that overwhelm everyday creators, or **subscription services** that rent you tools while harvesting your data. SaneVideo takes a different path.
+
+| | The Problem | The Sane Way |
+|---|---|---|
+| **Power** | Cloud-dependent, vendor-controlled | Your video, your Mac, your rules |
+| **Love** | Built to extract (subscriptions, upsells) | $5 one-time. Built to serve. |
+| **Sound Mind** | Feature bloat, cluttered interfaces | One thing done well. Calm UI. |
+
+> *"For God has not given us a spirit of fear, but of power and of love and of a sound mind."*
+> — 2 Timothy 1:7
+
+**100% On-Device | 0% Telemetry | $5 One-Time**
+
+---
+
+> **For Developers & AI Agents**: [DEVELOPMENT.md](DEVELOPMENT.md) is the SOP (Single Source of Truth).
 
 ---
 
@@ -79,12 +92,14 @@ SaneVideo is a modern, native macOS application built with SwiftUI and AVFoundat
 ## 🎯 System Requirements
 
 **Minimum Requirements:**
-- **macOS 26.2 (Tahoe)** or later (required)
-- **Apple Silicon** (M1/M2/M3/M4/M5) only - Intel Macs not supported
+- **macOS 15.0 (Sequoia)** or later
+- **Apple Silicon** (arm64) only - Intel Macs not supported
 - **8GB RAM** minimum (16GB recommended for 4K editing)
-- **FoundationModels framework** (included with macOS 26.2+)
+- **AI features** require macOS 26.0+ (FoundationModels/Translation); core recording/editing works on 15.0+
 
-> **Note**: SaneVideo is designed for the latest macOS and Apple Silicon architecture. We prioritize future-proof features over backward compatibility. If you're on an older system, please upgrade to macOS 26.2+ to use SaneVideo.
+> **Note**: SaneVideo is optimized for newer macOS features when available, but the core app runs on macOS 15.0+.
+
+**Distribution**: DMGs are hosted on Cloudflare (not attached to GitHub releases).
 
 ---
 
@@ -194,13 +209,11 @@ All files remain on your local machine. No cloud storage required.
 
 ## 🎨 Design Philosophy
 
-SaneVideo embraces these principles:
+Built on the three pillars of **Power**, **Love**, and **Sound Mind**:
 
-1. **Native First**: Feels like it was made by Apple
-2. **Performance**: 120fps real-time filters, instant UI response
-3. **Simplicity**: Complex features, simple interface
-4. **Privacy**: Your data stays on your Mac
-5. **Quality**: 4K HEVC exports with professional-grade filters
+- **Power** (Agency): Native macOS, on-device processing, no lock-in. You control your tools.
+- **Love** (Service): Solves real problems for real creators. No dark patterns, no extraction.
+- **Sound Mind** (Clarity): Clean interface, 120fps Metal filters, calm experience. Reduces noise.
 
 ---
 
@@ -213,7 +226,7 @@ SaneVideo embraces these principles:
 - ✅ Real-time Filters
 - ✅ HEVC Export
 
-### Phase 2 (Current)
+### Phase 2 (In Progress)
 
 - [x] Magic Fix (Silence & Filler Removal)
 - [ ] Audio timeline tracks
@@ -222,7 +235,7 @@ SaneVideo embraces these principles:
 - [ ] Keyframe animations
 - [ ] Multi-track editing
 
-### Phase 3 (Future)
+### Phase 3 (Planned)
 
 - [ ] Motion tracking
 - [ ] Green screen removal
@@ -262,4 +275,6 @@ For issues or questions:
 
 ---
 
-**Made with ❤️ for macOS**
+**Keep your head. Stay Sane.**
+
+*Built for a Sound Mind | 100% On-Device | 0% Fear*

@@ -104,8 +104,9 @@ final class StressTests: XCTestCase {
     let machine = StateMachine()
 
     // Concurrent spamming
+    let toggleCount = 100
     await withTaskGroup(of: Void.self) { group in
-      for _ in 0..<100 {
+      for _ in 0..<toggleCount {
         group.addTask {
           await machine.toggle()
         }
@@ -114,8 +115,8 @@ final class StressTests: XCTestCase {
 
     // Verify actor is still accessible after concurrent access
     let finalState = await machine.isRecording
-    // State should be deterministic: 100 toggles from false = false (even count)
-    XCTAssertFalse(finalState, "After 100 toggles from false, state should be false")
+    // State should be deterministic: even number of toggles from false returns false.
+    XCTAssertFalse(finalState, "After \(toggleCount) toggles from false, state should be false")
   }
 
   // MARK: - Memory Pressure Simulation
@@ -125,13 +126,14 @@ final class StressTests: XCTestCase {
     var dataHolder: [Data] = []
 
     // 50 blocks of 10MB
-    for i in 0..<50 {
+    let blockCount = 50
+    for i in 0..<blockCount {
       let data = Data(count: 10 * 1024 * 1024)
       dataHolder.append(data)
       print("Allocated block \(i)")
     }
 
-    XCTAssertEqual(dataHolder.count, 50)
+    XCTAssertEqual(dataHolder.count, blockCount)
     // Check if we crashed. If not, pass.
     // In a real app, MemoryManager should trigger.
   }

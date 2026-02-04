@@ -22,7 +22,7 @@ struct TranscriptionEnginePicker: View {
             // Description
             Text(TranscriptionEngine.whisperKit.description)
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundColor(Color.stone)
                 .fixedSize(horizontal: false, vertical: true)
 
             // Model info badge
@@ -32,7 +32,7 @@ struct TranscriptionEnginePicker: View {
                     .font(.caption)
                 Text("distil-large-v3 model • 100% on-device • 99 languages")
                     .font(.caption2)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(Color.stone)
             }
         }
     }

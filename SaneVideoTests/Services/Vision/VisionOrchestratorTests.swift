@@ -154,16 +154,18 @@ struct VisionOrchestratorTests {
         var result2 = VisionAnalysisResult()
 
         let sameTime = CMTime(seconds: 1.0, preferredTimescale: 600)
+        let originalFrame = CGRect(x: 100, y: 100, width: 50, height: 50)
+        let replacementFrame = CGRect(x: 200, y: 200, width: 60, height: 60)
 
-        result1.faces = [sameTime: CGRect(x: 100, y: 100, width: 50, height: 50)]
-        result2.faces = [sameTime: CGRect(x: 200, y: 200, width: 60, height: 60)]
+        result1.faces = [sameTime: originalFrame]
+        result2.faces = [sameTime: replacementFrame]
 
         // Act
         result1.merge(other: result2)
 
         // Assert - new value should win
         #expect(result1.faces.count == 1)
-        #expect(result1.faces[sameTime]?.origin.x == 200)
+        #expect(result1.faces[sameTime] == replacementFrame)
     }
 
     @Test("VisionAnalysisResult merge combines privacyRegions")

@@ -27,7 +27,7 @@ struct OptionButtonGroup<T: Hashable>: View {
                         .padding(.vertical, 6)
                 }
                 .buttonStyle(.bordered)
-                .tint(selected == option ? tintColor : .secondary)
+                .tint(selected == option ? tintColor : Color.stone)
                 .accessibilityIdentifier("\(accessibilityPrefix).\(option)")
             }
         }

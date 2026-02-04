@@ -1,6 +1,8 @@
 AllCops:
   NewCops: enable
   TargetRubyVersion: 2.6
+  Exclude:
+    - 'Scripts/SaneMaster.rb'  # Bash wrapper with .rb extension
 
 Metrics/MethodLength:
   Enabled: false

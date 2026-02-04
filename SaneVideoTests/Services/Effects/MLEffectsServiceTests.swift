@@ -68,24 +68,29 @@ final class MLEffectsServiceTests: XCTestCase {
     }
 
     func testMLEffectConfigurationIntensityClamping() {
+        let expectedMinIntensity: Float = 0.0
+        let expectedMaxIntensity: Float = 1.0
         let tooLow = MLEffectConfiguration(type: .denoise, intensity: -0.5)
-        XCTAssertEqual(tooLow.intensity, 0.0, "Intensity below 0 should be clamped to 0")
+        XCTAssertEqual(tooLow.intensity, expectedMinIntensity, "Intensity below 0 should be clamped to 0")
 
         let tooHigh = MLEffectConfiguration(type: .denoise, intensity: 1.5)
-        XCTAssertEqual(tooHigh.intensity, 1.0, "Intensity above 1 should be clamped to 1")
+        XCTAssertEqual(tooHigh.intensity, expectedMaxIntensity, "Intensity above 1 should be clamped to 1")
     }
 
     // MARK: - MLExportEffects Tests
 
     func testMLExportEffectsDefault() {
         let effects = MLExportEffects()
+        let expectedSuperResolutionScale: CGFloat = 2.0
+        let expectedDenoiseStrength: Float = 1.0
+        let expectedTargetFrameRate: Double = 60
 
         XCTAssertFalse(effects.superResolutionEnabled)
-        XCTAssertEqual(effects.superResolutionScale, 2.0)
+        XCTAssertEqual(effects.superResolutionScale, expectedSuperResolutionScale)
         XCTAssertFalse(effects.denoiseEnabled)
-        XCTAssertEqual(effects.denoiseStrength, 1.0)
+        XCTAssertEqual(effects.denoiseStrength, expectedDenoiseStrength)
         XCTAssertFalse(effects.frameInterpolationEnabled)
-        XCTAssertEqual(effects.targetFrameRate, 60)
+        XCTAssertEqual(effects.targetFrameRate, expectedTargetFrameRate)
     }
 
     func testMLExportEffectsHasAnyEnabled() {

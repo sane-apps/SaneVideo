@@ -19,22 +19,22 @@ enum Theme {
         static let secondaryBackground = Color(nsColor: .controlBackgroundColor)
 
         // BRAND COLORS (System Integrated)
-        static let accent = Color.accentColor
-        
-        static let accentGradient = Color.accentColor // Effectively 1:1 with system for snappiness
+        static let accent = Color.videoPurple
+
+        static let accentGradient = Color.videoPurple // Effectively 1:1 with system for snappiness
 
         // SECONDARY (System Integrated)
         static let action = Color.accentColor
-        
+
         static let secondaryGradient = Color.accentColor
-        
+
         // SEMANTIC COLORS (System Integrated)
         static let warning = Color.orange
         static let destructive = Color.red
 
         // Semantic Text (Adapts to Light/Dark mode)
-        static let textPrimary = Color.primary
-        static let textSecondary = Color.secondary
+        static let textPrimary = Color.cloud
+        static let textSecondary = Color.stone
 
         // UI ELEMENT COLORS
         static let cardBackground = Color.white.opacity(0.05)
@@ -48,7 +48,7 @@ enum Theme {
         static let cornerRadius: CGFloat = 8
         static let smallCornerRadius: CGFloat = 4
         static let largeCornerRadius: CGFloat = 12
-        
+
         // Spacing System (8pt grid)
         static let spacingXS: CGFloat = 4
         static let spacingSM: CGFloat = 8
@@ -56,27 +56,27 @@ enum Theme {
         static let spacingLG: CGFloat = 16
         static let spacingXL: CGFloat = 20
         static let spacingXXL: CGFloat = 24
-        
+
         // Padding System
         static let paddingXS: CGFloat = 4
         static let paddingSM: CGFloat = 8
         static let paddingMD: CGFloat = 12
         static let paddingLG: CGFloat = 16
         static let paddingXL: CGFloat = 20
-        
+
         // Legacy (for backward compatibility)
         static let padding: CGFloat = 12
     }
-    
+
     enum Typography {
         // Font Sizes (consistent scale)
-        static let fontSizeXS: CGFloat = 10
-        static let fontSizeSM: CGFloat = 11
+        static let fontSizeXS: CGFloat = 12
+        static let fontSizeSM: CGFloat = 12
         static let fontSizeMD: CGFloat = 13
         static let fontSizeLG: CGFloat = 15
         static let fontSizeXL: CGFloat = 17
         static let fontSizeXXL: CGFloat = 20
-        
+
         // Icon Sizes
         static let iconSizeXS: CGFloat = 12
         static let iconSizeSM: CGFloat = 14
@@ -84,7 +84,7 @@ enum Theme {
         static let iconSizeLG: CGFloat = 18
         static let iconSizeXL: CGFloat = 24
     }
-    
+
     enum Opacity {
         // Consistent opacity values
         static let subtle: Double = 0.05
@@ -159,6 +159,20 @@ extension Color {
             opacity: Double(a) / 255
         )
     }
+
+    static let videoPurple = Color(hex: "a855f7")
+    static let navy = Color(hex: "1a2744")
+    static let deepNavy = Color(hex: "0d1525")
+    static let glowingTeal = Color(hex: "5fa8d3")
+    static let silver = Color(hex: "a8b4c4")
+    static let void = Color(hex: "0a0a0a")
+    static let carbon = Color(hex: "141414")
+    static let smoke = Color(hex: "222222")
+    static let stone = Color(hex: "888888")
+    static let cloud = Color(hex: "e5e5e5")
+    static let successGreen = Color(hex: "22c55e")
+    static let warningOrange = Color(hex: "f59e0b")
+    static let errorRed = Color(hex: "ef4444")
 }
 
 // Reusable Button Styles (Active)

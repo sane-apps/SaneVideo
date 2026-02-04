@@ -22,14 +22,14 @@ struct TrackHeaderView: View {
             HStack(spacing: 6) {
                 Image(systemName: trackIcon)
                     .font(.system(size: 12, weight: .medium))
-                    .foregroundColor(track.isMuted ? .secondary : trackColor)
+                    .foregroundColor(track.isMuted ? Color.stone : trackColor)
                     .frame(width: 16)
 
                 if !track.name.isEmpty && track.name != "Video 1" {
                     Text(track.name)
                         .font(.system(size: 11, weight: .semibold))
                         .lineLimit(1)
-                        .foregroundColor(track.isMuted ? .secondary : .primary)
+                        .foregroundColor(track.isMuted ? Color.stone : .primary)
                 }
             }
 
@@ -39,7 +39,7 @@ struct TrackHeaderView: View {
                 Button(action: onMuteToggle) {
                     Image(systemName: track.isMuted ? "speaker.slash.fill" : "speaker.wave.2.fill")
                         .font(.system(size: 12, weight: .medium))
-                        .foregroundColor(track.isMuted ? .red : .secondary)
+                        .foregroundColor(track.isMuted ? .red : Color.stone)
                         .frame(width: 20, height: 20)
                         .contentShape(Rectangle())
                 }
@@ -51,7 +51,7 @@ struct TrackHeaderView: View {
                 Button(action: onLockToggle) {
                     Image(systemName: track.isLocked ? "lock.fill" : "lock.open")
                         .font(.system(size: 12, weight: .medium))
-                        .foregroundColor(track.isLocked ? .orange : .secondary)
+                        .foregroundColor(track.isLocked ? .orange : Color.stone)
                         .frame(width: 20, height: 20)
                         .contentShape(Rectangle())
                 }
@@ -76,7 +76,7 @@ struct TrackHeaderView: View {
         )
         .overlay(
             RoundedRectangle(cornerRadius: 4)
-                .stroke(Color.secondary.opacity(0.15), lineWidth: 0.5)
+                .stroke(Color.stone.opacity(0.15), lineWidth: 0.5)
         )
     }
 
@@ -122,7 +122,7 @@ struct AddTrackButton: View {
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
-            .background(Color.secondary.opacity(0.1))
+            .background(Color.stone.opacity(0.1))
             .cornerRadius(8)
         }
         .menuStyle(.borderlessButton)

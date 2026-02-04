@@ -28,7 +28,7 @@ struct ToolCard<Content: View>: View {
           .font(.system(size: Theme.Typography.iconSizeXS, weight: .semibold))
         Text(title.uppercased())
           .font(.system(size: Theme.Typography.fontSizeXS, weight: .bold))
-          .foregroundColor(.secondary)
+          .foregroundColor(Color.stone)
           .tracking(0.5)
         Spacer()
       }
@@ -36,11 +36,11 @@ struct ToolCard<Content: View>: View {
       content
     }
     .padding(Theme.Dimensions.paddingMD)
-    .background(Color.secondary.opacity(Theme.Opacity.subtle))
+    .background(Color.stone.opacity(Theme.Opacity.subtle))
     .cornerRadius(Theme.Dimensions.cornerRadius)
     .overlay(
       RoundedRectangle(cornerRadius: Theme.Dimensions.cornerRadius)
-        .stroke(Color.secondary.opacity(Theme.Opacity.light), lineWidth: 0.5)
+        .stroke(Color.stone.opacity(Theme.Opacity.light), lineWidth: 0.5)
     )
     .enhancedLiquidGlass(radius: Theme.Dimensions.cornerRadius, opacity: Theme.Opacity.strong)
     .smoothAppear()
@@ -65,7 +65,7 @@ struct InspectorToggle: View {
         .background(
           isOn ? color.opacity(Theme.Opacity.light) : Color.gray.opacity(Theme.Opacity.light)
         )
-        .foregroundColor(isOn ? color : .secondary)
+        .foregroundColor(isOn ? color : Color.stone)
         .cornerRadius(Theme.Dimensions.smallCornerRadius)
 
       // Text content - UX FIX: Improved typography and spacing
@@ -77,7 +77,7 @@ struct InspectorToggle: View {
           .multilineTextAlignment(.leading)
         Text(subtitle)
           .font(.system(size: Theme.Typography.fontSizeSM))
-          .foregroundStyle(.secondary)  // ACCESSIBILITY FIX: Use foregroundStyle for better adaptive contrast
+          .foregroundStyle(Color.stone)  // ACCESSIBILITY FIX: Use foregroundStyle for better adaptive contrast
           .opacity(0.8)  // Slightly stronger than default secondary
           .lineLimit(2)
           .multilineTextAlignment(.leading)

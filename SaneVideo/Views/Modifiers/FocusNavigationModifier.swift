@@ -19,7 +19,7 @@ struct FocusStyle {
     var scale: CGFloat = 1.0
 
     static let `default` = FocusStyle()
-    static let subtle = FocusStyle(borderColor: .secondary.opacity(0.5), borderWidth: 1)
+    static let subtle = FocusStyle(borderColor: Color.stone.opacity(0.5), borderWidth: 1)
     static let button = FocusStyle(borderColor: .accentColor, borderWidth: 2, scale: 1.02)
     static let listRow = FocusStyle(borderColor: .accentColor.opacity(0.6), borderWidth: 1, backgroundColor: .accentColor.opacity(0.1))
 }

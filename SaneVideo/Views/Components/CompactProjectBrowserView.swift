@@ -64,7 +64,7 @@ struct CompactProjectBrowserView: View {
         } else {
             Text("(\(projects.count))")
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundColor(Color.stone)
         }
     }
 
@@ -299,7 +299,7 @@ struct CompactProjectRow: View {
                         .fill(Color.accentColor.opacity(0.2))
                     Image(systemName: firstClip == nil ? "film.stack" : "photo")
                         .font(.system(size: 16))
-                        .foregroundColor(.secondary)
+                        .foregroundColor(Color.stone)
                 }
             }
             .frame(width: 50, height: 32)
@@ -314,7 +314,7 @@ struct CompactProjectRow: View {
 
                 Text("\(project.clipCount) clip\(project.clipCount == 1 ? "" : "s")")
                     .font(.caption2)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(Color.stone)
             }
 
             Spacer()

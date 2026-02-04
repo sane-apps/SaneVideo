@@ -60,7 +60,7 @@ struct MagicProgressOverlay: View {
           // 4. Percentage text
           Text("\(Int(progress * 100))%")
             .font(.system(size: Theme.Typography.fontSizeSM, weight: .bold))
-            .foregroundStyle(.secondary)
+            .foregroundStyle(Color.stone)
             .monospacedDigit()
             .contentTransition(.numericText())
         }

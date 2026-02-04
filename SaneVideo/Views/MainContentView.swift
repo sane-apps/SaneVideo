@@ -282,7 +282,7 @@ struct MainContentView: View {
                 HStack(spacing: 4) {
                   Text(appState.projectState.currentProject?.name ?? "Untitled Project")
                     .font(.system(size: 13, weight: .medium))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.stone)
                   Image(systemName: "pencil")
                     .font(.system(size: 10))
                     .foregroundStyle(.tertiary)

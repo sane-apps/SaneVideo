@@ -12,7 +12,6 @@ import MediaToolbox
 /// Audio limiter that prevents clipping when multiple tracks are mixed.
 /// Uses soft-knee limiting for transparent peak control.
 enum AudioLimiter {
-
     // MARK: - Configuration
 
     /// Limiter threshold in dB (signals above this will be limited)
@@ -31,8 +30,15 @@ enum AudioLimiter {
 
     /// State object for the limiter envelope follower
     private final class LimiterState {
-        var envelope: Float = 1.0
+        var envelope: Float = 0.0 // Gain reduction in dB (0 = no reduction, negative = reduction)
         var sampleRate: Float = 44100.0
+        var attackCoeff: Float = 0.0
+        var releaseCoeff: Float = 0.0
+
+        func precomputeCoefficients() {
+            attackCoeff = expf(-1.0 / (AudioLimiter.attackTime * sampleRate))
+            releaseCoeff = expf(-1.0 / (AudioLimiter.releaseTime * sampleRate))
+        }
     }
 
     // MARK: - Public Interface
@@ -94,10 +100,11 @@ enum AudioLimiter {
                 Unmanaged<LimiterState>.fromOpaque(storage).release()
             },
             prepare: { tap, _, processingFormat in
-                // Store sample rate for envelope calculations
+                // Store sample rate and precompute coefficients
                 let storage = MTAudioProcessingTapGetStorage(tap)
                 let state = Unmanaged<LimiterState>.fromOpaque(storage).takeUnretainedValue()
                 state.sampleRate = Float(processingFormat.pointee.mSampleRate)
+                state.precomputeCoefficients()
             },
             unprepare: { _ in },
             process: limiterProcessCallback
@@ -120,9 +127,8 @@ enum AudioLimiter {
     }
 
     /// Process callback for the audio processing tap
-    private static let limiterProcessCallback: MTAudioProcessingTapProcessCallback = {
-        tap, numberFrames, _, bufferListInOut, numberFramesOut, _ in
-
+    /// Uses two-pass stereo linking: find peak across all channels, apply same gain to all
+    private static let limiterProcessCallback: MTAudioProcessingTapProcessCallback = { tap, numberFrames, _, bufferListInOut, numberFramesOut, _ in
         // Get source audio
         var sourceFlags = MTAudioProcessingTapFlags()
         let status = MTAudioProcessingTapGetSourceAudio(
@@ -140,62 +146,90 @@ enum AudioLimiter {
         let storage = MTAudioProcessingTapGetStorage(tap)
         let state = Unmanaged<LimiterState>.fromOpaque(storage).takeUnretainedValue()
 
-        // Process each buffer in the list
         let bufferList = UnsafeMutableAudioBufferListPointer(bufferListInOut)
+
+        // Pass 1: Find peak level across all channels for each frame
+        let frameCount = bufferList.first.map { Int($0.mDataByteSize) / MemoryLayout<Float>.size } ?? 0
+        guard frameCount > 0 else { return }
+
+        // Allocate peak buffer (real-time safe for reasonable frame counts)
+        let peakBuffer = UnsafeMutablePointer<Float>.allocate(capacity: frameCount)
+        defer { peakBuffer.deallocate() }
+
+        // Initialize with first channel
+        if let firstData = bufferList.first?.mData {
+            let firstSamples = firstData.assumingMemoryBound(to: Float.self)
+            for i in 0 ..< frameCount {
+                peakBuffer[i] = abs(firstSamples[i])
+            }
+        }
+
+        // Max across remaining channels
+        for bufIdx in 1 ..< bufferList.count {
+            guard let data = bufferList[bufIdx].mData else { continue }
+            let samples = data.assumingMemoryBound(to: Float.self)
+            let count = Int(bufferList[bufIdx].mDataByteSize) / MemoryLayout<Float>.size
+            for i in 0 ..< min(count, frameCount) {
+                peakBuffer[i] = max(peakBuffer[i], abs(samples[i]))
+            }
+        }
+
+        // Compute gain array once from peak envelope
+        let gainBuffer = UnsafeMutablePointer<Float>.allocate(capacity: frameCount)
+        defer { gainBuffer.deallocate() }
+        computeGains(peakSamples: peakBuffer, frameCount: frameCount, gains: gainBuffer, state: state)
+
+        // Pass 2: Apply same gain to all channels
         for buffer in bufferList {
             guard let data = buffer.mData else { continue }
-
-            let frameCount = Int(buffer.mDataByteSize) / MemoryLayout<Float>.size
             let samples = data.assumingMemoryBound(to: Float.self)
-
-            // Apply soft-knee limiting
-            applyLimiting(
-                samples: samples,
-                frameCount: frameCount,
-                state: state
-            )
+            let count = Int(buffer.mDataByteSize) / MemoryLayout<Float>.size
+            for i in 0 ..< count {
+                samples[i] *= gainBuffer[i]
+            }
         }
     }
 
-    /// Apply soft-knee peak limiting to audio samples
-    private static func applyLimiting(
-        samples: UnsafeMutablePointer<Float>,
+    /// Compute gain reduction array from peak samples using dB-domain soft-knee limiting
+    /// Updates the state envelope and fills the gains buffer
+    private static func computeGains(
+        peakSamples: UnsafePointer<Float>,
         frameCount: Int,
+        gains: UnsafeMutablePointer<Float>,
         state: LimiterState
     ) {
-        let threshold = powf(10.0, thresholdDB / 20.0)
-        let attackCoeff = expf(-1.0 / (attackTime * state.sampleRate))
-        let releaseCoeff = expf(-1.0 / (releaseTime * state.sampleRate))
-        let kneeWidth = powf(10.0, kneeWidthDB / 20.0) - 1.0
+        let kneeStart = thresholdDB - kneeWidthDB // -7.0 dB (when threshold = -1.0, knee = 6.0)
 
-        for i in 0..<frameCount {
-            let inputSample = samples[i]
-            let inputLevel = abs(inputSample)
+        for i in 0 ..< frameCount {
+            let inputLevel = peakSamples[i]
 
-            // Calculate target gain based on input level
-            var targetGain: Float = 1.0
+            // Convert to dB (floor at -96dB to avoid log(0))
+            let inputDB = 20.0 * log10f(max(inputLevel, 1e-5))
 
-            if inputLevel > threshold {
-                // Above threshold: apply limiting
-                targetGain = threshold / inputLevel
-            } else if inputLevel > threshold - kneeWidth {
-                // In knee region: soft transition
-                let kneeRatio = (inputLevel - (threshold - kneeWidth)) / kneeWidth
-                let limitedGain = threshold / inputLevel
-                targetGain = 1.0 + (limitedGain - 1.0) * kneeRatio * kneeRatio
+            // Calculate target gain reduction in dB
+            var gainReductionDB: Float = 0.0
+
+            if inputDB > thresholdDB {
+                // Above threshold: hard limit
+                gainReductionDB = thresholdDB - inputDB
+            } else if inputDB > kneeStart {
+                // Knee region: quadratic soft transition
+                let kneeRatio = (inputDB - kneeStart) / kneeWidthDB
+                gainReductionDB = (thresholdDB - inputDB) * kneeRatio * kneeRatio
             }
+            // Below knee: gainReductionDB stays 0 (unity gain)
 
-            // Smooth envelope following (attack/release)
-            if targetGain < state.envelope {
-                // Attack: fast response to peaks
-                state.envelope = attackCoeff * state.envelope + (1.0 - attackCoeff) * targetGain
+            // Smooth envelope (attack/release in dB domain)
+            if gainReductionDB < state.envelope {
+                // Attack: fast response to peaks (more negative = more reduction)
+                state.envelope = state.attackCoeff * state.envelope + (1.0 - state.attackCoeff) * gainReductionDB
             } else {
-                // Release: slower return to unity
-                state.envelope = releaseCoeff * state.envelope + (1.0 - releaseCoeff) * targetGain
+                // Release: slower return to 0 dB
+                state.envelope = state.releaseCoeff * state.envelope + (1.0 - state.releaseCoeff) * gainReductionDB
             }
 
-            // Apply gain
-            samples[i] = inputSample * state.envelope
+            // Convert dB gain to linear and store
+            gains[i] = powf(10.0, state.envelope / 20.0)
         }
     }
 
@@ -214,10 +248,8 @@ enum AudioLimiter {
         let floatCount = length / MemoryLayout<Float>.size
         let samples = UnsafePointer<Float>(OpaquePointer(data))
 
-        for i in 0..<floatCount {
-            if abs(samples[i]) > 1.0 {
-                return true
-            }
+        for i in 0 ..< floatCount where abs(samples[i]) > 1.0 {
+            return true
         }
 
         return false

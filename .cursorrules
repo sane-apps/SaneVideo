@@ -397,7 +397,7 @@ open fastlane/coverage/index.html    # View report
 | **context7** | Real-time library documentation | Up-to-date docs for WhisperKit, Vapor, any library |
 | **github** | GitHub API integration (Official MCP) | Issues, PRs, repos, code search |
 | **memory** | Persistent knowledge graph (Official MCP) | Cross-session context retention |
-| **XcodeBuildMCP** | Programmatic Xcode builds | CI/CD integration, test runs, signing |
+| **xcode** | Apple's official Xcode MCP (`xcrun mcpbridge`) | Build, test, preview, diagnostics |
 
 > **Note**: `.cursor/mcp.json` has `imagesorcery` MCP because Cursor lacks native image viewing (Claude Code has it built-in).
 
@@ -416,10 +416,10 @@ open fastlane/coverage/index.html    # View report
 | **API signature/existence** | `verify_api` | SDK is source of truth (Rule #6) |
 | **API examples/WWDC context** | `apple-docs` MCP | Rich examples, related APIs |
 | **Build/test the project** | `SaneMaster.rb verify` | Always use SaneMaster (Rule #1) |
-| **CI/CD programmatic builds** | `XcodeBuildMCP` | Granular control, automation |
+| **CI/CD programmatic builds** | `xcode` MCP (`xcrun mcpbridge`) | Build, test, preview via Xcode Tools |
 | **Generate mock classes** | `gen_mock` (Mockolo) | Fast protocol→mock generation |
 | **Generate test templates** | `gen_test` | Creates structured unit/UI tests |
-| **iOS companion app testing** | XcodeBuildMCP + manual | Enable additional tools when mobile dev begins |
+| **iOS companion app testing** | `xcode` MCP + manual | Enable additional tools when mobile dev begins |
 | **GitHub issues/PRs** | `github` MCP | Create issues, review PRs |
 | **Cross-session context** | `memory` MCP | Persistent knowledge graph |
 | **Code intelligence** | `swift-lsp` plugin | Completions, go-to-definition |
@@ -428,6 +428,6 @@ open fastlane/coverage/index.html    # View report
 
 > **Current Focus**: macOS app until rock solid. iOS/iPad work comes later.
 
-- **XcodeBuildMCP** — Can target iOS simulators/devices
+- **xcode MCP** — Apple's official `xcrun mcpbridge`, can target iOS simulators/devices
 - Shared code in Swift Package for cross-platform
 - Use `apple-docs` for UIKit vs AppKit differences

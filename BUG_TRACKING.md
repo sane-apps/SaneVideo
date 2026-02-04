@@ -172,7 +172,7 @@ Files approaching limits (monitor for refactoring):
 
 ### Pipeline Audit Fixes (2025-12-31)
 - **Status**: FIXED (2025-12-31)
-- **Origin**: PIPELINE_AUDIT.md "Fix-these-first" claims verified and fixed
+- **Origin**: Pipeline audit "Fix-these-first" claims verified and fixed
 
 #### P0: Privacy Blur Leaks Across Clips
 - **Symptom**: Privacy blur regions from one clip appear on adjacent clips
@@ -461,6 +461,49 @@ All items resolved:
 
 ---
 
+## Completed (Jan 31 - Feb 3, 2026)
+
+### Silence Detection No-Audio Bug + Quality Improvements
+- **Status**: FIXED (2026-01-31)
+- **Symptom**: `SilenceDetector.detectSilence` returned the entire clip as silent when no audio track existed, causing MagicFix to remove all content from video-only files
+- **Root Cause**: Missing validation for audio track presence before silence detection
+- **Fixes Applied**:
+  1. Return empty array `[]` when no audio track detected (instead of treating entire clip as silent)
+  2. Added `SilenceDetector.hasAudioTrack(url:)` static validation method
+  3. Added `MagicFixService` pre-validation before calling silence detection
+  4. Added 100ms margin padding on silence cut boundaries to preserve word starts/ends
+  5. Added 10% tolerance for loud samples within silent regions to prevent single-sample splits
+- **New Features**: `silenceMargin` and `silenceTolerance` fields in `MagicFixOptions` with backward-compatible defaults
+- **Files**: `SilenceDetector.swift`, `MagicFixService.swift`, `MagicFixOptions.swift`, `ProjectState+SmartFeatures.swift`
+- **Tests**: `SilenceDetectorTests.swift` (8 new tests covering margin, config, and Codable roundtrip)
+- **Commit**: `9b845e3`
+
+### Batch Operation Cancel Support
+- **Status**: FIXED (2026-01-31)
+- **Symptom**: Cancel button during batch MagicFix operations didn't work
+- **Root Cause**: `!isBatchOperation` guard prevented batch operations from storing their task handle
+- **Fix Applied**: Removed guard around `setProcessingTask()` so batch operations store cancellable task handle
+- **Files**: `ProjectState+SmartFeatures.swift`
+- **Commit**: `9b845e3`
+
+### Spring-Physics Zoom Animation
+- **Status**: ADDED (2026-01-08)
+- **Feature**: Smooth spring-based zoom animation for timeline and video preview
+- **Implementation**: Natural physics-based motion for improved UX
+- **Commit**: `6de0507`
+
+### Cursor Tracking System
+- **Status**: ADDED (2026-01-08)
+- **Feature**: Enhanced cursor tracking for precise video editing
+- **Commit**: `6de0507`
+
+### A/V Drift Correction
+- **Status**: ADDED (2026-01-08)
+- **Feature**: Automatic detection and correction of audio/video synchronization drift
+- **Commit**: `6de0507`
+
+---
+
 ## New Bug Template
 
 ```markdown
@@ -478,4 +521,4 @@ All items resolved:
 
 ---
 
-*Last Updated: 2026-01-02*
+*Last Updated: 2026-02-04*

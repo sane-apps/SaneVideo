@@ -6,6 +6,7 @@
 //
 
 import AVFoundation
+import Foundation
 import XCTest
 
 @testable import SaneVideo
@@ -61,7 +62,7 @@ final class ProjectFileManagerTests: XCTestCase {
             _ = try await sut.loadClip(from: testURL)
             XCTFail("Should have thrown an error")
         } catch {
-            XCTAssertEqual((error as NSError).code, 404)
+            XCTAssertEqual((error as NSError).code, expectedError.code)
         }
     }
 
@@ -113,7 +114,7 @@ final class ProjectFileManagerTests: XCTestCase {
             _ = try sut.createBookmark(for: testURL)
             XCTFail("Should have thrown an error")
         } catch {
-            XCTAssertEqual((error as NSError).code, 500)
+            XCTAssertEqual((error as NSError).code, expectedError.code)
         }
     }
 
@@ -157,18 +158,18 @@ final class ProjectFileManagerTests: XCTestCase {
     func testDeleteFile_CallsHandler() async throws {
         // Arrange
         let testURL = URL(fileURLWithPath: "/tmp/to_delete.mp4")
-        var deleteCalled = false
+        let deleteCalled = ThreadSafeBox(false)
 
         sut.deleteFileHandler = { url in
             XCTAssertEqual(url, testURL)
-            deleteCalled = true
+            deleteCalled.set(true)
         }
 
         // Act
         try await sut.deleteFile(at: testURL)
 
         // Assert
-        XCTAssertTrue(deleteCalled)
+        XCTAssertTrue(deleteCalled.get())
         XCTAssertEqual(sut.deleteFileCallCount, 1)
     }
 
@@ -186,7 +187,7 @@ final class ProjectFileManagerTests: XCTestCase {
             try await sut.deleteFile(at: testURL)
             XCTFail("Should have thrown an error")
         } catch {
-            XCTAssertEqual((error as NSError).code, 403)
+            XCTAssertEqual((error as NSError).code, expectedError.code)
         }
     }
 
@@ -195,10 +196,10 @@ final class ProjectFileManagerTests: XCTestCase {
     func testHydrateProject_CallsHandler() {
         // Arrange
         let project = VideoProject()
-        var hydrateCalled = false
+        let hydrateCalled = ThreadSafeBox(false)
 
         sut.hydrateProjectHandler = { p in
-            hydrateCalled = true
+            hydrateCalled.set(true)
             XCTAssertEqual(p.id, project.id)
             return (p, false)
         }
@@ -207,7 +208,7 @@ final class ProjectFileManagerTests: XCTestCase {
         let (_, needsSave) = sut.hydrateProject(project)
 
         // Assert
-        XCTAssertTrue(hydrateCalled)
+        XCTAssertTrue(hydrateCalled.get())
         XCTAssertFalse(needsSave)
         XCTAssertEqual(sut.hydrateProjectCallCount, 1)
     }
@@ -244,10 +245,10 @@ final class ProjectFileManagerTests: XCTestCase {
     func testEnterSecurityScope_CallsHandler() {
         // Arrange
         let project = VideoProject()
-        var scopeCalled = false
+        let scopeCalled = ThreadSafeBox(false)
 
         sut.enterSecurityScopeHandler = { p in
-            scopeCalled = true
+            scopeCalled.set(true)
             XCTAssertEqual(p.id, project.id)
             return ProjectFileManager.SecurityScopeSession(urls: [])
         }
@@ -256,7 +257,7 @@ final class ProjectFileManagerTests: XCTestCase {
         let session = sut.enterSecurityScope(for: project)
 
         // Assert
-        XCTAssertTrue(scopeCalled)
+        XCTAssertTrue(scopeCalled.get())
         XCTAssertNotNil(session)
         XCTAssertEqual(sut.enterSecurityScopeCallCount, 1)
     }
@@ -279,5 +280,26 @@ final class ProjectFileManagerTests: XCTestCase {
         // Assert
         XCTAssertEqual(sut.loadClipCallCount, 5)
         XCTAssertEqual(sut.loadClipArgValues.count, 5)
+    }
+}
+
+private final class ThreadSafeBox<Value>: @unchecked Sendable {
+    private let lock = NSLock()
+    private var value: Value
+
+    init(_ value: Value) {
+        self.value = value
+    }
+
+    func set(_ newValue: Value) {
+        lock.lock()
+        value = newValue
+        lock.unlock()
+    }
+
+    func get() -> Value {
+        lock.lock()
+        defer { lock.unlock() }
+        return value
     }
 }

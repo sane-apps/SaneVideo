@@ -17,7 +17,7 @@ struct CaptionStylePreview: View {
             ZStack {
                 // Background
                 RoundedRectangle(cornerRadius: 6)
-                    .fill(Color.secondary.opacity(0.1))
+                    .fill(Color.stone.opacity(0.1))
                     .frame(width: 80, height: 50)
 
                 // Sample caption text
@@ -40,7 +40,7 @@ struct CaptionStylePreview: View {
 
             Text(style.name)
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundColor(Color.stone)
                 .lineLimit(1)
         }
     }

@@ -276,6 +276,9 @@ final class MagicFixRegressionTests: XCTestCase {
 
         // Verify the clip can still be retrieved (important for the reload logic)
         let clipAfterFix = projectState.getClip(by: testClip.id)
+        if let clipAfterFix {
+            XCTAssertEqual(clipAfterFix.id, testClip.id)
+        }
         // Note: clipAfterFix may be nil if clip was removed during test, but getClip should not crash
         // This test primarily verifies the fix doesn't introduce regressions
     }

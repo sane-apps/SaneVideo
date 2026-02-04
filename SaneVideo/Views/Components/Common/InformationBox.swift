@@ -10,7 +10,7 @@ import SwiftUI
 /// A styled box for displaying analysis results, status messages, etc.
 struct InformationBox: View {
     let text: String
-    var color: Color = .secondary
+    var color: Color = Color.stone
     var icon: String?
 
     var body: some View {
@@ -22,7 +22,7 @@ struct InformationBox: View {
             }
             Text(text)
                 .font(.caption2)
-                .foregroundColor(.secondary)
+                .foregroundColor(Color.stone)
         }
         .padding(6)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -74,7 +74,7 @@ struct DetectedItemsList: View {
                 ForEach(items.prefix(maxItems), id: \.self) { item in
                     Text("• \(item)")
                         .font(.caption2)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(Color.stone)
                 }
             }
             .padding(6)

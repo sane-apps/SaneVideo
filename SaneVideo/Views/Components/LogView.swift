@@ -112,11 +112,11 @@ struct LogEntryRow: View {
                 HStack {
                     Text(entry.date, style: .time)
                         .font(.caption2)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(Color.stone)
 
                     Text(entry.category)
                         .font(.caption2.bold())
-                        .foregroundColor(.secondary)
+                        .foregroundColor(Color.stone)
                         .padding(.horizontal, 4)
                         .background(Color.white.opacity(0.1))
                         .clipShape(RoundedRectangle(cornerRadius: Theme.Dimensions.cornerRadius))

@@ -6,13 +6,12 @@
 //  Follow AAA pattern: Arrange-Act-Assert
 //
 
-import Testing
 @testable import SaneVideo
+import Testing
 
 @Suite("Disk Space Monitor Tests")
 @MainActor
 struct DiskSpaceMonitorTests {
-
     // MARK: - Test Setup
 
     var sut: DiskSpaceMonitor {
@@ -21,31 +20,39 @@ struct DiskSpaceMonitorTests {
 
     // MARK: - Initialization Tests
 
-    @Test("Initial state has no monitoring task")
+    @Test("Initial state allows disk space verification without starting")
     func initialState() async throws {
-        // Arrange & Act
+        // Arrange
         let monitor = sut
 
-        // Assert
-        #expect(monitor != nil)
+        // Act & Assert - verifyDiskSpace should work even before start()
+        try monitor.verifyDiskSpace()
+
+        // Callback should not be set by default
+        #expect(monitor.onLowDiskSpace == nil)
     }
 
-    @Test("Callback can be set")
+    @Test("Callback can be set and cleared")
     func callbackCanBeSet() async throws {
         // Arrange
         let monitor = sut
-        var callbackInvoked = false
+        #expect(monitor.onLowDiskSpace == nil, "Should start with no callback")
 
-        // Act
-        monitor.onLowDiskSpace = { _ in
-            callbackInvoked = true
-        }
+        // Act - set callback
+        monitor.onLowDiskSpace = { _ in }
 
-        // Assert
-        #expect(monitor.onLowDiskSpace != nil)
+        // Assert - callback is set
+        #expect(monitor.onLowDiskSpace != nil, "Callback should be set after assignment")
+
+        // Act - clear callback
+        monitor.onLowDiskSpace = nil
+
+        // Assert - callback is cleared
+        #expect(monitor.onLowDiskSpace == nil, "Callback should be nil after clearing")
     }
 
     // MARK: - Start/Stop Lifecycle Tests
+
     // Note: DiskSpaceMonitor.monitoringTask is private, so we test through observable behavior.
     // For lifecycle tests, completion without crash/hang IS the assertion.
 
@@ -133,6 +140,7 @@ struct DiskSpaceMonitorTests {
     }
 
     // MARK: - Deallocation Tests
+
     // Note: This tests deinit behavior - completion without crash IS the assertion.
 
     @Test("Monitor cleans up on deallocation")

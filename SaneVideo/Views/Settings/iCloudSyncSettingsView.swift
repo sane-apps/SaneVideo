@@ -30,7 +30,7 @@ struct iCloudSyncSettingsView: View {
                         .font(.headline)
                     Text("Sync projects across your Mac devices")
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.stone)
                 }
                 Spacer()
             }
@@ -44,14 +44,14 @@ struct iCloudSyncSettingsView: View {
                     .frame(width: 8, height: 8)
                 Text(isCloudAvailable ? "iCloud Available" : "iCloud Unavailable")
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.stone)
 
                 Spacer()
 
                 if let lastSync = lastSyncDate {
                     Text("Last sync: \(lastSync, style: .relative)")
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.stone)
                 }
             }
 
@@ -62,7 +62,7 @@ struct iCloudSyncSettingsView: View {
                         .font(.body)
                     Text("Projects will sync automatically when saved")
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.stone)
                 }
             }
             .disabled(!isCloudAvailable)
@@ -98,15 +98,15 @@ struct iCloudSyncSettingsView: View {
                                 .controlSize(.small)
                             Text("Loading...")
                                 .font(.caption)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(Color.stone)
                         }
                     } else if cloudProjects.isEmpty {
                         HStack {
                             Image(systemName: "cloud")
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(Color.stone)
                             Text("No projects synced yet")
                                 .font(.caption)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(Color.stone)
                         }
                         .padding(.vertical, 8)
                     } else {
@@ -138,7 +138,7 @@ struct iCloudSyncSettingsView: View {
 
                     Text("Media files are stored in iCloud Drive and may count against your storage quota.")
                         .font(.caption2)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.stone)
                 }
 
                 // Manual Sync Button
@@ -174,7 +174,7 @@ struct iCloudSyncSettingsView: View {
                     Note: Sync is currently available for Mac-to-Mac only. iPad and iPhone support is coming in a future update.
                     """)
                     .font(.caption2)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.stone)
                 }
             }
 
@@ -244,7 +244,7 @@ private struct CloudProjectRow: View {
                     Text(syncInfo.deviceName)
                 }
                 .font(.caption2)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.stone)
             }
 
             Spacer()
@@ -255,7 +255,7 @@ private struct CloudProjectRow: View {
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 6)
-        .background(Color.secondary.opacity(0.05))
+        .background(Color.stone.opacity(0.05))
         .cornerRadius(6)
     }
 }

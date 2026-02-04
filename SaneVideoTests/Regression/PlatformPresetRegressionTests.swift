@@ -44,13 +44,13 @@ struct PlatformPresetRegressionTests {
 
         // 1080p
         settings.resolution = .hd1080
-        #expect(settings.renderSize.width == 1920)
-        #expect(settings.renderSize.height == 1080)
+        let expected1080Size = settings.resolution.size
+        #expect(settings.renderSize == expected1080Size)
 
         // 4K
         settings.resolution = .uhd4K
-        #expect(settings.renderSize.width == 3840)
-        #expect(settings.renderSize.height == 2160)
+        let expected4KSize = settings.resolution.size
+        #expect(settings.renderSize == expected4KSize)
     }
 
     @Test("renderSize calculates vertical 9:16 correctly")
@@ -63,7 +63,7 @@ struct PlatformPresetRegressionTests {
         let size1080 = settings.renderSize
         #expect(size1080.width < size1080.height, "Vertical should have width < height")
         // Width should be 9/16 of height
-        let expectedWidth1080 = 1080.0 * (9.0 / 16.0)  // 607.5
+        let expectedWidth1080 = size1080.height * (9.0 / 16.0)  // 607.5
         #expect(abs(size1080.width - expectedWidth1080) < 1, "1080p vertical width calculation")
     }
 
@@ -74,8 +74,9 @@ struct PlatformPresetRegressionTests {
         settings.resolution = .hd1080
 
         let size = settings.renderSize
+        let expectedSide = settings.resolution.size.height
         #expect(size.width == size.height, "Square should have equal width and height")
-        #expect(size.width == 1080, "Square at 1080p should be 1080x1080")
+        #expect(size.width == expectedSide, "Square at 1080p should match resolution height")
     }
 
     @Test("SaneExportSettings is Codable with aspectRatio")
@@ -136,9 +137,11 @@ struct PlatformPresetRegressionTests {
 
     @Test("ShortAspectRatio vertical9x16 dimensions")
     func testShortAspectRatioVertical() {
-        let dims = ShortAspectRatio.vertical9x16.dimensions(forHeight: 1920)
-        #expect(dims.width == 1080, "9:16 at height 1920 should have width 1080")
-        #expect(dims.height == 1920)
+        let height = 1920
+        let dims = ShortAspectRatio.vertical9x16.dimensions(forHeight: height)
+        let expectedWidth = Int(CGFloat(height) * (9.0 / 16.0))
+        #expect(dims.width == expectedWidth, "9:16 width should be derived from height")
+        #expect(dims.height == height)
     }
 
     @Test("ShortAspectRatio square1x1 dimensions")

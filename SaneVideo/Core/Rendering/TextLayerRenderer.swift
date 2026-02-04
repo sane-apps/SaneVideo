@@ -139,7 +139,7 @@ enum TextLayerRenderer {
                !words.isEmpty,
                let style = layer.style,
                style.highlightStyle != .none {
-                attributedString = createKaraokeAttributedString(
+                let karaokeInput = KaraokeInput(
                     text: text,
                     words: words,
                     compositionTime: compositionTime,
@@ -147,6 +147,7 @@ enum TextLayerRenderer {
                     style: style,
                     font: font
                 )
+                attributedString = createKaraokeAttributedString(using: karaokeInput)
             } else {
                 attributedString = NSAttributedString(string: text, attributes: baseAttributes)
             }
@@ -182,41 +183,43 @@ enum TextLayerRenderer {
 
     // MARK: - Karaoke Highlighting
 
+    private struct KaraokeInput {
+        let text: String
+        let words: [CaptionWord]
+        let compositionTime: CMTime
+        let baseAttributes: [NSAttributedString.Key: Any]
+        let style: CaptionStyle
+        let font: NSFont
+    }
+
     /// Creates an attributed string with the active word highlighted for karaoke effect
-    private static func createKaraokeAttributedString(
-        text: String,
-        words: [CaptionWord],
-        compositionTime: CMTime,
-        baseAttributes: [NSAttributedString.Key: Any],
-        style: CaptionStyle,
-        font: NSFont
-    ) -> NSAttributedString {
-        let mutableString = NSMutableAttributedString(string: text, attributes: baseAttributes)
+    private static func createKaraokeAttributedString(using input: KaraokeInput) -> NSAttributedString {
+        let mutableString = NSMutableAttributedString(string: input.text, attributes: input.baseAttributes)
 
         // Find the active word based on composition time
-        let currentSeconds = compositionTime.seconds
-        guard let activeWord = words.first(where: { currentSeconds >= $0.start && currentSeconds < $0.end }) else {
+        let currentSeconds = input.compositionTime.seconds
+        guard let activeWord = input.words.first(where: { currentSeconds >= $0.start && currentSeconds < $0.end }) else {
             return mutableString
         }
 
         // Find the range of the active word in the text
-        guard let wordRange = text.range(of: activeWord.text, options: .caseInsensitive) else {
+        guard let wordRange = input.text.range(of: activeWord.text, options: .caseInsensitive) else {
             return mutableString
         }
 
-        let nsRange = NSRange(wordRange, in: text)
+        let nsRange = NSRange(wordRange, in: input.text)
 
         // Get the active color
-        let activeColor = style.activeTextColor.flatMap { NSColor(hex: $0) } ?? NSColor.yellow
+        let activeColor = input.style.activeTextColor.flatMap { NSColor(hex: $0) } ?? NSColor.yellow
 
         // Apply highlight based on style
-        switch style.highlightStyle {
+        switch input.style.highlightStyle {
         case .none:
             break
 
         case .pop:
             // Larger font for active word
-            let popFont = NSFont(descriptor: font.fontDescriptor, size: font.pointSize * 1.2) ?? font
+            let popFont = NSFont(descriptor: input.font.fontDescriptor, size: input.font.pointSize * 1.2) ?? input.font
             mutableString.addAttribute(.font, value: popFont, range: nsRange)
             mutableString.addAttribute(.foregroundColor, value: activeColor, range: nsRange)
 

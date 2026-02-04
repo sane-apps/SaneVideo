@@ -67,7 +67,7 @@ struct CollapseButton: View {
         } label: {
             Image(systemName: chevronName)
                 .font(.system(size: 10, weight: .semibold))
-                .foregroundColor(.secondary)
+                .foregroundColor(Color.stone)
                 .frame(width: 16, height: 44)
                 .background(Color(nsColor: .controlBackgroundColor))
                 .contentShape(Rectangle())

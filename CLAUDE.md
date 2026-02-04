@@ -60,8 +60,6 @@
 
 ```bash
 ./Scripts/SaneMaster.rb verify          # Build + unit tests
-ruby ./Scripts/qa.rb                   # Tooling QA checks (hooks + scripts)
-ruby ./Scripts/hooks/test/tier_tests.rb # Run hook test tiers
 ```
 
 ## The 5 Core Rules
@@ -138,28 +136,24 @@ The hooks are helping, not fighting you:
 
 ```
 Scripts/
-├── hooks/           # 4 enforcement hooks
-│   ├── saneprompt.rb   # UserPromptSubmit
-│   ├── sanetools.rb    # PreToolUse
-│   ├── sanetrack.rb    # PostToolUse
-│   └── sanestop.rb     # Stop
-├── SaneMaster.rb    # Main CLI
-└── qa.rb            # Quality checks
+└── SaneMaster.rb    # Main CLI (build, test, verify, gen_test, gen_mock, etc.)
 ```
+
+Hooks are now managed globally at `~/SaneApps/infra/SaneProcess/`.
 
 ---
 
 ## MCP Tool Optimization (TOKEN SAVERS)
 
-### XcodeBuildMCP Session Setup
-At session start, set defaults ONCE to avoid repeating on every build:
+### Xcode Tools (Apple's Official MCP)
+Requires Xcode running with the project open. Get the `tabIdentifier` first:
 ```
-mcp__XcodeBuildMCP__session-set-defaults:
-  projectPath: /Users/sj/SaneVideo/SaneVideo.xcodeproj
-  scheme: SaneVideo
-  arch: arm64
+mcp__xcode__XcodeListWindows
+mcp__xcode__BuildProject
+mcp__xcode__RunAllTests
+mcp__xcode__RenderPreview
 ```
-Note: SaneVideo is a **macOS app** - no simulator needed. Use `build_macos`, `test_macos`, `build_run_macos`.
+Note: SaneVideo is a **macOS app**. Use `macos-automator` for real UI.
 
 ### claude-mem 3-Layer Workflow (10x Token Savings)
 ```

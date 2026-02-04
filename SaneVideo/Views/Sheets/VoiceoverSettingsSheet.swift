@@ -263,7 +263,7 @@ private struct VoiceButton: View {
                     }
                     Text(genderLabel)
                         .font(.caption2)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.stone)
                 }
                 Spacer()
                 if isSelected {
@@ -275,7 +275,7 @@ private struct VoiceButton: View {
             .padding(8)
         }
         .buttonStyle(.bordered)
-        .tint(isSelected ? Color.accentColor : .secondary)
+        .tint(isSelected ? Color.accentColor : Color.stone)
         .accessibilityIdentifier("voiceover.voice.\(voice.identifier).button")
     }
 

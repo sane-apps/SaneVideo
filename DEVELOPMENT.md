@@ -1,6 +1,6 @@
 # SaneVideo Development Guide (SOP)
 
-**Version 2.1** | Last updated: 2026-01-01
+**Version 2.1** | Last updated: 2026-02-02
 
 > **SINGLE SOURCE OF TRUTH** for all Developers and AI Agents.
 
@@ -56,7 +56,7 @@ Names like "SANEMASTER OR DISASTER" aren't just mnemonics—they're a **shared v
 **New to this project? Start here:**
 
 1. **Read Rule #0 first** (Section 1) - It's about HOW to use all other rules
-2. **All files stay in project** - NEVER write files outside `/Users/sj/SaneVideo/` unless user explicitly requests it
+2. **All files stay in project** - NEVER write files outside `/Users/sj/SaneApps/apps/SaneVideo/` unless user explicitly requests it
 3. **Use SaneMaster.rb for everything** - `./Scripts/SaneMaster.rb verify` for build+test, never raw `xcodebuild`
 4. **Self-rate after every task** - Rate yourself 1-10 on SOP adherence (see Section 1)
 
@@ -119,11 +119,6 @@ This runs automatically when you open the project. If bootstrap fails:
 - Use `--rollback` to restore previous configuration
 - Use `--no-fix` to skip auto-fixing (report only)
 
-**Supplementary Documentation:**
-
-- `TEST_CREATION_WORKFLOW.md` - **Test creation workflow** (trigger: "enter test creation workflow")
-- `TEST_COVERAGE_ANALYSIS.md` - Coverage analysis and gaps
-
 **All other docs are historical/archive - refer to DEVELOPMENT.md first.**
 
 ---
@@ -153,11 +148,11 @@ This runs automatically when you open the project. If bootstrap fails:
 
 ### #1: STAY IN YOUR LANE
 
-✅ DO: Save all files inside `/Users/sj/SaneVideo/`
+✅ DO: Save all files inside `/Users/sj/SaneApps/apps/SaneVideo/`
 ❌ DON'T: Create files outside project without asking
 
-🟢 RIGHT: `/Users/sj/SaneVideo/Scripts/new_helper.rb`
-🟢 RIGHT: `/Users/sj/SaneVideo/Core/Models/NewModel.swift`
+🟢 RIGHT: `/Users/sj/SaneApps/apps/SaneVideo/Scripts/new_helper.rb`
+🟢 RIGHT: `/Users/sj/SaneApps/apps/SaneVideo/Core/Models/NewModel.swift`
 🔴 WRONG: `~/.claude/plans/my-plan.md`
 🔴 WRONG: `/tmp/scratch.swift`
 
@@ -938,19 +933,17 @@ log stream --predicate 'subsystem == "com.sanevideo.SaneVideo"' --level debug
     - **Pry**: `bundle exec pry` for interactive debugging.
     - **RuboCop**: `bundle exec rubocop` for script linting.
     - **Bundler-Audit**: `bundle exec bundle-audit` for security.
-3. **XcodeBuildMCP**: Use for granular programmatic builds/tests.
-4. **Claude Code Plugins** (install via `/plugin install`):
+3. **Claude Code Plugins** (install via `/plugin install`):
     - **swift-lsp@claude-plugins-official**: ✅ Enabled - Provides Swift code intelligence (completion, go-to-definition, diagnostics)
     - **code-review@claude-plugins-official**: ✅ Enabled - Automated PR review with 4 parallel agents
     - **security-guidance@claude-plugins-official**: ✅ Enabled - Security vulnerability alerts during editing
     - **sane-loop@claude-plugins-official**: ✅ Enabled - **SOP Enforcement Loop** - Prevents task completion until verification criteria are met (see below)
-5. **MCP Servers** (configured in `.mcp.json`):
-    - **Note**: Ensure `enableAllProjectMcpServers: true` is set in `.claude/settings.local.json` and no restrictive `enabledMcpjsonServers` array exists.
+4. **MCP Servers** (configured in `.mcp.json`):
+    - **Note**: Ensure `enableAllProjectMcpServers: true` is set in `.claude/settings.json` and no restrictive `enabledMcpjsonServers` array exists.
     - **apple-docs**: ✅ Enabled - Apple Developer Documentation & WWDC transcripts (1,260+ sessions, 2012-2025). Use for API examples, related APIs, and understanding "why" behind APIs.
     - **github**: ✅ Enabled - GitHub API integration for issues, PRs, repos, and code search. (Official MCP)
-    - **memory**: ✅ Enabled - Persistent knowledge graph for cross-session context. (Official MCP)
+    - **memory**: ✅ Enabled - Persistent knowledge graph for cross-session context. Provided by the claude-mem plugin (configured in `.claude/settings.json`), not a standalone MCP server entry.
     - **context7**: ✅ Enabled - Real-time, version-specific library documentation. Prevents hallucinated APIs by fetching current docs from source repos.
-    - **XcodeBuildMCP**: ✅ Enabled - Programmatic Xcode builds, test runs, and code signing. Use for CI/CD integration.
 
 ### When to Use Which Tool (Decision Matrix)
 
@@ -960,10 +953,8 @@ log stream --predicate 'subsystem == "com.sanevideo.SaneVideo"' --level debug
 | **Need API usage examples or WWDC context** | `apple-docs` MCP | Rich examples, related APIs, historical context |
 | **Need up-to-date library docs (WhisperKit, Vapor, etc.)** | `context7` MCP | Fetches real-time docs from source repos |
 | **Build/test the project** | `./Scripts/SaneMaster.rb verify` | Always use SaneMaster (Rule #1) |
-| **Programmatic builds (CI/CD)** | `XcodeBuildMCP` | Granular control, JSON output, automation |
 | **Generate mock classes** | `./Scripts/SaneMaster.rb gen_mock` (Mockolo) | Fast protocol→mock generation |
 | **Generate test templates** | `./Scripts/SaneMaster.rb gen_test` | Creates structured unit/UI tests |
-| **iOS companion app testing** | XcodeBuildMCP + manual | Enable additional tools when mobile dev begins |
 | **GitHub issues/PRs** | `github` MCP | Create issues, review PRs, search code |
 | **Remember context across sessions** | `memory` MCP | Persistent knowledge graph |
 | **Code intelligence (completions, go-to-def)** | `swift-lsp` plugin | IDE-like Swift support in Claude Code |
@@ -973,7 +964,6 @@ log stream --predicate 'subsystem == "com.sanevideo.SaneVideo"' --level debug
 > **Current Focus**: macOS app until rock solid. iOS/iPad work comes later.
 
 When developing the iPhone/iPad companion apps:
-- **XcodeBuildMCP** can target iOS simulators and devices
 - Shared code should live in a Swift Package for cross-platform use
 - Use `apple-docs` for platform-specific API differences (UIKit vs AppKit)
 
@@ -1001,7 +991,7 @@ When developing the iPhone/iPad companion apps:
 - ✅ Handles async/await patterns
 - ✅ Follows project conventions
 
-**See:** `TEST_CREATION_WORKFLOW.md` for test creation workflow and best practices.
+**See the "Test Standards" section above** for test creation workflow and best practices.
 
 ### SaneLoop: SOP Enforcement Loop
 
@@ -1208,8 +1198,6 @@ Regression tests are critical for preventing the reintroduction of fixed bugs.
 
 - **ROADMAP.md**: Discussed features for future consideration. Check when user asks "what features have we discussed?"
 - **BUG_TRACKING.md**: Bug documentation and tracking
-- **TEST_CREATION_WORKFLOW.md**: Test creation workflow (trigger: "enter test creation workflow")
-- **TEST_COVERAGE_ANALYSIS.md**: Coverage analysis and gaps
 
 **Rule**: When in doubt, refer to DEVELOPMENT.md. If information is missing, add it here rather than creating new files.
 
@@ -1257,16 +1245,18 @@ After fixing ANY bug:
 - [ ] Plain English explanation ready?
 - [ ] Memory updated? (if pattern worth remembering)
 
-### Memory MCP (Cross-Session Knowledge)
+### Memory (Cross-Session Knowledge via claude-mem Plugin)
 
-**Rule**: If it took >30 minutes to figure out, write it to memory.
+**Rule**: If it took >30 minutes to figure out, write it to memory. Memory is accessed via the claude-mem plugin, not as a standalone MCP server.
+
+**Configuration**: Memory settings are in `.claude/settings.json`
 
 **Entity types**: `bug_pattern`, `concurrency_gotcha`, `architecture_pattern`, `compliance_rule`
 
 **Commands:**
 ```bash
-mcp__memory__search_nodes("bug_pattern")  # Query before bug fix
-./Scripts/SaneMaster.rb memory_context    # Show all stored knowledge
+mcp__plugin_claude-mem_mcp-search__search(query: "bug_pattern")  # Query before bug fix
+./Scripts/SaneMaster.rb memory_context                           # Show all stored knowledge
 ```
 
 **Session reviews** (at session end): Store `SessionReview_YYYY-MM-DD_TaskName` with tasks completed, mistakes made, patterns discovered.

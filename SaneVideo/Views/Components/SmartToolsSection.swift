@@ -89,7 +89,7 @@ struct SmartToolsSection: View {
           .cornerRadius(Theme.Dimensions.smallCornerRadius)
           .overlay(
             RoundedRectangle(cornerRadius: Theme.Dimensions.smallCornerRadius)
-              .stroke(Color.secondary.opacity(Theme.Opacity.medium), lineWidth: 0.5)
+              .stroke(Color.stone.opacity(Theme.Opacity.medium), lineWidth: 0.5)
           )
       }
       .menuStyle(.button)
@@ -135,7 +135,7 @@ struct SmartToolsSection: View {
             HStack {
               Text("Threshold")
                 .font(.system(size: Theme.Typography.fontSizeSM, weight: .medium))
-                .foregroundColor(.secondary)
+                .foregroundColor(Color.stone)
               Spacer()
               Text("\(Int(options.silenceThreshold)) dB")
                 .font(.system(size: Theme.Typography.fontSizeSM, weight: .semibold, design: .monospaced))
@@ -198,7 +198,7 @@ struct SmartToolsSection: View {
           if options.enhanceAudio {
             Text("Voice isolation applies during playback only")
               .font(.system(size: Theme.Typography.fontSizeXS))
-              .foregroundStyle(.secondary)
+              .foregroundStyle(Color.stone)
               .padding(.leading, 28) // Align with toggle text
           }
         }
@@ -328,8 +328,8 @@ struct SmartToolsSection: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, Theme.Dimensions.paddingMD)
-        .background(Color.secondary.opacity(0.1))
-        .foregroundColor(.secondary)
+        .background(Color.stone.opacity(0.1))
+        .foregroundColor(Color.stone)
         .cornerRadius(Theme.Dimensions.cornerRadius)
       }
       .buttonStyle(.plain)

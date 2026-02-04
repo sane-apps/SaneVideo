@@ -91,26 +91,28 @@ struct TimelineControls: View {
                 label: {
                     Image(systemName: "arrow.uturn.backward")
                         .font(.system(size: 12))
-                        .foregroundColor(undoManager?.canUndo == true ? .accentColor : .secondary.opacity(0.5))
+                        .foregroundColor(undoManager?.canUndo == true ? .accentColor : Color.stone.opacity(0.5))
                 }
             )
             .buttonStyle(.plain)
             .disabled(!(undoManager?.canUndo ?? false))
             .help("Undo (⌘Z)")
             .accessibilityIdentifier("toolbar.undo")
+            .accessibilityLabel("Undo")
 
             Button(
                 action: { undoManager?.redo() },
                 label: {
                     Image(systemName: "arrow.uturn.forward")
                         .font(.system(size: 12))
-                        .foregroundColor(undoManager?.canRedo == true ? .accentColor : .secondary.opacity(0.5))
+                        .foregroundColor(undoManager?.canRedo == true ? .accentColor : Color.stone.opacity(0.5))
                 }
             )
             .buttonStyle(.plain)
             .disabled(!(undoManager?.canRedo ?? false))
             .help("Redo (⌘⇧Z)")
             .accessibilityIdentifier("toolbar.redo")
+            .accessibilityLabel("Redo")
         }
     }
 
@@ -122,9 +124,9 @@ struct TimelineControls: View {
                 .foregroundColor(.primary)
                 .fontWeight(.medium)
             Text("/")
-                .foregroundColor(.secondary)
+                .foregroundColor(Color.stone)
             Text(timecodeString(from: projectState.currentProject?.timeline.duration ?? .zero))
-                .foregroundColor(.secondary)
+                .foregroundColor(Color.stone)
         }
         .font(.system(size: 11, design: .monospaced))
     }
@@ -147,6 +149,7 @@ struct TimelineControls: View {
             .pressScale()
             .help("Previous frame (←)")
             .accessibilityIdentifier("player.step_backward")
+            .accessibilityLabel("Previous frame")
 
             // Play/Pause
             Button(
@@ -163,9 +166,10 @@ struct TimelineControls: View {
             .hoverScale(1.15)
             .pressScale()
             .animation(.smoothUI, value: playbackState.isPlaying)
-            .disabled(projectState.currentProject?.timeline.tracks.allSatisfy { $0.clips.isEmpty } ?? true)
+            .disabled(projectState.currentProject?.timeline.tracks.allSatisfy(\.clips.isEmpty) ?? true)
             .help("Play/Pause (Space)")
             .accessibilityIdentifier("player.toggle_play_pause")
+            .accessibilityLabel(playbackState.isPlaying ? "Pause" : "Play")
 
             // Step forward
             Button(
@@ -181,6 +185,7 @@ struct TimelineControls: View {
             .pressScale()
             .help("Next frame (→)")
             .accessibilityIdentifier("player.step_forward")
+            .accessibilityLabel("Next frame")
         }
     }
 
@@ -209,7 +214,7 @@ struct TimelineControls: View {
             label: {
                 Text("\(playbackSpeed, specifier: playbackSpeed == 1.0 ? "%.0f" : "%.1f")x")
                     .font(.system(size: 10, weight: .medium, design: .monospaced))
-                    .foregroundColor(.secondary)
+                    .foregroundColor(Color.stone)
                     .frame(width: 32)
             }
         )
@@ -230,17 +235,18 @@ struct TimelineControls: View {
                 label: {
                     Image(systemName: isMuted || volume == 0 ? "speaker.slash.fill" : volumeIcon)
                         .font(.system(size: 11))
-                        .foregroundColor(isMuted ? .secondary : .accentColor)
+                        .foregroundColor(isMuted ? Color.stone : .accentColor)
                         .frame(width: 20)
                 }
             )
             .buttonStyle(.plain)
             .help(isMuted ? "Unmute" : "Mute")
             .accessibilityIdentifier("player.mute")
+            .accessibilityLabel(isMuted ? "Unmute audio" : "Mute audio")
 
-            Slider(value: $volume, in: 0...1) { _ in
+            Slider(value: $volume, in: 0 ... 1) { _ in
                 playbackState.player?.volume = volume
-                if volume > 0 && isMuted {
+                if volume > 0, isMuted {
                     isMuted = false
                     playbackState.player?.isMuted = false
                 }
@@ -248,18 +254,19 @@ struct TimelineControls: View {
             .frame(width: 50)
             .tint(.accentColor)
             .accessibilityIdentifier("player.volume")
+            .accessibilityLabel("Volume")
         }
     }
 
     private var volumeIcon: String {
         if volume > 0.66 {
-            return "speaker.wave.3.fill"
+            "speaker.wave.3.fill"
         } else if volume > 0.33 {
-            return "speaker.wave.2.fill"
+            "speaker.wave.2.fill"
         } else if volume > 0 {
-            return "speaker.wave.1.fill"
+            "speaker.wave.1.fill"
         } else {
-            return "speaker.slash.fill"
+            "speaker.slash.fill"
         }
     }
 
@@ -274,6 +281,7 @@ struct TimelineControls: View {
                     ServiceContainer.shared.hapticsManager.impact()
                 }
                 .help("Rotate 90° (R)")
+                .accessibilityLabel("Rotate clip 90 degrees")
             }
 
             // Split
@@ -282,6 +290,7 @@ struct TimelineControls: View {
             }
             .disabled(selectedClip == nil || projectState.isProcessing)
             .help("Split clip (⌘B)")
+            .accessibilityLabel("Split clip at playhead")
 
             // Delete
             ToolButton(icon: "trash", isSelected: false, id: "DeleteClipButton") {
@@ -298,7 +307,7 @@ struct TimelineControls: View {
                 Button("Move to Trash", role: .destructive) {
                     projectState.deleteClipFile(clip)
                 }
-                Button("Cancel", role: .cancel) { }
+                Button("Cancel", role: .cancel) {}
             } message: { clip in
                 Text("Remove '\(clip.url.lastPathComponent)' from project or move file to Trash?")
             }
@@ -316,7 +325,7 @@ struct TimelineControls: View {
                 action: { snapEnabled.toggle() },
                 label: {
                     Image(systemName: "bolt.fill")
-                        .foregroundColor(snapEnabled ? .accentColor : .secondary)
+                        .foregroundColor(snapEnabled ? .accentColor : Color.stone)
                         .font(.system(size: 11))
                         .opacity(snapEnabled ? 1.0 : 0.6)
                 }
@@ -326,13 +335,14 @@ struct TimelineControls: View {
             .animation(.smoothUI, value: snapEnabled)
             .help("Snap (N): \(snapEnabled ? "On" : "Off")")
             .accessibilityIdentifier("timeline.toggle_snap")
+            .accessibilityLabel("Snap to edges, \(snapEnabled ? "on" : "off")")
 
             // Magnetic Toggle
             Button(
                 action: { magneticTimeline.toggle() },
                 label: {
                     Image(systemName: magneticTimeline ? "arrow.left.to.line.compact" : "arrow.left.to.line")
-                        .foregroundColor(magneticTimeline ? .accentColor : .secondary)
+                        .foregroundColor(magneticTimeline ? .accentColor : Color.stone)
                         .font(.system(size: 11))
                 }
             )
@@ -341,21 +351,23 @@ struct TimelineControls: View {
             .animation(.smoothUI, value: magneticTimeline)
             .help("Magnetic (M): \(magneticTimeline ? "On" : "Off")")
             .accessibilityIdentifier("timeline.toggle_magnetic")
+            .accessibilityLabel("Magnetic timeline, \(magneticTimeline ? "on" : "off")")
 
             // Zoom Slider
             HStack(spacing: 4) {
                 Image(systemName: "minus.magnifyingglass")
                     .font(.system(size: 9))
-                    .foregroundColor(.secondary)
+                    .foregroundColor(Color.stone)
 
                 Slider(value: $zoomLevel, in: 0.1 ... 5.0, step: 0.1)
                     .frame(width: 60)
                     .tint(.accentColor)
                     .accessibilityIdentifier("timeline.zoom_slider")
+                    .accessibilityLabel("Timeline zoom")
 
                 Image(systemName: "plus.magnifyingglass")
                     .font(.system(size: 9))
-                    .foregroundColor(.secondary)
+                    .foregroundColor(Color.stone)
             }
         }
     }
@@ -387,6 +399,7 @@ struct TimelineControls: View {
         .hoverScale(1.1)
         .help("Display: \(displayMode.label) (click to cycle)")
         .accessibilityIdentifier("player.displayMode.toggle")
+        .accessibilityLabel("Display mode: \(displayMode.label)")
     }
 
     // MARK: - Helpers

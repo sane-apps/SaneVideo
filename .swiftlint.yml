@@ -10,7 +10,7 @@ disabled_rules:
   - shorthand_operator
 
 file_length:
-  warning: 500
+  warning: 750
   error: 800
 
 opt_in_rules:

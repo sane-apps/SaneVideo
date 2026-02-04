@@ -115,7 +115,7 @@ struct GeneralSettingsView: View {
                 defaultValue: "Clear cached previews and temporary recordings to free up space.")
             )
             .font(.caption)
-            .foregroundColor(.secondary)
+            .foregroundColor(Color.stone)
           }
           Spacer()
           Button(String(localized: "settings.action.clear_cache", defaultValue: "Clear Cache")) {
@@ -139,16 +139,16 @@ struct GeneralSettingsView: View {
             "SaneVideo processes all AI features on-device using Apple Intelligence. Your videos never leave your Mac."
           )
           .font(.caption)
-          .foregroundColor(.secondary)
+          .foregroundColor(Color.stone)
 
           HStack {
             Text("Cloud AI:")
               .font(.caption)
-              .foregroundColor(.secondary)
+              .foregroundColor(Color.stone)
             Spacer()
             Text("Optional (your API keys)")
               .font(.caption)
-              .foregroundColor(.secondary)
+              .foregroundColor(Color.stone)
           }
 
           Button("Configure API Keys") {
@@ -192,7 +192,7 @@ struct ExportSettingsView: View {
             defaultValue: "These settings will be used as the default for new exports.")
         )
         .font(.caption)
-        .foregroundColor(.secondary)
+        .foregroundColor(Color.stone)
         .padding(.bottom, 8)
 
         Picker(
@@ -239,7 +239,7 @@ struct DebugSettingsView: View {
             "Run automated stress tests to identify performance bottlenecks and breaking points.")
       )
       .font(.caption)
-      .foregroundColor(.secondary)
+      .foregroundColor(Color.stone)
 
       HStack {
         Button(

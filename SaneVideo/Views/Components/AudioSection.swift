@@ -55,9 +55,9 @@ struct AudioSection: View {
             if let result = analysisResult {
                 Text(result)
                     .font(.caption2)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(Color.stone)
                     .padding(6)
-                    .background(Color.secondary.opacity(0.1))
+                    .background(Color.stone.opacity(0.1))
                     .cornerRadius(4)
                     .transition(.smoothScale)
                     .smoothAppear()
@@ -70,7 +70,7 @@ struct AudioSection: View {
                 Text("Volume control in toolbar below video")
                     .font(.caption2)
             }
-            .foregroundColor(.secondary)
+            .foregroundColor(Color.stone)
             .padding(.top, 4)
         }
     }

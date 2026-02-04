@@ -93,7 +93,7 @@ struct RepurposingSheet: View {
                 if let clip = sourceClip {
                     Text("From: \(clip.url.lastPathComponent)")
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.stone)
                 }
             }
 
@@ -103,7 +103,7 @@ struct RepurposingSheet: View {
                 VStack(alignment: .trailing, spacing: 4) {
                     Text(analysisPhase.rawValue)
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.stone)
                     ProgressView(value: analysisProgress)
                         .frame(width: 120)
                 }
@@ -111,7 +111,7 @@ struct RepurposingSheet: View {
                 VStack(alignment: .trailing, spacing: 4) {
                     Text("Exporting...")
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.stone)
                     ProgressView(value: exportProgress)
                         .frame(width: 120)
                 }
@@ -193,7 +193,7 @@ struct RepurposingSheet: View {
                             .font(.headline)
                         Spacer()
                         Text("\(settings.maxShorts)")
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color.stone)
                     }
 
                     Slider(value: Binding(
@@ -272,11 +272,11 @@ struct RepurposingSheet: View {
                 VStack(spacing: 16) {
                     Image(systemName: "film.stack")
                         .font(.system(size: 48))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.stone)
 
                     Text(isAnalyzing ? "Analyzing video..." : "No candidates yet")
                         .font(.title3)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color.stone)
 
                     if !isAnalyzing {
                         Text("Click 'Analyze' to find short clips")

@@ -1,0 +1,39 @@
+# Lefthook Configuration
+# "The Enforcer" - Eliminates manual errors by running checks automatically.
+
+pre-commit:
+  parallel: true
+  commands:
+    lint:
+      glob: "*.swift"
+      run: swiftlint lint --fix {staged_files} && git add {staged_files}
+    file_size_check:
+      glob: "*.swift"
+      run: swiftlint lint --strict {staged_files} | grep -q "file_length.*error" && (echo "❌ File exceeds 800 lines! Refactor before committing." && exit 1) || exit 0
+    xcodegen_check:
+      glob: "*.swift"
+      # TODO: fix path matching in SaneProcess check_xcodegen (xcodeproj stores relative-to-group paths)
+      run: bundle exec ./Scripts/SaneMaster.rb check_xcodegen {staged_files} || echo "⚠️  XcodeGen check warning (non-blocking)"
+    protocol_change_check:
+      glob: "*.swift"
+      run: bundle exec ./Scripts/SaneMaster.rb check_protocol_changes {staged_files}
+    test_reference_validation:
+      glob: "*.swift"
+      run: bundle exec ./Scripts/SaneMaster.rb validate_test_references
+    deprecation_check:
+      glob: "*.swift"
+      run: bundle exec ./Scripts/SaneMaster.rb check_deprecations || true
+    rubocop:
+      glob: "*.rb"
+      run: bundle exec rubocop -a --force-exclusion {staged_files} && git add {staged_files}
+
+pre-push:
+  parallel: false
+  commands:
+    security:
+      run: bundle exec bundle-audit check --update
+    doctor:
+      run: bundle exec ./Scripts/SaneMaster.rb doctor
+    verify_tests:
+      # Run the verification script to ensure no regressions before pushing
+      run: bundle exec ./Scripts/SaneMaster.rb verify

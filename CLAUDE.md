@@ -46,11 +46,11 @@
 
 | Need | Check |
 |------|-------|
-| Build/test commands | `./Scripts/SaneMaster.rb --help` |
+| Build/test commands | `./scripts/SaneMaster.rb --help` |
 | Project structure | `project.yml` (XcodeGen config) |
 | Past bugs/learnings | `.claude/memory.json` or MCP memory |
 | Code patterns | `.claude/rules/` directory |
-| Feature status | `ROADMAP.md` or `BUG_TRACKING.md` |
+| Feature status | `ROADMAP.md` or [GitHub Issues](https://github.com/sj/SaneVideo/issues) |
 | Swift services | `SaneVideo/Services/` directory |
 | UI components | `SaneVideo/UI/` directory |
 
@@ -59,7 +59,7 @@
 ## Quick Start
 
 ```bash
-./Scripts/SaneMaster.rb verify          # Build + unit tests
+./scripts/SaneMaster.rb verify          # Build + unit tests
 ```
 
 ## The 5 Core Rules
@@ -85,7 +85,7 @@ Fix all failures before claiming done. No tautologies (`#expect(true)`).
 ### 4. USE PROJECT TOOLS
 Use SaneMaster, not raw commands. The tools exist for a reason.
 
-**DO:** `./Scripts/SaneMaster.rb verify`
+**DO:** `./scripts/SaneMaster.rb verify`
 **DON'T:** `xcodebuild -scheme MyApp build`
 
 ### 5. STAY RESPONSIVE

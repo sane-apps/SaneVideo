@@ -57,36 +57,36 @@ Names like "SANEMASTER OR DISASTER" aren't just mnemonics—they're a **shared v
 
 1. **Read Rule #0 first** (Section 1) - It's about HOW to use all other rules
 2. **All files stay in project** - NEVER write files outside `/Users/sj/SaneApps/apps/SaneVideo/` unless user explicitly requests it
-3. **Use SaneMaster.rb for everything** - `./Scripts/SaneMaster.rb verify` for build+test, never raw `xcodebuild`
+3. **Use SaneMaster.rb for everything** - `./scripts/SaneMaster.rb verify` for build+test, never raw `xcodebuild`
 4. **Self-rate after every task** - Rate yourself 1-10 on SOP adherence (see Section 1)
 
-Bootstrap runs automatically via SessionStart hook. If it fails, run `./Scripts/SaneMaster.rb doctor`.
+Bootstrap runs automatically via SessionStart hook. If it fails, run `./scripts/SaneMaster.rb doctor`.
 
 **Your first action when user says "check our SOP" or "use our SOP":**
 ```bash
-./Scripts/SaneMaster.rb bootstrap  # Verify environment (may already have run)
-./Scripts/SaneMaster.rb verify     # Build + unit tests
+./scripts/SaneMaster.rb bootstrap  # Verify environment (may already have run)
+./scripts/SaneMaster.rb verify     # Build + unit tests
 ```
 
 **Key Commands:**
 
 ```bash
-./Scripts/SaneMaster.rb bootstrap  # Environment check + auto-update (runs on session start)
-./Scripts/SaneMaster.rb verify     # Build + unit tests (fast, ~30s)
-./Scripts/SaneMaster.rb verify --ui  # Build + unit + UI tests (~60s)
-./Scripts/SaneMaster.rb test_suite --quick  # Comprehensive validation
+./scripts/SaneMaster.rb bootstrap  # Environment check + auto-update (runs on session start)
+./scripts/SaneMaster.rb verify     # Build + unit tests (fast, ~30s)
+./scripts/SaneMaster.rb verify --ui  # Build + unit + UI tests (~60s)
+./scripts/SaneMaster.rb test_suite --quick  # Comprehensive validation
 ```
 
 **SOP Loop Commands (Two-Fix Rule Enforcement):**
 
 ```bash
-./Scripts/SaneMaster.rb verify_gate       # Run verify with failure tracking (--json for structured output)
-./Scripts/SaneMaster.rb sop_loop <prompt> # Start SOP-compliant task loop with auto-verification
-./Scripts/SaneMaster.rb reset_escalation  # Clear escalation state after investigation
+./scripts/SaneMaster.rb verify_gate       # Run verify with failure tracking (--json for structured output)
+./scripts/SaneMaster.rb sop_loop <prompt> # Start SOP-compliant task loop with auto-verification
+./scripts/SaneMaster.rb reset_escalation  # Clear escalation state after investigation
 ```
 
 The SOP loop enforces the **Two-Fix Rule**: After 2 consecutive `verify` failures, you MUST stop guessing and investigate:
-1. `./Scripts/SaneMaster.rb verify_api <API>` - Verify API exists in SDK
+1. `./scripts/SaneMaster.rb verify_api <API>` - Verify API exists in SDK
 2. Check docs with `apple-docs` or `context7` MCP servers
 3. Only then run `reset_escalation` and attempt another fix
 
@@ -100,13 +100,13 @@ Task complexity levels for `sop_loop`:
 The `.claude/settings.json` file contains:
 ```json
 "hooks": {
-  "SessionStart": [{ "command": "./Scripts/SaneMaster.rb bootstrap" }]
+  "SessionStart": [{ "command": "./scripts/SaneMaster.rb bootstrap" }]
 }
 ```
 
 This runs automatically when you open the project. If bootstrap fails:
 1. Check the error message
-2. Run `./Scripts/SaneMaster.rb doctor` for diagnostics
+2. Run `./scripts/SaneMaster.rb doctor` for diagnostics
 3. See Section 6 (Troubleshooting)
 
 **Bootstrap Features:**
@@ -165,8 +165,8 @@ If file must go elsewhere → ask user where.
 ✅ DO: Run verify_api before using any Apple API
 ❌ DON'T: Assume an API exists from memory or web search
 
-🟢 RIGHT: `./Scripts/SaneMaster.rb verify_api AVCaptureDevice AVFoundation`
-🟢 RIGHT: `./Scripts/SaneMaster.rb verify_api kAXExtrasMenuBarAttribute Accessibility`
+🟢 RIGHT: `./scripts/SaneMaster.rb verify_api AVCaptureDevice AVFoundation`
+🟢 RIGHT: `./scripts/SaneMaster.rb verify_api kAXExtrasMenuBarAttribute Accessibility`
 🔴 WRONG: "I remember AVCaptureDevice has a .zoom property"
 🔴 WRONG: "Stack Overflow says use .preferredCamera"
 
@@ -198,11 +198,11 @@ If file must go elsewhere → ask user where.
 
 ### #5: SANEMASTER OR DISASTER
 
-✅ DO: Use `./Scripts/SaneMaster.rb` for all build/test operations
+✅ DO: Use `./scripts/SaneMaster.rb` for all build/test operations
 ❌ DON'T: Use raw xcodebuild or xcode commands
 
-🟢 RIGHT: `./Scripts/SaneMaster.rb verify`
-🟢 RIGHT: `./Scripts/SaneMaster.rb verify_api MyAPI`
+🟢 RIGHT: `./scripts/SaneMaster.rb verify`
+🟢 RIGHT: `./scripts/SaneMaster.rb verify_api MyAPI`
 🔴 WRONG: `xcodebuild -scheme SaneVideo build`
 🔴 WRONG: `xcrun xcodebuild test`
 
@@ -215,13 +215,13 @@ If file must go elsewhere → ask user where.
 
 🟢 RIGHT:
 ```bash
-./Scripts/SaneMaster.rb verify    # BUILD
+./scripts/SaneMaster.rb verify    # BUILD
 killall -9 SaneVideo              # KILL
-./Scripts/SaneMaster.rb launch    # LAUNCH
-./Scripts/SaneMaster.rb logs --follow  # LOG
+./scripts/SaneMaster.rb launch    # LAUNCH
+./scripts/SaneMaster.rb logs --follow  # LOG
 ```
-🟢 RIGHT: `./Scripts/SaneMaster.rb test_mode` (runs all steps)
-🔴 WRONG: `./Scripts/SaneMaster.rb verify` then "done!"
+🟢 RIGHT: `./scripts/SaneMaster.rb test_mode` (runs all steps)
+🔴 WRONG: `./scripts/SaneMaster.rb verify` then "done!"
 🔴 WRONG: Launch without killing old instance first
 
 ---
@@ -240,11 +240,11 @@ killall -9 SaneVideo              # KILL
 
 ### #8: BUG FOUND? WRITE IT DOWN
 
-✅ DO: Document bugs in TodoWrite immediately, BUG_TRACKING.md after
+✅ DO: Document bugs in TodoWrite immediately, GitHub Issues after
 ❌ DON'T: Try to remember bugs or skip documentation
 
 🟢 RIGHT: TodoWrite: "BUG: Camera - black screen on launch"
-🟢 RIGHT: Update BUG_TRACKING.md with root cause after fix
+🟢 RIGHT: Create GitHub issue with root cause after fix
 🔴 WRONG: "I'll remember to fix that later"
 🔴 WRONG: Fix bug without documenting what caused it
 
@@ -327,7 +327,7 @@ Approve?
 **Why rejected:**
 - No `[Rule #X]` citations - can't verify SOP compliance
 - No test specified (violates Rule #5: Regression Tests)
-- No BUG_TRACKING.md update (violates Rule #8)
+- No GitHub issue created (violates Rule #8)
 - "Find where" is vague - should have file:line
 
 #### ✅ APPROVED PLAN (Same Task, Correct Format)
@@ -346,15 +346,15 @@ Approve?
   - SaneVideoTests/Regression/MagicFixRegressionTests.swift
   - `testPlaybackResetsAfterMagicFix()`
 
-[Rule #8: DOCUMENT BUG] - Update BUG_TRACKING.md:
+[Rule #8: DOCUMENT BUG] - Create GitHub issue:
   - BUG-XXX: Magic Fix doesn't trigger timeline reload
 
 [Rule #6: FULL CYCLE] - Fix and verify:
   - Edit ProjectState+SmartFeatures.swift:254
   - Add `loadProject(forceReload: true)` + `seek(to: .zero)`
-  - `./Scripts/SaneMaster.rb verify`
-  - `killall -9 SaneVideo && ./Scripts/SaneMaster.rb launch`
-  - `./Scripts/SaneMaster.rb logs --follow`
+  - `./scripts/SaneMaster.rb verify`
+  - `killall -9 SaneVideo && ./scripts/SaneMaster.rb launch`
+  - `./scripts/SaneMaster.rb logs --follow`
 
 [Rule #4: VERIFY BEFORE SHIP] - All tests pass, logs clean
 
@@ -364,7 +364,7 @@ Approve?
 **Why approved:**
 - Every step cites its justifying rule
 - Regression test specified with exact file path
-- BUG_TRACKING.md update included
+- GitHub issue creation included
 - Specific file:line references
 - Clear verification sequence
 
@@ -414,13 +414,13 @@ Task(Explore): "crash patterns"
 
 ```bash
 # Setup dependencies and environment
-./Scripts/SaneMaster.rb setup
+./scripts/SaneMaster.rb setup
 
 # Verify everything (Build + Tests)
-./Scripts/SaneMaster.rb verify
+./scripts/SaneMaster.rb verify
 
 # Generate usage assets (e.g. tests)
-./Scripts/SaneMaster.rb gen_assets
+./scripts/SaneMaster.rb gen_assets
 ```
 
 ### Manual Generation (If needed)
@@ -555,13 +555,13 @@ Use this for rapid iteration. **UI tests are optional and skipped by default** -
 
 ```bash
 # Default: Build + run unit tests (fast, ~1s)
-./Scripts/SaneMaster.rb verify
+./scripts/SaneMaster.rb verify
 
 # Include functional UI tests (excludes visual tests - manual only)
-./Scripts/SaneMaster.rb verify --ui
+./scripts/SaneMaster.rb verify --ui
 
 # Optional: Full Clean Build (Slow, ~30s)
-./Scripts/SaneMaster.rb verify --clean
+./scripts/SaneMaster.rb verify --clean
 ```
 
 #### 2. Full System Check (Slow, Complete)
@@ -577,7 +577,7 @@ bundle exec fastlane verify_full
 Always diagnostics after a run:
 
 ```bash
-./Scripts/SaneMaster.rb diagnose --dump
+./scripts/SaneMaster.rb diagnose --dump
 ```
 
 *Why?* This ensures you see "ProjectStore initialized at..." and other critical runtime events that Xcode/MCP might swallow.
@@ -586,8 +586,8 @@ Always diagnostics after a run:
 
 | Scenario | Command | What It Does |
 |----------|---------|--------------|
-| After code changes | `./Scripts/SaneMaster.rb verify` | Build + run unit tests (automated, ~30s) |
-| Before committing | `./Scripts/SaneMaster.rb verify --ui` | Build + unit + UI tests (automated, ~60s) |
+| After code changes | `./scripts/SaneMaster.rb verify` | Build + run unit tests (automated, ~30s) |
+| Before committing | `./scripts/SaneMaster.rb verify --ui` | Build + unit + UI tests (automated, ~60s) |
 | User testing live | See "Test Mode" below | Kill → Build → Launch → Stream logs |
 | Debugging crash | See Section 6 | Crash analysis workflow |
 
@@ -597,9 +597,9 @@ Always diagnostics after a run:
 
 **Test Mode workflow (when user says "test mode" or you need live debugging):**
 ```bash
-./Scripts/SaneMaster.rb test_mode   # Preferred: runs all steps below automatically
-# Or manually: killall -9 SaneVideo && ./Scripts/SaneMaster.rb verify && ./Scripts/SaneMaster.rb launch
-# Then: ./Scripts/SaneMaster.rb logs --follow   # Stream logs
+./scripts/SaneMaster.rb test_mode   # Preferred: runs all steps below automatically
+# Or manually: killall -9 SaneVideo && ./scripts/SaneMaster.rb verify && ./scripts/SaneMaster.rb launch
+# Then: ./scripts/SaneMaster.rb logs --follow   # Stream logs
 ```
 
 Monitor these resources while user tests:
@@ -646,7 +646,7 @@ After research, present findings in this format:
 ...
 
 ### Verification
-- [ ] ./Scripts/SaneMaster.rb verify passes
+- [ ] ./scripts/SaneMaster.rb verify passes
 - [ ] Manual test: [specific check]
 ```
 
@@ -677,9 +677,9 @@ Success resets the counter. Normal iterative development (fail → fix → fail 
 ### Commands
 
 ```bash
-./Scripts/SaneMaster.rb breaker_status  # Check if tripped
-./Scripts/SaneMaster.rb breaker_errors  # See what failed
-./Scripts/SaneMaster.rb reset_breaker   # Unblock (after plan approved)
+./scripts/SaneMaster.rb breaker_status  # Check if tripped
+./scripts/SaneMaster.rb breaker_errors  # See what failed
+./scripts/SaneMaster.rb reset_breaker   # Unblock (after plan approved)
 ```
 
 ### Recovery Flow
@@ -692,7 +692,7 @@ When blocked, follow the **Research Protocol** (section above). Start with `brea
          ▼
 ┌─────────────────────────────────────────────┐
 │  1. READ ERRORS                             │
-│     ./Scripts/SaneMaster.rb breaker_errors  │
+│     ./scripts/SaneMaster.rb breaker_errors  │
 ├─────────────────────────────────────────────┤
 │  2. RESEARCH (use ALL tools above)          │
 │     - What API am I misusing?               │
@@ -705,7 +705,7 @@ When blocked, follow the **Research Protocol** (section above). Start with `brea
 │     - Propose specific fix steps            │
 ├─────────────────────────────────────────────┤
 │  4. USER APPROVES PLAN                      │
-│     User runs: ./Scripts/SaneMaster.rb      │
+│     User runs: ./scripts/SaneMaster.rb      │
 │                reset_breaker                │
 └─────────────────────────────────────────────┘
          │
@@ -724,9 +724,9 @@ The Memory MCP can bloat and fill context window. Monitor and maintain regularly
 ### Commands
 
 ```bash
-./Scripts/SaneMaster.rb mh              # Check entity/token counts
-./Scripts/SaneMaster.rb mcompact --dry-run  # Preview compaction
-./Scripts/SaneMaster.rb mcleanup        # Generate MCP cleanup commands (pipe memory JSON)
+./scripts/SaneMaster.rb mh              # Check entity/token counts
+./scripts/SaneMaster.rb mcompact --dry-run  # Preview compaction
+./scripts/SaneMaster.rb mcleanup        # Generate MCP cleanup commands (pipe memory JSON)
 ```
 
 ### Thresholds
@@ -748,7 +748,7 @@ At session end, if thresholds are exceeded:
 
 Run `mcp__memory__read_graph` and pipe to cleanup analysis:
 ```
-"Read the memory graph and run ./Scripts/SaneMaster.rb mcleanup"
+"Read the memory graph and run ./scripts/SaneMaster.rb mcleanup"
 ```
 
 This generates specific MCP commands to delete stale entities and trim verbose ones.
@@ -792,11 +792,11 @@ This generates specific MCP commands to delete stale entities and trim verbose o
 /sane-loop "Fix: [describe bug]
 
 SOP Requirements (verify before completing):
-1. ./Scripts/SaneMaster.rb verify passes
-2. killall -9 SaneVideo && ./Scripts/SaneMaster.rb launch
-3. ./Scripts/SaneMaster.rb logs --follow (check for errors)
+1. ./scripts/SaneMaster.rb verify passes
+2. killall -9 SaneVideo && ./scripts/SaneMaster.rb launch
+3. ./scripts/SaneMaster.rb logs --follow (check for errors)
 4. Regression test added in SaneVideoTests/Regression/
-5. BUG_TRACKING.md updated
+5. GitHub issue created/updated
 6. Self-rating 1-10 provided
 
 Output <promise>SOP-COMPLETE</promise> ONLY when ALL verified." --completion-promise "SOP-COMPLETE" --max-iterations 10
@@ -812,7 +812,7 @@ Output <promise>SOP-COMPLETE</promise> ONLY when ALL verified." --completion-pro
 
 - **Ghost Beeps / No Launch**: Run `xcodegen generate`.
 - **"Signal 9" Crash**: Check `SaneVideo.entitlements` for App Sandbox.
-- **Phantom Errors**: Run `./Scripts/SaneMaster.rb clean --nuclear`.
+- **Phantom Errors**: Run `./scripts/SaneMaster.rb clean --nuclear`.
 - **Permissions Black Screen**: Run `tccutil reset Camera`.
 - **Test Execution**: Tests are working! Unit tests and functional UI tests run automatically. Visual tests are excluded (manual testing only).
 
@@ -826,7 +826,7 @@ Output <promise>SOP-COMPLETE</promise> ONLY when ALL verified." --completion-pro
 App problem?
     │
     ├─ App still running but misbehaving?
-    │   └─ Check logs: ./Scripts/SaneMaster.rb logs --follow
+    │   └─ Check logs: ./scripts/SaneMaster.rb logs --follow
     │
     ├─ App crashed/exited?
     │   └─ Check crash reports: ls ~/Library/Logs/DiagnosticReports/ | grep -i sane
@@ -846,9 +846,9 @@ If app is malfunctioning, follow Rule #6 (kill → launch → logs). Don't just 
 #### Step 1: Analyze Crashes
 
 ```bash
-./Scripts/SaneMaster.rb crashes           # Summary of recent crashes
-./Scripts/SaneMaster.rb crashes --details  # Full stack traces
-./Scripts/SaneMaster.rb crashes --recent   # Most recent crash only
+./scripts/SaneMaster.rb crashes           # Summary of recent crashes
+./scripts/SaneMaster.rb crashes --details  # Full stack traces
+./scripts/SaneMaster.rb crashes --recent   # Most recent crash only
 ```
 
 #### Step 2: Check Application Logs
@@ -857,13 +857,13 @@ If app is malfunctioning, follow Rule #6 (kill → launch → logs). Don't just 
 
 ```bash
 # Show today's logs
-./Scripts/SaneMaster.rb logs
+./scripts/SaneMaster.rb logs
 
 # Show last 100 lines
-./Scripts/SaneMaster.rb logs --tail 100
+./scripts/SaneMaster.rb logs --tail 100
 
 # Follow logs live (like tail -f)
-./Scripts/SaneMaster.rb logs --follow
+./scripts/SaneMaster.rb logs --follow
 ```
 
 Log files are stored at: `~/Movies/SaneVideo/SaneVideo_Debug.log` (overwrites on each app launch for easy debugging)
@@ -905,13 +905,13 @@ log stream --predicate 'subsystem == "com.sanevideo.SaneVideo"' --level debug
 
 ## 7. Available Tools
 
-1. **SaneMaster.rb** (`./Scripts/SaneMaster.rb`): The master controller.
+1. **SaneMaster.rb** (`./scripts/SaneMaster.rb`): The master controller.
     - `bootstrap`: **Auto-runs on session start.** Full environment bootstrap with auto-update, rollback support, and session logging.
     - `verify`: Build app + run unit tests (default).
     - `verify --clean`: Full clean build + run unit tests.
     - `verify --ui`: Build + run unit tests + functional UI tests (excludes visual tests).
     - `doctor`: Health check (environment, assets, permissions, XcodeGen sync).
-    - `console`: **Interactive Ruby REPL** (Pry) for debugging scripts. Requires: `bundle exec ./Scripts/SaneMaster.rb console`
+    - `console`: **Interactive Ruby REPL** (Pry) for debugging scripts. Requires: `bundle exec ./scripts/SaneMaster.rb console`
     - `gen_test <name>`: Generate test files.
     - `gen_mock [options]`: Generate mocks using Mockolo.
     - `verify_api <APIName> [Framework]`: Verify API exists in SDK (prevents hallucinations).
@@ -949,12 +949,12 @@ log stream --predicate 'subsystem == "com.sanevideo.SaneVideo"' --level debug
 
 | Situation | Tool to Use | Why |
 |-----------|-------------|-----|
-| **Need API signature or existence** | `./Scripts/SaneMaster.rb verify_api` | SDK is source of truth (Rule #6) |
+| **Need API signature or existence** | `./scripts/SaneMaster.rb verify_api` | SDK is source of truth (Rule #6) |
 | **Need API usage examples or WWDC context** | `apple-docs` MCP | Rich examples, related APIs, historical context |
 | **Need up-to-date library docs (WhisperKit, Vapor, etc.)** | `context7` MCP | Fetches real-time docs from source repos |
-| **Build/test the project** | `./Scripts/SaneMaster.rb verify` | Always use SaneMaster (Rule #1) |
-| **Generate mock classes** | `./Scripts/SaneMaster.rb gen_mock` (Mockolo) | Fast protocol→mock generation |
-| **Generate test templates** | `./Scripts/SaneMaster.rb gen_test` | Creates structured unit/UI tests |
+| **Build/test the project** | `./scripts/SaneMaster.rb verify` | Always use SaneMaster (Rule #1) |
+| **Generate mock classes** | `./scripts/SaneMaster.rb gen_mock` (Mockolo) | Fast protocol→mock generation |
+| **Generate test templates** | `./scripts/SaneMaster.rb gen_test` | Creates structured unit/UI tests |
 | **GitHub issues/PRs** | `github` MCP | Create issues, review PRs, search code |
 | **Remember context across sessions** | `memory` MCP | Persistent knowledge graph |
 | **Code intelligence (completions, go-to-def)** | `swift-lsp` plugin | IDE-like Swift support in Claude Code |
@@ -973,13 +973,13 @@ When developing the iPhone/iPad companion apps:
 
 ```bash
 # Generate unit test with Swift Testing framework (default)
-./Scripts/SaneMaster.rb gen_test MyFeatureTests --target MyFeature
+./scripts/SaneMaster.rb gen_test MyFeatureTests --target MyFeature
 
 # Generate UI test with XCTest
-./Scripts/SaneMaster.rb gen_test MyUITests --type ui --framework xctest
+./scripts/SaneMaster.rb gen_test MyUITests --type ui --framework xctest
 
 # Generate async test
-./Scripts/SaneMaster.rb gen_test AsyncTests --async
+./scripts/SaneMaster.rb gen_test AsyncTests --async
 ```
 
 **Features:**
@@ -1010,9 +1010,9 @@ When developing the iPhone/iPad companion apps:
 /sane-loop "Fix: [describe bug]
 
 SOP Requirements (verify before completing):
-1. ./Scripts/SaneMaster.rb verify passes
-2. killall -9 SaneVideo && ./Scripts/SaneMaster.rb launch
-3. ./Scripts/SaneMaster.rb logs --follow (check for errors)
+1. ./scripts/SaneMaster.rb verify passes
+2. killall -9 SaneVideo && ./scripts/SaneMaster.rb launch
+3. ./scripts/SaneMaster.rb logs --follow (check for errors)
 4. Regression test added in SaneVideoTests/Regression/
 5. Self-rating 1-10 provided
 
@@ -1048,9 +1048,9 @@ For structured verification, use explicit acceptance criteria in your prompt:
 /sane-loop "TASK: [description]
 
 ACCEPTANCE CRITERIA:
-1. [ ] Build passes: ./Scripts/SaneMaster.rb verify
-2. [ ] App launches without errors: killall -9 SaneVideo && ./Scripts/SaneMaster.rb launch
-3. [ ] No warnings in logs: ./Scripts/SaneMaster.rb logs --follow
+1. [ ] Build passes: ./scripts/SaneMaster.rb verify
+2. [ ] App launches without errors: killall -9 SaneVideo && ./scripts/SaneMaster.rb launch
+3. [ ] No warnings in logs: ./scripts/SaneMaster.rb logs --follow
 4. [ ] Regression test added (if bug fix)
 5. [ ] Feature works as specified: [specific behavior to verify]
 
@@ -1090,7 +1090,7 @@ VERIFY EACH CRITERION with actual commands before outputting <promise>QA-PASS</p
 - **Scope**: Isolated logic, regex parsing, state machines, math algorithms.
 - **Data**: Mocked services, small buffers. **NO** file I/O or app launching.
 - **Goal**: Verify logic instantly.
-- **Run**: `./Scripts/SaneMaster.rb verify` (runs unit tests by default)
+- **Run**: `./scripts/SaneMaster.rb verify` (runs unit tests by default)
 
 ### Tier 2: Integration/UI Tests (Real-World, 10s-60s) - ✅ Active (Code Tests Only)
 
@@ -1099,7 +1099,7 @@ VERIFY EACH CRITERION with actual commands before outputting <promise>QA-PASS</p
 - **Data**: Real assets (`Tests/Assets/test_video.mp4` or `test_silence.mp4`).
 - **Goal**: Verify system stability and functional output.
 - **Excluded**: Visual test classes (see above) - these require manual inspection
-- **Run**: `./Scripts/SaneMaster.rb verify --ui` (includes functional UI tests, excludes visual tests)
+- **Run**: `./scripts/SaneMaster.rb verify --ui` (includes functional UI tests, excludes visual tests)
 - **ASSUME NOTHING**: Do not assume UI elements exist just because you wrote the View code. View hierarchies are complex. If element not found: `print(app.debugDescription)` to see actual hierarchy.
 
 ### Tier 3: Performance & Robustness
@@ -1118,23 +1118,23 @@ Use these tools for comprehensive code validation:
 1. **Static Analysis**:
 
    ```bash
-   ./Scripts/SaneMaster.rb validate_test_references  # Verify UI test references match code
-   ./Scripts/SaneMaster.rb check_deprecations         # Find deprecated API usage
-   ./Scripts/SaneMaster.rb dead_code                  # Find unused code
-   ./Scripts/SaneMaster.rb lint                       # Code style and quality
+   ./scripts/SaneMaster.rb validate_test_references  # Verify UI test references match code
+   ./scripts/SaneMaster.rb check_deprecations         # Find deprecated API usage
+   ./scripts/SaneMaster.rb dead_code                  # Find unused code
+   ./scripts/SaneMaster.rb lint                       # Code style and quality
    ```
 
 2. **API Verification**:
 
    ```bash
-   ./Scripts/SaneMaster.rb verify_api <APIName> [Framework]  # Verify APIs exist in SDK
+   ./scripts/SaneMaster.rb verify_api <APIName> [Framework]  # Verify APIs exist in SDK
    ```
 
 3. **Test Execution**:
 
    ```bash
-   ./Scripts/SaneMaster.rb verify           # Build + run unit tests (default)
-   ./Scripts/SaneMaster.rb verify --ui      # Build + run unit + functional UI tests (excludes visual tests)
+   ./scripts/SaneMaster.rb verify           # Build + run unit tests (default)
+   ./scripts/SaneMaster.rb verify --ui      # Build + run unit + functional UI tests (excludes visual tests)
    ```
 
 4. **Manual Visual Testing**: Visual tests (`SaneSmartFeaturesVisualTests`, `VisualEditingTests`, `VisualRecordingTests`) require manual inspection and are not automated.
@@ -1152,7 +1152,7 @@ Regression tests are critical for preventing the reintroduction of fixed bugs.
     3. **Edge Cases**: Test specific scenarios that caused issues previously.
 - **Naming**: Use descriptive names referencing the bug (e.g., `testSourceSwitchTimestampGap`).
 - **Separation**: Do NOT mix regression tests with feature tests. Keep them in the `Regression/` directory.
-- **Test Creation**: Use `./Scripts/SaneMaster.rb gen_test` to generate new tests as you fix bugs or add features.
+- **Test Creation**: Use `./scripts/SaneMaster.rb gen_test` to generate new tests as you fix bugs or add features.
 
 ### Code Coverage
 
@@ -1168,7 +1168,7 @@ Regression tests are critical for preventing the reintroduction of fixed bugs.
 - **Expectations over Polling**: Use `expectation(for: predicate, evaluatedWith: object)` instead of `while` loops with `sleep`.
 - **Assets**: Use `SaneMaster.rb gen_assets` to create lightweight test media. Use `TestEnvironment` to load heavy media only when necessary.
 - **Log Output**: `SaneMaster.rb` automatically mirrors raw test logs to `test_output.txt` to prevent terminal freezes.
-- **Test Hygiene**: `test_output.txt` is automatically removed by `./Scripts/SaneMaster.rb clean`. If running manual `xcodebuild`, please redirect output manually (`> output.txt 2>&1`) and clean up afterwards.
+- **Test Hygiene**: `test_output.txt` is automatically removed by `./scripts/SaneMaster.rb clean`. If running manual `xcodebuild`, please redirect output manually (`> output.txt 2>&1`) and clean up afterwards.
 
 ### Test Anti-Patterns (NEVER DO THIS)
 
@@ -1187,6 +1187,30 @@ Regression tests are critical for preventing the reintroduction of fixed bugs.
 
 ---
 
+## 8B. Known Architectural Debt
+
+| Item | Status | Files | Impact |
+|------|--------|-------|--------|
+| ServiceContainer synchronous init | Open | `Core/DI/ServiceContainer.swift:123-205` | Slow launch, memory spike — 40+ services init synchronously |
+| ControlsKit UI/Architecture coupling | Open | `Core/ControlsKit.swift:157,162` | SwiftUI Previews crash — IconCircleButtonStyle accesses ServiceContainer |
+| Sample rate assumptions (mixed 48k/44.1k) | Partially fixed | VideoWriter, ScreenRecorder, WaveformService | Subtle A/V drift risk |
+| Multiple export implementations | Monitor | ExportEngine, BatchExportService | Could diverge if one modified independently |
+| NotificationCenter Magic Fix triggers | Monitor | SaneVideoApp, EditorLayoutView, SidebarView | Multi-window could trigger duplicate operations |
+
+### Swift 6 Modernization: @preconcurrency Imports
+
+Apple frameworks not yet Sendable-annotated. Remove when Apple updates:
+
+| Framework | Files |
+|-----------|-------|
+| AVFoundation | PlaybackState, SaneVideoCompositor, AudioService, VoiceIsolation, CameraManager, AudioResampler, CameraFramePublisher |
+| ScreenCaptureKit | ScreenRecorderProtocol, ScreenRecorder+Delegates, ScreenRecorder |
+| Combine | CameraConcurrencyRegressionTests |
+
+**Last audited**: 2025-12-31. Check each Xcode major release.
+
+---
+
 ## 9. Documentation Structure
 
 ### Primary Documentation (Single Source of Truth)
@@ -1197,7 +1221,7 @@ Regression tests are critical for preventing the reintroduction of fixed bugs.
 ### Reference Documentation
 
 - **ROADMAP.md**: Discussed features for future consideration. Check when user asks "what features have we discussed?"
-- **BUG_TRACKING.md**: Bug documentation and tracking
+- **GitHub Issues**: Bug documentation and tracking at https://github.com/sj/SaneVideo/issues
 
 **Rule**: When in doubt, refer to DEVELOPMENT.md. If information is missing, add it here rather than creating new files.
 
@@ -1209,7 +1233,7 @@ Regression tests are critical for preventing the reintroduction of fixed bugs.
 
 ### Test Mode (Interactive Debugging)
 
-When user says **"test mode"**: `./Scripts/SaneMaster.rb test_mode` (kills processes, shows recent screenshots/crashes, builds, launches).
+When user says **"test mode"**: `./scripts/SaneMaster.rb test_mode` (kills processes, shows recent screenshots/crashes, builds, launches).
 
 **Diagnostic resources** (when user says "logs" or "check logs", check ALL):
 - `~/Movies/SaneVideo/SaneVideo_Debug.log` - Debug log (overwrites each launch)
@@ -1239,7 +1263,7 @@ ls -lt Screenshots/*.png | head -5  # Find latest screenshot
 ### Post-Fix Checklist
 
 After fixing ANY bug:
-- [ ] Regression test added? (`./Scripts/SaneMaster.rb gen_test`)
+- [ ] Regression test added? (`./scripts/SaneMaster.rb gen_test`)
 - [ ] Similar bugs checked elsewhere? (`grep -r "pattern" SaneVideo/`)
 - [ ] Changes committed?
 - [ ] Plain English explanation ready?
@@ -1256,7 +1280,7 @@ After fixing ANY bug:
 **Commands:**
 ```bash
 mcp__plugin_claude-mem_mcp-search__search(query: "bug_pattern")  # Query before bug fix
-./Scripts/SaneMaster.rb memory_context                           # Show all stored knowledge
+./scripts/SaneMaster.rb memory_context                           # Show all stored knowledge
 ```
 
 **Session reviews** (at session end): Store `SessionReview_YYYY-MM-DD_TaskName` with tasks completed, mistakes made, patterns discovered.

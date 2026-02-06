@@ -123,15 +123,15 @@ stateDiagram-v2
 ## Build and Release Truth
 
 - **Single source of truth**: `.saneprocess` in the project root.
-- **Build/test**: `./Scripts/SaneMaster.rb verify` (no raw xcodebuild).
-- **Release**: `./Scripts/SaneMaster.rb release` (delegates to SaneProcess `release.sh`).
+- **Build/test**: `./scripts/SaneMaster.rb verify` (no raw xcodebuild).
+- **Release**: `./scripts/SaneMaster.rb release` (delegates to SaneProcess `release.sh`).
 - **DMGs**: uploaded to Cloudflare R2 (not committed to GitHub).
 - **Appcast**: Sparkle feed configured in `SaneVideo/Info.plist`.
 
 ## Testing Strategy
 
 - Unit tests in `SaneVideoTests/`.
-- Use `./Scripts/SaneMaster.rb verify` (and `gen_assets` for media fixtures).
+- Use `./scripts/SaneMaster.rb verify` (and `gen_assets` for media fixtures).
 
 ## Risks and Tradeoffs
 

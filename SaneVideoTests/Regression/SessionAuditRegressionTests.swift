@@ -192,8 +192,8 @@ struct AccessibilityLabelsRegressionTests {
         ]
 
         for error in errors {
-            let suggestions = error.recoverySuggestions
-            #expect(!suggestions.isEmpty, "\(error) recovery suggestions should not be empty")
+            let hasSuggestions = !error.recoverySuggestions.isEmpty
+            #expect(hasSuggestions, "\(error) recovery suggestions should not be empty")
         }
     }
 }

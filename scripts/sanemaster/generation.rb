@@ -104,7 +104,6 @@ module SaneMasterModules
       print_api_not_found(api_name) unless found
     end
 
-    # rubocop:disable Naming/PredicateMethod
     def verify_documentation_sync
       # rubocop:enable Naming/PredicateMethod
       puts '📚 --- [ DOCUMENTATION SYNC CHECK ] ---'

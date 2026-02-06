@@ -202,9 +202,9 @@ All files remain on your local machine. No cloud storage required.
 ## 🛠️ Developer Notes (Build/Test)
 
 - **Build environment**: Requires **macOS + Xcode** (the test runner uses `xcodebuild`). Linux environments can’t run the full verification workflow.
-- **One command workflow**: Use `./Scripts/SaneMaster.rb verify` (don’t run raw `xcodebuild`).
+- **One command workflow**: Use `./scripts/SaneMaster.rb verify` (don’t run raw `xcodebuild`).
 - **Test assets**:
-  - Generate lightweight media fixtures with `./Scripts/SaneMaster.rb gen_assets` (requires `ffmpeg`).
+  - Generate lightweight media fixtures with `./scripts/SaneMaster.rb gen_assets` (requires `ffmpeg`).
   - Assets live in `Tests/Assets/` (e.g., `test_video.mp4`, `test_silence.mp4`).
 
 ## 🎨 Design Philosophy

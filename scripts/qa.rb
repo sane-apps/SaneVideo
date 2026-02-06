@@ -2,15 +2,17 @@
 # frozen_string_literal: true
 
 #
-# SaneVideo QA Script
+# Project QA Script
 # Automated product verification before release
 #
-# Usage: ruby ./Scripts/qa.rb
+# Usage: ruby scripts/qa.rb
 #
 # Checks:
 # - All hooks exist and have valid Ruby syntax
-# - README/DEVELOPMENT docs exist
-# - .claude/settings.json registers the expected hook entrypoints
+# - init.sh downloads all hooks
+# - README matches actual hook count
+# - docs/SOP.md matches rule count
+# - All URLs in docs are reachable
 # - All hooks use stdin pattern (not ENV vars)
 # - SaneMaster CLI and modules have valid syntax
 # - Hook tests pass
@@ -21,34 +23,50 @@ require 'net/http'
 require 'uri'
 require 'json'
 
-class SaneVideoQA
+class ProjectQA
+  # Auto-detect project name from directory
+  PROJECT_ROOT = File.expand_path('..', __dir__)
+  PROJECT_NAME = File.basename(PROJECT_ROOT)
+
   HOOKS_DIR = File.join(__dir__, 'hooks')
+  INIT_SCRIPT = File.join(__dir__, 'init.sh')
   README = File.join(__dir__, '..', 'README.md')
-  SOP_DOC = File.join(__dir__, '..', 'DEVELOPMENT.md')
+  # Try project-specific SOP doc, fallback to generic
+  SOP_DOC = Dir.glob(File.join(__dir__, '..', 'docs', '*.md')).first || File.join(__dir__, '..', 'docs', 'SOP.md')
   HOOKS_README = File.join(__dir__, 'hooks', 'README.md')
   SETTINGS_JSON = File.join(__dir__, '..', '.claude', 'settings.json')
 
-  AI_AGENT_QUICK_START = File.join(__dir__, '..', 'AI_AGENT_QUICK_START.md')
-
   # Hooks that get registered in settings.json
   EXPECTED_HOOKS = %w[
+    circuit_breaker.rb
+    edit_validator.rb
+    failure_tracker.rb
+    test_quality_checker.rb
+    path_rules.rb
     session_start.rb
-    saneprompt.rb
-    sanetools.rb
-    sanetrack.rb
-    sanestop.rb
+    audit_logger.rb
+    sop_mapper.rb
+    two_fix_reminder.rb
+    verify_reminder.rb
+    version_mismatch.rb
+    deeper_look_trigger.rb
+    skill_validator.rb
+    saneloop_enforcer.rb
+    session_summary_validator.rb
+    prompt_analyzer.rb
+    pattern_learner.rb
+    process_enforcer.rb
   ].freeze
 
   # Shared modules that hooks require (not registered, but must exist)
   SHARED_MODULES = %w[
     rule_tracker.rb
-    saneprompt_intelligence.rb
-    sanetools_checks.rb
-    state_signer.rb
   ].freeze
 
   # All hook files that should exist
   ALL_HOOK_FILES = (EXPECTED_HOOKS + SHARED_MODULES).freeze
+
+  EXPECTED_RULE_COUNT = 13
 
   SANEMASTER_CLI = File.join(__dir__, 'SaneMaster.rb')
   SANEMASTER_DIR = File.join(__dir__, 'sanemaster')
@@ -62,7 +80,6 @@ class SaneVideoQA
     diagnostics.rb
     export.rb
     generation.rb
-    generation_assets.rb
     generation_mocks.rb
     generation_templates.rb
     md_export.rb
@@ -78,11 +95,12 @@ class SaneVideoQA
   def initialize
     @errors = []
     @warnings = []
+    @skip_hooks_checks = false
   end
 
   def run
     puts '═══════════════════════════════════════════════════════════════'
-    puts '                   SaneVideo QA Check'
+    puts "                  #{PROJECT_NAME} QA Check"
     puts '═══════════════════════════════════════════════════════════════'
     puts
 
@@ -91,9 +109,12 @@ class SaneVideoQA
     check_hooks_use_stdin
     check_hooks_registered
     check_sanemaster_syntax
-    check_docs_exist
-    check_sop_doc
+    check_init_script
+    check_readme_hook_count
+    check_sop_doc_rule_count
     check_hooks_readme
+    check_version_consistency
+    check_urls
     run_hook_tests
 
     puts
@@ -101,6 +122,7 @@ class SaneVideoQA
 
     if @errors.empty? && @warnings.empty?
       puts '✅ All checks passed!'
+      exit 0
     else
       unless @warnings.empty?
         puts "⚠️  Warnings (#{@warnings.count}):"
@@ -115,14 +137,21 @@ class SaneVideoQA
         exit 1
       end
 
+      exit 0
     end
-    exit 0
   end
 
   private
 
   def check_hooks_exist
     print 'Checking hooks exist... '
+
+    unless Dir.exist?(HOOKS_DIR)
+      @skip_hooks_checks = true
+      @warnings << 'Hooks managed by SaneProcess — skipping local hook checks'
+      puts '⚠️  Hooks managed by SaneProcess'
+      return
+    end
 
     missing = ALL_HOOK_FILES.reject do |hook|
       File.exist?(File.join(HOOKS_DIR, hook))
@@ -137,6 +166,8 @@ class SaneVideoQA
   end
 
   def check_hooks_syntax
+    return if @skip_hooks_checks
+
     print 'Checking Ruby syntax... '
 
     invalid = []
@@ -157,6 +188,8 @@ class SaneVideoQA
   end
 
   def check_hooks_use_stdin
+    return if @skip_hooks_checks
+
     print 'Checking hooks use stdin for input... '
 
     uses_env_for_input = []
@@ -184,6 +217,8 @@ class SaneVideoQA
   end
 
   def check_hooks_registered
+    return if @skip_hooks_checks
+
     print 'Checking hooks registered in settings.json... '
 
     unless File.exist?(SETTINGS_JSON)
@@ -210,7 +245,7 @@ class SaneVideoQA
         hook_list = entry['hooks'] || []
         hook_list.each do |hook|
           command = hook['command'] || ''
-          # Extract hook filename from command like: ruby ./Scripts/hooks/saneprompt.rb
+          # Extract hook filename from command like: ruby "$CLAUDE_PROJECT_DIR"/scripts/hooks/circuit_breaker.rb
           if (match = command.match(%r{hooks/([^/\s"]+\.rb)}))
             registered_hooks << match[1]
           end
@@ -238,8 +273,18 @@ class SaneVideoQA
 
     # Check main CLI
     if File.exist?(SANEMASTER_CLI)
-      result = `ruby -c #{SANEMASTER_CLI} 2>&1`
-      invalid << 'SaneMaster.rb' unless $CHILD_STATUS.success?
+      first_line = begin
+        File.open(SANEMASTER_CLI, &:readline).strip
+      rescue StandardError
+        ''
+      end
+      if first_line.start_with?('#!/bin/bash', '#!/usr/bin/env bash', '#!/bin/sh', '#!/usr/bin/env sh')
+        result = `bash -n #{SANEMASTER_CLI} 2>&1`
+        invalid << 'SaneMaster.rb (bash)' unless $CHILD_STATUS.success?
+      else
+        result = `ruby -c #{SANEMASTER_CLI} 2>&1`
+        invalid << 'SaneMaster.rb' unless $CHILD_STATUS.success?
+      end
     else
       @errors << 'SaneMaster.rb not found'
       puts '❌ Missing'
@@ -274,11 +319,44 @@ class SaneVideoQA
   end
 
   def check_init_script
+    return if @skip_hooks_checks
+
     print 'Checking init.sh... '
-    puts '⚠️  Not used in SaneVideo (skipping)'
+
+    unless File.exist?(INIT_SCRIPT)
+      @errors << 'init.sh not found'
+      puts '❌ Missing'
+      return
+    end
+
+    content = File.read(INIT_SCRIPT)
+
+    # Extract hooks from the HOOKS array in init.sh
+    hooks_match = content.match(/HOOKS=\(\s*([\s\S]*?)\s*\)/)
+    unless hooks_match
+      @errors << 'init.sh: Cannot find HOOKS array'
+      puts '❌ HOOKS array not found'
+      return
+    end
+
+    # Parse the hooks list
+    init_hooks = hooks_match[1].scan(/"([^"]+)"/).flatten
+
+    missing = ALL_HOOK_FILES - init_hooks
+    extra = init_hooks - ALL_HOOK_FILES
+
+    if missing.empty? && extra.empty?
+      puts "✅ init.sh lists all #{ALL_HOOK_FILES.count} hooks"
+    else
+      @errors << "init.sh missing: #{missing.join(', ')}" unless missing.empty?
+      @warnings << "init.sh has extra: #{extra.join(', ')}" unless extra.empty?
+      puts "❌ Mismatch (missing: #{missing.count}, extra: #{extra.count})"
+    end
   end
 
   def check_readme_hook_count
+    return if @skip_hooks_checks
+
     print 'Checking README.md hook count... '
 
     unless File.exist?(README)
@@ -307,41 +385,39 @@ class SaneVideoQA
     end
   end
 
-  def check_docs_exist
-    print 'Checking required docs exist... '
-
-    missing = []
-    missing << 'README.md' unless File.exist?(README)
-    missing << 'DEVELOPMENT.md' unless File.exist?(SOP_DOC)
-    missing << 'AI_AGENT_QUICK_START.md' unless File.exist?(AI_AGENT_QUICK_START)
-
-    if missing.empty?
-      puts '✅ OK'
-    else
-      @errors << "Missing docs: #{missing.join(', ')}"
-      puts "❌ Missing: #{missing.join(', ')}"
-    end
-  end
-
-  def check_sop_doc
-    print 'Checking DEVELOPMENT.md (SOP)... '
+  def check_sop_doc_rule_count
+    sop_basename = File.basename(SOP_DOC)
+    print "Checking docs/#{sop_basename} rule count... "
 
     unless File.exist?(SOP_DOC)
-      @errors << 'DEVELOPMENT.md not found'
-      puts '❌ Missing'
+      @warnings << "docs/#{sop_basename} not found"
+      puts '⚠️  Not found'
       return
     end
 
     content = File.read(SOP_DOC)
-    if content.include?('## 1. The Golden Rules')
-      puts '✅ Found Golden Rules section'
+
+    # Look for "13 Golden Rules" or "11 Golden Rules"
+    rule_counts = content.scan(/(\d+)\s+Golden Rules?/i).flatten.map(&:to_i)
+
+    if rule_counts.empty?
+      @warnings << "docs/#{sop_basename}: No rule count found"
+      puts '⚠️  No count found'
+      return
+    end
+
+    wrong_counts = rule_counts.reject { |c| c == EXPECTED_RULE_COUNT }
+    if wrong_counts.empty?
+      puts "✅ Rule count correct (#{EXPECTED_RULE_COUNT})"
     else
-      @warnings << 'DEVELOPMENT.md: Golden Rules section not found'
-      puts '⚠️  Golden Rules section not found'
+      @errors << "#{sop_basename} says #{wrong_counts.first} rules, should be #{EXPECTED_RULE_COUNT}"
+      puts "❌ Says #{wrong_counts.first}, should be #{EXPECTED_RULE_COUNT}"
     end
   end
 
   def check_hooks_readme
+    return if @skip_hooks_checks
+
     print 'Checking hooks/README.md... '
 
     unless File.exist?(HOOKS_README)
@@ -352,8 +428,10 @@ class SaneVideoQA
 
     content = File.read(HOOKS_README)
 
-    # Check each expected hook entrypoint is mentioned
-    missing = EXPECTED_HOOKS.reject { |hook| content.include?(hook) }
+    # Check each expected hook is mentioned
+    missing = ALL_HOOK_FILES.reject do |hook|
+      content.include?(hook)
+    end
 
     if missing.empty?
       puts '✅ All hooks documented'
@@ -366,7 +444,46 @@ class SaneVideoQA
   def check_version_consistency
     print 'Checking version consistency... '
 
-    puts '⚠️  Not enforced in SaneVideo (skipping)'
+    versions = {}
+
+    # Check README.md
+    if File.exist?(README)
+      content = File.read(README)
+      if (match = content.match(/#{PROJECT_NAME} v(\d+\.\d+)/i))
+        versions['README.md'] = match[1]
+      end
+    end
+
+    # Check SOP doc
+    if File.exist?(SOP_DOC)
+      content = File.read(SOP_DOC)
+      if (match = content.match(/#{PROJECT_NAME} v(\d+\.\d+)/i))
+        versions[File.basename(SOP_DOC)] = match[1]
+      end
+    end
+
+    # Check init.sh
+    if File.exist?(INIT_SCRIPT)
+      content = File.read(INIT_SCRIPT)
+      if (match = content.match(/Version (\d+\.\d+)/i))
+        versions['init.sh'] = match[1]
+      end
+    end
+
+    if versions.empty?
+      @warnings << 'No version strings found'
+      puts '⚠️  No versions found'
+      return
+    end
+
+    unique_versions = versions.values.uniq
+    if unique_versions.one?
+      puts "✅ All files at v#{unique_versions.first}"
+    else
+      details = versions.map { |f, v| "#{f}=v#{v}" }.join(', ')
+      @errors << "Version mismatch: #{details}"
+      puts "❌ Mismatch: #{details}"
+    end
   end
 
   def check_urls
@@ -375,7 +492,7 @@ class SaneVideoQA
     urls_to_check = []
 
     # Collect URLs from key files
-    [README, SOP_DOC, AI_AGENT_QUICK_START, File.join(__dir__, '..', '.claude', 'SOP_CONTEXT.md')].each do |file|
+    [README, SOP_DOC, File.join(__dir__, '..', '.claude', 'SOP_CONTEXT.md')].each do |file|
       next unless File.exist?(file)
 
       content = File.read(file)
@@ -422,6 +539,8 @@ class SaneVideoQA
   end
 
   def run_hook_tests
+    return if @skip_hooks_checks
+
     print 'Running hook tests... '
 
     test_file = File.join(HOOKS_DIR, 'test', 'hook_test.rb')
@@ -448,4 +567,4 @@ class SaneVideoQA
 end
 
 # Run if executed directly
-SaneVideoQA.new.run if __FILE__ == $PROGRAM_NAME
+ProjectQA.new.run if __FILE__ == $PROGRAM_NAME

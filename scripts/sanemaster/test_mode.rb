@@ -225,7 +225,8 @@ module SaneMasterModules
       puts "   📊 Latest test result: #{File.basename(latest)} (#{mtime})"
     end
 
-    def build_app # rubocop:disable Naming/PredicateMethod -- performs action, not just a query
+    # -- performs action, not just a query
+    def build_app
       puts '4️⃣  Building app...'
       build_success = system("xcodebuild -scheme #{project_name} -destination \"platform=macOS\" build 2>&1 | grep -E \"(BUILD|error:)\" | tail -5")
       unless build_success

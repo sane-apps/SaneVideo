@@ -107,13 +107,13 @@ struct AudioLimiterTests {
         #expect(inputPeak > kneeStart)
         #expect(inputPeak < threshold)
 
-        // Calculate knee behavior
-        let kneeRatio = (inputPeak - kneeStart) / kneeWidth // (-4 - (-7)) / 6 = 0.5
-        let gainReductionDB = (threshold - inputPeak) * kneeRatio * kneeRatio // (-1 - (-4)) * 0.5 * 0.5 = 0.75 dB
+        // Calculate knee behavior: -0.5 * x² / kneeWidth
+        let x = inputPeak - kneeStart // 3.0
+        let gainReductionDB = -0.5 * (x * x) / kneeWidth // -0.5 * 9 / 6 = -0.75 dB
 
-        #expect(kneeRatio == 0.5)
-        #expect(gainReductionDB > 0.0) // Positive value, but represents reduction when applied
-        #expect(gainReductionDB < abs(threshold - inputPeak)) // Softer than hard limit
+        #expect(x == 3.0)
+        #expect(gainReductionDB < 0.0) // Negative = reduction (never boost)
+        #expect(abs(gainReductionDB) < abs(threshold - inputPeak)) // Softer than hard limit
     }
 
     @Test("Gain never exceeds unity (no boost)")
@@ -130,14 +130,14 @@ struct AudioLimiterTests {
             if inputDB > threshold {
                 gainReductionDB = threshold - inputDB
             } else if inputDB > kneeStart {
-                let kneeRatio = (inputDB - kneeStart) / kneeWidth
-                gainReductionDB = (threshold - inputDB) * kneeRatio * kneeRatio
+                let x = inputDB - kneeStart
+                gainReductionDB = -0.5 * (x * x) / kneeWidth
             }
 
             // Convert to linear gain
             let linearGain = powf(10.0, gainReductionDB / 20.0)
 
-            // Gain should never exceed 1.0 (unity)
+            // Gain should never exceed 1.0 (unity) — limiter never boosts
             #expect(linearGain <= 1.0)
 
             // For signals above threshold, gain should be reducing
@@ -220,8 +220,10 @@ struct AudioLimiterTests {
         let targetGainReductionDB: Float = -3.0
 
         // Simulate attack phase (moving toward target)
+        // 5ms attack at 44100 Hz = ~220 samples per time constant
+        // Need ~5 time constants (1100 samples) for 99%+ convergence
         var previousEnvelope = envelope
-        for _ in 0 ..< 100 {
+        for _ in 0 ..< 1100 {
             envelope = attackCoeff * envelope + (1.0 - attackCoeff) * targetGainReductionDB
 
             // Envelope should smoothly approach target (monotonic)
@@ -233,8 +235,8 @@ struct AudioLimiterTests {
             previousEnvelope = envelope
         }
 
-        // Should converge toward target
-        #expect(abs(envelope - targetGainReductionDB) < abs(-targetGainReductionDB) * 0.5)
+        // Should converge toward target (within 10% of target)
+        #expect(abs(envelope - targetGainReductionDB) < abs(targetGainReductionDB) * 0.1)
     }
 
     @Test("dB floor prevents log(0)")

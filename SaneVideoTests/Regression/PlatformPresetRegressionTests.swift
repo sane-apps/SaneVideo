@@ -19,11 +19,10 @@ import Testing
 /// Regression tests for platform preset UI feature
 @Suite("Platform Preset Regression Tests")
 struct PlatformPresetRegressionTests {
-
     // MARK: - SaneExportSettings Tests
 
     @Test("SaneExportSettings has aspectRatio field")
-    func testSaneExportSettingsHasAspectRatio() {
+    func saneExportSettingsHasAspectRatio() {
         var settings = SaneExportSettings()
 
         // Default should be nil (use source aspect ratio)
@@ -38,7 +37,7 @@ struct PlatformPresetRegressionTests {
     }
 
     @Test("renderSize returns resolution.size when aspectRatio is nil")
-    func testRenderSizeWithNilAspectRatio() {
+    func renderSizeWithNilAspectRatio() {
         var settings = SaneExportSettings()
         settings.aspectRatio = nil
 
@@ -54,21 +53,21 @@ struct PlatformPresetRegressionTests {
     }
 
     @Test("renderSize calculates vertical 9:16 correctly")
-    func testRenderSizeVertical() {
+    func renderSizeVertical() {
         var settings = SaneExportSettings()
         settings.aspectRatio = .vertical9x16
 
-        // 1080p base -> 1080x1920 vertical
+        // 1080p base (1920×1080) → vertical 1080×1920
         settings.resolution = .hd1080
         let size1080 = settings.renderSize
         #expect(size1080.width < size1080.height, "Vertical should have width < height")
-        // Width should be 9/16 of height
-        let expectedWidth1080 = size1080.height * (9.0 / 16.0)  // 607.5
-        #expect(abs(size1080.width - expectedWidth1080) < 1, "1080p vertical width calculation")
+        // Width = base height (1080), height = 1080 * 16/9 = 1920
+        #expect(size1080.width == 1080, "1080p vertical width should be 1080")
+        #expect(size1080.height == 1920, "1080p vertical height should be 1920")
     }
 
     @Test("renderSize calculates square 1:1 correctly")
-    func testRenderSizeSquare() {
+    func renderSizeSquare() {
         var settings = SaneExportSettings()
         settings.aspectRatio = .square1x1
         settings.resolution = .hd1080
@@ -80,7 +79,7 @@ struct PlatformPresetRegressionTests {
     }
 
     @Test("SaneExportSettings is Codable with aspectRatio")
-    func testSaneExportSettingsCodableWithAspectRatio() throws {
+    func saneExportSettingsCodableWithAspectRatio() throws {
         var original = SaneExportSettings()
         original.aspectRatio = .vertical9x16
         original.resolution = .hd1080
@@ -93,7 +92,7 @@ struct PlatformPresetRegressionTests {
     }
 
     @Test("SaneExportSettings Codable handles nil aspectRatio")
-    func testSaneExportSettingsCodableNilAspectRatio() throws {
+    func saneExportSettingsCodableNilAspectRatio() throws {
         var original = SaneExportSettings()
         original.aspectRatio = nil
 
@@ -106,28 +105,28 @@ struct PlatformPresetRegressionTests {
     // MARK: - ExportPreset Tests
 
     @Test("ExportPreset TikTok description mentions vertical")
-    func testTikTokPresetDescription() {
+    func tikTokPresetDescription() {
         let description = ExportPreset.tiktok.description
         #expect(description.contains("9:16") || description.contains("vertical"),
                 "TikTok preset should mention vertical format")
     }
 
     @Test("ExportPreset Instagram description mentions vertical")
-    func testInstagramPresetDescription() {
+    func instagramPresetDescription() {
         let description = ExportPreset.instagram.description
         #expect(description.contains("9:16") || description.contains("vertical") || description.contains("Reels"),
                 "Instagram preset should mention vertical/Reels format")
     }
 
     @Test("ExportPreset Twitter description mentions vertical")
-    func testTwitterPresetDescription() {
+    func twitterPresetDescription() {
         let description = ExportPreset.twitter.description
         #expect(description.contains("9:16") || description.contains("vertical"),
                 "Twitter preset should mention vertical format")
     }
 
     @Test("All presets have icons")
-    func testAllPresetsHaveIcons() {
+    func allPresetsHaveIcons() {
         for preset in ExportPreset.allCases {
             #expect(!preset.icon.isEmpty, "\(preset.rawValue) should have an icon")
         }
@@ -136,7 +135,7 @@ struct PlatformPresetRegressionTests {
     // MARK: - ShortAspectRatio Tests
 
     @Test("ShortAspectRatio vertical9x16 dimensions")
-    func testShortAspectRatioVertical() {
+    func shortAspectRatioVertical() {
         let height = 1920
         let dims = ShortAspectRatio.vertical9x16.dimensions(forHeight: height)
         let expectedWidth = Int(CGFloat(height) * (9.0 / 16.0))
@@ -145,13 +144,13 @@ struct PlatformPresetRegressionTests {
     }
 
     @Test("ShortAspectRatio square1x1 dimensions")
-    func testShortAspectRatioSquare() {
+    func shortAspectRatioSquare() {
         let dims = ShortAspectRatio.square1x1.dimensions(forHeight: 1080)
         #expect(dims.width == dims.height, "Square should have equal dimensions")
     }
 
     @Test("ShortAspectRatio is Codable")
-    func testShortAspectRatioCodable() throws {
+    func shortAspectRatioCodable() throws {
         let original = ShortAspectRatio.portrait4x5
 
         let encoded = try JSONEncoder().encode(original)

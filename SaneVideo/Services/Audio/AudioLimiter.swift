@@ -213,9 +213,9 @@ enum AudioLimiter {
                 // Above threshold: hard limit
                 gainReductionDB = thresholdDB - inputDB
             } else if inputDB > kneeStart {
-                // Knee region: quadratic soft transition
-                let kneeRatio = (inputDB - kneeStart) / kneeWidthDB
-                gainReductionDB = (thresholdDB - inputDB) * kneeRatio * kneeRatio
+                // Knee region: quadratic soft transition (always reduces, never boosts)
+                let x = inputDB - kneeStart
+                gainReductionDB = -0.5 * (x * x) / kneeWidthDB
             }
             // Below knee: gainReductionDB stays 0 (unity gain)
 

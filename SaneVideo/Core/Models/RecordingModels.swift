@@ -17,9 +17,9 @@ enum RecordingSource: Sendable, Equatable {
     // Force nonisolated conformance to suppress false positive Actor Isolation errors
     nonisolated static func == (lhs: RecordingSource, rhs: RecordingSource) -> Bool {
         switch (lhs, rhs) {
-        case (.camera, .camera): return true
-        case (.screen, .screen): return true
-        default: return false
+        case (.camera, .camera): true
+        case (.screen, .screen): true
+        default: false
         }
     }
 }
@@ -42,7 +42,7 @@ public struct SaneExportSettings: Codable, Sendable {
 
     /// Smart crop settings for AI-powered reframing
     /// When enabled, uses face/saliency tracking to keep subjects in frame
-    var smartCrop: SmartCropSettings = SmartCropSettings()
+    var smartCrop: SmartCropSettings = .init()
 
     public enum ExportResolution: String, Codable, Sendable {
         case hd720 = "720p"
@@ -114,11 +114,10 @@ public struct SaneExportSettings: Codable, Sendable {
         let baseHeight = resolution.size.height
         switch aspect {
         case .vertical9x16:
-            // Vertical: width = height × (9/16), then swap
-            // For 1080p: 1080×1920
-            // For 4K: 2160×3840
-            let width = baseHeight * (9.0 / 16.0)
-            return CGSize(width: width, height: baseHeight * (16.0 / 9.0))
+            // Vertical: swap orientation — base height becomes width, height is taller
+            // For 1080p (1920×1080): → 1080×1920
+            // For 4K (3840×2160): → 2160×3840
+            return CGSize(width: baseHeight, height: baseHeight * (16.0 / 9.0))
         case .square1x1:
             // Square: use height for both
             return CGSize(width: baseHeight, height: baseHeight)

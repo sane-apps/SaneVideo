@@ -24,7 +24,7 @@
 - [ ] Run `./Scripts/SaneMaster.rb verify` (build + tests)
 - [ ] Kill old instances: `killall -9 SaneVideo`
 - [ ] Launch with logging: `./Scripts/SaneMaster.rb launch` + `logs --follow`
-- [ ] Update BUG_TRACKING.md if fixing bugs
+- [ ] Create/update GitHub issue if fixing bugs
 - [ ] Verify all tests pass (not just compile)
 - [ ] Check for linter errors: `read_lints`
 
@@ -35,7 +35,7 @@
 - [ ] Fix the bug
 - [ ] Verify test catches the bug
 - [ ] Verify test passes after fix
-- [ ] Update BUG_TRACKING.md
+- [ ] Create/update GitHub issue
 
 ## Tools Reference
 

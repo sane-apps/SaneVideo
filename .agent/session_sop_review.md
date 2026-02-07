@@ -11,7 +11,7 @@
    - Race condition protection
    - Directory creation error handling
 3. **Created Regression Tests** - MagicFixRegressionTests.swift
-4. **Updated BUG_TRACKING.md**
+4. **Updated GitHub Issues**
 
 ---
 
@@ -37,7 +37,7 @@
    - ✅ Killed instances and launched with logging (at end, not after each fix)
 
 5. **Bug Tracking**
-   - ✅ Updated BUG_TRACKING.md throughout session
+   - ✅ Updated GitHub Issues throughout session
 
 ---
 
@@ -82,7 +82,7 @@
 1. `SaneVideoTests/Regression/MagicFixRegressionTests.swift` - 6 regression tests
 
 ### Documentation
-1. `BUG_TRACKING.md` - Updated throughout session
+1. `GitHub Issues` - Updated throughout session
 2. `.agent/sop_compliance_checklist.md` - Created checklist for future use
 
 ---

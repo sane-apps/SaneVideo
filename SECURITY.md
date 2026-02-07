@@ -31,13 +31,13 @@ SaneVideo is a **video recording and editing application** that:
 
 1. **Requires Camera, Microphone, and Screen Recording permissions**
 2. **Stores projects locally** on your Mac
-3. **Makes no network requests** — no analytics, telemetry, or cloud sync
+3. **Makes no analytics or telemetry requests** — no tracking, cloud sync, or data collection (Sparkle update checks are the only network activity, see PRIVACY.md)
 4. **Uses Hardened Runtime** for macOS security compliance
 
 ### Data Handling
 
 - All video/audio data stays on your device
-- No data is transmitted externally
+- No user data is transmitted externally (Sparkle checks for updates only)
 - Project files are stored in user-accessible locations
 
 ---

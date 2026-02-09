@@ -17,13 +17,15 @@ Most tools fall into two traps: **bloated professionals** that overwhelm everyda
 | | The Problem | The Sane Way |
 |---|---|---|
 | **Power** | Cloud-dependent, vendor-controlled | Your video, your Mac, your rules |
-| **Love** | Built to extract (subscriptions, upsells) | $5 one-time. Built to serve. |
+| **Love** | Built to extract (subscriptions, upsells) | Built to serve. No dark patterns. |
 | **Sound Mind** | Feature bloat, cluttered interfaces | One thing done well. Calm UI. |
 
 > *"For God has not given us a spirit of fear, but of power and of love and of a sound mind."*
 > — 2 Timothy 1:7
 
-**100% On-Device | 0% Telemetry | $5 One-Time**
+**100% On-Device | 0% Telemetry**
+
+> *I wanted to make it $5, but processing fees and taxes were... insane. — Mr. Sane*
 
 ---
 
@@ -99,7 +101,6 @@ Most tools fall into two traps: **bloated professionals** that overwhelm everyda
 
 > **Note**: SaneVideo is optimized for newer macOS features when available, but the core app runs on macOS 15.0+.
 
-**Distribution**: DMGs are hosted on Cloudflare (not attached to GitHub releases).
 
 ---
 

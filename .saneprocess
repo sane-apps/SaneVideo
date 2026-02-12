@@ -9,11 +9,19 @@ build:
   xcodegen: true
 
 release:
+  team_id: M78L6FXD48
+  signing_identity: "Developer ID Application"
   dist_host: dist.sanevideo.com
   site_host: sanevideo.com
   r2_bucket: sanebar-downloads
   use_sparkle: true
   min_system_version: "15.0"
+  dmg:
+    volume_icon: Resources/DMGIcon.icns
+    file_icon: Resources/DMGIcon.icns
+    window_size: "600 428"
+    app_icon_pos: "150 190"
+    drop_pos: "450 190"
 
 commands:
   verify: ./scripts/SaneMaster.rb verify

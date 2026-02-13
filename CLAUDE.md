@@ -155,13 +155,13 @@ mcp__xcode__RenderPreview
 ```
 Note: SaneVideo is a **macOS app**. Use `macos-automator` for real UI.
 
-### claude-mem 3-Layer Workflow (10x Token Savings)
+### Serena Memories
+Use Serena for project-specific knowledge:
 ```
-1. search(query, project: "SaneVideo") → Get index with IDs (~50-100 tokens/result)
-2. timeline(anchor=ID)                → Get context around results
-3. get_observations([IDs])            → Fetch ONLY filtered IDs
+read_memory  # Check past learnings
+write_memory # Save important findings
 ```
-**Always add `project: "SaneVideo"` to searches for isolation.**
+For cross-project knowledge graph, use official Memory MCP tools.
 
 ### apple-docs Optimization
 - `compact: true` works on `list_technologies`, `get_sample_code`, `wwdc` (NOT on `search_apple_docs`)

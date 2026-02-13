@@ -942,7 +942,7 @@ log stream --predicate 'subsystem == "com.sanevideo.SaneVideo"' --level debug
     - **Note**: Ensure `enableAllProjectMcpServers: true` is set in `.claude/settings.json` and no restrictive `enabledMcpjsonServers` array exists.
     - **apple-docs**: ✅ Enabled - Apple Developer Documentation & WWDC transcripts (1,260+ sessions, 2012-2025). Use for API examples, related APIs, and understanding "why" behind APIs.
     - **github**: ✅ Enabled - GitHub API integration for issues, PRs, repos, and code search. (Official MCP)
-    - **memory**: ✅ Enabled - Persistent knowledge graph for cross-session context. Provided by the claude-mem plugin (configured in `.claude/settings.json`), not a standalone MCP server entry.
+    - **memory**: ✅ Enabled - Persistent knowledge graph for cross-session context. Official Memory MCP server.
     - **context7**: ✅ Enabled - Real-time, version-specific library documentation. Prevents hallucinated APIs by fetching current docs from source repos.
 
 ### When to Use Which Tool (Decision Matrix)
@@ -956,7 +956,7 @@ log stream --predicate 'subsystem == "com.sanevideo.SaneVideo"' --level debug
 | **Generate mock classes** | `./scripts/SaneMaster.rb gen_mock` (Mockolo) | Fast protocol→mock generation |
 | **Generate test templates** | `./scripts/SaneMaster.rb gen_test` | Creates structured unit/UI tests |
 | **GitHub issues/PRs** | `github` MCP | Create issues, review PRs, search code |
-| **Remember context across sessions** | `memory` MCP | Persistent knowledge graph |
+| **Remember context across sessions** | Official Memory MCP | Persistent knowledge graph |
 | **Code intelligence (completions, go-to-def)** | `swift-lsp` plugin | IDE-like Swift support in Claude Code |
 
 ### Future: iOS/iPadOS Companion Apps
@@ -1269,18 +1269,18 @@ After fixing ANY bug:
 - [ ] Plain English explanation ready?
 - [ ] Memory updated? (if pattern worth remembering)
 
-### Memory (Cross-Session Knowledge via claude-mem Plugin)
+### Memory (Cross-Session Knowledge via Official Memory MCP)
 
-**Rule**: If it took >30 minutes to figure out, write it to memory. Memory is accessed via the claude-mem plugin, not as a standalone MCP server.
+**Rule**: If it took >30 minutes to figure out, write it to memory. Memory is accessed via the official Memory MCP server.
 
-**Configuration**: Memory settings are in `.claude/settings.json`
+**Configuration**: Memory MCP is configured in `.mcp.json`
 
 **Entity types**: `bug_pattern`, `concurrency_gotcha`, `architecture_pattern`, `compliance_rule`
 
 **Commands:**
 ```bash
-mcp__plugin_claude-mem_mcp-search__search(query: "bug_pattern")  # Query before bug fix
-./scripts/SaneMaster.rb memory_context                           # Show all stored knowledge
+mcp__memory__search_nodes(query: "bug_pattern")  # Query before bug fix
+./scripts/SaneMaster.rb memory_context            # Show all stored knowledge
 ```
 
 **Session reviews** (at session end): Store `SessionReview_YYYY-MM-DD_TaskName` with tasks completed, mistakes made, patterns discovered.

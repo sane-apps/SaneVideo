@@ -1,0 +1,2 @@
+ignore:
+  - CVE-2026-25765 # Temporary: fastlane depends on faraday 1.x; revisit when fastlane supports faraday 2.x on Ruby 4.

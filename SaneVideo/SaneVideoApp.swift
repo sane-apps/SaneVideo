@@ -6,7 +6,9 @@
 //
 
 import AppKit
-import Sparkle
+#if !APP_STORE
+    import Sparkle
+#endif
 import SwiftUI
 
 @main
@@ -16,8 +18,10 @@ struct SaneVideoApp: App {
     @State private var prefs = ServiceContainer.shared.userPreferences
     @Environment(\.scenePhase) private var scenePhase
 
-    // Sparkle auto-update service (manual check only for launch)
-    @State private var updaterService = UpdaterService()
+    #if !APP_STORE
+        // Sparkle auto-update service (manual check only for launch)
+        @State private var updaterService = UpdaterService()
+    #endif
 
     var body: some Scene {
         WindowGroup {
@@ -52,14 +56,16 @@ struct SaneVideoApp: App {
         }
 
         .commands {
-            // Sparkle: Check for Updates (after About SaneVideo)
-            CommandGroup(after: .appInfo) {
-                Button(String(localized: "menu.app.check_updates", defaultValue: "Check for Updates...")) {
-                    updaterService.checkForUpdates()
+            #if !APP_STORE
+                // Sparkle: Check for Updates (after About SaneVideo)
+                CommandGroup(after: .appInfo) {
+                    Button(String(localized: "menu.app.check_updates", defaultValue: "Check for Updates...")) {
+                        updaterService.checkForUpdates()
+                    }
+                    .disabled(!updaterService.canCheckForUpdates)
+                    .accessibilityIdentifier("menu.app.check_updates")
                 }
-                .disabled(!updaterService.canCheckForUpdates)
-                .accessibilityIdentifier("menu.app.check_updates")
-            }
+            #endif
 
             CommandGroup(replacing: .newItem) {
                 Button(String(localized: "menu.file.new_recording", defaultValue: "New Recording")) {
@@ -262,7 +268,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         setupMenuBar()
 
         // Initialize global hotkey manager
-        ServiceContainer.shared.globalHotkeyManager.start()
+        #if !APP_STORE
+            ServiceContainer.shared.globalHotkeyManager.start()
+        #endif
 
         // Initialize LogManager to capture early logs
         _ = ServiceContainer.shared.logManager

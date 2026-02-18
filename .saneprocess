@@ -44,4 +44,14 @@ mcps:
   - github
   - xcode
 
+appstore:
+  enabled: true
+  app_id: ""
+  configuration: Release-AppStore
+  platforms: [macos]
+  contact:
+    name: "Stephan Joseph"
+    phone: "+17277589785"
+    email: "hi@saneapps.com"
+
 website: false

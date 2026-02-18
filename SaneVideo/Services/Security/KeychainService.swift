@@ -10,8 +10,7 @@ import Security
 
 /// Thread-safe Keychain service for storing sensitive API credentials
 actor KeychainService {
-
-    private let serviceName = "com.sanevideo.apikeys"
+    private let serviceName = Bundle.main.bundleIdentifier.map { $0 + ".apikeys" } ?? "com.sanevideo.apikeys"
 
     /// Keys for stored credentials
     enum KeychainKey: String, CaseIterable {
@@ -21,9 +20,9 @@ actor KeychainService {
 
         var displayName: String {
             switch self {
-            case .youtubeClientID: return "YouTube Client ID"
-            case .youtubeClientSecret: return "YouTube Client Secret"
-            case .youtubeRefreshToken: return "YouTube Refresh Token"
+            case .youtubeClientID: "YouTube Client ID"
+            case .youtubeClientSecret: "YouTube Client Secret"
+            case .youtubeRefreshToken: "YouTube Refresh Token"
             }
         }
     }
@@ -37,13 +36,13 @@ actor KeychainService {
         var errorDescription: String? {
             switch self {
             case let .saveFailed(status):
-                return "Failed to save to Keychain: \(SecCopyErrorMessageString(status, nil) ?? "Unknown error" as CFString)"
+                "Failed to save to Keychain: \(SecCopyErrorMessageString(status, nil) ?? "Unknown error" as CFString)"
             case let .deleteFailed(status):
-                return "Failed to delete from Keychain: \(SecCopyErrorMessageString(status, nil) ?? "Unknown error" as CFString)"
+                "Failed to delete from Keychain: \(SecCopyErrorMessageString(status, nil) ?? "Unknown error" as CFString)"
             case .encodingFailed:
-                return "Failed to encode data for Keychain"
+                "Failed to encode data for Keychain"
             case .unexpectedData:
-                return "Unexpected data format in Keychain"
+                "Unexpected data format in Keychain"
             }
         }
     }
@@ -127,7 +126,7 @@ actor KeychainService {
 
     /// Check if a value exists in Keychain
     func hasValue(for key: KeychainKey) -> Bool {
-        return retrieve(for: key) != nil
+        retrieve(for: key) != nil
     }
 
     /// Delete all stored keys
@@ -144,11 +143,11 @@ actor KeychainService {
 
     /// Check if YouTube credentials are configured
     func hasYouTubeCredentials() -> Bool {
-        return hasValue(for: .youtubeClientID) && hasValue(for: .youtubeClientSecret)
+        hasValue(for: .youtubeClientID) && hasValue(for: .youtubeClientSecret)
     }
 
     /// Check if YouTube is fully authenticated (has refresh token)
     func isYouTubeAuthenticated() -> Bool {
-        return hasYouTubeCredentials() && hasValue(for: .youtubeRefreshToken)
+        hasYouTubeCredentials() && hasValue(for: .youtubeRefreshToken)
     }
 }

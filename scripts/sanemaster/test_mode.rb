@@ -21,7 +21,7 @@ module SaneMasterModules
 
       # STALE BUILD DETECTION - prevents launching outdated binaries
       binary_time = File.mtime(app_path)
-      source_files = Dir.glob("{#{project_name},#{project_name}Tests}/**/*.swift")
+      source_files = project_swift_sources
       newest_source = source_files.max_by { |f| File.mtime(f) }
 
       if newest_source && File.mtime(newest_source) > binary_time
@@ -55,6 +55,7 @@ module SaneMasterModules
       capture_logs = args.include?('--logs')
       env_vars = {}
       env_vars['VERIFY_PIP'] = ENV['VERIFY_PIP'] if ENV['VERIFY_PIP']
+      ensure_single_instance
 
       if capture_logs
         puts '📝 Capturing logs to stdout...'
@@ -166,6 +167,12 @@ module SaneMasterModules
       puts ''
     end
 
+    def ensure_single_instance
+      puts "🛑 Ensuring single #{project_name} instance..."
+      system("killall -9 #{project_name} 2>/dev/null")
+      sleep 0.3
+    end
+
     def show_screenshots(screenshots_dir)
       puts '2️⃣  Screenshots in project:'
       if Dir.exist?(screenshots_dir)
@@ -249,6 +256,14 @@ module SaneMasterModules
         puts '   (log file not created yet - will appear after app runs)'
       end
       puts ''
+    end
+
+    def project_swift_sources
+      ignored_roots = %w[.git build .build DerivedData node_modules vendor Pods releases fastlane].freeze
+
+      Dir.glob('**/*.swift').reject do |path|
+        path.split(File::SEPARATOR).any? { |part| ignored_roots.include?(part) }
+      end
     end
 
     def print_test_mode_ready

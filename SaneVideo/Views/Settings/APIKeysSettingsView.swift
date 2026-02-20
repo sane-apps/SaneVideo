@@ -155,6 +155,9 @@ struct APIKeysSettingsView: View {
             }
         }
         .animation(.easeInOut, value: showingSaveSuccess)
+        .task {
+            await keyManager.refreshStatus()
+        }
     }
 
     // MARK: - Helper Views

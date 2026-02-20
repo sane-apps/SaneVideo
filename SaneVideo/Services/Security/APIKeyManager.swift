@@ -19,11 +19,7 @@ class APIKeyManager {
     private(set) var hasYouTubeCredentials: Bool = false
     private(set) var isYouTubeAuthenticated: Bool = false
 
-    init() {
-        Task {
-            await refreshStatus()
-        }
-    }
+    init() {}
 
     // MARK: - Status Refresh
 

@@ -11,6 +11,8 @@ import Security
 /// Thread-safe Keychain service for storing sensitive API credentials
 actor KeychainService {
     private let serviceName = Bundle.main.bundleIdentifier.map { $0 + ".apikeys" } ?? "com.sanevideo.apikeys"
+    private let isKeychainBypassed: Bool
+    private let fallbackDefaults: UserDefaults
 
     /// Keys for stored credentials
     enum KeychainKey: String, CaseIterable {
@@ -47,12 +49,30 @@ actor KeychainService {
         }
     }
 
-    init() {}
+    init() {
+        let debugBypass: Bool = {
+#if DEBUG
+            return ProcessInfo.processInfo.environment["SANEAPPS_ENABLE_KEYCHAIN_IN_DEBUG"] != "1"
+#else
+            return false
+#endif
+        }()
+
+        self.isKeychainBypassed = debugBypass
+            || ProcessInfo.processInfo.environment["SANEAPPS_DISABLE_KEYCHAIN"] == "1"
+            || ProcessInfo.processInfo.arguments.contains("--sane-no-keychain")
+        self.fallbackDefaults = UserDefaults(suiteName: "com.sanevideo.no-keychain") ?? .standard
+    }
 
     // MARK: - Public API
 
     /// Save a value to Keychain
     func save(_ value: String, for key: KeychainKey) throws {
+        if isKeychainBypassed {
+            fallbackDefaults.set(value, forKey: fallbackKey(key))
+            return
+        }
+
         guard let data = value.data(using: .utf8) else {
             throw KeychainError.encodingFailed
         }
@@ -82,6 +102,10 @@ actor KeychainService {
 
     /// Retrieve a value from Keychain
     func retrieve(for key: KeychainKey) -> String? {
+        if isKeychainBypassed {
+            return fallbackDefaults.string(forKey: fallbackKey(key))
+        }
+
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: serviceName,
@@ -105,6 +129,11 @@ actor KeychainService {
 
     /// Delete a value from Keychain
     func delete(for key: KeychainKey) throws {
+        if isKeychainBypassed {
+            fallbackDefaults.removeObject(forKey: fallbackKey(key))
+            return
+        }
+
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: serviceName,
@@ -149,5 +178,9 @@ actor KeychainService {
     /// Check if YouTube is fully authenticated (has refresh token)
     func isYouTubeAuthenticated() -> Bool {
         hasYouTubeCredentials() && hasValue(for: .youtubeRefreshToken)
+    }
+
+    private func fallbackKey(_ key: KeychainKey) -> String {
+        "sane.no-keychain.\(serviceName).\(key.rawValue)"
     }
 }

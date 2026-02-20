@@ -248,7 +248,7 @@ Built on the three pillars of **Power**, **Love**, and **Sound Mind**:
 
 ## 📄 License
 
-GPL v3 — see [LICENSE](LICENSE)
+[PolyForm Shield 1.0.0](https://polyformproject.org/licenses/shield/1.0.0) — free for any use except building a competing product. See [LICENSE](LICENSE)
 
 ---
 

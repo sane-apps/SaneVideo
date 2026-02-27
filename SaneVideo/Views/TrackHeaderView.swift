@@ -90,9 +90,9 @@ struct TrackHeaderView: View {
 
     private var trackColor: Color {
         switch track.type {
-        case .video: return .blue
-        case .audio: return .green
-        case .overlay: return .purple
+        case .video: return Theme.Colors.accent
+        case .audio: return Theme.Colors.accent
+        case .overlay: return Theme.Colors.accent
         }
     }
 }

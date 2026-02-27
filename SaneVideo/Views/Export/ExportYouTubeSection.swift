@@ -43,7 +43,7 @@ struct ExportYouTubeSection: View {
                             .padding(.vertical, 4)
                             .background(
                                 LinearGradient(
-                                    colors: [.purple, .blue],
+                                    colors: [.teal, .blue],
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing
                                 )

@@ -90,7 +90,7 @@ struct ExportView: View {
                         .font(.system(size: 48))
                         .foregroundStyle(
                             LinearGradient(
-                                colors: [.blue, .purple],
+                                colors: [.blue, .teal],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             )

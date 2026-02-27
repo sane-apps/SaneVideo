@@ -43,6 +43,8 @@ settings:
   # Hardened runtime for app security
   ENABLE_HARDENED_RUNTIME: YES
 packages:
+  SaneUI:
+    path: ../../infra/SaneUI
   swift-grok:
     url: https://github.com/klu-ai/swift-grok
     branch: main
@@ -138,6 +140,7 @@ targets:
         name: SwiftFormat Auto-fix
         basedOnDependencyAnalysis: false
     dependencies:
+      - package: SaneUI
       - package: swift-grok
         product: GrokClient
       - package: WhisperKit

@@ -273,7 +273,7 @@ private struct BuiltInTemplateCard: View {
         switch colorName {
         case "red": return .red
         case "blue": return .blue
-        case "purple": return .purple
+        case "purple": return .teal
         case "black": return .primary
         case "green": return .green
         case "orange": return .orange
@@ -337,7 +337,7 @@ private struct CustomTemplateCard: View {
         switch colorName {
         case "red": return .red
         case "blue": return .blue
-        case "purple": return .purple
+        case "purple": return .teal
         case "pink": return .pink
         case "green": return .green
         case "orange": return .orange
@@ -524,7 +524,7 @@ private struct TemplateEditorSheet: View {
         switch colorName {
         case "red": return .red
         case "blue": return .blue
-        case "purple": return .purple
+        case "purple": return .teal
         case "pink": return .pink
         case "green": return .green
         case "orange": return .orange

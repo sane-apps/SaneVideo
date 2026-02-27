@@ -53,7 +53,7 @@ struct InspectorToggle: View {
   let subtitle: String
   @Binding var isOn: Bool
   let icon: String
-  var color: Color = .accentColor  // Use system accent color by default
+  var color: Color = Theme.Colors.accent
   var identifier: String?
 
   var body: some View {
@@ -87,13 +87,10 @@ struct InspectorToggle: View {
       // Spacer with minimum length
       Spacer(minLength: Theme.Dimensions.spacingXS)
 
-      // Toggle - UX FIX: Always use blue for accessibility (WCAG contrast)
-      // Yellow/orange toggles fail contrast requirements on light backgrounds
-      // Apple uses blue for system toggles for this exact reason
       Toggle("", isOn: $isOn)
         .labelsHidden()
         .toggleStyle(.switch)
-        .tint(.blue)  // ACCESSIBILITY FIX: Blue has 4.5:1 contrast ratio, yellow doesn't
+        .tint(Theme.Colors.accent)
         .accessibilityLabel(title)
         .accessibilityIdentifier(identifier ?? "Toggle_\(title)")
         .controlSize(.small)
@@ -103,15 +100,5 @@ struct InspectorToggle: View {
     .accessibilityIdentifier(
       identifier != nil
         ? "Row_\(identifier!.replacingOccurrences(of: "Toggle_", with: ""))" : "Row_\(title)")
-  }
-}
-
-// Helper for contrast (extracted to avoid duplication if not already in Theme)
-extension Color {
-  func isLight() -> Bool {
-    // Simple heuristic for contrast text
-    // In a real design system we'd check luminance
-    // For standard Yellow/Cyan this is usually true, for Blue/Purple false
-    return false  // Defaulting to white text for now as most accents are dark enough or we want white on buttons
   }
 }

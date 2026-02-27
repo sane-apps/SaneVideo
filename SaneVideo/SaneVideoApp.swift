@@ -9,6 +9,7 @@ import AppKit
 #if !APP_STORE
     import Sparkle
 #endif
+import SaneUI
 import SwiftUI
 
 @main
@@ -16,6 +17,11 @@ struct SaneVideoApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @State private var appState = ServiceContainer.shared.appState
     @State private var prefs = ServiceContainer.shared.userPreferences
+    @State private var licenseService = LicenseService(
+        appName: "SaneVideo",
+        checkoutURL: URL(string: "https://go.saneapps.com/buy/sanevideo")!
+    )
+    @AppStorage("hasSeenWelcome") private var hasSeenWelcome = false
     @Environment(\.scenePhase) private var scenePhase
 
     #if !APP_STORE
@@ -26,11 +32,15 @@ struct SaneVideoApp: App {
     var body: some Scene {
         WindowGroup {
             MainContentView()
+                .environment(licenseService)
                 .environment(appState)
                 .environment(ServiceContainer.shared.errorPresenter)
                 .preferredColorScheme(
                     prefs.appTheme == .system ? nil : (prefs.appTheme == .dark ? .dark : .light)
                 )
+                .onAppear {
+                    licenseService.checkCachedLicense()
+                }
                 .onChange(of: scenePhase) { _, newPhase in
                     if newPhase == .background || newPhase == .inactive {
                         appState.saveCurrentState()
@@ -47,6 +57,33 @@ struct SaneVideoApp: App {
                         appState.appMode = .editing
                         Task { await appState.bootstrapEditorForTesting() }
                     }
+                }
+                .sheet(isPresented: Binding(
+                    get: { !hasSeenWelcome },
+                    set: { isShowing in
+                        if !isShowing {
+                            hasSeenWelcome = true
+                        }
+                    }
+                )) {
+                    WelcomeGateView(
+                        appName: "SaneVideo",
+                        appIcon: "play.tv",
+                        freeFeatures: [
+                            (icon: "film", text: "Edit and trim local videos"),
+                            (icon: "camera", text: "AI-powered cleanup & subtitles"),
+                            (icon: "bolt", text: "Project templates and export presets")
+                        ],
+                        proFeatures: [
+                            (icon: "checkmark.seal", text: "All free features, plus:"),
+                            (icon: "wand.and.rays", text: "Advanced motion, subtitle, and style controls"),
+                            (icon: "rectangle.on.rectangle.circle", text: "Unlimited project history and presets"),
+                            (icon: "sparkles", text: "Priority processing and batch workflows"),
+                            (icon: "link.badge.plus", text: "Cloud sync for project assets")
+                        ],
+                        licenseService: licenseService
+                    )
+                    .preferredColorScheme(.dark)
                 }
         }
         .defaultSize(width: AppConstants.defaultWindowWidth, height: AppConstants.defaultWindowHeight)

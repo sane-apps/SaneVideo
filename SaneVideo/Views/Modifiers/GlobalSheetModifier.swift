@@ -12,7 +12,6 @@ struct GlobalSheetModifier: ViewModifier {
 
     // Local state for sheets
     @State private var showLogs = false
-    @State private var showOnboarding = !UserDefaults.standard.bool(forKey: "hasCompletedOnboarding")
     @State private var showShortcuts = false
     @State private var showTemplateBrowser = false
     @State private var showRepurposing = false
@@ -22,24 +21,12 @@ struct GlobalSheetModifier: ViewModifier {
     @State private var showingRenameAlert = false
     @State private var newProjectName = ""
 
-    private var isTesting: Bool {
-        ProcessInfo.processInfo.arguments.contains("-uitesting") ||
-        ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
-    }
-
     func body(content: Content) -> some View {
         @Bindable var appState = appState
         return content
             // 1. File Import
             .sheet(isPresented: $appState.showingImportPicker) {
                 FileImporterView()
-            }
-            // 3. Onboarding
-            .sheet(isPresented: .init(
-                get: { showOnboarding && !isTesting },
-                set: { showOnboarding = $0 }
-            )) {
-                OnboardingView(isPresented: $showOnboarding)
             }
             // 4. Keyboard Shortcuts
             .sheet(isPresented: $showShortcuts) {

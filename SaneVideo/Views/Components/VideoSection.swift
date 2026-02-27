@@ -89,11 +89,11 @@ struct VideoSection: View {
                     }
                 }
                 .padding(8)
-                .background(Color.purple.opacity(0.15))
+                .background(Theme.Colors.accent.opacity(0.15))
                 .cornerRadius(6)
                 .overlay(
                     RoundedRectangle(cornerRadius: 6)
-                        .stroke(Color.purple.opacity(0.3), lineWidth: 1)
+                        .stroke(Theme.Colors.accent.opacity(0.3), lineWidth: 1)
                 )
             }
             .buttonStyle(.plain)

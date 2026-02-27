@@ -7,6 +7,7 @@
 
 import AVKit
 import Combine
+import SaneUI
 import SwiftUI
 import UniformTypeIdentifiers
 
@@ -23,8 +24,6 @@ struct MainContentView: View {
   @State private var isDraggingFile = false
   // Note: selectedClipIds moved to AppState for global access
 
-  @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
-
   private var isTesting: Bool {
     ProcessInfo.processInfo.arguments.contains("-uitesting")
       || ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
@@ -36,8 +35,7 @@ struct MainContentView: View {
 
     return
       mainContent
-      // CONSISTENCY: Use controlBackgroundColor for consistent UI
-      .background(Color(nsColor: .controlBackgroundColor))
+      .background(SaneGradientBackground())
       .overlay(alignment: .top) {
         MagicOverlayView()
       }

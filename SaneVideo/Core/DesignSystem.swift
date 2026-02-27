@@ -6,27 +6,27 @@
 //
 
 import SwiftUI
+import SaneUI
 
 enum Theme {
 
     // UNIFIED COLOR PALETTE - Professional Dark Mode optimized
-    // Primary: Purple/Indigo family (brand color)
-    // Secondary: Blue family (actions)
-    // Accent: Teal for highlights
+    // Brand palette: SaneUI Navy + teal
+    // Action/Accent: teal + neutral grays
     enum Colors {
         // Semantic Application Colors (Adaptive)
         static let background = Color(nsColor: .windowBackgroundColor)
         static let secondaryBackground = Color(nsColor: .controlBackgroundColor)
 
         // BRAND COLORS (System Integrated)
-        static let accent = Color.videoPurple
+        static let accent = Color.saneAccent
 
-        static let accentGradient = Color.videoPurple // Effectively 1:1 with system for snappiness
+        static let accentGradient = Color.saneAccent
 
         // SECONDARY (System Integrated)
-        static let action = Color.accentColor
+        static let action = Color.saneAccent
 
-        static let secondaryGradient = Color.accentColor
+        static let secondaryGradient = Color.saneAccent
 
         // SEMANTIC COLORS (System Integrated)
         static let warning = Color.orange
@@ -160,11 +160,10 @@ extension Color {
         )
     }
 
-    static let videoPurple = Color(hex: "a855f7")
-    static let navy = Color(hex: "1a2744")
-    static let deepNavy = Color(hex: "0d1525")
-    static let glowingTeal = Color(hex: "5fa8d3")
-    static let silver = Color(hex: "a8b4c4")
+    static let navy = SanePalette.navy
+    static let deepNavy = SanePalette.navyDeep
+    static let glowingTeal = SanePalette.tealGlow
+    static let silver = Color(red: 0.72, green: 0.80, blue: 0.88)
     static let void = Color(hex: "0a0a0a")
     static let carbon = Color(hex: "141414")
     static let smoke = Color(hex: "222222")

@@ -8,6 +8,7 @@
 
 import AppKit
 import SwiftUI
+import SaneUI
 
 struct BackgroundEffectsView: View {
   @Environment(AppState.self) var appState
@@ -16,7 +17,7 @@ struct BackgroundEffectsView: View {
 
   @State private var selectedEffect: BackgroundEffect?
   @State private var blurRadius: Float = 20
-  @State private var selectedColor: Color = .green
+  @State private var selectedColor: Color = Theme.Colors.accent
   @State private var selectedImageURL: URL?
   @State private var isPickingImage = false
 
@@ -137,9 +138,15 @@ struct BackgroundEffectsView: View {
               isSelected: isChromaKey,
               id: "background.effect.chroma",
               action: {
-                // Default to green screen
-                selectedEffect = .chromaKey(red: 0, green: 1, blue: 0, sensitivity: 0.2)
-                selectedColor = .green
+                // Default to brand accent screen
+                let accentComponents = Theme.Colors.accent.cgColor?.components ?? [0, 1, 0, 1]
+                selectedEffect = .chromaKey(
+                  red: CGFloat(accentComponents[0]),
+                  green: CGFloat(accentComponents[1]),
+                  blue: CGFloat(accentComponents[2]),
+                  sensitivity: 0.2
+                )
+                selectedColor = Theme.Colors.accent
                 saveEffect()
               }
             )
@@ -247,10 +254,10 @@ struct BackgroundEffectsView: View {
 
   private var colorPresets: [(name: String, color: Color)] {
     [
-      ("Green Screen", .green),
+      ("Teal", Theme.Colors.accent),
       ("Black", .black),
       ("White", .white),
-      ("Blue", .blue),
+      ("Navy", Color.navy),
       ("Gray", .gray)
     ]
   }
@@ -361,7 +368,7 @@ struct BackgroundEffectsView: View {
           }
 
         // Common key colors
-        ForEach([Color.green, Color.blue, Color(red: 1, green: 0, blue: 1)], id: \.self) { color in
+        ForEach([Theme.Colors.accent, Color.navy, Color.black, .white], id: \.self) { color in
           Circle()
             .fill(color)
             .frame(width: 20, height: 20)

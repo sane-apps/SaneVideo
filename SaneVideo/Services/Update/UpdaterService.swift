@@ -8,6 +8,7 @@
 #if !APP_STORE
     import Combine
     import Sparkle
+    import SaneUI
     import SwiftUI
 
     /// Sparkle updater wrapper with @MainActor isolation for Swift 6 compatibility
@@ -21,10 +22,11 @@
 
         init() {
             updaterController = SPUStandardUpdaterController(
-                startingUpdater: false,
+                startingUpdater: true,
                 updaterDelegate: nil,
                 userDriverDelegate: nil
             )
+            updaterController.updater.updateCheckInterval = SaneSparkleCheckFrequency.normalizedInterval(from: updaterController.updater.updateCheckInterval)
             cancellable = updaterController.updater.publisher(for: \.canCheckForUpdates)
                 .sink { [weak self] value in
                     self?.canCheckForUpdates = value
@@ -33,6 +35,16 @@
 
         func checkForUpdates() {
             updaterController.checkForUpdates(nil)
+        }
+
+        var automaticallyChecksForUpdates: Bool {
+            get { updaterController.updater.automaticallyChecksForUpdates }
+            set { updaterController.updater.automaticallyChecksForUpdates = newValue }
+        }
+
+        var updateCheckFrequency: SaneSparkleCheckFrequency {
+            get { SaneSparkleCheckFrequency.resolve(updateCheckInterval: updaterController.updater.updateCheckInterval) }
+            set { updaterController.updater.updateCheckInterval = newValue.interval }
         }
     }
 #else
@@ -45,5 +57,9 @@
         private(set) var canCheckForUpdates = false
         init() {}
         func checkForUpdates() {}
+        var automaticallyChecksForUpdates: Bool {
+            get { false }
+            set {}
+        }
     }
 #endif

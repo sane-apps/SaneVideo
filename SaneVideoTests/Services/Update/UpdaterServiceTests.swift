@@ -15,14 +15,13 @@ struct UpdaterServiceTests {
     // MARK: - Initialization Tests
 
     @MainActor
-    @Test("UpdaterService initializes with canCheckForUpdates false")
+    @Test("UpdaterService initializes with canCheckForUpdates ready")
     func updaterServiceInitializes() {
         // Arrange & Act
         let service = UpdaterService()
 
-        // Assert - canCheckForUpdates starts false until Sparkle is ready
-        // This is the expected initial state per UpdaterService.swift:21
-        #expect(service.canCheckForUpdates == false, "canCheckForUpdates should be false initially")
+        // Assert - startingUpdater:true should make Sparkle ready immediately in direct builds
+        #expect(service.canCheckForUpdates == true, "canCheckForUpdates should be true once Sparkle starts immediately")
     }
 
     @MainActor
@@ -34,8 +33,8 @@ struct UpdaterServiceTests {
         // Act - call checkForUpdates (in test environment, no actual update check happens)
         service.checkForUpdates()
 
-        // Assert - after calling checkForUpdates, canCheckForUpdates should still be accessible
-        // In test environment without valid appcast, it remains false
-        #expect(service.canCheckForUpdates == false, "canCheckForUpdates should remain false in test environment")
+        // Assert - in the test environment Sparkle becomes briefly ready, then unavailable again
+        // after a manual check because there is no real update feed/session to keep active.
+        #expect(service.canCheckForUpdates == false, "canCheckForUpdates should fall back to false after a manual check in tests")
     }
 }

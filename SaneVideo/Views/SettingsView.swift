@@ -7,6 +7,9 @@
 
 import AVFoundation
 import SwiftUI
+#if !APP_STORE
+  import SaneUI
+#endif
 
 struct SettingsView: View {
   var prefs = ServiceContainer.shared.userPreferences
@@ -71,6 +74,10 @@ struct SettingsView: View {
 struct GeneralSettingsView: View {
   @Bindable var prefs = ServiceContainer.shared.userPreferences
   @State private var showingCacheAlert = false
+  #if !APP_STORE
+    @State private var automaticallyChecksForUpdates = false
+    @State private var updateCheckFrequency = SaneSparkleCheckFrequency.daily
+  #endif
 
   var body: some View {
     Form {
@@ -162,8 +169,39 @@ struct GeneralSettingsView: View {
           .buttonStyle(.link)
         }
       }
+
+      #if !APP_STORE
+        Section(header: Text("Software Updates").font(.headline)) {
+          Toggle("Check for updates automatically", isOn: $automaticallyChecksForUpdates)
+
+          Picker("Check frequency", selection: $updateCheckFrequency) {
+            ForEach(SaneSparkleCheckFrequency.allCases) { frequency in
+              Text(frequency.title).tag(frequency)
+            }
+          }
+          .pickerStyle(.segmented)
+          .disabled(!automaticallyChecksForUpdates)
+
+          Button("Check Now") {
+            ServiceContainer.shared.updaterService.checkForUpdates()
+          }
+          .disabled(!ServiceContainer.shared.updaterService.canCheckForUpdates)
+        }
+      #endif
     }
     .padding()
+    #if !APP_STORE
+    .onAppear {
+      automaticallyChecksForUpdates = ServiceContainer.shared.updaterService.automaticallyChecksForUpdates
+      updateCheckFrequency = ServiceContainer.shared.updaterService.updateCheckFrequency
+    }
+    .onChange(of: automaticallyChecksForUpdates) { _, newValue in
+      ServiceContainer.shared.updaterService.automaticallyChecksForUpdates = newValue
+    }
+    .onChange(of: updateCheckFrequency) { _, newValue in
+      ServiceContainer.shared.updaterService.updateCheckFrequency = newValue
+    }
+    #endif
     .alert(
       String(localized: "settings.cache_cleared.title", defaultValue: "Cache Cleared"),
       isPresented: $showingCacheAlert

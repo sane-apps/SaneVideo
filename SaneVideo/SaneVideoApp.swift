@@ -26,7 +26,7 @@ struct SaneVideoApp: App {
 
     #if !APP_STORE
         // Sparkle auto-update service (manual check only for launch)
-        @State private var updaterService = UpdaterService()
+        @State private var updaterService = ServiceContainer.shared.updaterService
     #endif
 
     var body: some Scene {

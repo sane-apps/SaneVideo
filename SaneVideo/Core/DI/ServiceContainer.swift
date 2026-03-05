@@ -44,6 +44,7 @@ final class ServiceContainer {
     let pdfService: PDFGeneratorService
     let ffmpegService: FFmpegService
     let shareLinkService: ShareLinkService
+    let updaterService: UpdaterService
     
     // MARK: - Audio/Voice Services
     
@@ -145,6 +146,7 @@ final class ServiceContainer {
         self.pdfService = PDFGeneratorService()
         self.ffmpegService = FFmpegService()
         self.shareLinkService = ShareLinkService()
+        self.updaterService = UpdaterService()
         
         // Audio/Voice Services
         self.voiceoverService = VoiceoverService()

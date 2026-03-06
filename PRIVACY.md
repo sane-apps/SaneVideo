@@ -68,7 +68,7 @@ rm -rf ~/Library/Caches/com.sanevideo.app
 
 ## Contact
 
-Questions about privacy? Open an issue on [GitHub](https://github.com/sane-apps/SaneVideo/issues).
+Questions about privacy? Open an issue on [GitHub](https://github.com/sane-apps/SaneVideo/issues/new?template=bug_report.md).
 
 ## Changes
 

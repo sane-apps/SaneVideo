@@ -13,6 +13,16 @@ import Combine
 @Suite("Camera Manager Tests")
 @MainActor
 struct CameraManagerTests {
+    @Test("Permissionless automation hides hardware camera discovery by default")
+    func permissionlessAutomationSuppressesCameraDiscovery() {
+        let manager = CameraManager()
+        #expect(manager.availableCameras.isEmpty)
+    }
+
+    @Test("Hardware integration stays opt-in by default")
+    func hardwareIntegrationDefaultsOff() {
+        #expect(TestEnvironment.allowsHardwareIntegration == false)
+    }
 
     // MARK: - Mock Tests
 

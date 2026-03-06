@@ -64,7 +64,10 @@ final class CameraManager: NSObject, CameraServiceProtocol {
 
   /// Returns list of available cameras. Thread-safe.
   var availableCameras: [AVCaptureDevice] {
-    cachedDiscoverySession.devices
+    if TestEnvironment.suppressPermissionPrompts && !TestEnvironment.allowsHardwareIntegration {
+      return []
+    }
+    return cachedDiscoverySession.devices
   }
 
   // MARK: - Protocol Implementation
@@ -170,6 +173,11 @@ final class CameraManager: NSObject, CameraServiceProtocol {
     let isAuthorized = ServiceContainer.shared.permissionManager.cameraStatus == .granted
 
     guard isAuthorized else {
+      if TestEnvironment.suppressPermissionPrompts {
+        AppLogger.camera.info("Permissionless automation active; skipping camera permission prompt")
+        self.lastError = .cameraPermissionDenied
+        throw AppError.cameraPermissionDenied
+      }
       AppLogger.camera.warning("Camera permission not granted, requesting...")
       let granted = await ServiceContainer.shared.permissionManager.requestCameraPermission()
       if granted {

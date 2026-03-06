@@ -43,8 +43,7 @@ class CameraState {
 
     /// Refresh the list of available cameras (call when user interacts with camera picker)
     func refreshCameras() {
-        let isTesting = ProcessInfo.processInfo.arguments.contains("-uitesting")
-        if isTesting {
+        if TestEnvironment.suppressPermissionPrompts && !TestEnvironment.allowsHardwareIntegration {
             availableCameras = [] // Mock empty cameras during test to avoid CMIO activation
             hasDiscoveredCameras = true
             return
@@ -93,8 +92,7 @@ class CameraState {
     // MARK: - Actions
 
     func toggleCamera() {
-        let isTesting = ProcessInfo.processInfo.arguments.contains("-uitesting")
-        if isTesting {
+        if TestEnvironment.suppressPermissionPrompts && !TestEnvironment.allowsHardwareIntegration {
             isActive.toggle()
             return
         }
@@ -103,8 +101,7 @@ class CameraState {
     }
 
     func startCamera(completion: @escaping @Sendable () -> Void = {}) {
-        let isTesting = ProcessInfo.processInfo.arguments.contains("-uitesting")
-        if isTesting {
+        if TestEnvironment.suppressPermissionPrompts && !TestEnvironment.allowsHardwareIntegration {
             isActive = true
             completion()
             return

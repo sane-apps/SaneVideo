@@ -93,8 +93,7 @@ class AudioService: NSObject, AudioServiceProtocol {
   // MARK: - Permission
 
   func checkPermission() {
-    let isTesting = ProcessInfo.processInfo.arguments.contains("-uitesting")
-    if isTesting { return }
+    if TestEnvironment.suppressPermissionPrompts { return }
 
     Task { @MainActor in
       permissionManager.checkMicrophonePermission()
@@ -102,8 +101,7 @@ class AudioService: NSObject, AudioServiceProtocol {
   }
 
   func requestPermission() {
-    let isTesting = ProcessInfo.processInfo.arguments.contains("-uitesting")
-    if isTesting { return }
+    if TestEnvironment.suppressPermissionPrompts { return }
 
     Task {
       _ = await permissionManager.requestMicrophonePermission()
@@ -126,6 +124,10 @@ class AudioService: NSObject, AudioServiceProtocol {
       AppLogger.audio.debug("Permission status authorized: \(isAuthorized)")
 
       guard isAuthorized else {
+        if TestEnvironment.suppressPermissionPrompts {
+          AppLogger.audio.info("Permissionless automation active; skipping microphone permission prompt")
+          return
+        }
         AppLogger.audio.warning("Microphone permission not granted, requesting...")
         let granted = await ServiceContainer.shared.permissionManager.requestMicrophonePermission()
         if granted {

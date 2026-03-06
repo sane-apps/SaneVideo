@@ -17,6 +17,9 @@ import Testing
 @Suite("Camera Integration Tests")
 @MainActor
 struct CameraIntegrationTests {
+    private func hardwareIntegrationEnabled() -> Bool {
+        TestEnvironment.allowsHardwareIntegration
+    }
 
     // MARK: - Hardware Detection
 
@@ -47,6 +50,8 @@ struct CameraIntegrationTests {
 
     @Test("CameraManager can start and stop without crashing")
     func testCameraManagerLifecycle() async throws {
+        guard hardwareIntegrationEnabled() else { return }
+
         // Skip if no camera hardware (CI environment)
         guard hasCameraHardware else {
             // On CI without camera, just verify the manager can be created
@@ -84,6 +89,8 @@ struct CameraIntegrationTests {
 
     @Test("Camera formats can be enumerated from device")
     func testCameraFormatEnumeration() throws {
+        guard hardwareIntegrationEnabled() else { return }
+
         guard hasCameraHardware else {
             // Skip on CI
             return
@@ -105,7 +112,7 @@ struct CameraIntegrationTests {
         let formats = camera.formats
 
         // Assert - should have at least one format
-        #expect(formats.count > 0, "Camera should have at least one supported format")
+        #expect(!formats.isEmpty, "Camera should have at least one supported format")
 
         // Verify formats have valid properties
         for format in formats {
@@ -114,7 +121,7 @@ struct CameraIntegrationTests {
             #expect(dims.height > 0, "Format height should be positive")
 
             let fpsRanges = format.videoSupportedFrameRateRanges
-            #expect(fpsRanges.count > 0, "Format should have at least one FPS range")
+            #expect(!fpsRanges.isEmpty, "Format should have at least one FPS range")
 
             for range in fpsRanges {
                 #expect(range.maxFrameRate >= range.minFrameRate,
@@ -125,6 +132,8 @@ struct CameraIntegrationTests {
 
     @Test("Camera supports expected FPS range for 1080p")
     func testCamera1080pFPSSupport() throws {
+        guard hardwareIntegrationEnabled() else { return }
+
         guard hasCameraHardware else {
             return
         }
@@ -148,7 +157,7 @@ struct CameraIntegrationTests {
         }
 
         // Assert - should have 1080p support
-        #expect(formats1080p.count > 0, "Camera should support 1080p resolution")
+        #expect(!formats1080p.isEmpty, "Camera should support 1080p resolution")
 
         // Find max FPS for 1080p
         var maxFPS: Double = 0
@@ -166,6 +175,8 @@ struct CameraIntegrationTests {
 
     @Test("AVCaptureSession can be configured without error")
     func testSessionConfiguration() async throws {
+        guard hardwareIntegrationEnabled() else { return }
+
         guard hasCameraHardware else {
             return
         }
@@ -206,7 +217,7 @@ struct CameraIntegrationTests {
         session.commitConfiguration()
 
         // Assert - session should have the input
-        #expect(session.inputs.count > 0, "Session should have at least one input")
+        #expect(!session.inputs.isEmpty, "Session should have at least one input")
     }
 
 }

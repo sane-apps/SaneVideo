@@ -107,6 +107,10 @@ class PermissionManager: PermissionManagerProtocol {
       cameraStatus = .granted
       return true
     }
+    if TestEnvironment.suppressPermissionPrompts {
+      checkCameraPermission()
+      return cameraStatus == .granted
+    }
     AppLogger.camera.info("Requesting camera permission...")
     let granted = await AVCaptureDevice.requestAccess(for: .video)
     AppLogger.camera.info("Camera permission result: \(granted)")
@@ -129,6 +133,10 @@ class PermissionManager: PermissionManagerProtocol {
     if TestEnvironment.isTesting {
       microphoneStatus = .granted
       return true
+    }
+    if TestEnvironment.suppressPermissionPrompts {
+      checkMicrophonePermission()
+      return microphoneStatus == .granted
     }
     AppLogger.audio.info("Requesting microphone permission...")
     let granted = await AVCaptureDevice.requestAccess(for: .audio)
@@ -173,6 +181,10 @@ class PermissionManager: PermissionManagerProtocol {
       screenRecordingStatus = .granted
       return
     }
+    if TestEnvironment.suppressPermissionPrompts {
+      checkScreenRecordingPermission()
+      return
+    }
 
     // CRITICAL FIX: Don't re-request if already granted
     if screenRecordingStatus == .granted {
@@ -209,6 +221,14 @@ class PermissionManager: PermissionManagerProtocol {
   func requestAllPermissions() async -> [String: Bool] {
     if TestEnvironment.isTesting {
       return ["camera": true, "microphone": true, "screenRecording": true]
+    }
+    if TestEnvironment.suppressPermissionPrompts {
+      checkAllPermissions()
+      return [
+        "camera": cameraStatus == .granted,
+        "microphone": microphoneStatus == .granted,
+        "screenRecording": screenRecordingStatus == .granted
+      ]
     }
     AppLogger.general.info("Starting batch permission request...")
     let camera = await requestCameraPermission()

@@ -2,11 +2,13 @@ import Foundation
 
 /// Centralized utility for detecting execution environment and test states.
 enum TestEnvironment {
+  private static var env: [String: String] {
+    ProcessInfo.processInfo.environment
+  }
 
   /// True if running in a UI test (XCUITest)
   static var isUITesting: Bool {
     let args = ProcessInfo.processInfo.arguments
-    let env = ProcessInfo.processInfo.environment
     return args.contains("-uitesting") || args.contains("-ui_testing")
       || UserDefaults.standard.bool(forKey: "ui_testing") || env["UI_TESTING"] != nil
   }
@@ -15,11 +17,20 @@ enum TestEnvironment {
   static var isTesting: Bool {
     // Check for XCTest environment
     let args = ProcessInfo.processInfo.arguments
-    let env = ProcessInfo.processInfo.environment
     return isUITesting
       || args.contains("-XCTest") || args.contains("-xctest")
       || env["XCTestConfigurationFilePath"] != nil
       || NSClassFromString("XCTestCase") != nil
+  }
+
+  /// True when automation should never trigger camera/mic/screen permission prompts.
+  static var suppressPermissionPrompts: Bool {
+    isTesting || env["SANEAPPS_PERMISSIONLESS_AUTOMATION"] == "1"
+  }
+
+  /// True only for explicit opt-in hardware test runs.
+  static var allowsHardwareIntegration: Bool {
+    env["SANEVIDEO_ENABLE_HARDWARE_TESTS"] == "1"
   }
 
   /// True if the app should jump directly into the editor for testing

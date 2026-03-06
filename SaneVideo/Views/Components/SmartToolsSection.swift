@@ -278,7 +278,7 @@ struct SmartToolsSection: View {
           .frame(maxWidth: .infinity)
           .padding(.vertical, Theme.Dimensions.paddingLG)
           .background(Theme.Colors.accentGradient)
-          .foregroundColor(Theme.Colors.accent.isLight() ? .black : .white)
+          .foregroundColor(.white)
           .cornerRadius(Theme.Dimensions.largeCornerRadius)
           .shadow(color: Theme.Colors.accent.opacity(Theme.Opacity.heavy), radius: 12, x: 0, y: 6)
         }

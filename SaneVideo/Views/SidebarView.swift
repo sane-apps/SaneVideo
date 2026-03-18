@@ -24,9 +24,9 @@ struct SidebarView: View {
                     .padding(.vertical, 8)
 
                 // Quick Actions (2025-12-31: Magic Fix moved to Inspector Smart Tools)
-                Text("QUICK")
-                    .font(.system(size: 7, weight: .bold))
-                    .foregroundStyle(.tertiary)
+                Text("Create")
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundStyle(Theme.Colors.textSecondary)
                     .textCase(.uppercase)
                     .padding(.top, 4)
 
@@ -49,21 +49,30 @@ struct SidebarView: View {
                 
                 // Help link at bottom (non-intrusive)
                 Button {
-                    if let url = URL(string: "https://sanevideo.app/help") {
-                        NSWorkspace.shared.open(url)
-                    }
+                    NotificationCenter.default.post(
+                        name: NSNotification.Name("ShowKeyboardShortcuts"), object: nil
+                    )
                 } label: {
                     Image(systemName: "questionmark.circle")
                         .font(.system(size: 16))
-                        .foregroundStyle(Color.stone)
+                        .foregroundStyle(Theme.Colors.accentSoft)
                 }
                 .buttonStyle(.plain)
-                .help("Get Help")
+                .help("Open local help and keyboard shortcuts")
             }
-            .frame(width: 50)
+            .frame(width: 64)
             .padding(.vertical, 16)
-            // CONSISTENCY: Use controlBackgroundColor to match main editor
-            .background(Color(nsColor: .controlBackgroundColor))
+            .background(
+                LinearGradient(
+                    colors: [
+                        Color.deepNavy.opacity(0.92),
+                        Color.navy.opacity(0.88),
+                        Theme.Colors.accentDeep.opacity(0.55)
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+            )
 
             Divider()
 
@@ -112,18 +121,18 @@ private struct SidebarRailItem: View {
             VStack(spacing: 4) {
                 Image(systemName: isSelected ? "\(icon).fill" : icon)
                     .font(.system(size: 18))
-                    .foregroundStyle(isSelected ? Color.accentColor : Color.stone)
+                    .foregroundStyle(isSelected ? Theme.Colors.accent : Color.white.opacity(0.72))
 
                 Text(label)
-                    .font(.system(size: 9, weight: .medium))
-                    .foregroundColor(isSelected ? Color.accentColor : Color.stone)
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundColor(isSelected ? Theme.Colors.accent : Color.white.opacity(0.72))
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 8)
             .background {
                 if isSelected {
                     Capsule()
-                        .fill(Color.accentColor.opacity(0.1))
+                        .fill(Theme.Colors.accent.opacity(0.18))
                         .padding(.horizontal, 4)
                 }
             }
@@ -148,11 +157,11 @@ private struct QuickActionButton: View {
             VStack(spacing: 4) {
                 Image(systemName: icon)
                     .font(.system(size: 16))
-                    .foregroundStyle(Color.accentColor)
+                    .foregroundStyle(Theme.Colors.accent)
 
                 Text(label)
-                    .font(.system(size: 8, weight: .medium))
-                    .foregroundColor(Color.stone)
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundColor(Color.white.opacity(0.72))
                     .lineLimit(1)
             }
             .frame(maxWidth: .infinity)

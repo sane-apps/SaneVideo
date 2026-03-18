@@ -93,8 +93,7 @@ struct TooltipView: View {
     var body: some View {
         HStack(spacing: 8) {
             Text(message)
-                .font(.caption)
-                .foregroundColor(.white)
+                .saneReadableSupportText()
                 .fixedSize(horizontal: true, vertical: false) // Prevent truncation in small parents
                 .multilineTextAlignment(.leading)
 
@@ -107,18 +106,14 @@ struct TooltipView: View {
                 }
             }, label: {
                 Image(systemName: "xmark.circle.fill")
-                    .foregroundColor(.white.opacity(0.7))
+                    .foregroundStyle(Theme.Colors.textSecondary)
             })
             .buttonStyle(.plain)
             .accessibilityIdentifier("tooltip.action.dismiss")
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
-        .background(
-            RoundedRectangle(cornerRadius: 8)
-                .fill(Color.black.opacity(0.8))
-                .shadow(color: .black.opacity(0.3), radius: 8, x: 0, y: 4)
-        )
+        .sanePanel(radius: 10, emphasized: true, accent: Theme.Colors.accentSoft)
         .opacity(isVisible ? 1 : 0)
     }
 }

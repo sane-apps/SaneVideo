@@ -70,6 +70,7 @@ struct RepurposingSheet: View {
             footerView
         }
         .frame(width: 800, height: 600)
+        .sanePanel(radius: 18, emphasized: true, accent: Theme.Colors.accentSoft)
         .accessibilityIdentifier("repurposing.sheet")
         .alert("Analysis Error", isPresented: $showingError, actions: {
             Button("OK", role: .cancel) {
@@ -85,37 +86,42 @@ struct RepurposingSheet: View {
     // MARK: - Header
 
     private var headerView: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 4) {
-                Label("Create Shorts", systemImage: "scissors")
-                    .font(.title2.bold())
+        VStack(alignment: .leading, spacing: 14) {
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Label("Create Shorts", systemImage: "scissors")
+                        .font(.title2.bold())
 
-                if let clip = sourceClip {
-                    Text("From: \(clip.url.lastPathComponent)")
-                        .font(.caption)
-                        .foregroundStyle(Color.stone)
+                    if let clip = sourceClip {
+                        Text("From: \(clip.url.lastPathComponent)")
+                            .saneReadableSupportText()
+                    }
+                }
+
+                Spacer()
+
+                if isAnalyzing {
+                    VStack(alignment: .trailing, spacing: 4) {
+                        Text(analysisPhase.rawValue)
+                            .saneReadableSupportText()
+                        ProgressView(value: analysisProgress)
+                            .frame(width: 120)
+                    }
+                } else if isExporting {
+                    VStack(alignment: .trailing, spacing: 4) {
+                        Text("Exporting...")
+                            .saneReadableSupportText()
+                        ProgressView(value: exportProgress)
+                            .frame(width: 120)
+                    }
                 }
             }
 
-            Spacer()
-
-            if isAnalyzing {
-                VStack(alignment: .trailing, spacing: 4) {
-                    Text(analysisPhase.rawValue)
-                        .font(.caption)
-                        .foregroundStyle(Color.stone)
-                    ProgressView(value: analysisProgress)
-                        .frame(width: 120)
-                }
-            } else if isExporting {
-                VStack(alignment: .trailing, spacing: 4) {
-                    Text("Exporting...")
-                        .font(.caption)
-                        .foregroundStyle(Color.stone)
-                    ProgressView(value: exportProgress)
-                        .frame(width: 120)
-                }
-            }
+            FeatureCallout(
+                title: "Local short variants",
+                message: "Analyze the source clip locally, pick the candidates you want, then export plain files only. Optional iCloud sync is separate and no SaneApps hosting is involved.",
+                icon: "film.stack.fill"
+            )
         }
         .padding()
     }
@@ -128,7 +134,12 @@ struct RepurposingSheet: View {
                 // Platform Preset
                 VStack(alignment: .leading, spacing: 8) {
                     Label("Platform", systemImage: "square.grid.2x2")
-                        .font(.headline)
+                        .saneReadableSectionTitle()
+
+                    HelperText(
+                        text: "Pick a starting profile, then fine-tune duration and crop below if needed.",
+                        icon: "square.grid.2x2.fill"
+                    )
 
                     ForEach(ShortPlatform.allCases, id: \.id) { platform in
                         Button {
@@ -148,11 +159,15 @@ struct RepurposingSheet: View {
                             }
                             .padding(.vertical, 6)
                             .padding(.horizontal, 10)
-                            .background(settings.platform == platform ? Color.accentColor.opacity(0.1) : Color.clear)
+                            .background(
+                                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                    .fill(settings.platform == platform ? Theme.Colors.accentSoft.opacity(0.18) : Color.white.opacity(0.03))
+                            )
                             .cornerRadius(6)
                         }
                         .buttonStyle(.plain)
                         .accessibilityIdentifier("repurposing.platform.\(platform.rawValue)")
+                        .help(platform.description)
                     }
                 }
 
@@ -161,7 +176,7 @@ struct RepurposingSheet: View {
                 // Duration
                 VStack(alignment: .leading, spacing: 8) {
                     Label("Duration", systemImage: "clock")
-                        .font(.headline)
+                        .saneReadableSectionTitle()
 
                     Picker("", selection: $settings.targetDuration) {
                         ForEach(ShortDuration.allCases) { duration in
@@ -170,12 +185,14 @@ struct RepurposingSheet: View {
                     }
                     .pickerStyle(.segmented)
                     .accessibilityIdentifier("repurposing.duration")
+
+                    HelperText(text: settings.targetDuration.description, icon: settings.targetDuration.icon)
                 }
 
                 // Aspect Ratio
                 VStack(alignment: .leading, spacing: 8) {
                     Label("Aspect Ratio", systemImage: "aspectratio")
-                        .font(.headline)
+                        .saneReadableSectionTitle()
 
                     Picker("", selection: $settings.aspectRatio) {
                         ForEach(ShortAspectRatio.allCases) { ratio in
@@ -184,16 +201,18 @@ struct RepurposingSheet: View {
                     }
                     .pickerStyle(.segmented)
                     .accessibilityIdentifier("repurposing.aspect")
+
+                    HelperText(text: settings.aspectRatio.description, icon: settings.aspectRatio.icon)
                 }
 
                 // Max Shorts
                 VStack(alignment: .leading, spacing: 8) {
                     HStack {
                         Label("Max Shorts", systemImage: "number")
-                            .font(.headline)
+                            .saneReadableSectionTitle()
                         Spacer()
                         Text("\(settings.maxShorts)")
-                            .foregroundStyle(Color.stone)
+                            .saneReadableMeta(monospaced: true)
                     }
 
                     Slider(value: Binding(
@@ -201,6 +220,11 @@ struct RepurposingSheet: View {
                         set: { settings.maxShorts = Int($0) }
                     ), in: 1...10, step: 1)
                     .accessibilityIdentifier("repurposing.max_shorts")
+
+                    HelperText(
+                        text: "Raise this when you want more options to review. Lower it when you want a tighter, faster shortlist.",
+                        icon: "list.number"
+                    )
                 }
 
                 Divider()
@@ -208,15 +232,24 @@ struct RepurposingSheet: View {
                 // Analysis Options
                 VStack(alignment: .leading, spacing: 8) {
                     Label("Analysis", systemImage: "waveform.badge.magnifyingglass")
-                        .font(.headline)
+                        .saneReadableSectionTitle()
+
+                    HelperText(
+                        text: "These switches change what SaneVideo looks for while building candidate clips.",
+                        icon: "waveform.badge.magnifyingglass"
+                    )
 
                     Toggle("Detect faces", isOn: $settings.detectFaces)
+                        .help("Biases toward moments where the presenter is visible and engaged.")
                         .accessibilityIdentifier("repurposing.detect_faces")
                     Toggle("Detect highlights", isOn: $settings.detectHighlights)
+                        .help("Biases toward energetic or visually important moments.")
                         .accessibilityIdentifier("repurposing.detect_highlights")
                     Toggle("Use captions", isOn: $settings.useCaptions)
+                        .help("Uses existing captions to help identify meaningful spoken segments.")
                         .accessibilityIdentifier("repurposing.use_captions")
                     Toggle("Avoid silence", isOn: $settings.avoidSilence)
+                        .help("Skips long pauses so the candidates feel tighter.")
                         .accessibilityIdentifier("repurposing.avoid_silence")
                 }
 
@@ -225,18 +258,27 @@ struct RepurposingSheet: View {
                 // Export Options
                 VStack(alignment: .leading, spacing: 8) {
                     Label("Export Options", systemImage: "square.and.arrow.up")
-                        .font(.headline)
+                        .saneReadableSectionTitle()
+
+                    HelperText(
+                        text: "These settings affect how the chosen short variants are rendered on export.",
+                        icon: "square.and.arrow.up.fill"
+                    )
 
                     Toggle("Add captions", isOn: $settings.addCaptions)
+                        .help("Burns captions into the short exports.")
                         .accessibilityIdentifier("repurposing.add_captions")
                     Toggle("Smart crop", isOn: $settings.smartCrop)
+                        .help("Adjusts framing to keep the most important region centered in the crop.")
                         .accessibilityIdentifier("repurposing.smart_crop")
                     Toggle("Normalize audio", isOn: $settings.normalizeAudio)
+                        .help("Levels loudness so the exported shorts feel more consistent.")
                         .accessibilityIdentifier("repurposing.normalize_audio")
                 }
             }
             .padding()
         }
+        .sanePanel(radius: 16, accent: Theme.Colors.accentSoft)
     }
 
     // MARK: - Candidates Panel
@@ -246,7 +288,7 @@ struct RepurposingSheet: View {
             // Toolbar
             HStack {
                 Text("\(candidates.count) Candidates")
-                    .font(.headline)
+                    .saneReadableSectionTitle()
 
                 Spacer()
 
@@ -276,12 +318,14 @@ struct RepurposingSheet: View {
 
                     Text(isAnalyzing ? "Analyzing video..." : "No candidates yet")
                         .font(.title3)
-                        .foregroundStyle(Color.stone)
+                        .foregroundStyle(Theme.Colors.textPrimary)
 
                     if !isAnalyzing {
-                        Text("Click 'Analyze' to find short clips")
-                            .font(.caption)
-                            .foregroundStyle(.tertiary)
+                        FeatureCallout(
+                            title: "No candidates yet",
+                            message: "Click Analyze to find short clips from the current source video using the settings on the left.",
+                            icon: "play.circle.fill"
+                        )
                     }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)

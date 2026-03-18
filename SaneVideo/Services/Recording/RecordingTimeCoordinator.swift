@@ -22,6 +22,8 @@ class RecordingTimeCoordinator: @unchecked Sendable {
     private var _startTime: CMTime = .zero
     private var _pauseTime: CMTime = .zero
     private var _timeOffset: CMTime = .zero
+    private var _microphoneTimeOffset: CMTime = .zero
+    private var _pendingTimeOffset: CMTime?
     private var _startTimeNeedsRecalibration = false
     private var _lastRecordedTime: CMTime = .zero
 
@@ -43,7 +45,12 @@ class RecordingTimeCoordinator: @unchecked Sendable {
 
     var timeOffset: CMTime {
         get { lock.withLock { _timeOffset } }
-        set { lock.withLock { _timeOffset = newValue } }
+        set {
+            lock.withLock {
+                _timeOffset = newValue
+                _microphoneTimeOffset = newValue
+            }
+        }
     }
 
     var startTimeNeedsRecalibration: Bool {
@@ -62,9 +69,44 @@ class RecordingTimeCoordinator: @unchecked Sendable {
         lock.withLock {
             _startTime = .zero
             _timeOffset = .zero
+            _microphoneTimeOffset = .zero
+            _pendingTimeOffset = nil
             _startTimeNeedsRecalibration = false
             _lastRecordedTime = .zero
             _pauseTime = .zero
+            driftTracker = nil
+        }
+    }
+
+    func beginSourceSwitchRecalibration() {
+        lock.withLock {
+            _startTimeNeedsRecalibration = true
+            _pendingTimeOffset = nil
+            driftTracker?.reset()
+        }
+    }
+
+    func commitPendingRecalibrationIfNeeded(applyToMicrophone: Bool = false) {
+        lock.withLock {
+            guard let pendingTimeOffset = _pendingTimeOffset else { return }
+            _timeOffset = pendingTimeOffset
+            if applyToMicrophone {
+                _microphoneTimeOffset = pendingTimeOffset
+            }
+            _pendingTimeOffset = nil
+            _startTimeNeedsRecalibration = false
+        }
+    }
+
+    func recordWrittenPresentationTime(_ presentationTime: CMTime) {
+        lock.withLock {
+            guard _startTime != .zero else { return }
+            guard presentationTime >= _startTime else { return }
+
+            let relativeTime = CMTimeSubtract(presentationTime, _startTime)
+            if relativeTime > _lastRecordedTime {
+                _lastRecordedTime = relativeTime
+            }
         }
     }
 
@@ -81,6 +123,7 @@ class RecordingTimeCoordinator: @unchecked Sendable {
             let now = CMClockGetTime(CMClockGetHostTimeClock())
             let pauseDuration = CMTimeSubtract(now, _pauseTime)
             _timeOffset = CMTimeAdd(_timeOffset, pauseDuration)
+            _microphoneTimeOffset = CMTimeAdd(_microphoneTimeOffset, pauseDuration)
         }
     }
     
@@ -90,6 +133,7 @@ class RecordingTimeCoordinator: @unchecked Sendable {
         let presentationTime: CMTime
         let shouldWrite: Bool
         let isFirstSample: Bool
+        let usedPendingRecalibration: Bool
     }
     
     /// Process a sample buffer timestamp and return adjusted time and write decision
@@ -102,22 +146,29 @@ class RecordingTimeCoordinator: @unchecked Sendable {
                 // First sample ever - set the baseline
                 _startTime = samplePresentationTime
                 _startTimeNeedsRecalibration = false
+                _pendingTimeOffset = nil
                 isFirstSample = true
                 AppLogger.recording.info("Recording started. First sample time: \(self._startTime.seconds)")
-            } else if _startTimeNeedsRecalibration {
+            }
+
+            var offsetToApply = _timeOffset
+            var usedPendingRecalibration = false
+
+            if _startTimeNeedsRecalibration {
                 // Recalibrate (inline to stay within lock)
                 let gap = CMTime(value: 100, timescale: 1000) // 100ms gap
                 let lastAbsoluteTime = CMTimeAdd(_startTime, _lastRecordedTime)
                 let targetNewTime = CMTimeAdd(lastAbsoluteTime, gap)
                 let newTimeOffset = CMTimeSubtract(samplePresentationTime, targetNewTime)
-                _timeOffset = newTimeOffset
-                _startTimeNeedsRecalibration = false
-                AppLogger.recording.info("Time base recalibrated. Safe gap added: 100ms. New offset: \(self._timeOffset.seconds)s, continuing from: \(self._lastRecordedTime.seconds)s")
+                _pendingTimeOffset = newTimeOffset
+                offsetToApply = newTimeOffset
+                usedPendingRecalibration = true
+                AppLogger.recording.info("Time base recalibration candidate prepared. Safe gap added: 100ms. Pending offset: \(newTimeOffset.seconds)s, continuing from: \(self._lastRecordedTime.seconds)s")
             }
 
             var presentationTime = samplePresentationTime
-            if _timeOffset != .zero {
-                presentationTime = CMTimeSubtract(presentationTime, _timeOffset)
+            if offsetToApply != .zero {
+                presentationTime = CMTimeSubtract(presentationTime, offsetToApply)
             }
 
             // Apply drift correction if tracker is active
@@ -129,21 +180,28 @@ class RecordingTimeCoordinator: @unchecked Sendable {
                 }
             }
 
-            // Track last recorded time
-            _lastRecordedTime = CMTimeSubtract(presentationTime, _startTime)
-
             return ProcessingResult(
                 presentationTime: presentationTime,
                 shouldWrite: true, // Logic flow handled by caller checking writer state
-                isFirstSample: isFirstSample
+                isFirstSample: isFirstSample,
+                usedPendingRecalibration: usedPendingRecalibration
             )
         }
     }
     
     /// Adjust sample buffer timing based on current offset
     func adjustBufferTime(_ sample: CMSampleBuffer) -> CMSampleBuffer {
-        // Capture offset atomically once to avoid multiple lock acquisitions
-        let currentOffset = timeOffset
+        let currentOffset = lock.withLock { _timeOffset }
+        return adjustBufferTime(sample, currentOffset: currentOffset)
+    }
+
+    /// Adjust microphone timing without applying video-only source-switch recalibration.
+    func adjustMicrophoneBufferTime(_ sample: CMSampleBuffer) -> CMSampleBuffer {
+        let currentOffset = lock.withLock { _microphoneTimeOffset }
+        return adjustBufferTime(sample, currentOffset: currentOffset)
+    }
+
+    private func adjustBufferTime(_ sample: CMSampleBuffer, currentOffset: CMTime) -> CMSampleBuffer {
         guard currentOffset != .zero else { return sample }
 
         var count: CMItemCount = 0

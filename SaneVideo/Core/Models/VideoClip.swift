@@ -45,6 +45,9 @@ struct VideoClip: Identifiable, Equatable, Hashable, Codable, Sendable {
   var captions: [Caption] = []
 
   var clickDataURL: URL?  // Auto-zoom click events
+  var cursorDataURL: URL?  // Cursor motion sidecar for local demo polish
+  var keystrokeDataURL: URL?  // Shortcut and navigation key sidecar
+  var interactionOverlayStyle: InteractionOverlayStyle = .init()
 
   // Background Effects (Person Segmentation)
   var backgroundEffect: BackgroundEffect?
@@ -69,6 +72,18 @@ struct VideoClip: Identifiable, Equatable, Hashable, Codable, Sendable {
   /// Flattened list of all words from all captions (for filler detection)
   var allWords: [CaptionWord] {
     captions.flatMap { $0.words ?? [] }
+  }
+
+  var hasRecordedClickData: Bool {
+    sidecarHasEntries(at: clickDataURL, as: [ClickSample].self)
+  }
+
+  var hasRecordedCursorData: Bool {
+    sidecarHasEntries(at: cursorDataURL, as: [CursorSample].self)
+  }
+
+  var hasRecordedKeystrokeData: Bool {
+    sidecarHasEntries(at: keystrokeDataURL, as: [KeystrokeSample].self)
   }
 
   // MARK: - Transform
@@ -135,6 +150,9 @@ struct VideoClip: Identifiable, Equatable, Hashable, Codable, Sendable {
     copy.privacyRegions = self.privacyRegions
     copy.keyframeAnimation = self.keyframeAnimation
     copy.clickDataURL = self.clickDataURL
+    copy.cursorDataURL = self.cursorDataURL
+    copy.keystrokeDataURL = self.keystrokeDataURL
+    copy.interactionOverlayStyle = self.interactionOverlayStyle
     copy.backgroundEffect = self.backgroundEffect
     copy.enhancedAudioURL = self.enhancedAudioURL
     copy.removedRanges = self.removedRanges
@@ -214,6 +232,18 @@ struct VideoClip: Identifiable, Equatable, Hashable, Codable, Sendable {
     rotation = rotation.next
   }
 
+  private func sidecarHasEntries<T: Decodable>(at url: URL?, as _: [T].Type) -> Bool {
+    guard let url, FileManager.default.fileExists(atPath: url.path) else { return false }
+
+    do {
+      let data = try Data(contentsOf: url)
+      guard !data.isEmpty else { return false }
+      return !(try JSONDecoder().decode([T].self, from: data)).isEmpty
+    } catch {
+      return false
+    }
+  }
+
   // MARK: - Advanced Types
 
   enum VideoClipError: Error {
@@ -228,6 +258,31 @@ struct VideoClip: Identifiable, Equatable, Hashable, Codable, Sendable {
     var position: CGPoint  // Normalized (0-1)
     var scale: CGFloat = 1.0
     var rotation: Double = 0.0  // Radians
+
+    static let defaultBoxSize = CGSize(width: 0.88, height: 0.26)
+    static let edgePadding: CGFloat = 0.03
+
+    var normalizedFrame: CGRect {
+      Self.makeNormalizedFrame(center: position, size: Self.defaultBoxSize)
+    }
+
+    var normalizedHitFrame: CGRect {
+      let scaledSize = CGSize(
+        width: Self.defaultBoxSize.width * scale,
+        height: Self.defaultBoxSize.height * scale
+      )
+      return Self.makeNormalizedFrame(center: position, size: scaledSize)
+    }
+
+    private static func makeNormalizedFrame(center: CGPoint, size: CGSize) -> CGRect {
+      let maxWidth = max(0.1, 1.0 - (edgePadding * 2))
+      let maxHeight = max(0.1, 1.0 - (edgePadding * 2))
+      let width = min(max(size.width, 0.1), maxWidth)
+      let height = min(max(size.height, 0.1), maxHeight)
+      let originX = min(max(center.x - (width / 2), edgePadding), 1.0 - edgePadding - width)
+      let originY = min(max(center.y - (height / 2), edgePadding), 1.0 - edgePadding - height)
+      return CGRect(x: originX, y: originY, width: width, height: height)
+    }
 
     static func == (lhs: VideoOverlay, rhs: VideoOverlay) -> Bool {
       lhs.id == rhs.id
@@ -277,6 +332,9 @@ struct VideoClip: Identifiable, Equatable, Hashable, Codable, Sendable {
     case removedRanges, useSmoothCutForRemovals
     case transform
     case clickDataURL
+    case cursorDataURL
+    case keystrokeDataURL
+    case interactionOverlayStyle
     case backgroundEffect
     // FIX: Add effects to coding keys
     case effects
@@ -322,6 +380,11 @@ struct VideoClip: Identifiable, Equatable, Hashable, Codable, Sendable {
       try container.decodeIfPresent(Bool.self, forKey: .useSmoothCutForRemovals) ?? false
 
     clickDataURL = try container.decodeIfPresent(URL.self, forKey: .clickDataURL)
+    cursorDataURL = try container.decodeIfPresent(URL.self, forKey: .cursorDataURL)
+    keystrokeDataURL = try container.decodeIfPresent(URL.self, forKey: .keystrokeDataURL)
+    interactionOverlayStyle =
+      try container.decodeIfPresent(InteractionOverlayStyle.self, forKey: .interactionOverlayStyle)
+      ?? InteractionOverlayStyle()
     backgroundEffect = try container.decodeIfPresent(
       BackgroundEffect.self, forKey: .backgroundEffect)
 
@@ -364,6 +427,9 @@ struct VideoClip: Identifiable, Equatable, Hashable, Codable, Sendable {
     try container.encode(removedRanges, forKey: .removedRanges)
     try container.encode(useSmoothCutForRemovals, forKey: .useSmoothCutForRemovals)
     try container.encodeIfPresent(clickDataURL, forKey: .clickDataURL)
+    try container.encodeIfPresent(cursorDataURL, forKey: .cursorDataURL)
+    try container.encodeIfPresent(keystrokeDataURL, forKey: .keystrokeDataURL)
+    try container.encode(interactionOverlayStyle, forKey: .interactionOverlayStyle)
     try container.encodeIfPresent(backgroundEffect, forKey: .backgroundEffect)
     try container.encode(privacyRegions, forKey: .privacyRegions)
     try container.encode(isVoiceIsolationEnabled, forKey: .isVoiceIsolationEnabled)

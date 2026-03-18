@@ -141,8 +141,7 @@ struct EditorLayoutView: View {
                 withAnimation { isSidebarCollapsed = false }
             }
         }
-        // CONSISTENCY: Use controlBackgroundColor for main editor area
-        .background(Color(nsColor: .controlBackgroundColor))
+        .background(SaneVideoEditorChromeBackground())
         .liquidGlass(radius: 0) // Full screen edge lighting logic if needed, or 0 for seamless base
 
         // MARK: - Keyboard Shortcuts (J/K/L/Space)
@@ -340,7 +339,7 @@ struct EditorLayoutView: View {
                 .offset(x: 8)
                 .zIndex(1)
         }
-        .background(Color(nsColor: .controlBackgroundColor))
+        .background(SaneVideoEditorPanelBackground())
     }
 
     @ViewBuilder
@@ -349,7 +348,7 @@ struct EditorLayoutView: View {
             // PLAYER STAGE - Video fills available space using GeometryReader
             GeometryReader { geometry in
                 ZStack {
-                    Color(nsColor: .windowBackgroundColor)
+                    SaneVideoEditorChromeBackground()
 
                     // PERFORMANCE: Show thumbnail until player is ready, then show AVPlayer
                     if let player = appState.playbackState.player {
@@ -410,7 +409,7 @@ struct EditorLayoutView: View {
             }
         }
         // CONSISTENCY: Inspector pane uses same controlBackgroundColor
-        .background(Color(nsColor: .controlBackgroundColor))
+        .background(SaneVideoEditorPanelBackground(emphasized: true))
     }
 
     // MARK: - Selection Helpers

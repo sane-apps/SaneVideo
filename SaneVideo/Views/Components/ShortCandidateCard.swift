@@ -43,7 +43,7 @@ struct ShortCandidateCard: View {
                     HStack {
                         Spacer()
                         Text(candidate.durationLabel)
-                            .font(.caption2.bold())
+                            .font(Theme.Typography.badge)
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
                             .background(.ultraThinMaterial)
@@ -67,7 +67,7 @@ struct ShortCandidateCard: View {
             HStack {
                 // Score badge
                 Text(candidate.scoreLabel)
-                    .font(.caption2.bold())
+                    .font(Theme.Typography.badge)
                     .padding(.horizontal, 6)
                     .padding(.vertical, 2)
                     .background(scoreColor.opacity(0.2))
@@ -76,8 +76,7 @@ struct ShortCandidateCard: View {
 
                 // Time
                 Text(formatTime(candidate.startTime))
-                    .font(.caption)
-                    .foregroundStyle(Color.stone)
+                    .saneReadableMeta(monospaced: true)
 
                 Spacer()
             }
@@ -87,14 +86,14 @@ struct ShortCandidateCard: View {
                 HStack(spacing: 4) {
                     ForEach(candidate.highlights, id: \.self) { highlight in
                         Image(systemName: highlight.icon)
-                            .font(.caption2)
-                            .foregroundStyle(Color.stone)
+                            .font(.system(size: Theme.Typography.fontSizeSM, weight: .semibold))
+                            .foregroundStyle(Theme.Colors.textSecondary)
                     }
                 }
             }
         }
         .padding(8)
-        .background(isSelected ? Color.accentColor.opacity(0.1) : Color.stone.opacity(0.05))
+        .background(isSelected ? Color.accentColor.opacity(0.12) : Theme.Colors.secondaryBackground.opacity(0.55))
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)

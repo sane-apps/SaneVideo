@@ -254,7 +254,7 @@ struct BackgroundEffectsView: View {
 
   private var colorPresets: [(name: String, color: Color)] {
     [
-      ("Teal", Theme.Colors.accent),
+      ("Sane Blue", Theme.Colors.accent),
       ("Black", .black),
       ("White", .white),
       ("Navy", Color.navy),

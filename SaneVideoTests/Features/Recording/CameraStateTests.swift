@@ -104,7 +104,7 @@ struct CameraStateTests {
         var completionCalled = false
 
         // Act
-        await cameraState.startCamera {
+        cameraState.startCamera { _ in
             completionCalled = true
         }
 
@@ -157,6 +157,28 @@ struct CameraStateTests {
 
         // Assert - Should be false when camera is not active
         #expect(hasSignal == false, "Should be false when camera inactive")
+    }
+
+    @Test("Camera surface stays reserved while a session still exists")
+    func shouldShowCameraSurfaceWhileSessionExists() {
+        let mock = CameraServiceProtocolMock(session: AVCaptureSession())
+        let cameraState = CameraState(cameraService: mock)
+
+        #expect(cameraState.shouldShowCameraSurface == true)
+        #expect(cameraState.shouldShowLivePreview == false)
+    }
+
+    @Test("Live preview becomes visible when active signal is present")
+    func shouldShowLivePreviewWhenActive() {
+        let mock = CameraServiceProtocolMock(
+            isActive: true,
+            hasVideoSignal: true,
+            session: AVCaptureSession()
+        )
+        let cameraState = CameraState(cameraService: mock)
+
+        #expect(cameraState.shouldShowCameraSurface == true)
+        #expect(cameraState.shouldShowLivePreview == true)
     }
 
     @Test("Audio level publisher exists")

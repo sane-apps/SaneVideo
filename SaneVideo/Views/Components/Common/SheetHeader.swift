@@ -11,30 +11,74 @@ import SwiftUI
 struct SheetHeader: View {
     let title: String
     let subtitle: String
+    let icon: String
     let dismissAction: () -> Void
     let accessibilityID: String
 
+    init(
+        title: String,
+        subtitle: String,
+        icon: String = "sparkles",
+        dismissAction: @escaping () -> Void,
+        accessibilityID: String
+    ) {
+        self.title = title
+        self.subtitle = subtitle
+        self.icon = icon
+        self.dismissAction = dismissAction
+        self.accessibilityID = accessibilityID
+    }
+
     var body: some View {
         HStack {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(title)
-                    .font(.headline)
-                Text(subtitle)
-                    .font(.caption)
-                    .foregroundStyle(Color.stone)
+            HStack(spacing: 12) {
+                ZStack {
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: [Theme.Colors.accent, Theme.Colors.accentDeep],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                    Image(systemName: icon)
+                        .font(.system(size: Theme.Typography.iconSizeLG, weight: .semibold))
+                        .foregroundStyle(.white)
+                }
+                .frame(width: 38, height: 38)
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(title)
+                        .saneReadableSectionTitle()
+                    Text(subtitle)
+                        .saneReadableSupportText()
+                }
             }
             Spacer()
             Button {
                 dismissAction()
             } label: {
                 Image(systemName: "xmark.circle.fill")
-                    .foregroundStyle(Color.stone)
+                    .font(.system(size: Theme.Typography.iconSizeLG, weight: .semibold))
+                    .foregroundStyle(Theme.Colors.textSecondary)
             }
             .buttonStyle(.plain)
             .keyboardShortcut(.cancelAction)
             .accessibilityIdentifier(accessibilityID)
+            .help(String(localized: "sheet.close.help", defaultValue: "Close"))
         }
         .padding(16)
+        .background(
+            LinearGradient(
+                colors: [
+                    Theme.Colors.helperTintStrong.opacity(0.38),
+                    .clear,
+                    Theme.Colors.accentGlow.opacity(0.18)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        )
     }
 }
 

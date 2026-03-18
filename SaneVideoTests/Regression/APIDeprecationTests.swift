@@ -38,8 +38,7 @@ final class APIDeprecationTests: XCTestCase {
 
       // Check for deprecated faceCaptureQuality (but allow documented legacy usage)
       if contents.contains(".faceCaptureQuality") && !contents.contains("// Note:")
-        && !contents.contains("legacy")
-      {
+        && !contents.contains("legacy") {
         deprecatedUsages.append(
           "\(fileURL.lastPathComponent): Uses deprecated faceCaptureQuality without documentation")
       }
@@ -109,7 +108,7 @@ final class APIDeprecationTests: XCTestCase {
       "NSPersistentStoreUbiquitousPeerTokenOption",
       "NSPersistentStoreRemoveUbiquitousMetadataOption",
       "NSPersistentStoreUbiquitousContainerIdentifierKey",
-      "NSPersistentStoreRebuildFromUbiquitousContentOption",
+      "NSPersistentStoreRebuildFromUbiquitousContentOption"
     ]
 
     let fileManager = FileManager.default
@@ -149,5 +148,44 @@ final class APIDeprecationTests: XCTestCase {
     XCTAssertTrue(
       contents.contains("export(to:") || contents.contains("async"),
       "ExportEngine should use modern async export API")
+  }
+
+  /// Regression: export sheet actions must resume UI work on the main actor.
+  /// A background completion path caused a live crash in /Applications/SaneVideo.app
+  /// on March 10, 2026 after Export File completed.
+  func testExportViewActionsAreMainActorIsolated() throws {
+    let sourceDir = URL(fileURLWithPath: #file)
+      .deletingLastPathComponent()  // Regression
+      .deletingLastPathComponent()  // SaneVideoTests
+      .deletingLastPathComponent()  // SaneVideo
+      .appendingPathComponent("SaneVideo/Views/Export")
+
+    let actionsFile = sourceDir.appendingPathComponent("ExportView+Actions.swift")
+    guard let contents = try? String(contentsOf: actionsFile, encoding: .utf8) else { return }
+
+    XCTAssertTrue(
+      contents.contains("@MainActor\nextension ExportView"),
+      "ExportView actions must be main-actor isolated before mutating SwiftUI state or dismissing sheets")
+  }
+
+  /// Regression: ExportEngine queue callbacks must not inherit main-actor isolation.
+  /// The installed app crashed on March 10, 2026 when export completion resumed on
+  /// the dedicated export queue while still carrying main-actor executor checks.
+  func testExportEngineUsesNonisolatedQueueCallbacks() throws {
+    let sourceDir = URL(fileURLWithPath: #file)
+      .deletingLastPathComponent()  // Regression
+      .deletingLastPathComponent()  // SaneVideoTests
+      .deletingLastPathComponent()  // SaneVideo
+      .appendingPathComponent("SaneVideo/Services/Export")
+
+    let exportFile = sourceDir.appendingPathComponent("ExportEngine.swift")
+    guard let contents = try? String(contentsOf: exportFile, encoding: .utf8) else { return }
+
+    XCTAssertTrue(
+      contents.contains("nonisolated(unsafe) let publishProgress"),
+      "ExportEngine progress callbacks must be detached from the export queue's actor context")
+    XCTAssertTrue(
+      contents.contains("nonisolated(unsafe) let finalizeExport"),
+      "ExportEngine completion callbacks must be detached from the export queue's actor context")
   }
 }

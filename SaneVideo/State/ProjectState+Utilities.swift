@@ -161,6 +161,13 @@ extension ProjectState {
                 var mutableTrack = track
                 mutableTrack.clips[index].url = newURL
                 mutableTrack.clips[index].isMissing = false
+                let assetDuration = AVURLAsset(url: newURL).duration
+                if assetDuration.isValid, assetDuration.seconds > 0 {
+                    mutableTrack.clips[index].duration = assetDuration
+                    if mutableTrack.clips[index].trimEnd > assetDuration {
+                        mutableTrack.clips[index].trimEnd = assetDuration
+                    }
+                }
 
                 if let bookmarkData = try? ServiceContainer.shared.projectFileManager.createBookmark(
                     for: newURL) {

@@ -8,6 +8,7 @@
 
 import AVFoundation
 import CoreMedia
+import CoreGraphics
 import XCTest
 
 @testable import SaneVideo
@@ -83,6 +84,63 @@ final class ExportEffectsIntegrationTests: XCTestCase {
         let isPlayable = try await asset.load(.isPlayable)
         XCTAssertTrue(isPlayable)
         return asset
+    }
+
+    private func effectComparisonAssetURL() -> URL {
+        let candidates = [
+            "IMG_6091.MOV",
+            "test_video.mp4",
+            "test_silence.mp4"
+        ]
+
+        for candidate in candidates {
+            let url = TestEnvironment.testAsset(named: candidate)
+            if FileManager.default.fileExists(atPath: url.path) {
+                return url
+            }
+        }
+
+        return testAssetURL
+    }
+
+    private func pixelBufferForFrame(at time: CMTime, assetURL: URL) throws -> [UInt8] {
+        let asset = AVURLAsset(url: assetURL)
+        let generator = AVAssetImageGenerator(asset: asset)
+        generator.appliesPreferredTrackTransform = true
+        generator.requestedTimeToleranceBefore = .zero
+        generator.requestedTimeToleranceAfter = .zero
+
+        let cgImage = try generator.copyCGImage(at: time, actualTime: nil)
+        let width = 32
+        let height = 32
+        let bytesPerRow = width * 4
+        var pixels = [UInt8](repeating: 0, count: height * bytesPerRow)
+
+        guard let context = CGContext(
+            data: &pixels,
+            width: width,
+            height: height,
+            bitsPerComponent: 8,
+            bytesPerRow: bytesPerRow,
+            space: CGColorSpaceCreateDeviceRGB(),
+            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+        ) else {
+            XCTFail("Failed to create bitmap context for frame comparison")
+            return []
+        }
+
+        context.draw(cgImage, in: CGRect(x: 0, y: 0, width: width, height: height))
+        return pixels
+    }
+
+    private func meanAbsolutePixelDifference(_ lhs: [UInt8], _ rhs: [UInt8]) -> Double {
+        guard lhs.count == rhs.count, !lhs.isEmpty else { return 0 }
+
+        let totalDifference = zip(lhs, rhs).reduce(0.0) { partialResult, pair in
+            partialResult + abs(Double(pair.0) - Double(pair.1))
+        }
+
+        return totalDifference / Double(lhs.count) / 255.0
     }
 
     // MARK: - Single Effect Tests
@@ -191,14 +249,18 @@ final class ExportEffectsIntegrationTests: XCTestCase {
 
     @MainActor
     func testEffectModifiesPixelData() async throws {
-        guard FileManager.default.fileExists(atPath: testAssetURL.path) else {
+        let comparisonAssetURL = effectComparisonAssetURL()
+        guard FileManager.default.fileExists(atPath: comparisonAssetURL.path) else {
             throw XCTSkip("Test asset not available")
         }
 
-        let asset = AVURLAsset(url: testAssetURL)
+        let asset = AVURLAsset(url: comparisonAssetURL)
         let duration = try await asset.load(.duration)
+        let trimmedDuration = min(duration.seconds, 2.0)
+        let trimEnd = CMTime(seconds: trimmedDuration, preferredTimescale: 600)
 
-        let clip = VideoClip(url: testAssetURL, duration: duration, startTime: .zero)
+        var clip = VideoClip(url: comparisonAssetURL, duration: duration, startTime: .zero)
+        clip.trimEnd = trimEnd
 
         // Export without effect
         projectState.startNewProject()
@@ -240,17 +302,15 @@ final class ExportEffectsIntegrationTests: XCTestCase {
             outputURL: tempWith
         ) { _ in }
 
-        // Compare file sizes
-        let withoutSize = try FileManager.default.attributesOfItem(atPath: tempWithout.path)[.size] as? Int ?? 0
-        let withSize = try FileManager.default.attributesOfItem(atPath: tempWith.path)[.size] as? Int ?? 0
-
-        let sizeDifference = abs(withoutSize - withSize)
-        let percentDifference = Double(sizeDifference) / Double(max(withoutSize, withSize)) * 100
+        let comparisonTime = CMTime(seconds: min(0.5, max(trimmedDuration / 2, 0.1)), preferredTimescale: 600)
+        let withoutPixels = try pixelBufferForFrame(at: comparisonTime, assetURL: tempWithout)
+        let withPixels = try pixelBufferForFrame(at: comparisonTime, assetURL: tempWith)
+        let normalizedDifference = meanAbsolutePixelDifference(withoutPixels, withPixels)
 
         XCTAssertGreaterThan(
-            percentDifference,
-            1.0,
-            "Effect should measurably change file size. Without: \(withoutSize), With: \(withSize), Diff: \(percentDifference)%"
+            normalizedDifference,
+            0.01,
+            "Effect should measurably change rendered frame pixels. Normalized diff: \(normalizedDifference)"
         )
     }
 

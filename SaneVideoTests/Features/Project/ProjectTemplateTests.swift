@@ -13,13 +13,40 @@ final class ProjectTemplateTests: XCTestCase {
     
     func testAllTemplatesExist() {
         let templates = ProjectTemplate.allTemplates
-        XCTAssertEqual(templates.count, 4, "Should have 4 templates: YouTube, TikTok, Instagram, Custom")
+        XCTAssertEqual(templates.count, 7, "Should include built-in product demo templates plus platform templates")
         
         let templateNames = Set(templates.map { $0.name })
+        XCTAssertTrue(templateNames.contains("Product Walkthrough"), "Should have Product Walkthrough template")
+        XCTAssertTrue(templateNames.contains("Feature Launch"), "Should have Feature Launch template")
+        XCTAssertTrue(templateNames.contains("Support Tutorial"), "Should have Support Tutorial template")
         XCTAssertTrue(templateNames.contains("YouTube"), "Should have YouTube template")
         XCTAssertTrue(templateNames.contains("TikTok"), "Should have TikTok template")
         XCTAssertTrue(templateNames.contains("Instagram"), "Should have Instagram template")
         XCTAssertTrue(templateNames.contains("Custom"), "Should have Custom template")
+    }
+
+    func testDemoTemplatesHaveExpectedPresets() {
+        XCTAssertEqual(ProjectTemplate.productWalkthrough.defaultPresentationPreset, .productWalkthrough)
+        XCTAssertEqual(ProjectTemplate.featureLaunch.defaultPresentationPreset, .featureLaunch)
+        XCTAssertEqual(ProjectTemplate.supportTutorial.defaultPresentationPreset, .supportTutorial)
+
+        XCTAssertTrue(ProjectTemplate.productWalkthrough.defaultExportSettings.aspectRatio == nil)
+        XCTAssertEqual(ProjectTemplate.featureLaunch.defaultExportSettings.aspectRatio, .vertical9x16)
+    }
+
+    func testPresentationPresetPresenterLayouts() {
+        XCTAssertNil(PresentationPreset.screenOnly.presenterLayout, "Screen Only should hide presenter overlay")
+
+        let walkthroughLayout = PresentationPreset.productWalkthrough.presenterLayout
+        XCTAssertEqual(walkthroughLayout?.corner, .bottomRight)
+        XCTAssertEqual(walkthroughLayout?.width, 320)
+
+        let sidebarLayout = PresentationPreset.screenCameraSidebar.presenterLayout
+        XCTAssertNotNil(sidebarLayout)
+        XCTAssertTrue((sidebarLayout?.height ?? 0) > (sidebarLayout?.width ?? 0), "Sidebar layout should be portrait-leaning")
+
+        let teaserLayout = PresentationPreset.squareTeaser.presenterLayout
+        XCTAssertEqual(teaserLayout?.width, teaserLayout?.height, "Square teaser should use a square presenter frame")
     }
     
     func testYouTubeTemplateSettings() {

@@ -82,7 +82,7 @@ final class TimelineRegressionTests: XCTestCase {
     let videoURL = URL(fileURLWithPath: "/tmp/test.mp4")
     let clip1 = VideoClip(
       url: videoURL, duration: CMTime(seconds: 5, preferredTimescale: 600), startTime: .zero)
-    var clip2 = VideoClip(
+    let clip2 = VideoClip(
       url: videoURL, duration: CMTime(seconds: 5, preferredTimescale: 600),
       startTime: CMTime(seconds: 10, preferredTimescale: 600))  // Gap of 5s
 
@@ -123,7 +123,7 @@ final class TimelineRegressionTests: XCTestCase {
     }
 
     // Create an empty track (0 clips)
-    var emptyTrack = Track(name: "Empty Track", type: .video, clips: [], zIndex: 0)
+    let emptyTrack = Track(name: "Empty Track", type: .video, clips: [], zIndex: 0)
     project.timeline.tracks = [emptyTrack]
 
     // This should NOT crash - the bug was 1..<0 creating an invalid range
@@ -147,7 +147,7 @@ final class TimelineRegressionTests: XCTestCase {
     let videoURL = URL(fileURLWithPath: "/tmp/test.mp4")
     let clip = VideoClip(
       url: videoURL, duration: CMTime(seconds: 5, preferredTimescale: 600), startTime: .zero)
-    var singleClipTrack = Track(name: "Single Clip Track", type: .video, clips: [clip], zIndex: 0)
+    let singleClipTrack = Track(name: "Single Clip Track", type: .video, clips: [clip], zIndex: 0)
     project.timeline.tracks = [singleClipTrack]
 
     // This should NOT crash - 1..<1 is valid but empty, but guard prevents it anyway

@@ -15,6 +15,10 @@ import OSLog
 // MARK: - Setup & Monitoring
 
 extension RecordingEngine {
+  private struct UncheckedAssetWriter: @unchecked Sendable {
+    let writer: AVAssetWriter
+  }
+
   @MainActor
   func setupSoundAnalysisMonitoring() {
     soundAnalysisService.onSoundDetected = { result in
@@ -131,6 +135,8 @@ extension RecordingEngine {
     Task { @RecordingActor in
       let errorMessage = error?.localizedDescription ?? "User cancelled or stopped externally"
       AppLogger.recording.info("Screen recording stream stopped: \(errorMessage)")
+      let nsError = error as NSError?
+      let pickerWasCancelled = nsError?.domain == "SaneVideo" && nsError?.code == -102
 
       if isSwitching, pendingSource == .screen {
         AppLogger.recording.error("Screen recorder stopped/cancelled during switch TO screen. Rolling back.")
@@ -147,7 +153,7 @@ extension RecordingEngine {
         return
       }
 
-      let wasScreenSharing = currentSource == .screen || pendingSource == .screen
+      let wasScreenSharing = currentSource == .screen || pendingSource == .screen || pickerWasCancelled
       if wasScreenSharing {
         AppLogger.recording.info("Notifying system that screen share ended externally.")
         await MainActor.run {
@@ -208,7 +214,12 @@ extension RecordingEngine {
     }
 
     input.markAsFinished()
-    await writer.finishWriting()
+    let uncheckedWriter = UncheckedAssetWriter(writer: writer)
+    await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+      uncheckedWriter.writer.finishWriting {
+        continuation.resume()
+      }
+    }
   }
 
   @RecordingActor
@@ -258,7 +269,7 @@ extension RecordingEngine {
 
       isSwitching = true
       pendingSource = source
-      timeCoordinator.startTimeNeedsRecalibration = true
+      timeCoordinator.beginSourceSwitchRecalibration()
 
       await MainActor.run {
         let sourceName = source == .camera ? "Camera" : "Screen"

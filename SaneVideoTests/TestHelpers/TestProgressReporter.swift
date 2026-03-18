@@ -26,13 +26,14 @@ final class TestProgressReporter {
         currentTestName = testName
         startTime = Date()
         testCount += 1
-        
-        let elapsed = startTime.map { Date().timeIntervalSince($0) } ?? 0
+
         print("🧪 [\(testCount)] Starting: \(testName) (0.0s)")
-        
+
         // Start progress updates every 5 seconds
         updateTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) { [weak self] _ in
-            self?.updateProgress()
+            Task { @MainActor in
+                self?.updateProgress()
+            }
         }
     }
     
@@ -90,4 +91,3 @@ extension XCTestCase {
         }
     }
 }
-

@@ -2,6 +2,14 @@ import Foundation
 
 /// Centralized utility for detecting execution environment and test states.
 enum TestEnvironment {
+  private static let sourceFileProjectRoot: String = {
+    var url = URL(fileURLWithPath: #filePath)
+    for _ in 0..<4 {
+      url.deleteLastPathComponent()
+    }
+    return url.path
+  }()
+
   private static var env: [String: String] {
     ProcessInfo.processInfo.environment
   }
@@ -35,8 +43,85 @@ enum TestEnvironment {
 
   /// True if the app should jump directly into the editor for testing
   static var shouldOpenEditor: Bool {
-    let args = ProcessInfo.processInfo.arguments
-    return args.contains("-open_editor") || UserDefaults.standard.bool(forKey: "open_editor")
+    shouldOpenEditor(
+      arguments: ProcessInfo.processInfo.arguments,
+      userDefaults: .standard,
+      environment: env
+    )
+  }
+
+  static func shouldOpenEditor(
+    arguments: [String],
+    userDefaults: UserDefaults,
+    environment: [String: String]
+  ) -> Bool {
+    arguments.contains("-open_editor")
+      || userDefaults.bool(forKey: "open_editor")
+      || bootstrapProjectURL(in: environment) != nil
+      || automationExportURL(in: environment) != nil
+  }
+
+  static var bootstrapProjectURL: URL? {
+    bootstrapProjectURL(in: env)
+  }
+
+  static func bootstrapProjectURL(in environment: [String: String]) -> URL? {
+    guard let rawPath = environment["TEST_PROJECT_PATH"] ?? environment["OPEN_PROJECT_PATH"] else {
+      return nil
+    }
+
+    let path = rawPath.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !path.isEmpty, FileManager.default.fileExists(atPath: path) else {
+      return nil
+    }
+
+    return URL(fileURLWithPath: path)
+  }
+
+  static var shouldBuildCommentaryReelAutomatically: Bool {
+    env["AUTOMATION_BUILD_COMMENTARY_REEL"] == "1" || automationExportURL != nil
+  }
+
+  static var automationTranscriptURL: URL? {
+    automationTranscriptURL(in: env)
+  }
+
+  static func automationTranscriptURL(in environment: [String: String]) -> URL? {
+    guard let rawPath = environment["AUTOMATION_TRANSCRIPT_PATH"] else {
+      return nil
+    }
+
+    let path = rawPath.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !path.isEmpty, FileManager.default.fileExists(atPath: path) else {
+      return nil
+    }
+
+    return URL(fileURLWithPath: path)
+  }
+
+  static var shouldRefineAutomationCaptions: Bool {
+    env["AUTOMATION_REFINE_CAPTIONS"] == "1"
+  }
+
+  static var shouldQuitAfterAutomation: Bool {
+    env["AUTOMATION_QUIT_AFTER_EXPORT"] == "1"
+  }
+
+  static var automationExportURL: URL? {
+    automationExportURL(in: env)
+  }
+
+  static func automationExportURL(in environment: [String: String]) -> URL? {
+    guard let rawPath = environment["AUTOMATION_EXPORT_PATH"] else {
+      return nil
+    }
+
+    let path = rawPath.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !path.isEmpty else {
+      return nil
+    }
+
+    return URL(fileURLWithPath: path)
   }
 
   /// Standard path for the mock test video asset.
@@ -52,15 +137,22 @@ enum TestEnvironment {
       }
     }
 
-    // 2. Check current directory (Works if run from terminal in project root)
+    // 2. Check the source-file-derived repo root (Works under xcodebuild and tests)
+    let sourceRootAssetPath = sourceFileProjectRoot + "/Tests/Assets/" + filename
+    if FileManager.default.fileExists(atPath: sourceRootAssetPath) {
+      return URL(fileURLWithPath: sourceRootAssetPath)
+    }
+
+    // 3. Check current directory (Works if run from terminal in project root)
     let localPath = FileManager.default.currentDirectoryPath + "/Tests/Assets/" + filename
     if FileManager.default.fileExists(atPath: localPath) {
       return URL(fileURLWithPath: localPath)
     }
 
-    // 3. Try to find project root by looking for project.yml
+    // 4. Try to find project root by looking for project.yml
     let possibleRoots = [
       FileManager.default.currentDirectoryPath,
+      sourceFileProjectRoot,
       FileManager.default.homeDirectoryForCurrentUser.path + "/SaneVideo",
       Bundle.main.bundlePath + "/../../../.."  // From .app bundle
     ]
@@ -75,15 +167,13 @@ enum TestEnvironment {
       }
     }
 
-    // 4. Ultimate fallback - create temp directory
+    // 5. Ultimate fallback - create temp directory
     let tmpPath = "/tmp/SaneVideo/" + filename
     return URL(fileURLWithPath: tmpPath)
   }
 
   /// Get a specific test asset by name
   static func testAsset(named name: String) -> URL {
-    let originalEnv = ProcessInfo.processInfo.environment["TEST_ASSET_NAME"]
-    // Temporarily override to get the specific asset
     let url = mockAssetURL
     let directory = url.deletingLastPathComponent()
     return directory.appendingPathComponent(name)
@@ -98,6 +188,12 @@ enum TestEnvironment {
     }
     if shouldOpenEditor {
       NSLog("🧪 [TestEnvironment] Jump-to-Editor Mode ACTIVE")
+    }
+    if let projectURL = bootstrapProjectURL {
+      NSLog("🧪 [TestEnvironment] Bootstrap project: \(projectURL.path)")
+    }
+    if let exportURL = automationExportURL {
+      NSLog("🧪 [TestEnvironment] Automation export: \(exportURL.path)")
     }
   }
 }

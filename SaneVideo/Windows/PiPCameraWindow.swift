@@ -206,6 +206,14 @@ class PiPCameraWindow: NSPanel {
         UserDefaults.standard.set(preset.rawValue, forKey: "pipPreferredSize")
     }
 
+    func applyLayout(_ layout: PresenterOverlayLayout) {
+        guard let screen = NSScreen.main else { return }
+
+        let targetFrame = frameForLayout(layout, on: screen)
+        setFrame(targetFrame, display: true)
+        updateControlsForCurrentSize()
+    }
+
     // Keeping this method signature to minimize diff/breakage
     func updateControlsVisibility(isVisible: Bool) {
         controlsHostingView?.isHidden = !isVisible
@@ -597,5 +605,37 @@ class PiPCameraWindow: NSPanel {
 
     enum ScreenCorner {
         case topLeft, topRight, bottomLeft, bottomRight
+    }
+
+    private func frameForLayout(_ layout: PresenterOverlayLayout, on screen: NSScreen) -> NSRect {
+        let origin = origin(for: layout.corner, frameSize: CGSize(width: layout.width, height: layout.height), on: screen, margin: layout.margin)
+        return NSRect(x: origin.x, y: origin.y, width: layout.width, height: layout.height)
+    }
+
+    private func origin(
+        for corner: PresenterOverlayCorner,
+        frameSize: CGSize,
+        on screen: NSScreen,
+        margin: CGFloat
+    ) -> NSPoint {
+        switch corner {
+        case .bottomRight:
+            return NSPoint(
+                x: screen.frame.maxX - frameSize.width - margin,
+                y: margin
+            )
+        case .bottomLeft:
+            return NSPoint(x: margin, y: margin)
+        case .topRight:
+            return NSPoint(
+                x: screen.frame.maxX - frameSize.width - margin,
+                y: screen.frame.maxY - frameSize.height - margin
+            )
+        case .topLeft:
+            return NSPoint(
+                x: margin,
+                y: screen.frame.maxY - frameSize.height - margin
+            )
+        }
     }
 }

@@ -6,6 +6,7 @@
 //
 
 import AVFoundation
+import SaneUI
 import SwiftUI
 
 struct RecordingModeView: View {
@@ -17,10 +18,27 @@ struct RecordingModeView: View {
             let buttonScale = min(max(geo.size.width / 1000, 0.6), 1.2)
             // Use .medium as base (52pt) and scale from there
             let scaledButtonSize: CGFloat = IconCircleButton.Size.medium.diameter * buttonScale
+            let wantsCameraPreview = !appState.isScreenSharing && (
+                appState.cameraEnabled
+                    || appState.recordingState.isPreparing
+                    || appState.isRecording
+                    || appState.cameraState.shouldShowCameraSurface
+            )
 
             ZStack {
                 // 1. Main Preview Area (Full Screen)
-                Color.black.ignoresSafeArea()
+                ZStack {
+                    SaneVideoAmbientBackground()
+                    LinearGradient(
+                        colors: [
+                            Color.black.opacity(0.24),
+                            Color.black.opacity(0.36)
+                        ],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                }
+                .ignoresSafeArea()
 
                 if appState.isScreenSharing {
                     if appState.screenPreviewLayer != nil {
@@ -40,8 +58,8 @@ struct RecordingModeView: View {
                                     .foregroundColor(.white)
 
                                 Text("Window minimized to prevent visual feedback")
-                                    .font(.subheadline)
-                                    .foregroundColor(.gray)
+                                    .font(Theme.Typography.body)
+                                    .foregroundColor(Theme.Colors.textSecondary)
                             }
                         }
                         .edgesIgnoringSafeArea(.all)
@@ -55,28 +73,29 @@ struct RecordingModeView: View {
                     }
                 } else {
                     // Camera Preview
-                    if appState.cameraEnabled && appState.cameraState.isActive, let session = appState.cameraState.session {
+                    if appState.cameraState.shouldShowLivePreview, let session = appState.cameraState.session {
                         CameraPreviewView(session: session)
                             .aspectRatio(16 / 9, contentMode: .fit)
                             .edgesIgnoringSafeArea(.all)
-                    } else if appState.cameraEnabled {
+                    } else if wantsCameraPreview {
                         // Camera Loading State
                         VStack(spacing: 16) {
                             ProgressView().scaleEffect(1.5)
-                            Text("Camera Loading...").font(.title2).foregroundColor(.gray)
+                            Text("Camera Loading...")
+                                .font(.system(size: 22, weight: .semibold))
+                                .foregroundColor(Theme.Colors.textSecondary)
                         }
                     } else {
                         // Camera Off State
                         VStack(spacing: 20) {
                             Image(systemName: "video.slash")
                                 .font(.system(size: 80 * buttonScale))
-                                .foregroundColor(.gray)
+                                .foregroundColor(Theme.Colors.textSecondary)
                             Text("Camera is Off")
                                 .font(.system(size: 28 * buttonScale))
-                                .foregroundColor(.gray)
+                                .foregroundColor(Theme.Colors.textPrimary)
                             Button("Turn On Camera") {
-                                // cameraEnabled didSet automatically starts camera
-                                appState.cameraEnabled = true
+                                appState.toggleCamera()
                             }
                             .buttonStyle(.borderedProminent)
                             .controlSize(.large)
@@ -119,8 +138,8 @@ struct RecordingModeView: View {
                     Spacer()
                     SharedRecordingControls(
                         showDevicePickers: true,
-                        showGalleryTarget: false,  // Gallery button removed - not needed here
-                        showTimer: false,  // Timer moved to top-left
+                        showGalleryTarget: false, // Gallery button removed - not needed here
+                        showTimer: false, // Timer moved to top-left
                         useGlassBackground: false,
                         buttonSize: .custom(scaledButtonSize)
                     )
@@ -140,14 +159,9 @@ struct RecordingModeView: View {
             }
         }
         .onAppear {
-            Task {
-                AppLogger.uiLog.debug("RecordingModeView: onAppear")
-                // Auto-start camera if not screen sharing
-                // cameraEnabled didSet automatically starts camera
-                if !appState.isScreenSharing && !appState.cameraState.isActive {
-                    appState.cameraEnabled = true
-                }
-            }
+            AppLogger.uiLog.debug("RecordingModeView: onAppear")
+            guard !TestEnvironment.isTesting || TestEnvironment.allowsHardwareIntegration else { return }
+            appState.prepareCameraPreviewIfNeeded()
         }
     }
 

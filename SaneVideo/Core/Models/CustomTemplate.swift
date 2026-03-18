@@ -18,6 +18,11 @@ struct CustomTemplate: Identifiable, Codable, Sendable, Hashable {
     var aspectRatio: CGSize
     var exportSettings: SaneExportSettings
     var captionStyle: String
+    var presentationPreset: PresentationPreset
+    var speakerNotes: SpeakerNotes
+    var chapterMarkers: [ChapterMarker]
+    var demoPackSettings: DemoPackSettings
+    var publishMetadata: PublishMetadata
     var createdAt: Date
     var modifiedAt: Date
 
@@ -29,7 +34,12 @@ struct CustomTemplate: Identifiable, Codable, Sendable, Hashable {
         color: String = "blue",
         aspectRatio: CGSize = CGSize(width: 16, height: 9),
         exportSettings: SaneExportSettings = SaneExportSettings(),
-        captionStyle: String = "Classic"
+        captionStyle: String = "Classic",
+        presentationPreset: PresentationPreset = .productWalkthrough,
+        speakerNotes: SpeakerNotes = .init(),
+        chapterMarkers: [ChapterMarker] = [],
+        demoPackSettings: DemoPackSettings = .init(),
+        publishMetadata: PublishMetadata = .init()
     ) {
         self.id = id
         self.name = name
@@ -39,6 +49,11 @@ struct CustomTemplate: Identifiable, Codable, Sendable, Hashable {
         self.aspectRatio = aspectRatio
         self.exportSettings = exportSettings
         self.captionStyle = captionStyle
+        self.presentationPreset = presentationPreset
+        self.speakerNotes = speakerNotes
+        self.chapterMarkers = chapterMarkers
+        self.demoPackSettings = demoPackSettings
+        self.publishMetadata = publishMetadata
         self.createdAt = Date()
         self.modifiedAt = Date()
     }

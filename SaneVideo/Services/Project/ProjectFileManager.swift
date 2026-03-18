@@ -370,6 +370,12 @@ final class ProjectFileManager: Sendable, ProjectFileManagerProtocol {
                 if let clickURL = clip.clickDataURL {
                     urls.insert(clickURL)
                 }
+                if let cursorURL = clip.cursorDataURL {
+                    urls.insert(cursorURL)
+                }
+                if let keystrokeURL = clip.keystrokeDataURL {
+                    urls.insert(keystrokeURL)
+                }
                 if let enhancedURL = clip.enhancedAudioURL {
                     urls.insert(enhancedURL)
                 }

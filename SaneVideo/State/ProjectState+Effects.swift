@@ -384,6 +384,17 @@ extension ProjectState {
             let data = try Data(contentsOf: clickDataURL)
             let decoder = JSONDecoder()
             let clicks = try decoder.decode([ClickSample].self, from: data)
+            var cursorPath: [CursorSample] = []
+
+            if let cursorDataURL = clip.cursorDataURL,
+               FileManager.default.fileExists(atPath: cursorDataURL.path) {
+                let cursorData = try Data(contentsOf: cursorDataURL)
+                let cursorSamples = try decoder.decode([CursorSample].self, from: cursorData)
+                if !cursorSamples.isEmpty {
+                    let smoothedPath = CursorInterpolator().process(samples: cursorSamples, clicks: clicks)
+                    cursorPath = smoothedPath
+                }
+            }
 
             guard !clicks.isEmpty else {
                 await MainActor.run {
@@ -396,12 +407,14 @@ extension ProjectState {
             let keyframes = AutoZoomService.generateAutoZoomKeyframes(
                 from: clicks,
                 clipDuration: clip.duration,
+                cursorPath: cursorPath.isEmpty ? nil : cursorPath,
                 config: .default
             )
 
             await MainActor.run {
                 self.applyKeyframesToClip(keyframes, clip: clip, undoName: "Apply Auto-Zoom")
-                ServiceContainer.shared.toastManager.show("✅ Auto-zoom applied (\(clicks.count) clicks)")
+                let mode = cursorPath.isEmpty ? "click-guided" : "cursor-guided"
+                ServiceContainer.shared.toastManager.show("✅ Auto-zoom applied (\(clicks.count) clicks, \(mode))")
             }
 
         } catch {

@@ -40,6 +40,7 @@ struct TemplateBrowserSheet: View {
             SheetHeader(
                 title: String(localized: "templates.header.title", defaultValue: "Template Library"),
                 subtitle: String(localized: "templates.header.subtitle", defaultValue: "Save and reuse export settings"),
+                icon: "square.stack.3d.up.fill",
                 dismissAction: { dismiss() },
                 accessibilityID: "templates.sheet.close"
             )
@@ -51,6 +52,11 @@ struct TemplateBrowserSheet: View {
             } else {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 20) {
+                        FeatureCallout(
+                            title: "Reusable demo recipes",
+                            message: "Templates save export settings, caption defaults, presentation presets, and demo-pack behavior together.",
+                            icon: "folder.badge.plus"
+                        )
                         builtInSection
                         Divider()
                         customSection
@@ -63,7 +69,7 @@ struct TemplateBrowserSheet: View {
             footer
         }
         .frame(width: 550, height: 600)
-        .subtleGlass(radius: 12)
+        .sanePanel(radius: 18, emphasized: true, accent: Theme.Colors.accentSoft)
         .task { await loadTemplates() }
         .sheet(isPresented: $showingCreateSheet) {
             TemplateEditorSheet(
@@ -100,8 +106,7 @@ struct TemplateBrowserSheet: View {
         VStack(spacing: 12) {
             ProgressView()
             Text(String(localized: "templates.loading", defaultValue: "Loading templates..."))
-                .font(.caption)
-                .foregroundStyle(Color.stone)
+                .saneReadableSupportText()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
@@ -112,7 +117,12 @@ struct TemplateBrowserSheet: View {
                 String(localized: "templates.builtin.header", defaultValue: "Built-in Templates"),
                 systemImage: "star.fill"
             )
-            .font(.subheadline.weight(.semibold))
+            .saneReadableSectionTitle()
+
+            HelperText(
+                text: "Start here if you want a ready-made product-demo format without tuning every export setting yourself.",
+                icon: "wand.and.stars"
+            )
 
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
                 ForEach(ProjectTemplate.allTemplates, id: \.id) { template in
@@ -125,7 +135,10 @@ struct TemplateBrowserSheet: View {
                             color: template.color,
                             aspectRatio: template.aspectRatio,
                             exportSettings: template.defaultExportSettings,
-                            captionStyle: template.defaultCaptionStyle
+                            captionStyle: template.defaultCaptionStyle,
+                            presentationPreset: template.defaultPresentationPreset,
+                            demoPackSettings: template.defaultPresentationPreset.recommendedDemoPackSettings,
+                            publishMetadata: .default(for: template.name)
                         )
                         onSelect?(custom)
                         dismiss()
@@ -142,7 +155,7 @@ struct TemplateBrowserSheet: View {
                     String(localized: "templates.custom.header", defaultValue: "My Templates"),
                     systemImage: "folder.fill"
                 )
-                .font(.subheadline.weight(.semibold))
+                .saneReadableSectionTitle()
 
                 Spacer()
 
@@ -153,11 +166,16 @@ struct TemplateBrowserSheet: View {
                         String(localized: "templates.action.create", defaultValue: "New Template"),
                         systemImage: "plus.circle.fill"
                     )
-                    .font(.caption)
+                    .font(Theme.Typography.meta)
                 }
                 .buttonStyle(.bordered)
                 .accessibilityIdentifier("templates.action.create")
             }
+
+            HelperText(
+                text: "Save your current setup here when you find a combination you want to reuse across launches, tutorials, or support demos.",
+                icon: "square.and.arrow.down.fill"
+            )
 
             if templates.isEmpty {
                 emptyCustomView
@@ -188,11 +206,10 @@ struct TemplateBrowserSheet: View {
                 .foregroundStyle(Color.stone)
 
             Text(String(localized: "templates.empty.title", defaultValue: "No custom templates yet"))
-                .font(.subheadline)
+                .saneReadableBodyStrong()
 
             Text(String(localized: "templates.empty.subtitle", defaultValue: "Create templates from your current project settings"))
-                .font(.caption)
-                .foregroundStyle(Color.stone)
+                .saneReadableSupportText()
                 .multilineTextAlignment(.center)
 
             if currentSettings != nil {
@@ -246,27 +263,27 @@ private struct BuiltInTemplateCard: View {
                     .foregroundStyle(colorFromString(template.color))
                     .frame(width: 32)
 
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: 6) {
                     Text(template.name)
-                        .font(.caption.weight(.semibold))
+                        .saneReadableBodyStrong()
                     Text(template.description)
-                        .font(.caption2)
-                        .foregroundStyle(Color.stone)
+                        .saneReadableSupportText()
                         .lineLimit(2)
+                    FeatureBadge(
+                        label: template.defaultPresentationPreset.displayName,
+                        icon: template.defaultPresentationPreset.icon,
+                        accent: colorFromString(template.color)
+                    )
                 }
 
                 Spacer()
             }
             .padding(12)
-            .background(Color.white.opacity(0.05))
-            .cornerRadius(8)
-            .overlay(
-                RoundedRectangle(cornerRadius: 8)
-                    .stroke(Color.white.opacity(0.1), lineWidth: 1)
-            )
+            .sanePanel(radius: 12, accent: colorFromString(template.color))
         }
         .buttonStyle(.plain)
         .accessibilityIdentifier("templates.builtin.\(template.name.lowercased())")
+        .help(template.description)
     }
 
     private func colorFromString(_ colorName: String) -> Color {
@@ -299,12 +316,16 @@ private struct CustomTemplateCard: View {
                     .foregroundStyle(colorFromString(template.color))
                     .frame(width: 32)
 
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: 6) {
                     Text(template.name)
-                        .font(.caption.weight(.semibold))
+                        .saneReadableBodyStrong()
                     Text("\(template.resolutionString) • \(template.codecString)")
-                        .font(.caption2)
-                        .foregroundStyle(Color.stone)
+                        .saneReadableSupportText()
+                    FeatureBadge(
+                        label: template.presentationPreset.displayName,
+                        icon: template.presentationPreset.icon,
+                        accent: colorFromString(template.color)
+                    )
                 }
 
                 Spacer()
@@ -314,23 +335,19 @@ private struct CustomTemplateCard: View {
                         onDelete()
                     } label: {
                         Image(systemName: "trash")
-                            .font(.caption)
+                            .font(.system(size: Theme.Typography.fontSizeSM, weight: .semibold))
                             .foregroundStyle(.red)
                     }
                     .buttonStyle(.plain)
                 }
             }
             .padding(12)
-            .background(Color.accentColor.opacity(0.1))
-            .cornerRadius(8)
-            .overlay(
-                RoundedRectangle(cornerRadius: 8)
-                    .stroke(Color.accentColor.opacity(0.3), lineWidth: 1)
-            )
+            .sanePanel(radius: 12, accent: colorFromString(template.color))
         }
         .buttonStyle(.plain)
         .onHover { isHovered = $0 }
         .accessibilityIdentifier("templates.custom.\(template.id.uuidString)")
+        .help(template.description.isEmpty ? "Custom template" : template.description)
     }
 
     private func colorFromString(_ colorName: String) -> Color {
@@ -387,6 +404,7 @@ private struct TemplateEditorSheet: View {
                     ? String(localized: "templates.editor.create", defaultValue: "Create Template")
                     : String(localized: "templates.editor.edit", defaultValue: "Edit Template"),
                 subtitle: String(localized: "templates.editor.subtitle", defaultValue: "Save current settings as template"),
+                icon: "square.and.arrow.down.on.square",
                 dismissAction: { dismiss() },
                 accessibilityID: "templates.editor.close"
             )
@@ -395,34 +413,42 @@ private struct TemplateEditorSheet: View {
 
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
+                    FeatureCallout(
+                        title: "Save your house style",
+                        message: "A template preserves the current export setup so you can reuse it across future demos with one click.",
+                        icon: "checkmark.seal.fill"
+                    )
+
                     // Name field
                     VStack(alignment: .leading, spacing: 8) {
                         Text(String(localized: "templates.editor.name", defaultValue: "Name"))
-                            .font(.subheadline.weight(.semibold))
+                            .saneReadableLabel()
                         TextField(
                             String(localized: "templates.editor.name.placeholder", defaultValue: "My Template"),
                             text: $name
                         )
                         .textFieldStyle(.roundedBorder)
                         .accessibilityIdentifier("templates.editor.name")
+                        HelperText(text: "Use a clear name like Launch Vertical, Product Walkthrough, or Support How-To.", icon: "tag.fill")
                     }
 
                     // Description field
                     VStack(alignment: .leading, spacing: 8) {
                         Text(String(localized: "templates.editor.description", defaultValue: "Description"))
-                            .font(.subheadline.weight(.semibold))
+                            .saneReadableLabel()
                         TextField(
                             String(localized: "templates.editor.description.placeholder", defaultValue: "Optional description..."),
                             text: $description
                         )
                         .textFieldStyle(.roundedBorder)
                         .accessibilityIdentifier("templates.editor.description")
+                        HelperText(text: "Describe when to use this template so it is obvious later.", icon: "text.bubble.fill")
                     }
 
                     // Icon picker
                     VStack(alignment: .leading, spacing: 8) {
                         Text(String(localized: "templates.editor.icon", defaultValue: "Icon"))
-                            .font(.subheadline.weight(.semibold))
+                            .saneReadableLabel()
 
                         LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 6), spacing: 8) {
                             ForEach(CustomTemplate.availableIcons, id: \.self) { icon in
@@ -443,7 +469,7 @@ private struct TemplateEditorSheet: View {
                     // Color picker
                     VStack(alignment: .leading, spacing: 8) {
                         Text(String(localized: "templates.editor.color", defaultValue: "Color"))
-                            .font(.subheadline.weight(.semibold))
+                            .saneReadableLabel()
 
                         HStack(spacing: 8) {
                             ForEach(CustomTemplate.availableColors, id: \.self) { color in
@@ -467,15 +493,16 @@ private struct TemplateEditorSheet: View {
                     if let settings = currentSettings {
                         VStack(alignment: .leading, spacing: 8) {
                             Text(String(localized: "templates.editor.settings", defaultValue: "Settings to Save"))
-                                .font(.subheadline.weight(.semibold))
+                                .saneReadableLabel()
 
                             HStack(spacing: 16) {
                                 Label(settings.resolution.displayName, systemImage: "rectangle.on.rectangle")
                                 Label(codecName(settings.codec), systemImage: "film")
                                 Label("\(Int(settings.frameRate)) fps", systemImage: "speedometer")
                             }
-                            .font(.caption)
-                            .foregroundStyle(Color.stone)
+                            .saneReadableSupportText()
+
+                            HelperText(text: "The current export settings are what this template will reapply later.", icon: "gearshape.2.fill")
                         }
                     }
                 }
@@ -502,7 +529,7 @@ private struct TemplateEditorSheet: View {
             .padding(16)
         }
         .frame(width: 400, height: 500)
-        .subtleGlass(radius: 12)
+        .sanePanel(radius: 18, emphasized: true, accent: Theme.Colors.accentSoft)
     }
 
     private func saveTemplate() {
@@ -514,10 +541,27 @@ private struct TemplateEditorSheet: View {
             color: selectedColor,
             aspectRatio: currentAspectRatio ?? CGSize(width: 16, height: 9),
             exportSettings: currentSettings ?? SaneExportSettings(),
-            captionStyle: "Classic"
+            captionStyle: "Classic",
+            presentationPreset: inferredPresentationPreset(),
+            demoPackSettings: inferredPresentationPreset().recommendedDemoPackSettings,
+            publishMetadata: .default(for: name)
         )
         onSave(newTemplate)
         dismiss()
+    }
+
+    private func inferredPresentationPreset() -> PresentationPreset {
+        let ratio = currentAspectRatio ?? CGSize(width: 16, height: 9)
+
+        if abs(ratio.width - 9) < 0.1 && abs(ratio.height - 16) < 0.1 {
+            return .verticalDemo
+        }
+
+        if abs(ratio.width - 1) < 0.1 && abs(ratio.height - 1) < 0.1 {
+            return .squareTeaser
+        }
+
+        return .productWalkthrough
     }
 
     private func colorFromString(_ colorName: String) -> Color {

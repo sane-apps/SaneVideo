@@ -35,7 +35,7 @@ struct MainContentView: View {
 
     return
       mainContent
-      .background(SaneGradientBackground())
+      .background(SaneVideoAmbientBackground())
       .overlay(alignment: .top) {
         MagicOverlayView()
       }
@@ -123,6 +123,9 @@ struct MainContentView: View {
       .withGlobalSheets()
       .withToastOverlay()
       // Consolidated Sheets for UI Test Reliability
+      .sheet(isPresented: $appState.showDemoStudioSheet) {
+        DemoStudioSheet()
+      }
       .sheet(isPresented: $appState.showExportSheet) {
         ExportView()
           .onAppear {
@@ -279,11 +282,11 @@ struct MainContentView: View {
               label: {
                 HStack(spacing: 4) {
                   Text(appState.projectState.currentProject?.name ?? "Untitled Project")
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundStyle(Color.stone)
+                    .font(.system(size: Theme.Typography.fontSizeSM, weight: .semibold))
+                    .foregroundStyle(Theme.Colors.textPrimary)
                   Image(systemName: "pencil")
-                    .font(.system(size: 10))
-                    .foregroundStyle(.tertiary)
+                    .font(.system(size: Theme.Typography.fontSizeXS, weight: .medium))
+                    .foregroundStyle(Theme.Colors.textSecondary)
                 }
               }
             )

@@ -297,4 +297,50 @@ extension ProjectState {
     func updateCaptions(for clip: VideoClip, newCaptions: [Caption]) {
         applyCaptions(to: clip, captions: newCaptions)
     }
+
+    func applyTranscriptCorrections(from url: URL, to clip: VideoClip) throws {
+        let payload = try TranscriptImportParser.parseFile(at: url)
+
+        switch payload {
+        case let .captions(captions):
+            applyCaptions(to: clip, captions: captions)
+        case let .timestampedLines(lines):
+            let corrected = mergeTimestampedTranscriptLines(lines, into: clip.captions)
+            applyCaptions(to: clip, captions: corrected)
+        }
+    }
+
+    private func mergeTimestampedTranscriptLines(
+        _ lines: [TimestampedTranscriptLine],
+        into captions: [Caption]
+    ) -> [Caption] {
+        guard !captions.isEmpty, !lines.isEmpty else { return captions }
+
+        let sortedLines = lines.sorted { $0.startTime < $1.startTime }
+        var updatedCaptions = captions
+        var lineIndex = 0
+
+        for index in updatedCaptions.indices {
+            let captionStart = updatedCaptions[index].startTime.seconds
+
+            while lineIndex + 1 < sortedLines.count {
+                let currentDelta = abs(sortedLines[lineIndex].startTime.seconds - captionStart)
+                let nextDelta = abs(sortedLines[lineIndex + 1].startTime.seconds - captionStart)
+                if nextDelta > currentDelta {
+                    break
+                }
+                lineIndex += 1
+            }
+
+            let bestMatch = sortedLines[lineIndex]
+            let delta = abs(bestMatch.startTime.seconds - captionStart)
+            guard delta <= 1.5 else { continue }
+
+            let cleanedText = bestMatch.text.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !cleanedText.isEmpty else { continue }
+            updatedCaptions[index].text = cleanedText
+        }
+
+        return updatedCaptions
+    }
 }

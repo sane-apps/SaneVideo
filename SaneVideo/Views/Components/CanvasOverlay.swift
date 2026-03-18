@@ -42,19 +42,7 @@ struct CanvasOverlay: View {
                                             if let clip = clip {
                                                 // iterate in reverse to hit top-most first
                                                 for overlay in clip.overlays.reversed() {
-                                                    // Basic Hit Test (Center +/- size/2)
-                                                    // We assume size is 0.5x0.2 roughly since it's not in model yet,
-                                                    // OR we rely on the TextLayer rendering logic.
-                                                    // For now, let's assume a standard hit box around the position
-                                                    // Position is Center.
-                                                    let w = 0.5 * overlay.scale
-                                                    let h = 0.2 * overlay.scale
-                                                    let rect = CGRect(
-                                                        x: overlay.position.x - w / 2,
-                                                        y: overlay.position.y - h / 2,
-                                                        width: w,
-                                                        height: h
-                                                    )
+                                                    let rect = overlay.normalizedHitFrame
 
                                                     if rect.contains(normalizedStart) {
                                                         interactionTarget = .overlay(overlay.id)
@@ -196,7 +184,10 @@ struct CanvasOverlay: View {
                         Rectangle()
                             .strokeBorder(isInteracting ? Color.accentColor : Color.white.opacity(0.5), style: StrokeStyle(lineWidth: 2, dash: [5]))
                             .background(Color.black.opacity(0.01)) // catch hits
-                            .frame(width: 0.5 * geo.size.width, height: 0.2 * geo.size.height) // Base size matches logic above
+                            .frame(
+                                width: VideoClip.VideoOverlay.defaultBoxSize.width * geo.size.width,
+                                height: VideoClip.VideoOverlay.defaultBoxSize.height * geo.size.height
+                            )
                             .scaleEffect(currentScale)
                             .rotationEffect(currentRotation)
                             .position(

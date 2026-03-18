@@ -57,12 +57,7 @@ struct StylesInspectorView: View {
             // CRITICAL FIX: Validate clip exists before rendering
             if let clip = validatedClip {
                 ScrollView {
-                    // CRITICAL FIX: Use LazyVStack for better performance with many sections
-                    // P0 FIX: Add keyboard navigation support
-                    LazyVStack(spacing: 0) {
-                        // ═══════════════════════════════════════════
-                        // MAGIC FIX (Core Feature)
-                        // ═══════════════════════════════════════════
+                    LazyVStack(spacing: Theme.Dimensions.spacingMD) {
                         CollapsibleSection(
                             title: "Magic Fix",
                             icon: "wand.and.stars",
@@ -71,11 +66,6 @@ struct StylesInspectorView: View {
                             SmartToolsSection(clip: clip, options: $projectState.magicFixOptions, isOperationInProgress: $isOperationInProgress)
                         }
 
-                        Divider().padding(.horizontal)
-
-                        // ═══════════════════════════════════════════
-                        // REFRAME (Auto-Zoom, Smart Crop)
-                        // ═══════════════════════════════════════════
                         CollapsibleSection(
                             title: "Reframe",
                             icon: "crop",
@@ -84,11 +74,6 @@ struct StylesInspectorView: View {
                             VideoSection(clip: clip, isOperationInProgress: $isOperationInProgress)
                         }
 
-                        Divider().padding(.horizontal)
-
-                        // ═══════════════════════════════════════════
-                        // BACKGROUND (AI Replacement)
-                        // ═══════════════════════════════════════════
                         CollapsibleSection(
                             title: clip.backgroundEffect != nil ? "Background ✓" : "Background",
                             icon: "person.crop.rectangle",
@@ -98,11 +83,6 @@ struct StylesInspectorView: View {
                             BackgroundEffectsView(clip: clip, isOperationInProgress: $isOperationInProgress)
                         }
 
-                        Divider().padding(.horizontal)
-
-                        // ═══════════════════════════════════════════
-                        // EFFECTS (Filters, LUTs)
-                        // ═══════════════════════════════════════════
                         CollapsibleSection(
                             title: "Effects",
                             icon: "sparkles",
@@ -112,11 +92,6 @@ struct StylesInspectorView: View {
                             EffectsPickerView(clip: clip, isOperationInProgress: $isOperationInProgress)
                         }
 
-                        Divider().padding(.horizontal)
-
-                        // ═══════════════════════════════════════════
-                        // AUDIO ANALYSIS (Find Highlights, Analyze)
-                        // ═══════════════════════════════════════════
                         CollapsibleSection(
                             title: "Audio Analysis",
                             icon: "waveform.badge.magnifyingglass",
@@ -125,11 +100,6 @@ struct StylesInspectorView: View {
                             AudioSection(clip: clip, isOperationInProgress: $isOperationInProgress)
                         }
 
-                        Divider().padding(.horizontal)
-
-                        // ═══════════════════════════════════════════
-                        // CLIP INFO (Metadata, Locate File)
-                        // ═══════════════════════════════════════════
                         CollapsibleSection(
                             title: "Clip Info",
                             icon: "info.circle",
@@ -137,35 +107,47 @@ struct StylesInspectorView: View {
                         ) {
                             ClipInfoSection(clip: clip)
                         }
-
                     }
+                    .padding(.horizontal, Theme.Dimensions.paddingSM)
+                    .padding(.vertical, Theme.Dimensions.paddingSM)
                     .padding(.bottom, 20)
                 }
             } else {
                 EmptySelectionView()
             }
         }
-        // P1 FIX: Increase Inspector width for better spacing
         .frame(minWidth: 320, idealWidth: 360, maxWidth: 420)
-        // CONSISTENCY: Use controlBackgroundColor to match main editor
-        .background(Color(nsColor: .controlBackgroundColor))
-        // CRITICAL FIX: Auto-deselect if clip is deleted
+        .background {
+            ZStack {
+                LinearGradient(
+                    colors: [
+                        Color(nsColor: .controlBackgroundColor),
+                        Theme.Colors.ambientDeep.opacity(0.70),
+                        Theme.Colors.ambientMid.opacity(0.34)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+
+                RadialGradient(
+                    colors: [Theme.Colors.accentGlow.opacity(0.22), .clear],
+                    center: .topTrailing,
+                    startRadius: 12,
+                    endRadius: 240
+                )
+            }
+        }
         .onChange(of: appState.projectState.currentProject?.id) { _, _ in
-            // CRITICAL FIX: Safely check if clip still exists
             if selectedClip != nil, validatedClip == nil {
-                // Clip was deleted or project changed, deselect it
                 selectedClip = nil
                 AppLogger.general.info("Inspector: Auto-deselected deleted clip")
             }
         }
-        // CRITICAL FIX: Sync selectedClip if it becomes invalid
         .onChange(of: selectedClip?.id) { _, _ in
             if selectedClip != nil, validatedClip == nil {
-                // Selected clip doesn't exist, deselect
                 selectedClip = nil
             }
         }
-        // CRITICAL FIX: Monitor for operations in progress
         .onChange(of: appState.projectState.isProcessing) { _, isProcessing in
             isOperationInProgress = isProcessing
         }

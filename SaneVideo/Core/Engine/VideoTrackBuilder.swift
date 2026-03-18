@@ -100,6 +100,12 @@ enum VideoTrackBuilder {
         // Insert Video Segments
         var currentInsertStart = insertStart
         var segmentCompTrack = useTrackA ? trackA : trackB
+        var populatedTracks: [AVMutableCompositionTrack] = []
+
+        func notePopulatedTrack(_ track: AVMutableCompositionTrack) {
+          if populatedTracks.contains(where: { $0.trackID == track.trackID }) { return }
+          populatedTracks.append(track)
+        }
 
         // Define overlap for smooth cuts (internal to clip)
         // NOTE: Overlap must be expressed in PLAYED time, and mapped to SOURCE time based on clip speed.
@@ -107,6 +113,7 @@ enum VideoTrackBuilder {
         let overlap = TimeUtils.smoothCutOverlap(clipSpeed: clip.speed, overlapPlayedSeconds: 0.15)
 
         for (segIndex, segment) in validSegments.enumerated() {
+          let targetTrack = segmentCompTrack
           var finalSegment = segment
           var finalInsertStart = currentInsertStart
           var actualOverlapPlayed = CMTime.zero
@@ -136,20 +143,21 @@ enum VideoTrackBuilder {
             }
           }
 
-          try? segmentCompTrack.insertTimeRange(finalSegment, of: assetTrack, at: finalInsertStart)
+          try? targetTrack.insertTimeRange(finalSegment, of: assetTrack, at: finalInsertStart)
+          notePopulatedTrack(targetTrack)
 
           let segmentDuration = finalSegment.duration
           let playDuration = CMTimeMultiplyByFloat64(segmentDuration, multiplier: 1.0 / clip.speed)
 
           if clip.speed != 1.0 {
             let scaleRange = CMTimeRange(start: finalInsertStart, duration: segmentDuration)
-            segmentCompTrack.scaleTimeRange(scaleRange, toDuration: playDuration)
+            targetTrack.scaleTimeRange(scaleRange, toDuration: playDuration)
           }
 
           // Add Internal Transition Metadata
           if clip.useSmoothCutForRemovals && segIndex > 0 && actualOverlapPlayed > .zero {
-            let fromTrackID = (segmentCompTrack === trackA) ? trackB.trackID : trackA.trackID
-            let toTrackID = segmentCompTrack.trackID
+            let fromTrackID = (targetTrack === trackA) ? trackB.trackID : trackA.trackID
+            let toTrackID = targetTrack.trackID
 
             // Transition happens during the overlap
             let transitionRange = CMTimeRange(start: finalInsertStart, duration: actualOverlapPlayed)
@@ -169,12 +177,13 @@ enum VideoTrackBuilder {
 
           // Switch tracks for next segment if doing smooth cuts
           if clip.useSmoothCutForRemovals {
-            segmentCompTrack = (segmentCompTrack === trackA) ? trackB : trackA
+            segmentCompTrack = (targetTrack === trackA) ? trackB : trackA
           }
         }
 
         let totalPlayDuration = CMTimeSubtract(currentInsertStart, insertStart)
         let playDuration = totalPlayDuration
+        let instructionTracks = populatedTracks.isEmpty ? [currentCompTrack] : populatedTracks
 
         // Ensure useTrackA is updated based on the LAST track used for this clip
         useTrackA = (segmentCompTrack === trackA)
@@ -182,67 +191,80 @@ enum VideoTrackBuilder {
         // Video Metadata Collection
 
         // A. Transform
-        let layerInstruction: AVVideoCompositionLayerInstruction
-
-        if let transform = try? await TransformCalculator.calculateTransform(
+        let transform = try? await TransformCalculator.calculateTransform(
           assetTrack: assetTrack,
           rotation: clip.rotation,
           userTransform: clip.transform,
           renderSize: renderSize
-        ) {
-          if #available(macOS 26.0, *) {
-            var layerConfig = AVVideoCompositionLayerInstruction.Configuration(
-              trackID: currentCompTrack.trackID)
-            layerConfig.setTransform(transform, at: insertStart)
-            layerConfig.setOpacity(1.0, at: insertStart)
-            layerConfig.setOpacity(0.0, at: CMTimeAdd(insertStart, playDuration))
-            layerInstruction = AVVideoCompositionLayerInstruction(configuration: layerConfig)
+        )
+
+        for instructionTrack in instructionTracks {
+          let layerInstruction: AVVideoCompositionLayerInstruction
+
+          if let transform {
+            if #available(macOS 26.0, *) {
+              var layerConfig = AVVideoCompositionLayerInstruction.Configuration(
+                trackID: instructionTrack.trackID)
+              layerConfig.setTransform(transform, at: insertStart)
+              layerConfig.setOpacity(1.0, at: insertStart)
+              layerConfig.setOpacity(0.0, at: CMTimeAdd(insertStart, playDuration))
+              layerInstruction = AVVideoCompositionLayerInstruction(configuration: layerConfig)
+            } else {
+              // Use the composition track, not the source asset track, so the compositor can resolve frames.
+              let mutableInstruction = AVMutableVideoCompositionLayerInstruction(assetTrack: instructionTrack)
+              mutableInstruction.setTransform(transform, at: insertStart)
+              mutableInstruction.setOpacity(1.0, at: insertStart)
+              mutableInstruction.setOpacity(0.0, at: CMTimeAdd(insertStart, playDuration))
+              layerInstruction = mutableInstruction
+            }
           } else {
-            // macOS 15-25: Use mutable layer instruction API
-            let mutableInstruction = AVMutableVideoCompositionLayerInstruction(assetTrack: assetTrack)
-            mutableInstruction.setTransform(transform, at: insertStart)
-            mutableInstruction.setOpacity(1.0, at: insertStart)
-            mutableInstruction.setOpacity(0.0, at: CMTimeAdd(insertStart, playDuration))
-            layerInstruction = mutableInstruction
+            if #available(macOS 26.0, *) {
+              let layerConfig = AVVideoCompositionLayerInstruction.Configuration(
+                trackID: instructionTrack.trackID)
+              layerInstruction = AVVideoCompositionLayerInstruction(configuration: layerConfig)
+            } else {
+              layerInstruction = AVMutableVideoCompositionLayerInstruction(assetTrack: instructionTrack)
+            }
           }
-        } else {
-          if #available(macOS 26.0, *) {
-            let layerConfig = AVVideoCompositionLayerInstruction.Configuration(
-              trackID: currentCompTrack.trackID)
-            layerInstruction = AVVideoCompositionLayerInstruction(configuration: layerConfig)
-          } else {
-            layerInstruction = AVMutableVideoCompositionLayerInstruction(assetTrack: assetTrack)
-          }
+
+          layerInstructions.append(layerInstruction)
         }
-        layerInstructions.append(layerInstruction)
 
         // B. Effects
         if !clip.effects.isEmpty {
-          var effects = trackEffects[currentCompTrack.trackID] ?? []
-          effects.append((CMTimeRange(start: insertStart, duration: playDuration), clip.effects))
-          trackEffects[currentCompTrack.trackID] = effects
+          for instructionTrack in instructionTracks {
+            var effects = trackEffects[instructionTrack.trackID] ?? []
+            effects.append((CMTimeRange(start: insertStart, duration: playDuration), clip.effects))
+            trackEffects[instructionTrack.trackID] = effects
+          }
         }
 
         // C. Keyframes
         if let keyframes = clip.keyframeAnimation {
-          var kfs = trackKeyframes[currentCompTrack.trackID] ?? []
-          kfs.append((CMTimeRange(start: insertStart, duration: playDuration), [keyframes]))
-          trackKeyframes[currentCompTrack.trackID] = kfs
+          for instructionTrack in instructionTracks {
+            var kfs = trackKeyframes[instructionTrack.trackID] ?? []
+            kfs.append((CMTimeRange(start: insertStart, duration: playDuration), [keyframes]))
+            trackKeyframes[instructionTrack.trackID] = kfs
+          }
         }
 
         // D. Background Effects (Person Segmentation)
         if let bgEffect = clip.backgroundEffect {
-          var bgEffects = trackBackgroundEffects[currentCompTrack.trackID] ?? []
-          bgEffects.append((CMTimeRange(start: insertStart, duration: playDuration), [bgEffect]))
-          trackBackgroundEffects[currentCompTrack.trackID] = bgEffects
+          for instructionTrack in instructionTracks {
+            var bgEffects = trackBackgroundEffects[instructionTrack.trackID] ?? []
+            bgEffects.append((CMTimeRange(start: insertStart, duration: playDuration), [bgEffect]))
+            trackBackgroundEffects[instructionTrack.trackID] = bgEffects
+          }
         }
 
         // E. Privacy Regions
         if !clip.privacyRegions.isEmpty {
-          var regions = trackPrivacyRegions[currentCompTrack.trackID] ?? []
-          regions.append(
-            (CMTimeRange(start: insertStart, duration: playDuration), clip.privacyRegions))
-          trackPrivacyRegions[currentCompTrack.trackID] = regions
+          for instructionTrack in instructionTracks {
+            var regions = trackPrivacyRegions[instructionTrack.trackID] ?? []
+            regions.append(
+              (CMTimeRange(start: insertStart, duration: playDuration), clip.privacyRegions))
+            trackPrivacyRegions[instructionTrack.trackID] = regions
+          }
         }
 
         // F. Active Transition (Incoming)

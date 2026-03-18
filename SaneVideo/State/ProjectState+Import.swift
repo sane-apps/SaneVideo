@@ -74,9 +74,19 @@ extension ProjectState {
 
       if var resultClip = clip {
         let clickDataURL = targetURL.deletingPathExtension().appendingPathExtension("clicks.json")
+        let cursorDataURL = targetURL.deletingPathExtension().appendingPathExtension("cursor.json")
+        let keystrokeDataURL = targetURL.deletingPathExtension().appendingPathExtension("keys.json")
         if FileManager.default.fileExists(atPath: clickDataURL.path) {
           resultClip.clickDataURL = clickDataURL
           AppLogger.project.info("Attached click data for auto-zoom: \(clickDataURL.lastPathComponent)")
+        }
+        if FileManager.default.fileExists(atPath: cursorDataURL.path) {
+          resultClip.cursorDataURL = cursorDataURL
+          AppLogger.project.info("Attached cursor data for demo polish: \(cursorDataURL.lastPathComponent)")
+        }
+        if FileManager.default.fileExists(atPath: keystrokeDataURL.path) {
+          resultClip.keystrokeDataURL = keystrokeDataURL
+          AppLogger.project.info("Attached keystroke data for demo overlays: \(keystrokeDataURL.lastPathComponent)")
         }
 
         NSLog("Successfully loaded clip. Duration: \(resultClip.duration.seconds)s. Adding to timeline...")

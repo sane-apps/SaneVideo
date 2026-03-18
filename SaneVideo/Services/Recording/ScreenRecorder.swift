@@ -44,6 +44,7 @@ class ScreenRecorder: NSObject, ScreenRecorderProtocol, SCContentSharingPickerOb
 
   /// Output URL for direct recording
   private var currentOutputURL: URL?
+  private var suppressDynamicFilterUpdates = false
 
   /// Callback triggered when the stream stops (e.g. user cancelled via system UI)
   var onStop: ((Error?) -> Void)?
@@ -152,12 +153,14 @@ class ScreenRecorder: NSObject, ScreenRecorderProtocol, SCContentSharingPickerOb
       AppLogger.recording.warning("Picker already active, reusing existing selection...")
       // If we have a baseFilter, reuse it
       if let existingFilter = baseFilter {
+        onContentSelected?()
         await handleContentSelected(filter: existingFilter)
         return
       }
       // Otherwise, wait a moment and check again
       try await Task.sleep(nanoseconds: 500_000_000)  // 500ms
       if let existingFilter = baseFilter {
+        onContentSelected?()
         await handleContentSelected(filter: existingFilter)
         return
       }
@@ -265,6 +268,7 @@ class ScreenRecorder: NSObject, ScreenRecorderProtocol, SCContentSharingPickerOb
     // 3. Clear references after stop completes
     activeStream = nil
     recordingOutput = nil
+    suppressDynamicFilterUpdates = false
 
     // TAHOE FIX: Do NOT deactivate picker or remove observer here.
     // Keeping picker.isActive = true preserves the selection persistence in the system UI.
@@ -301,6 +305,11 @@ class ScreenRecorder: NSObject, ScreenRecorderProtocol, SCContentSharingPickerOb
       return
     }
 
+    guard !suppressDynamicFilterUpdates else {
+      AppLogger.recording.info("ℹ️ Skipping dynamic filter update after previous ScreenCaptureKit access denial")
+      return
+    }
+
     AppLogger.recording.info("🔄 Refreshing screen content filter...")
     let newFilter = await rebuildFilter(from: base)
 
@@ -308,8 +317,24 @@ class ScreenRecorder: NSObject, ScreenRecorderProtocol, SCContentSharingPickerOb
       try await stream.updateContentFilter(newFilter)
       AppLogger.recording.info("✅ Screen content filter updated successfully")
     } catch {
+      if Self.shouldSuppressDynamicFilterUpdates(for: error) {
+        suppressDynamicFilterUpdates = true
+        AppLogger.recording.warning(
+          "⚠️ Disabling dynamic filter updates for this share session after ScreenCaptureKit denied the update path")
+      }
       AppLogger.recording.error("Failed to update content filter: \(error.localizedDescription)")
     }
+  }
+
+  static func shouldSuppressDynamicFilterUpdates(for error: Error) -> Bool {
+    let nsError = error as NSError
+    if nsError.domain == "com.apple.ScreenCaptureKit.SCStreamErrorDomain", nsError.code == -3801 {
+      return true
+    }
+
+    let description = nsError.localizedDescription.lowercased()
+    return description.contains("declined tcc")
+      || description.contains("application, window, display capture")
   }
 
   // MARK: - Private Methods
@@ -372,6 +397,9 @@ class ScreenRecorder: NSObject, ScreenRecorderProtocol, SCContentSharingPickerOb
 
   /// Handle user's content selection and start the stream
   func handleContentSelected(filter: SCContentFilter) async {
+    suppressDynamicFilterUpdates = false
+    let effectiveFilter = await rebuildFilter(from: filter)
+
     // TAHOE OPTIMIZATION: If we already have an active stream, just update its filter.
     // This is much faster and completely flicker-free.
     if let stream = activeStream {
@@ -379,7 +407,7 @@ class ScreenRecorder: NSObject, ScreenRecorderProtocol, SCContentSharingPickerOb
       self.baseFilter = filter
       self.baseFilterTimestamp = Date()
       do {
-        try await stream.updateContentFilter(filter)
+        try await stream.updateContentFilter(effectiveFilter)
         AppLogger.recording.info("✅ Existing stream filter updated successfully")
 
         // NOTE: We don't call updateContentFilter() here anymore.
@@ -422,7 +450,9 @@ class ScreenRecorder: NSObject, ScreenRecorderProtocol, SCContentSharingPickerOb
 
       // System Audio Capture (macOS 13+)
       config.capturesAudio = true
-      config.excludesCurrentProcessAudio = true
+      // Default false matches Apple docs and preserves playback audio when the user is
+      // sharing content inside SaneVideo itself.
+      config.excludesCurrentProcessAudio = false
 
       // Microphone Capture (macOS 15+)
       // DISABLED: Using SCStream for mic triggers system Voice Processing (VPIO)
@@ -437,7 +467,7 @@ class ScreenRecorder: NSObject, ScreenRecorderProtocol, SCContentSharingPickerOb
       self.baseFilter = filter
       self.baseFilterTimestamp = Date()
 
-      let newStream = SCStream(filter: filter, configuration: config, delegate: self)
+      let newStream = SCStream(filter: effectiveFilter, configuration: config, delegate: self)
 
       // NOTE: We removed the deferred updateContentFilter() task from here.
       // WindowManager.swift now handles this 150ms after the PiP appears,

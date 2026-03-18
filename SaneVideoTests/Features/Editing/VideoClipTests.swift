@@ -1,3 +1,4 @@
+import AppKit
 import CoreMedia
 import Foundation
 import Testing
@@ -43,7 +44,7 @@ struct VideoClipTests {
     let words = [
       CaptionWord(text: "Hello", start: 0.0, end: 1.0, probability: 0.9),
       CaptionWord(text: "Um", start: 1.0, end: 2.0, probability: 0.8),
-      CaptionWord(text: "World", start: 2.0, end: 3.0, probability: 0.9),
+      CaptionWord(text: "World", start: 2.0, end: 3.0, probability: 0.9)
     ]
 
     let caption = Caption(text: "Hello Um World", startTime: start, endTime: end, words: words)
@@ -128,5 +129,141 @@ struct VideoClipTests {
     // Verify
     #expect(decodedClip.opacity == 0.5)
     #expect(decodedClip.enhancedAudioURL?.path == "/tmp/enhanced.wav")
+  }
+
+  @Test("Demo studio sidecars and overlay style persist")
+  func demoStudioPersistence() throws {
+    let url = URL(fileURLWithPath: "/tmp/test.mp4")
+    var clip = VideoClip(url: url, duration: CMTime(seconds: 10, preferredTimescale: 600))
+
+    clip.clickDataURL = URL(fileURLWithPath: "/tmp/test.clicks.json")
+    clip.cursorDataURL = URL(fileURLWithPath: "/tmp/test.cursor.json")
+    clip.keystrokeDataURL = URL(fileURLWithPath: "/tmp/test.keys.json")
+    clip.interactionOverlayStyle = InteractionOverlayStyle(
+      highlightClicks: true,
+      spotlightCursor: false,
+      showKeystrokes: true,
+      clickRingScale: 1.4,
+      spotlightOpacity: 0.5
+    )
+
+    let data = try JSONEncoder().encode(clip)
+    let decodedClip = try JSONDecoder().decode(VideoClip.self, from: data)
+
+    #expect(decodedClip.clickDataURL == clip.clickDataURL)
+    #expect(decodedClip.cursorDataURL == clip.cursorDataURL)
+    #expect(decodedClip.keystrokeDataURL == clip.keystrokeDataURL)
+    #expect(decodedClip.interactionOverlayStyle == clip.interactionOverlayStyle)
+  }
+
+  @Test("Keystroke sample display text preserves modifier order")
+  func keystrokeDisplayText() {
+    let sample = KeystrokeSample(
+      timestamp: 1.5,
+      key: "K",
+      modifiers: ["Command", "Shift"],
+      keyCode: 40
+    )
+
+    #expect(sample.displayText == "Command + Shift + K")
+  }
+
+  @Test("Interaction sidecars only report ready when they contain samples")
+  func interactionSidecarReadiness() throws {
+    let base = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+    let clickURL = base.appendingPathExtension("clicks.json")
+    let cursorURL = base.appendingPathExtension("cursor.json")
+    let keyURL = base.appendingPathExtension("keys.json")
+    defer {
+      try? FileManager.default.removeItem(at: clickURL)
+      try? FileManager.default.removeItem(at: cursorURL)
+      try? FileManager.default.removeItem(at: keyURL)
+    }
+
+    var clip = VideoClip(
+      url: URL(fileURLWithPath: "/tmp/test.mp4"),
+      duration: CMTime(seconds: 10, preferredTimescale: 600)
+    )
+    clip.clickDataURL = clickURL
+    clip.cursorDataURL = cursorURL
+    clip.keystrokeDataURL = keyURL
+
+    try JSONEncoder().encode([ClickSample]()).write(to: clickURL)
+    try JSONEncoder().encode([CursorSample]()).write(to: cursorURL)
+    try JSONEncoder().encode([KeystrokeSample]()).write(to: keyURL)
+
+    #expect(clip.hasRecordedClickData == false)
+    #expect(clip.hasRecordedCursorData == false)
+    #expect(clip.hasRecordedKeystrokeData == false)
+
+    try JSONEncoder().encode([
+      ClickSample(timestamp: 1.0, x: 0.4, y: 0.6, button: 0)
+    ]).write(to: clickURL)
+    try JSONEncoder().encode([
+      CursorSample(timestamp: 1.0, x: 0.4, y: 0.6, isDown: false, button: 0)
+    ]).write(to: cursorURL)
+    try JSONEncoder().encode([
+      KeystrokeSample(timestamp: 1.0, key: "K", modifiers: ["Command"], keyCode: 40)
+    ]).write(to: keyURL)
+
+    #expect(clip.hasRecordedClickData)
+    #expect(clip.hasRecordedCursorData)
+    #expect(clip.hasRecordedKeystrokeData)
+  }
+
+  @Test("Voiceover save panel prefers key window, then main window")
+  @MainActor
+  func voiceoverPreferredWindowPriority() {
+    let keyWindow = TestWindow(visible: true)
+    let mainWindow = TestWindow(visible: true)
+    let fallbackWindow = TestWindow(visible: true)
+
+    let preferredWithKey = VoiceoverSettingsSheet.preferredPresentationWindow(
+      keyWindow: keyWindow,
+      mainWindow: mainWindow,
+      windows: [fallbackWindow]
+    )
+    #expect(preferredWithKey === keyWindow)
+
+    let preferredWithMain = VoiceoverSettingsSheet.preferredPresentationWindow(
+      keyWindow: nil,
+      mainWindow: mainWindow,
+      windows: [fallbackWindow]
+    )
+    #expect(preferredWithMain === mainWindow)
+  }
+
+  @Test("Voiceover save panel falls back to the first visible window")
+  @MainActor
+  func voiceoverPreferredWindowVisibleFallback() {
+    let hiddenWindow = TestWindow(visible: false)
+    let visibleWindow = TestWindow(visible: true)
+
+    let preferred = VoiceoverSettingsSheet.preferredPresentationWindow(
+      keyWindow: nil,
+      mainWindow: nil,
+      windows: [hiddenWindow, visibleWindow]
+    )
+
+    #expect(preferred === visibleWindow)
+  }
+}
+
+@MainActor
+private final class TestWindow: NSWindow {
+  private let forcedVisible: Bool
+
+  init(visible: Bool) {
+    self.forcedVisible = visible
+    super.init(
+      contentRect: NSRect(x: 0, y: 0, width: 400, height: 300),
+      styleMask: [.titled],
+      backing: .buffered,
+      defer: false
+    )
+  }
+
+  override var isVisible: Bool {
+    forcedVisible
   }
 }

@@ -120,7 +120,8 @@ class AudioService: NSObject, AudioServiceProtocol {
     Task {
       AppLogger.audio.info("start() called")
 
-      let isAuthorized = ServiceContainer.shared.permissionManager.microphoneStatus == .granted
+      permissionManager.checkMicrophonePermission()
+      let isAuthorized = permissionManager.microphoneStatus == .granted
       AppLogger.audio.debug("Permission status authorized: \(isAuthorized)")
 
       guard isAuthorized else {
@@ -129,7 +130,7 @@ class AudioService: NSObject, AudioServiceProtocol {
           return
         }
         AppLogger.audio.warning("Microphone permission not granted, requesting...")
-        let granted = await ServiceContainer.shared.permissionManager.requestMicrophonePermission()
+        let granted = await permissionManager.requestMicrophonePermission()
         if granted {
           AppLogger.audio.info("Permission granted, starting session...")
           self.start()

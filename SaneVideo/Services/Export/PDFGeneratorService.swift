@@ -10,6 +10,11 @@ import CoreMedia
 import Foundation
 import PDFKit
 
+protocol PDFGeneratorServiceProtocol: Actor {
+    func generateStudyGuide(for project: VideoProject, outputURL: URL) async throws
+    func generateStudyGuideData(for project: VideoProject) throws -> Data
+}
+
 enum PDFError: Error, LocalizedError {
     case generationFailed
     case fileSaveFailed
@@ -22,7 +27,7 @@ enum PDFError: Error, LocalizedError {
     }
 }
 
-actor PDFGeneratorService {
+actor PDFGeneratorService: PDFGeneratorServiceProtocol {
 
     init() {}
 

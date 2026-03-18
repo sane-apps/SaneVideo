@@ -20,17 +20,22 @@ struct iCloudSyncSettingsView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
+            InformationBox(
+                text: "iCloud sync is optional. It keeps projects in your own iCloud Drive across Macs without adding SaneApps hosting costs. Recording and export still work offline when this is off.",
+                color: Theme.Colors.accent,
+                icon: "icloud.fill"
+            )
+
             // Header
             HStack {
                 Image(systemName: "icloud.fill")
                     .font(.title)
-                    .foregroundStyle(.blue)
+                    .foregroundStyle(Theme.Colors.accent)
                 VStack(alignment: .leading, spacing: 2) {
                     Text("iCloud Sync")
-                        .font(.headline)
+                        .saneReadableSectionTitle()
                     Text("Sync projects across your Mac devices")
-                        .font(.caption)
-                        .foregroundStyle(Color.stone)
+                        .saneReadableSupportText()
                 }
                 Spacer()
             }
@@ -43,15 +48,13 @@ struct iCloudSyncSettingsView: View {
                     .fill(isCloudAvailable ? Color.green : Color.red)
                     .frame(width: 8, height: 8)
                 Text(isCloudAvailable ? "iCloud Available" : "iCloud Unavailable")
-                    .font(.caption)
-                    .foregroundStyle(Color.stone)
+                    .saneReadableMeta()
 
                 Spacer()
 
                 if let lastSync = lastSyncDate {
                     Text("Last sync: \(lastSync, style: .relative)")
-                        .font(.caption)
-                        .foregroundStyle(Color.stone)
+                        .saneReadableMeta()
                 }
             }
 
@@ -59,12 +62,12 @@ struct iCloudSyncSettingsView: View {
             Toggle(isOn: $isSyncEnabled) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Enable iCloud Sync")
-                        .font(.body)
+                        .saneReadableBodyStrong()
                     Text("Projects will sync automatically when saved")
-                        .font(.caption)
-                        .foregroundStyle(Color.stone)
+                        .saneReadableSupportText()
                 }
             }
+            .help("Turn this on to keep project packages in your own iCloud Drive across Macs.")
             .disabled(!isCloudAvailable)
             .accessibilityIdentifier("settings.sync.enable_toggle")
             .onChange(of: isSyncEnabled) { _, newValue in
@@ -74,6 +77,11 @@ struct iCloudSyncSettingsView: View {
                 }
             }
 
+            HelperText(
+                text: "Use this if you move between Macs. Leave it off if you want a strictly local-only setup on one machine.",
+                icon: "arrow.triangle.2.circlepath.icloud"
+            )
+
             if isSyncEnabled && isCloudAvailable {
                 Divider()
 
@@ -81,7 +89,7 @@ struct iCloudSyncSettingsView: View {
                 VStack(alignment: .leading, spacing: 12) {
                     HStack {
                         Text("Projects in iCloud")
-                            .font(.subheadline.weight(.medium))
+                            .saneReadableLabel()
                         Spacer()
                         Button {
                             Task { await loadCloudProjects() }
@@ -89,24 +97,28 @@ struct iCloudSyncSettingsView: View {
                             Image(systemName: "arrow.clockwise")
                         }
                         .buttonStyle(.borderless)
+                        .help("Refresh the list of projects currently visible in iCloud.")
                         .disabled(isLoading)
                     }
+
+                    HelperText(
+                        text: "This list shows the copies already synced to your iCloud Drive.",
+                        icon: "folder.badge.gearshape"
+                    )
 
                     if isLoading {
                         HStack {
                             ProgressView()
                                 .controlSize(.small)
                             Text("Loading...")
-                                .font(.caption)
-                                .foregroundStyle(Color.stone)
+                                .saneReadableSupportText()
                         }
                     } else if cloudProjects.isEmpty {
                         HStack {
                             Image(systemName: "cloud")
-                                .foregroundStyle(Color.stone)
+                                .foregroundStyle(Theme.Colors.textSecondary)
                             Text("No projects synced yet")
-                                .font(.caption)
-                                .foregroundStyle(Color.stone)
+                                .saneReadableSupportText()
                         }
                         .padding(.vertical, 8)
                     } else {
@@ -126,19 +138,20 @@ struct iCloudSyncSettingsView: View {
                 // Sync Options
                 VStack(alignment: .leading, spacing: 12) {
                     Text("Sync Options")
-                        .font(.subheadline.weight(.medium))
+                        .saneReadableLabel()
 
                     Toggle("Sync media files", isOn: .constant(true))
                         .disabled(true)
+                        .help("Media files are included so your projects open correctly on your other Mac.")
                         .accessibilityIdentifier("settings.sync.media")
 
                     Toggle("Sync captions", isOn: .constant(true))
                         .disabled(true)
+                        .help("Captions and transcript assets stay with the project package.")
                         .accessibilityIdentifier("settings.sync.captions")
 
                     Text("Media files are stored in iCloud Drive and may count against your storage quota.")
-                        .font(.caption2)
-                        .foregroundStyle(Color.stone)
+                        .saneReadableSupportText()
                 }
 
                 // Manual Sync Button
@@ -148,6 +161,7 @@ struct iCloudSyncSettingsView: View {
                     } label: {
                         Label("Sync Now", systemImage: "arrow.triangle.2.circlepath")
                     }
+                    .help("Refresh project sync status now instead of waiting for the next save.")
                     .disabled(isLoading)
                     .accessibilityIdentifier("settings.sync.sync_now")
 
@@ -155,7 +169,7 @@ struct iCloudSyncSettingsView: View {
 
                     if let error = syncError {
                         Text(error)
-                            .font(.caption)
+                            .saneReadableSupportText()
                             .foregroundStyle(.red)
                     }
                 }
@@ -165,7 +179,7 @@ struct iCloudSyncSettingsView: View {
             GroupBox {
                 VStack(alignment: .leading, spacing: 8) {
                     Label("About iCloud Sync", systemImage: "info.circle")
-                        .font(.caption.weight(.medium))
+                        .saneReadableLabel()
 
                     Text("""
                     iCloud Sync keeps your SaneVideo projects synchronized across all your Mac computers. \
@@ -173,10 +187,10 @@ struct iCloudSyncSettingsView: View {
 
                     Note: Sync is currently available for Mac-to-Mac only. iPad and iPhone support is coming in a future update.
                     """)
-                    .font(.caption2)
-                    .foregroundStyle(Color.stone)
+                    .saneReadableSupportText()
                 }
             }
+            .sanePanel(radius: 12, accent: Theme.Colors.accentSoft)
 
             Spacer()
         }
@@ -231,11 +245,11 @@ private struct CloudProjectRow: View {
     var body: some View {
         HStack {
             Image(systemName: "folder.fill")
-                .foregroundStyle(.blue)
+                .foregroundStyle(Theme.Colors.accent)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text("Project \(syncInfo.projectId.uuidString.prefix(8))...")
-                    .font(.caption)
+                    .saneReadableBodyStrong()
                     .lineLimit(1)
 
                 HStack(spacing: 8) {
@@ -243,8 +257,7 @@ private struct CloudProjectRow: View {
                     Text("•")
                     Text(syncInfo.deviceName)
                 }
-                .font(.caption2)
-                .foregroundStyle(Color.stone)
+                .saneReadableSupportText()
             }
 
             Spacer()
@@ -255,8 +268,7 @@ private struct CloudProjectRow: View {
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 6)
-        .background(Color.stone.opacity(0.05))
-        .cornerRadius(6)
+        .sanePanel(radius: 10, accent: Theme.Colors.accentSoft)
     }
 }
 

@@ -44,6 +44,7 @@ class RecordingState {
   @ObservationIgnored nonisolated(unsafe) private var startingTask: Task<Void, Never>?
   private var recordingEngine: RecordingEngine?
   private var cameraService: CameraServiceProtocol
+  private let permissionManager: PermissionManagerProtocol
   private var injectedAudioService: AudioService?
   private var injectedScreenRecorder: ScreenRecorder?  // Stored for injection
   private var cancellables = Set<AnyCancellable>()
@@ -53,9 +54,11 @@ class RecordingState {
   init(
     cameraService: CameraServiceProtocol? = nil,
     audioService: AudioService? = nil,
-    screenRecorder: ScreenRecorder? = nil
+    screenRecorder: ScreenRecorder? = nil,
+    permissionManager: PermissionManagerProtocol? = nil
   ) {
     self.cameraService = cameraService ?? ServiceContainer.shared.cameraService
+    self.permissionManager = permissionManager ?? ServiceContainer.shared.permissionManager
     self.injectedAudioService = audioService
     self.injectedScreenRecorder = screenRecorder
     setupRecordingEngine()
@@ -137,14 +140,14 @@ class RecordingState {
           ServiceContainer.shared.soundManager.playError()
           ServiceContainer.shared.toastManager.show(
             "🎥 Camera disabled. Enable in Settings.", type: .error)
-          ServiceContainer.shared.permissionManager.openSystemSettings()
+          self?.permissionManager.openSystemSettings()
           return
         case .microphonePermissionDenied, .microphonePermissionRestricted:
           ServiceContainer.shared.hapticsManager.warning()
           ServiceContainer.shared.soundManager.playError()
           ServiceContainer.shared.toastManager.show(
             "🎤 Microphone disabled. Enable in Settings.", type: .error)
-          ServiceContainer.shared.permissionManager.openSystemSettings()
+          self?.permissionManager.openSystemSettings()
           return
         default:
           break
@@ -176,16 +179,109 @@ class RecordingState {
 
   // MARK: - Recording Control
 
-  func startRecording(isScreenSharing: Bool) {
+  func startRecording(isScreenSharing: Bool, includeCameraOverlay: Bool = true) {
     NSLog("🎬 RecordingState.startRecording called. isRecording=\(isRecording), isPreparing=\(isPreparing), isScreenSharing=\(isScreenSharing)")
     guard !isRecording, !isPreparing else {
       NSLog("🎬 RecordingState.startRecording BAILED: already recording or preparing")
       return
     }
 
+    // Re-check live permission state before deciding whether to prompt inline.
+    // This avoids stale .notDetermined statuses after app relaunch or TCC refresh.
+    permissionManager.checkCameraPermission()
+    permissionManager.checkMicrophonePermission()
+    if isScreenSharing {
+      permissionManager.checkScreenRecordingPermission()
+    }
+
+    if needsInlinePermissionPrompt(
+      isScreenSharing: isScreenSharing,
+      includeCameraOverlay: includeCameraOverlay
+    ) {
+      isPreparing = true
+      countdownValue = 0
+
+      Task { @MainActor [weak self] in
+        guard let self else { return }
+
+        let granted = await self.requestPromptablePermissionsIfNeeded(
+          isScreenSharing: isScreenSharing,
+          includeCameraOverlay: includeCameraOverlay
+        )
+        guard self.isPreparing else { return }
+
+        if granted {
+          self.beginRecordingIfPermissionsAvailable(
+            isScreenSharing: isScreenSharing,
+            includeCameraOverlay: includeCameraOverlay
+          )
+        } else {
+          self.isPreparing = false
+          self.presentMissingPermissionFeedback(
+            isScreenSharing: isScreenSharing,
+            includeCameraOverlay: includeCameraOverlay
+          )
+        }
+      }
+      return
+    }
+
+    beginRecordingIfPermissionsAvailable(
+      isScreenSharing: isScreenSharing,
+      includeCameraOverlay: includeCameraOverlay
+    )
+  }
+
+  private func needsInlinePermissionPrompt(isScreenSharing: Bool, includeCameraOverlay: Bool) -> Bool {
+    let requiresCamera = !isScreenSharing || includeCameraOverlay
+    let requiresMicrophone = isMicActive
+    return (requiresCamera && permissionManager.cameraStatus == .notDetermined)
+      || (requiresMicrophone && permissionManager.microphoneStatus == .notDetermined)
+  }
+
+  private func requestPromptablePermissionsIfNeeded(
+    isScreenSharing: Bool,
+    includeCameraOverlay: Bool
+  ) async -> Bool {
+    let requiresCamera = !isScreenSharing || includeCameraOverlay
+    let requiresMicrophone = isMicActive
+
+    if requiresCamera, permissionManager.cameraStatus == .notDetermined {
+      let cameraGranted = await permissionManager.requestCameraPermission()
+      if !cameraGranted { return false }
+    }
+
+    if requiresMicrophone, permissionManager.microphoneStatus == .notDetermined {
+      let microphoneGranted = await permissionManager.requestMicrophonePermission()
+      if !microphoneGranted { return false }
+    }
+
+    return true
+  }
+
+  private func presentMissingPermissionFeedback(
+    isScreenSharing: Bool,
+    includeCameraOverlay: Bool
+  ) {
+    AppLogger.recording.error("❌ Cannot start recording: Missing required permissions")
+    ServiceContainer.shared.toastManager.show("Missing required permissions. Please check Settings.", type: .error)
+    let requiresMicrophone = isMicActive
+
+    if isScreenSharing && permissionManager.screenRecordingStatus != .granted {
+      permissionManager.openScreenRecordingSettings()
+    } else if !isScreenSharing || includeCameraOverlay, permissionManager.cameraStatus != .granted {
+      permissionManager.openSystemSettings()
+    } else if requiresMicrophone, permissionManager.microphoneStatus != .granted {
+      permissionManager.openSystemSettings()
+    }
+  }
+
+  private func beginRecordingIfPermissionsAvailable(
+    isScreenSharing: Bool,
+    includeCameraOverlay: Bool
+  ) {
     // CRITICAL FIX: Verify permissions before starting recording
     // This handles cases where permissions were revoked while app was in background
-    let permissionManager = ServiceContainer.shared.permissionManager
     NSLog("🎬 Permission check: camera=\(permissionManager.cameraStatus), mic=\(permissionManager.microphoneStatus), screen=\(permissionManager.screenRecordingStatus)")
 
     // CRITICAL FIX: If we're already screen sharing with an active stream,
@@ -194,29 +290,25 @@ class RecordingState {
     // Trust the active stream rather than the flaky preflight check.
     let hasActiveScreenStream = recordingEngine?.screenRecorder.activeStream != nil
     let shouldSkipScreenPermissionCheck = isScreenSharing && hasActiveScreenStream
+    let requiresCamera = !isScreenSharing || includeCameraOverlay
+    let requiresMicrophone = isMicActive
 
     if shouldSkipScreenPermissionCheck {
       NSLog("🎬 Screen permission check SKIPPED - active stream proves permission is granted")
     }
 
     let hasPermissions = permissionManager.verifyPermissionsForRecording(
-      requiresCamera: !isScreenSharing, // Camera not needed for screen sharing
-      requiresMicrophone: true,
+      requiresCamera: requiresCamera,
+      requiresMicrophone: requiresMicrophone,
       requiresScreenRecording: isScreenSharing && !shouldSkipScreenPermissionCheck
     )
 
     if !hasPermissions {
       NSLog("🎬 ❌ Permission check FAILED! Cannot start recording.")
-      AppLogger.recording.error("❌ Cannot start recording: Missing required permissions")
-      ServiceContainer.shared.toastManager.show("Missing required permissions. Please check Settings.", type: .error)
-      // Open appropriate settings based on what's missing
-      if isScreenSharing && permissionManager.screenRecordingStatus != .granted {
-        permissionManager.openScreenRecordingSettings()
-      } else if !isScreenSharing && permissionManager.cameraStatus != .granted {
-        permissionManager.openSystemSettings()
-      } else if permissionManager.microphoneStatus != .granted {
-        permissionManager.openSystemSettings()
-      }
+      presentMissingPermissionFeedback(
+        isScreenSharing: isScreenSharing,
+        includeCameraOverlay: includeCameraOverlay
+      )
       return
     }
 
@@ -231,14 +323,20 @@ class RecordingState {
     }
     NSLog("🎬 Setting isPreparing=true, calling startCountdown")
     isPreparing = true
-    startCountdown(isScreenSharing: isScreenSharing)
+    startCountdown(
+      isScreenSharing: isScreenSharing,
+      includeCameraOverlay: includeCameraOverlay
+    )
   }
 
-  private func startCountdown(isScreenSharing: Bool) {
+  private func startCountdown(isScreenSharing: Bool, includeCameraOverlay: Bool) {
     NSLog("🎬 RecordingState.startCountdown called. shouldSkipCountdown=\(shouldSkipCountdown)")
     if shouldSkipCountdown {
       countdownValue = 0
-      self.actuallyStartRecording(isScreenSharing: isScreenSharing)
+      self.actuallyStartRecording(
+        isScreenSharing: isScreenSharing,
+        includeCameraOverlay: includeCameraOverlay
+      )
       return
     }
 
@@ -255,7 +353,10 @@ class RecordingState {
       if Task.isCancelled { return }
       NSLog("🎬 RecordingState: Countdown complete!")
       self.countdownTask = nil
-      self.actuallyStartRecording(isScreenSharing: isScreenSharing)
+      self.actuallyStartRecording(
+        isScreenSharing: isScreenSharing,
+        includeCameraOverlay: includeCameraOverlay
+      )
     }
   }
 
@@ -266,7 +367,7 @@ class RecordingState {
     countdownValue = 0
   }
 
-  private func actuallyStartRecording(isScreenSharing: Bool) {
+  private func actuallyStartRecording(isScreenSharing: Bool, includeCameraOverlay: Bool) {
     NSLog("🎬 RecordingState.actuallyStartRecording called! isScreenSharing=\(isScreenSharing)")
     // CRITICAL: Only check isRecording - we ARE expected to have isPreparing=true here
     // isPreparing will be set to false below
@@ -290,11 +391,16 @@ class RecordingState {
     }
 
     let initialSource: RecordingSource = isScreenSharing ? .screen : .camera
+    let includeMicrophoneAudio = isMicActive
     self.isRecording = true // Set optimistically but handle failure
 
     // CRITICAL: Start engine and only set isRecording if it succeeds
     startingTask = Task {
-      await recordingEngine?.startRecording(initialSource: initialSource)
+      await recordingEngine?.startRecording(
+        initialSource: initialSource,
+        includeCameraOverlay: includeCameraOverlay,
+        includeMicrophoneAudio: includeMicrophoneAudio
+      )
 
       // CRITICAL: Check if engine actually started (isRecording will be set by engine)
       // If start failed, cleanup timer

@@ -170,6 +170,7 @@ final class CameraManager: NSObject, CameraServiceProtocol {
     }
 
     // 2. Check permission
+    ServiceContainer.shared.permissionManager.checkCameraPermission()
     let isAuthorized = ServiceContainer.shared.permissionManager.cameraStatus == .granted
 
     guard isAuthorized else {
@@ -192,6 +193,8 @@ final class CameraManager: NSObject, CameraServiceProtocol {
     }
 
     // 3. Proceed with session start
+    hasVideoSignal = false
+    lastError = nil
     try await self.internalStart()
   }
 
@@ -301,27 +304,37 @@ final class CameraManager: NSObject, CameraServiceProtocol {
     AppLogger.camera.info("CameraManager set to active")
   }
   func stop() {
-    isActive = false
-    hasVideoSignal = false
-    framePublisher.resetSignalStatus()
+    guard !_isStoppingSession else {
+      AppLogger.camera.warning("Camera stop already in progress. Ignoring duplicate stop request.")
+      return
+    }
 
-    guard let session = session else { return }
+    guard let activeSession = session else {
+      isActive = false
+      hasVideoSignal = false
+      framePublisher.resetSignalStatus()
+      return
+    }
 
-    // CRITICAL FIX: Set flag BEFORE Task, clear AFTER async work completes
+    // Keep UI aligned with real hardware state until the session is fully torn down.
     _isStoppingSession = true
 
     Task {
-      if session.isRunning {
+      if activeSession.isRunning {
         await Task.detached(priority: .userInitiated) {
-          session.stopRunning()
+          activeSession.stopRunning()
         }.value
         AppLogger.camera.info("Session stopped")
       }
 
-      // CRITICAL: Only clear flag after stopRunning completes
       await MainActor.run {
+        self.framePublisher.resetSignalStatus()
+        self.hasVideoSignal = false
+        self.isActive = false
+        self.session = nil
         self._isStoppingSession = false
       }
+      AppLogger.camera.info("Camera session fully cleared")
     }
   }
 

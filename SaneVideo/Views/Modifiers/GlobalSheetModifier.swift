@@ -95,7 +95,7 @@ struct GlobalSheetModifier: ViewModifier {
                 if let projectId = notification.object as? UUID,
                    let project = appState.projectState.projects.first(where: { $0.id == projectId }) {
                     // Switch to this project first, then show rename dialog
-                    appState.projectState.currentProject = project
+                    appState.projectState.openProject(project)
                     newProjectName = project.name
                     showingRenameAlert = true
                 }

@@ -195,6 +195,16 @@ final class SaneVideoCompositor: NSObject, AVVideoCompositing {
             }
         }
 
+        // 3b. Render interaction overlays (click rings, cursor spotlight, keystrokes)
+        if let resultImage = currentImage,
+           let interactionImage = InteractionOverlayRenderer.renderInteractionLayers(
+             instruction.interactionLayers,
+             size: request.renderContext.size,
+             compositionTime: request.compositionTime
+           ) {
+          currentImage = interactionImage.composited(over: resultImage)
+        }
+
         // 4. Render Final
         guard let buffer = outputPixelBuffer else {
             renderError = NSError(

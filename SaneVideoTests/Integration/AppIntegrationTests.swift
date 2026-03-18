@@ -1,13 +1,12 @@
-import Testing
 import AVFoundation
 import Foundation
-import SwiftUI
-import UniformTypeIdentifiers
 @testable import SaneVideo
+import SwiftUI
+import Testing
+import UniformTypeIdentifiers
 
 @Suite("App Integration Tests")
 struct AppIntegrationTests {
-
     // MARK: - PDFExportDocument Tests
 
     @Test("PDFExportDocument initialization with data")
@@ -36,7 +35,8 @@ struct AppIntegrationTests {
     @MainActor
     func shareLinkService_SharedInstance() {
         let service = ServiceContainer.shared.shareLinkService
-        #expect(service != nil, "Shared instance should exist")
+        _ = service
+        #expect(Bool(true), "Shared instance should exist")
     }
 
     // MARK: - SilenceDetector Tests
@@ -71,7 +71,8 @@ struct AppIntegrationTests {
     @MainActor
     func waveformService_SharedInstance() {
         let service = ServiceContainer.shared.waveformService
-        #expect(service != nil)
+        _ = service
+        #expect(Bool(true), "Shared waveform service should exist")
     }
 
     @Test("WaveformService consistency and caching")
@@ -99,16 +100,116 @@ struct AppIntegrationTests {
 
         // Assert - Verify type is accessible (tests runtime behavior, not compilation)
         // The fact that we can access .self means the type exists
-        _ = type  // Verify we can use the type
+        _ = type // Verify we can use the type
         // The test passes if we get here (type is accessible)
+    }
+
+    @Test("SharedRecordingControls reserves more width for recording state")
+    func sharedRecordingControls_RecordingStateWidth() {
+        let idleWidth = SharedRecordingControls.minimumBarWidth(
+            buttonSize: .medium,
+            includePauseControl: false,
+            showTimer: false,
+            showGalleryTarget: false
+        )
+        let recordingWidth = SharedRecordingControls.minimumBarWidth(
+            buttonSize: .medium,
+            includePauseControl: true,
+            showTimer: true,
+            showGalleryTarget: false
+        )
+
+        #expect(recordingWidth > idleWidth, "Recording state should reserve extra room for pause and timer")
+        #expect(recordingWidth >= 520, "Recording state should reserve enough width for the full floating control strip")
     }
 
     // MARK: - Mock Object Tests
 
     @Test("Theme data constants")
     func themeData() {
-        #expect(Theme.Colors.action != nil)
-        #expect(Theme.Colors.background != nil)
+        _ = Theme.Colors.action
+        _ = Theme.Colors.background
+        #expect(Bool(true), "Theme colors should be accessible")
         #expect(Theme.Dimensions.cornerRadius == 8)
+    }
+
+    @Test("App quits after last window close when idle")
+    func appLifecyclePolicy_IdleWindowCloseQuits() {
+        #expect(
+            AppLifecyclePolicy.shouldTerminateAfterLastWindowClosed(
+                isRecording: false,
+                isExporting: false,
+                isScreenSharing: false,
+                isTogglingScreenShare: false,
+                isTesting: false
+            )
+        )
+    }
+
+    @Test("App stays alive after last window close during active work")
+    func appLifecyclePolicy_ActiveWorkKeepsAppAlive() {
+        #expect(
+            !AppLifecyclePolicy.shouldTerminateAfterLastWindowClosed(
+                isRecording: true,
+                isExporting: false,
+                isScreenSharing: false,
+                isTogglingScreenShare: false,
+                isTesting: false
+            )
+        )
+        #expect(
+            !AppLifecyclePolicy.shouldTerminateAfterLastWindowClosed(
+                isRecording: false,
+                isExporting: true,
+                isScreenSharing: false,
+                isTogglingScreenShare: false,
+                isTesting: false
+            )
+        )
+        #expect(
+            !AppLifecyclePolicy.shouldTerminateAfterLastWindowClosed(
+                isRecording: false,
+                isExporting: false,
+                isScreenSharing: true,
+                isTogglingScreenShare: false,
+                isTesting: false
+            )
+        )
+        #expect(
+            !AppLifecyclePolicy.shouldTerminateAfterLastWindowClosed(
+                isRecording: false,
+                isExporting: false,
+                isScreenSharing: false,
+                isTogglingScreenShare: true,
+                isTesting: false
+            )
+        )
+    }
+
+    @Test("App stays alive after last window close during tests")
+    func appLifecyclePolicy_TestingKeepsAppAlive() {
+        #expect(
+            !AppLifecyclePolicy.shouldTerminateAfterLastWindowClosed(
+                isRecording: false,
+                isExporting: false,
+                isScreenSharing: false,
+                isTogglingScreenShare: false,
+                isTesting: true
+            )
+        )
+    }
+
+    @Test("Main window scene uses singleton policy")
+    func mainWindowScenePolicy_IsSingleton() {
+        #expect(MainWindowScenePolicy.sceneID == "main-window")
+        #expect(MainWindowScenePolicy.title == "SaneVideo")
+        #expect(!MainWindowScenePolicy.allowsMultipleWindows)
+    }
+
+    @Test("Recording launch schedules preview restore only for live recording mode")
+    func launchRecordingPreviewPolicy_SchedulesOnlyForLiveRecording() {
+        #expect(LaunchRecordingPreviewPolicy.shouldScheduleRestore(appMode: .recording, isTesting: false))
+        #expect(!LaunchRecordingPreviewPolicy.shouldScheduleRestore(appMode: .editing, isTesting: false))
+        #expect(!LaunchRecordingPreviewPolicy.shouldScheduleRestore(appMode: .recording, isTesting: true))
     }
 }

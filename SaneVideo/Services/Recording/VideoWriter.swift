@@ -39,6 +39,26 @@ private class FrameRateTracker {
 
 @RecordingActor
 final class VideoWriter: VideoWriterProtocol {
+    private struct UncheckedAssetWriter: @unchecked Sendable {
+        let writer: AVAssetWriter
+    }
+
+    private final class FinishWritingState: @unchecked Sendable {
+        private let lock = NSLock()
+        private var hasResumed = false
+
+        func resumeOnce(_ body: () -> Void) {
+            let shouldResume = lock.withLock {
+                guard !hasResumed else { return false }
+                hasResumed = true
+                return true
+            }
+
+            guard shouldResume else { return }
+            body()
+        }
+    }
+
     private var assetWriter: AVAssetWriter?
     private var videoInput: AVAssetWriterInput?
     private var micInput: AVAssetWriterInput?
@@ -245,12 +265,13 @@ final class VideoWriter: VideoWriterProtocol {
         self.screenFrame = screenFrame
     }
 
-    func writeVideo(sampleBuffer: CMSampleBuffer, presentationTime: CMTime, source: RecordingSource = .camera) {
+    @discardableResult
+    func writeVideo(sampleBuffer: CMSampleBuffer, presentationTime: CMTime, source: RecordingSource = .camera) -> Bool {
         totalFramesReceived += 1
 
         guard let input = videoInput else {
             AppLogger.recording.warning("⚠️ VideoWriter: videoInput is nil")
-            return
+            return false
         }
 
         guard input.isReadyForMoreMediaData else {
@@ -258,12 +279,12 @@ final class VideoWriter: VideoWriterProtocol {
             if notReadyForDataCount % 30 == 0 {  // Log every 30 skipped frames
                 AppLogger.recording.warning("⚠️ VideoWriter: input not ready for data (skipped \(notReadyForDataCount) frames so far)")
             }
-            return
+            return false
         }
-        guard let writer = assetWriter, writer.status == .writing else { return }
+        guard let writer = assetWriter, writer.status == .writing else { return false }
         guard let adaptor = pixelBufferAdaptor else {
             AppLogger.recording.error("writeVideo: No pixel buffer adaptor!")
-            return
+            return false
         }
 
         // CRITICAL FIX (2025-12-31): Monotonic timestamp enforcement to prevent error -16364
@@ -275,7 +296,7 @@ final class VideoWriter: VideoWriterProtocol {
                 if droppedFrameCount == maxDroppedFramesBeforeWarning {
                     AppLogger.recording.warning("⚠️ VideoWriter: Dropped \(droppedFrameCount) out-of-order frames (timestamp regression detected)")
                 }
-                return
+                return false
             }
         }
 
@@ -286,10 +307,10 @@ final class VideoWriter: VideoWriterProtocol {
             AppLogger.recording.info("VideoWriter: Auto-started session at \(presentationTime.seconds)")
         }
 
-        autoreleasepool {
+        return autoreleasepool {
             guard let sourcePixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else {
                 AppLogger.recording.warning("writeVideo: No image buffer in sample")
-                return
+                return false
             }
 
             let sourceWidth = CVPixelBufferGetWidth(sourcePixelBuffer)
@@ -297,7 +318,7 @@ final class VideoWriter: VideoWriterProtocol {
 
             guard let pool = adaptor.pixelBufferPool else {
                 AppLogger.recording.warning("Pixel buffer pool not ready, skipping frame")
-                return
+                return false
             }
 
             var destinationPixelBuffer: CVPixelBuffer?
@@ -305,7 +326,7 @@ final class VideoWriter: VideoWriterProtocol {
 
             guard status == kCVReturnSuccess, let destBuffer = destinationPixelBuffer else {
                 AppLogger.recording.warning("Failed to create pixel buffer from pool: \(status)")
-                return
+                return false
             }
 
             let ciImage = CIImage(cvPixelBuffer: sourcePixelBuffer)
@@ -357,21 +378,31 @@ final class VideoWriter: VideoWriterProtocol {
                     let recordingPipWidth = pipWidth * scaleX
                     let recordingPipHeight = pipHeight * scaleY
 
-                    let cameraScaleX = recordingPipWidth / cameraWidth
-                    let cameraScaleY = recordingPipHeight / cameraHeight
-                    let scaledCamera = cameraImage.transformed(by: CGAffineTransform(scaleX: cameraScaleX, y: cameraScaleY))
-
-                    let positionedCamera = scaledCamera.transformed(by: CGAffineTransform(translationX: recordingX, y: recordingY))
+                    let positionedCamera = aspectFill(
+                        image: cameraImage,
+                        sourceSize: CGSize(width: cameraWidth, height: cameraHeight),
+                        targetRect: CGRect(
+                            x: recordingX,
+                            y: recordingY,
+                            width: recordingPipWidth,
+                            height: recordingPipHeight
+                        )
+                    )
 
                     finalImage = positionedCamera.composited(over: scaledImage)
                 } else if let cameraBuffer = cameraFrame {
                     let cameraImage = CIImage(cvPixelBuffer: cameraBuffer)
-                    let cameraWidth = CGFloat(CVPixelBufferGetWidth(cameraBuffer))
                     let pipWidth = targetSize.width * 0.2
-                    let scale = pipWidth / cameraWidth
-                    let scaledCamera = cameraImage.transformed(by: CGAffineTransform(scaleX: scale, y: scale))
+                    let pipHeight = pipWidth / 1.5
                     let pipX = targetSize.width - pipWidth - 20
-                    let positionedCamera = scaledCamera.transformed(by: CGAffineTransform(translationX: pipX, y: 20))
+                    let positionedCamera = aspectFill(
+                        image: cameraImage,
+                        sourceSize: CGSize(
+                            width: CGFloat(CVPixelBufferGetWidth(cameraBuffer)),
+                            height: CGFloat(CVPixelBufferGetHeight(cameraBuffer))
+                        ),
+                        targetRect: CGRect(x: pipX, y: 20, width: pipWidth, height: pipHeight)
+                    )
                     finalImage = positionedCamera.composited(over: scaledImage)
                 }
             }
@@ -395,38 +426,63 @@ final class VideoWriter: VideoWriterProtocol {
                             AppLogger.recording.info("📊 VideoWriter: Written \(totalFramesWritten)/\(totalFramesReceived) frames, actual FPS: \(String(format: "%.2f", actualFPS)), dropped: \(droppedFrameCount), notReady: \(notReadyForDataCount)")
                         }
                     }
+                    return true
                 } else {
                     AppLogger.recording.error("Adaptor append failed: \(writer.error?.localizedDescription ?? "unknown")")
+                    return false
                 }
             }
+
+            return false
         }
     }
 
-    func writeMicAudio(sampleBuffer: CMSampleBuffer) {
-        guard let input = micInput, input.isReadyForMoreMediaData else { return }
+    @discardableResult
+    func writeMicAudio(sampleBuffer: CMSampleBuffer) -> Bool {
+        guard let input = micInput, input.isReadyForMoreMediaData else { return false }
 
         // CRITICAL FIX (2025-12-31): Monotonic timestamp enforcement for audio
         let pts = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
         if lastWrittenMicTime.isValid && pts <= lastWrittenMicTime {
-            return  // Skip out-of-order audio sample
+            return false  // Skip out-of-order audio sample
         }
 
-        input.append(sampleBuffer)
-        lastWrittenMicTime = pts
-        driftTracker?.recordAudioTimestamp(pts)
+        let appended = input.append(sampleBuffer)
+        if appended {
+            lastWrittenMicTime = pts
+        }
+        return appended
     }
 
-    func writeSystemAudio(sampleBuffer: CMSampleBuffer) {
-        guard let input = systemAudioInput, input.isReadyForMoreMediaData else { return }
+    private func aspectFill(image: CIImage, sourceSize: CGSize, targetRect: CGRect) -> CIImage {
+        guard sourceSize.width > 0, sourceSize.height > 0, targetRect.width > 0, targetRect.height > 0 else {
+            return image
+        }
+
+        let scale = max(targetRect.width / sourceSize.width, targetRect.height / sourceSize.height)
+        let scaledSize = CGSize(width: sourceSize.width * scale, height: sourceSize.height * scale)
+        let offsetX = targetRect.minX - ((scaledSize.width - targetRect.width) / 2)
+        let offsetY = targetRect.minY - ((scaledSize.height - targetRect.height) / 2)
+
+        let scaledImage = image.transformed(by: CGAffineTransform(scaleX: scale, y: scale))
+        return scaledImage.transformed(by: CGAffineTransform(translationX: offsetX, y: offsetY))
+    }
+
+    @discardableResult
+    func writeSystemAudio(sampleBuffer: CMSampleBuffer) -> Bool {
+        guard let input = systemAudioInput, input.isReadyForMoreMediaData else { return false }
 
         // CRITICAL FIX (2025-12-31): Monotonic timestamp enforcement for audio
         let pts = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
         if lastWrittenSystemAudioTime.isValid && pts <= lastWrittenSystemAudioTime {
-            return  // Skip out-of-order audio sample
+            return false  // Skip out-of-order audio sample
         }
 
-        input.append(sampleBuffer)
-        lastWrittenSystemAudioTime = pts
+        let appended = input.append(sampleBuffer)
+        if appended {
+            lastWrittenSystemAudioTime = pts
+        }
+        return appended
     }
 
     // Concurrency Safety: Ensure finish() is only executed once
@@ -490,37 +546,33 @@ final class VideoWriter: VideoWriterProtocol {
                 // CRITICAL FIX: Use continuation-based timeout to prevent hanging
                 // AVAssetWriter.finishWriting is callback-based, we wrap it with timeout
                 let timeoutSeconds = Self.finishWritingTimeout
+                let uncheckedWriter = UncheckedAssetWriter(writer: writer)
+                let finishState = FinishWritingState()
 
                 let success = await withCheckedContinuation { (continuation: CheckedContinuation<Bool, Never>) in
-                    var didResume = false
-                    let resumeLock = NSLock()
-
                     // Create timeout timer
                     let timer = DispatchSource.makeTimerSource(queue: .global())
                     timer.schedule(deadline: .now() + timeoutSeconds)
                     timer.setEventHandler {
-                        resumeLock.lock()
-                        defer { resumeLock.unlock() }
-                        guard !didResume else { return }
-                        didResume = true
-                        AppLogger.recording.error("VideoWriter: finishWriting timed out after \(timeoutSeconds)s")
-                        continuation.resume(returning: false)
+                        timer.cancel()
+                        finishState.resumeOnce {
+                            AppLogger.recording.error("VideoWriter: finishWriting timed out after \(timeoutSeconds)s")
+                            continuation.resume(returning: false)
+                        }
                     }
                     timer.resume()
 
                     // Start finish writing
-                    writer.finishWriting {
+                    uncheckedWriter.writer.finishWriting {
                         timer.cancel()
-                        resumeLock.lock()
-                        defer { resumeLock.unlock() }
-                        guard !didResume else { return }
-                        didResume = true
-                        continuation.resume(returning: writer.status == .completed)
+                        finishState.resumeOnce {
+                            continuation.resume(returning: uncheckedWriter.writer.status == .completed)
+                        }
                     }
                 }
 
                 if !success {
-                    writer.cancelWriting()
+                    uncheckedWriter.writer.cancelWriting()
                     if let url = outputURL { try? FileManager.default.removeItem(at: url) }
                     cleanup()
                     return nil

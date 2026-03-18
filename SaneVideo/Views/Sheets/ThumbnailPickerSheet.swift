@@ -42,6 +42,7 @@ struct ThumbnailPickerSheet: View {
             SheetHeader(
                 title: String(localized: "thumbnail.header.title", defaultValue: "Thumbnail Studio"),
                 subtitle: String(localized: "thumbnail.header.subtitle", defaultValue: "Create an eye-catching thumbnail"),
+                icon: "photo.on.rectangle.angled",
                 dismissAction: { dismiss() },
                 accessibilityID: "thumbnail.sheet.close"
             )
@@ -53,6 +54,11 @@ struct ThumbnailPickerSheet: View {
             } else {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 20) {
+                        FeatureCallout(
+                            title: "Pick the frame, then polish it",
+                            message: "Use AI Pick for quick wins, switch to Custom Frame when you need a specific moment, and keep the text readable.",
+                            icon: "photo.badge.sparkles"
+                        )
                         previewSection
                         Divider()
                         candidatesSection
@@ -70,7 +76,7 @@ struct ThumbnailPickerSheet: View {
             footer
         }
         .frame(width: 600, height: 700)
-        .subtleGlass(radius: 12)
+        .sanePanel(radius: 18, emphasized: true, accent: Theme.Colors.accentSoft)
         .task { await loadCandidates() }
         .onChange(of: selectedIndex) { _, _ in updateStyledPreview() }
         .onChange(of: selectedStyle) { _, _ in applyPreset(); updateStyledPreview() }
@@ -87,8 +93,7 @@ struct ThumbnailPickerSheet: View {
         VStack(spacing: 12) {
             ProgressView()
             Text(String(localized: "thumbnail.loading", defaultValue: "Analyzing video for best frames..."))
-                .font(.caption)
-                .foregroundStyle(Color.stone)
+                .saneReadableSupportText()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
@@ -99,7 +104,12 @@ struct ThumbnailPickerSheet: View {
                 String(localized: "thumbnail.preview.header", defaultValue: "Preview"),
                 systemImage: "eye"
             )
-            .font(.subheadline.weight(.semibold))
+            .saneReadableSectionTitle()
+
+            HelperText(
+                text: "Check crop, contrast, and text placement here before you save or copy the thumbnail.",
+                icon: "eye.fill"
+            )
 
             ZStack {
                 if let preview = styledPreview {
@@ -131,7 +141,7 @@ struct ThumbnailPickerSheet: View {
                     String(localized: "thumbnail.frames.header", defaultValue: "Select Frame"),
                     systemImage: "film.stack"
                 )
-                .font(.subheadline.weight(.semibold))
+                .saneReadableSectionTitle()
                 Spacer()
                 Button {
                     showCustomScrubber.toggle()
@@ -141,23 +151,30 @@ struct ThumbnailPickerSheet: View {
                             ? String(localized: "thumbnail.action.use_ai", defaultValue: "Use AI Pick")
                             : String(localized: "thumbnail.action.use_custom", defaultValue: "Custom Frame")
                     )
-                    .font(.caption)
+                    .font(Theme.Typography.meta)
                 }
                 .buttonStyle(.bordered)
                 .accessibilityIdentifier("thumbnail.action.toggle_custom")
             }
 
+            HelperText(
+                text: showCustomScrubber
+                    ? "Custom Frame lets you scrub to the exact moment you want."
+                    : "AI Pick surfaces frames that look promising for a thumbnail.",
+                icon: showCustomScrubber ? "slider.horizontal.below.rectangle" : "sparkles"
+            )
+
             if showCustomScrubber {
                 HStack {
                     Text(formatTime(customTime))
-                        .font(.caption.monospacedDigit())
+                        .saneReadableMeta(monospaced: true)
                     Slider(value: $customTime, in: 0...duration)
                         .accessibilityIdentifier("thumbnail.custom.scrubber")
                         .onChange(of: customTime) { _, newValue in
                             Task { await updateCustomFrame(at: newValue) }
                         }
                     Text(formatTime(duration))
-                        .font(.caption.monospacedDigit())
+                        .saneReadableMeta(monospaced: true)
                 }
             } else {
                 ScrollView(.horizontal, showsIndicators: false) {
@@ -184,7 +201,12 @@ struct ThumbnailPickerSheet: View {
                 String(localized: "thumbnail.styles.header", defaultValue: "Style Presets"),
                 systemImage: "paintpalette"
             )
-            .font(.subheadline.weight(.semibold))
+            .saneReadableSectionTitle()
+
+            HelperText(
+                text: selectedStyle.description,
+                icon: selectedStyle.icon
+            )
 
             LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 6), spacing: 8) {
                 ForEach(ThumbnailStyle.allCases) { style in
@@ -193,7 +215,7 @@ struct ThumbnailPickerSheet: View {
                             Image(systemName: style.icon)
                                 .font(.title3)
                             Text(style.displayName)
-                                .font(.caption2)
+                                .font(Theme.Typography.meta)
                         }
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 8)
@@ -219,7 +241,12 @@ struct ThumbnailPickerSheet: View {
                 String(localized: "thumbnail.adjust.header", defaultValue: "Fine Tune"),
                 systemImage: "slider.horizontal.3"
             )
-            .font(.subheadline.weight(.semibold))
+            .saneReadableSectionTitle()
+
+            HelperText(
+                text: "Use these sliders for small corrections after you pick a style preset.",
+                icon: "dial.high.fill"
+            )
 
             VStack(spacing: 8) {
                 sliderRow(
@@ -251,7 +278,7 @@ struct ThumbnailPickerSheet: View {
                 contrast = 1.0
                 selectedStyle = .original
             }
-            .font(.caption)
+            .font(Theme.Typography.meta)
             .accessibilityIdentifier("thumbnail.action.reset")
         }
     }
@@ -265,13 +292,13 @@ struct ThumbnailPickerSheet: View {
     ) -> some View {
         HStack {
             Text(title)
-                .font(.caption)
+                .saneReadableLabel()
                 .frame(width: 80, alignment: .leading)
             Slider(value: value, in: range)
                 .accessibilityIdentifier(id)
             Text(String(format: format, value.wrappedValue))
-                .font(.caption.monospacedDigit())
-                .frame(width: 30)
+                .saneReadableMeta(monospaced: true)
+                .frame(width: 44)
         }
     }
 
@@ -282,13 +309,18 @@ struct ThumbnailPickerSheet: View {
                     String(localized: "thumbnail.overlay.header", defaultValue: "Text Overlay"),
                     systemImage: "textformat"
                 )
-                .font(.subheadline.weight(.semibold))
+                .saneReadableSectionTitle()
                 Spacer()
                 Toggle("", isOn: $showTextOverlay)
                     .toggleStyle(.switch)
                     .labelsHidden()
                     .accessibilityIdentifier("thumbnail.overlay.toggle")
             }
+
+            HelperText(
+                text: "Turn this on only when the frame still needs a short, readable headline.",
+                icon: "textformat.size"
+            )
 
             if showTextOverlay {
                 TextField(
@@ -298,8 +330,7 @@ struct ThumbnailPickerSheet: View {
                 .textFieldStyle(.roundedBorder)
                 .accessibilityIdentifier("thumbnail.overlay.text")
                 Text(String(localized: "thumbnail.overlay.footer", defaultValue: "Text will appear at bottom of thumbnail"))
-                    .font(.caption2)
-                    .foregroundStyle(Color.stone)
+                    .saneReadableSupportText()
             }
         }
     }

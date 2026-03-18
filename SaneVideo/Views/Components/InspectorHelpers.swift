@@ -18,9 +18,12 @@ struct CollapsibleSection<Content: View>: View {
     var isPrimary: Bool = false // P1 FIX: Mark primary sections
     @ViewBuilder let content: () -> Content
 
+    private var accentColor: Color {
+        isPrimary ? Theme.Colors.accent : Theme.Colors.accentSoft
+    }
+
     var body: some View {
         VStack(spacing: 0) {
-            // P1 FIX: Enhanced header with visual hierarchy
             Button(action: {
                 withAnimation(.easeInOut(duration: 0.2)) {
                     isExpanded.toggle()
@@ -28,50 +31,68 @@ struct CollapsibleSection<Content: View>: View {
             }, label: {
                 HStack(spacing: Theme.Dimensions.spacingSM) {
                     Image(systemName: icon)
-                        .font(.system(size: isPrimary ? Theme.Typography.iconSizeSM : Theme.Typography.iconSizeXS, weight: isPrimary ? .bold : .regular))
-                        .foregroundColor(isPrimary ? Theme.Colors.accent : Color.stone)
+                        .font(.system(size: isPrimary ? Theme.Typography.iconSizeSM : Theme.Typography.iconSizeXS, weight: isPrimary ? .bold : .semibold))
+                        .foregroundStyle(isExpanded ? accentColor : Theme.Colors.textSecondary)
                         .frame(width: isPrimary ? 22 : 20)
                     Text(title)
-                        .font(.system(size: isPrimary ? Theme.Typography.fontSizeMD : Theme.Typography.fontSizeSM, weight: isPrimary ? .bold : .semibold))
-                        .foregroundColor(.primary)
+                        .font(.system(size: isPrimary ? Theme.Typography.fontSizeMD : Theme.Typography.fontSizeSM, weight: .semibold))
+                        .foregroundStyle(Theme.Colors.textPrimary)
 
-                    // Badge (shows count when applicable)
                     if let badge = badge {
                         Text(badge)
                             .font(.system(size: Theme.Typography.fontSizeXS, weight: .bold))
                             .foregroundColor(.white)
                             .padding(.horizontal, Theme.Dimensions.spacingSM)
                             .padding(.vertical, Theme.Dimensions.spacingXS)
-                            .background(Capsule().fill(Theme.Colors.accent))
+                            .background(
+                                Capsule()
+                                    .fill(
+                                        LinearGradient(
+                                            colors: [accentColor, Theme.Colors.accentDeep],
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        )
+                                    )
+                            )
                     }
 
                     Spacer()
                     Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
                         .font(.system(size: Theme.Typography.fontSizeXS, weight: .semibold))
-                        .foregroundColor(Color.stone)
+                        .foregroundStyle(isExpanded ? accentColor : Theme.Colors.textSecondary)
                 }
                 .padding(.horizontal, Theme.Dimensions.paddingMD)
                 .padding(.vertical, isPrimary ? Theme.Dimensions.paddingMD : Theme.Dimensions.paddingSM)
-                .background(isPrimary ? Theme.Colors.accent.opacity(Theme.Opacity.subtle) : Color.stone.opacity(Theme.Opacity.subtle))
+                .background(
+                    LinearGradient(
+                        colors: [
+                            accentColor.opacity(isExpanded ? 0.18 : 0.08),
+                            Color.white.opacity(isExpanded ? 0.04 : 0.015)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
             })
             .buttonStyle(.plain)
-            // P0 FIX: Enhanced accessibility
             .accessibilityIdentifier("\(title)SectionButton")
             .accessibilityLabel("\(title) section")
             .accessibilityHint(isExpanded ? "Collapse \(title) section" : "Expand \(title) section")
             .accessibilityValue(isExpanded ? "Expanded" : "Collapsed")
-            // P0 FIX: Keyboard navigation support
             .keyboardShortcut(.defaultAction) // Space/Enter to toggle
 
-            // Content (collapsible)
             if isExpanded {
+                Divider()
+                    .overlay(accentColor.opacity(0.18))
+                    .padding(.horizontal, Theme.Dimensions.paddingMD)
+
                 content()
                     .padding(.horizontal, Theme.Dimensions.paddingMD)
-                    .padding(.vertical, Theme.Dimensions.paddingSM)
+                    .padding(.vertical, Theme.Dimensions.paddingMD)
                     .transition(.smoothScale)
-                    // REMOVED: .focusable() - was causing yellow focus ring on Inspector panel
             }
         }
+        .sanePanel(radius: 16, emphasized: isExpanded, accent: accentColor)
     }
 }
 
@@ -82,9 +103,9 @@ struct SubsectionHeader: View {
 
     var body: some View {
         Text(title.uppercased())
-            .font(.system(size: Theme.Typography.fontSizeXS, weight: .semibold))
-            .foregroundColor(Color.stone)
-            .tracking(0.5)
+            .font(.system(size: Theme.Typography.fontSizeXS, weight: .bold))
+            .foregroundStyle(Theme.Colors.accentSoft)
+            .tracking(0.8)
     }
 }
 
@@ -209,15 +230,25 @@ struct InspectorHeader: View {
         HStack {
             Text(String(localized: "inspector.header.title", defaultValue: "Inspector"))
                 .font(.system(.headline, design: .rounded))
+                .foregroundStyle(Theme.Colors.textPrimary)
 
             Spacer()
 
-            // MOVED HERE: Privacy badge always visible at top of inspector
             PrivacyBadge()
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding()
-        .background(.ultraThinMaterial)
+        .background(
+            LinearGradient(
+                colors: [
+                    Theme.Colors.ambientDeep.opacity(0.68),
+                    Theme.Colors.accentDeep.opacity(0.24),
+                    .clear
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        )
         .accessibilityLabel("Inspector panel")
         .accessibilityHint("View and edit properties of the selected clip")
     }
@@ -232,41 +263,39 @@ struct EmptySelectionView: View {
             
             Image(systemName: "selection.pin.in.out")
                 .font(.system(size: 40))
-                .foregroundColor(Color.stone.opacity(0.3))
+                .foregroundStyle(Theme.Colors.accentSoft.opacity(0.55))
             
             VStack(spacing: 12) {
                 Text("Nothing Selected")
-                    .font(.system(size: 14, weight: .bold))
+                    .saneReadableBodyStrong()
                 
                 Text("Select a clip in the timeline\nto view and edit properties.")
-                    .font(.system(size: 12))
-                    .foregroundColor(Color.stone)
+                    .saneReadableSupportText()
                     .multilineTextAlignment(.center)
                     .lineSpacing(4)
                 
-                // CRITICAL FIX: Add actionable hints
                 VStack(spacing: 6) {
                     HStack(spacing: 4) {
                         Image(systemName: "hand.point.up.left.fill")
                             .font(.caption2)
-                            .foregroundColor(Color.stone)
+                            .foregroundStyle(Theme.Colors.textSecondary)
                         Text("Click a clip in the timeline")
-                            .font(.caption2)
-                            .foregroundColor(Color.stone)
+                            .saneReadableSupportText()
                     }
                     
                     HStack(spacing: 4) {
                         Image(systemName: "keyboard")
                             .font(.caption2)
-                            .foregroundColor(Color.stone)
+                            .foregroundStyle(Theme.Colors.textSecondary)
                         Text("Or use Cmd+Click to select")
-                            .font(.caption2)
-                            .foregroundColor(Color.stone)
+                            .saneReadableSupportText()
                     }
                 }
                 .padding(.top, 8)
             }
             .padding(.horizontal, 20)
+            .padding(.vertical, 16)
+            .sanePanel(radius: 18, accent: Theme.Colors.accentSoft)
             
             Spacer()
         }
@@ -282,14 +311,13 @@ struct InfoRow: View {
     var body: some View {
         HStack {
             Text(label)
-                .foregroundColor(Color.stone)
+                .saneReadableSupportText()
             Spacer()
             Text(value)
-                .font(.caption)
+                .saneReadableMeta()
                 .lineLimit(1)
                 .truncationMode(.middle)
         }
-        .font(.caption)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(label): \(value)")
     }

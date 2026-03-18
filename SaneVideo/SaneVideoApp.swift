@@ -30,7 +30,7 @@ struct SaneVideoApp: App {
     #endif
 
     var body: some Scene {
-        WindowGroup {
+        Window(MainWindowScenePolicy.title, id: MainWindowScenePolicy.sceneID) {
             MainContentView()
                 .environment(licenseService)
                 .environment(appState)
@@ -38,6 +38,7 @@ struct SaneVideoApp: App {
                 .preferredColorScheme(
                     prefs.appTheme == .system ? nil : (prefs.appTheme == .dark ? .dark : .light)
                 )
+                .background(MainWindowOpenRegistrar())
                 .onAppear {
                     licenseService.checkCachedLicense()
                 }
@@ -197,12 +198,29 @@ struct SaneVideoApp: App {
                 .accessibilityIdentifier("menu.file.rename_project")
             }
 
-            CommandGroup(after: .toolbar) {
+            CommandGroup(after: .importExport) {
                 Button(String(localized: "menu.file.export_video", defaultValue: "Export Video...")) {
                     appState.showExportSheet = true
                 }
                 .keyboardShortcut("e", modifiers: [.command])
                 .accessibilityIdentifier("menu.file.export_video")
+
+                Button(String(localized: "menu.file.demo_studio", defaultValue: "Demo Studio...")) {
+                    appState.openDemoStudio()
+                }
+                .keyboardShortcut("d", modifiers: [.command, .shift])
+                .accessibilityIdentifier("menu.file.demo_studio")
+
+                Button(String(localized: "menu.file.build_commentary_reel", defaultValue: "Build Commentary Reel")) {
+                    appState.buildCommentaryReel()
+                }
+                .keyboardShortcut("b", modifiers: [.command, .option])
+                .accessibilityIdentifier("menu.file.build_commentary_reel")
+
+                Button(String(localized: "menu.view.teleprompter", defaultValue: "Toggle Teleprompter")) {
+                    appState.toggleTeleprompter()
+                }
+                .accessibilityIdentifier("menu.view.teleprompter")
 
                 Divider()
 
@@ -274,9 +292,9 @@ struct SaneVideoApp: App {
                 .accessibilityIdentifier("menu.help.shortcuts")
 
                 Button(String(localized: "menu.help.sane_video_help", defaultValue: "SaneVideo Help")) {
-                    if let url = URL(string: "https://www.sanevideo.app/help") {
-                        NSWorkspace.shared.open(url)
-                    }
+                    NotificationCenter.default.post(
+                        name: NSNotification.Name("ShowKeyboardShortcuts"), object: nil
+                    )
                 }
             }
         }
@@ -291,19 +309,44 @@ struct SaneVideoApp: App {
     }
 }
 
-// MARK: - App Delegate for Menu Bar
+enum MainWindowScenePolicy {
+    static let sceneID = "main-window"
+    static let title = "SaneVideo"
+    static let allowsMultipleWindows = false
+}
+
+private struct MainWindowOpenRegistrar: View {
+    @Environment(\.openWindow) private var openWindow
+
+    var body: some View {
+        Color.clear
+            .frame(width: 0, height: 0)
+            .allowsHitTesting(false)
+            .onAppear {
+                ServiceContainer.shared.appState.windowManager.registerMainWindowOpener {
+                    openWindow(id: MainWindowScenePolicy.sceneID)
+                }
+            }
+    }
+}
+
+enum AppLifecyclePolicy {
+    static func shouldTerminateAfterLastWindowClosed(
+        isRecording: Bool,
+        isExporting: Bool,
+        isScreenSharing: Bool,
+        isTogglingScreenShare: Bool,
+        isTesting: Bool = false
+    ) -> Bool {
+        !isTesting && !isRecording && !isExporting && !isScreenSharing && !isTogglingScreenShare
+    }
+}
+
+// MARK: - App Delegate
 
 @MainActor
 class AppDelegate: NSObject, NSApplicationDelegate {
-    var statusItem: NSStatusItem?
-
-    deinit {
-        NotificationCenter.default.removeObserver(self)
-    }
-
     func applicationDidFinishLaunching(_: Notification) {
-        setupMenuBar()
-
         // Initialize global hotkey manager
         #if !APP_STORE
             ServiceContainer.shared.globalHotkeyManager.start()
@@ -399,84 +442,20 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    private func setupMenuBar() {
-        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
-
-        if statusItem?.button != nil {
-            Task { @MainActor in
-                self.updateMenuBarIcon(isRecording: false)
-            }
-        }
-
-        let menu = NSMenu()
-        menu.addItem(
-            NSMenuItem(title: "New Recording", action: #selector(newRecording), keyEquivalent: ""))
-        menu.addItem(NSMenuItem(title: "Show Window", action: #selector(showWindow), keyEquivalent: ""))
-        menu.addItem(NSMenuItem.separator())
-        menu.addItem(
-            NSMenuItem(
-                title: "Quit SaneVideo",
-                action: #selector(NSApplication.terminate(_:)),
-                keyEquivalent: "q"
-            ))
-
-        statusItem?.menu = menu
-
-        // Observe recording state
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(recordingStateChanged),
-            name: NSNotification.Name("RecordingStateChanged"),
-            object: nil
+    func applicationShouldTerminateAfterLastWindowClosed(_: NSApplication) -> Bool {
+        return AppLifecyclePolicy.shouldTerminateAfterLastWindowClosed(
+            isRecording: ServiceContainer.shared.appState.recordingState.isRecording,
+            isExporting: ServiceContainer.shared.exportService.isExporting,
+            isScreenSharing: ServiceContainer.shared.appState.windowManager.isScreenSharing,
+            isTogglingScreenShare: ServiceContainer.shared.appState.windowManager.isTogglingScreenShare,
+            isTesting: TestEnvironment.isTesting
         )
     }
 
-    @objc private func recordingStateChanged(_ notification: Notification) {
-        if let isRecording = notification.userInfo?["isRecording"] as? Bool {
-            Task { @MainActor in
-                self.updateMenuBarIcon(isRecording: isRecording)
-            }
-        }
-    }
-
-    @MainActor
-    private func updateMenuBarIcon(isRecording: Bool) {
-        guard let button = statusItem?.button else { return }
-
-        if isRecording {
-            // Red dot icon (static, no pulsing)
-            let image = NSImage(
-                systemSymbolName: "record.circle.fill", accessibilityDescription: "Recording"
-            )
-            image?.isTemplate = false // Keep original color (red)
-            button.image = image
-            button.imagePosition = .imageOnly
-
-            // Remove any existing animation
-            button.layer?.removeAnimation(forKey: "pulse")
-        } else {
-            // Black camera icon
-            let image = NSImage(systemSymbolName: "video.fill", accessibilityDescription: "SaneVideo")
-            image?.isTemplate = true
-            button.image = image
-            button.layer?.removeAnimation(forKey: "pulse")
-        }
-    }
-
-    @MainActor
-    @objc private func newRecording() {
-        ServiceContainer.shared.appState.startNewRecording()
-        showWindow()
-    }
-
-    @MainActor
-    @objc private func showWindow() {
-        NSApp.activate(ignoringOtherApps: true)
-        NSApp.windows.first?.makeKeyAndOrderFront(nil)
-    }
-
-    private func setupGlobalHotkey() {
-        // Global hotkey handling is now centralized in GlobalHotkeyManager
+    func applicationShouldHandleReopen(_: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        guard !flag else { return false }
+        ServiceContainer.shared.appState.windowManager.restoreMainWindow()
+        return true
     }
 
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {

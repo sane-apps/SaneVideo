@@ -22,6 +22,9 @@ class CameraState {
 
     var session: AVCaptureSession? { cameraService.session }
     var hasVideoSignal: Bool { cameraService.hasVideoSignal }
+    var lastError: AppError? { cameraService.lastError }
+    var shouldShowCameraSurface: Bool { isActive || session != nil }
+    var shouldShowLivePreview: Bool { session != nil && (isActive || hasVideoSignal) }
     var audioLevelPublisher: AnyPublisher<Float, Never> { audioService.audioLevelSubject.eraseToAnyPublisher() }
 
     // MARK: - Internal Properties
@@ -36,6 +39,7 @@ class CameraState {
     init(cameraService: CameraServiceProtocol? = nil, audioService: AudioService? = nil) {
         self.cameraService = cameraService ?? ServiceContainer.shared.cameraService
         self.audioService = audioService ?? ServiceContainer.shared.audioService
+        self.isActive = self.cameraService.isActive
         setupObserver()
         // NOTE: Camera discovery is deferred until refreshCameras() is called
         // This prevents CMIO daemon activation on app launch
@@ -100,10 +104,10 @@ class CameraState {
         AppLogger.camera.info("Toggled camera (Active: \(cameraService.isActive))")
     }
 
-    func startCamera(completion: @escaping @Sendable () -> Void = {}) {
+    func startCamera(completion: @escaping @Sendable (Bool) -> Void = { _ in }) {
         if TestEnvironment.suppressPermissionPrompts && !TestEnvironment.allowsHardwareIntegration {
             isActive = true
-            completion()
+            completion(true)
             return
         }
 
@@ -112,16 +116,18 @@ class CameraState {
         
         if !cameraService.isActive {
             Task {
+                var didStart = false
                 do {
                     try await cameraService.start()
+                    didStart = cameraService.isActive
                     AppLogger.camera.info("Started camera")
                 } catch {
                     AppLogger.camera.error("Failed to start camera: \(error.localizedDescription)")
                 }
-                completion()
+                completion(didStart)
             }
         } else {
-            completion()
+            completion(true)
         }
     }
 

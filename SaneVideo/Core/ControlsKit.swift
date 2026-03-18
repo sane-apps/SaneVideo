@@ -116,11 +116,6 @@ public struct IconCircleButtonStyle: ButtonStyle {
 
     private var dim: CGFloat { size.diameter }
 
-    // Consistent opacity values across all button states
-    private var fillOpacity: Double {
-        isActive ? Theme.Opacity.heavy : Theme.Opacity.medium  // 0.5 : 0.2
-    }
-
     private var borderOpacity: Double {
         isActive ? 0.7 : Theme.Opacity.strong  // 0.7 : 0.3
     }
@@ -131,11 +126,39 @@ public struct IconCircleButtonStyle: ButtonStyle {
             .contentShape(Circle())
             .background(
                 ZStack {
-                    // Glass background
                     Circle()
-                        .fill(activeColor.opacity(fillOpacity))
+                        .fill(.ultraThinMaterial)
 
-                    // Border ring
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: isActive
+                                    ? [activeColor.opacity(0.95), Theme.Colors.accentDeep.opacity(0.92)]
+                                    : [Color.white.opacity(0.18), Theme.Colors.ambientDeep.opacity(0.46)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+
+                    Circle()
+                        .fill(
+                            RadialGradient(
+                                colors: [
+                                    activeColor.opacity(isActive ? 0.34 : 0.10),
+                                    .clear
+                                ],
+                                center: .topLeading,
+                                startRadius: 3,
+                                endRadius: dim * 0.9
+                            )
+                        )
+
+                    Circle()
+                        .strokeBorder(
+                            Color.white.opacity(isActive ? 0.20 : 0.10),
+                            lineWidth: 1
+                        )
+
                     Circle()
                         .strokeBorder(
                             activeColor.opacity(borderOpacity),
@@ -144,9 +167,9 @@ public struct IconCircleButtonStyle: ButtonStyle {
                 }
             )
             // Glow effect when active
-            .shadow(color: isActive ? activeColor.opacity(0.5) : .clear, radius: 10, x: 0, y: 0)
+            .shadow(color: isActive ? activeColor.opacity(0.56) : activeColor.opacity(0.10), radius: isActive ? 14 : 6, x: 0, y: 0)
             // Subtle drop shadow for depth
-            .shadow(color: .black.opacity(0.2), radius: 2, x: 0, y: 1)
+            .shadow(color: .black.opacity(0.28), radius: 4, x: 0, y: 2)
             // Hover and press animations
             .scaleEffect(isHovering ? (configuration.isPressed ? 1.0 : 1.08) : (configuration.isPressed ? 0.94 : 1.0))
             .animation(.easeOut(duration: 0.15), value: isHovering)
@@ -166,6 +189,9 @@ public struct IconCircleButtonStyle: ButtonStyle {
 }
 
 public struct RecBadgeTimer: View {
+    static let minimumReservedWidth: CGFloat = 104
+    static let trailingInset: CGFloat = Theme.Dimensions.paddingSM
+
     let isRecording: Bool
     let timeString: String
 
@@ -202,8 +228,11 @@ public struct RecBadgeTimer: View {
             Text(timeString)
                 .font(.system(.title3, design: .monospaced).weight(.medium))
                 .foregroundColor(isRecording ? .red : .primary)
+                .lineLimit(1)
                 .accessibilityIdentifier("record.timer")
         }
+        .frame(minWidth: Self.minimumReservedWidth, alignment: .leading)
+        .padding(.trailing, Self.trailingInset)
         .onChange(of: isRecording) { _, recording in
             if recording {
                 withAnimation(.easeInOut(duration: 0.6).repeatForever(autoreverses: true)) {

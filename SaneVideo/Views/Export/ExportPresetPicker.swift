@@ -57,7 +57,7 @@ struct ExportPresetPicker: View {
                     }
                 } label: {
                     Image(systemName: "chevron.down")
-                        .font(.caption)
+                        .font(.system(size: Theme.Typography.fontSizeSM, weight: .semibold))
                 }
                 .menuStyle(.borderlessButton)
                 .frame(width: 24)
@@ -68,14 +68,14 @@ struct ExportPresetPicker: View {
             if let template = selectedCustomTemplate {
                 HStack(spacing: 4) {
                     Image(systemName: template.icon)
-                        .font(.caption)
+                        .font(.system(size: Theme.Typography.fontSizeSM, weight: .medium))
                     Text(template.name)
-                        .font(.caption)
+                        .font(Theme.Typography.meta)
                         .lineLimit(1)
                 }
                 .padding(.horizontal, 8)
-                .padding(.vertical, 4)
-                .background(Color.accentColor.opacity(0.1))
+                .padding(.vertical, 6)
+                .background(Color.accentColor.opacity(0.14))
                 .cornerRadius(4)
             }
         }
@@ -112,13 +112,13 @@ struct TemplateQuickApplyButton: View {
         Button(action: onApply) {
             VStack(spacing: 4) {
                 Image(systemName: template.icon)
-                    .font(.system(size: 16))
+                    .font(.system(size: 18))
                 Text(template.name)
-                    .font(.caption2)
+                    .font(Theme.Typography.meta)
                     .lineLimit(1)
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 6)
+            .padding(.vertical, 8)
             .background(isSelected ? Color.accentColor.opacity(0.15) : Color.clear)
             .cornerRadius(6)
             .overlay(

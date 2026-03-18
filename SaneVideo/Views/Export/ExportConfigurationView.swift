@@ -17,13 +17,17 @@ struct ExportConfigurationView: View {
 
     var body: some View {
         GroupBox {
-            VStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 14) {
+                HelperText(
+                    text: "Start with a preset, then override quality or format only when the destination needs something specific.",
+                    icon: "slider.horizontal.3"
+                )
+
                 // PRESETS ROW with descriptions
                 VStack(alignment: .leading, spacing: 8) {
                     HStack {
                         Text(String(localized: "export.preset.label", defaultValue: "Preset"))
-                            .font(.caption)
-                            .foregroundStyle(Color.stone)
+                            .saneReadableLabel()
                         Spacer()
                         ExportPresetPicker(
                             exportSettings: $exportSettings,
@@ -49,9 +53,7 @@ struct ExportConfigurationView: View {
                     }
 
                     if let description = selectedPreset?.description {
-                        Text(description)
-                            .font(.caption2)
-                            .foregroundStyle(Color.stone)
+                        HelperText(text: description, icon: "sparkles")
                     }
                 }
                 .padding(.leading, 4)
@@ -62,8 +64,7 @@ struct ExportConfigurationView: View {
                 HStack(spacing: 20) {
                     VStack(alignment: .leading, spacing: 4) {
                         Label(String(localized: "export.quality.label", defaultValue: "Quality"), systemImage: "dial.high")
-                            .font(.caption)
-                            .foregroundStyle(Color.stone)
+                            .saneReadableLabel()
 
                         Picker("", selection: $exportSettings.resolution) {
                             Text(String(localized: "export.res.uhd", defaultValue: "4K (2160p)")).tag(SaneExportSettings.ExportResolution.uhd4K)
@@ -75,12 +76,15 @@ struct ExportConfigurationView: View {
                         .accessibilityIdentifier("export.resolution_picker")
                         .accessibilityLabel("Export resolution")
                         .onChange(of: exportSettings.resolution) { _, _ in selectedPreset = .custom }
+                        
+                        Text("4K keeps product UI crisp. 1080p is the normal default for lighter exports.")
+                            .saneReadableSupportText()
+                            .fixedSize(horizontal: false, vertical: true)
                     }
 
                     VStack(alignment: .leading, spacing: 4) {
                         Label(String(localized: "export.format.label", defaultValue: "Format"), systemImage: "film")
-                            .font(.caption)
-                            .foregroundStyle(Color.stone)
+                            .saneReadableLabel()
 
                         Picker("", selection: $exportSettings.codec) {
                             Text(String(localized: "export.codec.h264", defaultValue: "H.264 (Most Compatible)")).tag(AVVideoCodecType.h264)
@@ -93,18 +97,24 @@ struct ExportConfigurationView: View {
                         .accessibilityIdentifier("export.format_picker")
                         .accessibilityLabel("Export format")
                         .onChange(of: exportSettings.codec) { _, _ in selectedPreset = .custom }
+
+                        Text("H.264 is safest, HEVC is smaller, and ProRes is best when you plan to re-edit the export later.")
+                            .saneReadableSupportText()
+                            .fixedSize(horizontal: false, vertical: true)
                     }
 
                     VStack(alignment: .leading, spacing: 4) {
                         Label(String(localized: "export.size.label", defaultValue: "Est. Size"), systemImage: "externaldrive")
-                            .font(.caption)
-                            .foregroundStyle(Color.stone)
+                            .saneReadableLabel()
 
                         Text("\(Int(exportSettings.bitrate / 1_000_000)) Mbps")
-                            .font(.caption2)
-                            .foregroundStyle(Color.stone)
+                            .saneReadableMeta()
                         Text(estimateFileSize())
-                            .font(.caption.monospaced())
+                            .saneReadableMeta(monospaced: true)
+
+                        Text("Bitrate is the main size lever. Bigger numbers usually look better, but take more space and time.")
+                            .saneReadableSupportText()
+                            .fixedSize(horizontal: false, vertical: true)
                     }
                 }
                 .padding(4)
@@ -115,6 +125,7 @@ struct ExportConfigurationView: View {
                 MLEffectsExportSection(mlEffects: $mlEffects)
             }
         }
+        .sanePanel(radius: 16, accent: Theme.Colors.accentSoft)
     }
 
     private func applyPreset(_ preset: ExportPreset) {
@@ -181,20 +192,39 @@ struct ExportPresetButton: View {
                 Image(systemName: icon)
                     .font(.system(size: 20))
                 Text(title)
-                    .font(.caption2)
-                    .fontWeight(selected ? .semibold : .regular)
+                    .font(.system(size: Theme.Typography.fontSizeSM, weight: selected ? .semibold : .regular))
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 8)
-            .background(selected ? Color.accentColor.opacity(0.1) : Color.clear)
+            .padding(.vertical, 10)
+            .background(
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .fill(
+                        selected
+                            ? AnyShapeStyle(
+                                LinearGradient(
+                                    colors: [Theme.Colors.accentSoft.opacity(0.22), Theme.Colors.accentDeep.opacity(0.16)],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            : AnyShapeStyle(
+                                LinearGradient(
+                                    colors: [Color.white.opacity(0.04), Color.white.opacity(0.02)],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                    )
+            )
             .cornerRadius(6)
             .overlay(
                 RoundedRectangle(cornerRadius: 6)
-                    .stroke(selected ? Color.accentColor : Color.stone.opacity(0.2), lineWidth: 1)
+                    .stroke(selected ? Theme.Colors.accentSoft : Color.stone.opacity(0.2), lineWidth: 1)
             )
         }
         .buttonStyle(.plain)
         .accessibilityIdentifier(id)
         .accessibilityLabel("\(title) preset\(selected ? ", selected" : "")")
+        .help(preset.description)
     }
 }

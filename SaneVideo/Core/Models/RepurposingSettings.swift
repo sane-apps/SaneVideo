@@ -113,6 +113,19 @@ enum ShortPlatform: String, CaseIterable, Identifiable, Codable, Sendable {
         }
     }
 
+    var description: String {
+        switch self {
+        case .tiktok:
+            return "Fast-paced vertical clips with aggressive trimming."
+        case .instagramReels:
+            return "Vertical reels with a slightly cleaner, more polished pacing."
+        case .youtubeShorts:
+            return "Longer vertical clips that can hold a fuller explanation."
+        case .custom:
+            return "Start neutral, then tune duration, crop, and export settings manually."
+        }
+    }
+
     var recommendedDuration: ShortDuration {
         switch self {
         case .tiktok: return .thirty

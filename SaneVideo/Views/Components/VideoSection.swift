@@ -20,118 +20,177 @@ struct VideoSection: View {
     @State private var selectedAspectRatio: AspectRatioOption = .vertical
     @State private var cropError: String?
 
+    private var hasClickData: Bool { clip.hasRecordedClickData }
+    private var hasCursorData: Bool { clip.hasRecordedCursorData }
+    private var hasKeystrokeData: Bool { clip.hasRecordedKeystrokeData }
+    private var autoZoomSummary: String {
+        if hasClickData && hasCursorData {
+            return "Creates focus moves from recorded clicks and cursor motion so walkthroughs feel guided instead of static."
+        } else if hasClickData {
+            return "Creates focus moves from recorded click events so the viewer follows the action without manual keyframing."
+        } else {
+            return "Auto-Zoom needs recorded click data. Screen recordings with interaction capture turn this on automatically."
+        }
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            // Auto-Zoom (Screen Studio style) - only if click data exists
-            if clip.clickDataURL != nil {
+            VStack(alignment: .leading, spacing: 12) {
                 SubsectionHeader(title: String(localized: "video.section.auto_zoom", defaultValue: "Auto-Zoom"))
+
+                HelperText(
+                    text: autoZoomSummary,
+                    icon: "sparkles.tv.fill",
+                    color: hasClickData ? Theme.Colors.accent : Theme.Colors.warning
+                )
+
+                HStack(spacing: 8) {
+                    FeatureBadge(
+                        label: hasClickData ? "Click data ready" : "No click data yet",
+                        icon: hasClickData ? "cursorarrow.click" : "exclamationmark.triangle.fill",
+                        accent: hasClickData ? Theme.Colors.accent : Theme.Colors.warning
+                    )
+
+                    if hasCursorData {
+                        FeatureBadge(
+                            label: "Cursor path ready",
+                            icon: "cursorarrow.motionlines",
+                            accent: Theme.Colors.accentSoft
+                        )
+                    }
+
+                    if hasKeystrokeData {
+                        FeatureBadge(
+                            label: "Keys ready",
+                            icon: "command",
+                            accent: Theme.Colors.accentSoft
+                        )
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+
                 Button {
                     Task { await appState.projectState.applyAutoZoom(to: clip) }
                 } label: {
-                    HStack {
+                    HStack(spacing: 10) {
                         Image(systemName: "magnifyingglass")
-                        Text(String(localized: "video.action.apply_auto_zoom", defaultValue: "Apply Auto-Zoom"))
-                            .font(.caption)
+                            .font(.system(size: Theme.Typography.iconSizeSM, weight: .semibold))
+                        Text(
+                            hasClickData
+                                ? String(localized: "video.action.apply_auto_zoom", defaultValue: "Apply Auto-Zoom")
+                                : "Record Click Data First"
+                        )
+                        .saneReadableBodyStrong()
                         Spacer()
-                        Image(systemName: "sparkles")
-                            .font(.caption2)
-                            .foregroundStyle(Color.stone)
+                        Text(hasCursorData ? "Cursor-guided" : "Click-guided")
+                            .saneReadableMeta()
                     }
-                    .padding(8)
-                    .background(Color.accentColor.opacity(0.15))
-                    .cornerRadius(6)
+                    .padding(12)
+                    .background(
+                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                            .fill(Theme.Colors.accent.opacity(hasClickData ? 0.18 : 0.08))
+                    )
                     .overlay(
-                        RoundedRectangle(cornerRadius: 6)
-                            .stroke(Color.accentColor.opacity(0.3), lineWidth: 1)
+                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                            .stroke(Theme.Colors.accent.opacity(hasClickData ? 0.34 : 0.16), lineWidth: 1)
                     )
                 }
                 .buttonStyle(.plain)
                 .hoverScale(1.02)
                 .pressScale()
-                .disabled(appState.projectState.isProcessing || clip.isMissing)
-                .help(clip.isMissing ? "Clip file is missing" : "Apply auto-zoom to highlight click events")
+                .disabled(appState.projectState.isProcessing || isOperationInProgress || clip.isMissing || !hasClickData)
+                .help(
+                    clip.isMissing
+                        ? "Clip file is missing"
+                        : hasClickData
+                            ? "Generate automatic focus moves from recorded interaction data"
+                            : "Auto-Zoom needs click data from a screen recording"
+                )
                 .accessibilityIdentifier("video.apply_auto_zoom")
                 .smoothAppear()
-
-                Divider().padding(.vertical, 4)
             }
+            .padding(14)
+            .sanePanel(radius: 16, emphasized: hasClickData, accent: hasClickData ? Theme.Colors.accent : Theme.Colors.warning)
 
-            // Smart Crop with Aspect Ratio Options
-            SubsectionHeader(title: String(localized: "video.section.smart_crop", defaultValue: "Smart Crop"))
+            VStack(alignment: .leading, spacing: 12) {
+                SubsectionHeader(title: String(localized: "video.section.smart_crop", defaultValue: "Smart Crop"))
 
-            HStack(spacing: 8) {
-                ForEach(AspectRatioOption.allCases) { option in
-                    AspectRatioButton(
-                        option: option,
-                        isSelected: selectedAspectRatio == option
-                    ) {
-                        selectedAspectRatio = option
-                    }
-                    .accessibilityIdentifier("video.aspect_ratio.\(option.id)")
-                }
-            }
-
-            // Apply Button
-            Button {
-                Task { await applySmartCrop() }
-            } label: {
-                HStack {
-                    Image(systemName: "crop")
-                    Text(isAnalyzingCrop ? String(localized: "video.action.analyzing", defaultValue: "Analyzing...") : String(localized: "video.action.apply_smart_crop", defaultValue: "Apply Smart Crop"))
-                        .font(.caption)
-                    Spacer()
-                    if isAnalyzingCrop {
-                        ProgressView().scaleEffect(0.6)
-                    } else {
-                        Text(selectedAspectRatio.localizedLabel)
-                            .font(.caption2)
-                            .foregroundStyle(Color.stone)
-                    }
-                }
-                .padding(8)
-                .background(Theme.Colors.accent.opacity(0.15))
-                .cornerRadius(6)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 6)
-                        .stroke(Theme.Colors.accent.opacity(0.3), lineWidth: 1)
+                HelperText(
+                    text: "Reframes the clip for a destination shape. Pick the target below, then run the analysis button once.",
+                    icon: "viewfinder.circle.fill",
+                    color: Theme.Colors.accent
                 )
+
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Target output")
+                        .saneReadableLabel()
+                    Text("These ratio buttons only choose the destination format. They do not crop the clip until you run the action below.")
+                        .saneReadableSupportText()
+
+                    HStack(spacing: 8) {
+                        ForEach(AspectRatioOption.allCases) { option in
+                            AspectRatioButton(
+                                option: option,
+                                isSelected: selectedAspectRatio == option
+                            ) {
+                                selectedAspectRatio = option
+                            }
+                            .accessibilityIdentifier("video.aspect_ratio.\(option.id)")
+                        }
+                    }
+                }
+
+                Button {
+                    Task { await applySmartCrop() }
+                } label: {
+                    HStack(spacing: 10) {
+                        Image(systemName: "crop")
+                            .font(.system(size: Theme.Typography.iconSizeSM, weight: .semibold))
+                        Text(isAnalyzingCrop ? String(localized: "video.action.analyzing", defaultValue: "Analyzing...") : "Analyze + Apply Crop")
+                            .saneReadableBodyStrong()
+                        Spacer()
+                        if isAnalyzingCrop {
+                            ProgressView().scaleEffect(0.6)
+                        } else {
+                            Text("\(selectedAspectRatio.localizedLabel) · \(selectedAspectRatio.localizedPlatform)")
+                                .saneReadableMeta()
+                        }
+                    }
+                    .padding(12)
+                    .background(
+                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                            .fill(Theme.Colors.accent.opacity(0.18))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                            .stroke(Theme.Colors.accent.opacity(0.34), lineWidth: 1)
+                    )
+                }
+                .buttonStyle(.plain)
+                .hoverScale(1.02)
+                .pressScale()
+                .disabled(isAnalyzingCrop || isOperationInProgress || clip.isMissing)
+                .help(clip.isMissing ? "Clip file is missing" : "Analyze the clip and apply a smart crop for the selected output shape")
+                .accessibilityIdentifier("video.apply_smart_crop")
+                .smoothAppear()
             }
-            .buttonStyle(.plain)
-            .hoverScale(1.02)
-            .pressScale()
-            .disabled(isAnalyzingCrop || clip.isMissing)
-            .help(clip.isMissing ? "Clip file is missing" : "Apply smart crop to reframe video")
-            .accessibilityIdentifier("video.apply_smart_crop")
-            .smoothAppear()
+            .padding(14)
+            .sanePanel(radius: 16, accent: Theme.Colors.accentSoft)
 
             if let error = cropError {
-                HStack {
-                    Image(systemName: "exclamationmark.triangle.fill")
-                        .foregroundColor(.orange)
-                    Text(error)
-                        .font(.caption2)
-                        .foregroundColor(Color.stone)
-                }
-                .padding(6)
-                .background(Color.orange.opacity(0.1))
-                .cornerRadius(4)
-                .transition(.smoothScale)
+                InformationBox(text: error, color: Theme.Colors.warning, icon: "exclamationmark.triangle.fill")
+                    .transition(.smoothScale)
             }
 
             if let result = cropResult {
-                Text(result)
-                    .font(.caption2)
-                    .foregroundColor(Color.stone)
+                InformationBox(text: result, color: Theme.Colors.accent, icon: "checkmark.circle.fill")
             }
 
-            // Hint: Basic controls in toolbar
-            HStack(spacing: 4) {
-                Image(systemName: "info.circle")
-                    .font(.caption2)
-                Text("Rotate & Speed in toolbar below video")
-                    .font(.caption2)
-            }
-            .foregroundColor(Color.stone)
+            HelperText(
+                text: "Rotate and playback speed still live in the toolbar below the viewer.",
+                icon: "slider.horizontal.3",
+                color: Theme.Colors.accentSoft
+            )
             .padding(.top, 4)
         }
     }
@@ -169,7 +228,7 @@ struct VideoSection: View {
             targetAspectRatio: selectedAspectRatio.ratio
         )
         await MainActor.run {
-            cropResult = "✅ Applied \(selectedAspectRatio.localizedLabel) crop"
+            cropResult = "Applied \(selectedAspectRatio.localizedLabel) crop for \(selectedAspectRatio.localizedPlatform)."
             cropError = nil
         }
     }
@@ -231,24 +290,41 @@ struct AspectRatioButton: View {
 
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 2) {
+            VStack(spacing: 4) {
                 Image(systemName: option.icon)
-                    .font(.system(size: 14))
+                    .font(.system(size: 15, weight: .semibold))
                 Text(option.localizedLabel)
-                    .font(.system(size: 8, weight: .medium))
+                    .font(.system(size: 11, weight: .bold))
+                Text(option.localizedPlatform)
+                    .font(.system(size: 10, weight: .medium))
+                    .lineLimit(1)
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 6)
-            .background(isSelected ? Color.accentColor.opacity(0.2) : Color.stone.opacity(0.1))
-            .foregroundColor(isSelected ? .accentColor : Color.stone)
-            .cornerRadius(6)
+            .padding(.vertical, 10)
+            .background(
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .fill(
+                        isSelected
+                            ? LinearGradient(
+                                colors: [Theme.Colors.accent.opacity(0.24), Theme.Colors.accentDeep.opacity(0.18)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                            : LinearGradient(
+                                colors: [Color.white.opacity(0.05), Theme.Colors.ambientDeep.opacity(0.18)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                    )
+            )
+            .foregroundStyle(isSelected ? Theme.Colors.textPrimary : Theme.Colors.textSecondary)
             .overlay(
-                RoundedRectangle(cornerRadius: 6)
-                    .stroke(isSelected ? Color.accentColor : Color.clear, lineWidth: 1)
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .stroke(isSelected ? Theme.Colors.accent : Color.white.opacity(0.08), lineWidth: 1)
             )
         }
         .buttonStyle(.plain)
-        .hoverScale(1.05)
+        .hoverScale(1.03)
         .pressScale()
         .animation(.smoothUI, value: isSelected)
         .help(option.localizedPlatform)

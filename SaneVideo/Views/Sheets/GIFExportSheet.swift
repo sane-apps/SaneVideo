@@ -48,6 +48,11 @@ struct GIFExportSheet: View {
 
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
+                    HelperText(
+                        text: "Use GIF for short loops and lightweight previews. This writes a plain file to disk and does not host anything for the user.",
+                        icon: "photo.stack.fill"
+                    )
+
                     presetsSection
                     Divider()
                     fpsSection
@@ -102,6 +107,11 @@ struct GIFExportSheet: View {
             )
             .font(.subheadline.weight(.semibold))
 
+            HelperText(
+                text: "Start with a preset, then change frame rate or width only if you need a smaller file or smoother motion.",
+                icon: "slider.horizontal.3"
+            )
+
             HStack(spacing: 10) {
                 PresetButton(
                     title: String(localized: "gif.preset.social.title", defaultValue: "Social"),
@@ -133,6 +143,11 @@ struct GIFExportSheet: View {
             Text(String(localized: "gif.fps.header", defaultValue: "Frame Rate"))
                 .font(.caption)
 
+            HelperText(
+                text: "Lower frame rates keep the file small. Higher frame rates look smoother but grow fast.",
+                icon: "speedometer"
+            )
+
             Picker("", selection: $fps) {
                 ForEach(fpsOptions, id: \.self) { option in
                     Text("\(option) FPS").tag(option)
@@ -151,6 +166,11 @@ struct GIFExportSheet: View {
         VStack(alignment: .leading, spacing: 8) {
             Text(String(localized: "gif.width.header", defaultValue: "Width"))
                 .font(.caption)
+
+            HelperText(
+                text: "Width controls sharpness and file size together. Social previews usually look fine at 320px or 480px.",
+                icon: "arrow.left.and.right"
+            )
 
             Picker("", selection: $width) {
                 ForEach(widthOptions, id: \.self) { option in
@@ -175,6 +195,11 @@ struct GIFExportSheet: View {
                     .labelsHidden()
                     .accessibilityIdentifier("gif.duration.full_video")
             }
+
+            HelperText(
+                text: "Trim the GIF down to the exact moment you want. Shorter loops usually export faster and feel more polished.",
+                icon: "scissors"
+            )
 
             if !useFullVideo {
                 VStack(spacing: 8) {

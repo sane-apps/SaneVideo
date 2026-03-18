@@ -22,6 +22,14 @@ struct APIKeysSettingsView: View {
 
     var body: some View {
         Form {
+            Section {
+                InformationBox(
+                    text: "API keys are optional. You only need them for direct upload or cloud-powered extras. Local recording, editing, teleprompter, and Demo Pack export work without them.",
+                    color: Theme.Colors.accent,
+                    icon: "lock.shield.fill"
+                )
+            }
+
             // YouTube Section
             Section {
                 VStack(alignment: .leading, spacing: 12) {
@@ -35,20 +43,32 @@ struct APIKeysSettingsView: View {
                     }
 
                     Text(String(localized: "settings.youtube.description", defaultValue: "Required for uploading videos directly to YouTube. Get credentials from [Google Cloud Console](https://console.cloud.google.com/apis/credentials)."))
-                        .font(.caption)
-                        .foregroundColor(Color.stone)
+                        .saneReadableSupportText()
+
+                    HelperText(
+                        text: "Use this only if you want SaneVideo to upload for you. If you export files and upload them yourself, leave this blank.",
+                        icon: "arrow.up.circle.fill"
+                    )
 
                     VStack(spacing: 8) {
                         HStack {
                             Text(String(localized: "settings.youtube.client_id_label", defaultValue: "Client ID"))
+                                .saneReadableLabel()
                                 .frame(width: 100, alignment: .leading)
                             TextField(String(localized: "settings.youtube.client_id_placeholder", defaultValue: "Enter Client ID"), text: $youtubeClientID)
                                 .textFieldStyle(.roundedBorder)
+                                .help("Paste the OAuth client ID from Google Cloud Console.")
                                 .accessibilityIdentifier("settings.youtube.client_id")
                         }
 
+                        HelperText(
+                            text: "The client ID identifies your Google app configuration for direct upload.",
+                            icon: "number.circle.fill"
+                        )
+
                         HStack {
                             Text(String(localized: "settings.youtube.client_secret_label", defaultValue: "Client Secret"))
+                                .saneReadableLabel()
                                 .frame(width: 100, alignment: .leading)
                             Group {
                                 if showYouTubeSecret {
@@ -58,20 +78,28 @@ struct APIKeysSettingsView: View {
                                 }
                             }
                             .textFieldStyle(.roundedBorder)
+                            .help("Paste the matching client secret from Google Cloud Console.")
                             .accessibilityIdentifier("settings.youtube.client_secret")
 
                             Button(action: { showYouTubeSecret.toggle() }, label: {
                                 Image(systemName: showYouTubeSecret ? "eye.slash" : "eye")
                             })
                             .buttonStyle(.borderless)
+                            .help(showYouTubeSecret ? "Hide the client secret." : "Reveal the client secret so you can confirm it.")
                             .accessibilityIdentifier("settings.youtube.toggle_secret")
                         }
+
+                        HelperText(
+                            text: "The secret is stored in your Mac Keychain. SaneVideo does not send it anywhere unless you choose a feature that uses it.",
+                            icon: "key.fill"
+                        )
                     }
 
                     HStack {
                         Button(String(localized: "settings.youtube.action.save", defaultValue: "Save YouTube Credentials")) {
                             saveYouTubeCredentials()
                         }
+                        .help("Save these optional YouTube credentials to your Mac Keychain.")
                         .disabled(youtubeClientID.isEmpty || youtubeClientSecret.isEmpty)
                         .accessibilityIdentifier("settings.youtube.save")
 
@@ -80,6 +108,7 @@ struct APIKeysSettingsView: View {
                                 clearYouTubeCredentials()
                             }
                             .buttonStyle(.borderless)
+                            .help("Remove the stored YouTube credentials from your Mac Keychain.")
                             .accessibilityIdentifier("settings.youtube.clear")
                         }
                     }
@@ -98,12 +127,18 @@ struct APIKeysSettingsView: View {
                     }
 
                     Text(String(localized: "settings.security.description", defaultValue: "All API keys are stored securely in your Mac's Keychain. They never leave your device and are encrypted at rest."))
-                        .font(.caption)
-                        .foregroundColor(Color.stone)
+                        .saneReadableSupportText()
+
+                    HelperText(
+                        text: "You should only see a single macOS Keychain prompt when you save or clear credentials. SaneVideo does not need Keychain access for normal local recording and editing.",
+                        icon: "exclamationmark.shield.fill",
+                        color: Theme.Colors.warning
+                    )
 
                     Button(String(localized: "settings.action.clear_all", defaultValue: "Clear All API Keys"), role: .destructive) {
                         showingClearAlert = true
                     }
+                    .help("Remove every stored API credential from your Mac Keychain.")
                     .padding(.top, 4)
                     .accessibilityIdentifier("settings.keys.clear_all")
                 }
@@ -140,12 +175,8 @@ struct APIKeysSettingsView: View {
                     Text(String(localized: "settings.save_success", defaultValue: "Saved successfully"))
                 }
                 .padding()
-                .background(Color(NSColor.controlBackgroundColor))
-                .cornerRadius(Theme.Dimensions.cornerRadius)
-                .overlay(
-                    RoundedRectangle(cornerRadius: Theme.Dimensions.cornerRadius)
-                        .stroke(Color.stone.opacity(0.2), lineWidth: 1)
-                ).onAppear {
+                .sanePanel(radius: Theme.Dimensions.cornerRadius, accent: .green)
+                .onAppear {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
                         withAnimation {
                             showingSaveSuccess = false
@@ -166,12 +197,12 @@ struct APIKeysSettingsView: View {
     private func statusBadge(configured: Bool) -> some View {
         if configured {
             Label(String(localized: "settings.status.configured", defaultValue: "Configured"), systemImage: "checkmark.circle.fill")
-                .font(.caption)
+                .font(Theme.Typography.meta)
                 .foregroundColor(.green)
         } else {
             Label(String(localized: "settings.status.not_set", defaultValue: "Not Set"), systemImage: "circle.dashed")
-                .font(.caption)
-                .foregroundColor(Color.stone)
+                .font(Theme.Typography.meta)
+                .foregroundColor(Theme.Colors.textSecondary)
         }
     }
 

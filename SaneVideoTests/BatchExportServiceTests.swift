@@ -13,6 +13,22 @@ import CoreMedia
 
 @Suite("Batch Export Service Tests")
 struct BatchExportServiceTests {
+    private final class ProgressRecorder: @unchecked Sendable {
+        private let lock = NSLock()
+        private var values: [Double] = []
+
+        func append(_ value: Double) {
+            lock.withLock {
+                values.append(value)
+            }
+        }
+
+        func snapshot() -> [Double] {
+            lock.withLock {
+                values
+            }
+        }
+    }
 
     // MARK: - Test Setup
 
@@ -58,7 +74,7 @@ struct BatchExportServiceTests {
     func progressHandlerIsCalled() async throws {
         // Arrange
         let service = sut
-        var progressValues: [Double] = []
+        let progressRecorder = ProgressRecorder()
         let settings = RepurposingSettings()
 
         // Create a minimal candidate (will fail due to no real video, but progress should be called)
@@ -78,7 +94,7 @@ struct BatchExportServiceTests {
                 from: TestEnvironment.mockAssetURL,
                 settings: settings,
                 progressHandler: { progress in
-                    progressValues.append(progress)
+                    progressRecorder.append(progress)
                 }
             )
         } catch {
@@ -88,6 +104,7 @@ struct BatchExportServiceTests {
         // Assert - progress handler should have been called at least once
         // (even if export failed)
         // Note: If asset doesn't exist, this might not call progress
+        _ = progressRecorder.snapshot()
     }
 
     // MARK: - Cancellation Safety Tests
@@ -142,6 +159,67 @@ struct BatchExportServiceTests {
             #expect(error.errorDescription != nil)
             #expect(error.errorDescription?.isEmpty == false)
         }
+    }
+
+    @Test("Sync repair whole-track shift builds delayed audio filter")
+    func syncRepairWholeTrackShiftBuildsDelayFilter() throws {
+        let request = SyncRepairBuildRequest(
+            inputPath: "/tmp/input.mp4",
+            outputPath: "/tmp/output.mp4",
+            audioTrackCount: 2,
+            videoDuration: 12.0,
+            primaryAudioDuration: 11.5,
+            mode: .shiftWholeTrack,
+            markerTime: nil,
+            offsetSeconds: 1.5,
+            tailTempo: 1.0
+        )
+        let arguments = try FFmpegService.buildSyncRepairArguments(request: request)
+
+        let combined = arguments.joined(separator: " ")
+        #expect(combined.contains("adelay=1500:all=1"))
+        #expect(combined.contains("-c:v copy"))
+        #expect(combined.contains("-map [a1]"))
+    }
+
+    @Test("Sync repair tail shift trims post-marker audio when moving earlier")
+    func syncRepairTailShiftBuildsTrimmedPostFilter() throws {
+        let request = SyncRepairBuildRequest(
+            inputPath: "/tmp/input.mp4",
+            outputPath: "/tmp/output.mp4",
+            audioTrackCount: 1,
+            videoDuration: 30.0,
+            primaryAudioDuration: 29.0,
+            mode: .shiftFromMarker,
+            markerTime: 12.0,
+            offsetSeconds: -1.25,
+            tailTempo: 1.0
+        )
+        let arguments = try FFmpegService.buildSyncRepairArguments(request: request)
+
+        let combined = arguments.joined(separator: " ")
+        #expect(combined.contains("atrim=start=13.250"))
+        #expect(combined.contains("concat=n=2:v=0:a=1"))
+    }
+
+    @Test("Sync repair trim mode copies streams to primary audio duration")
+    func syncRepairTrimModeUsesPrimaryAudioDuration() throws {
+        let request = SyncRepairBuildRequest(
+            inputPath: "/tmp/input.mp4",
+            outputPath: "/tmp/output.mp4",
+            audioTrackCount: 1,
+            videoDuration: 42.0,
+            primaryAudioDuration: 39.25,
+            mode: .trimVideoToPrimaryAudio,
+            markerTime: nil,
+            offsetSeconds: 0,
+            tailTempo: 1.0
+        )
+        let arguments = try FFmpegService.buildSyncRepairArguments(request: request)
+
+        #expect(arguments.contains("-c"))
+        #expect(arguments.contains("copy"))
+        #expect(arguments.contains("39.250"))
     }
 
     // MARK: - Helper Methods

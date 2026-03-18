@@ -35,7 +35,7 @@ class RecordingEngine: NSObject {
   // Helpers
   // Services
   let cameraService: CameraServiceProtocol
-  @RecordingActor var videoWriter: VideoWriter?
+  @RecordingActor var videoWriter: VideoWriterProtocol?
   let screenRecorder: ScreenRecorder
   let audioService: AudioService
   let soundAnalysisService: SoundAnalysisService
@@ -51,6 +51,7 @@ class RecordingEngine: NSObject {
   @RecordingActor var pendingSource: RecordingSource?  // Track transition for graceful handoff
   @RecordingActor var isSwitching = false  // Prevention of overlapping switches
   @RecordingActor var isMicMuted = false  // Mic muting state
+  @RecordingActor var isMicrophoneAudioEnabled = true
   @RecordingActor var outputURL: URL?
   let diskSpaceMonitor = DiskSpaceMonitor()
 
@@ -181,7 +182,11 @@ class RecordingEngine: NSObject {
   // MARK: - Public Interface
 
   @RecordingActor
-  func startRecording(initialSource: RecordingSource) async {
+  func startRecording(
+    initialSource: RecordingSource,
+    includeCameraOverlay: Bool = true,
+    includeMicrophoneAudio: Bool = true
+  ) async {
     guard !isRecording, !isStopping else {
       AppLogger.recording.warning("Cannot start recording: already recording or stopping")
       return
@@ -196,6 +201,7 @@ class RecordingEngine: NSObject {
 
       isRecording = true
       isPaused = false
+      isMicrophoneAudioEnabled = includeMicrophoneAudio
       currentSource = initialSource
       timeCoordinator.reset()
       return
@@ -237,18 +243,24 @@ class RecordingEngine: NSObject {
       self.screenRecorder.targetSize = targetSize
     }
 
+    timeCoordinator.reset()
+
     // CRITICAL: Create videoWriter but don't set isRecording until ALL services start successfully
     // This prevents partial failure states where isRecording=true but no input source
     let renderingService = RenderingService.shared
     self.videoWriter = VideoWriter(renderingService: renderingService, targetSize: targetSize)
+    var cameraWasStarted = false
+    var screenWasStarted = false
 
     do {
       try self.videoWriter?.start(outputURL: url, targetFrameRate: targetFPS)
+      self.timeCoordinator.driftTracker = self.videoWriter?.driftTracker
     } catch {
       AppLogger.recording.error("Failed to start video writer: \(error)")
       // CRITICAL: Cleanup on failure
       self.videoWriter = nil
       self.outputURL = nil
+      self.timeCoordinator.driftTracker = nil
       await MainActor.run {
         self.onError?(AppError.recordingEngineError("Failed to start recording"))
       }
@@ -263,23 +275,23 @@ class RecordingEngine: NSObject {
     if initialSource == .camera {
       do {
         try await cameraService.start()
+        cameraWasStarted = true
       } catch {
         // CRITICAL: Cleanup on failure - videoWriter was created but camera failed
         AppLogger.recording.error("Camera start failed, cleaning up videoWriter")
-        _ = await self.videoWriter?.finish()  // Try to finish gracefully
-        self.videoWriter = nil
-        self.outputURL = nil
+        await rollbackFailedStart(cameraWasStarted: cameraWasStarted, screenWasStarted: screenWasStarted)
         await MainActor.run {
-          self.diskSpaceMonitor.stop()
           self.onError?(.cameraSetupFailed(error))
         }
         return
       }
     } else {
       do {
-        // CRITICAL: Ensure camera is active for PiP overlay during screen sharing
-        // We do this BEFORE starting the screen recorder to avoid flicker
-        try await cameraService.start()
+        if includeCameraOverlay {
+          // Only start camera when the user actually wants presenter overlay.
+          try await cameraService.start()
+          cameraWasStarted = true
+        }
 
         // Re-apply prefs in case they changed since recording started
         await MainActor.run {
@@ -288,28 +300,42 @@ class RecordingEngine: NSObject {
           self.screenRecorder.targetSize = prefs.recordingResolution.size
         }
         try await self.screenRecorder.start()
+        screenWasStarted = true
       } catch {
         // CRITICAL: Cleanup on failure - videoWriter was created but screen recorder failed
         AppLogger.recording.error("Screen recorder (or camera) start failed, cleaning up videoWriter")
-        _ = await self.videoWriter?.finish()  // Try to finish gracefully
-        self.videoWriter = nil
-        self.outputURL = nil
+        await rollbackFailedStart(cameraWasStarted: cameraWasStarted, screenWasStarted: screenWasStarted)
         await MainActor.run {
-          self.diskSpaceMonitor.stop()
           self.onError?(.screenCaptureUnavailable)
         }
         return
       }
     }
 
-    // CRITICAL: Start audio service
-    await MainActor.run { self.audioService.start() }
+    if includeMicrophoneAudio {
+      await MainActor.run { self.audioService.start() }
+      let microphoneReady = await waitForMicrophoneCaptureToStart()
+      guard microphoneReady else {
+        AppLogger.recording.error("Microphone failed to start before recording began")
+        await rollbackFailedStart(cameraWasStarted: cameraWasStarted, screenWasStarted: screenWasStarted)
+        await MainActor.run {
+          self.onError?(
+            .recordingEngineError(
+              "Microphone failed to start. Recording was cancelled before it could save silent audio."
+            )
+          )
+        }
+        return
+      }
+    } else {
+      await MainActor.run { self.audioService.stop() }
+    }
 
     // CRITICAL: Only NOW set isRecording=true after ALL services started successfully
     isRecording = true
     isPaused = false
+    isMicrophoneAudioEnabled = includeMicrophoneAudio
     currentSource = initialSource
-    timeCoordinator.reset()
 
     // Start Real-time Sound Analysis
     // RELIABILITY FIX: Guard against nil format instead of force unwrap
@@ -331,6 +357,71 @@ class RecordingEngine: NSObject {
     AppLogger.recording.info(
       "Started recording (Source: \(initialSource == .camera ? "camera" : "screen"))")
   }
+
+  @RecordingActor
+  func waitForMicrophoneCaptureToStart(
+    timeoutNanoseconds: UInt64 = 2_000_000_000,
+    pollNanoseconds: UInt64 = 50_000_000,
+    allowTestBypass: Bool = true
+  ) async -> Bool {
+    if allowTestBypass, TestEnvironment.isTesting {
+      return true
+    }
+
+    if await MainActor.run(body: { self.audioService.isRunning }) {
+      return true
+    }
+
+    let attempts = max(1, Int(timeoutNanoseconds / max(1, pollNanoseconds)))
+    for _ in 0..<attempts {
+      if Task.isCancelled {
+        return false
+      }
+
+      try? await Task.sleep(nanoseconds: pollNanoseconds)
+
+      if await MainActor.run(body: { self.audioService.isRunning }) {
+        return true
+      }
+    }
+
+    return await MainActor.run(body: { self.audioService.isRunning })
+  }
+
+  @RecordingActor
+  private func rollbackFailedStart(
+    cameraWasStarted: Bool,
+    screenWasStarted: Bool
+  ) async {
+    if screenWasStarted {
+      await screenRecorder.stop()
+    }
+
+    await MainActor.run {
+      if cameraWasStarted {
+        self.cameraService.stop()
+      }
+      self.audioService.stop()
+      self.diskSpaceMonitor.stop()
+    }
+
+    if let writer = videoWriter {
+      _ = try? await withTimeout(seconds: 5) {
+        await writer.finish()
+      }
+    }
+
+    if let failedURL = outputURL {
+      try? FileManager.default.removeItem(at: failedURL)
+    }
+
+    videoWriter = nil
+    outputURL = nil
+    isMicrophoneAudioEnabled = false
+    timeCoordinator.driftTracker = nil
+    timeCoordinator.reset()
+  }
+
   @RecordingActor
   @discardableResult
   func stopRecording() async -> URL? {
@@ -368,6 +459,8 @@ class RecordingEngine: NSObject {
       // Clean up state
       self.videoWriter = nil
       self.outputURL = nil
+      self.isMicrophoneAudioEnabled = false
+      self.timeCoordinator.driftTracker = nil
       timeCoordinator.reset()
 
       return mockURL
@@ -419,6 +512,8 @@ class RecordingEngine: NSObject {
     // CRITICAL: Cleanup only after we've attempted to save everything
     videoWriter = nil
     outputURL = nil
+    isMicrophoneAudioEnabled = false
+    timeCoordinator.driftTracker = nil
     timeCoordinator.reset()
     sourceSwitchTimeoutTask?.cancel()
     sourceSwitchTimeoutTask = nil
@@ -509,6 +604,17 @@ class RecordingEngine: NSObject {
         }
       }
 
+      let shouldDeferPendingCameraFrame =
+        isSwitching && currentSource == .screen && pendingSource == .camera && source == .camera
+
+      // During screen -> camera transitions, camera frames can arrive before SCStream.stopCapture()
+      // has finished. If we promote on that early frame, we recalibrate onto the camera clock while
+      // screen capture is still active, which produces A/V drift. Let performSourceSwitch() finish
+      // the stop first, then commit the source flip explicitly.
+      if shouldDeferPendingCameraFrame {
+        return
+      }
+
       let isTargetSource = (source == currentSource) || (source == pendingSource)
       guard !isPaused, isRecording, isTargetSource else { return }
 
@@ -532,18 +638,33 @@ class RecordingEngine: NSObject {
       }
 
       let samplePresentationTime = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
+      let wasRecalibrating = timeCoordinator.startTimeNeedsRecalibration
       let result = timeCoordinator.processSampleTime(samplePresentationTime)
 
       if result.isFirstSample {
         videoWriter?.startSession(at: result.presentationTime)
       }
 
-      if !timeCoordinator.startTimeNeedsRecalibration {
+      let didWrite = videoWriter?.writeVideo(
+        sampleBuffer: sampleBuffer,
+        presentationTime: result.presentationTime,
+        source: source
+      ) ?? false
+
+      if didWrite {
+        if result.usedPendingRecalibration {
+          timeCoordinator.commitPendingRecalibrationIfNeeded()
+        }
+        timeCoordinator.recordWrittenPresentationTime(result.presentationTime)
+      } else if wasRecalibrating {
+        // Keep the handoff armed until a frame actually lands on disk.
+        timeCoordinator.beginSourceSwitchRecalibration()
+      }
+
+      if didWrite, !timeCoordinator.startTimeNeedsRecalibration {
         sourceSwitchTimeoutTask?.cancel()
         sourceSwitchTimeoutTask = nil
       }
-
-      videoWriter?.writeVideo(sampleBuffer: sampleBuffer, presentationTime: result.presentationTime, source: source)
     }
   }
 
@@ -551,9 +672,17 @@ class RecordingEngine: NSObject {
     autoreleasepool {
       guard !isMicMuted else { return }
       guard !isPaused, isRecording, let writer = videoWriter, writer.isWriting else { return }
-      guard !timeCoordinator.startTimeNeedsRecalibration else { return }
+      let needsInitialSessionStart = timeCoordinator.startTime == .zero
 
-      let adjusted = timeCoordinator.adjustBufferTime(sampleBuffer)
+      if needsInitialSessionStart {
+        let samplePresentationTime = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
+        let result = timeCoordinator.processSampleTime(samplePresentationTime)
+        if result.isFirstSample {
+          videoWriter?.startSession(at: result.presentationTime)
+        }
+      }
+
+      let adjusted = timeCoordinator.adjustMicrophoneBufferTime(sampleBuffer)
       let bufferToWrite: CMSampleBuffer
       if let resampled = micAudioResampler.resampleIfNeeded(adjusted) {
         bufferToWrite = resampled
@@ -561,43 +690,54 @@ class RecordingEngine: NSObject {
         bufferToWrite = adjusted
       }
 
-      if timeCoordinator.startTime == .zero {
-        let presentationTime = bufferToWrite.presentationTimeStamp
-        timeCoordinator.startTime = presentationTime
-        timeCoordinator.startTimeNeedsRecalibration = false
-        videoWriter?.startSession(at: presentationTime)
+      if needsInitialSessionStart {
         AppLogger.recording.info(
-          "Recording started (Mic Audio first). First sample time: \(presentationTime.seconds)")
+          "Recording started (Mic Audio first). First sample time: \(timeCoordinator.startTime.seconds)")
       }
 
       if timeCoordinator.startTime != .zero,
         bufferToWrite.presentationTimeStamp >= timeCoordinator.startTime {
-        videoWriter?.writeMicAudio(sampleBuffer: bufferToWrite)
-        soundAnalysisService.analyze(sampleBuffer: sampleBuffer)
+        let didWrite = videoWriter?.writeMicAudio(sampleBuffer: bufferToWrite) ?? false
+        if didWrite {
+          timeCoordinator.recordWrittenPresentationTime(bufferToWrite.presentationTimeStamp)
+          timeCoordinator.driftTracker?.recordAudioTimestamp(bufferToWrite.presentationTimeStamp)
+          soundAnalysisService.analyze(sampleBuffer: sampleBuffer)
+        }
       }
     }
   }
 
   @RecordingActor func processSystemAudioSample(_ sampleBuffer: CMSampleBuffer) {
     autoreleasepool {
-      guard currentSource == .screen else { return }
+      let shouldRouteSystemAudio = currentSource == .screen || pendingSource == .screen
+      guard shouldRouteSystemAudio else { return }
       guard !isPaused, isRecording, let writer = videoWriter, writer.isWriting else { return }
-      guard !timeCoordinator.startTimeNeedsRecalibration else { return }
+      let needsInitialSessionStart = timeCoordinator.startTime == .zero
+
+      if needsInitialSessionStart {
+        let samplePresentationTime = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
+        let result = timeCoordinator.processSampleTime(samplePresentationTime)
+        if result.isFirstSample {
+          videoWriter?.startSession(at: result.presentationTime)
+        }
+      }
 
       let bufferToWrite = timeCoordinator.adjustBufferTime(sampleBuffer)
 
-      if timeCoordinator.startTime == .zero {
-        let presentationTime = bufferToWrite.presentationTimeStamp
-        timeCoordinator.startTime = presentationTime
-        timeCoordinator.startTimeNeedsRecalibration = false
-        videoWriter?.startSession(at: presentationTime)
+      if needsInitialSessionStart {
         AppLogger.recording.info(
-          "Recording started (System Audio first). First sample time: \(presentationTime.seconds)")
+          "Recording started (System Audio first). First sample time: \(timeCoordinator.startTime.seconds)")
       }
 
       if timeCoordinator.startTime != .zero,
         bufferToWrite.presentationTimeStamp >= timeCoordinator.startTime {
-        videoWriter?.writeSystemAudio(sampleBuffer: bufferToWrite)
+        let didWrite = videoWriter?.writeSystemAudio(sampleBuffer: bufferToWrite) ?? false
+        if didWrite {
+          timeCoordinator.recordWrittenPresentationTime(bufferToWrite.presentationTimeStamp)
+        }
+        if didWrite, !isMicrophoneAudioEnabled {
+          timeCoordinator.driftTracker?.recordAudioTimestamp(bufferToWrite.presentationTimeStamp)
+        }
       }
     }
   }

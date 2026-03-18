@@ -180,7 +180,7 @@ struct TimelineTracksView: View {
         // and programmatic scroll position targeting (e.g., seek-to-playhead).
         .scrollTargetLayout()
         .frame(height: timelineHeight)
-        .background(Color(nsColor: .controlBackgroundColor))
+        .background(SaneVideoEditorPanelBackground())
     }
 
     private var playheadOverlay: some View {

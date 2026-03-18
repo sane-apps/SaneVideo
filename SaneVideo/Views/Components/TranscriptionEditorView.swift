@@ -18,6 +18,7 @@ struct TranscriptionEditorView: View {
     @State private var searchText = ""
     @State private var isRefining = false
     @State private var isTranslating = false
+    @State private var isGeneratingTranscript = false
     @State private var showStylePicker = false
 
     // CRITICAL FIX (2025-12-31): Get fresh clip from project to ensure we have latest captions
@@ -131,15 +132,77 @@ struct TranscriptionEditorView: View {
                 .foregroundColor(Color.stone)
             Text(String(localized: "transcript.empty.title", defaultValue: "No Transcript"))
                 .font(.headline)
-            Button(String(localized: "transcript.action.generate", defaultValue: "Generate AI Transcript")) {
+            Button {
                 Task {
-                    _ = try? await appState.projectState.generateCaptions(for: clip)
+                    await generateTranscript(for: clip)
+                }
+            } label: {
+                HStack(spacing: 8) {
+                    if isGeneratingTranscript {
+                        ProgressView()
+                            .controlSize(.small)
+                    } else {
+                        Image(systemName: "text.bubble.fill")
+                    }
+
+                    Text(
+                        isGeneratingTranscript
+                            ? String(
+                                localized: "transcript.action.generating",
+                                defaultValue: "Generating..."
+                            )
+                            : String(
+                                localized: "transcript.action.generate",
+                                defaultValue: "Generate AI Transcript"
+                            )
+                    )
                 }
             }
             .buttonStyle(.borderedProminent)
+            .disabled(isGeneratingTranscript)
+            .help(
+                String(
+                    localized: "transcript.action.generate.help",
+                    defaultValue: "Generate an on-device transcript for this clip."
+                )
+            )
+
+            Text(
+                String(
+                    localized: "transcript.empty.helper",
+                    defaultValue: "First run can take longer while on-device transcription warms up."
+                )
+            )
+            .multilineTextAlignment(.center)
+            .saneReadableSupportText()
+            .frame(maxWidth: 280)
             Spacer()
         }
         .padding()
+    }
+
+    private func generateTranscript(for clip: VideoClip) async {
+        guard !isGeneratingTranscript else { return }
+
+        if clip.isMissing {
+            ServiceContainer.shared.toastManager.show(
+                "Cannot generate a transcript because the clip file is missing.",
+                type: .error
+            )
+            return
+        }
+
+        isGeneratingTranscript = true
+        defer { isGeneratingTranscript = false }
+
+        do {
+            _ = try await appState.projectState.generateCaptions(for: clip)
+        } catch {
+            ServiceContainer.shared.toastManager.show(
+                "Transcript generation failed: \(error.localizedDescription)",
+                type: .error
+            )
+        }
     }
     
     private func isPlayheadAt(_ caption: Caption, in clip: VideoClip) -> Bool {

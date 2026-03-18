@@ -90,7 +90,7 @@ struct ExportView: View {
                         .font(.system(size: 48))
                         .foregroundStyle(
                             LinearGradient(
-                                colors: [.blue, .teal],
+                                colors: [Theme.Colors.accent, Theme.Colors.accentDeep],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             )
@@ -107,6 +107,15 @@ struct ExportView: View {
             .padding(.top, 10)
             .animation(.smoothUI, value: isExporting)
             .animation(.smoothUI, value: youtubeService.isUploading)
+
+            FeatureCallout(
+                title: showYouTubeUpload ? "Local export first, upload second" : "Local-first export",
+                message: showYouTubeUpload
+                    ? "SaneVideo writes a local file to disk first, then uploads that file only because you turned YouTube on."
+                    : "Export File and Demo Pack write plain files to disk. Use YouTube only if you explicitly want a third-party upload.",
+                icon: showYouTubeUpload ? "arrow.up.circle.fill" : "externaldrive.fill.badge.checkmark",
+                tone: showYouTubeUpload ? .warning : .accent
+            )
     
             // YouTube Config
             ExportYouTubeSection(
@@ -144,7 +153,9 @@ struct ExportView: View {
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
                 .disabled(isExporting || youtubeService.isUploading || isTimelineEmpty)
+                .keyboardShortcut(.defaultAction)
                 .accessibilityIdentifier("export.action.primary")
+                .help(hasMultipleClipsSelected ? "Exports each selected clip as its own local file." : (showYouTubeUpload ? "Exports a local file and then uploads it to YouTube." : "Exports a standalone local video file."))
     
                 // YouTube Toggle
                 Button {
@@ -159,6 +170,7 @@ struct ExportView: View {
                 .controlSize(.large)
                 .disabled(isExporting || youtubeService.isUploading)
                 .accessibilityIdentifier("export.action.toggle_youtube")
+                .help("Shows or hides the optional YouTube upload fields. Leave it off for a fully local workflow.")
     
                 Button {
                     ServiceContainer.shared.hapticsManager.selection()
@@ -172,7 +184,15 @@ struct ExportView: View {
                 .controlSize(.large)
                 .disabled(isExporting || youtubeService.isUploading)
                 .accessibilityIdentifier("export.action.share_link")
+                .help("Exports a local file and opens the system share sheet for that file.")
             }
+
+            HelperText(
+                text: hasMultipleClipsSelected
+                    ? "Batch Export writes one file per selected clip. Use Demo Pack when you want a packaged set of assets for one polished demo."
+                    : "Export File is the quick path. Use Demo Pack when you want the video plus thumbnail, transcript, notes, chapters, and metadata together.",
+                icon: "shippingbox.fill"
+            )
     
             // Export Settings Configuration
             ExportConfigurationView(
@@ -186,6 +206,11 @@ struct ExportView: View {
             HStack {
                 // Additional Export Options
                 Menu {
+                    Button(String(localized: "export.option.demo_pack", defaultValue: "Export Demo Pack"), action: exportDemoPack)
+                    Button(String(localized: "export.option.demo_studio", defaultValue: "Demo Studio Settings")) {
+                        appState.openDemoStudio()
+                    }
+                    Divider()
                     Button(String(localized: "export.option.thumbnail", defaultValue: "Export Thumbnail"), action: generateThumbnail)
                     Button(String(localized: "export.option.study_guide", defaultValue: "Export Study Guide (PDF)"), action: exportStudyGuide)
                     Button(String(localized: "export.option.gif", defaultValue: "Export as GIF"), action: exportAsGIF)
@@ -196,6 +221,7 @@ struct ExportView: View {
                 }
                 .menuStyle(.borderlessButton)
                 .frame(width: 120)
+                .help("More local export tools like demo pack, thumbnail, study guide, GIF, and voiceover.")
     
                 Spacer()
     
@@ -210,9 +236,14 @@ struct ExportView: View {
         }
         .padding(32)
         .frame(width: 520)
+        .sanePanel(radius: 18, emphasized: true, accent: Theme.Colors.accentSoft)
         .accessibilityIdentifier(AccessibilityIdentifiers.exportSheet)
         .onAppear {
             AppLogger.general.info("ExportView: appeared. isExporting: \(isExporting), isUploading: \(youtubeService.isUploading)")
+            if let project = appState.currentProject {
+                videoTitle = project.publishMetadata.title
+                videoDescription = project.publishMetadata.description
+            }
             /*
             // Apply template settings if project was created from template
             if let template = templateSettings {

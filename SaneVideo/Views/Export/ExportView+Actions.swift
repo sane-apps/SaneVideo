@@ -9,6 +9,7 @@ import AppKit
 import AVFoundation
 import SwiftUI
 
+@MainActor
 extension ExportView {
     // MARK: - Export Actions
 
@@ -195,12 +196,69 @@ extension ExportView {
                 let content = try await aiService.generateTitleAndDescription(transcript: transcript)
                 self.videoTitle = content.title
                 self.videoDescription = content.description
+                var metadata = project.publishMetadata
+                metadata.title = content.title
+                metadata.description = content.description
+                appState.projectState.updatePublishMetadata(metadata)
                 self.isGeneratingAI = false
                 toastManager.show("AI generated title & description")
             } catch {
                 self.isGeneratingAI = false
                 self.exportError = error
                 self.showingError = true
+            }
+        }
+    }
+
+    func exportDemoPack() {
+        guard let project = appState.currentProject else {
+            ServiceContainer.shared.toastManager.show("No project to export", type: .error)
+            return
+        }
+
+        let hasClips = project.timeline.tracks.contains { !$0.clips.isEmpty }
+        guard hasClips else {
+            ServiceContainer.shared.toastManager.show("Cannot export empty timeline. Add clips first.", type: .error)
+            return
+        }
+
+        let panel = NSOpenPanel()
+        panel.canChooseDirectories = true
+        panel.canChooseFiles = false
+        panel.canCreateDirectories = true
+        panel.allowsMultipleSelection = false
+        panel.prompt = "Export Demo Pack"
+        panel.message = "Choose the folder where SaneVideo should write the local demo pack."
+        panel.directoryURL = FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent("Desktop", isDirectory: true)
+
+        Task { @MainActor in
+            guard let window = NSApp.keyWindow ?? NSApp.mainWindow else { return }
+            let response = await panel.beginSheetModal(for: window)
+            guard response == .OK, let directoryURL = panel.url else { return }
+
+            isExporting = true
+            exportProgress = 0
+
+            do {
+                let bundleURL = try await ServiceContainer.shared.demoPackExportService.exportDemoPack(
+                    project: project,
+                    settings: exportSettings,
+                    outputDirectory: directoryURL
+                ) { _, progress in
+                    Task { @MainActor in
+                        self.exportProgress = progress
+                    }
+                }
+
+                isExporting = false
+                NSWorkspace.shared.activateFileViewerSelecting([bundleURL])
+                ServiceContainer.shared.toastManager.show("Demo pack exported!", type: .success)
+                dismiss()
+            } catch {
+                isExporting = false
+                exportError = error
+                showingError = true
             }
         }
     }

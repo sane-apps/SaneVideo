@@ -78,6 +78,11 @@ struct TranscriptExportSheet: View {
             Divider()
 
             VStack(alignment: .leading, spacing: 20) {
+                HelperText(
+                    text: "Choose a transcript format based on where it is going next. PDF is best for notes, SRT and VTT are for subtitles, and TXT is plain copy.",
+                    icon: "doc.text.fill"
+                )
+
                 formatSection
                 Divider()
                 optionsSection
@@ -119,6 +124,11 @@ struct TranscriptExportSheet: View {
             )
             .font(.subheadline.weight(.semibold))
 
+            HelperText(
+                text: "Pick PDF when a human will read it, or subtitle formats when another editor or player needs the timing data.",
+                icon: "square.and.arrow.down"
+            )
+
             Picker("", selection: $selectedFormat) {
                 ForEach(TranscriptFormat.allCases) { format in
                     Label(format.displayName, systemImage: format.icon).tag(format)
@@ -143,10 +153,16 @@ struct TranscriptExportSheet: View {
             )
             .font(.caption)
             .accessibilityIdentifier("transcript.options.timestamps")
+            .help("Shows the timing for each line when the selected format supports it.")
 
             Text(optionsDescription)
                 .font(.caption)
                 .foregroundStyle(Color.stone)
+
+            HelperText(
+                text: "Timestamps make review and editing easier. Turn them off only when you want cleaner reader-facing plain text.",
+                icon: "clock.badge.checkmark"
+            )
         }
     }
 
@@ -192,6 +208,11 @@ struct TranscriptExportSheet: View {
             .padding(8)
             .background(Color.black.opacity(0.2))
             .cornerRadius(8)
+
+            HelperText(
+                text: "This preview shows the first few lines so you can confirm the format before saving the full export.",
+                icon: "eye.fill"
+            )
         }
     }
 
@@ -271,8 +292,13 @@ struct TranscriptExportSheet: View {
                     return
                 }
 
-                let content = generateFullContent()
-                try content.write(to: url, atomically: true, encoding: .utf8)
+                if selectedFormat == .pdf {
+                    let pdfData = try generatePDFData()
+                    try pdfData.write(to: url)
+                } else {
+                    let content = generateFullContent()
+                    try content.write(to: url, atomically: true, encoding: .utf8)
+                }
 
                 await MainActor.run {
                     isExporting = false
@@ -319,6 +345,71 @@ struct TranscriptExportSheet: View {
             }.joined(separator: "\n\n")
             return result
         }
+    }
+
+    private func generatePDFData() throws -> Data {
+        let pdfData = NSMutableData()
+        var pageBounds = CGRect(x: 0, y: 0, width: 595.2, height: 841.8)
+
+        guard let consumer = CGDataConsumer(data: pdfData as CFMutableData),
+              let context = CGContext(consumer: consumer, mediaBox: &pageBounds, nil)
+        else {
+            throw PDFError.generationFailed
+        }
+
+        func beginPage() {
+            context.beginPDFPage(nil as CFDictionary?)
+        }
+
+        @discardableResult
+        func drawText(_ text: String, font: NSFont, x: CGFloat, y: CGFloat) -> CGFloat {
+            let attributes: [NSAttributedString.Key: Any] = [
+                .font: font,
+                .foregroundColor: NSColor.black
+            ]
+            let attributedString = NSAttributedString(string: text, attributes: attributes)
+            let size = attributedString.size()
+            let textY = y - size.height
+
+            NSGraphicsContext.current = NSGraphicsContext(cgContext: context, flipped: false)
+            attributedString.draw(at: CGPoint(x: x, y: textY))
+            return size.height + 8
+        }
+
+        let margin: CGFloat = 50
+        var cursorY: CGFloat = pageBounds.height - margin
+
+        beginPage()
+        cursorY -= drawText(projectName, font: .boldSystemFont(ofSize: 22), x: margin, y: cursorY)
+        cursorY -= drawText("Transcript Export", font: .boldSystemFont(ofSize: 16), x: margin, y: cursorY)
+        cursorY -= drawText(
+            "Generated on \(DateFormatter.localizedString(from: .now, dateStyle: .medium, timeStyle: .short))",
+            font: .systemFont(ofSize: 11),
+            x: margin,
+            y: cursorY
+        )
+        cursorY -= 20
+
+        for caption in captions {
+            if cursorY < margin + 24 {
+                context.endPDFPage()
+                beginPage()
+                cursorY = pageBounds.height - margin
+            }
+
+            let line: String
+            if includeTimestamps {
+                line = "[\(formatTime(caption.startTime))] \(caption.text)"
+            } else {
+                line = caption.text
+            }
+
+            cursorY -= drawText(line, font: .systemFont(ofSize: 12), x: margin, y: cursorY)
+        }
+
+        context.endPDFPage()
+        context.closePDF()
+        return pdfData as Data
     }
 }
 

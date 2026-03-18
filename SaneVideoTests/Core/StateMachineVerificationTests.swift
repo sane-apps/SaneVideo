@@ -19,6 +19,7 @@ final class StateMachineVerificationTests: XCTestCase {
   var windowManager: WindowManager!
   var recordingState: RecordingState!
   var mockCameraService: CameraServiceProtocolMock!
+  var mockScreenRecorder: MockScreenRecorder!
   var cancellables: Set<AnyCancellable>!
 
   override func setUp() async throws {
@@ -29,7 +30,7 @@ final class StateMachineVerificationTests: XCTestCase {
 
     let mockAudioService = MockAudioService(
       permissionManager: ServiceContainer.shared.permissionManager)
-    let mockScreenRecorder = MockScreenRecorder()
+    mockScreenRecorder = MockScreenRecorder()
 
     // 2. Inject Mocks into RecordingState
     recordingState = RecordingState(
@@ -63,6 +64,7 @@ final class StateMachineVerificationTests: XCTestCase {
 
     // CRITICAL FIX: Clean up AppState to prevent multiple instances
     appState = nil
+    mockScreenRecorder = nil
     cancellables = nil
 
     // CRITICAL FIX: Small delay to allow cleanup to complete
@@ -71,6 +73,37 @@ final class StateMachineVerificationTests: XCTestCase {
   }
 
   // MARK: - Scenario 1: Screen Share -> Record -> Stop
+
+  func testStartRecordingDoesNotAutoEnableCameraDuringPermissionPreflight() {
+    appState.cameraEnabled = false
+    appState.startRecording()
+
+    XCTAssertFalse(
+      appState.cameraEnabled,
+      "Recording start should let RecordingState handle camera permission preflight instead of force-starting camera"
+    )
+  }
+
+  func testScreenShareToggleDoesNotAutoEnableCamera() {
+    appState.cameraEnabled = false
+
+    appState.toggleScreenShare()
+
+    XCTAssertTrue(appState.isScreenSharing, "Screen sharing should enter picker mode")
+    XCTAssertFalse(
+      appState.cameraEnabled,
+      "Screen sharing should stay screen-only until the user explicitly enables camera"
+    )
+  }
+
+  func testScreenShareToggleStartsScreenRecorderFlow() async throws {
+    XCTAssertEqual(mockScreenRecorder.startCallCount, 0)
+
+    appState.toggleScreenShare()
+    try? await Task.sleep(nanoseconds: 250_000_000)
+
+    XCTAssertEqual(mockScreenRecorder.startCallCount, 1, "Starting screen share should delegate to ScreenRecorder.start()")
+  }
 
   func testScreenShareRecordingFlow() async throws {
     // Permission bypass implemented via MockScreenRecorder
@@ -83,6 +116,7 @@ final class StateMachineVerificationTests: XCTestCase {
     // 2. Start Screen Share
     appState.toggleScreenShare()
     XCTAssertTrue(appState.isScreenSharing, "Should be screen sharing")
+    XCTAssertFalse(appState.cameraEnabled, "Screen sharing should not silently enable camera")
     XCTAssertTrue(appState.windowManager.isPiPVisible, "PiP should be visible by default")
 
     // Verify Window Logic (Mocked or checked via state)
@@ -181,6 +215,25 @@ final class StateMachineVerificationTests: XCTestCase {
     print("✅ Screen share exit completed without crash")
   }
 
+  func testScreenPickerCancelResetsScreenShareState() async throws {
+    XCTAssertFalse(appState.isScreenSharing)
+
+    appState.toggleScreenShare()
+
+    try? await Task.sleep(nanoseconds: 250_000_000)
+    XCTAssertTrue(appState.isScreenSharing, "Starting screen share should enter picker mode")
+
+    mockScreenRecorder.simulatePickerCancellation()
+
+    try? await Task.sleep(nanoseconds: 500_000_000)
+
+    XCTAssertFalse(appState.isScreenSharing, "Cancelling the picker should unwind screen-share mode")
+    XCTAssertFalse(
+      appState.windowManager.isScreenSharing,
+      "WindowManager should return to non-screen-sharing state after picker cancel"
+    )
+  }
+
   // MARK: - Crash Regression (Zombie Window Logic)
 
   func testZombieWindowFixLogic() async throws {
@@ -233,8 +286,11 @@ class MockAudioService: AudioService {
 
 // Mock ScreenRecorder
 class MockScreenRecorder: ScreenRecorder {
+  private(set) var startCallCount = 0
+
   override func start(outputURL: URL? = nil) async throws {
     print("MockScreenRecorder: start called")
+    startCallCount += 1
     // Do not call super.start() to avoid picker
   }
 
@@ -244,5 +300,14 @@ class MockScreenRecorder: ScreenRecorder {
 
   override func teardown() {
     print("MockScreenRecorder: teardown called")
+  }
+
+  func simulatePickerCancellation() {
+    let error = NSError(
+      domain: "SaneVideo",
+      code: -102,
+      userInfo: [NSLocalizedDescriptionKey: "User cancelled screen picker"]
+    )
+    onStop?(error)
   }
 }

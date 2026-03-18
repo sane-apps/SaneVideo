@@ -15,16 +15,18 @@ struct KeyboardShortcutsSheet: View {
             // Header
             HStack {
                 Text("Keyboard Shortcuts")
-                    .font(.headline)
+                    .saneReadableSectionTitle()
                 Spacer()
                 Button {
                     dismiss()
                 } label: {
                     Image(systemName: "xmark.circle.fill")
-                        .foregroundColor(Color.stone)
+                        .font(.system(size: Theme.Typography.iconSizeLG, weight: .semibold))
+                        .foregroundColor(Theme.Colors.textSecondary)
                 }
                 .buttonStyle(.plain)
                 .keyboardShortcut(.cancelAction)
+                .help("Close")
             }
             .padding()
             .background(Color(NSColor.controlBackgroundColor))
@@ -34,6 +36,11 @@ struct KeyboardShortcutsSheet: View {
             // Content
             ScrollView {
                 VStack(spacing: 24) {
+                    InformationBox(
+                        text: "Use this sheet as the quick reference for shortcuts. For feature-specific guidance, hover over controls to see what they do and when to use them.",
+                        icon: "questionmark.circle"
+                    )
+
                     ShortcutSection(title: "General", shortcuts: [
                         ("New Recording", "⌘N"),
                         ("Open Project", "⌘O"),
@@ -125,20 +132,18 @@ struct ShortcutSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text(title)
-                .font(.subheadline)
-                .fontWeight(.bold)
-                .foregroundColor(Color.stone)
+                .saneReadableLabel()
 
             ForEach(shortcuts, id: \.0) { label, key in
                 HStack {
                     Text(label)
-                        .foregroundColor(.primary)
+                        .saneReadableBody()
                     Spacer()
                     Text(key)
-                        .font(.system(.body, design: .monospaced))
+                        .font(.system(size: Theme.Typography.fontSizeSM, weight: .medium, design: .monospaced))
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
-                        .background(Color.stone.opacity(0.1))
+                        .background(Theme.Colors.secondaryBackground.opacity(0.8))
                         .cornerRadius(4)
                 }
             }

@@ -1,7 +1,7 @@
-
 import XCTest
 import CoreMedia
 import CoreImage
+import Foundation
 @testable import SaneVideo
 
 /// Tests for the rendering pipeline: Effects, Keyframes, and Transitions
@@ -204,5 +204,57 @@ class RenderingPipelineTests: XCTestCase {
         XCTAssertEqual(meta.toTrackID, 2)
         XCTAssertEqual(meta.type, .dissolve)
         XCTAssertEqual(meta.timeRange.duration.seconds, 0.5, accuracy: 0.01)
+    }
+
+    func testInteractionOverlayRendererProducesImage() {
+        let layer = InteractionLayerItem(
+            clipID: UUID(),
+            timeRange: CMTimeRange(start: .zero, duration: CMTime(seconds: 3, preferredTimescale: 600)),
+            clicks: [InteractionClickItem(time: CMTime(seconds: 0.5, preferredTimescale: 600), x: 0.5, y: 0.5, button: 0)],
+            cursorPath: [
+                InteractionCursorItem(time: .zero, x: 0.4, y: 0.4, isDown: false),
+                InteractionCursorItem(time: CMTime(seconds: 1.0, preferredTimescale: 600), x: 0.6, y: 0.5, isDown: false)
+            ],
+            keystrokes: [InteractionKeystrokeItem(id: UUID(), time: CMTime(seconds: 0.75, preferredTimescale: 600), text: "Command + K")],
+            style: InteractionOverlayStyle()
+        )
+
+        let image = InteractionOverlayRenderer.renderInteractionLayers(
+            [layer],
+            size: CGSize(width: 1920, height: 1080),
+            compositionTime: CMTime(seconds: 0.9, preferredTimescale: 600)
+        )
+
+        XCTAssertNotNil(image, "Interaction renderer should produce an image when click, cursor, or key data is present")
+    }
+
+    func testInteractionOverlayBuilderMapsSidecarsToCompositionTime() throws {
+        let tempDirectory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try FileManager.default.createDirectory(at: tempDirectory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: tempDirectory) }
+
+        let videoURL = tempDirectory.appendingPathComponent("demo.mp4")
+        let clickURL = tempDirectory.appendingPathComponent("demo.clicks.json")
+        let cursorURL = tempDirectory.appendingPathComponent("demo.cursor.json")
+        let keysURL = tempDirectory.appendingPathComponent("demo.keys.json")
+
+        FileManager.default.createFile(atPath: videoURL.path, contents: Data(), attributes: nil)
+        try JSONEncoder().encode([ClickSample(timestamp: 1.0, x: 0.25, y: 0.4, button: 0)]).write(to: clickURL)
+        try JSONEncoder().encode([CursorSample(timestamp: 1.0, x: 0.3, y: 0.5)]).write(to: cursorURL)
+        try JSONEncoder().encode([KeystrokeSample(timestamp: 1.0, key: "K", modifiers: ["Command"], keyCode: 40)]).write(to: keysURL)
+
+        var clip = VideoClip(url: videoURL, duration: CMTime(seconds: 10, preferredTimescale: 600))
+        clip.clickDataURL = clickURL
+        clip.cursorDataURL = cursorURL
+        clip.keystrokeDataURL = keysURL
+        clip.startTime = CMTime(seconds: 5, preferredTimescale: 600)
+
+        let track = Track(name: "Video", type: .video, clips: [clip], zIndex: 0)
+        let interactionLayers = TextLayerBuilder.buildInteractionLayers(from: [track])
+
+        XCTAssertEqual(interactionLayers.count, 1)
+        XCTAssertEqual(interactionLayers[0].clicks.first?.time.seconds ?? -1, 6.0, accuracy: 0.001)
+        XCTAssertEqual(interactionLayers[0].cursorPath.first?.time.seconds ?? -1, 6.0, accuracy: 0.001)
+        XCTAssertEqual(interactionLayers[0].keystrokes.first?.text, "Command + K")
     }
 }

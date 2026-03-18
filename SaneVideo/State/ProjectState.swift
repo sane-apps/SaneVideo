@@ -236,7 +236,7 @@ class ProjectState {
     // MARK: - Project Management
 
     /// Generate a unique project name following Apple convention: "Untitled Project", "Untitled Project 2", etc.
-    private func generateUniqueProjectName(baseName: String = "Untitled Project") -> String {
+    func generateUniqueProjectName(baseName: String = "Untitled Project") -> String {
         let existingNames = Set(projects.map { $0.name })
 
         // First, try without a number (Apple convention: first doc has no number)
@@ -262,15 +262,38 @@ class ProjectState {
             // Note: Aspect ratio and export settings are applied at export time
             // Caption style can be set here
             project.captionStyleName = template.defaultCaptionStyle
+            project.presentationPreset = template.defaultPresentationPreset
+            project.demoPackSettings = template.defaultPresentationPreset.recommendedDemoPackSettings
+            project.publishMetadata = .default(for: template.name)
+            project.publishMetadata.subtitle = template.description
         } else {
             // Generate unique name following Apple convention
             project.name = generateUniqueProjectName()
+            project.publishMetadata = .default(for: project.name)
         }
 
         updateCurrentProject(project)
         projects.insert(project, at: 0)
         saveProject(project)
         AppLogger.project.info("Started new project \(project.id) with template: \(template?.name ?? "none")")
+    }
+
+    func openProject(_ project: VideoProject) {
+        updateCurrentProject(project)
+    }
+
+    func openProjectFile(at url: URL) throws {
+        let data = try Data(contentsOf: url)
+        let project = try JSONDecoder().decode(VideoProject.self, from: data)
+
+        if let existingIndex = projects.firstIndex(where: { $0.id == project.id }) {
+            projects[existingIndex] = project
+        } else {
+            projects.insert(project, at: 0)
+        }
+
+        updateCurrentProject(project)
+        AppLogger.project.info("Opened project file: \(url.lastPathComponent)")
     }
 
     func loadProjects() async {
@@ -387,6 +410,62 @@ class ProjectState {
         AppLogger.project.info("Updated caption style to \(style.name)")
     }
 
+    func updatePresentationPreset(_ preset: PresentationPreset) {
+        guard var project = currentProject else { return }
+        project.updatePresentationPreset(preset)
+        currentProject = project
+        saveProject(project)
+    }
+
+    func updateSpeakerNotes(_ notes: SpeakerNotes) {
+        guard var project = currentProject else { return }
+        project.updateSpeakerNotes(notes)
+        currentProject = project
+        saveProject(project)
+    }
+
+    func updateChapterMarkers(_ markers: [ChapterMarker]) {
+        guard var project = currentProject else { return }
+        project.updateChapterMarkers(markers)
+        currentProject = project
+        saveProject(project)
+    }
+
+    func updateWorkflowBrief(_ brief: WorkflowBrief) {
+        guard var project = currentProject else { return }
+        project.updateWorkflowBrief(brief)
+        currentProject = project
+        saveProject(project)
+    }
+
+    func updateCommentaryPlanItems(_ items: [CommentaryPlanItem]) {
+        guard var project = currentProject else { return }
+        project.updateCommentaryPlanItems(items)
+        currentProject = project
+        saveProject(project)
+    }
+
+    func updateCommentaryMarkers(_ markers: [CommentaryMarker]) {
+        guard var project = currentProject else { return }
+        project.updateCommentaryMarkers(markers)
+        currentProject = project
+        saveProject(project)
+    }
+
+    func updateDemoPackSettings(_ settings: DemoPackSettings) {
+        guard var project = currentProject else { return }
+        project.updateDemoPackSettings(settings)
+        currentProject = project
+        saveProject(project)
+    }
+
+    func updatePublishMetadata(_ metadata: PublishMetadata) {
+        guard var project = currentProject else { return }
+        project.updatePublishMetadata(metadata)
+        currentProject = project
+        saveProject(project)
+    }
+
     func renameProject(_ newName: String) {
         guard var project = currentProject else { return }
         guard !newName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
@@ -395,6 +474,9 @@ class ProjectState {
 
         let oldName = project.name
         project.rename(newName)
+        if project.publishMetadata.title.isEmpty || project.publishMetadata.title == oldName {
+            project.publishMetadata.title = newName
+        }
         currentProject = project
         saveProject(project)
 
@@ -421,6 +503,12 @@ class ProjectState {
         duplicate.captionStyleName = project.captionStyleName
         duplicate.captionOffset = project.captionOffset
         duplicate.captionFontName = project.captionFontName
+        duplicate.presentationPreset = project.presentationPreset
+        duplicate.speakerNotes = project.speakerNotes
+        duplicate.chapterMarkers = project.chapterMarkers
+        duplicate.commentaryMarkers = project.commentaryMarkers
+        duplicate.demoPackSettings = project.demoPackSettings
+        duplicate.publishMetadata = project.publishMetadata
         
         // Reset playback state for the duplicate
         duplicate.currentTime = 0.0
@@ -574,7 +662,7 @@ class ProjectState {
 
     // MARK: - Internal Helpers
 
-    private func updateCurrentProject(_ project: VideoProject?) {
+    func updateCurrentProject(_ project: VideoProject?) {
         // CRITICAL FIX: Stop existing security scope session before creating a new one
         // This prevents security scope leaks when switching projects
         if let existingSession = currentScopeSession {

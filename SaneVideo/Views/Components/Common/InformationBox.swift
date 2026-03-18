@@ -14,23 +14,20 @@ struct InformationBox: View {
     var icon: String?
 
     var body: some View {
-        HStack(spacing: 6) {
+        HStack(alignment: .top, spacing: 8) {
             if let icon = icon {
                 Image(systemName: icon)
-                    .font(.caption2)
-                    .foregroundColor(color)
+                    .font(.system(size: Theme.Typography.iconSizeSM, weight: .semibold))
+                    .foregroundStyle(color)
+                    .padding(.top, 1)
             }
             Text(text)
-                .font(.caption2)
-                .foregroundColor(Color.stone)
+                .saneReadableSupportText()
+                .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(6)
+        .padding(10)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .subtleGlass(radius: 4) // Enhanced liquid glass
-        .overlay(
-            RoundedRectangle(cornerRadius: 4)
-                .stroke(color.opacity(0.3), lineWidth: 0.5)
-        )
+        .sanePanel(radius: 10, accent: color)
         .smoothAppear()
     }
 }
@@ -43,21 +40,24 @@ struct EstimateBox: View {
     var color: Color = .orange
 
     var body: some View {
-        HStack {
-            Label(label, systemImage: icon)
-                .font(.caption)
-            Spacer()
-            Text(value)
-                .font(.caption.weight(.medium))
-                .foregroundStyle(color)
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Label(label, systemImage: icon)
+                    .saneReadableLabel()
+                Spacer()
+                Text(value)
+                    .saneReadableMeta(monospaced: true)
+                    .foregroundStyle(color)
+            }
+
+            HelperText(
+                text: "Use this estimate to sanity-check file size before you export.",
+                icon: "externaldrive.fill.badge.checkmark",
+                color: color
+            )
         }
-        .padding(10)
-        .subtleGlass(radius: 8) // Enhanced liquid glass
-        .overlay(
-            RoundedRectangle(cornerRadius: 8)
-                .stroke(color.opacity(0.3), lineWidth: 1)
-        )
-        .shadow(color: color.opacity(0.1), radius: 4, x: 0, y: 2)
+        .padding(12)
+        .sanePanel(radius: 12, accent: color)
         .smoothAppear()
     }
 }
@@ -73,13 +73,12 @@ struct DetectedItemsList: View {
             VStack(alignment: .leading, spacing: 2) {
                 ForEach(items.prefix(maxItems), id: \.self) { item in
                     Text("• \(item)")
-                        .font(.caption2)
-                        .foregroundColor(Color.stone)
+                        .saneReadableSupportText()
                 }
             }
-            .padding(6)
+            .padding(10)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .subtleGlass(radius: 4) // Enhanced liquid glass
+            .sanePanel(radius: 10, accent: color)
         }
     }
 }

@@ -15,6 +15,9 @@
     @MainActor
     @Observable
     final class UpdaterService {
+        private let updateFeedURL = Bundle.main.object(forInfoDictionaryKey: "SUFeedURL")
+            .flatMap { $0 as? String }
+            .flatMap(URL.init(string:))
         private let updaterController: SPUStandardUpdaterController
         private var cancellable: AnyCancellable?
 
@@ -34,7 +37,17 @@
         }
 
         func checkForUpdates() {
-            updaterController.checkForUpdates(nil)
+            Task { @MainActor in
+                guard await hasLiveAppcastFeed() else {
+                    ServiceContainer.shared.toastManager.show(
+                        "Automatic updates are not configured for this build yet. Install newer builds manually for now.",
+                        type: .info
+                    )
+                    return
+                }
+
+                updaterController.checkForUpdates(nil)
+            }
         }
 
         var automaticallyChecksForUpdates: Bool {
@@ -46,6 +59,31 @@
             get { SaneSparkleCheckFrequency.resolve(updateCheckInterval: updaterController.updater.updateCheckInterval) }
             set { updaterController.updater.updateCheckInterval = newValue.interval }
         }
+
+        private func hasLiveAppcastFeed() async -> Bool {
+            guard let updateFeedURL else { return false }
+
+            var request = URLRequest(url: updateFeedURL)
+            request.timeoutInterval = 4
+            request.setValue("application/xml,text/xml,application/rss+xml,*/*;q=0.1", forHTTPHeaderField: "Accept")
+
+            do {
+                let (data, response) = try await URLSession.shared.data(for: request)
+                guard let httpResponse = response as? HTTPURLResponse,
+                      (200..<300).contains(httpResponse.statusCode) else {
+                    return false
+                }
+
+                return Self.looksLikeAppcastFeed(data)
+            } catch {
+                return false
+            }
+        }
+
+        nonisolated static func looksLikeAppcastFeed(_ data: Data) -> Bool {
+            let preview = String(bytes: data.prefix(2048), encoding: .utf8)?.lowercased() ?? ""
+            return preview.contains("<rss") || preview.contains("<channel") || preview.contains("<item")
+        }
     }
 #else
     import SwiftUI
@@ -54,12 +92,17 @@
     @MainActor
     @Observable
     final class UpdaterService {
-        private(set) var canCheckForUpdates = false
+        private(set) var canCheckForUpdates = true
         init() {}
-        func checkForUpdates() {}
+        func checkForUpdates() {
+            ServiceContainer.shared.toastManager.show(
+                "Automatic updates are handled through the App Store for this build.",
+                type: .info
+            )
+        }
         var automaticallyChecksForUpdates: Bool {
             get { false }
-            set {}
+            set { _ = newValue }
         }
     }
 #endif

@@ -103,6 +103,14 @@ Use subagents for heavy work. Answer user while tasks run.
 4. CONFIRM → Tests pass, user approves
 ```
 
+## UI Readability Guardrail
+
+- Do not ship gray-on-gray text.
+- Do not use `.caption` or `.caption2` for normal body/supporting copy.
+- Do not use hard-coded `.gray` or `Color.stone` for primary information.
+- In SaneVideo, prefer `Theme.Typography` and the `saneReadable*` modifiers for titles, labels, support text, and metadata.
+- If a screen looks "subtle" at the cost of readability, it is wrong. Raise contrast and size first.
+
 ## When Hooks Block You
 
 The hooks are helping, not fighting you:

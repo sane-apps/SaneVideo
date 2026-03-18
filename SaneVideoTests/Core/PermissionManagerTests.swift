@@ -5,14 +5,13 @@
 //  Tests for PermissionManager - permission checking, requesting, status tracking
 //
 
-import Testing
 import AVFoundation
 @testable import SaneVideo
+import Testing
 
 @Suite("Permission Manager Tests")
 @MainActor
 struct PermissionManagerTests {
-
     // MARK: - Test Setup
 
     var sut: PermissionManager {
@@ -170,6 +169,70 @@ struct PermissionManagerTests {
 
         // Assert - In test environment, should return true
         #expect(verified == true, "Should verify in test environment")
+    }
+
+    @Test("Promptable permissions allow first-use camera and mic requests")
+    func promptablePermissionsAllowInlineRequest() {
+        #expect(PermissionManager.allowsRecordingStart(for: .granted, canPromptInline: true))
+        #expect(PermissionManager.allowsRecordingStart(for: .notDetermined, canPromptInline: true))
+        #expect(!PermissionManager.allowsRecordingStart(for: .notDetermined, canPromptInline: false))
+        #expect(!PermissionManager.allowsRecordingStart(for: .denied, canPromptInline: true))
+        #expect(!PermissionManager.allowsRecordingStart(for: .restricted, canPromptInline: true))
+        #expect(!PermissionManager.allowsRecordingStart(for: .unknown, canPromptInline: true))
+    }
+
+    @Test("Camera preview auto-starts only when presenter mode is ready")
+    func cameraPreviewAutoStartsWhenReady() {
+        #expect(CameraPreviewStartupPolicy.shouldAutoStartOnAppear(
+            isScreenSharing: false,
+            cameraStatus: .granted,
+            cameraEnabled: false,
+            cameraSurfaceVisible: false
+        ))
+    }
+
+    @Test("Camera preview does not auto-start during screen capture")
+    func cameraPreviewDoesNotAutoStartDuringScreenCapture() {
+        #expect(!CameraPreviewStartupPolicy.shouldAutoStartOnAppear(
+            isScreenSharing: true,
+            cameraStatus: .granted,
+            cameraEnabled: false,
+            cameraSurfaceVisible: false
+        ))
+    }
+
+    @Test("Camera preview does not auto-start without confirmed permission")
+    func cameraPreviewDoesNotAutoStartWithoutPermission() {
+        #expect(!CameraPreviewStartupPolicy.shouldAutoStartOnAppear(
+            isScreenSharing: false,
+            cameraStatus: .notDetermined,
+            cameraEnabled: false,
+            cameraSurfaceVisible: false
+        ))
+        #expect(!CameraPreviewStartupPolicy.shouldAutoStartOnAppear(
+            isScreenSharing: false,
+            cameraStatus: .granted,
+            cameraEnabled: true,
+            cameraSurfaceVisible: false
+        ))
+        #expect(!CameraPreviewStartupPolicy.shouldAutoStartOnAppear(
+            isScreenSharing: false,
+            cameraStatus: .granted,
+            cameraEnabled: false,
+            cameraSurfaceVisible: true
+        ))
+    }
+
+    @Test("Recording preview restore is disabled during automated tests")
+    func recordingPreviewRestoreStaysOffDuringTests() {
+        #expect(!LaunchRecordingPreviewPolicy.shouldScheduleRestore(
+            appMode: .recording,
+            isTesting: true
+        ))
+        #expect(LaunchRecordingPreviewPolicy.shouldScheduleRestore(
+            appMode: .recording,
+            isTesting: false
+        ))
     }
 
     // MARK: - Publisher Tests

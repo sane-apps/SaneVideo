@@ -39,16 +39,21 @@ struct MLEffectsExportSection: View {
                     String(localized: "export.ml.header", defaultValue: "AI Enhancement"),
                     systemImage: "cpu"
                 )
-                .font(.subheadline.weight(.semibold))
+                .saneReadableSectionTitle()
 
                 Spacer()
 
                 if mlEffects.hasAnyEnabled {
                     Text(String(localized: "export.ml.warning", defaultValue: "Export will take longer"))
-                        .font(.caption2)
+                        .font(Theme.Typography.support)
                         .foregroundStyle(.orange)
                 }
             }
+
+            HelperText(
+                text: "These enhancement effects run on-device. They can improve polish, but they make export slower.",
+                icon: "cpu"
+            )
 
             // Super Resolution
             VStack(alignment: .leading, spacing: 6) {
@@ -58,10 +63,9 @@ struct MLEffectsExportSection: View {
                             .foregroundStyle(Color.accentColor)
                         VStack(alignment: .leading, spacing: 2) {
                             Text(String(localized: "export.ml.superres", defaultValue: "Super Resolution"))
-                                .font(.caption.weight(.medium))
+                                .saneReadableBodyStrong()
                             Text(String(localized: "export.ml.superres.desc", defaultValue: "ML upscaling for sharper video"))
-                                .font(.caption2)
-                                .foregroundStyle(Color.stone)
+                                .saneReadableSupportText()
                         }
                     }
                 }
@@ -71,7 +75,7 @@ struct MLEffectsExportSection: View {
                 if mlEffects.superResolutionEnabled {
                     HStack {
                         Text(String(localized: "export.ml.scale", defaultValue: "Scale:"))
-                            .font(.caption)
+                            .saneReadableLabel()
                         Picker("", selection: $mlEffects.superResolutionScale) {
                             Text("1.5x").tag(CGFloat(1.5))
                             Text("2x").tag(CGFloat(2.0))
@@ -93,10 +97,9 @@ struct MLEffectsExportSection: View {
                             .foregroundStyle(Color.accentColor)
                         VStack(alignment: .leading, spacing: 2) {
                             Text(String(localized: "export.ml.denoise", defaultValue: "Noise Reduction"))
-                                .font(.caption.weight(.medium))
+                                .saneReadableBodyStrong()
                             Text(String(localized: "export.ml.denoise.desc", defaultValue: "Temporal noise filter for cleaner video"))
-                                .font(.caption2)
-                                .foregroundStyle(Color.stone)
+                                .saneReadableSupportText()
                         }
                     }
                 }
@@ -107,12 +110,12 @@ struct MLEffectsExportSection: View {
                 if mlEffects.denoiseEnabled {
                     HStack {
                         Text(String(localized: "export.ml.strength", defaultValue: "Strength:"))
-                            .font(.caption)
+                            .saneReadableLabel()
                         Slider(value: $mlEffects.denoiseStrength, in: 0.5...1.5)
                             .frame(width: 100)
                         Text(String(format: "%.1fx", mlEffects.denoiseStrength))
-                            .font(.caption.monospacedDigit())
-                            .frame(width: 32)
+                            .saneReadableMeta(monospaced: true)
+                            .frame(width: 40)
                     }
                     .padding(.leading, 24)
                 }
@@ -128,10 +131,9 @@ struct MLEffectsExportSection: View {
                             .foregroundStyle(Color.accentColor)
                         VStack(alignment: .leading, spacing: 2) {
                             Text(String(localized: "export.ml.interpolation", defaultValue: "Frame Interpolation"))
-                                .font(.caption.weight(.medium))
+                                .saneReadableBodyStrong()
                             Text(String(localized: "export.ml.interpolation.desc", defaultValue: "Smooth motion with ML-generated frames"))
-                                .font(.caption2)
-                                .foregroundStyle(Color.stone)
+                                .saneReadableSupportText()
                         }
                     }
                 }
@@ -141,7 +143,7 @@ struct MLEffectsExportSection: View {
                 if mlEffects.frameInterpolationEnabled {
                     HStack {
                         Text(String(localized: "export.ml.target_fps", defaultValue: "Target FPS:"))
-                            .font(.caption)
+                            .saneReadableLabel()
                         Picker("", selection: $mlEffects.targetFrameRate) {
                             Text("48 fps").tag(48.0)
                             Text("60 fps").tag(60.0)
@@ -160,7 +162,7 @@ struct MLEffectsExportSection: View {
                     Image(systemName: "exclamationmark.triangle.fill")
                         .foregroundStyle(.yellow)
                     Text(String(localized: "export.ml.model_required", defaultValue: "ML model download required"))
-                        .font(.caption)
+                        .saneReadableSupportText()
                     Spacer()
                     if isDownloadingModel {
                         ProgressView()
@@ -169,18 +171,16 @@ struct MLEffectsExportSection: View {
                         Button(String(localized: "export.ml.download", defaultValue: "Download")) {
                             downloadModel()
                         }
-                        .font(.caption)
+                        .font(Theme.Typography.meta)
                         .buttonStyle(.bordered)
                     }
                 }
                 .padding(8)
-                .background(Color.accentColor.opacity(0.1))
-                .cornerRadius(6)
+                .sanePanel(radius: 10, accent: .yellow)
             }
         }
         .padding(12)
-        .background(Color.stone.opacity(0.05))
-        .cornerRadius(8)
+        .sanePanel(radius: 12, accent: Theme.Colors.accentSoft)
         .task {
             updateModelStatus()
         }

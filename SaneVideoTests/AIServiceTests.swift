@@ -123,6 +123,56 @@ struct AIServiceTests {
         }
     }
 
+    // MARK: - Commentary Workflow Tests
+
+    @Suite("Commentary Workflow")
+    struct CommentaryWorkflowTests {
+
+        @Test("WorkflowBrief combines text and voice instructions")
+        func workflowBriefCombinesPromptSources() {
+            let brief = WorkflowBrief(
+                workflow: .commentary,
+                instructions: "Group the errors by concept.",
+                voiceBriefSummary: "Keep the source timestamp visible.",
+                maxMoments: 5
+            )
+
+            #expect(brief.hasContent)
+            #expect(brief.combinedPrompt == "Group the errors by concept.\nKeep the source timestamp visible.")
+        }
+
+        @Test("CommentaryPlanItem mirrors commentary markers")
+        func commentaryPlanItemFromMarkersPreservesOrder() {
+            let markers = [
+                CommentaryMarker(
+                    concept: "Second",
+                    title: "Second point",
+                    startTime: 30,
+                    endTime: 36,
+                    scriptureReferences: "Acts 17:11",
+                    sortOrder: 1
+                ),
+                CommentaryMarker(
+                    concept: "First",
+                    title: "First point",
+                    startTime: 12,
+                    endTime: 18,
+                    scriptureReferences: "1 Timothy 5:21",
+                    sortOrder: 0
+                )
+            ]
+
+            let items = CommentaryPlanItem.fromMarkers(markers)
+
+            #expect(items.count == 2)
+            #expect(items[0].concept == "First")
+            #expect(items[0].claim == "First point")
+            #expect(items[0].supportingReferences == "1 Timothy 5:21")
+            #expect(items[1].concept == "Second")
+            #expect(items[1].startTime == 30)
+        }
+    }
+
     // MARK: - MagicFixAnalysis Tests
 
     @Suite("MagicFixAnalysis")
@@ -262,6 +312,37 @@ struct AIServiceTests {
 
             // Assert
             #expect(result.isEmpty)
+        }
+
+        @Test("generateCommentaryPlan builds transcript-grounded concept cards")
+        func generateCommentaryPlanBuildsDraft() async {
+            let service = AIService()
+            let captions = [
+                Caption(
+                    text: "They open by saying everyone should be impartial.",
+                    startTime: CMTime(seconds: 0, preferredTimescale: 600),
+                    endTime: CMTime(seconds: 3, preferredTimescale: 600)
+                ),
+                Caption(
+                    text: "Later they argue Jake should not return to minister there.",
+                    startTime: CMTime(seconds: 4, preferredTimescale: 600),
+                    endTime: CMTime(seconds: 8, preferredTimescale: 600)
+                )
+            ]
+            let brief = WorkflowBrief(
+                workflow: .commentary,
+                instructions: "be impartial, Jake should not return",
+                maxMoments: 2
+            )
+
+            let items = await service.generateCommentaryPlan(captions: captions, brief: brief)
+
+            #expect(items.count == 2)
+            #expect(items[0].concept == "Be Impartial")
+            #expect(items[0].claim.contains("impartial"))
+            #expect(items[0].sourceTimestampRange == "00:00-00:03")
+            #expect(items[1].concept == "Jake Should Not Return")
+            #expect(items[1].claim.contains("Jake should not return"))
         }
     }
 

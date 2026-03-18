@@ -36,6 +36,11 @@ struct VoiceoverSettingsSheet: View {
 
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
+                    HelperText(
+                        text: "Voiceover uses Apple system voices to turn the current captions into a narration track. It saves an audio file locally for this project.",
+                        icon: "waveform.badge.mic"
+                    )
+
                     voiceSection
                     Divider()
                     settingsSection
@@ -81,6 +86,11 @@ struct VoiceoverSettingsSheet: View {
             )
             .font(.subheadline.weight(.semibold))
 
+            HelperText(
+                text: "Pick the voice that best matches the tone of the demo. Premium Apple voices usually sound the most natural.",
+                icon: "person.wave.2.fill"
+            )
+
             LazyVGrid(columns: [
                 GridItem(.flexible()),
                 GridItem(.flexible())
@@ -116,6 +126,11 @@ struct VoiceoverSettingsSheet: View {
             )
             .font(.subheadline.weight(.semibold))
 
+            HelperText(
+                text: "Use speed to match pacing and pitch to adjust tone. Small moves usually sound better than dramatic ones.",
+                icon: "dial.medium"
+            )
+
             LabeledSliderControl(
                 label: String(localized: "voiceover.settings.speed.title", defaultValue: "Speed"),
                 value: speechRateBinding,
@@ -148,6 +163,11 @@ struct VoiceoverSettingsSheet: View {
             )
             .font(.subheadline.weight(.semibold))
 
+            HelperText(
+                text: "Play a short sample before generating the full file so you can hear the current voice, speed, and pitch together.",
+                icon: "speaker.wave.2.fill"
+            )
+
             HStack {
                 Button {
                     voiceoverService.previewVoice(voiceoverService.selectedVoiceId)
@@ -159,6 +179,7 @@ struct VoiceoverSettingsSheet: View {
                 }
                 .buttonStyle(.bordered)
                 .accessibilityIdentifier("voiceover.preview.play")
+                .help("Play a short system voice sample with the current settings.")
 
                 Button {
                     voiceoverService.stopPreview()
@@ -170,6 +191,7 @@ struct VoiceoverSettingsSheet: View {
                 }
                 .buttonStyle(.bordered)
                 .accessibilityIdentifier("voiceover.preview.stop")
+                .help("Stop the sample playback.")
             }
         }
     }
@@ -216,7 +238,7 @@ struct VoiceoverSettingsSheet: View {
                 savePanel.allowedContentTypes = [.audio]
                 savePanel.nameFieldStringValue = "\(projectName)_Voiceover.m4a"
 
-                let response = await savePanel.beginSheetModal(for: NSApp.keyWindow!)
+                let response = await Self.presentSavePanel(savePanel)
 
                 guard response == .OK, let url = savePanel.url else {
                     isGenerating = false
@@ -237,6 +259,39 @@ struct VoiceoverSettingsSheet: View {
                 }
             }
         }
+    }
+
+    @MainActor
+    static func preferredPresentationWindow(
+        keyWindow: NSWindow?,
+        mainWindow: NSWindow?,
+        windows: [NSWindow]
+    ) -> NSWindow? {
+        if let keyWindow {
+            return keyWindow
+        }
+
+        if let mainWindow {
+            return mainWindow
+        }
+
+        return windows.first(where: \.isVisible)
+    }
+
+    @MainActor
+    static func presentSavePanel(
+        _ savePanel: NSSavePanel,
+        app: NSApplication = .shared
+    ) async -> NSApplication.ModalResponse {
+        if let window = preferredPresentationWindow(
+            keyWindow: app.keyWindow,
+            mainWindow: app.mainWindow,
+            windows: app.windows
+        ) {
+            return await savePanel.beginSheetModal(for: window)
+        }
+
+        return savePanel.runModal()
     }
 }
 

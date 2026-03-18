@@ -23,12 +23,12 @@ struct TranscriptionCoordinatorTests {
     // MARK: - Initial State Tests
 
     @Test("Coordinator initializes successfully")
-    func initialState() {
+    func initialState() async {
         // Act
         let coordinator = sut
 
-        // Assert - Coordinator exists and is ready
-        #expect(coordinator != nil, "Coordinator should initialize")
+        // Assert - Coordinator starts in the expected unloaded state
+        #expect(await coordinator.modelState == .notLoaded)
     }
 
     // MARK: - Caption Generation Tests

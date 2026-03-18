@@ -86,6 +86,7 @@ class ExportCompositor {
                 trackPrivacyRegions: saneInstruction.trackPrivacyRegions,
                 activeTransitions: saneInstruction.activeTransitions,
                 textLayers: saneInstruction.textLayers,
+                interactionLayers: saneInstruction.interactionLayers,
                 visionService: saneInstruction.visionService,
                 smartCropKeyframes: keyframes
             )

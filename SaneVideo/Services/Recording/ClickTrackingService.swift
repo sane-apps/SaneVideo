@@ -16,9 +16,11 @@ actor ClickTrackingService {
     private var isTracking = false
     private var clicks: [ClickSample] = []
     private var cursorSamples: [CursorSample] = []
+    private var keystrokeSamples: [KeystrokeSample] = []
     private var startTime: Date?
     nonisolated(unsafe) private var clickMonitor: Any?
     nonisolated(unsafe) private var moveMonitor: Any?
+    nonisolated(unsafe) private var keyMonitor: Any?
 
     // Screen size for normalization
     private var screenSize: CGSize = .zero
@@ -30,12 +32,14 @@ actor ClickTrackingService {
     // Throttle: minimum interval between cursor samples (16ms ≈ 60fps)
     private var lastCursorSampleTime: TimeInterval = 0
     private static let cursorSampleInterval: TimeInterval = 1.0 / 60.0
+    private static let navigationKeyCodes: Set<UInt16> = [36, 48, 49, 51, 53, 123, 124, 125, 126]
 
     func startTracking() {
         guard !isTracking else { return }
         isTracking = true
         clicks = []
         cursorSamples = []
+        keystrokeSamples = []
         startTime = Date()
         lastCursorSampleTime = 0
         isButtonDown = false
@@ -69,8 +73,18 @@ actor ClickTrackingService {
             }
             self.moveMonitor = mMonitor
 
-            if cMonitor != nil && mMonitor != nil {
-                AppLogger.recording.info("ClickTrackingService: Started tracking clicks + cursor movement")
+            // Capture shortcuts and navigation keys only to avoid storing free-form typing.
+            let kMonitor = NSEvent.addGlobalMonitorForEvents(
+                matching: [.keyDown]
+            ) { [weak self] event in
+                Task {
+                    await self?.handleKeyEvent(event)
+                }
+            }
+            self.keyMonitor = kMonitor
+
+            if cMonitor != nil && mMonitor != nil && kMonitor != nil {
+                AppLogger.recording.info("ClickTrackingService: Started tracking clicks, cursor movement, and shortcut keys")
             } else {
                 AppLogger.recording.warning("ClickTrackingService: Failed to create event monitors - may need accessibility permissions")
             }
@@ -85,12 +99,15 @@ actor ClickTrackingService {
         // Remove event monitors (must be done on MainActor)
         let cMon = self.clickMonitor
         let mMon = self.moveMonitor
+        let kMon = self.keyMonitor
         Task { @MainActor in
             if let cMon { NSEvent.removeMonitor(cMon) }
             if let mMon { NSEvent.removeMonitor(mMon) }
+            if let kMon { NSEvent.removeMonitor(kMon) }
         }
         self.clickMonitor = nil
         self.moveMonitor = nil
+        self.keyMonitor = nil
 
         let encoder = JSONEncoder()
 
@@ -107,6 +124,13 @@ actor ClickTrackingService {
             try cursorData.write(to: cURL)
             cursorURL = cURL
             AppLogger.recording.info("ClickTrackingService: Saved \(cursorSamples.count) cursor samples to \(cURL.lastPathComponent)")
+        }
+
+        if !keystrokeSamples.isEmpty {
+            let keysURL = url.deletingPathExtension().appendingPathExtension("keys.json")
+            let keyData = try encoder.encode(keystrokeSamples)
+            try keyData.write(to: keysURL)
+            AppLogger.recording.info("ClickTrackingService: Saved \(keystrokeSamples.count) shortcut key samples to \(keysURL.lastPathComponent)")
         }
 
         AppLogger.recording.info("ClickTrackingService: Saved \(clicks.count) click events to \(clicksURL.lastPathComponent)")
@@ -184,6 +208,65 @@ actor ClickTrackingService {
         lastCursorSampleTime = timestamp
     }
 
+    private func handleKeyEvent(_ event: NSEvent) async {
+        guard let startTime else { return }
+
+        let key = normalizedKey(for: event)
+        let modifiers = modifierLabels(for: event.modifierFlags)
+        guard shouldCaptureKey(key: key, modifiers: modifiers, keyCode: event.keyCode) else { return }
+
+        let sample = KeystrokeSample(
+            timestamp: Date().timeIntervalSince(startTime),
+            key: key,
+            modifiers: modifiers,
+            keyCode: event.keyCode
+        )
+        keystrokeSamples.append(sample)
+    }
+
+    private func shouldCaptureKey(key: String, modifiers: [String], keyCode: UInt16) -> Bool {
+        if Self.navigationKeyCodes.contains(keyCode) {
+            return true
+        }
+
+        if !modifiers.isEmpty {
+            return !key.isEmpty
+        }
+
+        return false
+    }
+
+    private func normalizedKey(for event: NSEvent) -> String {
+        switch event.keyCode {
+        case 36: return "Return"
+        case 48: return "Tab"
+        case 49: return "Space"
+        case 51: return "Delete"
+        case 53: return "Escape"
+        case 123: return "Left Arrow"
+        case 124: return "Right Arrow"
+        case 125: return "Down Arrow"
+        case 126: return "Up Arrow"
+        default:
+            return event.charactersIgnoringModifiers?
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+                .uppercased() ?? ""
+        }
+    }
+
+    private func modifierLabels(for flags: NSEvent.ModifierFlags) -> [String] {
+        let filtered = flags.intersection(.deviceIndependentFlagsMask)
+        var labels: [String] = []
+
+        if filtered.contains(.command) { labels.append("Command") }
+        if filtered.contains(.shift) { labels.append("Shift") }
+        if filtered.contains(.option) { labels.append("Option") }
+        if filtered.contains(.control) { labels.append("Control") }
+        if filtered.contains(.function) { labels.append("Fn") }
+
+        return labels
+    }
+
     /// Get all recorded clicks
     func getClicks() -> [ClickSample] {
         return clicks
@@ -192,5 +275,10 @@ actor ClickTrackingService {
     /// Get all recorded cursor samples
     func getCursorSamples() -> [CursorSample] {
         return cursorSamples
+    }
+
+    /// Get locally recorded shortcut/navigation keys
+    func getKeystrokeSamples() -> [KeystrokeSample] {
+        return keystrokeSamples
     }
 }

@@ -21,9 +21,16 @@ struct ExportYouTubeSection: View {
         if showYouTubeUpload {
             GroupBox {
                 VStack(alignment: .leading, spacing: 12) {
+                    FeatureCallout(
+                        title: "Optional YouTube upload",
+                        message: "Skip this section if you want a fully local workflow. When enabled, SaneVideo still exports a local file first.",
+                        icon: "play.rectangle.fill",
+                        tone: .warning
+                    )
+
                     HStack {
                         Label(String(localized: "export.youtube.header", defaultValue: "YouTube Details"), systemImage: "play.rectangle.fill")
-                            .font(.caption)
+                            .saneReadableLabel()
                             .foregroundStyle(.red)
 
                         Spacer()
@@ -43,7 +50,7 @@ struct ExportYouTubeSection: View {
                             .padding(.vertical, 4)
                             .background(
                                 LinearGradient(
-                                    colors: [.teal, .blue],
+                                    colors: [Theme.Colors.accentSoft, Theme.Colors.accent],
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing
                                 )
@@ -56,6 +63,13 @@ struct ExportYouTubeSection: View {
                         .disabled(!hasCaptions || isGeneratingAI)
                         .help(hasCaptions ? "Generate title & description from transcript" : "Requires captions - generate them first")
                     }
+
+                    HelperText(
+                        text: hasCaptions
+                            ? "Auto-Generate uses the local transcript to draft a starting title and description."
+                            : "Generate captions first if you want SaneVideo to draft the title and description for you.",
+                        icon: "wand.and.stars"
+                    )
 
                     TextField(String(localized: "export.youtube.title", defaultValue: "Title"), text: $videoTitle)
                         .textFieldStyle(.roundedBorder)
@@ -70,6 +84,7 @@ struct ExportYouTubeSection: View {
                 }
                 .padding(8)
             }
+            .sanePanel(radius: 14, accent: .red)
             .transition(.move(edge: .top).combined(with: .opacity))
         }
     }

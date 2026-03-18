@@ -53,6 +53,22 @@ final class ProjectStateEffectsTests: XCTestCase {
         return clip
     }
 
+    @MainActor
+    private func replaceClip(_ clip: VideoClip) {
+        guard var project = projectState.currentProject,
+              !project.timeline.tracks.isEmpty,
+              let clipIndex = project.timeline.tracks[0].clips.firstIndex(where: { $0.id == clip.id }) else {
+            return
+        }
+
+        project.timeline.tracks[0].clips[clipIndex] = clip
+        projectState.currentProject = project
+    }
+
+    private func writeJSON<T: Encodable>(_ value: T, to url: URL) throws {
+        try JSONEncoder().encode(value).write(to: url)
+    }
+
     // MARK: - Transition Tests
 
     @MainActor
@@ -332,5 +348,70 @@ final class ProjectStateEffectsTests: XCTestCase {
         let updatedClip = projectState.getClip(by: clip.id)
         XCTAssertFalse(updatedClip?.overlays.isEmpty ?? true, "Overlay should be added")
         XCTAssertEqual(updatedClip?.overlays.first?.text, "Test Overlay")
+    }
+
+    @MainActor
+    func testApplyAutoZoomFallsBackWithoutCursorSidecar() async throws {
+        guard var clip = addTestClip() else {
+            XCTFail("Failed to add test clip")
+            return
+        }
+
+        let baseURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        let clickURL = baseURL.appendingPathExtension("clicks.json")
+        defer { try? FileManager.default.removeItem(at: clickURL) }
+
+        try writeJSON([
+            ClickSample(timestamp: 1.0, x: 0.7, y: 0.35, button: 0)
+        ], to: clickURL)
+
+        clip.clickDataURL = clickURL
+        replaceClip(clip)
+
+        await projectState.applyAutoZoom(to: clip)
+
+        let updatedClip = projectState.getClip(by: clip.id)
+        let positionTrack = updatedClip?.keyframeAnimation?[.positionX]
+
+        XCTAssertNotNil(updatedClip?.keyframeAnimation)
+        XCTAssertEqual(positionTrack?.keyframes.count, 4, "Click-only fallback should use legacy keyframe count")
+    }
+
+    @MainActor
+    func testApplyAutoZoomUsesCursorSidecarWhenAvailable() async throws {
+        guard var clip = addTestClip() else {
+            XCTFail("Failed to add test clip")
+            return
+        }
+
+        let baseURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        let clickURL = baseURL.appendingPathExtension("clicks.json")
+        let cursorURL = baseURL.appendingPathExtension("cursor.json")
+        defer {
+            try? FileManager.default.removeItem(at: clickURL)
+            try? FileManager.default.removeItem(at: cursorURL)
+        }
+
+        try writeJSON([
+            ClickSample(timestamp: 1.0, x: 0.5, y: 0.5, button: 0)
+        ], to: clickURL)
+
+        try writeJSON([
+            CursorSample(timestamp: 0.9, x: 0.55, y: 0.5, isDown: false, button: 0),
+            CursorSample(timestamp: 1.2, x: 0.82, y: 0.25, isDown: false, button: 0),
+            CursorSample(timestamp: 1.6, x: 0.88, y: 0.22, isDown: false, button: 0)
+        ], to: cursorURL)
+
+        clip.clickDataURL = clickURL
+        clip.cursorDataURL = cursorURL
+        replaceClip(clip)
+
+        await projectState.applyAutoZoom(to: clip)
+
+        let updatedClip = projectState.getClip(by: clip.id)
+        let positionTrack = updatedClip?.keyframeAnimation?[.positionX]
+
+        XCTAssertNotNil(updatedClip?.keyframeAnimation)
+        XCTAssertTrue((positionTrack?.keyframes.count ?? 0) > 4, "Cursor-guided zoom should create interpolated keyframes")
     }
 }

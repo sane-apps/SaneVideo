@@ -83,6 +83,7 @@ class ExportEngine: ExportServiceProtocol {
         do {
             let resultURL = try await exportTask.value
             try await handleExportCompletion(outputURL: resultURL, error: nil)
+            progressHandler(1.0)
             return resultURL
         } catch {
             // If strictly cancelled, clean up but maybe don't throw to UI if handled?
@@ -199,13 +200,16 @@ class ExportEngine: ExportServiceProtocol {
         writer.shouldOptimizeForNetworkUse = true
 
         // Video Input
-        let compressionProps: [String: Any] = [
+        var compressionProps: [String: Any] = [
             AVVideoAverageBitRateKey: settings.bitrate,
-            AVVideoProfileLevelKey: getProfileLevel(for: settings.codec),
             AVVideoExpectedSourceFrameRateKey: settings.frameRate,
             // Keyframe interval usually 1x-3x framerate
             AVVideoMaxKeyFrameIntervalKey: Int(settings.frameRate * 2)
         ]
+
+        if let profileLevel = getProfileLevel(for: settings.codec) {
+            compressionProps[AVVideoProfileLevelKey] = profileLevel
+        }
 
         let writerVideoSettings: [String: Any] = [
             AVVideoCodecKey: settings.codec,
@@ -291,10 +295,17 @@ class ExportEngine: ExportServiceProtocol {
 
         // Capture cancellation state
         let sessionState = currentExportState
+        nonisolated(unsafe) let progressCallback = progressHandler
+        nonisolated(unsafe) let publishProgress: @Sendable (Double) -> Void = { [weak self] currentProgress in
+            Task { @MainActor [weak self] in
+                self?.progress = currentProgress
+                progressCallback(currentProgress)
+            }
+        }
 
         // Video Writer
         group.enter()
-        writerVideoInput.requestMediaDataWhenReady(on: processingQueue) { [weak self] in
+        writerVideoInput.requestMediaDataWhenReady(on: processingQueue) {
             let videoInput = uncheckedVideoInput.input
             let videoOutput = uncheckedVideoOutput.output
 
@@ -318,10 +329,7 @@ class ExportEngine: ExportServiceProtocol {
                             // Debounce updates to main thread
                             if Date().timeIntervalSince(progressState.lastProgressUpdate) > 0.1 {
                                 progressState.lastProgressUpdate = Date()
-                                Task { @MainActor [weak self] in
-                                    self?.progress = currentProgress
-                                    progressHandler(currentProgress)
-                                }
+                                publishProgress(currentProgress)
                             }
                         } else {
                             // Write failed
@@ -387,7 +395,7 @@ class ExportEngine: ExportServiceProtocol {
         // Wait for inputs to finish
         // We use a safe continuation to bridge the dispatch group wrap
         return try await withCheckedThrowingContinuation { continuation in
-            group.notify(queue: processingQueue) {
+            nonisolated(unsafe) let finalizeExport: @Sendable () -> Void = {
                 // CRITICAL FIX: Use uncheckedWriter/uncheckedReader directly to avoid
                 // capturing non-Sendable AVAssetWriter/AVAssetReader in @Sendable closures
 
@@ -417,7 +425,7 @@ class ExportEngine: ExportServiceProtocol {
                 processingQueue.asyncAfter(deadline: .now() + finishWritingTimeout, execute: timeoutWorkItem!)
 
                 // Use uncheckedWriter to avoid Sendable warning in completion closure
-                uncheckedWriter.writer.finishWriting {
+                nonisolated(unsafe) let completeFinishWriting: @Sendable () -> Void = {
                     finishCompleted = true
                     timeoutWorkItem?.cancel()
 
@@ -438,23 +446,27 @@ class ExportEngine: ExportServiceProtocol {
                         continuation.resume(throwing: uncheckedWriter.writer.error ?? ExportError.unknown)
                     }
                 }
+
+                uncheckedWriter.writer.finishWriting(completionHandler: completeFinishWriting)
             }
+
+            group.notify(queue: processingQueue, execute: finalizeExport)
         }
     }
 
     // MARK: - Helpers
 
-    private func getProfileLevel(for codec: AVVideoCodecType) -> String {
-        // Simple profile selection using string literals to avoid import issues
-        // Note: These match the standard keys from VideoToolbox
+    private func getProfileLevel(for codec: AVVideoCodecType) -> CFString? {
         switch codec {
         case .hevc:
-            "HEVC_Main_AutoLevel"
+            kVTProfileLevel_HEVC_Main_AutoLevel
         case .hevcWithAlpha:
             // HEVC with Alpha uses Main10 profile for alpha layer support
-            "HEVC_Main10_AutoLevel"
+            kVTProfileLevel_HEVC_Main10_AutoLevel
+        case .h264:
+            kVTProfileLevel_H264_High_AutoLevel
         default:
-            "H264_High_AutoLevel"
+            nil
         }
     }
 

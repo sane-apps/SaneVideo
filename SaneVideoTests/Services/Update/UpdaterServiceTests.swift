@@ -25,16 +25,32 @@ struct UpdaterServiceTests {
     }
 
     @MainActor
-    @Test("UpdaterService checkForUpdates can be called")
-    func checkForUpdatesCanBeCalled() {
-        // Arrange
-        let service = UpdaterService()
+    @Test("UpdaterService accepts valid appcast feeds")
+    func appcastValidationAcceptsRSS() {
+        let xml = """
+        <?xml version="1.0" encoding="utf-8"?>
+        <rss version="2.0">
+          <channel>
+            <title>SaneVideo Updates</title>
+            <item>
+              <title>Version 1.0</title>
+            </item>
+          </channel>
+        </rss>
+        """
 
-        // Act - call checkForUpdates (in test environment, no actual update check happens)
-        service.checkForUpdates()
+        #expect(UpdaterService.looksLikeAppcastFeed(Data(xml.utf8)))
+    }
 
-        // Assert - in the test environment Sparkle becomes briefly ready, then unavailable again
-        // after a manual check because there is no real update feed/session to keep active.
-        #expect(service.canCheckForUpdates == false, "canCheckForUpdates should fall back to false after a manual check in tests")
+    @Test("UpdaterService rejects non-appcast responses")
+    func appcastValidationRejectsHTML() {
+        let html = """
+        <html>
+          <head><title>Coming Soon</title></head>
+          <body>Parking page</body>
+        </html>
+        """
+
+        #expect(!UpdaterService.looksLikeAppcastFeed(Data(html.utf8)))
     }
 }

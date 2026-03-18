@@ -65,6 +65,19 @@ struct WindowManagerTests {
         #expect(manager.isPiPVisible == true)
     }
 
+    @Test("PiP stays hidden when camera is inactive")
+    func updatePiPStateWithoutCamera() {
+        let manager = sut
+        manager.isScreenSharing = true
+        manager.isPiPVisible = true
+
+        manager.updatePiPState(isCameraActive: false, isRecording: false)
+
+        #expect(manager.isScreenSharing == true)
+        #expect(manager.isPiPVisible == true, "User preference stays on even when there is no live camera feed")
+        #expect(manager.pipWindowFrame == nil, "PiP window should not exist without an active camera")
+    }
+
     @Test("Update PiP state when screen sharing is inactive")
     func updatePiPStateWithoutScreenSharing() {
         // Arrange
@@ -151,6 +164,38 @@ struct WindowManagerTests {
         let finalExcludedCount = manager.excludedWindowIDs.count
         #expect(finalExcludedCount >= 0, "excludedWindowIDs should remain accessible")
         #expect(finalExcludedCount == initialExcludedCount, "No windows should be removed in test environment")
+    }
+
+    @Test("Floating controls window reserves recording width")
+    func floatingControlsWindow_UsesRecordingPanelSize() {
+        let window = FloatingControlsWindow()
+        defer { window.close() }
+
+        #expect(window.frame.width == FloatingControlsWindow.preferredPanelSize.width)
+        #expect(window.frame.height == FloatingControlsWindow.preferredPanelSize.height)
+        #expect(window.minSize == FloatingControlsWindow.preferredPanelSize)
+    }
+
+    @Test("Floating controls content fits inside the recording panel")
+    func floatingControlsWindow_ContentFitsRecordingPanel() {
+        let appState = ServiceContainer.shared.appState
+        let originalRecording = appState.recordingState.isRecording
+        let originalPaused = appState.recordingState.isPaused
+
+        appState.recordingState.isRecording = true
+        appState.recordingState.isPaused = false
+
+        defer {
+            appState.recordingState.isRecording = originalRecording
+            appState.recordingState.isPaused = originalPaused
+        }
+
+        let window = FloatingControlsWindow()
+        defer { window.close() }
+
+        window.contentView?.layoutSubtreeIfNeeded()
+        let fittedWidth = ceil(window.contentView?.fittingSize.width ?? 0)
+        #expect(window.frame.width >= fittedWidth, "Recording-state content should fit inside the floating panel")
     }
 
     // MARK: - Window Management Tests

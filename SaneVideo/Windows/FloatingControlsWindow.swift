@@ -7,13 +7,25 @@ import AppKit
 import SwiftUI
 
 class FloatingControlsWindow: NSPanel {
+    static let preferredPanelSize = NSSize(
+        width: ceil(
+            SharedRecordingControls.minimumBarWidth(
+                buttonSize: .medium,
+                includePauseControl: true,
+                showTimer: true,
+                showGalleryTarget: false
+            ) + Theme.Dimensions.paddingXL
+        ),
+        height: 112
+    )
+
     private var hideTimer: Timer?
 
     override var canBecomeKey: Bool { true }
     override var canBecomeMain: Bool { false }
 
     init() {
-        let initialFrame = NSRect(x: 0, y: 0, width: 600, height: 100)
+        let initialFrame = NSRect(origin: .zero, size: Self.preferredPanelSize)
 
         super.init(
             contentRect: initialFrame,
@@ -36,6 +48,8 @@ class FloatingControlsWindow: NSPanel {
         hasShadow = true
         hidesOnDeactivate = false
         collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
+        minSize = Self.preferredPanelSize
+        setContentSize(Self.preferredPanelSize)
 
         // CRITICAL FIX: Prevent controls from appearing in screen share picker
         if #available(macOS 15.0, *) {

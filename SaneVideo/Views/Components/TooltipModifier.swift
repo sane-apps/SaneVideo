@@ -50,16 +50,11 @@ extension View {
                 GeometryReader { geometry in
                     let rect = geometry[tooltip.anchor]
 
-                    Text(tooltip.text)
-                        .font(.caption)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(.ultraThinMaterial)
-                        .background(Color.black.opacity(0.8))
-                        .foregroundColor(.white)
-                        .cornerRadius(4)
+                    HelperText(text: tooltip.text, icon: "sparkles")
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 8)
                         .fixedSize()
-                        .shadow(radius: 2)
+                        .sanePanel(radius: 10, emphasized: true, accent: Theme.Colors.accentSoft)
                         .allowsHitTesting(false)
                         // Position above the anchor
                         // We center horizontally (rect.midX) and place above (rect.minY - 10)

@@ -65,6 +65,40 @@ struct CompositionBuilderTests {
         #expect(abs((segments.first?.duration.seconds ?? 0) - 10.0) < 0.01)
     }
 
+    @Test("Smooth jump cut video segments populate both A/B tracks with layer instructions")
+    func smoothJumpCutTracksReceiveLayerInstructions() async throws {
+        let assetURL = TestEnvironment.testAsset(named: "test_video.mp4")
+        let asset = AVURLAsset(url: assetURL)
+        let duration = try await asset.load(.duration)
+
+        var clip = VideoClip(
+            url: assetURL,
+            duration: duration
+        )
+
+        let removalStart = CMTime(seconds: min(1.0, max(0.2, duration.seconds / 4.0)), preferredTimescale: 600)
+        let removalDuration = CMTime(seconds: min(0.3, max(0.1, duration.seconds / 10.0)), preferredTimescale: 600)
+        clip.removedRanges = [CodableTimeRange(CMTimeRange(start: removalStart, duration: removalDuration))]
+        clip.useSmoothCutForRemovals = true
+
+        let track = Track(name: "Video 1", type: .video, clips: [clip], zIndex: 0)
+        let composition = AVMutableComposition()
+        var assetCache: [URL: AVURLAsset] = [:]
+
+        let result = try await VideoTrackBuilder.build(
+            from: [track],
+            into: composition,
+            assetCache: &assetCache,
+            renderSize: CGSize(width: 1920, height: 1080)
+        )
+
+        let populatedTrackIDs = Set(result.compositionVideoTracks.filter { !$0.segments.isEmpty }.map(\.trackID))
+        let instructedTrackIDs = Set(result.layerInstructions.map(\.trackID))
+
+        #expect(populatedTrackIDs.count == 2, "Smooth jump cuts should populate both A/B video tracks")
+        #expect(instructedTrackIDs == populatedTrackIDs, "Every populated Magic Fix video track must have a layer instruction")
+    }
+
     // MARK: - Error Handling
 
     @Test("Handle invalid URL gracefully during composition build")

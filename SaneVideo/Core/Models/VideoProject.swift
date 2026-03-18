@@ -23,6 +23,14 @@ struct VideoProject: Identifiable, Codable, Equatable, Sendable {
     var captionStyleName: String = "Classic"
     var captionOffset: CGSize = .zero
     var captionFontName: String?
+    var presentationPreset: PresentationPreset = .productWalkthrough
+    var speakerNotes: SpeakerNotes = .init()
+    var chapterMarkers: [ChapterMarker] = []
+    var workflowBrief: WorkflowBrief = .init()
+    var commentaryPlanItems: [CommentaryPlanItem] = []
+    var commentaryMarkers: [CommentaryMarker] = []
+    var demoPackSettings: DemoPackSettings = .init()
+    var publishMetadata: PublishMetadata
 
     init(id: UUID = UUID(), name: String = "Untitled Project", createdAt: Date = Date()) {
         self.id = id
@@ -36,6 +44,7 @@ struct VideoProject: Identifiable, Codable, Equatable, Sendable {
         currentTime = 0.0
         scrollOffset = 0.0
         zoomLevel = 1.0
+        publishMetadata = .default(for: name)
     }
 
     // MARK: - Computed Properties (Cached at model level for performance)
@@ -81,6 +90,46 @@ struct VideoProject: Identifiable, Codable, Equatable, Sendable {
         captionFontName = fontName
         modifiedAt = Date()
     }
+
+    mutating func updatePresentationPreset(_ preset: PresentationPreset) {
+        presentationPreset = preset
+        modifiedAt = Date()
+    }
+
+    mutating func updateSpeakerNotes(_ notes: SpeakerNotes) {
+        speakerNotes = notes
+        modifiedAt = Date()
+    }
+
+    mutating func updateChapterMarkers(_ markers: [ChapterMarker]) {
+        chapterMarkers = markers.sorted { $0.timestamp < $1.timestamp }
+        modifiedAt = Date()
+    }
+
+    mutating func updateWorkflowBrief(_ brief: WorkflowBrief) {
+        workflowBrief = brief
+        modifiedAt = Date()
+    }
+
+    mutating func updateCommentaryPlanItems(_ items: [CommentaryPlanItem]) {
+        commentaryPlanItems = CommentaryPlanItem.ordered(items)
+        modifiedAt = Date()
+    }
+
+    mutating func updateCommentaryMarkers(_ markers: [CommentaryMarker]) {
+        commentaryMarkers = CommentaryMarker.ordered(markers)
+        modifiedAt = Date()
+    }
+
+    mutating func updateDemoPackSettings(_ settings: DemoPackSettings) {
+        demoPackSettings = settings
+        modifiedAt = Date()
+    }
+
+    mutating func updatePublishMetadata(_ metadata: PublishMetadata) {
+        publishMetadata = metadata
+        modifiedAt = Date()
+    }
     
     /// Update playback state
     mutating func updatePlaybackState(time: Double, scroll: CGFloat, zoom: CGFloat) {
@@ -103,7 +152,15 @@ struct VideoProject: Identifiable, Codable, Equatable, Sendable {
             lhs.timeline == rhs.timeline &&
             lhs.currentTime == rhs.currentTime &&
             lhs.scrollOffset == rhs.scrollOffset &&
-            lhs.zoomLevel == rhs.zoomLevel
+            lhs.zoomLevel == rhs.zoomLevel &&
+            lhs.presentationPreset == rhs.presentationPreset &&
+            lhs.speakerNotes == rhs.speakerNotes &&
+            lhs.chapterMarkers == rhs.chapterMarkers &&
+            lhs.workflowBrief == rhs.workflowBrief &&
+            lhs.commentaryPlanItems == rhs.commentaryPlanItems &&
+            lhs.commentaryMarkers == rhs.commentaryMarkers &&
+            lhs.demoPackSettings == rhs.demoPackSettings &&
+            lhs.publishMetadata == rhs.publishMetadata
     }
 
     // MARK: - Codable
@@ -111,6 +168,7 @@ struct VideoProject: Identifiable, Codable, Equatable, Sendable {
     enum CodingKeys: String, CodingKey {
         case id, createdAt, modifiedAt, name, timeline, captionStyleName, captionOffset, captionFontName
         case currentTime, scrollOffset, zoomLevel
+        case presentationPreset, speakerNotes, chapterMarkers, workflowBrief, commentaryPlanItems, commentaryMarkers, demoPackSettings, publishMetadata
     }
 
     init(from decoder: Decoder) throws {
@@ -126,6 +184,14 @@ struct VideoProject: Identifiable, Codable, Equatable, Sendable {
         currentTime = try container.decodeIfPresent(Double.self, forKey: .currentTime) ?? 0.0
         scrollOffset = try container.decodeIfPresent(CGFloat.self, forKey: .scrollOffset) ?? 0.0
         zoomLevel = try container.decodeIfPresent(CGFloat.self, forKey: .zoomLevel) ?? 1.0
+        presentationPreset = try container.decodeIfPresent(PresentationPreset.self, forKey: .presentationPreset) ?? .productWalkthrough
+        speakerNotes = try container.decodeIfPresent(SpeakerNotes.self, forKey: .speakerNotes) ?? .init()
+        chapterMarkers = try container.decodeIfPresent([ChapterMarker].self, forKey: .chapterMarkers) ?? []
+        workflowBrief = try container.decodeIfPresent(WorkflowBrief.self, forKey: .workflowBrief) ?? .init()
+        commentaryPlanItems = try container.decodeIfPresent([CommentaryPlanItem].self, forKey: .commentaryPlanItems) ?? []
+        commentaryMarkers = try container.decodeIfPresent([CommentaryMarker].self, forKey: .commentaryMarkers) ?? []
+        demoPackSettings = try container.decodeIfPresent(DemoPackSettings.self, forKey: .demoPackSettings) ?? .init()
+        publishMetadata = try container.decodeIfPresent(PublishMetadata.self, forKey: .publishMetadata) ?? .default(for: name)
     }
 
     func encode(to encoder: Encoder) throws {
@@ -141,5 +207,13 @@ struct VideoProject: Identifiable, Codable, Equatable, Sendable {
         try container.encode(currentTime, forKey: .currentTime)
         try container.encode(scrollOffset, forKey: .scrollOffset)
         try container.encode(zoomLevel, forKey: .zoomLevel)
+        try container.encode(presentationPreset, forKey: .presentationPreset)
+        try container.encode(speakerNotes, forKey: .speakerNotes)
+        try container.encode(chapterMarkers, forKey: .chapterMarkers)
+        try container.encode(workflowBrief, forKey: .workflowBrief)
+        try container.encode(commentaryPlanItems, forKey: .commentaryPlanItems)
+        try container.encode(commentaryMarkers, forKey: .commentaryMarkers)
+        try container.encode(demoPackSettings, forKey: .demoPackSettings)
+        try container.encode(publishMetadata, forKey: .publishMetadata)
     }
 }

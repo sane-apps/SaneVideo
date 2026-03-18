@@ -131,7 +131,7 @@ struct CompactProjectBrowserView: View {
             isCurrent: isCurrent,
             isSelected: selectedIds.contains(project.id),
             selectedCount: selectedIds.count,
-            onSelect: { appState.projectState.currentProject = project },
+            onSelect: { appState.projectState.openProject(project) },
             onRowClick: { modifiers in handleRowClick(project: project, modifiers: modifiers) },
             onBulkDelete: deleteSelectedProjects,
             onBulkDuplicate: duplicateSelectedProjects,
@@ -142,7 +142,7 @@ struct CompactProjectBrowserView: View {
     private func openFirstSelected() {
         if let firstId = selectedIds.first,
            let project = projects.first(where: { $0.id == firstId }) {
-            appState.projectState.currentProject = project
+            appState.projectState.openProject(project)
         }
     }
 

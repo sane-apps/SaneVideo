@@ -14,6 +14,7 @@
 //  - SaneVideoCompositor: Applies crop transform per-frame with interpolation
 //
 
+import AVFoundation
 import CoreMedia
 import Foundation
 import Testing
@@ -183,6 +184,44 @@ struct SmartCropExportRegressionTests {
         )
 
         #expect(instruction.smartCropKeyframes == nil, "Default keyframes should be nil")
+    }
+
+    @Test("ExportCompositor preserves interaction layers when injecting smart crop keyframes")
+    @MainActor
+    func testInjectSmartCropPreservesInteractionLayers() async throws {
+        let interactionLayer = InteractionLayerItem(
+            clipID: UUID(),
+            timeRange: CMTimeRange(start: .zero, duration: CMTime(seconds: 2, preferredTimescale: 600)),
+            clicks: [InteractionClickItem(time: .zero, x: 0.4, y: 0.3, button: 0)],
+            cursorPath: [InteractionCursorItem(time: .zero, x: 0.4, y: 0.3, isDown: false)],
+            keystrokes: [InteractionKeystrokeItem(id: UUID(), time: .zero, text: "Command + K")],
+            style: InteractionOverlayStyle()
+        )
+
+        let baseInstruction = SaneVideoCompositionInstruction(
+            timeRange: CMTimeRange(start: .zero, duration: CMTime(seconds: 2, preferredTimescale: 600)),
+            layerInstructions: [],
+            interactionLayers: [interactionLayer]
+        )
+
+        let compositor = ExportCompositor()
+        let baseVideoComposition = AVMutableVideoComposition()
+        baseVideoComposition.instructions = [baseInstruction]
+
+        let keyframes: [CMTime: SuggestedCrop] = [
+            .zero: SuggestedCrop(centerX: 0.5, centerY: 0.5, scale: 1.0)
+        ]
+
+        let updatedVideoComposition = try await compositor.createVideoComposition(
+            for: AVMutableComposition(),
+            baseVideoComposition: baseVideoComposition,
+            settings: SaneExportSettings(),
+            smartCropKeyframes: keyframes
+        )
+
+        let updatedInstruction = updatedVideoComposition?.instructions.first as? SaneVideoCompositionInstruction
+        #expect(updatedInstruction?.interactionLayers.count == 1)
+        #expect(updatedInstruction?.interactionLayers.first?.keystrokes.first?.text == "Command + K")
     }
 
     // MARK: - Integration Architecture

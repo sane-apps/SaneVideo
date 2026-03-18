@@ -18,6 +18,7 @@ class WindowManager {
   var isPiPVisible = true
   var isScreenSharing = false
   var isTogglingScreenShare = false
+  var isTeleprompterVisible = false
 
   // CRITICAL FIX: Flag to prevent concurrent PiP show/hide operations
   private var isTogglingPiP = false
@@ -26,6 +27,12 @@ class WindowManager {
 
   private var floatingControls: FloatingControlsWindow?
   private var pipWindow: PiPCameraWindow?
+  private var teleprompterWindow: TeleprompterWindow?
+  private var mainWindowOpener: (@MainActor () -> Void)?
+
+  private var currentPresenterLayout: PresenterOverlayLayout? {
+    ServiceContainer.shared.appState.currentProject?.presentationPreset.presenterLayout
+  }
 
   // MARK: - Validation Helpers
 
@@ -45,6 +52,9 @@ class WindowManager {
     // Note: Controls are now embedded in PiP window, so excluding PiP window ID covers them.
     if isWindowValid(floatingControls), let floating = floatingControls {
       ids.append(CGWindowID(floating.windowNumber))
+    }
+    if isWindowValid(teleprompterWindow), let teleprompter = teleprompterWindow {
+      ids.append(CGWindowID(teleprompter.windowNumber))
     }
     return ids
   }
@@ -82,16 +92,23 @@ class WindowManager {
     updatePiPState(isCameraActive: isCameraActive, isRecording: isRecording)
   }
 
-  func updatePiPState(isCameraActive _: Bool, isRecording _: Bool) {
-    let shouldShowPiP = isScreenSharing && isPiPVisible
+  func updatePiPState(isCameraActive: Bool, isRecording _: Bool) {
+    let shouldShowPiP = isScreenSharing && isPiPVisible && isCameraActive && currentPresenterLayout != nil
+    let shouldShowFloatingControls = isScreenSharing && !shouldShowPiP
     AppLogger.window.info(
-      "updatePiPState: isScreenSharing=\(isScreenSharing), isPiPVisible=\(isPiPVisible), shouldShow=\(shouldShowPiP)"
+      "updatePiPState: isScreenSharing=\(isScreenSharing), isPiPVisible=\(isPiPVisible), isCameraActive=\(isCameraActive), shouldShowPiP=\(shouldShowPiP), shouldShowFloatingControls=\(shouldShowFloatingControls)"
     )
 
     if shouldShowPiP {
       showPiPWindow()
+      hideFloatingControls()
     } else {
       hidePiPWindow()
+      if shouldShowFloatingControls {
+        showFloatingControls()
+      } else {
+        hideFloatingControls()
+      }
     }
   }
 
@@ -113,6 +130,9 @@ class WindowManager {
 
     // CRITICAL FIX: Validate window state before operations
     if isWindowValid(pipWindow), let existingWindow = pipWindow, existingWindow.isVisible {
+      if let layout = currentPresenterLayout {
+        existingWindow.applyLayout(layout)
+      }
       existingWindow.setupPreview()
       existingWindow.orderFrontRegardless()
       isTogglingPiP = false
@@ -155,8 +175,10 @@ class WindowManager {
         return
       }
 
+      if let layout = self.currentPresenterLayout {
+        window.applyLayout(layout)
+      }
       window.orderFrontRegardless()
-      window.snapToCorner(.bottomRight)
       window.showResizeHintIfNeeded()  // Show double-click hint on first use
 
       isTogglingPiP = false
@@ -207,12 +229,50 @@ class WindowManager {
       await updateRecorderFilter()
     }
 
-    hideFloatingControls()
   }
 
   func toggleScreenShare(isRecording: Bool, isCameraActive: Bool) {
     isScreenSharing.toggle()
     updatePiPState(isCameraActive: isCameraActive, isRecording: isRecording)
+  }
+
+  func showTeleprompter() {
+    if TestEnvironment.isTesting && !TestEnvironment.isUITesting { return }
+
+    if !isWindowValid(teleprompterWindow) {
+      teleprompterWindow = nil
+    }
+
+    if teleprompterWindow == nil {
+      AppLogger.window.info("Creating Teleprompter Window")
+      teleprompterWindow = TeleprompterWindow()
+    }
+
+    guard let window = teleprompterWindow else { return }
+    isTeleprompterVisible = true
+
+    Task { @MainActor in
+      await updateRecorderFilter()
+      try? await Task.sleep(nanoseconds: 50_000_000)
+
+      guard isWindowValid(window) else { return }
+      window.orderFrontRegardless()
+      window.makeKey()
+    }
+  }
+
+  func hideTeleprompter() {
+    if TestEnvironment.isTesting && !TestEnvironment.isUITesting { return }
+
+    isTeleprompterVisible = false
+    guard let window = teleprompterWindow else { return }
+
+    teleprompterWindow = nil
+    window.close()
+
+    Task { @MainActor in
+      await updateRecorderFilter()
+    }
   }
 
   // MARK: - App Window Management
@@ -254,6 +314,7 @@ class WindowManager {
     let windowsSnapshot = NSApp.windows
 
     var foundMain = false
+    var fallbackWindow: NSWindow?
     for window in windowsSnapshot {
       guard !window.isReleasedWhenClosed, window.windowNumber > 0 else {
         continue
@@ -274,6 +335,10 @@ class WindowManager {
         continue
       }
 
+      if fallbackWindow == nil {
+        fallbackWindow = window
+      }
+
       if window.title.contains("SaneVideo") || window.title == "SaneVideo" || window.title.isEmpty {
         AppLogger.window.info("Restoring window: '\(window.title)' (ID: \(window.windowNumber))")
         window.makeKeyAndOrderFront(nil)
@@ -282,10 +347,21 @@ class WindowManager {
       }
     }
 
-    if !foundMain {
-      AppLogger.window.warning("Could not find specific main window, calling unhide")
-      NSApp.unhide(nil)
+    if !foundMain, let fallbackWindow {
+      AppLogger.window.info("Restoring fallback window: '\(fallbackWindow.title)' (ID: \(fallbackWindow.windowNumber))")
+      fallbackWindow.makeKeyAndOrderFront(nil)
+      foundMain = true
     }
+
+    if !foundMain {
+      AppLogger.window.warning("Could not find main window, reopening default window scene")
+      NSApp.unhide(nil)
+      mainWindowOpener?()
+    }
+  }
+
+  func registerMainWindowOpener(_ opener: @escaping @MainActor () -> Void) {
+    mainWindowOpener = opener
   }
 
   // MARK: - Cleanup
@@ -297,6 +373,7 @@ class WindowManager {
       hidePiPWindow()
     }
 
+    hideTeleprompter()
     hideFloatingControls()
     AppLogger.window.info("All windows cleaned up")
   }

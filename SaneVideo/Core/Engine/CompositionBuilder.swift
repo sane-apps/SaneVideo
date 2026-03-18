@@ -100,6 +100,7 @@ enum CompositionBuilder {
 
         // 3. Build Text Layers (Captions & Overlays) using TextLayerBuilder
         let textLayers = TextLayerBuilder.build(from: visualTimelineTracks, project: project)
+        let interactionLayers = TextLayerBuilder.buildInteractionLayers(from: visualTimelineTracks)
 
         // 4. Build Audio Tracks using AudioTrackBuilder
         var audioMixParams: [AVMutableAudioMixInputParameters] = []
@@ -163,6 +164,7 @@ enum CompositionBuilder {
                 trackPrivacyRegions: videoResult.trackPrivacyRegions,
                 activeTransitions: videoResult.activeTransitions,
                 textLayers: textLayers,
+                interactionLayers: interactionLayers,
                 visionService: ServiceContainer.shared.personSegmentationService
             )
 

@@ -36,6 +36,63 @@ struct TextLayerItem: Sendable {
   let words: [CaptionWord]?
 }
 
+struct InteractionClickItem: Sendable {
+  let time: CMTime
+  let x: Double
+  let y: Double
+  let button: Int
+}
+
+struct InteractionCursorItem: Sendable {
+  let time: CMTime
+  let x: Double
+  let y: Double
+  let isDown: Bool
+}
+
+struct InteractionKeystrokeItem: Sendable {
+  let id: UUID
+  let time: CMTime
+  let text: String
+}
+
+struct InteractionLayerItem: Sendable {
+  let clipID: UUID
+  let timeRange: CMTimeRange
+  let clicks: [InteractionClickItem]
+  let cursorPath: [InteractionCursorItem]
+  let keystrokes: [InteractionKeystrokeItem]
+  let style: InteractionOverlayStyle
+
+  func cursorPosition(at compositionTime: CMTime) -> (x: Double, y: Double)? {
+    guard !cursorPath.isEmpty else { return nil }
+
+    if compositionTime <= cursorPath[0].time {
+      return (cursorPath[0].x, cursorPath[0].y)
+    }
+
+    for index in 1..<cursorPath.count {
+      let previous = cursorPath[index - 1]
+      let next = cursorPath[index]
+      if compositionTime <= next.time {
+        let span = next.time.seconds - previous.time.seconds
+        guard span > 0.000_1 else { return (next.x, next.y) }
+        let progress = max(0, min(1, (compositionTime.seconds - previous.time.seconds) / span))
+        return (
+          previous.x + ((next.x - previous.x) * progress),
+          previous.y + ((next.y - previous.y) * progress)
+        )
+      }
+    }
+
+    if let last = cursorPath.last {
+      return (last.x, last.y)
+    }
+
+    return nil
+  }
+}
+
 // MARK: - Instruction Class
 
 /// Custom Instruction that carries effect metadata
@@ -69,6 +126,9 @@ class SaneVideoCompositionInstruction: NSObject, AVVideoCompositionInstructionPr
   /// Active Text Layers (Captions + Overlays) for this instruction time range
   let textLayers: [TextLayerItem]
 
+  /// Active interaction overlays (click rings, cursor spotlight, keystroke pills)
+  let interactionLayers: [InteractionLayerItem]
+
   /// Vision service for background effects (optional)
   let visionService: PersonSegmentationService?
 
@@ -86,6 +146,7 @@ class SaneVideoCompositionInstruction: NSObject, AVVideoCompositionInstructionPr
     trackBackgroundEffects: [CMPersistentTrackID: [(CMTimeRange, [BackgroundEffect])]] = [:],
     trackPrivacyRegions: [CMPersistentTrackID: [(CMTimeRange, [PrivacyRegion])]] = [:],
     activeTransitions: [TransitionMetadata] = [], textLayers: [TextLayerItem] = [],
+    interactionLayers: [InteractionLayerItem] = [],
     visionService: PersonSegmentationService? = nil,
     smartCropKeyframes: [CMTime: SuggestedCrop]? = nil
   ) {
@@ -97,6 +158,7 @@ class SaneVideoCompositionInstruction: NSObject, AVVideoCompositionInstructionPr
     self.trackPrivacyRegions = trackPrivacyRegions
     self.activeTransitions = activeTransitions
     self.textLayers = textLayers
+    self.interactionLayers = interactionLayers
     self.visionService = visionService
     self.smartCropKeyframes = smartCropKeyframes
 

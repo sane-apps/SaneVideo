@@ -70,7 +70,7 @@ struct TimelineControls: View {
                 .padding(.trailing, 12)
         }
         .frame(height: 42)
-        .background(Color(nsColor: .controlBackgroundColor))
+        .background(SaneVideoEditorPanelBackground(emphasized: true))
         .overlay(Divider(), alignment: .bottom)
         .zIndex(100)
         .onAppear {

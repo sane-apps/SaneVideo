@@ -18,8 +18,12 @@ struct ProjectTemplate: Identifiable, Sendable {
     let aspectRatio: CGSize
     let defaultExportSettings: SaneExportSettings
     let defaultCaptionStyle: String
+    let defaultPresentationPreset: PresentationPreset
 
     static let allTemplates: [ProjectTemplate] = [
+        .productWalkthrough,
+        .featureLaunch,
+        .supportTutorial,
         .youtube,
         .tiktok,
         .instagram,
@@ -41,7 +45,8 @@ struct ProjectTemplate: Identifiable, Sendable {
             bitrate: 20_000_000,
             frameRate: 60.0
         ),
-        defaultCaptionStyle: "YouTube"
+        defaultCaptionStyle: "YouTube",
+        defaultPresentationPreset: .screenOnly
     )
 
     static let tiktok = ProjectTemplate(
@@ -57,7 +62,8 @@ struct ProjectTemplate: Identifiable, Sendable {
             bitrate: 8_000_000,
             frameRate: 60.0
         ),
-        defaultCaptionStyle: "TikTok"
+        defaultCaptionStyle: "TikTok",
+        defaultPresentationPreset: .verticalDemo
     )
 
     static let instagram = ProjectTemplate(
@@ -73,7 +79,8 @@ struct ProjectTemplate: Identifiable, Sendable {
             bitrate: 10_000_000,
             frameRate: 30.0
         ),
-        defaultCaptionStyle: "Instagram"
+        defaultCaptionStyle: "Instagram",
+        defaultPresentationPreset: .squareTeaser
     )
 
     static let custom = ProjectTemplate(
@@ -84,6 +91,59 @@ struct ProjectTemplate: Identifiable, Sendable {
         color: "blue",
         aspectRatio: CGSize(width: 16, height: 9),
         defaultExportSettings: SaneExportSettings(),
-        defaultCaptionStyle: "Classic"
+        defaultCaptionStyle: "Classic",
+        defaultPresentationPreset: .productWalkthrough
+    )
+
+    static let productWalkthrough = ProjectTemplate(
+        id: UUID(),
+        name: "Product Walkthrough",
+        description: "16:9 demo • camera bubble • local export bundle ready",
+        icon: "rectangle.on.rectangle.circle.fill",
+        color: "blue",
+        aspectRatio: CGSize(width: 16, height: 9),
+        defaultExportSettings: SaneExportSettings(
+            codec: .hevc,
+            resolution: .uhd4K,
+            bitrate: 18_000_000,
+            frameRate: 60.0
+        ),
+        defaultCaptionStyle: "YouTube",
+        defaultPresentationPreset: .productWalkthrough
+    )
+
+    static let featureLaunch = ProjectTemplate(
+        id: UUID(),
+        name: "Feature Launch",
+        description: "9:16 teaser • fast pacing • launch-ready vertical export",
+        icon: "sparkles.rectangle.stack.fill",
+        color: "orange",
+        aspectRatio: CGSize(width: 9, height: 16),
+        defaultExportSettings: SaneExportSettings(
+            codec: .h264,
+            resolution: .hd1080,
+            bitrate: 10_000_000,
+            frameRate: 60.0,
+            aspectRatio: .vertical9x16
+        ),
+        defaultCaptionStyle: "TikTok",
+        defaultPresentationPreset: .featureLaunch
+    )
+
+    static let supportTutorial = ProjectTemplate(
+        id: UUID(),
+        name: "Support Tutorial",
+        description: "16:9 how-to • slower pacing • caption-first walkthroughs",
+        icon: "questionmark.video.fill",
+        color: "green",
+        aspectRatio: CGSize(width: 16, height: 9),
+        defaultExportSettings: SaneExportSettings(
+            codec: .h264,
+            resolution: .hd1080,
+            bitrate: 12_000_000,
+            frameRate: 30.0
+        ),
+        defaultCaptionStyle: "Classic",
+        defaultPresentationPreset: .supportTutorial
     )
 }

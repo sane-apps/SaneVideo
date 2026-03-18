@@ -16,6 +16,7 @@ protocol VideoWriterProtocol: AnyObject, Sendable {
     var isWriting: Bool { get }
     var error: Error? { get }
     var isReadyForData: Bool { get }
+    var driftTracker: DriftTracker? { get }
 
     // MARK: - Lifecycle
     func start(outputURL: URL, targetFrameRate: Double) throws
@@ -23,9 +24,9 @@ protocol VideoWriterProtocol: AnyObject, Sendable {
     func finish() async -> URL?
 
     // MARK: - Writing
-    func writeVideo(sampleBuffer: CMSampleBuffer, presentationTime: CMTime, source: RecordingSource)
-    func writeMicAudio(sampleBuffer: CMSampleBuffer)
-    func writeSystemAudio(sampleBuffer: CMSampleBuffer)
+    func writeVideo(sampleBuffer: CMSampleBuffer, presentationTime: CMTime, source: RecordingSource) -> Bool
+    func writeMicAudio(sampleBuffer: CMSampleBuffer) -> Bool
+    func writeSystemAudio(sampleBuffer: CMSampleBuffer) -> Bool
 
     // MARK: - PiP Compositing
     func updateCameraFrame(_ pixelBuffer: CVPixelBuffer?)

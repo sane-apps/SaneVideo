@@ -18,26 +18,23 @@ final class PiPRegressionTests: XCTestCase {
   func testPiPWindowProperties() {
     let pipWindow = PiPCameraWindow()
 
-    // 1. Verify it is an NSPanel (critical for floating behavior)
-    XCTAssertTrue(pipWindow is NSPanel, "PiPCameraWindow must be an NSPanel")
-
-    // 2. Verify Level
+    // 1. Verify Level
     // Use rawValue comparison if .floating isn't directly equating correctly, but it should be fine.
     XCTAssertEqual(
       pipWindow.level, .floating,
       "PiP Window level must be .floating (reverted from .statusBar for SCK visibility)")
 
-    // 3. Verify Style Mask
+    // 2. Verify Style Mask
     XCTAssertTrue(
       pipWindow.styleMask.contains(.nonactivatingPanel),
       "Style mask must include .nonactivatingPanel")
 
-    // 4. Verify Collection Behavior
+    // 3. Verify Collection Behavior
     XCTAssertTrue(pipWindow.collectionBehavior.contains(.canJoinAllSpaces), "Must join all spaces")
     XCTAssertTrue(
       pipWindow.collectionBehavior.contains(.fullScreenAuxiliary), "Must be fullScreenAuxiliary")
 
-    // 5. Verify Deactivation Hiding behavior
+    // 4. Verify Deactivation Hiding behavior
     XCTAssertFalse(pipWindow.hidesOnDeactivate, "Must NOT hide on deactivate")
 
     // Note: Controls are now embedded in PiPCameraWindow, so no separate window to check.

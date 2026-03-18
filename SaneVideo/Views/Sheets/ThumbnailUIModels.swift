@@ -30,6 +30,17 @@ enum ThumbnailStyle: String, CaseIterable, Identifiable {
         case .bw: return String(localized: "thumbnail.style.bw", defaultValue: "B&W")
         }
     }
+
+    var description: String {
+        switch self {
+        case .original: return "Keeps the frame untouched for accurate product shots."
+        case .vibrant: return "Boosts color and contrast when the original frame feels flat."
+        case .dramatic: return "Adds mood and punch for launch thumbnails or bold announcements."
+        case .warm: return "Leans friendly and inviting for tutorials, onboarding, and human-led demos."
+        case .cool: return "Crisp blue-led look that fits technical product marketing."
+        case .bw: return "High-contrast monochrome when shape and typography matter more than color."
+        }
+    }
     
     var icon: String {
         switch self {
@@ -72,10 +83,10 @@ struct ThumbnailCard: View {
                 
                 HStack(spacing: 2) {
                     Text(label)
-                        .font(.caption2)
+                        .font(Theme.Typography.meta)
                     if score > 0 {
                         Image(systemName: "face.smiling.fill")
-                            .font(.caption2)
+                            .font(.system(size: Theme.Typography.fontSizeSM, weight: .semibold))
                             .foregroundStyle(Color.accentColor)
                     }
                 }
@@ -92,5 +103,6 @@ struct ThumbnailCard: View {
         }
         .buttonStyle(.plain)
         .accessibilityIdentifier(id)
+        .help(score > 0 ? "\(label) • AI-ranked as a promising frame." : label)
     }
 }

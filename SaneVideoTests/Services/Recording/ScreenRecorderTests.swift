@@ -208,6 +208,32 @@ final class ScreenRecorderTests: XCTestCase {
         XCTAssertEqual(sut.updateContentFilterCallCount, 1)
     }
 
+    func testDynamicFilterSuppressionDetection_MatchesScreenCaptureKitTCCError() {
+        let error = NSError(
+            domain: "com.apple.ScreenCaptureKit.SCStreamErrorDomain",
+            code: -3801,
+            userInfo: [NSLocalizedDescriptionKey: "The user declined TCCs for application, window, display capture"]
+        )
+
+        XCTAssertTrue(
+            ScreenRecorder.shouldSuppressDynamicFilterUpdates(for: error),
+            "Dynamic filter retries should stop after the known ScreenCaptureKit TCC denial"
+        )
+    }
+
+    func testDynamicFilterSuppressionDetection_IgnoresUnrelatedErrors() {
+        let error = NSError(
+            domain: "com.sanevideo.tests",
+            code: 42,
+            userInfo: [NSLocalizedDescriptionKey: "Something else failed"]
+        )
+
+        XCTAssertFalse(
+            ScreenRecorder.shouldSuppressDynamicFilterUpdates(for: error),
+            "Only the known ScreenCaptureKit access denial should disable future filter updates"
+        )
+    }
+
     // MARK: - Sample Buffer Subject Tests
 
     func testSampleBufferSubject_Exists() {

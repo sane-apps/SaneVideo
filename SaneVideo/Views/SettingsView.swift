@@ -13,10 +13,11 @@ import SwiftUI
 
 struct SettingsView: View {
   var prefs = ServiceContainer.shared.userPreferences
+  @State private var selectedTab = "general"
 
   var body: some View {
-    TabView {
-      GeneralSettingsView()
+    TabView(selection: $selectedTab) {
+      GeneralSettingsView(selectedTab: $selectedTab)
         .tabItem {
           Label(
             String(localized: "settings.tab.general", defaultValue: "General"), systemImage: "gear")
@@ -73,6 +74,7 @@ struct SettingsView: View {
 
 struct GeneralSettingsView: View {
   @Bindable var prefs = ServiceContainer.shared.userPreferences
+  @Binding var selectedTab: String
   @State private var showingCacheAlert = false
   #if !APP_STORE
     @State private var automaticallyChecksForUpdates = false
@@ -81,9 +83,17 @@ struct GeneralSettingsView: View {
 
   var body: some View {
     Form {
+      Section {
+        InformationBox(
+          text: "These settings change the defaults for this Mac. Your current projects keep their own project-specific recording, export, and Demo Studio settings.",
+          color: Theme.Colors.accent,
+          icon: "gearshape.fill"
+        )
+      }
+
       Section(
         header: Text(String(localized: "settings.appearance.header", defaultValue: "Appearance"))
-          .font(.headline)
+          .saneReadableSectionTitle()
       ) {
         Picker(
           String(localized: "settings.appearance.theme", defaultValue: "Theme"),
@@ -94,48 +104,63 @@ struct GeneralSettingsView: View {
           }
         }
         .pickerStyle(.radioGroup)
+        .help("Choose how SaneVideo looks on this Mac.")
         .accessibilityIdentifier("settings.theme_picker")
+
+        HelperText(
+          text: "Theme changes the app chrome only. It does not affect exported video colors.",
+          icon: "paintpalette.fill"
+        )
       }
       .padding(.bottom, 20)
 
       Section(
         header: Text(
           String(localized: "settings.transcription.header", defaultValue: "Transcription Engine")
-        ).font(.headline)
+        ).saneReadableSectionTitle()
       ) {
         TranscriptionEnginePicker()
+        HelperText(
+          text: "Pick the speech-to-text engine you want to use for captions and transcripts.",
+          icon: "captions.bubble.fill"
+        )
       }
       .padding(.bottom, 20)
 
       Section(
         header: Text(
           String(localized: "settings.storage.header", defaultValue: "Storage & Performance")
-        ).font(.headline)
+        ).saneReadableSectionTitle()
       ) {
         HStack {
           VStack(alignment: .leading) {
             Text(String(localized: "settings.storage.temp_files", defaultValue: "Temporary Files"))
-              .font(.body)
+              .saneReadableBodyStrong()
             Text(
               String(
                 localized: "settings.storage.description",
                 defaultValue: "Clear cached previews and temporary recordings to free up space.")
             )
-            .font(.caption)
-            .foregroundColor(Color.stone)
+            .saneReadableSupportText()
           }
           Spacer()
           Button(String(localized: "settings.action.clear_cache", defaultValue: "Clear Cache")) {
             prefs.clearCache()
             showingCacheAlert = true
           }
+          .help("Remove cached previews and temporary files from this Mac.")
           .accessibilityIdentifier("settings.clear_cache")
         }
+
+        HelperText(
+          text: "Use this if the app is taking more disk space than expected or previews look stale.",
+          icon: "internaldrive.fill"
+        )
       }
       .padding(.bottom, 20)
 
       // MARK: - Privacy Section
-      Section(header: Text("Privacy & AI").font(.headline)) {
+      Section(header: Text("Privacy & AI").saneReadableSectionTitle()) {
         VStack(alignment: .leading, spacing: 12) {
           HStack {
             CompactPrivacyBadge()
@@ -145,34 +170,33 @@ struct GeneralSettingsView: View {
           Text(
             "SaneVideo processes all AI features on-device using Apple Intelligence. Your videos never leave your Mac."
           )
-          .font(.caption)
-          .foregroundColor(Color.stone)
+          .saneReadableSupportText()
 
           HStack {
             Text("Cloud AI:")
-              .font(.caption)
-              .foregroundColor(Color.stone)
+              .saneReadableLabel()
             Spacer()
             Text("Optional (your API keys)")
-              .font(.caption)
-              .foregroundColor(Color.stone)
+              .saneReadableMeta()
           }
 
           Button("Configure API Keys") {
-            // Open API keys settings
-            if let url = URL(
-              string: "x-apple.systempreferences:com.apple.preference.security?Privacy") {
-              NSWorkspace.shared.open(url)
-            }
+            selectedTab = "apikeys"
           }
-          .font(.caption)
           .buttonStyle(.link)
+          .help("Open the optional API Keys tab inside SaneVideo.")
+
+          HelperText(
+            text: "You only need API keys for optional direct upload or cloud-powered extras. The normal local demo workflow does not depend on them.",
+            icon: "lock.shield.fill"
+          )
         }
       }
 
       #if !APP_STORE
-        Section(header: Text("Software Updates").font(.headline)) {
+        Section(header: Text("Software Updates").saneReadableSectionTitle()) {
           Toggle("Check for updates automatically", isOn: $automaticallyChecksForUpdates)
+            .help("Let SaneVideo check for updates on this Mac.")
 
           Picker("Check frequency", selection: $updateCheckFrequency) {
             ForEach(SaneSparkleCheckFrequency.allCases) { frequency in
@@ -180,12 +204,19 @@ struct GeneralSettingsView: View {
             }
           }
           .pickerStyle(.segmented)
+          .help("Choose how often automatic update checks run.")
           .disabled(!automaticallyChecksForUpdates)
 
           Button("Check Now") {
             ServiceContainer.shared.updaterService.checkForUpdates()
           }
+          .help("Check for an update right now.")
           .disabled(!ServiceContainer.shared.updaterService.canCheckForUpdates)
+
+          HelperText(
+            text: "Automatic updates do not upload your projects. This only checks whether a newer app build exists.",
+            icon: "arrow.down.circle.fill"
+          )
         }
       #endif
     }
@@ -219,18 +250,25 @@ struct ExportSettingsView: View {
 
   var body: some View {
     Form {
+      Section {
+        InformationBox(
+          text: "These export defaults are the starting point for new exports. You can still override them per project or per export later.",
+          color: Theme.Colors.accent,
+          icon: "arrow.up.circle.fill"
+        )
+      }
+
       Section(
         header: Text(
           String(localized: "settings.export.header", defaultValue: "Default Export Configuration")
-        ).font(.headline)
+        ).saneReadableSectionTitle()
       ) {
         Text(
           String(
             localized: "settings.export.description",
             defaultValue: "These settings will be used as the default for new exports.")
         )
-        .font(.caption)
-        .foregroundColor(Color.stone)
+        .saneReadableSupportText()
         .padding(.bottom, 8)
 
         Picker(
@@ -242,7 +280,13 @@ struct ExportSettingsView: View {
           Text(String(localized: "settings.export.resolution.4k", defaultValue: "4K UHD")).tag(
             SaneExportSettings.ExportResolution.uhd4K)
         }
+        .help("Choose the default export resolution for new export jobs.")
         .accessibilityIdentifier("settings.resolution_picker")
+
+        HelperText(
+          text: "Use 1080p for the normal product-demo master. Use 4K when you want maximum detail or more room for crop/reframe work.",
+          icon: "rectangle.compress.vertical"
+        )
 
         Picker(
           String(localized: "settings.export.codec", defaultValue: "Codec"),
@@ -253,7 +297,13 @@ struct ExportSettingsView: View {
           Text(String(localized: "settings.export.codec.h264", defaultValue: "H.264")).tag(
             AVVideoCodecType.h264)
         }
+        .help("Choose the default video codec for new export jobs.")
         .accessibilityIdentifier("settings.codec_picker")
+
+        HelperText(
+          text: "HEVC makes smaller files at the same quality. H.264 is the safer compatibility default when you need broad support.",
+          icon: "film.stack.fill"
+        )
       }
     }
     .padding()
@@ -268,7 +318,7 @@ struct DebugSettingsView: View {
   var body: some View {
     VStack(alignment: .leading, spacing: 16) {
       Text(String(localized: "settings.debug.header", defaultValue: "Stress Testing & Limits"))
-        .font(.headline)
+        .saneReadableSectionTitle()
 
       Text(
         String(
@@ -276,8 +326,12 @@ struct DebugSettingsView: View {
           defaultValue:
             "Run automated stress tests to identify performance bottlenecks and breaking points.")
       )
-      .font(.caption)
-      .foregroundColor(Color.stone)
+      .saneReadableSupportText()
+
+      HelperText(
+        text: "This is for validation and diagnostics. Normal recording and editing do not require it.",
+        icon: "ladybug.fill"
+      )
 
       HStack {
         Button(
@@ -294,20 +348,20 @@ struct DebugSettingsView: View {
             }
           }
         )
+        .help("Run the built-in stress test suite for diagnostics.")
         .disabled(runner.isRunning)
         .accessibilityIdentifier("settings.run_stress_tests")
 
         Spacer()
 
         Text(runner.statusMessage)
-          .font(.caption)
-          .foregroundColor(.gray)
+          .saneReadableSupportText()
       }
 
       Divider()
 
       Text(String(localized: "settings.debug.logs", defaultValue: "Logs:"))
-        .font(.subheadline)
+        .saneReadableLabel()
 
       ScrollView {
         VStack(alignment: .leading) {
@@ -319,9 +373,7 @@ struct DebugSettingsView: View {
         }
         .padding(8)
       }
-      .background(Color(NSColor.textBackgroundColor))
-      .cornerRadius(4)
-      .border(Color.gray.opacity(0.3), width: 1)
+      .sanePanel(radius: 10, accent: Theme.Colors.accentDeep)
     }
     .padding()
   }

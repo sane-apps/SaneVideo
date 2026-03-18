@@ -17,6 +17,10 @@ actor BatchExportService {
     private let logger = Logger(subsystem: "com.sanevideo.SaneVideo", category: "BatchExport")
     private var isExporting = false
 
+    private struct UncheckedExportSession: @unchecked Sendable {
+        let session: AVAssetExportSession
+    }
+
     /// Export context for single short (reduces parameter count)
     private struct ExportContext {
         let outputDirectory: URL
@@ -174,34 +178,28 @@ actor BatchExportService {
             throw BatchExportError.exportSessionCreationFailed
         }
 
-        exportSession.outputURL = outputURL
-        exportSession.outputFileType = .mp4
         exportSession.videoComposition = videoComposition
         exportSession.shouldOptimizeForNetworkUse = true
 
-        // Export with progress monitoring
-        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
-            // Start progress timer
-            let timer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak exportSession] _ in
-                guard let session = exportSession else { return }
-                progressHandler(Double(session.progress))
+        let uncheckedSession = UncheckedExportSession(session: exportSession)
+        let progressTask = Task {
+            while !Task.isCancelled {
+                progressHandler(Double(uncheckedSession.session.progress))
+                try? await Task.sleep(for: .milliseconds(100))
             }
-            RunLoop.current.add(timer, forMode: .common)
+        }
+        defer { progressTask.cancel() }
 
-            exportSession.exportAsynchronously {
-                timer.invalidate()
-
-                switch exportSession.status {
-                case .completed:
-                    continuation.resume()
-                case .failed:
-                    continuation.resume(throwing: exportSession.error ?? BatchExportError.exportFailed)
-                case .cancelled:
-                    continuation.resume(throwing: BatchExportError.exportCancelled)
-                default:
-                    continuation.resume(throwing: BatchExportError.exportFailed)
-                }
+        do {
+            try await exportSession.export(to: outputURL, as: .mp4)
+            progressHandler(1.0)
+        } catch is CancellationError {
+            throw BatchExportError.exportCancelled
+        } catch {
+            if Task.isCancelled {
+                throw BatchExportError.exportCancelled
             }
+            throw error
         }
 
         return outputURL
@@ -228,9 +226,6 @@ actor BatchExportService {
         }
 
         // Calculate output dimensions based on aspect ratio
-        let targetAspect = settings.aspectRatio.widthRatio / settings.aspectRatio.heightRatio
-        let sourceAspect = sourceWidth / sourceHeight
-
         var renderWidth: CGFloat
         var renderHeight: CGFloat
 

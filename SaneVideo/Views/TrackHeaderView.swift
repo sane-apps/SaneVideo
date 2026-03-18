@@ -72,11 +72,11 @@ struct TrackHeaderView: View {
         // Both header and track row use same height (120px) and VStack spacing (8px)
         .background(
             RoundedRectangle(cornerRadius: 4)
-                .fill(Color(NSColor.controlBackgroundColor))
+                .fill(Theme.Colors.editorPanelElevated)
         )
         .overlay(
             RoundedRectangle(cornerRadius: 4)
-                .stroke(Color.stone.opacity(0.15), lineWidth: 0.5)
+                .stroke(Theme.Colors.editorStroke, lineWidth: 0.5)
         )
     }
 

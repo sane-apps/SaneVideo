@@ -11,22 +11,48 @@ import SwiftUI
 struct EnhancedMagicOverlayView: View {
     @Environment(AppState.self) var appState
     @State private var showCancelConfirmation = false
+
+    private var processingStatus: String {
+        appState.projectState.processingStatus ?? ""
+    }
+
+    private var overlayTitle: String {
+        let lowercased = processingStatus.lowercased()
+        if lowercased.contains("transcrib") || lowercased.contains("caption") {
+            return "Captions"
+        }
+        return "Magic Fix"
+    }
+
+    private var overlayIcon: String {
+        overlayTitle == "Captions" ? "captions.bubble.fill" : "wand.and.stars"
+    }
+
+    private var cancelActionTitle: String {
+        overlayTitle == "Captions" ? "Cancel caption generation?" : "Cancel Magic Fix?"
+    }
+
+    private var cancelActionMessage: String {
+        overlayTitle == "Captions"
+            ? "Canceling will stop the current caption generation run. Any progress will be lost."
+            : "Canceling will stop the current Magic Fix operation. Any progress will be lost."
+    }
     
     var body: some View {
         if appState.projectState.isProcessing {
             VStack(spacing: 16) {
                 // Header
                 HStack {
-                    Image(systemName: "wand.and.stars")
+                    Image(systemName: overlayIcon)
                         .font(.title2)
                         .foregroundColor(.accentColor)
                         .symbolEffect(.pulse, options: .repeating)
                     
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("Magic Fix")
+                        Text(overlayTitle)
                             .font(.headline)
-                        if let status = appState.projectState.processingStatus {
-                            Text(status)
+                        if !processingStatus.isEmpty {
+                            Text(processingStatus)
                                 .font(.subheadline)
                                 .foregroundColor(Color.stone)
                         }
@@ -42,7 +68,7 @@ struct EnhancedMagicOverlayView: View {
                             .foregroundColor(Color.stone)
                     }
                     .buttonStyle(.plain)
-                    .help("Cancel Magic Fix")
+                    .help(overlayTitle == "Captions" ? "Cancel caption generation" : "Cancel Magic Fix")
                 }
                 
                 // Progress bar
@@ -72,13 +98,13 @@ struct EnhancedMagicOverlayView: View {
             .shadow(radius: 20)
             .transition(.scale.combined(with: .opacity))
             .accessibilityIdentifier(AccessibilityIdentifiers.magicProgressOverlay)
-            .alert("Cancel Magic Fix?", isPresented: $showCancelConfirmation) {
+            .alert(cancelActionTitle, isPresented: $showCancelConfirmation) {
                 Button("Continue Processing", role: .cancel) {}
                 Button("Cancel", role: .destructive) {
                     cancelMagicFix()
                 }
             } message: {
-                Text("Canceling will stop the current Magic Fix operation. Any progress will be lost.")
+                Text(cancelActionMessage)
             }
         }
     }

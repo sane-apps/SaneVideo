@@ -117,4 +117,20 @@ class AIService {
             try await engine.refineCaptions(captions: captions, prompt: prompt)
         }
     }
+
+    /// Builds a transcript-grounded commentary draft that SaneVideo can render and edit.
+    func generateCommentaryPlan(
+        captions: [Caption],
+        brief: WorkflowBrief,
+        existingMarkers: [CommentaryMarker] = []
+    ) async -> [CommentaryPlanItem] {
+        isGenerating = true
+        defer { isGenerating = false }
+
+        return CommentaryWorkflowPlanner.buildDraft(
+            from: captions,
+            brief: brief,
+            existingMarkers: existingMarkers
+        )
+    }
 }

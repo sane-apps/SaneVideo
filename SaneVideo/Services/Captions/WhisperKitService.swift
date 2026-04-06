@@ -49,6 +49,7 @@ actor WhisperKitService: TranscriptionServiceProtocol {
     nonisolated(unsafe) private var whisperKit: WhisperKit?
     private var isInitialized = false
     private var initializationTask: Task<Void, Error>?
+    private var isTranscribing = false
 
     /// Current model loading state - observable for UI
     private(set) var modelState: ModelState = .notLoaded
@@ -172,6 +173,12 @@ actor WhisperKitService: TranscriptionServiceProtocol {
         // Ensure model is initialized
         try await ensureInitialized()
 
+        guard !isTranscribing else {
+            throw TranscriptionError.transcriptionFailed("WhisperKit transcription already in progress")
+        }
+        isTranscribing = true
+        defer { isTranscribing = false }
+
         // Extract audio from video
         let audioURL = try await extractAudio(from: videoURL)
         defer {
@@ -182,9 +189,12 @@ actor WhisperKitService: TranscriptionServiceProtocol {
         // Transcribe with WhisperKit
         AppLogger.project.info("🎤 WhisperKit: Transcribing audio...")
 
-        guard let kit = whisperKit else {
+        guard let whisperKit else {
             throw TranscriptionError.initializationFailed("WhisperKit model not initialized")
         }
+        // Explicitly opt this one reference out of sendability checking while the actor
+        // guarantees only one transcription can run at a time for this service instance.
+        nonisolated(unsafe) let currentWhisperKit = whisperKit
 
         let decodeOptions = DecodingOptions(
             verbose: false,
@@ -193,8 +203,7 @@ actor WhisperKitService: TranscriptionServiceProtocol {
             wordTimestamps: true
         )
 
-        // Transcribe - kit is actor-isolated so this is safe
-        let transcriptionResults = try await kit.transcribe(
+        let transcriptionResults = try await currentWhisperKit.transcribe(
             audioPath: audioURL.path,
             decodeOptions: decodeOptions
         )

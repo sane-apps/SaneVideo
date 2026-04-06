@@ -11,6 +11,16 @@ Graduate verified findings to ARCHITECTURE.md or DEVELOPMENT.md.
 - Finding 2
 -->
 
+## 2026-04-06 Click Tracking And WhisperKit Concurrency
+**Updated:** 2026-04-06 | **Status:** verified | **TTL:** 30d
+**Source:** Swift 5.10 release blog, Apple MainActor docs, `swiftlang/swift` issue search, local `ClickTrackingService.swift` and `WhisperKitService.swift`
+- Swift 5.10's concurrency guidance is to fix ownership at the isolation boundary first: access global-actor state asynchronously, move work into isolated methods when possible, and use narrow unsafe opt-outs only for the exact storage or local value the compiler cannot prove safe.
+- The Swift 5.10 release post explicitly documents `nonisolated(unsafe)` on local variables as the narrow escape hatch for non-`Sendable` references when the programmer is providing the synchronization.
+- `swiftlang/swift` currently has active region-based isolation checker bugs for patterns it cannot reason about yet, including generic "pattern that the region-based isolation checker does not understand how to check" reports (`#87538`, `#83642`, `#80016`, `#79435`, `#78061`) and closure/non-`Sendable` diagnostics like `#87918`. Practical meaning: simplify the closure payload and binding pattern before reaching for wider unsafe annotations.
+- Local `WhisperKitService` finding: `generateCaptions` only needs one `WhisperKit` instance per transcription. A single-flight guard plus one narrow `nonisolated(unsafe)` local reference is safer than broad module-level suppression for the entire WhisperKit import.
+- Local `ClickTrackingService` finding: the monitor closures were sending full `NSEvent` objects into actor tasks even though click handling only needs `isDown` and `button`, cursor tracking needs no event payload, and key tracking only needs `charactersIgnoringModifiers`, `modifierFlags`, and `keyCode`.
+- Local `ClickTrackingService` finding: monitor removal does not need another nested `Task { @MainActor in ... }`. `await MainActor.run { ... }` from the actor is the simpler handoff and avoids additional region-based isolation checker failures around `Any?` monitor tokens.
+
 ## Screen-Share Stop A/V Sync Hardening
 **Updated:** 2026-03-16 | **Status:** verified | **TTL:** 30d
 **Source:** Apple docs + local Cap research

@@ -8,6 +8,9 @@ bundle_id: com.sanevideo.app
 build:
   xcodegen: true
 
+tests:
+  verify_timeout_seconds: 600
+
 release:
   team_id: M78L6FXD48
   signing_identity: "Developer ID Application"

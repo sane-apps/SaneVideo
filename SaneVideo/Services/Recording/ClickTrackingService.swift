@@ -57,8 +57,10 @@ actor ClickTrackingService {
             let cMonitor = NSEvent.addGlobalMonitorForEvents(
                 matching: [.leftMouseDown, .rightMouseDown, .leftMouseUp, .rightMouseUp]
             ) { [weak self] event in
-                Task {
-                    await self?.handleClickEvent(event)
+                let isDown = event.type == .leftMouseDown || event.type == .rightMouseDown
+                let button = (event.type == .leftMouseDown || event.type == .leftMouseUp) ? 0 : 1
+                Task { [weak self] in
+                    await self?.handleClickEvent(isDown: isDown, button: button)
                 }
             }
             self.clickMonitor = cMonitor
@@ -66,9 +68,9 @@ actor ClickTrackingService {
             // Cursor movement monitor (new: tracks mouseMoved + drag)
             let mMonitor = NSEvent.addGlobalMonitorForEvents(
                 matching: [.mouseMoved, .leftMouseDragged, .rightMouseDragged]
-            ) { [weak self] event in
-                Task {
-                    await self?.handleCursorMoveEvent(event)
+            ) { [weak self] _ in
+                Task { [weak self] in
+                    await self?.handleCursorMoveEvent()
                 }
             }
             self.moveMonitor = mMonitor
@@ -77,16 +79,27 @@ actor ClickTrackingService {
             let kMonitor = NSEvent.addGlobalMonitorForEvents(
                 matching: [.keyDown]
             ) { [weak self] event in
-                Task {
-                    await self?.handleKeyEvent(event)
+                let key = event.charactersIgnoringModifiers ?? ""
+                let modifierFlags = event.modifierFlags.rawValue
+                let keyCode = event.keyCode
+                Task { [weak self] in
+                    await self?.handleKeyEvent(
+                        key: key,
+                        modifierFlags: modifierFlags,
+                        keyCode: keyCode
+                    )
                 }
             }
             self.keyMonitor = kMonitor
 
-            if cMonitor != nil && mMonitor != nil && kMonitor != nil {
-                AppLogger.recording.info("ClickTrackingService: Started tracking clicks, cursor movement, and shortcut keys")
-            } else {
+            if cMonitor == nil {
                 AppLogger.recording.warning("ClickTrackingService: Failed to create event monitors - may need accessibility permissions")
+            } else if mMonitor == nil {
+                AppLogger.recording.warning("ClickTrackingService: Failed to create event monitors - may need accessibility permissions")
+            } else if kMonitor == nil {
+                AppLogger.recording.warning("ClickTrackingService: Failed to create event monitors - may need accessibility permissions")
+            } else {
+                AppLogger.recording.info("ClickTrackingService: Started tracking clicks, cursor movement, and shortcut keys")
             }
         }
     }
@@ -97,13 +110,13 @@ actor ClickTrackingService {
         isTracking = false
 
         // Remove event monitors (must be done on MainActor)
-        let cMon = self.clickMonitor
-        let mMon = self.moveMonitor
-        let kMon = self.keyMonitor
-        Task { @MainActor in
-            if let cMon { NSEvent.removeMonitor(cMon) }
-            if let mMon { NSEvent.removeMonitor(mMon) }
-            if let kMon { NSEvent.removeMonitor(kMon) }
+        nonisolated(unsafe) let cMon = self.clickMonitor
+        nonisolated(unsafe) let mMon = self.moveMonitor
+        nonisolated(unsafe) let kMon = self.keyMonitor
+        await MainActor.run {
+            if let cMon = cMon { NSEvent.removeMonitor(cMon) }
+            if let mMon = mMon { NSEvent.removeMonitor(mMon) }
+            if let kMon = kMon { NSEvent.removeMonitor(kMon) }
         }
         self.clickMonitor = nil
         self.moveMonitor = nil
@@ -140,7 +153,7 @@ actor ClickTrackingService {
         return clicksURL
     }
 
-    private func handleClickEvent(_ event: NSEvent) async {
+    private func handleClickEvent(isDown: Bool, button: Int) async {
         guard let startTime else { return }
 
         let location = await MainActor.run {
@@ -150,9 +163,6 @@ actor ClickTrackingService {
         let normalizedX = location.x / screenSize.width
         let normalizedY = 1.0 - (location.y / screenSize.height)
         let timestamp = Date().timeIntervalSince(startTime)
-
-        let isDown = event.type == .leftMouseDown || event.type == .rightMouseDown
-        let button = (event.type == .leftMouseDown || event.type == .leftMouseUp) ? 0 : 1
 
         // Update button state for cursor samples
         isButtonDown = isDown
@@ -182,7 +192,7 @@ actor ClickTrackingService {
         lastCursorSampleTime = timestamp
     }
 
-    private func handleCursorMoveEvent(_: NSEvent) async {
+    private func handleCursorMoveEvent() async {
         guard let startTime else { return }
 
         let timestamp = Date().timeIntervalSince(startTime)
@@ -208,18 +218,18 @@ actor ClickTrackingService {
         lastCursorSampleTime = timestamp
     }
 
-    private func handleKeyEvent(_ event: NSEvent) async {
+    private func handleKeyEvent(key: String, modifierFlags: NSEvent.ModifierFlags.RawValue, keyCode: UInt16) async {
         guard let startTime else { return }
 
-        let key = normalizedKey(for: event)
-        let modifiers = modifierLabels(for: event.modifierFlags)
-        guard shouldCaptureKey(key: key, modifiers: modifiers, keyCode: event.keyCode) else { return }
+        let normalizedKey = normalizedKey(key: key, keyCode: keyCode)
+        let modifiers = modifierLabels(for: NSEvent.ModifierFlags(rawValue: modifierFlags))
+        guard shouldCaptureKey(key: normalizedKey, modifiers: modifiers, keyCode: keyCode) else { return }
 
         let sample = KeystrokeSample(
             timestamp: Date().timeIntervalSince(startTime),
-            key: key,
+            key: normalizedKey,
             modifiers: modifiers,
-            keyCode: event.keyCode
+            keyCode: keyCode
         )
         keystrokeSamples.append(sample)
     }
@@ -236,8 +246,8 @@ actor ClickTrackingService {
         return false
     }
 
-    private func normalizedKey(for event: NSEvent) -> String {
-        switch event.keyCode {
+    private func normalizedKey(key: String, keyCode: UInt16) -> String {
+        switch keyCode {
         case 36: return "Return"
         case 48: return "Tab"
         case 49: return "Space"
@@ -248,9 +258,9 @@ actor ClickTrackingService {
         case 125: return "Down Arrow"
         case 126: return "Up Arrow"
         default:
-            return event.charactersIgnoringModifiers?
+            return key
                 .trimmingCharacters(in: .whitespacesAndNewlines)
-                .uppercased() ?? ""
+                .uppercased()
         }
     }
 

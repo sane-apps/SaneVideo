@@ -34,6 +34,6 @@ pre-push:
       run: bundle exec bundle-audit check --update
     doctor:
       run: bundle exec ./Scripts/SaneMaster.rb doctor
-    verify_tests:
+    verify:
       # Run the verification script to ensure no regressions before pushing
       run: bundle exec ./Scripts/SaneMaster.rb verify

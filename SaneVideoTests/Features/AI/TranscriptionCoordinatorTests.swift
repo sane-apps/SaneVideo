@@ -43,24 +43,8 @@ struct TranscriptionCoordinatorTests {
         await #expect(throws: (any Error).self, "Should throw error for invalid file") {
             _ = try await coordinator.generateCaptions(for: invalidURL)
         }
-    }
 
-    @Test("Generate captions uses WhisperKit")
-    func generateCaptionsUsesWhisperKit() async {
-        // Arrange
-        let coordinator = sut
-        let testURL = TestEnvironment.mockAssetURL
-
-        // Act - Try to generate with test asset
-        // Note: Actual transcription requires valid video file and WhisperKit model
-        // Whether it succeeds or throws depends on system state (WhisperKit availability)
-        var didComplete = false
-        do {
-            _ = try await coordinator.generateCaptions(for: testURL)
-            didComplete = true  // Success path - captions were generated
-        } catch {
-            didComplete = true  // Expected if WhisperKit unavailable or test file invalid
-        }
-        #expect(didComplete, "generateCaptions should complete (success or expected error)")
+        let state = await coordinator.modelState
+        #expect(state == .notLoaded, "Invalid input should fail before WhisperKit starts loading")
     }
 }

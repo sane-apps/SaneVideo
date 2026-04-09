@@ -343,12 +343,14 @@ class RecordingState {
     countdownValue = 3
     NSLog("🎬 RecordingState: Countdown starting at 3...")
     countdownTask?.cancel()
-    countdownTask = Task { @MainActor in
-      while countdownValue > 0 {
+    countdownTask = Task { @MainActor [weak self] in
+      guard let self else { return }
+
+      while self.countdownValue > 0 {
         NSLog("🎬 RecordingState: Countdown = \(self.countdownValue)")
         try? await Task.sleep(nanoseconds: 1_000_000_000)
         if Task.isCancelled { return }
-        countdownValue -= 1
+        self.countdownValue -= 1
       }
       if Task.isCancelled { return }
       NSLog("🎬 RecordingState: Countdown complete!")
@@ -395,7 +397,10 @@ class RecordingState {
     self.isRecording = true // Set optimistically but handle failure
 
     // CRITICAL: Start engine and only set isRecording if it succeeds
-    startingTask = Task {
+    let recordingEngine = recordingEngine
+    startingTask = Task { [weak self, recordingEngine] in
+      guard self != nil else { return }
+
       await recordingEngine?.startRecording(
         initialSource: initialSource,
         includeCameraOverlay: includeCameraOverlay,

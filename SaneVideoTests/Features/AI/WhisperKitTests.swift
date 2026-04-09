@@ -43,4 +43,17 @@ struct WhisperKitTests {
         _ = isAvailable  // Verify we can use the value
         // The test passes if we get here (method completed without error)
     }
+
+    @Test("WhisperKit invalid file fails before model initialization")
+    func invalidFileFailsBeforeModelInitialization() async {
+        let service = WhisperKitService()
+        let invalidURL = URL(fileURLWithPath: "/nonexistent/file.mp4")
+
+        await #expect(throws: (any Error).self, "Invalid file should fail immediately") {
+            _ = try await service.generateCaptions(for: invalidURL)
+        }
+
+        let state = await service.modelState
+        #expect(state == .notLoaded, "Invalid file should not start WhisperKit model initialization")
+    }
 }

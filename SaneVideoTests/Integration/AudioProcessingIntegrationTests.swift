@@ -382,6 +382,10 @@ final class AudioProcessingIntegrationTests: XCTestCase {
 
     @MainActor
     func testTranscriptionWithGermanAudio() async throws {
+        guard ProcessInfo.processInfo.environment["RUN_LONG_TRANSCRIPTION_TESTS"] == "1" else {
+            throw XCTSkip("German Whisper transcription is opt-in. Set RUN_LONG_TRANSCRIPTION_TESTS=1 for manual multilingual verification.")
+        }
+
         let germanAssetURL = TestEnvironment.testAsset(named: "German.MOV")
         guard FileManager.default.fileExists(atPath: germanAssetURL.path) else {
             throw XCTSkip("German test asset not available at \(germanAssetURL.path)")

@@ -3,7 +3,7 @@ GEM
   specs:
     CFPropertyList (3.0.8)
     abbrev (0.1.2)
-    addressable (2.8.8)
+    addressable (2.9.0)
       public_suffix (>= 2.0.2, < 8.0)
     artifactory (3.0.17)
     ast (2.4.3)
@@ -173,7 +173,7 @@ GEM
       mutex_m
     io-console (0.8.2)
     jmespath (1.6.2)
-    json (2.19.2)
+    json (2.19.3)
     jwt (2.10.2)
       base64
     language_server-protocol (3.17.0.5)
@@ -212,7 +212,7 @@ GEM
       coderay (~> 1.1)
       method_source (~> 1.0)
       reline (>= 0.6.0)
-    public_suffix (7.0.1)
+    public_suffix (7.0.5)
     racc (1.8.1)
     rainbow (3.1.1)
     rake (13.3.1)

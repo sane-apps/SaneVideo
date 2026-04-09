@@ -70,6 +70,26 @@ final class MagicFixRegressionTests: XCTestCase {
         testClipURL = nil
     }
 
+    private func scopedMagicFixOptions(_ configure: (inout MagicFixOptions) -> Void) -> MagicFixOptions {
+        var options = MagicFixOptions()
+        options.removeSilence = false
+        options.removeFillers = false
+        options.generateCaptions = false
+        options.enhanceAudio = false
+        options.autoEnhance = false
+        options.findHighlights = false
+        options.smartCrop = false
+        options.autoFraming = false
+        options.scanForText = false
+        options.analyzeMood = false
+        options.magicRemovePeople = false
+        options.generativeStyle = false
+        options.applyHighlightCursor = false
+        options.smoothJumpCuts = false
+        configure(&options)
+        return options
+    }
+
     // MARK: - Bug Fix: Magic Fix Hang (Schedule File Before Engine Start)
 
     /// Regression Test for: "Magic Fix hangs after audio file loaded"
@@ -131,8 +151,7 @@ final class MagicFixRegressionTests: XCTestCase {
     /// Fix implemented: Added Task.isCancelled checks before file loading and directory creation
     func testMagicFixCancellationBeforeHeavyOperations() async {
         // Arrange
-        var options = MagicFixOptions()
-        options.enhanceAudio = true
+        let options = scopedMagicFixOptions { $0.enhanceAudio = true }
 
         // Act: Start Magic Fix and immediately cancel
         let task = Task {
@@ -154,8 +173,7 @@ final class MagicFixRegressionTests: XCTestCase {
     /// Fix implemented: Wrapped enhanceAudioFirst with withTimeout(seconds: 600.0)
     func testMagicFixAudioEnhancementTimeout() async {
         // Arrange
-        var options = MagicFixOptions()
-        options.enhanceAudio = true
+        let options = scopedMagicFixOptions { $0.enhanceAudio = true }
 
         // Act: Start Magic Fix with audio enhancement
         // Note: This test verifies timeout wrapper exists, not that it triggers
@@ -178,8 +196,7 @@ final class MagicFixRegressionTests: XCTestCase {
     /// Fix implemented: Added explicit checks and logging when getClip returns nil
     func testMagicFixClipDeletionRaceCondition() async {
         // Arrange
-        var options = MagicFixOptions()
-        options.removeSilence = true
+        let options = scopedMagicFixOptions { $0.removeSilence = true }
 
         // Act: Start Magic Fix, then delete clip mid-process
         let expectation = XCTestExpectation(description: "Magic Fix handles deleted clip")
@@ -209,8 +226,7 @@ final class MagicFixRegressionTests: XCTestCase {
     /// Fix implemented: Function now throws and verifies enhancedAudioURL was set
     func testEnhanceAudioFirstVerifiesSuccess() async {
         // Arrange
-        var options = MagicFixOptions()
-        options.enhanceAudio = true
+        let options = scopedMagicFixOptions { $0.enhanceAudio = true }
 
         // Act: Try to enhance audio (will likely fail on test file, but should handle gracefully)
         // Note: This test verifies the error handling path exists
@@ -251,10 +267,7 @@ final class MagicFixRegressionTests: XCTestCase {
     /// Fix implemented: Added loadProject(forceReload: true) and seek(to: .zero) after Magic Fix completes
     func testPlaybackResetAfterMagicFix() async {
         // Arrange
-        var options = MagicFixOptions()
-        options.removeSilence = true
-        options.generateCaptions = false
-        options.enhanceAudio = false
+        let options = scopedMagicFixOptions { $0.removeSilence = true }
 
         // Pre-condition: Clip has no removed ranges
         XCTAssertTrue(testClip.removedRanges.isEmpty, "Clip should start with no removed ranges")

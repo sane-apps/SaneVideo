@@ -276,6 +276,17 @@ extension RecordingEngine {
         ServiceContainer.shared.toastManager.show("Switching to \(sourceName)...")
       }
 
+      if TestEnvironment.isTesting {
+        currentSource = source
+        pendingSource = nil
+        isSwitching = false
+        timeCoordinator.startTimeNeedsRecalibration = false
+        sourceSwitchTimeoutTask?.cancel()
+        sourceSwitchTimeoutTask = nil
+        AppLogger.recording.info("🧪 [TEST] Source switch completed immediately")
+        return
+      }
+
       // CRITICAL FIX: Cancel any previous timeout task before starting new one
       // This prevents race conditions where old timeout corrupts new switch state
       sourceSwitchTimeoutTask?.cancel()

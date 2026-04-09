@@ -194,6 +194,24 @@ struct RecordingStateTests {
     #expect(recordingState.countdownValue == 0)
   }
 
+  @Test("Countdown tasks do not retain recording state after test teardown")
+  func countdownTaskDoesNotRetainRecordingState() async {
+    weak var weakState: RecordingState?
+
+    do {
+      var recordingState: RecordingState? = RecordingState(cameraService: nil)
+      recordingState?.shouldSkipCountdown = false
+      recordingState?.startRecording(isScreenSharing: false)
+      weakState = recordingState
+      recordingState = nil
+    }
+
+    await Task.yield()
+    try? await Task.sleep(nanoseconds: 50_000_000)
+
+    #expect(weakState == nil)
+  }
+
   // MARK: - Stop Recording Tests
 
   @Test("Stop behavior when idle")

@@ -170,6 +170,15 @@ actor WhisperKitService: TranscriptionServiceProtocol {
 
         AppLogger.project.info("🎤 WhisperKit: Starting transcription for \(videoURL.lastPathComponent)")
 
+        guard videoURL.isFileURL else {
+            throw TranscriptionError.transcriptionFailed("WhisperKit requires a local file URL")
+        }
+
+        let normalizedVideoURL = videoURL.standardizedFileURL
+        guard FileManager.default.fileExists(atPath: normalizedVideoURL.path) else {
+            throw TranscriptionError.transcriptionFailed("WhisperKit source file does not exist: \(normalizedVideoURL.path)")
+        }
+
         // Ensure model is initialized
         try await ensureInitialized()
 
@@ -180,7 +189,7 @@ actor WhisperKitService: TranscriptionServiceProtocol {
         defer { isTranscribing = false }
 
         // Extract audio from video
-        let audioURL = try await extractAudio(from: videoURL)
+        let audioURL = try await extractAudio(from: normalizedVideoURL)
         defer {
             // Clean up temp audio file
             try? FileManager.default.removeItem(at: audioURL)

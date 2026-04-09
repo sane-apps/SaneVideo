@@ -539,6 +539,29 @@ struct RecordingEngineTests {
         _ = await engine.stopRecording()
     }
 
+    @Test("Test mode source switches do not leave timeout tasks armed")
+    func testModeSourceSwitchesDoNotArmTimeoutTasks() async throws {
+        let engine = sut
+        await engine.startRecording(initialSource: .camera)
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        engine.switchSource(source: .screen)
+        try await Task.sleep(nanoseconds: 50_000_000)
+        #expect(await engine.currentSource == .screen)
+        #expect(await engine.pendingSource == nil)
+        #expect(await engine.isSwitching == false)
+        #expect(engine.sourceSwitchTimeoutTask == nil)
+
+        engine.switchSource(source: .camera)
+        try await Task.sleep(nanoseconds: 50_000_000)
+        #expect(await engine.currentSource == .camera)
+        #expect(await engine.pendingSource == nil)
+        #expect(await engine.isSwitching == false)
+        #expect(engine.sourceSwitchTimeoutTask == nil)
+
+        _ = await engine.stopRecording()
+    }
+
     @Test("Switch source from screen to camera")
     func switchFromScreenToCamera() async throws {
         // Arrange

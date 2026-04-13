@@ -110,6 +110,7 @@ enum AudioLimiter {
             process: limiterProcessCallback
         )
 
+#if compiler(>=6.2)
         var tap: MTAudioProcessingTap?
         let status = MTAudioProcessingTapCreate(
             kCFAllocatorDefault,
@@ -124,6 +125,22 @@ enum AudioLimiter {
         }
 
         return createdTap
+#else
+        var tap: Unmanaged<MTAudioProcessingTap>?
+        let status = MTAudioProcessingTapCreate(
+            kCFAllocatorDefault,
+            &callbacks,
+            kMTAudioProcessingTapCreationFlag_PreEffects,
+            &tap
+        )
+
+        guard status == noErr, let createdTap = tap else {
+            AppLogger.audio.warning("Failed to create audio limiter tap: \(status)")
+            return nil
+        }
+
+        return createdTap.takeRetainedValue()
+#endif
     }
 
     /// Process callback for the audio processing tap

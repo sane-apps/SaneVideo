@@ -60,6 +60,13 @@ struct MLEffectConfiguration: Sendable {
     }
 }
 
+enum SuperResolutionModelStatus: Sendable {
+    case ready
+    case downloading
+    case downloadRequired
+    case unsupported
+}
+
 /// Actor for ML-powered video effects using VideoToolbox
 /// NOTE: VTFrameProcessor requires macOS 15.4+, some configs require macOS 26+
 actor MLEffectsService {
@@ -85,9 +92,11 @@ actor MLEffectsService {
 
     /// Check if super resolution is supported (requires macOS 26+)
     nonisolated static var isSuperResolutionSupported: Bool {
+#if swift(>=6.2)
         if #available(macOS 26.0, *) {
             return VTSuperResolutionScalerConfiguration.isSupported
         }
+#endif
         return false
     }
 
@@ -110,26 +119,40 @@ actor MLEffectsService {
     // MARK: - Model Status (Super Resolution)
 
     /// Get super resolution model status from a temporary config instance
-    @available(macOS 26.0, *)
-    nonisolated static var superResolutionModelStatus: VTSuperResolutionScalerConfiguration.ModelStatus {
-        // Create a minimal config to check model status
-        guard let config = VTSuperResolutionScalerConfiguration(
-            frameWidth: 1920,
-            frameHeight: 1080,
-            scaleFactor: 2,
-            inputType: .video,
-            usePrecomputedFlow: false,
-            qualityPrioritization: .normal,
-            revision: .revision1
-        ) else {
-            return .downloadRequired
+    nonisolated static var superResolutionModelStatus: SuperResolutionModelStatus {
+#if swift(>=6.2)
+        if #available(macOS 26.0, *) {
+            guard let config = VTSuperResolutionScalerConfiguration(
+                frameWidth: 1920,
+                frameHeight: 1080,
+                scaleFactor: 2,
+                inputType: .video,
+                usePrecomputedFlow: false,
+                qualityPrioritization: .normal,
+                revision: .revision1
+            ) else {
+                return .downloadRequired
+            }
+
+            switch config.configurationModelStatus {
+            case .ready:
+                return .ready
+            case .downloading:
+                return .downloading
+            case .downloadRequired:
+                return .downloadRequired
+            @unknown default:
+                return .unsupported
+            }
         }
-        return config.configurationModelStatus
+#endif
+        return .unsupported
     }
 
     /// Download ML models required for super resolution
     @available(macOS 26.0, *)
     func downloadSuperResolutionModel() async throws {
+#if swift(>=6.2)
         // Create a config instance to trigger download
         guard let config = VTSuperResolutionScalerConfiguration(
             frameWidth: 1920,
@@ -152,6 +175,9 @@ actor MLEffectsService {
                 }
             }
         }
+#else
+        throw MLEffectsError.unsupported
+#endif
     }
 
     // MARK: - Session Management
@@ -163,6 +189,7 @@ actor MLEffectsService {
         frameHeight: Int,
         scaleFactor: Int = 2
     ) throws {
+#if swift(>=6.2)
         guard let config = VTSuperResolutionScalerConfiguration(
             frameWidth: frameWidth,
             frameHeight: frameHeight,
@@ -187,6 +214,9 @@ actor MLEffectsService {
         self.previousSourceFrame = nil
         self.previousOutputFrame = nil
         isInitialized = true
+#else
+        throw MLEffectsError.unsupported
+#endif
     }
 
     /// Start a denoise session
@@ -274,6 +304,7 @@ actor MLEffectsService {
         destinationBuffer: CVPixelBuffer,
         presentationTime: CMTime
     ) async throws {
+#if swift(>=6.2)
         guard let processor = superResProcessor as? VTFrameProcessor else {
             throw MLEffectsError.sessionNotStarted
         }
@@ -317,6 +348,9 @@ actor MLEffectsService {
         // Store for next frame
         previousSourceFrame = sourceFrame
         previousOutputFrame = destinationFrame
+#else
+        throw MLEffectsError.unsupported
+#endif
     }
 
     /// Apply temporal noise filter to a frame

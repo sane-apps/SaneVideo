@@ -36,7 +36,6 @@ final class SaneVideoCompositor: NSObject, AVVideoCompositing {
     // Render Context (Shared Metal-backed CIContext)
     // Note: RenderingService.shared.ciContext is now dynamic based on thermal state
     private var ciContext: CIContext { RenderingService.shared.ciContext }
-    private let commandQueue: MTLCommandQueue? = RenderingService.shared.commandQueue
 
     // Frame ordering and caching
     // TODO: Restore RenderQueue and FaceDetectionCache once implemented

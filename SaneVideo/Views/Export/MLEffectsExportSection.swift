@@ -30,6 +30,7 @@ struct MLEffectsExportSection: View {
     @State private var modelStatus: String = "Checking..."
     @State private var isDownloadingModel = false
     @State private var isModelReady = false
+    @State private var isSuperResolutionSupported = true
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -157,7 +158,16 @@ struct MLEffectsExportSection: View {
             }
 
             // Model status / download prompt for super resolution
-            if mlEffects.superResolutionEnabled && !isModelReady {
+            if mlEffects.superResolutionEnabled && !isSuperResolutionSupported {
+                HStack {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundStyle(.yellow)
+                    Text(String(localized: "export.ml.unsupported", defaultValue: "Super Resolution isn't available on this build"))
+                        .saneReadableSupportText()
+                }
+                .padding(8)
+                .sanePanel(radius: 10, accent: .yellow)
+            } else if mlEffects.superResolutionEnabled && !isModelReady {
                 HStack {
                     Image(systemName: "exclamationmark.triangle.fill")
                         .foregroundStyle(.yellow)
@@ -187,34 +197,34 @@ struct MLEffectsExportSection: View {
     }
 
     private func updateModelStatus() {
-        if #available(macOS 26.0, *) {
-            let status = MLEffectsService.superResolutionModelStatus
-            switch status {
-            case .ready:
-                modelStatus = "Ready"
-                isModelReady = true
-            case .downloading:
-                modelStatus = "Downloading..."
-                isDownloadingModel = true
-                isModelReady = false
-            case .downloadRequired:
-                modelStatus = "Download Required"
-                isModelReady = false
-            @unknown default:
-                modelStatus = "Unknown"
-                isModelReady = false
-            }
-        } else {
-            // Super resolution not available on older macOS
-            modelStatus = "Requires macOS 26"
+        switch MLEffectsService.superResolutionModelStatus {
+        case .ready:
+            modelStatus = "Ready"
+            isDownloadingModel = false
+            isModelReady = true
+            isSuperResolutionSupported = true
+        case .downloading:
+            modelStatus = "Downloading..."
+            isDownloadingModel = true
             isModelReady = false
+            isSuperResolutionSupported = true
+        case .downloadRequired:
+            modelStatus = "Download Required"
+            isDownloadingModel = false
+            isModelReady = false
+            isSuperResolutionSupported = true
+        case .unsupported:
+            modelStatus = "Requires newer Apple video frameworks"
+            isDownloadingModel = false
+            isModelReady = false
+            isSuperResolutionSupported = false
         }
     }
 
     private func downloadModel() {
-        guard #available(macOS 26.0, *) else {
+        guard MLEffectsService.isSuperResolutionSupported else {
             ServiceContainer.shared.toastManager.show(
-                "Super resolution requires macOS 26 or later",
+                "Super resolution requires newer Apple video frameworks",
                 type: .error
             )
             return
@@ -224,7 +234,11 @@ struct MLEffectsExportSection: View {
         Task {
             do {
                 let service = MLEffectsService()
-                try await service.downloadSuperResolutionModel()
+                if #available(macOS 26.0, *) {
+                    try await service.downloadSuperResolutionModel()
+                } else {
+                    throw MLEffectsError.unsupported
+                }
                 await MainActor.run {
                     isDownloadingModel = false
                     updateModelStatus()

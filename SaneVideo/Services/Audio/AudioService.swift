@@ -7,7 +7,7 @@
 
 @preconcurrency import AVFoundation
 import Accelerate
-import Combine
+@preconcurrency import Combine
 
 @MainActor
 @Observable

@@ -6,7 +6,7 @@
 //  Consolidates duplicate implementations for consistent behavior.
 //
 
-import CoreImage
+@preconcurrency import CoreImage
 
 /// Shared chroma key kernel for green/blue screen removal.
 /// Uses GPU-accelerated CIColorKernel for real-time performance.

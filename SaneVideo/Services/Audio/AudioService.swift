@@ -9,6 +9,14 @@
 import Accelerate
 @preconcurrency import Combine
 
+private struct SubjectBox<Output>: @unchecked Sendable {
+  let subject = PassthroughSubject<Output, Never>()
+
+  func send(_ value: Output) {
+    subject.send(value)
+  }
+}
+
 @MainActor
 @Observable
 class AudioService: NSObject, AudioServiceProtocol {
@@ -21,9 +29,16 @@ class AudioService: NSObject, AudioServiceProtocol {
 
   // MARK: - Subjects
 
-  // Safety: PassthroughSubject is thread-safe for sending events.
-  nonisolated(unsafe) let sampleBufferSubject = PassthroughSubject<CMSampleBuffer, Never>()
-  nonisolated(unsafe) let audioLevelSubject = PassthroughSubject<Float, Never>()
+  private nonisolated let sampleBufferSubjectBox = SubjectBox<CMSampleBuffer>()
+  private nonisolated let audioLevelSubjectBox = SubjectBox<Float>()
+
+  nonisolated var sampleBufferSubject: PassthroughSubject<CMSampleBuffer, Never> {
+    sampleBufferSubjectBox.subject
+  }
+
+  nonisolated var audioLevelSubject: PassthroughSubject<Float, Never> {
+    audioLevelSubjectBox.subject
+  }
 
   // MARK: - Internal Properties
 
@@ -332,7 +347,7 @@ class AudioService: NSObject, AudioServiceProtocol {
 
     // Safety check for NaN or Infinity
     guard !rms.isNaN && !rms.isInfinite else {
-      audioLevelSubject.send(0)
+      audioLevelSubjectBox.send(0)
       return
     }
 
@@ -341,7 +356,7 @@ class AudioService: NSObject, AudioServiceProtocol {
     // Normalize -60dB to 0dB range to 0.0-1.0
     let normalized = max(0.0, min(1.0, (decibels + 60) / 60))
 
-    audioLevelSubject.send(normalized)
+    audioLevelSubjectBox.send(normalized)
   }
 }
 
@@ -351,7 +366,7 @@ extension AudioService: AVCaptureAudioDataOutputSampleBufferDelegate {
   nonisolated func captureOutput(
     _: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from _: AVCaptureConnection
   ) {
-    sampleBufferSubject.send(sampleBuffer)
+    sampleBufferSubjectBox.send(sampleBuffer)
 
     // PERFORMANCE: Throttle audio levels to ~15fps for UI
     let now = ContinuousClock().now

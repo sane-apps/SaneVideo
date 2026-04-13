@@ -120,7 +120,9 @@ class ProjectState {
 
         // Capture the ENTIRE project state (value type) for robust undo
         undoManager.registerUndo(withTarget: self) { target in
-            target.restoreProjectState(project)
+            MainActor.assumeIsolated {
+                target.restoreProjectState(project)
+            }
         }
         undoManager.setActionName(actionName)
 
@@ -134,7 +136,9 @@ class ProjectState {
         // Register initial state before group starts
         if let project = currentProject {
             undoManager?.registerUndo(withTarget: self) { target in
-                target.restoreProjectState(project)
+                MainActor.assumeIsolated {
+                    target.restoreProjectState(project)
+                }
             }
             undoManager?.setActionName(groupName)
         }
@@ -149,7 +153,9 @@ class ProjectState {
         // Capture current state for Redo
         if let current = currentProject {
             undoManager?.registerUndo(withTarget: self) { target in
-                target.restoreProjectState(current)
+                MainActor.assumeIsolated {
+                    target.restoreProjectState(current)
+                }
             }
         }
 

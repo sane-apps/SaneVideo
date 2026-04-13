@@ -958,8 +958,8 @@ actor ThumbnailServiceProtocolMock: ThumbnailServiceProtocol {
 
     private(set) var thumbnailCallCount = 0
     var thumbnailArgValues = [(clip: VideoClip, time: CMTime, size: CGSize)]()
-    var thumbnailHandler: ((VideoClip, CMTime, CGSize) async -> NSImage?)?
-    func thumbnail(for clip: VideoClip, time: CMTime, size: CGSize) async -> NSImage? {
+    var thumbnailHandler: ((VideoClip, CMTime, CGSize) async -> UncheckedBox<NSImage>?)?
+    func thumbnail(for clip: VideoClip, time: CMTime, size: CGSize) async -> UncheckedBox<NSImage>? {
         thumbnailCallCount += 1
         thumbnailArgValues.append((clip, time, size))
         if let thumbnailHandler = thumbnailHandler {
@@ -980,8 +980,8 @@ actor ThumbnailServiceProtocolMock: ThumbnailServiceProtocol {
 
     private(set) var generateBestThumbnailCallCount = 0
     var generateBestThumbnailArgValues = [(url: URL, strategy: ThumbnailScoringStrategy)]()
-    var generateBestThumbnailHandler: ((URL, ThumbnailScoringStrategy) async throws -> NSImage)?
-    func generateBestThumbnail(for url: URL, strategy: ThumbnailScoringStrategy) async throws -> NSImage {
+    var generateBestThumbnailHandler: ((URL, ThumbnailScoringStrategy) async throws -> UncheckedBox<NSImage>)?
+    func generateBestThumbnail(for url: URL, strategy: ThumbnailScoringStrategy) async throws -> UncheckedBox<NSImage> {
         generateBestThumbnailCallCount += 1
         generateBestThumbnailArgValues.append((url, strategy))
         if let generateBestThumbnailHandler = generateBestThumbnailHandler {

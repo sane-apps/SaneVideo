@@ -6,7 +6,7 @@
 //  Combines: Vision, MagicFix, Sound Analysis, Captions
 //
 
-import AVFoundation
+@preconcurrency import AVFoundation
 import CoreMedia
 import Foundation
 import SoundAnalysis

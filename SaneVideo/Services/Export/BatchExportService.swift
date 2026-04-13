@@ -5,7 +5,7 @@
 //  Service for batch exporting short-form video clips
 //
 
-import AVFoundation
+@preconcurrency import AVFoundation
 import CoreMedia
 import Foundation
 import OSLog

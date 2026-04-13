@@ -87,7 +87,7 @@ struct LibraryClipRow: View {
                 for: clip,
                 time: .zero,
                 size: CGSize(width: 120, height: 68)
-            )
+            )?.value
         }
     }
 

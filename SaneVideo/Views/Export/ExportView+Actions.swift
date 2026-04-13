@@ -30,7 +30,7 @@ extension ExportView {
             do {
                 let image = try await thumbnailService.generateBestThumbnail(for: firstClip.url)
 
-                guard let tiffData = image.tiffRepresentation,
+                guard let tiffData = image.value.tiffRepresentation,
                       let bitmap = NSBitmapImageRep(data: tiffData),
                       let jpegData = bitmap.representation(using: .jpeg, properties: [:])
                 else {

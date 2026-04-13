@@ -5,8 +5,8 @@
 //  Created by SaneVideo Refactor
 //
 
-import AVFoundation
-import AppKit
+@preconcurrency import AppKit
+@preconcurrency import AVFoundation
 import SwiftUI
 
 /// Thumbnail style presets
@@ -55,11 +55,20 @@ enum ThumbnailStyle: String, CaseIterable, Identifiable {
 }
 
 /// Candidate thumbnail frame with metadata
-struct ThumbnailCandidate {
-    let image: NSImage
+struct ThumbnailCandidate: Sendable {
+    private let imageBox: UncheckedBox<NSImage>
     let label: String
     let score: Float
     let time: CMTime
+
+    var image: NSImage { imageBox.value }
+
+    init(image: NSImage, label: String, score: Float, time: CMTime) {
+        self.imageBox = UncheckedBox(image)
+        self.label = label
+        self.score = score
+        self.time = time
+    }
 }
 
 /// Card view for displaying a thumbnail candidate

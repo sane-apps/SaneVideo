@@ -70,6 +70,9 @@ final class APIDeprecationTests: XCTestCase {
     XCTAssertFalse(
       contents.contains("Translator("),
       "TranslationService should not use deprecated Translator class")
+    XCTAssertTrue(
+      contents.contains("#if compiler(>=6.2)"),
+      "TranslationService should guard direct TranslationSession initialization for older toolchains")
   }
 
   /// Ensures CameraServiceProtocol uses async/await (modernized in macOS 26)

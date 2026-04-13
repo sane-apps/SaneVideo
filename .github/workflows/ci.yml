@@ -16,5 +16,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Checkout SaneUI
+        uses: actions/checkout@v4
+        with:
+          repository: sane-apps/SaneUI
+          path: SaneUI
+
+      - name: Link SaneUI into expected monorepo path
+        run: |
+          mkdir -p "${GITHUB_WORKSPACE}/../../infra"
+          rm -rf "${GITHUB_WORKSPACE}/../../infra/SaneUI"
+          ln -s "${GITHUB_WORKSPACE}/SaneUI" "${GITHUB_WORKSPACE}/../../infra/SaneUI"
+
       - name: Run verify
         run: ./scripts/SaneMaster.rb verify --quiet

@@ -5,20 +5,38 @@ import Foundation
 @preconcurrency import ScreenCaptureKit
 import SwiftUI
 
+private struct SampleBufferSubjectBox: @unchecked Sendable {
+  let subject = PassthroughSubject<CMSampleBuffer, Never>()
+
+  func send(_ sampleBuffer: CMSampleBuffer) {
+    subject.send(sampleBuffer)
+  }
+}
+
 /// Modern screen recorder using SCContentSharingPicker (macOS 14+)
 /// This eliminates manual permission handling and provides native macOS UI
 @MainActor
 class ScreenRecorder: NSObject, ScreenRecorderProtocol, SCContentSharingPickerObserver, SCStreamDelegate {
   // MARK: - Publishers
 
+  private nonisolated let screenSampleBufferBox = SampleBufferSubjectBox()
+  private nonisolated let systemAudioSampleBufferBox = SampleBufferSubjectBox()
+  private nonisolated let micSampleBufferBox = SampleBufferSubjectBox()
+
   /// Publisher for screen frames (nonisolated for Swift 6 concurrency)
-  nonisolated(unsafe) let sampleBufferSubject = PassthroughSubject<CMSampleBuffer, Never>()
+  nonisolated var sampleBufferSubject: PassthroughSubject<CMSampleBuffer, Never> {
+    screenSampleBufferBox.subject
+  }
 
   /// Publisher for system audio (YouTube, Spotify, etc.)
-  nonisolated(unsafe) let audioSampleBufferSubject = PassthroughSubject<CMSampleBuffer, Never>()
+  nonisolated var audioSampleBufferSubject: PassthroughSubject<CMSampleBuffer, Never> {
+    systemAudioSampleBufferBox.subject
+  }
 
   /// Publisher for microphone audio (consolidated in stream)
-  nonisolated(unsafe) let micSampleBufferSubject = PassthroughSubject<CMSampleBuffer, Never>()
+  nonisolated var micSampleBufferSubject: PassthroughSubject<CMSampleBuffer, Never> {
+    micSampleBufferBox.subject
+  }
 
   // MARK: - Private State
 
@@ -101,6 +119,18 @@ class ScreenRecorder: NSObject, ScreenRecorderProtocol, SCContentSharingPickerOb
     Task {
       await updateContentFilter()
     }
+  }
+
+  nonisolated func publishScreenSample(_ sampleBuffer: CMSampleBuffer) {
+    screenSampleBufferBox.send(sampleBuffer)
+  }
+
+  nonisolated func publishSystemAudioSample(_ sampleBuffer: CMSampleBuffer) {
+    systemAudioSampleBufferBox.send(sampleBuffer)
+  }
+
+  nonisolated func publishMicSample(_ sampleBuffer: CMSampleBuffer) {
+    micSampleBufferBox.send(sampleBuffer)
   }
 
   // MARK: - Public Interface

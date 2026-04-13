@@ -31,7 +31,7 @@ extension ScreenRecorder: SCStreamOutput {
     ) {
         switch type {
         case .screen:
-            sampleBufferSubject.send(sampleBuffer)
+            publishScreenSample(sampleBuffer)
 
         case .audio:
             if !loggedScreenAudioFormat,
@@ -43,10 +43,10 @@ extension ScreenRecorder: SCStreamOutput {
                 )
                 loggedScreenAudioFormat = true
             }
-            audioSampleBufferSubject.send(sampleBuffer)
+            publishSystemAudioSample(sampleBuffer)
 
         case .microphone:
-            micSampleBufferSubject.send(sampleBuffer)
+            publishMicSample(sampleBuffer)
 
         @unknown default:
             break

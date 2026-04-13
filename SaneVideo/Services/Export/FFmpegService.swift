@@ -6,7 +6,7 @@
 //
 
 #if !APP_STORE
-    import AVFoundation
+    @preconcurrency import AVFoundation
     import CoreMedia
     import Foundation
 

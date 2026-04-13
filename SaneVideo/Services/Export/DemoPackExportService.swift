@@ -135,7 +135,7 @@ final class DemoPackExportService {
                 strategy: .aesthetic
             )
             let thumbnailURL = bundleURL.appendingPathComponent("thumbnail.png")
-            try savePNG(image: image, to: thumbnailURL)
+            try savePNG(image: image.value, to: thumbnailURL)
             advance("Generated thumbnail")
         }
 

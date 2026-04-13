@@ -432,7 +432,7 @@ struct ThumbnailPickerSheet: View {
         do {
             let image = try await ThumbnailFrameLoader.getFrame(from: videoURL, at: time)
             await MainActor.run {
-                self.customImage = image
+                self.customImage = image.value
                 updateStyledPreview()
             }
         } catch {}

@@ -1,4 +1,4 @@
-import AVFoundation
+@preconcurrency import AVFoundation
 import Accelerate
 
 /// Service for detecting silence in video clips

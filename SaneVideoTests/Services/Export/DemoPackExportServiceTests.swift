@@ -108,14 +108,14 @@ private final class StubExportService: ExportServiceProtocol {
 }
 
 private actor StubThumbnailService: ThumbnailServiceProtocol {
-    func thumbnail(for _: VideoClip, time _: CMTime, size _: CGSize) async -> NSImage? {
-        testImage()
+    func thumbnail(for _: VideoClip, time _: CMTime, size _: CGSize) async -> UncheckedBox<NSImage>? {
+        UncheckedBox(testImage())
     }
 
     func clearCache() {}
 
-    func generateBestThumbnail(for _: URL, strategy _: ThumbnailScoringStrategy) async throws -> NSImage {
-        testImage()
+    func generateBestThumbnail(for _: URL, strategy _: ThumbnailScoringStrategy) async throws -> UncheckedBox<NSImage> {
+        UncheckedBox(testImage())
     }
 
     func generateSmartThumbnail(for _: URL, strategy _: ThumbnailScoringStrategy) async throws -> URL {

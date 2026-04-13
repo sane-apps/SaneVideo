@@ -190,7 +190,7 @@ struct EffectsPickerView: View {
             size: previewSize
         ) {
             await MainActor.run {
-                self.previewThumbnail = thumbnail
+                self.previewThumbnail = thumbnail.value
             }
         } else {
             // CRITICAL FIX: Log failure for debugging

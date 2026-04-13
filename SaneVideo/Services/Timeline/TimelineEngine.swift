@@ -5,7 +5,7 @@
 //  Created by SaneVideo Refactor
 //
 
-import AVFoundation
+@preconcurrency import AVFoundation
 import CoreImage
 import Foundation
 import Metal

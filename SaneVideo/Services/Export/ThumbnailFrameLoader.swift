@@ -5,8 +5,8 @@
 //  Created by SaneVideo Refactor
 //
 
-import AVFoundation
-import AppKit
+@preconcurrency import AppKit
+@preconcurrency import AVFoundation
 import Vision
 
 /// Handles loading and scoring thumbnail frame candidates from video
@@ -54,14 +54,16 @@ enum ThumbnailFrameLoader {
     }
     
     /// Get a frame at a specific time
-    static func getFrame(from videoURL: URL, at time: Double) async throws -> NSImage {
+    static func getFrame(from videoURL: URL, at time: Double) async throws -> UncheckedBox<NSImage> {
         let asset = AVURLAsset(url: videoURL)
         let generator = AVAssetImageGenerator(asset: asset)
         generator.appliesPreferredTrackTransform = true
         
         let cmTime = CMTime(seconds: time, preferredTimescale: 600)
         let (cgImage, _) = try await generator.image(at: cmTime)
-        return NSImage(cgImage: cgImage, size: NSSize(width: cgImage.width, height: cgImage.height))
+        return UncheckedBox(
+            NSImage(cgImage: cgImage, size: NSSize(width: cgImage.width, height: cgImage.height))
+        )
     }
     
     /// Calculate a "quality score" for a frame based on face detection

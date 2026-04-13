@@ -128,7 +128,7 @@ extension MainContentView {
         await MainActor.run {
           // Copy to clipboard
           NSPasteboard.general.clearContents()
-          NSPasteboard.general.writeObjects([image])
+          NSPasteboard.general.writeObjects([image.value])
           ServiceContainer.shared.toastManager.show(
             String(
               localized: "toast.thumbnail_copied_clipboard",

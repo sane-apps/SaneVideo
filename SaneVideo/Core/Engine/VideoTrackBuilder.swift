@@ -202,6 +202,7 @@ enum VideoTrackBuilder {
           let layerInstruction: AVVideoCompositionLayerInstruction
 
           if let transform {
+#if compiler(>=6.2)
             if #available(macOS 26.0, *) {
               var layerConfig = AVVideoCompositionLayerInstruction.Configuration(
                 trackID: instructionTrack.trackID)
@@ -210,14 +211,23 @@ enum VideoTrackBuilder {
               layerConfig.setOpacity(0.0, at: CMTimeAdd(insertStart, playDuration))
               layerInstruction = AVVideoCompositionLayerInstruction(configuration: layerConfig)
             } else {
-              // Use the composition track, not the source asset track, so the compositor can resolve frames.
-              let mutableInstruction = AVMutableVideoCompositionLayerInstruction(assetTrack: instructionTrack)
-              mutableInstruction.setTransform(transform, at: insertStart)
-              mutableInstruction.setOpacity(1.0, at: insertStart)
-              mutableInstruction.setOpacity(0.0, at: CMTimeAdd(insertStart, playDuration))
-              layerInstruction = mutableInstruction
+              layerInstruction = makeMutableLayerInstruction(
+                for: instructionTrack,
+                transform: transform,
+                insertStart: insertStart,
+                playDuration: playDuration
+              )
             }
+#else
+            layerInstruction = makeMutableLayerInstruction(
+              for: instructionTrack,
+              transform: transform,
+              insertStart: insertStart,
+              playDuration: playDuration
+            )
+#endif
           } else {
+#if compiler(>=6.2)
             if #available(macOS 26.0, *) {
               let layerConfig = AVVideoCompositionLayerInstruction.Configuration(
                 trackID: instructionTrack.trackID)
@@ -225,6 +235,9 @@ enum VideoTrackBuilder {
             } else {
               layerInstruction = AVMutableVideoCompositionLayerInstruction(assetTrack: instructionTrack)
             }
+#else
+            layerInstruction = AVMutableVideoCompositionLayerInstruction(assetTrack: instructionTrack)
+#endif
           }
 
           layerInstructions.append(layerInstruction)
@@ -296,6 +309,20 @@ enum VideoTrackBuilder {
       trackPrivacyRegions: trackPrivacyRegions,
       activeTransitions: activeTransitions
     )
+  }
+
+  private static func makeMutableLayerInstruction(
+    for track: AVCompositionTrack,
+    transform: CGAffineTransform,
+    insertStart: CMTime,
+    playDuration: CMTime
+  ) -> AVMutableVideoCompositionLayerInstruction {
+    // Use the composition track, not the source asset track, so the compositor can resolve frames.
+    let mutableInstruction = AVMutableVideoCompositionLayerInstruction(assetTrack: track)
+    mutableInstruction.setTransform(transform, at: insertStart)
+    mutableInstruction.setOpacity(1.0, at: insertStart)
+    mutableInstruction.setOpacity(0.0, at: CMTimeAdd(insertStart, playDuration))
+    return mutableInstruction
   }
 
   // MARK: - Private Helpers

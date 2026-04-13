@@ -44,7 +44,8 @@ class ExportCompositor {
         }
 
         if #available(macOS 26.0, *) {
-            // macOS 26+: Use modern Configuration API
+#if compiler(>=6.2)
+            // Newer compilers expose the AVVideoComposition configuration API directly.
             var config = AVVideoComposition.Configuration()
             config.instructions = instructions
             config.renderSize = settings.renderSize
@@ -53,16 +54,25 @@ class ExportCompositor {
             config.animationTool = base.animationTool
             config.customVideoCompositorClass = customClass
             return AVVideoComposition(configuration: config)
+#else
+            return makeMutableVideoComposition(
+                instructions: instructions,
+                renderSize: settings.renderSize,
+                frameRate: settings.frameRate,
+                sourceTrackIDForFrameTiming: base.sourceTrackIDForFrameTiming,
+                animationTool: base.animationTool,
+                customVideoCompositorClass: customClass
+            )
+#endif
         } else {
-            // macOS 15-25: Use mutable video composition
-            let mutableVideoComposition = AVMutableVideoComposition()
-            mutableVideoComposition.instructions = instructions
-            mutableVideoComposition.renderSize = settings.renderSize
-            mutableVideoComposition.frameDuration = CMTime(value: 1, timescale: CMTimeScale(settings.frameRate))
-            mutableVideoComposition.sourceTrackIDForFrameTiming = base.sourceTrackIDForFrameTiming
-            mutableVideoComposition.animationTool = base.animationTool
-            mutableVideoComposition.customVideoCompositorClass = customClass
-            return mutableVideoComposition
+            return makeMutableVideoComposition(
+                instructions: instructions,
+                renderSize: settings.renderSize,
+                frameRate: settings.frameRate,
+                sourceTrackIDForFrameTiming: base.sourceTrackIDForFrameTiming,
+                animationTool: base.animationTool,
+                customVideoCompositorClass: customClass
+            )
         }
     }
 
@@ -91,5 +101,23 @@ class ExportCompositor {
                 smartCropKeyframes: keyframes
             )
         }
+    }
+
+    private func makeMutableVideoComposition(
+        instructions: [AVVideoCompositionInstructionProtocol],
+        renderSize: CGSize,
+        frameRate: Double,
+        sourceTrackIDForFrameTiming: CMPersistentTrackID,
+        animationTool: AVVideoCompositionCoreAnimationTool?,
+        customVideoCompositorClass: AVVideoCompositing.Type
+    ) -> AVMutableVideoComposition {
+        let mutableVideoComposition = AVMutableVideoComposition()
+        mutableVideoComposition.instructions = instructions
+        mutableVideoComposition.renderSize = renderSize
+        mutableVideoComposition.frameDuration = CMTime(value: 1, timescale: CMTimeScale(frameRate))
+        mutableVideoComposition.sourceTrackIDForFrameTiming = sourceTrackIDForFrameTiming
+        mutableVideoComposition.animationTool = animationTool
+        mutableVideoComposition.customVideoCompositorClass = customVideoCompositorClass
+        return mutableVideoComposition
     }
 }

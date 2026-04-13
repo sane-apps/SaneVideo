@@ -75,6 +75,35 @@ final class APIDeprecationTests: XCTestCase {
       "TranslationService should guard direct TranslationSession initialization for older toolchains")
   }
 
+  func testModernVideoCompositionAPIsAreCompilerGuarded() throws {
+    let sourceRoot = URL(fileURLWithPath: #file)
+      .deletingLastPathComponent()  // Regression
+      .deletingLastPathComponent()  // SaneVideoTests
+      .deletingLastPathComponent()  // SaneVideo
+      .appendingPathComponent("SaneVideo")
+
+    let guardedFiles = [
+      "Services/Export/ExportCompositor.swift":
+        "AVVideoComposition configuration APIs should be compiler-guarded in ExportCompositor",
+      "Core/Engine/CompositionBuilder.swift":
+        "AVVideoComposition configuration APIs should be compiler-guarded in CompositionBuilder",
+      "Core/Engine/VideoTrackBuilder.swift":
+        "AVVideoCompositionLayerInstruction configuration APIs should be compiler-guarded in VideoTrackBuilder"
+    ]
+
+    for (relativePath, failureMessage) in guardedFiles {
+      let fileURL = sourceRoot.appendingPathComponent(relativePath)
+      guard let contents = try? String(contentsOf: fileURL, encoding: .utf8) else {
+        XCTFail("Could not read \(relativePath)")
+        continue
+      }
+
+      XCTAssertTrue(
+        contents.contains("#if compiler(>=6.2)"),
+        failureMessage)
+    }
+  }
+
   /// Ensures CameraServiceProtocol uses async/await (modernized in macOS 26)
   func testCameraServiceUsesAsyncAPI() throws {
     let sourceDir = URL(fileURLWithPath: #file)

@@ -169,21 +169,29 @@ enum CompositionBuilder {
             )
 
             if #available(macOS 26.0, *) {
-                // macOS 26+: Use modern Configuration API
+#if compiler(>=6.2)
+                // Newer compilers expose the AVVideoComposition configuration API directly.
                 var config = AVVideoComposition.Configuration()
                 config.renderSize = renderSize
                 config.frameDuration = CMTime(value: 1, timescale: 30)
                 config.customVideoCompositorClass = SaneVideoCompositor.self
                 config.instructions = [saneInstruction]
                 videoComposition = AVVideoComposition(configuration: config)
+#else
+                videoComposition = makeMutableVideoComposition(
+                    renderSize: renderSize,
+                    frameDuration: CMTime(value: 1, timescale: 30),
+                    customVideoCompositorClass: SaneVideoCompositor.self,
+                    instructions: [saneInstruction]
+                )
+#endif
             } else {
-                // macOS 15-25: Use mutable video composition
-                let mutableVideoComposition = AVMutableVideoComposition()
-                mutableVideoComposition.renderSize = renderSize
-                mutableVideoComposition.frameDuration = CMTime(value: 1, timescale: 30)
-                mutableVideoComposition.customVideoCompositorClass = SaneVideoCompositor.self
-                mutableVideoComposition.instructions = [saneInstruction]
-                videoComposition = mutableVideoComposition
+                videoComposition = makeMutableVideoComposition(
+                    renderSize: renderSize,
+                    frameDuration: CMTime(value: 1, timescale: 30),
+                    customVideoCompositorClass: SaneVideoCompositor.self,
+                    instructions: [saneInstruction]
+                )
             }
         }
 
@@ -221,5 +229,19 @@ enum CompositionBuilder {
                 }
             }
         }
+    }
+
+    private static func makeMutableVideoComposition(
+        renderSize: CGSize,
+        frameDuration: CMTime,
+        customVideoCompositorClass: AVVideoCompositing.Type,
+        instructions: [AVVideoCompositionInstructionProtocol]
+    ) -> AVMutableVideoComposition {
+        let mutableVideoComposition = AVMutableVideoComposition()
+        mutableVideoComposition.renderSize = renderSize
+        mutableVideoComposition.frameDuration = frameDuration
+        mutableVideoComposition.customVideoCompositorClass = customVideoCompositorClass
+        mutableVideoComposition.instructions = instructions
+        return mutableVideoComposition
     }
 }

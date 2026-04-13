@@ -104,6 +104,23 @@ final class APIDeprecationTests: XCTestCase {
     }
   }
 
+  func testWhisperKitImportUsesPreconcurrencyShim() throws {
+    let sourceRoot = URL(fileURLWithPath: #file)
+      .deletingLastPathComponent()  // Regression
+      .deletingLastPathComponent()  // SaneVideoTests
+      .deletingLastPathComponent()  // SaneVideo
+      .appendingPathComponent("SaneVideo/Services/Captions/WhisperKitService.swift")
+
+    guard let contents = try? String(contentsOf: sourceRoot, encoding: .utf8) else {
+      XCTFail("Could not read WhisperKitService.swift")
+      return
+    }
+
+    XCTAssertTrue(
+      contents.contains("@preconcurrency import WhisperKit"),
+      "WhisperKitService should import WhisperKit via @preconcurrency to keep strict-concurrency builds working on older toolchains")
+  }
+
   /// Ensures CameraServiceProtocol uses async/await (modernized in macOS 26)
   func testCameraServiceUsesAsyncAPI() throws {
     let sourceDir = URL(fileURLWithPath: #file)

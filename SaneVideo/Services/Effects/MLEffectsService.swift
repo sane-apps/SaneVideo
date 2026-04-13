@@ -102,16 +102,22 @@ actor MLEffectsService {
 
     /// Check if temporal noise filter is supported
     nonisolated static var isDenoiseSupported: Bool {
+#if swift(>=6.2)
         if #available(macOS 26.0, *) {
             return VTTemporalNoiseFilterConfiguration.isSupported
         }
+#endif
         return false
     }
 
     /// Check if frame rate conversion is supported
     nonisolated static var isFrameRateConversionSupported: Bool {
         if #available(macOS 15.4, *) {
+#if swift(>=6.2)
             return VTFrameRateConversionConfiguration.isSupported
+#else
+            return true
+#endif
         }
         return false
     }
@@ -226,6 +232,7 @@ actor MLEffectsService {
         frameHeight: Int,
         pixelFormat: OSType = kCVPixelFormatType_32BGRA
     ) throws {
+#if swift(>=6.2)
         guard VTTemporalNoiseFilterConfiguration.isSupported else {
             throw MLEffectsError.unsupported
         }
@@ -244,6 +251,9 @@ actor MLEffectsService {
         self.denoiseProcessor = processor
         self.denoiseConfig = config
         isInitialized = true
+#else
+        throw MLEffectsError.unsupported
+#endif
     }
 
     /// Start a frame rate conversion session
@@ -363,6 +373,7 @@ actor MLEffectsService {
         filterStrength: Float = 0.5,
         presentationTime: CMTime
     ) async throws {
+#if swift(>=6.2)
         guard let processor = denoiseProcessor as? VTFrameProcessor else {
             throw MLEffectsError.sessionNotStarted
         }
@@ -408,6 +419,9 @@ actor MLEffectsService {
                 }
             }
         }
+#else
+        throw MLEffectsError.unsupported
+#endif
     }
 
     /// Apply frame rate conversion (interpolate frames between source and next)

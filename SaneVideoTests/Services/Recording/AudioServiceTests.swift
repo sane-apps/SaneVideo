@@ -236,4 +236,34 @@ final class AudioServiceTests: XCTestCase {
         wait(for: [expectation], timeout: 1.0)
         XCTAssertEqual(receivedLevels, [0.1, 0.5, 0.9])
     }
+
+    func testRealAudioServicePublishersRemainStableAcrossAccesses() {
+        let service = AudioService(permissionManager: PermissionManager())
+
+        let firstSamplePublisher = service.sampleBufferSubject
+        let secondSamplePublisher = service.sampleBufferSubject
+        XCTAssertTrue(firstSamplePublisher === secondSamplePublisher)
+
+        let firstLevelPublisher = service.audioLevelSubject
+        let secondLevelPublisher = service.audioLevelSubject
+        XCTAssertTrue(firstLevelPublisher === secondLevelPublisher)
+
+        var receivedLevel: Float?
+        let expectation = expectation(description: "Received audio level from stable publisher")
+
+        secondLevelPublisher
+            .sink { level in
+                receivedLevel = level
+                expectation.fulfill()
+            }
+            .store(in: &cancellables)
+
+        firstLevelPublisher.send(0.42)
+
+        wait(for: [expectation], timeout: 1.0)
+        XCTAssertNotNil(receivedLevel)
+        if let receivedLevel {
+            XCTAssertEqual(receivedLevel, 0.42, accuracy: 0.001)
+        }
+    }
 }

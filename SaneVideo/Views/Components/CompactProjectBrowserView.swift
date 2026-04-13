@@ -451,7 +451,7 @@ struct CompactProjectRow: View {
 
         if let thumb = thumb {
             await MainActor.run {
-                self.thumbnail = thumb
+                self.thumbnail = thumb.value
             }
         }
     }

@@ -9,7 +9,7 @@
 import Foundation
 
 /// Result of a batch operation on a single item
-struct BatchItemResult<T> {
+struct BatchItemResult<T: Sendable>: @unchecked Sendable {
     let item: T
     let success: Bool
     let error: Error?

@@ -384,7 +384,7 @@ struct TimelineThumbnailCell: View {
             }.value
 
             await MainActor.run {
-                self.image = thumb
+                self.image = thumb?.value
                 self.isLoading = false
             }
         }

@@ -7,8 +7,9 @@
 //  Consolidated: Merged ThumbnailGeneratorService + SmartThumbnailService
 //
 
-import AVFoundation
-import Combine
+@preconcurrency import AVFoundation
+@preconcurrency import Combine
+@preconcurrency import AppKit
 import SwiftUI
 import Vision
 
@@ -100,12 +101,12 @@ actor ThumbnailService: ThumbnailServiceProtocol {
 
     /// Request a thumbnail for a specific time
     /// - Returns: Cached image immediately if available, or nil if generation started
-    func thumbnail(for clip: VideoClip, time: CMTime, size: CGSize) async -> NSImage? {
+    func thumbnail(for clip: VideoClip, time: CMTime, size: CGSize) async -> UncheckedBox<NSImage>? {
         let key = cacheKey(for: clip, time: time, size: size)
 
         // Check cache first
         if let cached = cache.object(forKey: key as NSString) {
-            return cached
+            return UncheckedBox(cached)
         }
 
         // Generate if not cached
@@ -114,7 +115,7 @@ actor ThumbnailService: ThumbnailServiceProtocol {
 
     // MARK: - Internal Generation
 
-    private func generateThumbnail(for clip: VideoClip, time: CMTime, size: CGSize, key: String) async -> NSImage? {
+    private func generateThumbnail(for clip: VideoClip, time: CMTime, size: CGSize, key: String) async -> UncheckedBox<NSImage>? {
         // Check if file exists (runs on actor, off main thread)
         // 0. Security Scope Access
         let isAccessing = clip.url.startAccessingSecurityScopedResource()
@@ -156,7 +157,7 @@ actor ThumbnailService: ThumbnailServiceProtocol {
             // Cache the result
             cache.setObject(image, forKey: key as NSString, cost: cgImage.bytesPerRow * cgImage.height)
 
-            return image
+            return UncheckedBox(image)
         } catch {
             await MainActor.run { AppLogger.timeline.error("Thumbnail generation failed for \(clip.url.lastPathComponent): \(error.localizedDescription)") }
             return nil
@@ -181,7 +182,7 @@ actor ThumbnailService: ThumbnailServiceProtocol {
     ///   - url: The video file URL
     ///   - strategy: Scoring strategy to use (defaults to .aesthetic)
     /// - Returns: The best-scored NSImage
-    func generateBestThumbnail(for url: URL, strategy: ThumbnailScoringStrategy = .aesthetic) async throws -> NSImage {
+    func generateBestThumbnail(for url: URL, strategy: ThumbnailScoringStrategy = .aesthetic) async throws -> UncheckedBox<NSImage> {
         let asset = AVURLAsset(url: url)
         let duration = try await asset.load(.duration)
         let durationSeconds = CMTimeGetSeconds(duration)
@@ -212,7 +213,7 @@ actor ThumbnailService: ThumbnailServiceProtocol {
             generator.maximumSize = CGSize(width: 512, height: 512) // Faster for face analysis
         }
 
-        var bestImage: NSImage?
+        var bestImage: UncheckedBox<NSImage>?
         var maxScore: Float = -1.0
 
         for time in times {
@@ -222,7 +223,10 @@ actor ThumbnailService: ThumbnailServiceProtocol {
 
                 if score > maxScore {
                     maxScore = score
-                    bestImage = NSImage(cgImage: cgImage, size: NSSize(width: cgImage.width, height: cgImage.height))
+                    bestImage = UncheckedBox(NSImage(
+                        cgImage: cgImage,
+                        size: NSSize(width: cgImage.width, height: cgImage.height)
+                    ))
                 }
             } catch {
                 await MainActor.run {

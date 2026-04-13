@@ -32,6 +32,7 @@ final class CrashReporter: NSObject {
 }
 
 extension CrashReporter: MXMetricManagerSubscriber {
+#if swift(>=6.2)
     nonisolated func didReceive(_ payloads: [MXMetricPayload]) {
         for payload in payloads {
             if let cpu = payload.cpuMetrics {
@@ -75,4 +76,5 @@ extension CrashReporter: MXMetricManagerSubscriber {
             }
         }
     }
+#endif
 }

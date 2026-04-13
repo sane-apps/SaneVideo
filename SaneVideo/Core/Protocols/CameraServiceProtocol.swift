@@ -6,7 +6,7 @@
 //
 
 import AVFoundation
-import Combine
+@preconcurrency import Combine
 import Foundation
 
 /// @mockable

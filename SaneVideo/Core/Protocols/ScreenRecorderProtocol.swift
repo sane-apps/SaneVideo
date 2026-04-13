@@ -5,7 +5,7 @@
 //  Protocol for ScreenRecorder to enable testability
 //
 
-import Combine
+@preconcurrency import Combine
 import CoreMedia
 import Foundation
 @preconcurrency import ScreenCaptureKit

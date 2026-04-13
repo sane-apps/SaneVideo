@@ -1,5 +1,5 @@
 import AVFoundation
-import Combine
+@preconcurrency import Combine
 import CoreMedia
 import Foundation
 @preconcurrency import ScreenCaptureKit

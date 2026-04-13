@@ -9,7 +9,7 @@
 
 import AppKit
 @preconcurrency import AVFoundation
-import CoreImage
+@preconcurrency import CoreImage
 import CoreMedia
 import Vision
 

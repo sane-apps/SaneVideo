@@ -11,7 +11,7 @@ import CoreMedia
 import Foundation
 
 #if canImport(WhisperKit)
-import WhisperKit
+@preconcurrency import WhisperKit
 
 /// WhisperKit transcription service for high-accuracy transcription
 /// Best for: accents, technical jargon, noisy audio, multiple speakers

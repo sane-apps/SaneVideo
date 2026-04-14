@@ -42,6 +42,7 @@ class ExportCompositor {
         } else {
             instructions = base.instructions
         }
+        let frameRate = Double(settings.frameRate)
 
         if #available(macOS 26.0, *) {
 #if compiler(>=6.2)
@@ -49,7 +50,7 @@ class ExportCompositor {
             var config = AVVideoComposition.Configuration()
             config.instructions = instructions
             config.renderSize = settings.renderSize
-            config.frameDuration = CMTime(value: 1, timescale: CMTimeScale(settings.frameRate))
+            config.frameDuration = CMTime(value: 1, timescale: CMTimeScale(frameRate))
             config.sourceTrackIDForFrameTiming = base.sourceTrackIDForFrameTiming
             config.animationTool = base.animationTool
             config.customVideoCompositorClass = customClass
@@ -58,7 +59,7 @@ class ExportCompositor {
             return makeMutableVideoComposition(
                 instructions: instructions,
                 renderSize: settings.renderSize,
-                frameRate: settings.frameRate,
+                frameRate: frameRate,
                 sourceTrackIDForFrameTiming: base.sourceTrackIDForFrameTiming,
                 animationTool: base.animationTool,
                 customVideoCompositorClass: customClass
@@ -68,7 +69,7 @@ class ExportCompositor {
             return makeMutableVideoComposition(
                 instructions: instructions,
                 renderSize: settings.renderSize,
-                frameRate: settings.frameRate,
+                frameRate: frameRate,
                 sourceTrackIDForFrameTiming: base.sourceTrackIDForFrameTiming,
                 animationTool: base.animationTool,
                 customVideoCompositorClass: customClass

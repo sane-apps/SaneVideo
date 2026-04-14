@@ -58,3 +58,11 @@ Graduate verified findings to ARCHITECTURE.md or DEVELOPMENT.md.
 - Apple documents `SCStream.updateContentFilter` as an update path, not a substitute for starting the stream with the right filter. Practical meaning: if SaneVideo wants its own PiP and control windows excluded, it should create the stream with the rebuilt exclusion filter from frame 1.
 - Current patch changes SaneVideo to start SCStream with the rebuilt display filter, update active streams with that same effective filter, and keep current-process audio included by default.
 - Current patch also makes recording startup wait for the mic capture session to report `isRunning`; if it never becomes live, the recording is cancelled before a silent file is saved.
+
+## 2026-04-13 ExportCompositor Frame Rate Type Mismatch
+**Updated:** 2026-04-13 | **Status:** verified | **TTL:** 14d
+**Source:** Apple CoreMedia docs for `CMTime` / `CMTimeScale`, local git history for `ExportCompositor.swift`, Mini `SaneMaster.rb verify`
+- Apple documents `CMTimeScale` as `Int32`, while `CMTime` represents time as a rational value using a numerator and timescale denominator. Practical meaning: export frame-rate values need to be normalized to the integer timescale boundary before constructing `CMTime`.
+- Local git history shows commit `ba1ba44` added the compiler-gated `makeMutableVideoComposition(...)` fallback path, but that helper already expected `frameRate: Double`.
+- The Mini verify failure on 2026-04-13 was `ExportCompositor.swift:71:37: cannot convert value of type 'Float' to expected argument type 'Double'`, which came from passing `settings.frameRate` directly into the fallback helper after `SaneExportSettings.frameRate` remained `Float`.
+- Safe fix: normalize `settings.frameRate` once to `Double`, use that in both fallback calls, and use the same normalized value when deriving `CMTimeScale(frameRate)` for the configuration path so the macOS 26 and fallback branches stay type-consistent.

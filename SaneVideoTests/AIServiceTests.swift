@@ -171,6 +171,48 @@ struct AIServiceTests {
             #expect(items[1].concept == "Second")
             #expect(items[1].startTime == 30)
         }
+
+        @Test("Local SaneAI workflow parser converts workflow JSON into plan items")
+        func localWorkflowParserBuildsPlanItems() throws {
+            let response = """
+            helper noise
+            {
+              "workflow": "meetingReview",
+              "summary": "Capture the release hold.",
+              "items": [
+                {
+                  "concept": "Hold The Release",
+                  "claim": "Do not ship until timestamps are fixed.",
+                  "supportingReferences": "PM review",
+                  "sourceExcerpt": "Let's hold the release until the timestamps are fixed.",
+                  "startTime": 42,
+                  "endTime": 58,
+                  "confidence": 0.91
+                },
+                {
+                  "concept": "Fix Timestamps",
+                  "claim": "Resolve the broken timestamp import path.",
+                  "supportingReferences": "",
+                  "sourceExcerpt": "The importer is still shifting everything by two hours.",
+                  "startTime": 59,
+                  "endTime": 74,
+                  "confidence": 0.84
+                }
+              ]
+            }
+            trailing noise
+            """
+
+            let items = try LocalSaneAIWorkflowRunner.parsePlan(from: Data(response.utf8))
+
+            #expect(items.count == 2)
+            #expect(items[0].concept == "Hold The Release")
+            #expect(items[0].claim.contains("Do not ship"))
+            #expect(items[0].supportingReferences == "PM review")
+            #expect(items[0].startTime == 42)
+            #expect(items[1].concept == "Fix Timestamps")
+            #expect(items[1].sourceExcerpt.contains("two hours"))
+        }
     }
 
     // MARK: - MagicFixAnalysis Tests

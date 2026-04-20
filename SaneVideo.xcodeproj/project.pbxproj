@@ -304,6 +304,7 @@
 		689C7ABD9F0505469CCEB4B3 /* SidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DF30A42313A70762DA814A4 /* SidebarView.swift */; };
 		68A887F57CCBF7AA4BE7FA8B /* TranscriptionError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54F9EA59DE76685114B98673 /* TranscriptionError.swift */; };
 		68D630F8C2C87F8D5D3B3058 /* DesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC7D07B3313D1684B12846E3 /* DesignSystem.swift */; };
+		69ADB6A5B9F49911F9FA65C4 /* LocalSaneAIWorkflowRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02C8D6406ED6BC9AFCCB290F /* LocalSaneAIWorkflowRunner.swift */; };
 		69C46F5CA3BAB5DB7E612E7F /* TranscriptionEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0562A95D53DD28CDA4DFA59F /* TranscriptionEditorView.swift */; };
 		6A383C7E1B6319D7B85AE142 /* ExportView+Actions.swift in Sources */ = {isa = PBXBuildFile; fileRef = BEB8DFE0FC9855A6B7222877 /* ExportView+Actions.swift */; };
 		6AB0FFFF1DE83032B9083754 /* UnifiedRecordButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6BBFB6156C1761B03CF00E1 /* UnifiedRecordButton.swift */; };
@@ -727,6 +728,7 @@
 /* Begin PBXFileReference section */
 		006E966828594CCE5A5971C1 /* ProgressTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressTracker.swift; sourceTree = "<group>"; };
 		009E1405656A2C12BCFD216D /* Performance.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Performance.swift; sourceTree = "<group>"; };
+		02C8D6406ED6BC9AFCCB290F /* LocalSaneAIWorkflowRunner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalSaneAIWorkflowRunner.swift; sourceTree = "<group>"; };
 		036F8EFCE2BA39CE3BB7D9C4 /* RealTimeAudioProcessorProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RealTimeAudioProcessorProtocol.swift; sourceTree = "<group>"; };
 		0370603FB35B5E437E15A1FB /* AnimationModifiers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnimationModifiers.swift; sourceTree = "<group>"; };
 		03B4B7B8E64A81347DEFD610 /* ExportServiceProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportServiceProtocol.swift; sourceTree = "<group>"; };
@@ -1749,6 +1751,7 @@
 				79C1191F648F864278EFF1DA /* AIProviders.swift */,
 				320D50EB6C70DB9427AD7BDA /* AIService.swift */,
 				5A1CC59CF603AAFC1B9BDC37 /* AppleFoundationProvider.swift */,
+				02C8D6406ED6BC9AFCCB290F /* LocalSaneAIWorkflowRunner.swift */,
 				A6E6DE2B9407C20D6426B897 /* TranslationService.swift */,
 			);
 			path = AI;
@@ -2615,6 +2618,7 @@
 				1CDB036BFFBA8651EB3FAAF7 /* LiquidGlassNSView.swift in Sources */,
 				3573D8C187E86ED3ADAFA45C /* LiquidGlassStyle.swift in Sources */,
 				453900808F2143FEAA909D54 /* LoadingStateModifier.swift in Sources */,
+				69ADB6A5B9F49911F9FA65C4 /* LocalSaneAIWorkflowRunner.swift in Sources */,
 				95D0B99DCE821BC4C3C40C27 /* LogExportService.swift in Sources */,
 				0DF53807FA7B7F06F53904FB /* LogManager.swift in Sources */,
 				4DF53CC5D3B78AC02D17CAEF /* LogView.swift in Sources */,

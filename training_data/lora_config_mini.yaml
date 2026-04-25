@@ -1,0 +1,31 @@
+# SaneVideo workflow-only LoRA config for the 8 GB Mini
+# Goal: train the transcript-grounded workflow JSON planner directly, not the
+# merged generic SaneAI action model.
+
+model: "mlx-community/SmolLM3-3B-4bit"
+
+lora_parameters:
+  rank: 16
+  dropout: 0.05
+  scale: 32.0
+
+batch_size: 1
+iters: 250
+num_layers: 16
+
+lr_schedule:
+  name: cosine_decay
+  arguments: [5.0e-5, 250]
+  warmup: 15
+  warmup_init: 0.0
+
+mask_prompt: true
+grad_checkpoint: true
+
+steps_per_report: 10
+steps_per_eval: 50
+val_batches: 1
+save_every: 25
+
+seed: 42
+max_seq_length: 1024

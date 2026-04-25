@@ -1,0 +1,29 @@
+# SaneVideo workflow-only challenger lane for the 8 GB Mini
+
+model: "mlx-community/SmolLM3-3B-4bit"
+
+lora_parameters:
+  rank: 16
+  dropout: 0.05
+  scale: 32.0
+
+batch_size: 1
+iters: 125
+num_layers: 8
+
+lr_schedule:
+  name: cosine_decay
+  arguments: [5.0e-5, 125]
+  warmup: 10
+  warmup_init: 0.0
+
+mask_prompt: true
+grad_checkpoint: true
+
+steps_per_report: 10
+steps_per_eval: 25
+val_batches: 1
+save_every: 25
+
+seed: 42
+max_seq_length: 1024

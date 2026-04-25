@@ -190,6 +190,8 @@ BUG_TRACKING.md
 # Generated output
 Output/
 outputs/
+models/
+training_data/__pycache__/
 
 # Local test artifacts
 MinimalTest/

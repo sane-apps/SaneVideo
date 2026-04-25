@@ -15,7 +15,8 @@ from pathlib import Path
 ROOT = Path(__file__).parent
 TRAIN_PATH = ROOT / "train.jsonl"
 VALID_PATH = ROOT / "valid.jsonl"
-PLACEHOLDER = "PLACEHOLDER_SYSTEM_PROMPT"
+SYSTEM_PROMPT_PATH = ROOT / "system_prompt.txt"
+PLACEHOLDER = SYSTEM_PROMPT_PATH.read_text(encoding="utf-8").strip()
 
 
 def seconds(raw: str) -> float:
@@ -40,6 +41,56 @@ def item(concept: str, claim: str, refs: str, excerpt: str, start: str, end: str
         "startTime": seconds(start),
         "endTime": seconds(end),
         "confidence": confidence,
+    }
+
+
+def limit_words(text: str, max_words: int) -> str:
+    words = text.split()
+    if len(words) <= max_words:
+        return text
+    return " ".join(words[:max_words]).rstrip(",.;:") + "."
+
+
+def clean_truncate(text: str, max_chars: int) -> str:
+    if len(text) <= max_chars:
+        return text
+
+    cut = text[:max_chars].rstrip()
+    boundary = max(cut.rfind(". "), cut.rfind("; "), cut.rfind(", "), cut.rfind(" "))
+    if boundary > max_chars // 2:
+        cut = cut[:boundary].rstrip(",.;: ")
+
+    return cut.rstrip(",.;:") + "."
+
+
+def compact_refs(text: str, max_chars: int = 72, max_entries: int = 3) -> str:
+    refs = [entry.strip() for entry in text.split(";") if entry.strip()]
+    kept: list[str] = []
+    for ref in refs:
+        candidate = "; ".join(kept + [ref])
+        if kept and len(candidate) > max_chars:
+            break
+        kept.append(ref)
+        if len(kept) >= max_entries:
+            break
+    return "; ".join(kept)
+
+
+def compact_item_payload(item_payload: dict, workflow: str) -> dict:
+    refs = item_payload["supportingReferences"]
+    if workflow != "commentary":
+        refs = ""
+    else:
+        refs = compact_refs(refs)
+
+    return {
+        "concept": item_payload["concept"],
+        "claim": item_payload["claim"],
+        "supportingReferences": refs,
+        "sourceExcerpt": clean_truncate(item_payload["sourceExcerpt"], 72),
+        "startTime": item_payload["startTime"],
+        "endTime": item_payload["endTime"],
+        "confidence": item_payload["confidence"],
     }
 
 
@@ -108,9 +159,9 @@ SCENARIOS = [
                 "Old-Issue Framing",
                 "The room keeps describing the concerns as old and already answered instead of showing why the evidence should be treated as closed.",
                 "Acts 17:11; 1 Thessalonians 5:21",
-                "None of this stuff is new. All this stuff goes back years.",
+                "None of this stuff is new. All this stuff goes back years. When Jeremiah was in his 20s and early 30s was most of it.",
                 "15:15",
-                "35:52",
+                "15:21",
                 0.9,
             )
         ],
@@ -132,9 +183,9 @@ SCENARIOS = [
                 "Fallout Versus Flock Protection",
                 "The call emphasizes collateral damage and ripple effects, but shepherds are first responsible to protect the flock and uphold truth.",
                 "Acts 20:28-31",
-                "This affects his wife, his family, his church, and his ministry. There is collateral damage here.",
-                "06:50",
-                "13:15",
+                "There is collateral damage here. This affects churches and ministries.",
+                "07:03",
+                "12:44",
                 0.92,
             )
         ],
@@ -219,17 +270,19 @@ SCENARIOS = [
             line("32:19", "He publicly owned that past failure."),
             line("36:34", "He has repented."),
             line("41:19", "One failure is not automatic disqualification."),
+            line("41:48", "Think about Peter and David."),
             line("42:19", "I want to err on the side of mercy."),
+            line("42:32", "God restores people."),
         ],
         "summary": "The careful frame keeps repentance and mercy in view while still asking the separate question of qualification for public ministry.",
         "items": [
             item(
-                "Repentance Is Not The Whole Question",
+                "Restoration Versus Qualification",
                 "The call treats repentance as nearly decisive, but a biblical evaluation still has to ask whether public qualification remains intact.",
-                "Matthew 3:8; 2 Corinthians 7:10-11; 1 Timothy 3:1-7; Titus 1:5-9",
-                "He publicly owned that past failure. He has repented. One failure is not automatic disqualification.",
-                "32:19",
-                "42:19",
+                "Galatians 6:1; 1 Timothy 3:1-7; Titus 1:5-9",
+                "One failure is not automatic disqualification. Think about Peter and David. I want to err on the side of mercy. God restores people.",
+                "41:19",
+                "42:32",
                 0.93,
             )
         ],
@@ -751,6 +804,17 @@ def payload_for(scenario: dict) -> str:
     )
 
 
+def compact_payload_for(scenario: dict) -> str:
+    return json.dumps(
+        {
+            "workflow": scenario["workflow"],
+            "summary": scenario["summary"],
+            "items": [compact_item_payload(entry, scenario["workflow"]) for entry in scenario["items"]],
+        },
+        ensure_ascii=True,
+    )
+
+
 def standard_prompt(scenario: dict) -> str:
     return (
         "Build a workflow plan for SaneVideo.\n"
@@ -800,6 +864,22 @@ def repair_prompt(scenario: dict) -> str:
     )
 
 
+def budget_prompt(scenario: dict) -> str:
+    return (
+        "Build a compact SaneVideo workflow draft.\n"
+        f"Workflow: {scenario['workflow']}\n"
+        f"Focus: {scenario['instructions']}\n"
+        f"Target: {scenario['max']} items maximum\n"
+        "Keep the JSON compact and valid.\n"
+        "- summary: short\n"
+        "- concept: 2-5 words\n"
+        "- claim: one short sentence\n"
+        "- sourceExcerpt: shortest proving quote\n"
+        f"Transcript:\n{render_transcript(scenario['transcript'])}\n"
+        "Return only valid JSON."
+    )
+
+
 PROMPT_BUILDERS = [standard_prompt, guarded_prompt, voice_brief_prompt, repair_prompt]
 
 
@@ -819,6 +899,7 @@ def build_examples() -> list[dict]:
         answer = payload_for(scenario)
         for builder in PROMPT_BUILDERS:
             examples.append(message_example(builder(scenario), answer))
+        examples.append(message_example(budget_prompt(scenario), compact_payload_for(scenario)))
     return examples
 
 

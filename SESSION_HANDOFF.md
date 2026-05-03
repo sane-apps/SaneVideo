@@ -1,9 +1,10 @@
 # Session Handoff — SaneVideo
 
-**Last updated:** 2026-04-25
+**Last updated:** 2026-05-03
 
 ## Current State
 
+- 2026-05-03 dependency simplification moved SaneVideo to Argmax's current `argmax-oss-swift` package at `1.0.0` for the `WhisperKit` product and removed the unused `swift-grok` dependency. SaneVideo transcription remains WhisperKit-based, while commentary planning stays deterministic via `CommentaryWorkflowPlanner`.
 - 2026-04-25 privacy policy update replaced stale `no telemetry/no third-party/no network` claims with the approved privacy-safe analytics standard and current network categories: updates, licensing, aggregate app counts, and optional user-configured export/upload integrations such as YouTube.
 - `SaneVideo` now has a standalone workflow-only training lane under `training_data/`.
 - Canonical standalone files:

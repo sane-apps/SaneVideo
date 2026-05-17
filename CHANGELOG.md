@@ -6,6 +6,12 @@ All notable changes to SaneVideo are documented here.
 
 ## [1.0] - 2026-05-17
 
+Initial SaneVideo release with local recording, editing, export, caption, and demo-pack workflows.
+
+---
+
+## [1.0] - 2026-05-17
+
 Initial SaneVideo release with local recording, editing, export, captions, and permission reliability fixes.
 
 ---

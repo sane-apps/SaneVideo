@@ -18,5 +18,10 @@
 	<array>
 		<string>com.apple.screenCaptureUI</string>
 	</array>
+	<key>com.apple.security.temporary-exception.mach-lookup.global-name</key>
+	<array>
+		<string>com.sanevideo.app-spki</string>
+		<string>com.sanevideo.app-spks</string>
+	</array>
 </dict>
 </plist>

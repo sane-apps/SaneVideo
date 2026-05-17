@@ -79,7 +79,9 @@ final class ReleaseReadinessRegressionTests: XCTestCase {
         let project = try String(contentsOf: sourceRoot.appendingPathComponent("project.yml"), encoding: .utf8)
         let appSource = try String(contentsOf: sourceRoot.appendingPathComponent("SaneVideo/SaneVideoApp.swift"), encoding: .utf8)
         let directPlist = try String(contentsOf: sourceRoot.appendingPathComponent("SaneVideo/Info.plist"), encoding: .utf8)
+        let directEntitlements = try String(contentsOf: sourceRoot.appendingPathComponent("SaneVideo/SaneVideo.entitlements"), encoding: .utf8)
         let appStorePlist = try String(contentsOf: sourceRoot.appendingPathComponent("SaneVideo/Info-AppStore.plist"), encoding: .utf8)
+        let appStoreEntitlements = try String(contentsOf: sourceRoot.appendingPathComponent("SaneVideo/SaneVideo-AppStore.entitlements"), encoding: .utf8)
 
         XCTAssertTrue(project.contains("SaneVideoAppStore:"))
         XCTAssertTrue(project.contains("INFOPLIST_FILE: SaneVideo/Info-AppStore.plist"))
@@ -90,10 +92,16 @@ final class ReleaseReadinessRegressionTests: XCTestCase {
         XCTAssertTrue(directPlist.contains("<key>SUFeedURL</key>"))
         XCTAssertTrue(directPlist.contains("<key>SUPublicEDKey</key>"))
         XCTAssertTrue(directPlist.contains("<key>SUEnableInstallerLauncherService</key>"))
+        XCTAssertTrue(directEntitlements.contains("com.apple.security.temporary-exception.mach-lookup.global-name"))
+        XCTAssertTrue(directEntitlements.contains("com.sanevideo.app-spki"))
+        XCTAssertTrue(directEntitlements.contains("com.sanevideo.app-spks"))
         XCTAssertTrue(appStorePlist.contains("<key>AppStoreProductID</key>"))
         XCTAssertFalse(appStorePlist.contains("SUFeedURL"))
         XCTAssertFalse(appStorePlist.contains("SUPublicEDKey"))
         XCTAssertFalse(appStorePlist.contains("SUEnableInstallerLauncherService"))
+        XCTAssertFalse(appStoreEntitlements.contains("mach-lookup"))
+        XCTAssertFalse(appStoreEntitlements.contains("com.sanevideo.app-spki"))
+        XCTAssertFalse(appStoreEntitlements.contains("com.sanevideo.app-spks"))
     }
 
     func testAppStoreScreenshotStoryboardAndGeneratorCoverLaunchSellingPoints() throws {

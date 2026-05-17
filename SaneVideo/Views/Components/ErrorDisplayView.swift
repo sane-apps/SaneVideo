@@ -19,7 +19,8 @@ struct ErrorDisplayView: View {
         guard let appError = error as? AppError else { return false }
         switch appError {
         case .cameraPermissionDenied, .cameraPermissionRestricted,
-             .microphonePermissionDenied, .microphonePermissionRestricted:
+             .microphonePermissionDenied, .microphonePermissionRestricted,
+             .screenCaptureUnavailable:
             return true
         default:
             return false
@@ -78,7 +79,7 @@ struct ErrorDisplayView: View {
             HStack {
                 if isPermissionError {
                     Button("Open System Settings") {
-                        ServiceContainer.shared.permissionManager.openSystemSettings()
+                        openPermissionSettings()
                     }
                     .buttonStyle(.borderedProminent)
                 } else if let onRetry {
@@ -138,7 +139,7 @@ struct ErrorDisplayView: View {
     private var errorIcon: String {
         if let appError = error as? AppError {
             switch appError {
-            case .cameraPermissionDenied, .cameraPermissionRestricted, .microphonePermissionDenied, .microphonePermissionRestricted:
+            case .cameraPermissionDenied, .cameraPermissionRestricted, .microphonePermissionDenied, .microphonePermissionRestricted, .screenCaptureUnavailable:
                 return "exclamationmark.triangle.fill"
             case .exportFailed:
                 return "xmark.circle.fill"
@@ -154,7 +155,7 @@ struct ErrorDisplayView: View {
     private var errorColor: Color {
         if let appError = error as? AppError {
             switch appError {
-            case .cameraPermissionDenied, .cameraPermissionRestricted, .microphonePermissionDenied, .microphonePermissionRestricted:
+            case .cameraPermissionDenied, .cameraPermissionRestricted, .microphonePermissionDenied, .microphonePermissionRestricted, .screenCaptureUnavailable:
                 return .orange
             case .exportFailed:
                 return .red
@@ -186,6 +187,24 @@ struct ErrorDisplayView: View {
             return appError.recoverySuggestions
         }
         return nil
+    }
+
+    private func openPermissionSettings() {
+        guard let appError = error as? AppError else {
+            ServiceContainer.shared.permissionManager.openSystemSettings()
+            return
+        }
+
+        switch appError {
+        case .cameraPermissionDenied, .cameraPermissionRestricted:
+            ServiceContainer.shared.permissionManager.openCameraSettings()
+        case .microphonePermissionDenied, .microphonePermissionRestricted:
+            ServiceContainer.shared.permissionManager.openMicrophoneSettings()
+        case .screenCaptureUnavailable:
+            ServiceContainer.shared.permissionManager.openScreenRecordingSettings()
+        default:
+            ServiceContainer.shared.permissionManager.openSystemSettings()
+        }
     }
 }
 

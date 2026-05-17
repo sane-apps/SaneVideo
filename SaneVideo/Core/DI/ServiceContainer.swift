@@ -90,8 +90,8 @@ final class ServiceContainer {
     // timelineThumbnailService consolidated into thumbnailService
     let renderingService: RenderingService
     let templateStore: TemplateStore
-    let syncManager: SyncManager
-    let mediaAssetManager: MediaAssetManager
+    lazy var syncManager: SyncManager = SyncManager()
+    lazy var mediaAssetManager: MediaAssetManager = MediaAssetManager()
 
     // MARK: - Utility Services
     
@@ -179,8 +179,6 @@ final class ServiceContainer {
         let renderingService = RenderingService.shared
         self.renderingService = renderingService
         self.templateStore = TemplateStore()
-        self.syncManager = SyncManager()
-        self.mediaAssetManager = MediaAssetManager()
 
         // Vision Services (Now using unified context)
         self.bodyPoseService = BodyPoseService()

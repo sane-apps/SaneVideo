@@ -8,6 +8,8 @@
 import SwiftUI
 
 struct PrivacySettingsView: View {
+    @Binding var selectedTab: String
+
     var body: some View {
         Form {
             Section {
@@ -22,29 +24,30 @@ struct PrivacySettingsView: View {
                 VStack(alignment: .leading, spacing: 12) {
                     Text(String(localized: "settings.privacy.description", defaultValue: "SaneVideo prioritizes your privacy. All core AI features run 100% on your Mac, ensuring your data never leaves your device."))
                         .saneReadableSupportText()
-                    
+
                     PrivacyBadge()
                         .padding(.vertical, 4)
-                    
+
                     Text(String(localized: "settings.privacy.cloud_note", defaultValue: "All AI features run 100% on-device using Apple Intelligence. No cloud services required."))
                         .saneReadableSupportText()
 
                     HelperText(
-                        text: "If you choose optional cloud-connected features like direct upload or third-party APIs, they stay separate from the normal local demo workflow.",
+                        text: YouTubeService.uploadFeatureEnabled ? "If you choose optional cloud-connected features like direct upload or third-party APIs, they stay separate from the normal local demo workflow." : "YouTube direct upload is disabled in this build. Optional API settings stay separate from the normal local demo workflow.",
                         icon: "externaldrive.badge.icloud"
                     )
 
                     Divider()
                         .padding(.vertical, 4)
 
-                    NavigationLink {
-                        APIKeysSettingsView()
+                    Button {
+                        selectedTab = "apikeys"
                     } label: {
                         Label(String(localized: "settings.privacy.manage_api_keys", defaultValue: "Manage API Keys"), systemImage: "key.fill")
                     }
-                    .help("Open optional API key settings for direct upload and cloud-powered extras.")
+                    .buttonStyle(.link)
+                    .help(YouTubeService.uploadFeatureEnabled ? "Open optional API key settings for direct upload and cloud-powered extras." : "Open optional API key settings. YouTube direct upload is disabled in this build.")
                     .accessibilityIdentifier("settings.privacy.manage_api_keys_button")
-                    
+
                     Button {
                         // Try to open PRIVACY.md from bundle, fallback to web
                         if let privacyURL = Bundle.main.url(forResource: "PRIVACY", withExtension: "md") {
@@ -57,7 +60,7 @@ struct PrivacySettingsView: View {
                     }
                     .buttonStyle(.link)
                     .help("Open the full privacy policy.")
-                    
+
                     Button {
                         // Try to open TERMS.md from bundle, fallback to web
                         if let termsURL = Bundle.main.url(forResource: "TERMS", withExtension: "md") {

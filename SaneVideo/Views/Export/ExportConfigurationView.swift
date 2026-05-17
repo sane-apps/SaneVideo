@@ -13,17 +13,12 @@ struct ExportConfigurationView: View {
     @Binding var exportSettings: SaneExportSettings
     @Binding var selectedPreset: ExportPreset?
     @Binding var mlEffects: MLExportEffects
+    @State private var showAdvancedEffects = false
     let estimateFileSize: () -> String
 
     var body: some View {
         GroupBox {
-            VStack(alignment: .leading, spacing: 14) {
-                HelperText(
-                    text: "Start with a preset, then override quality or format only when the destination needs something specific.",
-                    icon: "slider.horizontal.3"
-                )
-
-                // PRESETS ROW with descriptions
+            VStack(alignment: .leading, spacing: 12) {
                 VStack(alignment: .leading, spacing: 8) {
                     HStack {
                         Text(String(localized: "export.preset.label", defaultValue: "Preset"))
@@ -53,15 +48,16 @@ struct ExportConfigurationView: View {
                     }
 
                     if let description = selectedPreset?.description {
-                        HelperText(text: description, icon: "sparkles")
+                        Label(description, systemImage: "sparkles")
+                            .saneReadableSupportText()
+                            .lineLimit(2)
                     }
                 }
                 .padding(.leading, 4)
 
                 Divider()
 
-                // MANUAL SETTINGS ROW
-                HStack(spacing: 20) {
+                HStack(spacing: 16) {
                     VStack(alignment: .leading, spacing: 4) {
                         Label(String(localized: "export.quality.label", defaultValue: "Quality"), systemImage: "dial.high")
                             .saneReadableLabel()
@@ -76,11 +72,8 @@ struct ExportConfigurationView: View {
                         .accessibilityIdentifier("export.resolution_picker")
                         .accessibilityLabel("Export resolution")
                         .onChange(of: exportSettings.resolution) { _, _ in selectedPreset = .custom }
-                        
-                        Text("4K keeps product UI crisp. 1080p is the normal default for lighter exports.")
-                            .saneReadableSupportText()
-                            .fixedSize(horizontal: false, vertical: true)
                     }
+                    .frame(width: 132, alignment: .leading)
 
                     VStack(alignment: .leading, spacing: 4) {
                         Label(String(localized: "export.format.label", defaultValue: "Format"), systemImage: "film")
@@ -93,15 +86,12 @@ struct ExportConfigurationView: View {
                             Text(String(localized: "export.codec.prores", defaultValue: "ProRes (Best for Editing)")).tag(AVVideoCodecType.proRes422)
                         }
                         .pickerStyle(.menu)
-                        .frame(maxWidth: 120)
+                        .frame(minWidth: 220, maxWidth: 260, alignment: .leading)
                         .accessibilityIdentifier("export.format_picker")
                         .accessibilityLabel("Export format")
                         .onChange(of: exportSettings.codec) { _, _ in selectedPreset = .custom }
-
-                        Text("H.264 is safest, HEVC is smaller, and ProRes is best when you plan to re-edit the export later.")
-                            .saneReadableSupportText()
-                            .fixedSize(horizontal: false, vertical: true)
                     }
+                    .frame(maxWidth: .infinity, alignment: .leading)
 
                     VStack(alignment: .leading, spacing: 4) {
                         Label(String(localized: "export.size.label", defaultValue: "Est. Size"), systemImage: "externaldrive")
@@ -111,18 +101,26 @@ struct ExportConfigurationView: View {
                             .saneReadableMeta()
                         Text(estimateFileSize())
                             .saneReadableMeta(monospaced: true)
-
-                        Text("Bitrate is the main size lever. Bigger numbers usually look better, but take more space and time.")
-                            .saneReadableSupportText()
-                            .fixedSize(horizontal: false, vertical: true)
                     }
+                    .frame(width: 96, alignment: .leading)
                 }
                 .padding(4)
 
                 Divider()
 
-                // ML Effects Section
-                MLEffectsExportSection(mlEffects: $mlEffects)
+                DisclosureGroup(isExpanded: $showAdvancedEffects) {
+                    MLEffectsExportSection(mlEffects: $mlEffects)
+                        .padding(.top, 8)
+                } label: {
+                    HStack {
+                        Label("AI Enhancement", systemImage: "cpu")
+                            .saneReadableLabel()
+                        Spacer()
+                        Text(mlEffects.hasAnyEnabled ? "On" : "Off")
+                            .saneReadableMeta()
+                    }
+                }
+                .accessibilityIdentifier("export.ai_enhancement_disclosure")
             }
         }
         .sanePanel(radius: 16, accent: Theme.Colors.accentSoft)
@@ -190,12 +188,14 @@ struct ExportPresetButton: View {
         Button(action: action) {
             VStack(spacing: 4) {
                 Image(systemName: icon)
-                    .font(.system(size: 20))
+                    .font(.system(size: 18))
                 Text(title)
                     .font(.system(size: Theme.Typography.fontSizeSM, weight: selected ? .semibold : .regular))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.85)
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 10)
+            .padding(.vertical, 8)
             .background(
                 RoundedRectangle(cornerRadius: 10, style: .continuous)
                     .fill(

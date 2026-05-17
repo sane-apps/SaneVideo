@@ -11,9 +11,9 @@ import Foundation
 /// Reference to a media asset that can be synced across devices
 struct MediaAssetReference: Codable, Sendable, Equatable {
     let originalFilename: String
-    let relativePath: String  // Relative to project folder
+    let relativePath: String // Relative to project folder
     let fileSize: Int64?
-    let checksum: String?     // For integrity verification
+    let checksum: String? // For integrity verification
 
     init(originalFilename: String, relativePath: String, fileSize: Int64? = nil, checksum: String? = nil) {
         self.originalFilename = originalFilename
@@ -25,23 +25,17 @@ struct MediaAssetReference: Codable, Sendable, Equatable {
 
 /// Actor for managing media asset paths and references for sync
 actor MediaAssetManager {
-
     // MARK: - Properties
 
-    /// Base directory for project media in iCloud Drive
-    private let iCloudMediaBase: URL?
+    /// Base directory for project media in iCloud Drive, resolved only when sync features are used.
+    private var resolvedICloudMediaBase: URL?
 
     /// Local media cache directory
     private let localCacheBase: URL
 
     init() {
-        // iCloud Drive container for media files
-        self.iCloudMediaBase = FileManager.default.url(
-            forUbiquityContainerIdentifier: nil
-        )?.appendingPathComponent("Documents/Media", isDirectory: true)
-
         // Local cache in Application Support
-        self.localCacheBase = FileManager.default.urls(
+        localCacheBase = FileManager.default.urls(
             for: .applicationSupportDirectory,
             in: .userDomainMask
         ).first!.appendingPathComponent("SaneVideo/MediaCache", isDirectory: true)
@@ -51,6 +45,31 @@ actor MediaAssetManager {
             at: localCacheBase,
             withIntermediateDirectories: true
         )
+    }
+
+    private func iCloudMediaBase() -> URL? {
+        if let resolvedICloudMediaBase {
+            return resolvedICloudMediaBase
+        }
+
+        guard Self.canQueryRealICloudContainer else {
+            return nil
+        }
+
+        let url = FileManager.default.url(
+            forUbiquityContainerIdentifier: nil
+        )?.appendingPathComponent("Documents/Media", isDirectory: true)
+        resolvedICloudMediaBase = url
+        return url
+    }
+
+    private static var canQueryRealICloudContainer: Bool {
+        let environment = ProcessInfo.processInfo.environment
+        if environment["SANEVIDEO_ENABLE_REAL_ICLOUD_TESTS"] == "1" {
+            return true
+        }
+
+        return !TestEnvironment.isTesting
     }
 
     // MARK: - Path Conversion
@@ -92,8 +111,9 @@ actor MediaAssetManager {
         }
 
         // Try iCloud media folder
-        if let iCloudURL = iCloudMediaBase?.appendingPathComponent(relativePath),
-           FileManager.default.fileExists(atPath: iCloudURL.path) {
+        if let iCloudURL = iCloudMediaBase()?.appendingPathComponent(relativePath),
+           FileManager.default.fileExists(atPath: iCloudURL.path)
+        {
             return iCloudURL
         }
 
@@ -140,7 +160,7 @@ actor MediaAssetManager {
         sourceURL: URL,
         projectId: UUID
     ) async throws -> URL {
-        guard let iCloudBase = iCloudMediaBase else {
+        guard let iCloudBase = iCloudMediaBase() else {
             throw MediaAssetError.iCloudNotAvailable
         }
 
@@ -161,7 +181,7 @@ actor MediaAssetManager {
             let destChecksum = try await calculateChecksum(for: destinationURL)
 
             if sourceChecksum == destChecksum {
-                return destinationURL  // Already synced
+                return destinationURL // Already synced
             }
 
             // Different file - remove and re-copy
@@ -178,7 +198,7 @@ actor MediaAssetManager {
     /// - Parameter reference: Asset reference to download
     /// - Returns: Local URL of downloaded file
     func downloadAsset(_ reference: MediaAssetReference) async throws -> URL {
-        guard let iCloudBase = iCloudMediaBase else {
+        guard let iCloudBase = iCloudMediaBase() else {
             throw MediaAssetError.iCloudNotAvailable
         }
 
@@ -188,7 +208,8 @@ actor MediaAssetManager {
         var isDownloaded = false
 
         if let resourceValues = try? iCloudURL.resourceValues(forKeys: [.ubiquitousItemDownloadingStatusKey]),
-           let status = resourceValues.ubiquitousItemDownloadingStatus {
+           let status = resourceValues.ubiquitousItemDownloadingStatus
+        {
             // URLUbiquitousItemDownloadingStatus is a typed string (NS_TYPED_ENUM), not a true enum
             isDownloaded = (status == .current || status == .downloaded)
         }
@@ -204,7 +225,7 @@ actor MediaAssetManager {
 
                 if let resourceValues = try? iCloudURL.resourceValues(forKeys: [.ubiquitousItemDownloadingStatusKey]) {
                     isDownloaded = resourceValues.ubiquitousItemDownloadingStatus == .current ||
-                                   resourceValues.ubiquitousItemDownloadingStatus == .downloaded
+                        resourceValues.ubiquitousItemDownloadingStatus == .downloaded
                 }
             }
 
@@ -252,18 +273,18 @@ actor MediaAssetManager {
 
     /// Check if iCloud is available
     var isICloudAvailable: Bool {
-        iCloudMediaBase != nil
+        iCloudMediaBase() != nil
     }
 
     /// Get iCloud storage status
     func getICloudStorageStatus() async throws -> (used: Int64, available: Int64) {
-        guard let iCloudBase = iCloudMediaBase else {
+        guard let iCloudBase = iCloudMediaBase() else {
             throw MediaAssetError.iCloudNotAvailable
         }
 
         let values = try iCloudBase.resourceValues(forKeys: [
             .volumeAvailableCapacityKey,
-            .volumeTotalCapacityKey
+            .volumeTotalCapacityKey,
         ])
 
         let available = values.volumeAvailableCapacity ?? 0
@@ -277,8 +298,8 @@ actor MediaAssetManager {
 
 private struct SHA256 {
     private var state: [UInt32] = [
-        0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a,
-        0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19
+        0x6A09_E667, 0xBB67_AE85, 0x3C6E_F372, 0xA54F_F53A,
+        0x510E_527F, 0x9B05_688C, 0x1F83_D9AB, 0x5BE0_CD19,
     ]
     private var buffer = [UInt8]()
     private var totalLength: UInt64 = 0
@@ -304,7 +325,7 @@ private struct SHA256 {
 
         // Process blocks
         for i in stride(from: 0, to: buffer.count, by: 64) {
-            processBlock(Array(buffer[i..<i+64]))
+            processBlock(Array(buffer[i ..< i + 64]))
         }
 
         // Convert state to bytes
@@ -320,32 +341,32 @@ private struct SHA256 {
 
     private mutating func processBlock(_ block: [UInt8]) {
         let k: [UInt32] = [
-            0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
-            0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
-            0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
-            0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
-            0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
-            0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
-            0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
-            0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
+            0x428A_2F98, 0x7137_4491, 0xB5C0_FBCF, 0xE9B5_DBA5, 0x3956_C25B, 0x59F1_11F1, 0x923F_82A4, 0xAB1C_5ED5,
+            0xD807_AA98, 0x1283_5B01, 0x2431_85BE, 0x550C_7DC3, 0x72BE_5D74, 0x80DE_B1FE, 0x9BDC_06A7, 0xC19B_F174,
+            0xE49B_69C1, 0xEFBE_4786, 0x0FC1_9DC6, 0x240C_A1CC, 0x2DE9_2C6F, 0x4A74_84AA, 0x5CB0_A9DC, 0x76F9_88DA,
+            0x983E_5152, 0xA831_C66D, 0xB003_27C8, 0xBF59_7FC7, 0xC6E0_0BF3, 0xD5A7_9147, 0x06CA_6351, 0x1429_2967,
+            0x27B7_0A85, 0x2E1B_2138, 0x4D2C_6DFC, 0x5338_0D13, 0x650A_7354, 0x766A_0ABB, 0x81C2_C92E, 0x9272_2C85,
+            0xA2BF_E8A1, 0xA81A_664B, 0xC24B_8B70, 0xC76C_51A3, 0xD192_E819, 0xD699_0624, 0xF40E_3585, 0x106A_A070,
+            0x19A4_C116, 0x1E37_6C08, 0x2748_774C, 0x34B0_BCB5, 0x391C_0CB3, 0x4ED8_AA4A, 0x5B9C_CA4F, 0x682E_6FF3,
+            0x748F_82EE, 0x78A5_636F, 0x84C8_7814, 0x8CC7_0208, 0x90BE_FFFA, 0xA450_6CEB, 0xBEF9_A3F7, 0xC671_78F2,
         ]
 
         var w = [UInt32](repeating: 0, count: 64)
-        for i in 0..<16 {
-            w[i] = UInt32(block[i*4]) << 24 | UInt32(block[i*4+1]) << 16 |
-                   UInt32(block[i*4+2]) << 8 | UInt32(block[i*4+3])
+        for i in 0 ..< 16 {
+            w[i] = UInt32(block[i * 4]) << 24 | UInt32(block[i * 4 + 1]) << 16 |
+                UInt32(block[i * 4 + 2]) << 8 | UInt32(block[i * 4 + 3])
         }
 
-        for i in 16..<64 {
-            let s0 = rotateRight(w[i-15], 7) ^ rotateRight(w[i-15], 18) ^ (w[i-15] >> 3)
-            let s1 = rotateRight(w[i-2], 17) ^ rotateRight(w[i-2], 19) ^ (w[i-2] >> 10)
-            w[i] = w[i-16] &+ s0 &+ w[i-7] &+ s1
+        for i in 16 ..< 64 {
+            let s0 = rotateRight(w[i - 15], 7) ^ rotateRight(w[i - 15], 18) ^ (w[i - 15] >> 3)
+            let s1 = rotateRight(w[i - 2], 17) ^ rotateRight(w[i - 2], 19) ^ (w[i - 2] >> 10)
+            w[i] = w[i - 16] &+ s0 &+ w[i - 7] &+ s1
         }
 
         var a = state[0], b = state[1], c = state[2], d = state[3]
         var e = state[4], f = state[5], g = state[6], h = state[7]
 
-        for i in 0..<64 {
+        for i in 0 ..< 64 {
             let s1 = rotateRight(e, 6) ^ rotateRight(e, 11) ^ rotateRight(e, 25)
             let ch = (e & f) ^ (~e & g)
             let temp1 = h &+ s1 &+ ch &+ k[i] &+ w[i]
@@ -353,12 +374,24 @@ private struct SHA256 {
             let maj = (a & b) ^ (a & c) ^ (b & c)
             let temp2 = s0 &+ maj
 
-            h = g; g = f; f = e; e = d &+ temp1
-            d = c; c = b; b = a; a = temp1 &+ temp2
+            h = g
+            g = f
+            f = e
+            e = d &+ temp1
+            d = c
+            c = b
+            b = a
+            a = temp1 &+ temp2
         }
 
-        state[0] &+= a; state[1] &+= b; state[2] &+= c; state[3] &+= d
-        state[4] &+= e; state[5] &+= f; state[6] &+= g; state[7] &+= h
+        state[0] &+= a
+        state[1] &+= b
+        state[2] &+= c
+        state[3] &+= d
+        state[4] &+= e
+        state[5] &+= f
+        state[6] &+= g
+        state[7] &+= h
     }
 
     private func rotateRight(_ x: UInt32, _ n: Int) -> UInt32 {

@@ -28,13 +28,15 @@
 	<string>SaneVideo generates intelligent captions to make your content accessible to everyone. All processing happens on-device for maximum privacy.</string>
 	<key>NSScreenCaptureDescription</key>
 	<string>SaneVideo lets you record your screen effortlessly to create tutorials, demos, and professional content right from your Mac.</string>
+	<key>NSScreenCaptureUsageDescription</key>
+	<string>SaneVideo records your screen only when you start screen capture. Recordings stay on your Mac unless you export or share them.</string>
 	<key>NSHumanReadableCopyright</key>
 	<string>Copyright © 2025 SaneVideo. All rights reserved.</string>
 	<key>NSHighResolutionCapable</key>
 	<true/>
 	<!-- Sparkle Auto-Update Configuration -->
 	<key>SUFeedURL</key>
-	<string>https://www.sanevideo.app/appcast.xml</string>
+	<string>https://sanevideo.com/appcast.xml</string>
 	<key>SUPublicEDKey</key>
 	<string>7Pl/8cwfb2vm4Dm65AByslkMCScLJ9tbGlwGGx81qYU=</string>
 	<!-- Private key stored in macOS Keychain as "EdDSA Private Key" -->

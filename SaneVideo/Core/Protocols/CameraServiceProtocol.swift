@@ -19,6 +19,8 @@ protocol CameraServiceProtocol: AnyObject, Sendable {
     var session: AVCaptureSession? { get }
 
     var isActivePublisher: AnyPublisher<Bool, Never> { get }
+    var hasVideoSignalPublisher: AnyPublisher<Bool, Never> { get }
+    var lastErrorPublisher: AnyPublisher<AppError?, Never> { get }
     var sessionPublisher: AnyPublisher<AVCaptureSession?, Never> { get }
     // Must be nonisolated to allow access from RecordingEngine's processingQueue
     nonisolated var sampleBufferSubject: PassthroughSubject<CMSampleBuffer, Never> { get }

@@ -14,6 +14,7 @@ enum YouTubeError: Error, LocalizedError {
   case uploadFailed(String)
   case invalidResponse
   case missingCredentials
+  case featureUnavailable
 
   var errorDescription: String? {
     switch self {
@@ -21,6 +22,7 @@ enum YouTubeError: Error, LocalizedError {
     case .uploadFailed(let reason): return "Upload failed: \(reason)"
     case .invalidResponse: return "Received invalid response from YouTube."
     case .missingCredentials: return "Missing Client ID or Secret in Secrets.swift"
+    case .featureUnavailable: return "YouTube upload is not available in this build. Export a local file and upload it manually."
     }
   }
 }
@@ -28,17 +30,19 @@ enum YouTubeError: Error, LocalizedError {
 @MainActor
 @Observable
 class YouTubeService: NSObject {
+  static let uploadFeatureEnabled = false
 
   var isUploading = false
   var uploadProgress: Double = 0.0
-
-  private let scopes = ["https://www.googleapis.com/auth/youtube.upload"]
-  private let redirectURI = "com.googleusercontent.apps.YOUR_REVERSED_CLIENT_ID:/oauth2callback"  // Placeholder
 
   // Simple OAuth state (in a real app, use a robust library like GTMAppAuth)
   private var accessToken: String?
 
   func upload(videoURL: URL, title _: String, description _: String) async throws {
+    guard Self.uploadFeatureEnabled else {
+      throw YouTubeError.featureUnavailable
+    }
+
     // Try Keychain first, fallback to Secrets.swift for local development
     // Try Keychain first
     var clientID = await ServiceContainer.shared.apiKeyManager.getYouTubeClientID()

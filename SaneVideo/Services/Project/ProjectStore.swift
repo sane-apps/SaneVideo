@@ -36,19 +36,7 @@ final class ProjectStore: ProjectStoreProtocol {
                     .appendingPathComponent(UUID().uuidString)
                 isInTestMode = true
             } else {
-                // Projects directory in user's Movies folder
-                if let moviesDir = FileManager.default.urls(for: .moviesDirectory, in: .userDomainMask).first {
-                    projectsDirectory = moviesDir.appendingPathComponent("SaneVideo/Projects")
-                } else {
-                    // Fallback to Documents if Movies not found
-                    if let documentsDir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first {
-                        projectsDirectory = documentsDir.appendingPathComponent("SaneVideo/Projects")
-                    } else {
-                        // Ultimate fallback - use temp directory (should never happen)
-                        AppLogger.project.error("CRITICAL: Could not find Documents directory, using temp")
-                        projectsDirectory = FileManager.default.temporaryDirectory.appendingPathComponent("SaneVideo/Projects")
-                    }
-                }
+                projectsDirectory = Self.defaultProjectsDirectory()
                 isInTestMode = false
             }
         }
@@ -60,6 +48,23 @@ final class ProjectStore: ProjectStoreProtocol {
         } catch {
             AppLogger.project.error("Failed to create projects directory: \(error.localizedDescription)")
         }
+    }
+
+    static func defaultProjectsDirectory(
+        moviesDirectory: URL? = FileManager.default.urls(for: .moviesDirectory, in: .userDomainMask).first,
+        applicationSupportDirectory: URL? = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first,
+        temporaryDirectory: URL = FileManager.default.temporaryDirectory
+    ) -> URL {
+        if let moviesDirectory {
+            return moviesDirectory.appendingPathComponent("SaneVideo/Projects")
+        }
+
+        if let applicationSupportDirectory {
+            return applicationSupportDirectory.appendingPathComponent("SaneVideo/Projects")
+        }
+
+        AppLogger.project.error("CRITICAL: Could not find Movies or Application Support directory, using temp")
+        return temporaryDirectory.appendingPathComponent("SaneVideo/Projects")
     }
 
     // MARK: - ProjectStoreProtocol

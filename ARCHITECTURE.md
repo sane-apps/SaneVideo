@@ -41,7 +41,7 @@ SaneVideo is a native macOS app for recording, editing, and exporting video. It 
 
 ## Data and Persistence
 
-- **Projects**: `~/Movies/SaneVideo/Projects/*.svproj` (fallback to Documents or temp when unavailable).
+- **Projects**: `~/Movies/SaneVideo/Projects/*.svproj` (fallback to Application Support or temp when unavailable; never Documents).
 - **Recordings**: `~/Movies/SaneVideo/Recordings/`.
 - **Templates**: `~/Movies/SaneVideo/Templates/*.svtemplate`.
 - **Exports**: Defaults to `~/Desktop/` (user configurable).
@@ -49,7 +49,7 @@ SaneVideo is a native macOS app for recording, editing, and exporting video. It 
 ## Key Flows
 
 ### Recording Lifecycle
-1. User starts recording (menu bar or hotkey).
+1. User starts recording from the app window, menu command, or a supported direct-build hotkey.
 2. RecordingEngine configures capture inputs.
 3. Frames/audio are written to a recording file.
 4. Recording stops; output is saved to Recordings.
@@ -117,7 +117,8 @@ stateDiagram-v2
 ## Permissions and Privacy
 
 - Camera, Microphone, and Screen Recording are required for capture.
-- Processing is local-only; no telemetry.
+- Recording, editing, and local export processing are local-first.
+- Network use is scoped to updates, licensing, privacy-safe aggregate app counts, and optional user-configured integrations.
 - Sparkle update checks contact the configured appcast URL only.
 
 ## Build and Release Truth

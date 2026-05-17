@@ -2,9 +2,9 @@
 
 **The Professional Video Recording & Editing App for macOS**
 
-SaneVideo is a native macOS video recording and editing app. No subscriptions. No telemetry. Everything runs on your Mac.
+SaneVideo is a native macOS video recording and editing app. No subscriptions. Local recording, editing, and export run on your Mac.
 
-**Last updated:** 2026-02-04
+**Last updated:** 2026-05-12
 
 ---
 
@@ -23,7 +23,7 @@ Most tools fall into two traps: **bloated professionals** that overwhelm everyda
 > *"For God has not given us a spirit of fear, but of power and of love and of a sound mind."*
 > — 2 Timothy 1:7
 
-**100% On-Device | 0% Telemetry**
+**Local-First Video Workflow**
 
 > *I wanted to make it $5, but processing fees and taxes were... insane. — Mr. Sane*
 
@@ -40,11 +40,7 @@ Most tools fall into two traps: **bloated professionals** that overwhelm everyda
 - **Full Screen Recording**: Capture your entire screen in high resolution
 - **Window Recording**: Select specific windows to record
 - **Camera Overlay**: Front camera support for picture-in-picture style recordings
-- **Global Hotkey**: Press `⌥⌘R` anywhere to start/stop recording instantly
-- **Menu Bar Integration**: Always-accessible menu bar icon with status indicators
-  - Black camera icon when idle
-  - Pulsing red dot while recording
-  - Real-time recording duration display
+- **Keyboard Controls**: Start a new recording with `⌘N`; direct builds may also expose `⌥⌘R` global recording where macOS permissions allow it
 
 ### Editing
 
@@ -59,11 +55,6 @@ Most tools fall into two traps: **bloated professionals** that overwhelm everyda
   - **Natural**: Subtle color correction and sharpening
   - **Cinematic**: Desaturated look with vignette and blue tones
   - **Vintage**: Warm sepia with film grain and strong vignette
-
-- **Auto Enhance** (Core ML):
-  - One-click color correction
-  - Intelligent denoising
-  - Automatic brightness/exposure adjustment
 
 - **Magic Fix** (AI-Powered):
   - **Silence Removal**: Automatically cuts silent pauses
@@ -116,8 +107,7 @@ Most tools fall into two traps: **bloated professionals** that overwhelm everyda
 
 ### Recording
 
-- **Menu Bar**: Click the SaneVideo icon → "New Recording"
-- **Keyboard**: Press `⌘N` or use global hotkey `⌥⌘R`
+- **Keyboard**: Press `⌘N`
 - **Window**: Click the Record button in the toolbar
 
 ### Importing Videos
@@ -146,7 +136,7 @@ Most tools fall into two traps: **bloated professionals** that overwhelm everyda
 
 | Shortcut | Action |
 |----------|--------|
-| `⌥⌘R` | Toggle Recording (Global)  |
+| `⌥⌘R` | Toggle Recording in direct builds where global hotkey support is available |
 | `⌘N` | New Recording |
 | `⌘I` | Import Video |
 | `Space` | Play/Pause |
@@ -175,14 +165,15 @@ SaneVideo is designed with privacy first:
 - **App Sandbox** enabled with minimal permissions
 - **Hardened Runtime** for security
 - **Local Processing**: All video processing happens on your Mac
-- **No Telemetry**: Zero data collection or analytics
-- **No Network**: App works completely offline
+- **Local processing**: Recording, editing, and local export happen on your Mac
+- **No project upload by default**: Video files stay local unless you explicitly choose an external workflow
+- **Network is optional and scoped**: Updates, licensing, privacy-safe aggregate app counts, and optional integrations may use the network
 
 ### Permissions Explained
 
 - **Camera**: Only used when you explicitly start camera recording
 - **Microphone**: Only active during recording sessions
-- **Screen Recording**: Required for screen capture, granted per-session by macOS
+- **Screen Recording**: Required for screen capture. macOS controls this in System Settings and may require restarting SaneVideo after approval.
 
 ---
 
@@ -190,7 +181,7 @@ SaneVideo is designed with privacy first:
 
 - **Projects**: `~/Movies/SaneVideo/Projects/`
 - **Recordings**: `~/Movies/SaneVideo/Recordings/`
-- **Exports**: `~/Desktop/` (configurable)
+- **Exports**: `~/Desktop/` by default, with an app-storage fallback if Desktop is unavailable
 
 All files remain on your local machine. No cloud storage required.
 
@@ -218,31 +209,13 @@ Built on the three pillars of **Power**, **Love**, and **Sound Mind**:
 
 ---
 
-## 🗺️ Roadmap
-
-### Phase 1 (Current)
+## Current Scope
 
 - ✅ Screen + Camera Recording
 - ✅ Timeline Editing
 - ✅ Real-time Filters
 - ✅ HEVC Export
-
-### Phase 2 (In Progress)
-
 - [x] Magic Fix (Silence & Filler Removal)
-- [ ] Audio timeline tracks
-- [ ] Transitions between clips
-- [ ] Text overlays and titles
-- [ ] Keyframe animations
-- [ ] Multi-track editing
-
-### Phase 3 (Planned)
-
-- [ ] Motion tracking
-- [ ] Green screen removal
-- [ ] Advanced color grading
-- [ ] Plugin system
-- [ ] Collaboration features
 
 ---
 
@@ -271,56 +244,17 @@ Built with passion for the macOS creator community.
 For issues or questions:
 
 - Check the built-in Help menu
+- Use Settings → About → Report a Bug to copy diagnostics for support
 - Review keyboard shortcuts (above)
 - Ensure all permissions are granted in System Settings → Privacy & Security
+- Email hi@saneapps.com for private reports
 
 ---
 
 **Keep your head. Stay Sane.**
 
-*Built for a Sound Mind | 100% On-Device | 0% Fear*
+*Built for a Sound Mind | Local-First Video Workflow | 0% Fear*
 
 ## Third-Party Notices
 
 Third-party open-source attributions are documented in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
-
-<!-- SANEAPPS_AI_CONTRIB_START -->
-### Become a Contributor (Even if You Don't Code)
-
-Are you tired of waiting on the dev to get around to fixing your problem?  
-Do you have a great idea that could help everyone in the community, but think you can't do anything about it because you're not a coder?
-
-Good news: you actually can.
-
-Copy and paste this into Claude or Codex, then describe your bug or idea:
-
-```text
-I want to contribute to this repo, but I'm not a coder.
-
-Repository:
-https://github.com/sane-apps/SaneVideo
-
-Bug or idea:
-[Describe your bug or idea here in plain English]
-
-Please do this for me:
-1) Understand and reproduce the issue (or understand the feature request).
-2) Make the smallest safe fix.
-3) Open a pull request to https://github.com/sane-apps/SaneVideo
-4) Give me the pull request link.
-5) Open a GitHub issue in https://github.com/sane-apps/SaneVideo/issues/new?template=bug_report.md that includes:
-   - the pull request link
-   - a short summary of what changed and why
-6) Also give me the exact issue link.
-
-Important:
-- Keep it focused on this one issue/idea.
-- Do not make unrelated changes.
-```
-
-If needed, you can also just email the pull request link to hi@saneapps.com.
-
-I review and test every pull request before merge.
-
-If your PR is merged, I will publicly give you credit, and you'll have the satisfaction of knowing you helped ship a fix for everyone.
-<!-- SANEAPPS_AI_CONTRIB_END -->

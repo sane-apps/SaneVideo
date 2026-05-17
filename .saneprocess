@@ -25,6 +25,83 @@ release:
     window_size: "600 428"
     app_icon_pos: "150 190"
     drop_pos: "450 190"
+  reviewed_auto_reconcile_stashes:
+    - stash_sha: "38a920863df9d551dc844113274b8df1c6032d3a"
+      subject: "On main: auto-reconcile-20260509-055518-stephans-mac-mini"
+      decision: "deferred"
+      reason: "Reviewed for the 2026-05-17 v1 release pass; this historical auto-reconcile snapshot predates the current runtime/test fixes and is not part of this release candidate."
+    - stash_sha: "5010d7b6d005f0ec21d3b42542eb2ca5494e18c8"
+      subject: "On main: auto-reconcile-20260508-215519-stephans-mac-mini"
+      decision: "deferred"
+      reason: "Reviewed for the 2026-05-17 v1 release pass; this historical auto-reconcile snapshot predates the current runtime/test fixes and is not part of this release candidate."
+    - stash_sha: "a50290190962e742288abc70d8024374fa42dac1"
+      subject: "On main: auto-reconcile-20260503-215521-stephans-mac-mini"
+      decision: "deferred"
+      reason: "Reviewed for the 2026-05-17 v1 release pass; this historical auto-reconcile snapshot predates the current runtime/test fixes and is not part of this release candidate."
+    - stash_sha: "33ce00a78fe0458d49ed69405be00a1ad9e6e5ef"
+      subject: "On main: auto-reconcile-20260425-215520-stephans-mac-mini"
+      decision: "deferred"
+      reason: "Reviewed for the 2026-05-17 v1 release pass; this historical auto-reconcile snapshot predates the current runtime/test fixes and is not part of this release candidate."
+    - stash_sha: "5a062979958e25c87aed0681349551303a9cc3e3"
+      subject: "On main: auto-reconcile-20260425-055519-stephans-mac-mini"
+      decision: "deferred"
+      reason: "Reviewed for the 2026-05-17 v1 release pass; this historical auto-reconcile snapshot predates the current runtime/test fixes and is not part of this release candidate."
+    - stash_sha: "bcd97211d33eb9de88367b94470b3e335be81fe7"
+      subject: "On main: auto-reconcile-20260424-215517-stephans-mac-mini"
+      decision: "deferred"
+      reason: "Reviewed for the 2026-05-17 v1 release pass; this historical auto-reconcile snapshot predates the current runtime/test fixes and is not part of this release candidate."
+    - stash_sha: "01bcfebff6ab5e365bf99801ff48320b02e4654d"
+      subject: "On main: auto-reconcile-20260424-153452-stephans-mac-mini"
+      decision: "deferred"
+      reason: "Reviewed for the 2026-05-17 v1 release pass; this historical auto-reconcile snapshot predates the current runtime/test fixes and is not part of this release candidate."
+    - stash_sha: "94c14a10101ab275bd063282ae076a570fb07f06"
+      subject: "On main: auto-reconcile-20260422-215521-stephans-mac-mini"
+      decision: "deferred"
+      reason: "Reviewed for the 2026-05-17 v1 release pass; this historical auto-reconcile snapshot predates the current runtime/test fixes and is not part of this release candidate."
+    - stash_sha: "a62fad5ca85a9de993b1fa8e15992124d53a3a8b"
+      subject: "On main: auto-reconcile-20260420-215516-stephans-mac-mini"
+      decision: "deferred"
+      reason: "Reviewed for the 2026-05-17 v1 release pass; this historical auto-reconcile snapshot predates the current runtime/test fixes and is not part of this release candidate."
+    - stash_sha: "edbccad4af814f8b558dceb5e2cfaaccfc5297eb"
+      subject: "On main: auto-reconcile-20260420-101534-stephans-mac-mini"
+      decision: "deferred"
+      reason: "Reviewed for the 2026-05-17 v1 release pass; this historical auto-reconcile snapshot predates the current runtime/test fixes and is not part of this release candidate."
+    - stash_sha: "6a1bfa121f4a3b317699fe5acfacfe29681627ed"
+      subject: "On main: auto-reconcile-20260420-100741-stephans-mac-mini"
+      decision: "deferred"
+      reason: "Reviewed for the 2026-05-17 v1 release pass; this historical auto-reconcile snapshot predates the current runtime/test fixes and is not part of this release candidate."
+    - stash_sha: "fb125ade6252656b886650e820d9cf8b2c914d3d"
+      subject: "On main: auto-reconcile-20260418-055517-stephans-mac-mini"
+      decision: "deferred"
+      reason: "Reviewed for the 2026-05-17 v1 release pass; this historical auto-reconcile snapshot predates the current runtime/test fixes and is not part of this release candidate."
+    - stash_sha: "246678bb7ee8e1c30681951aaf96362ff3912227"
+      subject: "On main: auto-reconcile-20260416-055517-stephans-mac-mini"
+      decision: "deferred"
+      reason: "Reviewed for the 2026-05-17 v1 release pass; this historical auto-reconcile snapshot predates the current runtime/test fixes and is not part of this release candidate."
+    - stash_sha: "cb36a29e56cae239a38ef54c5f047132b6b19485"
+      subject: "On main: auto-reconcile-20260415-215519-stephans-mac-mini"
+      decision: "deferred"
+      reason: "Reviewed for the 2026-05-17 v1 release pass; this historical auto-reconcile snapshot predates the current runtime/test fixes and is not part of this release candidate."
+    - stash_sha: "31dd0a8f913e985e3655a288d07de6ea071640ff"
+      subject: "On main: auto-reconcile-20260415-055522-stephans-mac-mini"
+      decision: "deferred"
+      reason: "Reviewed for the 2026-05-17 v1 release pass; this historical auto-reconcile snapshot predates the current runtime/test fixes and is not part of this release candidate."
+    - stash_sha: "0ea4a4154cdf914d3ad4e0d8d3ae90c72b96dd8e"
+      subject: "On main: auto-reconcile-20260414-055518-stephans-mac-mini"
+      decision: "deferred"
+      reason: "Reviewed for the 2026-05-17 v1 release pass; this historical auto-reconcile snapshot predates the current runtime/test fixes and is not part of this release candidate."
+    - stash_sha: "8d7e475c3432dd11053553c342c8b98bb0445786"
+      subject: "On main: auto-reconcile-20260413-215526-stephans-mac-mini"
+      decision: "deferred"
+      reason: "Reviewed for the 2026-05-17 v1 release pass; this historical auto-reconcile snapshot predates the current runtime/test fixes and is not part of this release candidate."
+    - stash_sha: "2430e59bef00bff56b73ecb402b792056d234212"
+      subject: "On main: auto-reconcile-20260411-055515-stephans-mac-mini"
+      decision: "deferred"
+      reason: "Reviewed for the 2026-05-17 v1 release pass; this historical auto-reconcile snapshot predates the current runtime/test fixes and is not part of this release candidate."
+    - stash_sha: "36ea8341c7c293c8d3aba79be5faf066a68eb245"
+      subject: "On main: auto-reconcile-20260410-215518-stephans-mac-mini"
+      decision: "deferred"
+      reason: "Reviewed for the 2026-05-17 v1 release pass; this historical auto-reconcile snapshot predates the current runtime/test fixes and is not part of this release candidate."
 
 commands:
   verify: ./scripts/SaneMaster.rb verify
@@ -49,9 +126,44 @@ mcps:
 
 appstore:
   enabled: true
-  app_id: ""
+  app_id: "6770294375"
+  scheme: SaneVideoAppStore
+  product_id: "com.sanevideo.app.pro.unlock"
   configuration: Release-AppStore
   platforms: [macos]
+  category: public.app-category.video
+  age_rating: "4+"
+  privacy_policy_url: "https://sanevideo.com/privacy"
+  support_url: "https://www.sanevideo.com/support"
+  marketing_url: "https://sanevideo.com"
+  metadata:
+    macos:
+      subtitle: "Private Video Workflow"
+      promotional_text: "Record, edit, and export videos on your Mac with a local-first workflow and clear permission controls."
+      description: >-
+        SaneVideo is a native Mac video workflow app for creators who want recording, editing, and export without uploading project media by default.
+        Record your screen, camera, and microphone, import local clips, edit on a timeline, generate captions, prepare demo packs, and export files from your Mac.
+        Direct YouTube upload is not included in this build; export a local file and upload manually.
+      keywords: "video recorder,screen recording,camera,timeline,export,captions,creator,mac"
+      whats_new: "Initial SaneVideo release with local recording, editing, export, caption, and demo-pack workflows."
+      marketing_url: "https://sanevideo.com"
+  review_notes: >-
+    SaneVideo is a freemium Mac App Store app. Basic is free and includes local recording, import, editing, and export surfaces. SaneVideo Pro Unlock is an optional one-time non-consumable StoreKit in-app purchase exposed from onboarding and Settings > About / License surfaces. The app requests Camera and Microphone only for recording. Screen & System Audio Recording is used for screen capture and cannot function without Apple's screen capture permission. Direct YouTube upload is disabled in this build; reviewers should use local export and manual upload if they want to inspect the export path. No website license flow, external checkout links, or license keys are used in the App Store build.
+  review_notes_by_platform:
+    macos: >-
+      Fastest review path: launch SaneVideo, grant Camera/Microphone if prompted, inspect recording controls, import a local video if available, open Export, and verify local export settings. Basic is free and includes local recording, import, editing, and export surfaces. SaneVideo Pro Unlock is an optional one-time non-consumable App Store in-app purchase exposed from onboarding and Settings > License / About surfaces. No website license flow, no external checkout, and no license keys are used in the App Store build. Screen capture requires Screen & System Audio Recording permission because SaneVideo records the selected screen/window using Apple's screen capture APIs. Direct YouTube upload is unavailable in this build; export a local file and upload manually outside the app.
+  iap:
+    display_name: "SaneVideo Pro Unlock"
+    description: "Unlock Pro video workflow features."
+    review_note: "SaneVideo Pro Unlock is a one-time non-consumable StoreKit purchase. No external checkout links or license keys are used in the App Store build."
+  accessibility_declarations:
+    publish: true
+    mac:
+      supports_dark_interface: true
+  screenshots:
+    macos: Screenshots/appstore-*-dark-mac.png
+  strip_frameworks:
+    - Sparkle.framework
   contact:
     name: "Stephan Joseph"
     phone: "+17277589785"

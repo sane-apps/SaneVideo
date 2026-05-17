@@ -24,7 +24,7 @@ struct APIKeysSettingsView: View {
         Form {
             Section {
                 InformationBox(
-                    text: "API keys are optional. You only need them for direct upload or cloud-powered extras. Local recording, editing, teleprompter, and Demo Pack export work without them.",
+                    text: YouTubeService.uploadFeatureEnabled ? "API keys are optional. You only need them for direct upload or cloud-powered extras. Local recording, editing, teleprompter, and Demo Pack export work without them." : "API keys are optional. YouTube direct upload is disabled in this build, so local recording, editing, teleprompter, and Demo Pack export work without credentials.",
                     color: Theme.Colors.accent,
                     icon: "lock.shield.fill"
                 )
@@ -42,12 +42,12 @@ struct APIKeysSettingsView: View {
                         statusBadge(configured: keyManager.hasYouTubeCredentials)
                     }
 
-                    Text(String(localized: "settings.youtube.description", defaultValue: "Required for uploading videos directly to YouTube. Get credentials from [Google Cloud Console](https://console.cloud.google.com/apis/credentials)."))
+                    Text(String(localized: "settings.youtube.description", defaultValue: YouTubeService.uploadFeatureEnabled ? "Required for uploading videos directly to YouTube. Get credentials from [Google Cloud Console](https://console.cloud.google.com/apis/credentials)." : "YouTube upload is not available in this build. Export a local file and upload it manually."))
                         .saneReadableSupportText()
 
                     HelperText(
-                        text: "Use this only if you want SaneVideo to upload for you. If you export files and upload them yourself, leave this blank.",
-                        icon: "arrow.up.circle.fill"
+                        text: YouTubeService.uploadFeatureEnabled ? "Use this only if you want SaneVideo to upload for you. If you export files and upload them yourself, leave this blank." : "Credential entry is disabled until the direct upload path has real OAuth and upload completion proof.",
+                        icon: YouTubeService.uploadFeatureEnabled ? "arrow.up.circle.fill" : "play.slash.fill"
                     )
 
                     VStack(spacing: 8) {
@@ -62,7 +62,7 @@ struct APIKeysSettingsView: View {
                         }
 
                         HelperText(
-                            text: "The client ID identifies your Google app configuration for direct upload.",
+                            text: YouTubeService.uploadFeatureEnabled ? "The client ID identifies your Google app configuration for direct upload." : "Direct upload is disabled in this build, so this field is intentionally inactive.",
                             icon: "number.circle.fill"
                         )
 
@@ -90,17 +90,18 @@ struct APIKeysSettingsView: View {
                         }
 
                         HelperText(
-                            text: "The secret is stored in your Mac Keychain. SaneVideo does not send it anywhere unless you choose a feature that uses it.",
+                            text: YouTubeService.uploadFeatureEnabled ? "The secret is stored in your Mac Keychain. SaneVideo does not send it anywhere unless you choose a feature that uses it." : "Direct upload is disabled in this build. No YouTube secret is needed for local export.",
                             icon: "key.fill"
                         )
                     }
+                    .disabled(!YouTubeService.uploadFeatureEnabled)
 
                     HStack {
                         Button(String(localized: "settings.youtube.action.save", defaultValue: "Save YouTube Credentials")) {
                             saveYouTubeCredentials()
                         }
                         .help("Save these optional YouTube credentials to your Mac Keychain.")
-                        .disabled(youtubeClientID.isEmpty || youtubeClientSecret.isEmpty)
+                        .disabled(!YouTubeService.uploadFeatureEnabled || youtubeClientID.isEmpty || youtubeClientSecret.isEmpty)
                         .accessibilityIdentifier("settings.youtube.save")
 
                         if keyManager.hasYouTubeCredentials {

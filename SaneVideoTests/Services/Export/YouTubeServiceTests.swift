@@ -57,7 +57,15 @@ struct YouTubeServiceTests {
         #expect(error.errorDescription != nil)
         #expect(error.errorDescription?.lowercased().contains("missing") == true ||
                 error.errorDescription?.lowercased().contains("credentials") == true ||
-                error.errorDescription?.lowercased().contains("client id") == true)
+                    error.errorDescription?.lowercased().contains("client id") == true)
+    }
+
+    @Test("featureUnavailable has clear description")
+    func featureUnavailableDescription() {
+        let error = YouTubeError.featureUnavailable
+
+        #expect(error.errorDescription != nil)
+        #expect(error.errorDescription?.lowercased().contains("not available") == true)
     }
 
     @Test("All errors have unique descriptions")
@@ -67,7 +75,8 @@ struct YouTubeServiceTests {
             .authenticationFailed,
             .uploadFailed("test reason"),
             .invalidResponse,
-            .missingCredentials
+            .missingCredentials,
+            .featureUnavailable
         ]
 
         // Act
@@ -101,8 +110,8 @@ struct YouTubeServiceTests {
 
     // MARK: - Upload Method Tests
 
-    @Test("Upload throws missingCredentials when no client ID")
-    func uploadThrowsMissingCredentials() async throws {
+    @Test("Upload throws featureUnavailable while direct upload is disabled")
+    func uploadThrowsFeatureUnavailableWhileDisabled() async throws {
         // Arrange
         let service = YouTubeService()
         let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("test_video.mp4")
@@ -110,12 +119,9 @@ struct YouTubeServiceTests {
         // Act & Assert
         do {
             try await service.upload(videoURL: tempURL, title: "Test", description: "Test desc")
-            #expect(Bool(false), "Should have thrown missingCredentials")
+            #expect(Bool(false), "Should have thrown featureUnavailable")
         } catch let error as YouTubeError {
-            // Expected - should throw missingCredentials since we don't have credentials configured
-            // Check error description contains expected text (YouTubeError doesn't conform to Equatable)
-            #expect(error.errorDescription?.lowercased().contains("missing") == true ||
-                    error.errorDescription?.lowercased().contains("credentials") == true)
+            #expect(error.errorDescription?.lowercased().contains("not available") == true)
         }
     }
 

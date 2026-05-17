@@ -169,14 +169,7 @@ class PermissionManager: PermissionManagerProtocol {
             return
         }
 
-        // 2. If we've ever successfully used screen recording, assume still granted
-        // (User would have to explicitly revoke in System Settings)
-        if UserDefaults.standard.bool(forKey: "screenRecordingEverGranted") {
-            screenRecordingStatus = .granted
-            return
-        }
-
-        // 3. If we've requested before but never succeeded, it's denied
+        // 2. If we've requested before but preflight is false, permission is denied or stale.
         let wasRequested = UserDefaults.standard.bool(forKey: "screenRecordingWasRequested")
         screenRecordingStatus = wasRequested ? .denied : .notDetermined
     }
@@ -232,7 +225,7 @@ class PermissionManager: PermissionManagerProtocol {
             return [
                 "camera": cameraStatus == .granted,
                 "microphone": microphoneStatus == .granted,
-                "screenRecording": screenRecordingStatus == .granted
+                "screenRecording": screenRecordingStatus == .granted,
             ]
         }
         AppLogger.general.info("Starting batch permission request...")
@@ -246,7 +239,7 @@ class PermissionManager: PermissionManagerProtocol {
         let results = [
             "camera": camera,
             "microphone": microphone,
-            "screenRecording": screenRecordingStatus == .granted
+            "screenRecording": screenRecordingStatus == .granted,
         ]
         AppLogger.general.info("Batch permission request completed: \(results)")
         return results
@@ -270,15 +263,20 @@ class PermissionManager: PermissionManagerProtocol {
     // MARK: - Settings
 
     func openSystemSettings() {
-        // Direct links to specific privacy panes
-        // Note: These URLs are not officially documented but widely used.
-        // Fallback to generic settings if needed.
+        openCameraSettings()
+    }
+
+    func openCameraSettings() {
         guard let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Camera") else { return }
         NSWorkspace.shared.open(url)
     }
 
+    func openMicrophoneSettings() {
+        guard let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone") else { return }
+        NSWorkspace.shared.open(url)
+    }
+
     func openScreenRecordingSettings() {
-        // Direct link to Screen Recording privacy pane
         guard let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture") else { return }
         NSWorkspace.shared.open(url)
     }
@@ -365,7 +363,7 @@ class PermissionManager: PermissionManagerProtocol {
             userInfo: [
                 "camera": cameraStatus,
                 "microphone": microphoneStatus,
-                "screenRecording": screenRecordingStatus
+                "screenRecording": screenRecordingStatus,
             ]
         )
     }

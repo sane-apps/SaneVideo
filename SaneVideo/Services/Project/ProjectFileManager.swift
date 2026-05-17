@@ -11,7 +11,6 @@ import Foundation
 /// Centralized service for handling File IO, Bookmark Resolution, and Asset Loading
 /// Replaces ad-hoc IO in VideoClip and ProjectState
 final class ProjectFileManager: Sendable, ProjectFileManagerProtocol {
-
     init() {}
 
     // MARK: - Asset Loading
@@ -30,17 +29,17 @@ final class ProjectFileManager: Sendable, ProjectFileManagerProtocol {
         // The file might be busy being written to disk by the screen recorder
         var duration: CMTime = .zero
         var lastError: Error?
-        
+
         let options = [AVURLAssetPreferPreciseDurationAndTimingKey: true]
 
-        for attempt in 1...3 {
+        for attempt in 1 ... 3 {
             do {
                 let asset = AVURLAsset(url: url, options: options)
                 duration = try await asset.load(.duration)
-                
+
                 // If we get here, it worked
                 lastError = nil
-                
+
                 // 3. Log metadata
                 await logVideoMetadata(asset: asset, filename: url.lastPathComponent)
                 break
@@ -55,12 +54,12 @@ final class ProjectFileManager: Sendable, ProjectFileManagerProtocol {
         if let error = lastError {
             throw error
         }
-        
+
         // CRITICAL FIX: Validate duration is valid before creating clip
         guard duration.seconds > 0 else {
             throw AppError.recordingEngineError("Invalid video duration: \(duration.seconds)s")
         }
-        
+
         // 4. Create Bookmark (Off Main Thread)
         // Use a local capture to avoid actor isolation issues
         let bookmarkData = try? await Task.detached(priority: .utility) {
@@ -105,7 +104,8 @@ final class ProjectFileManager: Sendable, ProjectFileManagerProtocol {
             // Get codec info (format description)
             var codecName = "Unknown"
             if let formatDescriptions = try? await videoTrack.load(.formatDescriptions),
-               let formatDesc = formatDescriptions.first {
+               let formatDesc = formatDescriptions.first
+            {
                 let fourCC = CMFormatDescriptionGetMediaSubType(formatDesc)
                 codecName = fourCCToString(fourCC)
             }
@@ -167,7 +167,7 @@ final class ProjectFileManager: Sendable, ProjectFileManagerProtocol {
             UInt8((fourCC >> 24) & 0xFF),
             UInt8((fourCC >> 16) & 0xFF),
             UInt8((fourCC >> 8) & 0xFF),
-            UInt8(fourCC & 0xFF)
+            UInt8(fourCC & 0xFF),
         ]
         if let str = String(bytes: bytes, encoding: .ascii) {
             return str.trimmingCharacters(in: .whitespaces)
@@ -226,7 +226,7 @@ final class ProjectFileManager: Sendable, ProjectFileManagerProtocol {
     func hydrateProject(_ project: VideoProject) -> (VideoProject, Bool) {
         var updatedProject = project
         var updatedTracks: [Track] = []
-        var needsSave = false  // Track if any bookmarks were updated
+        var needsSave = false // Track if any bookmarks were updated
 
         for var track in project.timeline.tracks {
             var updatedClips: [VideoClip] = []
@@ -240,27 +240,27 @@ final class ProjectFileManager: Sendable, ProjectFileManagerProtocol {
                             // CRITICAL: Update bookmark if stale
                             if let newBookmark = try? createBookmark(for: resolvedURL) {
                                 clip.bookmarkData = newBookmark
-                                needsSave = true  // Mark that project needs saving
+                                needsSave = true // Mark that project needs saving
                                 AppLogger.project.info("Updated stale bookmark for \(clip.url.lastPathComponent)")
                             }
                         }
 
                         // Check if file moved
                         if clip.url != resolvedURL {
-                            AppLogger.project.info("Resolved moved file: \(clip.url.lastPathComponent) -> \(resolvedURL.path)")
+                            AppLogger.project.info("Resolved moved file: \(clip.url.lastPathComponent) -> \(resolvedURL.lastPathComponent)")
                             // Update URL
                             clip.url = resolvedURL
                         }
-                        
+
                         // CRITICAL: Check existence (TOCTOU race possible, but we'll re-check when accessing)
                         // Note: File might be deleted between check and use, but we handle that in playback
                         if !FileManager.default.fileExists(atPath: resolvedURL.path) {
-                            AppLogger.project.warning("⚠️ File missing at \(resolvedURL.path)")
+                            AppLogger.project.warning("⚠️ File missing: \(resolvedURL.lastPathComponent)")
                             clip.isMissing = true
                         } else {
                             clip.isMissing = false
                         }
-                        
+
                         // CRITICAL FIX: Validate clip properties on load
                         // Fix invalid properties automatically (synchronous validation)
                         if clip.duration.seconds <= 0 {
@@ -268,26 +268,26 @@ final class ProjectFileManager: Sendable, ProjectFileManagerProtocol {
                             clip.isMissing = true
                             needsSave = true
                         }
-                        
+
                         if clip.startTime.seconds < 0 {
                             AppLogger.project.warning("⚠️ Clip has negative startTime (\(clip.startTime.seconds)s), fixing to zero")
                             clip.startTime = .zero
                             needsSave = true
                         }
-                        
+
                         if clip.trimStart.seconds < 0 {
                             AppLogger.project.warning("⚠️ Clip has negative trimStart (\(clip.trimStart.seconds)s), fixing to zero")
                             clip.trimStart = .zero
                             needsSave = true
                         }
-                        
-                        if clip.trimEnd.seconds > clip.duration.seconds && clip.duration.seconds > 0 {
+
+                        if clip.trimEnd.seconds > clip.duration.seconds, clip.duration.seconds > 0 {
                             AppLogger.project.warning("⚠️ Clip trimEnd (\(clip.trimEnd.seconds)s) exceeds duration (\(clip.duration.seconds)s), fixing")
                             clip.trimEnd = clip.duration
                             needsSave = true
                         }
-                        
-                        if clip.trimStart.seconds >= clip.trimEnd.seconds && clip.duration.seconds > 0 {
+
+                        if clip.trimStart.seconds >= clip.trimEnd.seconds, clip.duration.seconds > 0 {
                             AppLogger.project.warning("⚠️ Clip trimStart (\(clip.trimStart.seconds)s) >= trimEnd (\(clip.trimEnd.seconds)s), fixing")
                             clip.trimStart = .zero
                             clip.trimEnd = clip.duration
@@ -308,10 +308,10 @@ final class ProjectFileManager: Sendable, ProjectFileManagerProtocol {
 
                     } catch {
                         AppLogger.project.warning("Failed to resolve bookmark for \(clip.url.lastPathComponent): \(error)")
-                        
+
                         // Mark as missing if we can't resolve
                         clip.isMissing = true
-                        updatedClips.append(clip) 
+                        updatedClips.append(clip)
                     }
                 } else {
                     // No bookmark - check if file exists at original URL (unlikely for sandboxed app but possible for temp files)
@@ -345,7 +345,7 @@ final class ProjectFileManager: Sendable, ProjectFileManagerProtocol {
             for url in urls where url.startAccessingSecurityScopedResource() {
                 accessed.append(url)
             }
-            self.activeURLs = accessed
+            activeURLs = accessed
             AppLogger.project.info("🔐 Started security scope session for \(accessed.count)/\(urls.count) URLs")
         }
 

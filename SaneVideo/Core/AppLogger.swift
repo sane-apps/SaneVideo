@@ -26,30 +26,35 @@ struct SaneLogger: Sendable {
     // File logging is the primary mechanism; onLog callback is deprecated.
 
     nonisolated func info(_ message: String) {
-        internalLogger.info("\(message, privacy: .public)")
-        AppLogger.writeToFile("[\(category)] INFO: \(message)")
+        let safeMessage = AppLogger.sanitizeForLog(message)
+        internalLogger.info("\(safeMessage, privacy: .public)")
+        AppLogger.writeToFile("[\(category)] INFO: \(safeMessage)")
     }
 
     nonisolated func debug(_ message: String) {
-        internalLogger.debug("\(message, privacy: .public)")
+        let safeMessage = AppLogger.sanitizeForLog(message)
+        internalLogger.debug("\(safeMessage, privacy: .public)")
         #if DEBUG
-        AppLogger.writeToFile("[\(category)] DEBUG: \(message)")
+            AppLogger.writeToFile("[\(category)] DEBUG: \(safeMessage)")
         #endif
     }
 
     nonisolated func warning(_ message: String) {
-        internalLogger.warning("\(message, privacy: .public)")
-        AppLogger.writeToFile("[\(category)] WARNING: \(message)")
+        let safeMessage = AppLogger.sanitizeForLog(message)
+        internalLogger.warning("\(safeMessage, privacy: .public)")
+        AppLogger.writeToFile("[\(category)] WARNING: \(safeMessage)")
     }
 
     nonisolated func error(_ message: String) {
-        internalLogger.error("\(message, privacy: .public)")
-        AppLogger.writeToFile("[\(category)] ERROR: \(message)")
+        let safeMessage = AppLogger.sanitizeForLog(message)
+        internalLogger.error("\(safeMessage, privacy: .public)")
+        AppLogger.writeToFile("[\(category)] ERROR: \(safeMessage)")
     }
 
     nonisolated func fault(_ message: String) {
-        internalLogger.fault("\(message, privacy: .public)")
-        AppLogger.writeToFile("[\(category)] FAULT: \(message)")
+        let safeMessage = AppLogger.sanitizeForLog(message)
+        internalLogger.fault("\(safeMessage, privacy: .public)")
+        AppLogger.writeToFile("[\(category)] FAULT: \(safeMessage)")
     }
 }
 
@@ -112,15 +117,27 @@ enum AppLogger {
     private static let fileLock = NSLock()
 
     /// Whether we've cleared the log this session (to enable fresh start)
-    nonisolated(unsafe) private static var hasInitializedLog = false
+    private nonisolated(unsafe) static var hasInitializedLog = false
 
-    /// Enable/disable file logging (always enabled for debugging)
-    nonisolated(unsafe) static var fileLoggingEnabled = true
+    /// Enable/disable file logging. Release builds use unified logging unless explicitly opted in.
+    #if DEBUG
+        nonisolated(unsafe) static var fileLoggingEnabled = true
+    #else
+        nonisolated(unsafe) static var fileLoggingEnabled = ProcessInfo.processInfo.environment["SANEVIDEO_ENABLE_FILE_LOGGING"] == "1"
+    #endif
+
+    nonisolated static func sanitizeForLog(_ message: String) -> String {
+        var sanitized = message.replacingOccurrences(of: NSHomeDirectory(), with: "~")
+        sanitized = sanitized.replacingOccurrences(
+            of: #"/Users/[^/\s]+"#,
+            with: "/Users/<user>",
+            options: .regularExpression
+        )
+        return sanitized
+    }
 
     /// Detect if running in XCTest environment to avoid file logging crashes during tests
-    private static let isRunningTests: Bool = {
-        NSClassFromString("XCTestCase") != nil
-    }()
+    private static let isRunningTests: Bool = NSClassFromString("XCTestCase") != nil
 
     /// Write a log message to file (thread-safe)
     /// First write of each session clears the file for a fresh log
@@ -194,7 +211,8 @@ enum AppLogger {
         for file in files {
             if let attrs = try? fileManager.attributesOfItem(atPath: file.path),
                let creationDate = attrs[.creationDate] as? Date,
-               creationDate < cutoffDate {
+               creationDate < cutoffDate
+            {
                 try? fileManager.removeItem(at: file)
             }
         }

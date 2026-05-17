@@ -83,6 +83,11 @@ actor WhisperKitService: TranscriptionServiceProtocol {
     /// Background preload - call from ServiceContainer on app launch
     /// Non-blocking, non-fatal, uses low priority
     func preloadModelInBackground() {
+        guard !TestEnvironment.isTesting else {
+            AppLogger.project.debug("🎤 WhisperKit: Skipping preload during tests")
+            return
+        }
+
         guard !isInitialized, initializationTask == nil else {
             AppLogger.project.debug("🎤 WhisperKit: Skipping preload - already initialized or in progress")
             return
@@ -113,6 +118,8 @@ actor WhisperKitService: TranscriptionServiceProtocol {
         // Use large-v3-turbo for multilingual support (100+ languages)
         // 6x faster than large-v3, comparable accuracy, ~954MB download
         config.model = "openai_whisper-large-v3_turbo_954MB"
+        config.downloadBase = try Self.modelDownloadBase()
+        config.tokenizerFolder = config.downloadBase
         config.computeOptions = ModelComputeOptions()
         config.verbose = true
         config.logLevel = .debug
@@ -125,6 +132,23 @@ actor WhisperKitService: TranscriptionServiceProtocol {
         self.whisperKit = model
         self.isInitialized = true
         AppLogger.project.info("✅ WhisperKit: Model initialized successfully")
+    }
+
+    private nonisolated static func modelDownloadBase() throws -> URL {
+        let baseURL = try FileManager.default.url(
+            for: .applicationSupportDirectory,
+            in: .userDomainMask,
+            appropriateFor: nil,
+            create: true
+        )
+        let modelURL = baseURL
+            .appendingPathComponent("SaneVideo", isDirectory: true)
+            .appendingPathComponent("WhisperKitModels", isDirectory: true)
+        try FileManager.default.createDirectory(
+            at: modelURL,
+            withIntermediateDirectories: true
+        )
+        return modelURL
     }
 
     // MARK: - Availability

@@ -19,7 +19,7 @@ struct SaneVideoApp: App {
     @State private var prefs = ServiceContainer.shared.userPreferences
     @State private var licenseService = LicenseService(
         appName: "SaneVideo",
-        checkoutURL: URL(string: "https://go.saneapps.com/buy/sanevideo")!
+        checkoutURL: LicenseService.directCheckoutURL(appSlug: "sanevideo")
     )
     @AppStorage("hasSeenWelcome") private var hasSeenWelcome = false
     @Environment(\.scenePhase) private var scenePhase
@@ -73,14 +73,14 @@ struct SaneVideoApp: App {
                         freeFeatures: [
                             (icon: "film", text: "Edit and trim local videos"),
                             (icon: "camera", text: "AI-powered cleanup & subtitles"),
-                            (icon: "bolt", text: "Project templates and export presets")
+                            (icon: "bolt", text: "Project templates and export presets"),
                         ],
                         proFeatures: [
                             (icon: "checkmark.seal", text: "All free features, plus:"),
                             (icon: "wand.and.rays", text: "Advanced motion, subtitle, and style controls"),
                             (icon: "rectangle.on.rectangle.circle", text: "Unlimited project history and presets"),
                             (icon: "sparkles", text: "Priority processing and batch workflows"),
-                            (icon: "link.badge.plus", text: "Cloud sync for project assets")
+                            (icon: "square.stack.3d.up", text: "Pro export presets and creator workflow tools"),
                         ],
                         licenseService: licenseService
                     )
@@ -91,6 +91,7 @@ struct SaneVideoApp: App {
 
         Settings {
             SettingsView()
+                .environment(licenseService)
         }
 
         .commands {
@@ -387,7 +388,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 for file in contents {
                     if let attrs = try? file.resourceValues(forKeys: [.creationDateKey]),
                        let created = attrs.creationDate,
-                       created < cutoffDate {
+                       created < cutoffDate
+                    {
                         try? fileManager.removeItem(at: file)
                         AppLogger.general.info("Cleaned up orphaned temp file: \(file.lastPathComponent)")
                     }
@@ -411,7 +413,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                        let created = attrs.creationDate,
                        let size = attrs.fileSize,
                        created < cutoffDate,
-                       size < 1024 * 1024 { // Less than 1MB = likely incomplete/corrupt
+                       size < 1024 * 1024
+                    { // Less than 1MB = likely incomplete/corrupt
                         try? fileManager.removeItem(at: file)
                         AppLogger.general.info("Cleaned up orphaned recording: \(file.lastPathComponent)")
                     }
@@ -431,7 +434,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 for file in contents {
                     if let attrs = try? file.resourceValues(forKeys: [.creationDateKey]),
                        let created = attrs.creationDate,
-                       created < cutoffDate {
+                       created < cutoffDate
+                    {
                         try? fileManager.removeItem(at: file)
                         AppLogger.general.info("Cleaned up WhisperKit temp file: \(file.lastPathComponent)")
                     }

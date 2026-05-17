@@ -19,9 +19,13 @@ final class CameraManager: NSObject, CameraServiceProtocol {
   private(set) var isActive = false {
     didSet { _isActiveSubject.send(isActive) }
   }
-  var hasVideoSignal = false
+  var hasVideoSignal = false {
+    didSet { _hasVideoSignalSubject.send(hasVideoSignal) }
+  }
   var permissionGranted = false
-  var lastError: AppError?
+  var lastError: AppError? {
+    didSet { _lastErrorSubject.send(lastError) }
+  }
   var session: AVCaptureSession? {
     didSet { _sessionSubject.send(session) }
   }
@@ -60,6 +64,12 @@ final class CameraManager: NSObject, CameraServiceProtocol {
     return session
   }
 
+  private struct SupportedFrameRate {
+    let duration: CMTime
+    let actualFPS: Double
+    let maxSupportedFPS: Double
+  }
+
   // MARK: - Available Cameras
 
   /// Returns list of available cameras. Thread-safe.
@@ -73,9 +83,17 @@ final class CameraManager: NSObject, CameraServiceProtocol {
   // MARK: - Protocol Implementation
 
   private let _isActiveSubject = CurrentValueSubject<Bool, Never>(false)
+  private let _hasVideoSignalSubject = CurrentValueSubject<Bool, Never>(false)
+  private let _lastErrorSubject = CurrentValueSubject<AppError?, Never>(nil)
   private let _sessionSubject = CurrentValueSubject<AVCaptureSession?, Never>(nil)
 
   var isActivePublisher: AnyPublisher<Bool, Never> { _isActiveSubject.eraseToAnyPublisher() }
+  var hasVideoSignalPublisher: AnyPublisher<Bool, Never> {
+    _hasVideoSignalSubject.eraseToAnyPublisher()
+  }
+  var lastErrorPublisher: AnyPublisher<AppError?, Never> {
+    _lastErrorSubject.eraseToAnyPublisher()
+  }
   var sessionPublisher: AnyPublisher<AVCaptureSession?, Never> {
     _sessionSubject.eraseToAnyPublisher()
   }
@@ -292,6 +310,7 @@ final class CameraManager: NSObject, CameraServiceProtocol {
           let error = NSError(
             domain: "SaneVideo", code: -1,
             userInfo: [NSLocalizedDescriptionKey: "Camera session failed to start"])
+          clearFailedSession(session)
           self.lastError = .cameraSetupFailed(error)
           throw AppError.cameraSetupFailed(error)
         }
@@ -300,8 +319,19 @@ final class CameraManager: NSObject, CameraServiceProtocol {
       AppLogger.camera.info("Session already running")
     }
 
+    self.session = session
     self.isActive = true
     AppLogger.camera.info("CameraManager set to active")
+  }
+
+  private func clearFailedSession(_ failedSession: AVCaptureSession) {
+    failedSession.stopRunning()
+    framePublisher.resetSignalStatus()
+    hasVideoSignal = false
+    isActive = false
+    if session === failedSession {
+      session = nil
+    }
   }
   func stop() {
     guard !_isStoppingSession else {
@@ -367,6 +397,37 @@ final class CameraManager: NSObject, CameraServiceProtocol {
   }
 
   // MARK: - Session Management
+
+  private nonisolated static func supportedFrameDuration(
+    for requestedFPS: Double,
+    format: AVCaptureDevice.Format
+  ) -> SupportedFrameRate? {
+    let ranges = format.videoSupportedFrameRateRanges
+    guard !ranges.isEmpty else { return nil }
+
+    let maxSupportedFPS = ranges.map(\.maxFrameRate).max() ?? 0
+    let candidates = ranges.flatMap { range -> [(duration: CMTime, fps: Double)] in
+      [
+        (range.minFrameDuration, range.maxFrameRate),
+        (range.maxFrameDuration, range.minFrameRate)
+      ]
+    }
+    .filter { candidate in
+      candidate.duration.isValid && candidate.duration.seconds > 0 && candidate.fps > 0
+    }
+
+    guard let best = candidates.min(by: { lhs, rhs in
+      abs(lhs.fps - requestedFPS) < abs(rhs.fps - requestedFPS)
+    }) else {
+      return nil
+    }
+
+    return SupportedFrameRate(
+      duration: best.duration,
+      actualFPS: best.fps,
+      maxSupportedFPS: maxSupportedFPS
+    )
+  }
 
   nonisolated private func setupSession(
     resolution: SaneExportSettings.ExportResolution,
@@ -490,26 +551,24 @@ final class CameraManager: NSObject, CameraServiceProtocol {
 
     do {
       try camera.lockForConfiguration()
+      defer { camera.unlockForConfiguration() }
       if let safeFormat = bestSafeFormat {
         camera.activeFormat = safeFormat
 
-        // Configure Frame Rate - Check what the format actually supports
-        let supportedRanges = safeFormat.videoSupportedFrameRateRanges
-        let maxSupportedFPS = supportedRanges.map { $0.maxFrameRate }.max() ?? 0
-        let actualFPS = min(targetFPS, maxSupportedFPS)
+        if let frameRate = Self.supportedFrameDuration(for: targetFPS, format: safeFormat) {
+          camera.activeVideoMinFrameDuration = frameRate.duration
+          camera.activeVideoMaxFrameDuration = frameRate.duration
 
-        let fpsInt = Int32(actualFPS)
-        let duration = CMTime(value: 1, timescale: fpsInt)
-        camera.activeVideoMinFrameDuration = duration
-        camera.activeVideoMaxFrameDuration = duration
+          let dims = CMVideoFormatDescriptionGetDimensions(safeFormat.formatDescription)
+          AppLogger.camera.info(
+            "✅ Selected SAFE format: \(dims.width)x\(dims.height) @ \(frameRate.actualFPS)fps (max supported: \(frameRate.maxSupportedFPS)fps, requested: \(targetFPS)fps)"
+          )
 
-        let dims = CMVideoFormatDescriptionGetDimensions(safeFormat.formatDescription)
-        AppLogger.camera.info(
-          "✅ Selected SAFE format: \(dims.width)x\(dims.height) @ \(actualFPS)fps (max supported: \(maxSupportedFPS)fps, requested: \(targetFPS)fps)"
-        )
-
-        if actualFPS < targetFPS {
-          AppLogger.camera.warning("⚠️ Camera format only supports \(actualFPS)fps, not requested \(targetFPS)fps")
+          if frameRate.actualFPS < targetFPS {
+            AppLogger.camera.warning("⚠️ Camera format only supports \(frameRate.actualFPS)fps, not requested \(targetFPS)fps")
+          }
+        } else {
+          AppLogger.camera.warning("⚠️ Camera format has no supported frame-rate ranges; leaving system default FPS")
         }
       } else {
         AppLogger.camera.warning(
@@ -523,21 +582,19 @@ final class CameraManager: NSObject, CameraServiceProtocol {
         // FIX (2025-12-31): Even with presets, we MUST set frame duration!
         // Without this, camera defaults to low FPS (often 15fps)
         let currentFormat = camera.activeFormat
-        let supportedRanges = currentFormat.videoSupportedFrameRateRanges
-        let maxSupportedFPS = supportedRanges.map { $0.maxFrameRate }.max() ?? 30.0
-        let actualFPS = min(targetFPS, maxSupportedFPS)
-        let fpsInt = Int32(actualFPS)
-        let duration = CMTime(value: 1, timescale: fpsInt)
-        camera.activeVideoMinFrameDuration = duration
-        camera.activeVideoMaxFrameDuration = duration
-        AppLogger.camera.info("📷 Preset fallback: configured frame rate to \(Int(actualFPS))fps (max: \(Int(maxSupportedFPS))fps)")
+        if let frameRate = Self.supportedFrameDuration(for: targetFPS, format: currentFormat) {
+          camera.activeVideoMinFrameDuration = frameRate.duration
+          camera.activeVideoMaxFrameDuration = frameRate.duration
+          AppLogger.camera.info("📷 Preset fallback: configured frame rate to \(Int(frameRate.actualFPS))fps (max: \(Int(frameRate.maxSupportedFPS))fps)")
+        } else {
+          AppLogger.camera.warning("⚠️ Preset fallback format has no supported frame-rate ranges; leaving system default FPS")
+        }
       }
 
       // Note: macOS HDR camera support is handled automatically via format selection
       // (10-bit YUV formats when available). The activeFormat already provides
       // the highest quality available from the selected camera.
 
-      camera.unlockForConfiguration()
     } catch {
       AppLogger.camera.error("Failed to lock device for configuration: \(error)")
       Task { @MainActor in
@@ -560,12 +617,6 @@ final class CameraManager: NSObject, CameraServiceProtocol {
     }
 
     session.commitConfiguration()
-
-    // Crash fix: Ensure session is assigned on main actor for SwiftUI compatibility.
-    // Also sync triggers the publisher
-    Task { @MainActor in
-      self.session = session
-    }
 
     return session
   }
@@ -638,26 +689,24 @@ final class CameraManager: NSObject, CameraServiceProtocol {
 
     do {
       try camera.lockForConfiguration()
+      defer { camera.unlockForConfiguration() }
 
       camera.activeFormat = bestFormat
 
-      let supportedRanges = bestFormat.videoSupportedFrameRateRanges
-      let maxSupportedFPS = supportedRanges.map { $0.maxFrameRate }.max() ?? 0
-      let actualFPS = min(fps, maxSupportedFPS)
-
-      let fpsInt = Int32(actualFPS)
-      let duration = CMTime(value: 1, timescale: fpsInt)
-      camera.activeVideoMinFrameDuration = duration
-      camera.activeVideoMaxFrameDuration = duration
-
-      let dims = CMVideoFormatDescriptionGetDimensions(bestFormat.formatDescription)
-      AppLogger.camera.info("✅ Reconfigured format: \(dims.width)x\(dims.height) @ \(Int(actualFPS))fps (max supported: \(Int(maxSupportedFPS))fps)")
-
-      if actualFPS < fps {
-        AppLogger.camera.warning("⚠️ Camera only supports \(Int(actualFPS))fps, not requested \(Int(fps))fps")
+      guard let frameRate = Self.supportedFrameDuration(for: fps, format: bestFormat) else {
+        AppLogger.camera.warning("⚠️ Reconfigured format has no supported frame-rate ranges; leaving system default FPS")
+        return
       }
 
-      camera.unlockForConfiguration()
+      camera.activeVideoMinFrameDuration = frameRate.duration
+      camera.activeVideoMaxFrameDuration = frameRate.duration
+
+      let dims = CMVideoFormatDescriptionGetDimensions(bestFormat.formatDescription)
+      AppLogger.camera.info("✅ Reconfigured format: \(dims.width)x\(dims.height) @ \(Int(frameRate.actualFPS))fps (max supported: \(Int(frameRate.maxSupportedFPS))fps)")
+
+      if frameRate.actualFPS < fps {
+        AppLogger.camera.warning("⚠️ Camera only supports \(Int(frameRate.actualFPS))fps, not requested \(Int(fps))fps")
+      }
     } catch {
       AppLogger.camera.error("❌ Failed to reconfigure camera format: \(error)")
     }

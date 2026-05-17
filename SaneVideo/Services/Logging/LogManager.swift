@@ -37,6 +37,7 @@ class LogManager {
 
     var logs: [LogEntry] = []
     private let maxLogs = 1000
+    static let diagnosticLogFileName = "SaneVideo_Log.txt"
 
     init() {
         // Subscribe to AppLogger
@@ -62,20 +63,35 @@ class LogManager {
             logs.removeFirst(logs.count - maxLogs)
         }
         
-        // DEBUG: Write to file so AI can read it
-        if let logFileURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("SaneVideo_Log.txt") {
+        if let logFileURL = Self.diagnosticLogURL() {
             let logString = "[\(entry.date)] [\(category)] \(entry.levelEmoji) \(message)\n"
-            if let data = logString.data(using: .utf8) {
-                if FileManager.default.fileExists(atPath: logFileURL.path) {
-                    if let fileHandle = try? FileHandle(forWritingTo: logFileURL) {
-                        fileHandle.seekToEndOfFile()
-                        fileHandle.write(data)
-                        try? fileHandle.close()
-                    }
-                } else {
-                    try? data.write(to: logFileURL)
-                }
-            }
+            write(logString, to: logFileURL)
+        }
+    }
+
+    static func diagnosticLogURL(fileManager: FileManager = .default) -> URL? {
+        guard let supportURL = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else {
+            return nil
+        }
+
+        return supportURL
+            .appendingPathComponent("SaneVideo", isDirectory: true)
+            .appendingPathComponent("Logs", isDirectory: true)
+            .appendingPathComponent(diagnosticLogFileName, isDirectory: false)
+    }
+
+    private func write(_ logString: String, to logFileURL: URL) {
+        let directory = logFileURL.deletingLastPathComponent()
+        try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        guard let data = logString.data(using: .utf8) else { return }
+
+        if FileManager.default.fileExists(atPath: logFileURL.path),
+           let fileHandle = try? FileHandle(forWritingTo: logFileURL) {
+            fileHandle.seekToEndOfFile()
+            fileHandle.write(data)
+            try? fileHandle.close()
+        } else {
+            try? data.write(to: logFileURL)
         }
     }
 

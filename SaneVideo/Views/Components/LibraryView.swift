@@ -14,10 +14,6 @@ struct LibraryView: View {
     @Binding var selectedClip: VideoClip?
     @State private var showingAudioImporter = false
 
-    // Deletion State
-    @State private var clipToDelete: VideoClip?
-    @State private var showDeleteConfirmation = false
-
     var body: some View {
         VStack(spacing: 0) {
             // Import section with labels and high contrast
@@ -42,23 +38,6 @@ struct LibraryView: View {
 
             // Clips list
             clipsListView
-        }
-        .confirmationDialog(
-            String(localized: "sidebar.delete.title", defaultValue: "Delete File from Disk?"),
-            isPresented: $showDeleteConfirmation,
-            titleVisibility: .visible
-        ) {
-            if let name = clipToDelete?.url.lastPathComponent {
-                Button(String(localized: "sidebar.action.delete", defaultValue: "Delete") + " '\(name)'", role: .destructive) {
-                    if let clip = clipToDelete {
-                        appState.projectState.deleteClipFile(clip)
-                    }
-                }
-                .accessibilityIdentifier("sidebar.delete_disk_confirm")
-            }
-            Button(String(localized: "sidebar.action.cancel", defaultValue: "Cancel"), role: .cancel) {}
-        } message: {
-            Text(String(localized: "sidebar.delete.message", defaultValue: "This will move the source file to the Trash. This action cannot be undone."))
         }
     }
 
@@ -121,6 +100,7 @@ struct LibraryClipRowWrapper: View {
     let clip: VideoClip
     @Binding var selectedClip: VideoClip?
     @Environment(AppState.self) var appState
+    @State private var showDeleteConfirmation = false
 
     var body: some View {
         HStack(spacing: 4) {
@@ -135,16 +115,33 @@ struct LibraryClipRowWrapper: View {
             NSItemProvider(object: clip.id.uuidString as NSString)
         }
         .contextMenu {
-            LibraryClipContextMenu(clip: clip)
+            LibraryClipContextMenu(clip: clip) {
+                showDeleteConfirmation = true
+            }
         }
         .listRowInsets(EdgeInsets(top: 4, leading: 8, bottom: 4, trailing: 8))
         .listRowSeparator(.hidden)
         .listRowBackground(Color.clear)
+        .confirmationDialog(
+            String(localized: "sidebar.delete.title", defaultValue: "Delete File from Disk?"),
+            isPresented: $showDeleteConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button(String(localized: "sidebar.action.delete", defaultValue: "Delete") + " '\(clip.url.lastPathComponent)'", role: .destructive) {
+                appState.projectState.deleteClipFile(clip)
+            }
+            .accessibilityIdentifier("sidebar.delete_disk_confirm")
+
+            Button(String(localized: "sidebar.action.cancel", defaultValue: "Cancel"), role: .cancel) {}
+        } message: {
+            Text(String(localized: "sidebar.delete.message", defaultValue: "This will move the source file to the Trash. This action cannot be undone."))
+        }
     }
 }
 
 struct LibraryClipContextMenu: View {
     let clip: VideoClip
+    let onRequestDeleteFile: () -> Void
     @Environment(AppState.self) var appState
 
     var body: some View {
@@ -187,6 +184,13 @@ struct LibraryClipContextMenu: View {
                 Label(String(localized: "sidebar.menu.remove", defaultValue: "Remove from Project"), systemImage: "xmark.bin")
             }
             .accessibilityIdentifier("sidebar.menu.remove")
+
+            Button(role: .destructive) {
+                onRequestDeleteFile()
+            } label: {
+                Label(String(localized: "sidebar.menu.delete_disk", defaultValue: "Delete File from Disk..."), systemImage: "trash")
+            }
+            .accessibilityIdentifier("sidebar.menu.delete_disk")
         }
     }
 }

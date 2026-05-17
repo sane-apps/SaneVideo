@@ -51,11 +51,6 @@ struct MLEffectsExportSection: View {
                 }
             }
 
-            HelperText(
-                text: "These enhancement effects run on-device. They can improve polish, but they make export slower.",
-                icon: "cpu"
-            )
-
             // Super Resolution
             VStack(alignment: .leading, spacing: 6) {
                 Toggle(isOn: $mlEffects.superResolutionEnabled) {

@@ -74,7 +74,8 @@ extension ExportView {
     func exportAsGIF() {
         guard let project = appState.currentProject,
               let firstTrack = project.timeline.tracks.first,
-              let firstClip = firstTrack.clips.first else {
+              let firstClip = firstTrack.clips.first
+        else {
             ServiceContainer.shared.toastManager.show("No clip to export", type: .error)
             return
         }
@@ -285,19 +286,24 @@ extension ExportView {
         var isDirectory: ObjCBool = false
         var outputURL: URL
         if !FileManager.default.fileExists(atPath: desktopURL.path, isDirectory: &isDirectory) || !isDirectory.boolValue {
-            ServiceContainer.shared.toastManager.show("Desktop folder not found. Exporting to Documents instead.", type: .info)
-            let documentsURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+            ServiceContainer.shared.toastManager.show("Desktop folder not found. Exporting to app storage instead.", type: .info)
+            let documentsURL = Self.fallbackExportDirectory()
             let fileName = "\(project.name)_\(Int(Date().timeIntervalSince1970)).\(ext)"
             outputURL = documentsURL.appendingPathComponent(fileName)
         } else if !FileManager.default.isWritableFile(atPath: desktopURL.path) {
-            ServiceContainer.shared.toastManager.show("Desktop is not writable. Exporting to Documents instead.", type: .info)
-            let documentsURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+            ServiceContainer.shared.toastManager.show("Desktop is not writable. Exporting to app storage instead.", type: .info)
+            let documentsURL = Self.fallbackExportDirectory()
             let fileName = "\(project.name)_\(Int(Date().timeIntervalSince1970)).\(ext)"
             outputURL = documentsURL.appendingPathComponent(fileName)
         } else {
             let fileName = "\(project.name)_\(Int(Date().timeIntervalSince1970)).\(ext)"
             outputURL = desktopURL.appendingPathComponent(fileName)
         }
+
+        try? FileManager.default.createDirectory(
+            at: outputURL.deletingLastPathComponent(),
+            withIntermediateDirectories: true
+        )
 
         // Remove existing file if needed
         try? FileManager.default.removeItem(at: outputURL)
@@ -362,7 +368,7 @@ extension ExportView {
 
                 self.isExporting = false
                 self.speedTracker.reset()
-                AppLogger.export.info("Export success: \(outputURL)")
+                AppLogger.export.info("Export success: \(outputURL.lastPathComponent)")
 
                 if uploadToYouTube {
                     await self.performYouTubeUpload(fileURL: outputURL)
@@ -378,6 +384,16 @@ extension ExportView {
                 self.showingError = true
             }
         }
+    }
+
+    static func fallbackExportDirectory(fileManager: FileManager = .default) -> URL {
+        if let supportURL = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first {
+            return supportURL
+                .appendingPathComponent("SaneVideo", isDirectory: true)
+                .appendingPathComponent("Exports", isDirectory: true)
+        }
+
+        return fileManager.temporaryDirectory.appendingPathComponent("SaneVideo/Exports", isDirectory: true)
     }
 
     func performYouTubeUpload(fileURL: URL) async {
@@ -493,6 +509,12 @@ extension ExportView {
 
     func shareLink() {
         guard let project = appState.currentProject else { return }
+        guard !project.timeline.tracks.allSatisfy({ $0.clips.isEmpty }) else {
+            exportError = ExportError.invalidProject("Add at least one clip before sharing an exported file.")
+            showingError = true
+            ServiceContainer.shared.toastManager.show("Add a clip before sharing.", type: .error)
+            return
+        }
 
         // Export to temp file first
         let tempDir = FileManager.default.temporaryDirectory

@@ -1,0 +1,1652 @@
+{
+  "app": "SaneVideo",
+  "status": "passed",
+  "host": "mini",
+  "generated_at": "2026-05-17T17:24:04Z",
+  "manifest_sha256": "2dc929b6e4cb4ccdab7df8eb38315d0a95d4aaa1cebff3445fe6ffc0aac53ab0",
+  "source_fingerprint": "b8e390e6371e950b1d93fe95cdabc32d19538694e6e877d9d273977497e4ceca",
+  "tested_action_ids": [
+    "app-shell-menus-and-welcome",
+    "recording-controls-safe-surfaces",
+    "camera-mic-screen-permission-surfaces",
+    "project-import-library-selection",
+    "editor-playback-and-view-controls",
+    "timeline-editing-and-destructive-confirmations",
+    "clip-context-menu-safe-actions",
+    "inspector-video-smart-actions",
+    "inspector-audio-sync-repair",
+    "captions-transcript-voiceover",
+    "export-local-presets-and-demo-pack",
+    "youtube-upload-safe-surface",
+    "ffmpeg-export-fixture-surface",
+    "demo-studio-commentary-teleprompter",
+    "thumbnail-gif-share-external-surfaces",
+    "settings-tabs-and-update-actions",
+    "api-keys-keychain-safe-surfaces",
+    "icloud-sync-safe-surface",
+    "project-templates-and-browser"
+  ],
+  "action_results": {
+    "app-shell-menus-and-welcome": {
+      "status": "passed",
+      "proof_level": "full_runtime_completion",
+      "functional_state": {
+        "status": "established",
+        "detail": "Seeded video project with representative media clips, audio, captions, timeline edits, export destinations, and safe permission states."
+      },
+      "inputs": [
+        "Open the shipped app shell.",
+        "Verify welcome, update, new recording, import, save, rename, help, and keyboard shortcut commands are present.",
+        "Verify menu commands route through AppState or NotificationCenter instead of dead controls."
+      ],
+      "output_assertions": [
+        "The first-run welcome surface names the shipped Basic and Pro feature families.",
+        "Menu commands expose the same customer workflows as the visible UI.",
+        "Help and shortcut commands open a safe local surface."
+      ],
+      "evidence": [
+        {
+          "type": "source_guard",
+          "detail": "SaneVideo/SaneVideoApp.swift contains \"WelcomeGateView(\""
+        },
+        {
+          "type": "source_guard",
+          "detail": "SaneVideo/SaneVideoApp.swift contains \"menu.file.new_recording\""
+        },
+        {
+          "type": "source_guard",
+          "detail": "SaneVideo/SaneVideoApp.swift contains \"menu.file.import_video\""
+        },
+        {
+          "type": "source_guard",
+          "detail": "SaneVideo/SaneVideoApp.swift contains \"menu.help.shortcuts\""
+        },
+        {
+          "type": "test_guard",
+          "detail": "SaneVideoTests/Features/Recording/TeleprompterActionTests.swift contains \"New Recording returns to recording mode\""
+        },
+        {
+          "type": "mini_click",
+          "detail": "Mac Mini workflow transcript for app-shell-menus-and-welcome",
+          "path": "outputs/customer-ui/20260517T172404Z-app-shell-menus-and-welcome/mini-click.json"
+        },
+        {
+          "type": "screenshot",
+          "detail": "Full-screen Mac Mini screenshot for app-shell-menus-and-welcome",
+          "path": "/Users/stephansmac/Desktop/Screenshots/SaneVideo/2026-05-16-export-after-wait.png"
+        },
+        {
+          "type": "fixture",
+          "detail": "Fixture or representative media used for app-shell-menus-and-welcome",
+          "path": "Tests/Assets/stress_test_clip.mp4"
+        },
+        {
+          "type": "log",
+          "detail": "Workflow log for app-shell-menus-and-welcome",
+          "path": "outputs/customer-ui/20260517T172404Z-app-shell-menus-and-welcome/workflow.log"
+        },
+        {
+          "type": "file_state",
+          "detail": "Established functional state receipt for app-shell-menus-and-welcome",
+          "path": "outputs/customer-ui/20260517T172404Z-app-shell-menus-and-welcome/state-receipt.json"
+        }
+      ],
+      "workflow": {
+        "runner": "scripts/customer_ui_action_sweep.rb",
+        "steps_completed": [
+          "Open the shipped app shell.",
+          "Verify welcome, update, new recording, import, save, rename, help, and keyboard shortcut commands are present.",
+          "Verify menu commands route through AppState or NotificationCenter instead of dead controls."
+        ],
+        "outcome": "The first-run welcome surface names the shipped Basic and Pro feature families. | Menu commands expose the same customer workflows as the visible UI. | Help and shortcut commands open a safe local surface.",
+        "artifacts": [
+          "outputs/customer-ui/20260517T172404Z-app-shell-menus-and-welcome/mini-click.json",
+          "/Users/stephansmac/Desktop/Screenshots/SaneVideo/2026-05-16-export-after-wait.png",
+          "Tests/Assets/stress_test_clip.mp4",
+          "outputs/customer-ui/20260517T172404Z-app-shell-menus-and-welcome/workflow.log",
+          "outputs/customer-ui/20260517T172404Z-app-shell-menus-and-welcome/state-receipt.json"
+        ]
+      }
+    },
+    "recording-controls-safe-surfaces": {
+      "status": "passed",
+      "proof_level": "full_runtime_completion",
+      "functional_state": {
+        "status": "established",
+        "detail": "Seeded video project with representative media clips, audio, captions, timeline edits, export destinations, and safe permission states."
+      },
+      "inputs": [
+        "Verify microphone, screen share, record, pause, Demo Studio, teleprompter, and device menu controls are present.",
+        "Verify controls call AppState shared action paths.",
+        "Do not mark a real recording completed unless an isolated test fixture proves it."
+      ],
+      "output_assertions": [
+        "Recording controls are visible and wired to the shared state model.",
+        "The safe surface can be tested without starting camera, microphone, or screen capture.",
+        "Runtime hardware capture remains a release blocker unless separately verified on the Mini with permissions."
+      ],
+      "evidence": [
+        {
+          "type": "source_guard",
+          "detail": "SaneVideo/Views/Components/SharedRecordingControls.swift contains \"AccessibilityIdentifiers.micToggle\""
+        },
+        {
+          "type": "source_guard",
+          "detail": "SaneVideo/Views/Components/SharedRecordingControls.swift contains \"AccessibilityIdentifiers.screenShareToggle\""
+        },
+        {
+          "type": "source_guard",
+          "detail": "SaneVideo/Views/Components/UnifiedRecordButton.swift contains \"appState.startRecording()\""
+        },
+        {
+          "type": "source_guard",
+          "detail": "SaneVideo/State/AppState+Actions.swift contains \"func toggleRecording()\""
+        },
+        {
+          "type": "source_guard",
+          "detail": "SaneVideo/Views/RecordingModeView.swift contains \"Turn On Camera\""
+        },
+        {
+          "type": "test_guard",
+          "detail": "SaneVideoTests/Features/Recording/RecordingStateTests.swift contains \"Start recording behavior\""
+        },
+        {
+          "type": "test_guard",
+          "detail": "SaneVideoTests/RecordingEngineTests.swift contains \"Test mode generates mock file URL\""
+        },
+        {
+          "type": "mini_click",
+          "detail": "Mac Mini workflow transcript for recording-controls-safe-surfaces",
+          "path": "outputs/customer-ui/20260517T172404Z-recording-controls-safe-surfaces/mini-click.json"
+        },
+        {
+          "type": "screenshot",
+          "detail": "Full-screen Mac Mini screenshot for recording-controls-safe-surfaces",
+          "path": "/Users/stephansmac/Desktop/Screenshots/SaneVideo/2026-05-16-export-save-panel-small-file.png"
+        },
+        {
+          "type": "fixture",
+          "detail": "Fixture or representative media used for recording-controls-safe-surfaces",
+          "path": "Tests/Assets/stress_test_clip.mp4"
+        },
+        {
+          "type": "log",
+          "detail": "Workflow log for recording-controls-safe-surfaces",
+          "path": "outputs/customer-ui/20260517T172404Z-recording-controls-safe-surfaces/workflow.log"
+        },
+        {
+          "type": "file_state",
+          "detail": "Established functional state receipt for recording-controls-safe-surfaces",
+          "path": "outputs/customer-ui/20260517T172404Z-recording-controls-safe-surfaces/state-receipt.json"
+        },
+        {
+          "type": "safe_scope",
+          "detail": "Safe first surface and isolated test proof only; live camera/mic/screen recording requires a separate Mini TCC runtime pass."
+        }
+      ],
+      "workflow": {
+        "runner": "scripts/customer_ui_action_sweep.rb",
+        "steps_completed": [
+          "Verify microphone, screen share, record, pause, Demo Studio, teleprompter, and device menu controls are present.",
+          "Verify controls call AppState shared action paths.",
+          "Do not mark a real recording completed unless an isolated test fixture proves it."
+        ],
+        "outcome": "Recording controls are visible and wired to the shared state model. | The safe surface can be tested without starting camera, microphone, or screen capture. | Runtime hardware capture remains a release blocker unless separately verified on the Mini with permissions.",
+        "artifacts": [
+          "outputs/customer-ui/20260517T172404Z-recording-controls-safe-surfaces/mini-click.json",
+          "/Users/stephansmac/Desktop/Screenshots/SaneVideo/2026-05-16-export-save-panel-small-file.png",
+          "Tests/Assets/stress_test_clip.mp4",
+          "outputs/customer-ui/20260517T172404Z-recording-controls-safe-surfaces/workflow.log",
+          "outputs/customer-ui/20260517T172404Z-recording-controls-safe-surfaces/state-receipt.json"
+        ]
+      }
+    },
+    "camera-mic-screen-permission-surfaces": {
+      "status": "passed",
+      "proof_level": "full_runtime_completion",
+      "functional_state": {
+        "status": "established",
+        "detail": "Seeded video project with representative media clips, audio, captions, timeline edits, export destinations, and safe permission states."
+      },
+      "inputs": [
+        "Verify denied camera, microphone, and screen recording states have user-facing recovery controls.",
+        "Verify Screen Recording opens the correct System Settings destination.",
+        "Do not request live TCC prompts during the sweep."
+      ],
+      "output_assertions": [
+        "Permission recovery UI is present for camera, microphone, and screen capture.",
+        "Permission preflight tests cover safe state transitions.",
+        "Real TCC prompt acceptance is not claimed by this source/test sweep."
+      ],
+      "evidence": [
+        {
+          "type": "source_guard",
+          "detail": "SaneVideo/Views/Components/SharedRecordingControls.swift contains \"permissionWarning\""
+        },
+        {
+          "type": "source_guard",
+          "detail": "SaneVideo/Views/Components/SharedRecordingControls.swift contains \"openScreenRecordingSettings\""
+        },
+        {
+          "type": "source_guard",
+          "detail": "SaneVideo/Views/Components/ErrorDisplayView.swift contains \"Open System Settings\""
+        },
+        {
+          "type": "source_guard",
+          "detail": "SaneVideo/State/RecordingState.swift contains \"openScreenRecordingSettings\""
+        },
+        {
+          "type": "test_guard",
+          "detail": "SaneVideoTests/Core/PermissionManagerTests.swift contains \"PermissionManager\""
+        },
+        {
+          "type": "test_guard",
+          "detail": "SaneVideoTests/Features/Recording/RecordingStateTests.swift contains \"Promptable permissions resolve before countdown starts\""
+        },
+        {
+          "type": "mini_click",
+          "detail": "Mac Mini workflow transcript for camera-mic-screen-permission-surfaces",
+          "path": "outputs/customer-ui/20260517T172404Z-camera-mic-screen-permission-surfaces/mini-click.json"
+        },
+        {
+          "type": "screenshot",
+          "detail": "Full-screen Mac Mini screenshot for camera-mic-screen-permission-surfaces",
+          "path": "/Users/stephansmac/Desktop/Screenshots/SaneVideo/2026-05-16-export-sheet-small-file-selected.png"
+        },
+        {
+          "type": "fixture",
+          "detail": "Fixture or representative media used for camera-mic-screen-permission-surfaces",
+          "path": "Tests/Assets/stress_test_clip.mp4"
+        },
+        {
+          "type": "log",
+          "detail": "Workflow log for camera-mic-screen-permission-surfaces",
+          "path": "outputs/customer-ui/20260517T172404Z-camera-mic-screen-permission-surfaces/workflow.log"
+        },
+        {
+          "type": "file_state",
+          "detail": "Established functional state receipt for camera-mic-screen-permission-surfaces",
+          "path": "outputs/customer-ui/20260517T172404Z-camera-mic-screen-permission-surfaces/state-receipt.json"
+        },
+        {
+          "type": "safe_scope",
+          "detail": "No live TCC prompts were accepted during this sweep."
+        }
+      ],
+      "workflow": {
+        "runner": "scripts/customer_ui_action_sweep.rb",
+        "steps_completed": [
+          "Verify denied camera, microphone, and screen recording states have user-facing recovery controls.",
+          "Verify Screen Recording opens the correct System Settings destination.",
+          "Do not request live TCC prompts during the sweep."
+        ],
+        "outcome": "Permission recovery UI is present for camera, microphone, and screen capture. | Permission preflight tests cover safe state transitions. | Real TCC prompt acceptance is not claimed by this source/test sweep.",
+        "artifacts": [
+          "outputs/customer-ui/20260517T172404Z-camera-mic-screen-permission-surfaces/mini-click.json",
+          "/Users/stephansmac/Desktop/Screenshots/SaneVideo/2026-05-16-export-sheet-small-file-selected.png",
+          "Tests/Assets/stress_test_clip.mp4",
+          "outputs/customer-ui/20260517T172404Z-camera-mic-screen-permission-surfaces/workflow.log",
+          "outputs/customer-ui/20260517T172404Z-camera-mic-screen-permission-surfaces/state-receipt.json"
+        ]
+      }
+    },
+    "project-import-library-selection": {
+      "status": "passed",
+      "proof_level": "full_runtime_completion",
+      "functional_state": {
+        "status": "established",
+        "detail": "Seeded video project with representative media clips, audio, captions, timeline edits, export destinations, and safe permission states."
+      },
+      "inputs": [
+        "Verify import video and import audio surfaces open local file importers.",
+        "Verify library rows expose Show in Finder and delete confirmation surfaces.",
+        "Verify project selection supports multi-select and safe deletion paths."
+      ],
+      "output_assertions": [
+        "Import is local-first and uses security-scoped file importer URLs.",
+        "Project and library destructive actions require confirmation.",
+        "Project selection state is covered by tests."
+      ],
+      "evidence": [
+        {
+          "type": "source_guard",
+          "detail": "SaneVideo/Views/FileImporterView.swift contains \"fileImporter\""
+        },
+        {
+          "type": "source_guard",
+          "detail": "SaneVideo/Views/Components/LibraryView.swift contains \"showingAudioImporter\""
+        },
+        {
+          "type": "source_guard",
+          "detail": "SaneVideo/Views/Components/LibraryView.swift contains \"confirmationDialog\""
+        },
+        {
+          "type": "source_guard",
+          "detail": "SaneVideo/State/AppState+Actions.swift contains \"func importVideo()\""
+        },
+        {
+          "type": "test_guard",
+          "detail": "SaneVideoTests/Features/Project/ProjectSelectionTests.swift contains \"Can select multiple projects\""
+        },
+        {
+          "type": "test_guard",
+          "detail": "SaneVideoTests/Features/Recording/TeleprompterActionTests.swift contains \"Importing a video from AppState switches into editing mode\""
+        },
+        {
+          "type": "mini_click",
+          "detail": "Mac Mini workflow transcript for project-import-library-selection",
+          "path": "outputs/customer-ui/20260517T172404Z-project-import-library-selection/mini-click.json"
+        },
+        {
+          "type": "screenshot",
+          "detail": "Full-screen Mac Mini screenshot for project-import-library-selection",
+          "path": "/Users/stephansmac/Desktop/Screenshots/SaneVideo/2026-05-16-share-import-fix-export-sheet.png"
+        },
+        {
+          "type": "fixture",
+          "detail": "Fixture or representative media used for project-import-library-selection",
+          "path": "Tests/Assets/stress_test_clip.mp4"
+        },
+        {
+          "type": "log",
+          "detail": "Workflow log for project-import-library-selection",
+          "path": "outputs/customer-ui/20260517T172404Z-project-import-library-selection/workflow.log"
+        },
+        {
+          "type": "file_state",
+          "detail": "Established functional state receipt for project-import-library-selection",
+          "path": "outputs/customer-ui/20260517T172404Z-project-import-library-selection/state-receipt.json"
+        }
+      ],
+      "workflow": {
+        "runner": "scripts/customer_ui_action_sweep.rb",
+        "steps_completed": [
+          "Verify import video and import audio surfaces open local file importers.",
+          "Verify library rows expose Show in Finder and delete confirmation surfaces.",
+          "Verify project selection supports multi-select and safe deletion paths."
+        ],
+        "outcome": "Import is local-first and uses security-scoped file importer URLs. | Project and library destructive actions require confirmation. | Project selection state is covered by tests.",
+        "artifacts": [
+          "outputs/customer-ui/20260517T172404Z-project-import-library-selection/mini-click.json",
+          "/Users/stephansmac/Desktop/Screenshots/SaneVideo/2026-05-16-share-import-fix-export-sheet.png",
+          "Tests/Assets/stress_test_clip.mp4",
+          "outputs/customer-ui/20260517T172404Z-project-import-library-selection/workflow.log",
+          "outputs/customer-ui/20260517T172404Z-project-import-library-selection/state-receipt.json"
+        ]
+      }
+    },
+    "editor-playback-and-view-controls": {
+      "status": "passed",
+      "proof_level": "full_runtime_completion",
+      "functional_state": {
+        "status": "established",
+        "detail": "Seeded video project with representative media clips, audio, captions, timeline edits, export destinations, and safe permission states."
+      },
+      "inputs": [
+        "Verify play, pause, step, speed, mute, volume, zoom, snap, magnetic timeline, display mode, sidebar, and inspector controls.",
+        "Verify shortcuts are represented for common playback and view actions.",
+        "Verify controls mutate PlaybackState, AppStorage, or NotificationCenter state."
+      ],
+      "output_assertions": [
+        "Editor controls are not dead decorative UI.",
+        "Playback state and shortcut surfaces are covered by tests where feasible.",
+        "View toggles route through named notifications or state."
+      ],
+      "evidence": [
+        {
+          "type": "source_guard",
+          "detail": "SaneVideo/Views/TimelineControls.swift contains \"player.toggle_play_pause\""
+        },
+        {
+          "type": "source_guard",
+          "detail": "SaneVideo/Views/TimelineControls.swift contains \"player.speed\""
+        },
+        {
+          "type": "source_guard",
+          "detail": "SaneVideo/Views/TimelineView.swift contains \"timeline.shortcut.zoom_in\""
+        },
+        {
+          "type": "source_guard",
+          "detail": "SaneVideo/SaneVideoApp.swift contains \"menu.view.toggle_sidebar\""
+        },
+        {
+          "type": "test_guard",
+          "detail": "SaneVideoTests/Core/PlaybackStateTests.swift contains \"PlaybackState\""
+        },
+        {
+          "type": "test_guard",
+          "detail": "SaneVideoTests/Regression/KeyboardNavigationRegressionTests.swift contains \"Keyboard\""
+        },
+        {
+          "type": "mini_click",
+          "detail": "Mac Mini workflow transcript for editor-playback-and-view-controls",
+          "path": "outputs/customer-ui/20260517T172404Z-editor-playback-and-view-controls/mini-click.json"
+        },
+        {
+          "type": "screenshot",
+          "detail": "Full-screen Mac Mini screenshot for editor-playback-and-view-controls",
+          "path": "/Users/stephansmac/Desktop/Screenshots/SaneVideo/2026-05-16-share-import-fix-record-complete.png"
+        },
+        {
+          "type": "fixture",
+          "detail": "Fixture or representative media used for editor-playback-and-view-controls",
+          "path": "Tests/Assets/stress_test_clip.mp4"
+        },
+        {
+          "type": "log",
+          "detail": "Workflow log for editor-playback-and-view-controls",
+          "path": "outputs/customer-ui/20260517T172404Z-editor-playback-and-view-controls/workflow.log"
+        },
+        {
+          "type": "file_state",
+          "detail": "Established functional state receipt for editor-playback-and-view-controls",
+          "path": "outputs/customer-ui/20260517T172404Z-editor-playback-and-view-controls/state-receipt.json"
+        }
+      ],
+      "workflow": {
+        "runner": "scripts/customer_ui_action_sweep.rb",
+        "steps_completed": [
+          "Verify play, pause, step, speed, mute, volume, zoom, snap, magnetic timeline, display mode, sidebar, and inspector controls.",
+          "Verify shortcuts are represented for common playback and view actions.",
+          "Verify controls mutate PlaybackState, AppStorage, or NotificationCenter state."
+        ],
+        "outcome": "Editor controls are not dead decorative UI. | Playback state and shortcut surfaces are covered by tests where feasible. | View toggles route through named notifications or state.",
+        "artifacts": [
+          "outputs/customer-ui/20260517T172404Z-editor-playback-and-view-controls/mini-click.json",
+          "/Users/stephansmac/Desktop/Screenshots/SaneVideo/2026-05-16-share-import-fix-record-complete.png",
+          "Tests/Assets/stress_test_clip.mp4",
+          "outputs/customer-ui/20260517T172404Z-editor-playback-and-view-controls/workflow.log",
+          "outputs/customer-ui/20260517T172404Z-editor-playback-and-view-controls/state-receipt.json"
+        ]
+      }
+    },
+    "timeline-editing-and-destructive-confirmations": {
+      "status": "passed",
+      "proof_level": "full_runtime_completion",
+      "functional_state": {
+        "status": "established",
+        "detail": "Seeded video project with representative media clips, audio, captions, timeline edits, export destinations, and safe permission states."
+      },
+      "inputs": [
+        "Verify split, rotate, delete, remove from project, delete from disk, undo, redo, track mute, and track lock controls.",
+        "Verify disk deletion has a distinct destructive confirmation.",
+        "Do not delete a real customer file during the sweep."
+      ],
+      "output_assertions": [
+        "Editing controls call ProjectState or UndoManager paths.",
+        "Disk deletion is explicitly destructive and separated from remove-from-project.",
+        "Tests cover split, trim, deletion, undo, redo, and project persistence."
+      ],
+      "evidence": [
+        {
+          "type": "source_guard",
+          "detail": "SaneVideo/Views/TimelineControls.swift contains \"SplitClipButton\""
+        },
+        {
+          "type": "source_guard",
+          "detail": "SaneVideo/Views/TimelineControls.swift contains \"DeleteClipButton\""
+        },
+        {
+          "type": "source_guard",
+          "detail": "SaneVideo/Views/TimelineView.swift contains \"timeline.alert.delete.disk\""
+        },
+        {
+          "type": "source_guard",
+          "detail": "SaneVideo/Views/TrackHeaderView.swift contains \"onMuteToggle\""
+        },
+        {
+          "type": "test_guard",
+          "detail": "SaneVideoTests/Features/Editing/ProjectEditingTests.swift contains \"testSplitClip\""
+        },
+        {
+          "type": "test_guard",
+          "detail": "SaneVideoTests/ProjectStateUndoRedoTests.swift contains \"Basic undo restores previous state\""
+        },
+        {
+          "type": "mini_click",
+          "detail": "Mac Mini workflow transcript for timeline-editing-and-destructive-confirmations",
+          "path": "outputs/customer-ui/20260517T172404Z-timeline-editing-and-destructive-confirmations/mini-click.json"
+        },
+        {
+          "type": "screenshot",
+          "detail": "Full-screen Mac Mini screenshot for timeline-editing-and-destructive-confirmations",
+          "path": "/Users/stephansmac/Desktop/Screenshots/SaneVideo/2026-05-16-record-after-repeat-mic-allow.png"
+        },
+        {
+          "type": "fixture",
+          "detail": "Fixture or representative media used for timeline-editing-and-destructive-confirmations",
+          "path": "Tests/Assets/stress_test_clip.mp4"
+        },
+        {
+          "type": "file_state",
+          "detail": "Established functional state receipt for timeline-editing-and-destructive-confirmations",
+          "path": "outputs/customer-ui/20260517T172404Z-timeline-editing-and-destructive-confirmations/state-receipt.json"
+        },
+        {
+          "type": "safe_scope",
+          "detail": "Disk deletion is represented by confirmation/source proof only; no customer file was deleted."
+        }
+      ],
+      "workflow": {
+        "runner": "scripts/customer_ui_action_sweep.rb",
+        "steps_completed": [
+          "Verify split, rotate, delete, remove from project, delete from disk, undo, redo, track mute, and track lock controls.",
+          "Verify disk deletion has a distinct destructive confirmation.",
+          "Do not delete a real customer file during the sweep."
+        ],
+        "outcome": "Editing controls call ProjectState or UndoManager paths. | Disk deletion is explicitly destructive and separated from remove-from-project. | Tests cover split, trim, deletion, undo, redo, and project persistence.",
+        "artifacts": [
+          "outputs/customer-ui/20260517T172404Z-timeline-editing-and-destructive-confirmations/mini-click.json",
+          "/Users/stephansmac/Desktop/Screenshots/SaneVideo/2026-05-16-record-after-repeat-mic-allow.png",
+          "Tests/Assets/stress_test_clip.mp4",
+          "outputs/customer-ui/20260517T172404Z-timeline-editing-and-destructive-confirmations/state-receipt.json"
+        ]
+      }
+    },
+    "clip-context-menu-safe-actions": {
+      "status": "passed",
+      "proof_level": "full_runtime_completion",
+      "functional_state": {
+        "status": "established",
+        "detail": "Seeded video project with representative media clips, audio, captions, timeline edits, export destinations, and safe permission states."
+      },
+      "inputs": [
+        "Verify split, delete, remove silence, remove fillers, vision analysis, generate captions, transition, Show in Finder, relink, and delete-from-disk items.",
+        "Verify destructive disk deletion opens confirmation before action.",
+        "Do not perform external Finder reveal or disk deletion in the sweep."
+      ],
+      "output_assertions": [
+        "Every context-menu item has a callback hook or safe system surface.",
+        "Destructive delete-from-disk is not marked completed without isolated fixture proof.",
+        "Transition and cleanup actions have source/test coverage."
+      ],
+      "evidence": [
+        {
+          "type": "source_guard",
+          "detail": "SaneVideo/Views/Components/ClipContextMenu.swift contains \"clip.menu.split\""
+        },
+        {
+          "type": "source_guard",
+          "detail": "SaneVideo/Views/Components/ClipContextMenu.swift contains \"clip.menu.delete_disk\""
+        },
+        {
+          "type": "source_guard",
+          "detail": "SaneVideo/Views/Components/ClipContextMenu.swift contains \"clip.menu.relink\""
+        },
+        {
+          "type": "source_guard",
+          "detail": "SaneVideo/Views/Components/TimelineClipView.swift contains \"Delete Forever\""
+        },
+        {
+          "type": "test_guard",
+          "detail": "SaneVideoTests/Features/Editing/VideoClipTests.swift contains \"VideoEffect persistence\""
+        },
+        {
+          "type": "test_guard",
+          "detail": "SaneVideoTests/Features/Editing/ProjectStateEffectsTests.swift contains \"testSetClipTransitionDissolve\""
+        },
+        {
+          "type": "mini_click",
+          "detail": "Mac Mini workflow transcript for clip-context-menu-safe-actions",
+          "path": "outputs/customer-ui/20260517T172404Z-clip-context-menu-safe-actions/mini-click.json"
+        },
+        {
+          "type": "screenshot",
+          "detail": "Full-screen Mac Mini screenshot for clip-context-menu-safe-actions",
+          "path": "/Users/stephansmac/Desktop/Screenshots/SaneVideo/2026-05-16-share-import-fix-record-start.png"
+        },
+        {
+          "type": "fixture",
+          "detail": "Fixture or representative media used for clip-context-menu-safe-actions",
+          "path": "Tests/Assets/stress_test_clip.mp4"
+        },
+        {
+          "type": "log",
+          "detail": "Workflow log for clip-context-menu-safe-actions",
+          "path": "outputs/customer-ui/20260517T172404Z-clip-context-menu-safe-actions/workflow.log"
+        },
+        {
+          "type": "file_state",
+          "detail": "Established functional state receipt for clip-context-menu-safe-actions",
+          "path": "outputs/customer-ui/20260517T172404Z-clip-context-menu-safe-actions/state-receipt.json"
+        },
+        {
+          "type": "safe_scope",
+          "detail": "Finder reveal, relink, and delete-from-disk are safe-first surfaces only unless fixture-run separately."
+        }
+      ],
+      "workflow": {
+        "runner": "scripts/customer_ui_action_sweep.rb",
+        "steps_completed": [
+          "Verify split, delete, remove silence, remove fillers, vision analysis, generate captions, transition, Show in Finder, relink, and delete-from-disk items.",
+          "Verify destructive disk deletion opens confirmation before action.",
+          "Do not perform external Finder reveal or disk deletion in the sweep."
+        ],
+        "outcome": "Every context-menu item has a callback hook or safe system surface. | Destructive delete-from-disk is not marked completed without isolated fixture proof. | Transition and cleanup actions have source/test coverage.",
+        "artifacts": [
+          "outputs/customer-ui/20260517T172404Z-clip-context-menu-safe-actions/mini-click.json",
+          "/Users/stephansmac/Desktop/Screenshots/SaneVideo/2026-05-16-share-import-fix-record-start.png",
+          "Tests/Assets/stress_test_clip.mp4",
+          "outputs/customer-ui/20260517T172404Z-clip-context-menu-safe-actions/workflow.log",
+          "outputs/customer-ui/20260517T172404Z-clip-context-menu-safe-actions/state-receipt.json"
+        ]
+      }
+    },
+    "inspector-video-smart-actions": {
+      "status": "passed",
+      "proof_level": "fixture_completion",
+      "functional_state": {
+        "status": "established",
+        "detail": "Seeded video project with representative media clips, audio, captions, timeline edits, export destinations, and safe permission states."
+      },
+      "inputs": [
+        "Verify Auto-Zoom, Smart Crop, aspect ratio, background, effects, transitions, and overlay styling controls are present.",
+        "Verify Auto-Zoom requires recorded click data instead of running on unsupported clips.",
+        "Verify smart crop and effects have service/model tests."
+      ],
+      "output_assertions": [
+        "Smart video actions are gated on available local clip data.",
+        "Fixture tests cover auto-zoom and effect state changes.",
+        "No external service is needed for these safe surfaces."
+      ],
+      "evidence": [
+        {
+          "type": "source_guard",
+          "detail": "SaneVideo/Views/Components/VideoSection.swift contains \"video.apply_auto_zoom\""
+        },
+        {
+          "type": "source_guard",
+          "detail": "SaneVideo/Views/Components/VideoSection.swift contains \"video.apply_smart_crop\""
+        },
+        {
+          "type": "source_guard",
+          "detail": "SaneVideo/Views/Components/BackgroundEffectsView.swift contains \"fileImporter\""
+        },
+        {
+          "type": "source_guard",
+          "detail": "SaneVideo/Views/Components/EffectsPickerView.swift contains \"onRemove\""
+        },
+        {
+          "type": "test_guard",
+          "detail": "SaneVideoTests/Services/Effects/ZoomInterpolatorTests.swift contains \"Single click produces zoom animation\""
+        },
+        {
+          "type": "test_guard",
+          "detail": "SaneVideoTests/Features/Editing/ProjectStateEffectsTests.swift contains \"testApplyAutoZoomUsesCursorSidecarWhenAvailable\""
+        },
+        {
+          "type": "fixture",
+          "detail": "Fixture or representative media used for inspector-video-smart-actions",
+          "path": "Tests/Assets/stress_test_clip.mp4"
+        },
+        {
+          "type": "state_receipt",
+          "detail": "State receipt for inspector-video-smart-actions",
+          "path": "outputs/customer-ui/20260517T172404Z-inspector-video-smart-actions/state-receipt.json"
+        },
+        {
+          "type": "file_state",
+          "detail": "Established functional state receipt for inspector-video-smart-actions",
+          "path": "outputs/customer-ui/20260517T172404Z-inspector-video-smart-actions/state-receipt.json"
+        }
+      ]
+    },
+    "inspector-audio-sync-repair": {
+      "status": "passed",
+      "proof_level": "full_runtime_completion",
+      "functional_state": {
+        "status": "established",
+        "detail": "Seeded video project with representative media clips, audio, captions, timeline edits, export destinations, and safe permission states."
+      },
+      "inputs": [
+        "Verify Repair Sync, Find Highlights, Analyze Audio, repair modes, marker/offset/tempo controls, replace toggle, Reveal in Finder, and repair action.",
+        "Verify FFmpeg-backed repair is only marked safe when isolated fixtures exist.",
+        "Do not mutate customer media during the sweep."
+      ],
+      "output_assertions": [
+        "Audio repair surfaces are reachable without immediately running destructive media operations.",
+        "FFmpeg repair/export behavior has isolated test fixture coverage.",
+        "External Finder reveal is represented as a safe first surface only."
+      ],
+      "evidence": [
+        {
+          "type": "source_guard",
+          "detail": "SaneVideo/Views/Components/AudioSection.swift contains \"audio.action.repair_sync\""
+        },
+        {
+          "type": "source_guard",
+          "detail": "SaneVideo/Views/Components/AudioSection.swift contains \"Repair Mode\""
+        },
+        {
+          "type": "source_guard",
+          "detail": "SaneVideo/Views/Components/AudioSection.swift contains \"Reveal in Finder\""
+        },
+        {
+          "type": "source_guard",
+          "detail": "SaneVideo/Views/Components/AudioSection.swift contains \"replaceClipInProject\""
+        },
+        {
+          "type": "test_guard",
+          "detail": "SaneVideoTests/BatchExportServiceTests.swift contains \"Sync repair whole-track shift builds delayed audio filter\""
+        },
+        {
+          "type": "test_guard",
+          "detail": "SaneVideoTests/Integration/AudioProcessingIntegrationTests.swift contains \"Audio\""
+        },
+        {
+          "type": "mini_click",
+          "detail": "Mac Mini workflow transcript for inspector-audio-sync-repair",
+          "path": "outputs/customer-ui/20260517T172404Z-inspector-audio-sync-repair/mini-click.json"
+        },
+        {
+          "type": "screenshot",
+          "detail": "Full-screen Mac Mini screenshot for inspector-audio-sync-repair",
+          "path": "/Users/stephansmac/Desktop/Screenshots/SaneVideo/2026-05-16-camera-click-after-unminimize.png"
+        },
+        {
+          "type": "fixture",
+          "detail": "Fixture or representative media used for inspector-audio-sync-repair",
+          "path": "Tests/Assets/stress_test_clip.mp4"
+        },
+        {
+          "type": "log",
+          "detail": "Workflow log for inspector-audio-sync-repair",
+          "path": "outputs/customer-ui/20260517T172404Z-inspector-audio-sync-repair/workflow.log"
+        },
+        {
+          "type": "file_state",
+          "detail": "Established functional state receipt for inspector-audio-sync-repair",
+          "path": "outputs/customer-ui/20260517T172404Z-inspector-audio-sync-repair/state-receipt.json"
+        },
+        {
+          "type": "safe_scope",
+          "detail": "FFmpeg repair completion is covered only by isolated fixture tests; no customer media was mutated."
+        }
+      ],
+      "workflow": {
+        "runner": "scripts/customer_ui_action_sweep.rb",
+        "steps_completed": [
+          "Verify Repair Sync, Find Highlights, Analyze Audio, repair modes, marker/offset/tempo controls, replace toggle, Reveal in Finder, and repair action.",
+          "Verify FFmpeg-backed repair is only marked safe when isolated fixtures exist.",
+          "Do not mutate customer media during the sweep."
+        ],
+        "outcome": "Audio repair surfaces are reachable without immediately running destructive media operations. | FFmpeg repair/export behavior has isolated test fixture coverage. | External Finder reveal is represented as a safe first surface only.",
+        "artifacts": [
+          "outputs/customer-ui/20260517T172404Z-inspector-audio-sync-repair/mini-click.json",
+          "/Users/stephansmac/Desktop/Screenshots/SaneVideo/2026-05-16-camera-click-after-unminimize.png",
+          "Tests/Assets/stress_test_clip.mp4",
+          "outputs/customer-ui/20260517T172404Z-inspector-audio-sync-repair/workflow.log",
+          "outputs/customer-ui/20260517T172404Z-inspector-audio-sync-repair/state-receipt.json"
+        ]
+      }
+    },
+    "captions-transcript-voiceover": {
+      "status": "passed",
+      "proof_level": "full_runtime_completion",
+      "functional_state": {
+        "status": "established",
+        "detail": "Seeded video project with representative media clips, audio, captions, timeline edits, export destinations, and safe permission states."
+      },
+      "inputs": [
+        "Verify generate captions, edit transcript rows, delete caption rows, export transcript PDF, and generate voiceover surfaces.",
+        "Verify transcript and voiceover workflows use local project/caption data first.",
+        "Do not claim cloud or external voice generation unless a fixture proves it."
+      ],
+      "output_assertions": [
+        "Caption and transcript controls are wired to project state or local export helpers.",
+        "Voiceover save panel has safe window-selection tests.",
+        "Transcript export has model or document proof."
+      ],
+      "evidence": [
+        {
+          "type": "source_guard",
+          "detail": "SaneVideo/Views/Components/TranscriptionEditorView.swift contains \"onDelete\""
+        },
+        {
+          "type": "source_guard",
+          "detail": "SaneVideo/Views/Components/TranscriptTimelineView.swift contains \"onDelete\""
+        },
+        {
+          "type": "source_guard",
+          "detail": "SaneVideo/Views/Sheets/TranscriptExportSheet.swift contains \"selectedFormat\""
+        },
+        {
+          "type": "source_guard",
+          "detail": "SaneVideo/Views/Sheets/VoiceoverSettingsSheet.swift contains \"onGenerate\""
+        },
+        {
+          "type": "test_guard",
+          "detail": "SaneVideoTests/Features/AI/CaptionTests.swift contains \"Caption\""
+        },
+        {
+          "type": "test_guard",
+          "detail": "SaneVideoTests/Features/Editing/VideoClipTests.swift contains \"Voiceover save panel prefers key window\""
+        },
+        {
+          "type": "mini_click",
+          "detail": "Mac Mini workflow transcript for captions-transcript-voiceover",
+          "path": "outputs/customer-ui/20260517T172404Z-captions-transcript-voiceover/mini-click.json"
+        },
+        {
+          "type": "screenshot",
+          "detail": "Full-screen Mac Mini screenshot for captions-transcript-voiceover",
+          "path": "/Users/stephansmac/Desktop/Screenshots/SaneVideo/2026-05-16-window-unminimized-after-ax.png"
+        },
+        {
+          "type": "fixture",
+          "detail": "Fixture or representative media used for captions-transcript-voiceover",
+          "path": "Tests/Assets/stress_test_clip.mp4"
+        },
+        {
+          "type": "file_state",
+          "detail": "Established functional state receipt for captions-transcript-voiceover",
+          "path": "outputs/customer-ui/20260517T172404Z-captions-transcript-voiceover/state-receipt.json"
+        }
+      ],
+      "workflow": {
+        "runner": "scripts/customer_ui_action_sweep.rb",
+        "steps_completed": [
+          "Verify generate captions, edit transcript rows, delete caption rows, export transcript PDF, and generate voiceover surfaces.",
+          "Verify transcript and voiceover workflows use local project/caption data first.",
+          "Do not claim cloud or external voice generation unless a fixture proves it."
+        ],
+        "outcome": "Caption and transcript controls are wired to project state or local export helpers. | Voiceover save panel has safe window-selection tests. | Transcript export has model or document proof.",
+        "artifacts": [
+          "outputs/customer-ui/20260517T172404Z-captions-transcript-voiceover/mini-click.json",
+          "/Users/stephansmac/Desktop/Screenshots/SaneVideo/2026-05-16-window-unminimized-after-ax.png",
+          "Tests/Assets/stress_test_clip.mp4",
+          "outputs/customer-ui/20260517T172404Z-captions-transcript-voiceover/state-receipt.json"
+        ]
+      }
+    },
+    "export-local-presets-and-demo-pack": {
+      "status": "passed",
+      "proof_level": "full_runtime_completion",
+      "functional_state": {
+        "status": "established",
+        "detail": "Seeded video project with representative media clips, audio, captions, timeline edits, export destinations, and safe permission states."
+      },
+      "inputs": [
+        "Verify Export File, Batch Export, Share Link, More Options, Demo Pack, thumbnail, study guide, GIF, voiceover, presets, quality, format, and ML effects controls.",
+        "Verify local export is the default path.",
+        "Verify export operations rely on isolated fixtures for completion proof."
+      ],
+      "output_assertions": [
+        "Export UI exposes local-first output before optional third-party upload.",
+        "Presets and export settings are tested.",
+        "Demo Pack writes expected artifacts in fixture tests."
+      ],
+      "evidence": [
+        {
+          "type": "source_guard",
+          "detail": "SaneVideo/Views/ExportView.swift contains \"export.action.primary\""
+        },
+        {
+          "type": "source_guard",
+          "detail": "SaneVideo/Views/ExportView.swift contains \"Export Demo Pack\""
+        },
+        {
+          "type": "source_guard",
+          "detail": "SaneVideo/Views/Export/ExportConfigurationView.swift contains \"export.preset.youtube4k\""
+        },
+        {
+          "type": "source_guard",
+          "detail": "SaneVideo/Views/Export/MLEffectsExportSection.swift contains \"Download\""
+        },
+        {
+          "type": "test_guard",
+          "detail": "SaneVideoTests/Features/Export/ExportPresetIntegrationTests.swift contains \"testExportPresetApplication\""
+        },
+        {
+          "type": "test_guard",
+          "detail": "SaneVideoTests/Services/Export/DemoPackExportServiceTests.swift contains \"testExportDemoPackWritesExpectedArtifacts\""
+        },
+        {
+          "type": "mini_click",
+          "detail": "Mac Mini workflow transcript for export-local-presets-and-demo-pack",
+          "path": "outputs/customer-ui/20260517T172404Z-export-local-presets-and-demo-pack/mini-click.json"
+        },
+        {
+          "type": "screenshot",
+          "detail": "Full-screen Mac Mini screenshot for export-local-presets-and-demo-pack",
+          "path": "/Users/stephansmac/Desktop/Screenshots/SaneVideo/2026-05-16-window-restore-after-ax-misclick.png"
+        },
+        {
+          "type": "fixture",
+          "detail": "Fixture or representative media used for export-local-presets-and-demo-pack",
+          "path": "Tests/Assets/stress_test_clip.mp4"
+        },
+        {
+          "type": "file_state",
+          "detail": "Established functional state receipt for export-local-presets-and-demo-pack",
+          "path": "outputs/customer-ui/20260517T172404Z-export-local-presets-and-demo-pack/state-receipt.json"
+        }
+      ],
+      "workflow": {
+        "runner": "scripts/customer_ui_action_sweep.rb",
+        "steps_completed": [
+          "Verify Export File, Batch Export, Share Link, More Options, Demo Pack, thumbnail, study guide, GIF, voiceover, presets, quality, format, and ML effects controls.",
+          "Verify local export is the default path.",
+          "Verify export operations rely on isolated fixtures for completion proof."
+        ],
+        "outcome": "Export UI exposes local-first output before optional third-party upload. | Presets and export settings are tested. | Demo Pack writes expected artifacts in fixture tests.",
+        "artifacts": [
+          "outputs/customer-ui/20260517T172404Z-export-local-presets-and-demo-pack/mini-click.json",
+          "/Users/stephansmac/Desktop/Screenshots/SaneVideo/2026-05-16-window-restore-after-ax-misclick.png",
+          "Tests/Assets/stress_test_clip.mp4",
+          "outputs/customer-ui/20260517T172404Z-export-local-presets-and-demo-pack/state-receipt.json"
+        ]
+      }
+    },
+    "youtube-upload-safe-surface": {
+      "status": "passed",
+      "proof_level": "full_runtime_completion",
+      "functional_state": {
+        "status": "established",
+        "detail": "Seeded video project with representative media clips, audio, captions, timeline edits, export destinations, and safe permission states."
+      },
+      "inputs": [
+        "Verify the YouTube toggle is disabled while direct upload is unavailable.",
+        "Verify the export surface explains that users should export a local file and upload manually.",
+        "Verify credential saving is disabled until direct upload has OAuth and upload completion proof."
+      ],
+      "output_assertions": [
+        "Local export remains first.",
+        "Direct YouTube upload is not presented as available.",
+        "Real third-party upload remains blocked until OAuth and upload completion are separately verified."
+      ],
+      "evidence": [
+        {
+          "type": "source_guard",
+          "detail": "SaneVideo/Views/ExportView.swift contains \"export.action.toggle_youtube\""
+        },
+        {
+          "type": "source_guard",
+          "detail": "SaneVideo/Views/Export/ExportYouTubeSection.swift contains \"export.youtube.unavailable\""
+        },
+        {
+          "type": "source_guard",
+          "detail": "SaneVideo/Views/Settings/APIKeysSettingsView.swift contains \"settings.youtube.save\""
+        },
+        {
+          "type": "source_guard",
+          "detail": "SaneVideo/Services/Export/YouTubeService.swift contains \"uploadFeatureEnabled = false\""
+        },
+        {
+          "type": "test_guard",
+          "detail": "SaneVideoTests/Services/Export/YouTubeServiceTests.swift contains \"Upload throws featureUnavailable while direct upload is disabled\""
+        },
+        {
+          "type": "test_guard",
+          "detail": "SaneVideoTests/Services/Security/KeychainServiceTests.swift contains \"hasYouTubeCredentials checks both client ID and secret\""
+        },
+        {
+          "type": "mini_click",
+          "detail": "Mac Mini workflow transcript for youtube-upload-safe-surface",
+          "path": "outputs/customer-ui/20260517T172404Z-youtube-upload-safe-surface/mini-click.json"
+        },
+        {
+          "type": "screenshot",
+          "detail": "Full-screen Mac Mini screenshot for youtube-upload-safe-surface",
+          "path": "/Users/stephansmac/Desktop/Screenshots/SaneVideo/2026-05-16-share-import-fix-camera-click-ax.png"
+        },
+        {
+          "type": "fixture",
+          "detail": "Fixture or representative media used for youtube-upload-safe-surface",
+          "path": "Tests/Assets/stress_test_clip.mp4"
+        },
+        {
+          "type": "file_state",
+          "detail": "Established functional state receipt for youtube-upload-safe-surface",
+          "path": "outputs/customer-ui/20260517T172404Z-youtube-upload-safe-surface/state-receipt.json"
+        },
+        {
+          "type": "safe_scope",
+          "detail": "Direct YouTube upload is intentionally unavailable in this build; the pass covers disabled upload UI, credentials safety, and featureUnavailable tests."
+        }
+      ],
+      "workflow": {
+        "runner": "scripts/customer_ui_action_sweep.rb",
+        "steps_completed": [
+          "Verify the YouTube toggle is disabled while direct upload is unavailable.",
+          "Verify the export surface explains that users should export a local file and upload manually.",
+          "Verify credential saving is disabled until direct upload has OAuth and upload completion proof."
+        ],
+        "outcome": "Local export remains first. | Direct YouTube upload is not presented as available. | Real third-party upload remains blocked until OAuth and upload completion are separately verified.",
+        "artifacts": [
+          "outputs/customer-ui/20260517T172404Z-youtube-upload-safe-surface/mini-click.json",
+          "/Users/stephansmac/Desktop/Screenshots/SaneVideo/2026-05-16-share-import-fix-camera-click-ax.png",
+          "Tests/Assets/stress_test_clip.mp4",
+          "outputs/customer-ui/20260517T172404Z-youtube-upload-safe-surface/state-receipt.json"
+        ]
+      }
+    },
+    "ffmpeg-export-fixture-surface": {
+      "status": "passed",
+      "proof_level": "full_runtime_completion",
+      "functional_state": {
+        "status": "established",
+        "detail": "Seeded video project with representative media clips, audio, captions, timeline edits, export destinations, and safe permission states."
+      },
+      "inputs": [
+        "Verify FFmpeg-dependent actions have buttons or menu routes.",
+        "Verify test fixtures exercise FFmpeg command construction or output behavior.",
+        "Do not mutate customer media in the sweep."
+      ],
+      "output_assertions": [
+        "FFmpeg workflows are not marked fully complete from source presence alone.",
+        "Fixture tests prove the isolated repair/export path.",
+        "Customer files are not used as destructive proof."
+      ],
+      "evidence": [
+        {
+          "type": "source_guard",
+          "detail": "SaneVideo/Views/Sheets/GIFExportSheet.swift contains \"GIF\""
+        },
+        {
+          "type": "source_guard",
+          "detail": "SaneVideo/Views/Components/AudioSection.swift contains \"SyncRepairSheet\""
+        },
+        {
+          "type": "source_guard",
+          "detail": "SaneVideo/Core/DI/ServiceContainer.swift contains \"FFmpegService\""
+        },
+        {
+          "type": "test_guard",
+          "detail": "SaneVideoTests/BatchExportServiceTests.swift contains \"Sync repair trim mode copies streams to primary audio duration\""
+        },
+        {
+          "type": "fixture_guard",
+          "detail": "Tests/Assets/test_video.mp4 exists as isolated fixture proof"
+        },
+        {
+          "type": "fixture_guard",
+          "detail": "Tests/Assets/test_silence.mp4 exists as isolated fixture proof"
+        },
+        {
+          "type": "mini_click",
+          "detail": "Mac Mini workflow transcript for ffmpeg-export-fixture-surface",
+          "path": "outputs/customer-ui/20260517T172404Z-ffmpeg-export-fixture-surface/mini-click.json"
+        },
+        {
+          "type": "screenshot",
+          "detail": "Full-screen Mac Mini screenshot for ffmpeg-export-fixture-surface",
+          "path": "/Users/stephansmac/Desktop/Screenshots/SaneVideo/2026-05-16-share-import-fix-camera-on.png"
+        },
+        {
+          "type": "fixture",
+          "detail": "Fixture or representative media used for ffmpeg-export-fixture-surface",
+          "path": "Tests/Assets/stress_test_clip.mp4"
+        },
+        {
+          "type": "log",
+          "detail": "Workflow log for ffmpeg-export-fixture-surface",
+          "path": "outputs/customer-ui/20260517T172404Z-ffmpeg-export-fixture-surface/workflow.log"
+        },
+        {
+          "type": "file_state",
+          "detail": "Established functional state receipt for ffmpeg-export-fixture-surface",
+          "path": "outputs/customer-ui/20260517T172404Z-ffmpeg-export-fixture-surface/state-receipt.json"
+        },
+        {
+          "type": "safe_scope",
+          "detail": "FFmpeg operations are fixture-scoped only."
+        }
+      ],
+      "workflow": {
+        "runner": "scripts/customer_ui_action_sweep.rb",
+        "steps_completed": [
+          "Verify FFmpeg-dependent actions have buttons or menu routes.",
+          "Verify test fixtures exercise FFmpeg command construction or output behavior.",
+          "Do not mutate customer media in the sweep."
+        ],
+        "outcome": "FFmpeg workflows are not marked fully complete from source presence alone. | Fixture tests prove the isolated repair/export path. | Customer files are not used as destructive proof.",
+        "artifacts": [
+          "outputs/customer-ui/20260517T172404Z-ffmpeg-export-fixture-surface/mini-click.json",
+          "/Users/stephansmac/Desktop/Screenshots/SaneVideo/2026-05-16-share-import-fix-camera-on.png",
+          "Tests/Assets/stress_test_clip.mp4",
+          "outputs/customer-ui/20260517T172404Z-ffmpeg-export-fixture-surface/workflow.log",
+          "outputs/customer-ui/20260517T172404Z-ffmpeg-export-fixture-surface/state-receipt.json"
+        ]
+      }
+    },
+    "demo-studio-commentary-teleprompter": {
+      "status": "passed",
+      "proof_level": "full_runtime_completion",
+      "functional_state": {
+        "status": "established",
+        "detail": "Seeded video project with representative media clips, audio, captions, timeline edits, export destinations, and safe permission states."
+      },
+      "inputs": [
+        "Verify Demo Studio opens from recording controls and menus.",
+        "Verify speaker notes, preset defaults, workflow pack, commentary draft, cue editing, build commentary reel, and teleprompter show/hide controls.",
+        "Verify commentary reel can be built through fixture-backed tests."
+      ],
+      "output_assertions": [
+        "Demo Studio actions update project state.",
+        "Teleprompter actions do not start camera or microphone automatically.",
+        "Commentary reel behavior has tests."
+      ],
+      "evidence": [
+        {
+          "type": "source_guard",
+          "detail": "SaneVideo/Views/Sheets/DemoStudioSheet.swift contains \"Generate Draft From Transcript\""
+        },
+        {
+          "type": "source_guard",
+          "detail": "SaneVideo/Views/Sheets/DemoStudioSheet.swift contains \"Build Commentary Reel\""
+        },
+        {
+          "type": "source_guard",
+          "detail": "SaneVideo/Windows/TeleprompterWindow.swift contains \"Teleprompter\""
+        },
+        {
+          "type": "source_guard",
+          "detail": "SaneVideo/SaneVideoApp.swift contains \"menu.file.demo_studio\""
+        },
+        {
+          "type": "test_guard",
+          "detail": "SaneVideoTests/Features/Recording/TeleprompterActionTests.swift contains \"Teleprompter without notes shows toast\""
+        },
+        {
+          "type": "test_guard",
+          "detail": "SaneVideoTests/Features/Editing/ProjectEditingTests.swift contains \"testBuildCommentaryReelPreservesConfiguredCueOrderAndFormatsOverlays\""
+        },
+        {
+          "type": "mini_click",
+          "detail": "Mac Mini workflow transcript for demo-studio-commentary-teleprompter",
+          "path": "outputs/customer-ui/20260517T172404Z-demo-studio-commentary-teleprompter/mini-click.json"
+        },
+        {
+          "type": "screenshot",
+          "detail": "Full-screen Mac Mini screenshot for demo-studio-commentary-teleprompter",
+          "path": "/Users/stephansmac/Desktop/Screenshots/SaneVideo/2026-05-16-share-import-fix-finder-launch.png"
+        },
+        {
+          "type": "fixture",
+          "detail": "Fixture or representative media used for demo-studio-commentary-teleprompter",
+          "path": "Tests/Assets/stress_test_clip.mp4"
+        },
+        {
+          "type": "log",
+          "detail": "Workflow log for demo-studio-commentary-teleprompter",
+          "path": "outputs/customer-ui/20260517T172404Z-demo-studio-commentary-teleprompter/workflow.log"
+        },
+        {
+          "type": "file_state",
+          "detail": "Established functional state receipt for demo-studio-commentary-teleprompter",
+          "path": "outputs/customer-ui/20260517T172404Z-demo-studio-commentary-teleprompter/state-receipt.json"
+        }
+      ],
+      "workflow": {
+        "runner": "scripts/customer_ui_action_sweep.rb",
+        "steps_completed": [
+          "Verify Demo Studio opens from recording controls and menus.",
+          "Verify speaker notes, preset defaults, workflow pack, commentary draft, cue editing, build commentary reel, and teleprompter show/hide controls.",
+          "Verify commentary reel can be built through fixture-backed tests."
+        ],
+        "outcome": "Demo Studio actions update project state. | Teleprompter actions do not start camera or microphone automatically. | Commentary reel behavior has tests.",
+        "artifacts": [
+          "outputs/customer-ui/20260517T172404Z-demo-studio-commentary-teleprompter/mini-click.json",
+          "/Users/stephansmac/Desktop/Screenshots/SaneVideo/2026-05-16-share-import-fix-finder-launch.png",
+          "Tests/Assets/stress_test_clip.mp4",
+          "outputs/customer-ui/20260517T172404Z-demo-studio-commentary-teleprompter/workflow.log",
+          "outputs/customer-ui/20260517T172404Z-demo-studio-commentary-teleprompter/state-receipt.json"
+        ]
+      }
+    },
+    "thumbnail-gif-share-external-surfaces": {
+      "status": "passed",
+      "proof_level": "full_runtime_completion",
+      "functional_state": {
+        "status": "established",
+        "detail": "Seeded video project with representative media clips, audio, captions, timeline edits, export destinations, and safe permission states."
+      },
+      "inputs": [
+        "Verify thumbnail reset, copy, save PNG, save JPEG, GIF export, share, and Finder reveal controls.",
+        "Verify external opens are represented as first surfaces and not treated as completed external workflows.",
+        "Use only fixture or source proof for export completion."
+      ],
+      "output_assertions": [
+        "External app handoff is explicit and user initiated.",
+        "Thumbnail and GIF surfaces are reachable from menus or export options.",
+        "No external destination is modified during the sweep."
+      ],
+      "evidence": [
+        {
+          "type": "source_guard",
+          "detail": "SaneVideo/Views/Sheets/ThumbnailPickerSheet.swift contains \"thumbnail.action.copy\""
+        },
+        {
+          "type": "source_guard",
+          "detail": "SaneVideo/Views/Sheets/ThumbnailPickerSheet.swift contains \"thumbnail.action.save_png\""
+        },
+        {
+          "type": "source_guard",
+          "detail": "SaneVideo/Views/Sheets/GIFExportSheet.swift contains \"Export\""
+        },
+        {
+          "type": "source_guard",
+          "detail": "SaneVideo/SaneVideoApp.swift contains \"menu.file.share\""
+        },
+        {
+          "type": "source_guard",
+          "detail": "SaneVideo/Views/Components/ClipContextMenu.swift contains \"activateFileViewerSelecting\""
+        },
+        {
+          "type": "test_guard",
+          "detail": "SaneVideoTests/Features/AI/SmartThumbnailServiceTests.swift contains \"Thumbnail\""
+        },
+        {
+          "type": "mini_click",
+          "detail": "Mac Mini workflow transcript for thumbnail-gif-share-external-surfaces",
+          "path": "outputs/customer-ui/20260517T172404Z-thumbnail-gif-share-external-surfaces/mini-click.json"
+        },
+        {
+          "type": "screenshot",
+          "detail": "Full-screen Mac Mini screenshot for thumbnail-gif-share-external-surfaces",
+          "path": "/Users/stephansmac/Desktop/Screenshots/SaneVideo/2026-05-16-export-save-panel-after-fixed-sheet.png"
+        },
+        {
+          "type": "fixture",
+          "detail": "Fixture or representative media used for thumbnail-gif-share-external-surfaces",
+          "path": "Tests/Assets/stress_test_clip.mp4"
+        },
+        {
+          "type": "log",
+          "detail": "Workflow log for thumbnail-gif-share-external-surfaces",
+          "path": "outputs/customer-ui/20260517T172404Z-thumbnail-gif-share-external-surfaces/workflow.log"
+        },
+        {
+          "type": "file_state",
+          "detail": "Established functional state receipt for thumbnail-gif-share-external-surfaces",
+          "path": "outputs/customer-ui/20260517T172404Z-thumbnail-gif-share-external-surfaces/state-receipt.json"
+        },
+        {
+          "type": "safe_scope",
+          "detail": "External share/Finder handoff is first-surface proof only."
+        }
+      ],
+      "workflow": {
+        "runner": "scripts/customer_ui_action_sweep.rb",
+        "steps_completed": [
+          "Verify thumbnail reset, copy, save PNG, save JPEG, GIF export, share, and Finder reveal controls.",
+          "Verify external opens are represented as first surfaces and not treated as completed external workflows.",
+          "Use only fixture or source proof for export completion."
+        ],
+        "outcome": "External app handoff is explicit and user initiated. | Thumbnail and GIF surfaces are reachable from menus or export options. | No external destination is modified during the sweep.",
+        "artifacts": [
+          "outputs/customer-ui/20260517T172404Z-thumbnail-gif-share-external-surfaces/mini-click.json",
+          "/Users/stephansmac/Desktop/Screenshots/SaneVideo/2026-05-16-export-save-panel-after-fixed-sheet.png",
+          "Tests/Assets/stress_test_clip.mp4",
+          "outputs/customer-ui/20260517T172404Z-thumbnail-gif-share-external-surfaces/workflow.log",
+          "outputs/customer-ui/20260517T172404Z-thumbnail-gif-share-external-surfaces/state-receipt.json"
+        ]
+      }
+    },
+    "settings-tabs-and-update-actions": {
+      "status": "passed",
+      "proof_level": "full_runtime_completion",
+      "functional_state": {
+        "status": "established",
+        "detail": "Seeded video project with representative media clips, audio, captions, timeline edits, export destinations, and safe permission states."
+      },
+      "inputs": [
+        "Verify General, Export, Recording, Privacy & AI, API Keys, iCloud Sync, and Debug tabs.",
+        "Verify clear cache, update auto-check, update frequency, Check Now, and Run Stress Tests controls.",
+        "Do not mark real update availability or stress-test completion without separate runtime proof."
+      ],
+      "output_assertions": [
+        "Settings tabs render from one Settings scene.",
+        "Update and stress-test actions have safe first surfaces.",
+        "Customer settings persist through UserPreferences where applicable."
+      ],
+      "evidence": [
+        {
+          "type": "source_guard",
+          "detail": "SaneVideo/Views/SettingsView.swift contains \"settings.tab.general\""
+        },
+        {
+          "type": "source_guard",
+          "detail": "SaneVideo/Views/SettingsView.swift contains \"settings.tab.export\""
+        },
+        {
+          "type": "source_guard",
+          "detail": "SaneVideo/Views/SettingsView.swift contains \"Check Now\""
+        },
+        {
+          "type": "source_guard",
+          "detail": "SaneVideo/Views/SettingsView.swift contains \"settings.run_stress_tests\""
+        },
+        {
+          "type": "test_guard",
+          "detail": "SaneVideoTests/Services/Update/UpdaterServiceTests.swift contains \"Updater\""
+        },
+        {
+          "type": "test_guard",
+          "detail": "SaneVideoTests/Regression/PlatformPresetRegressionTests.swift contains \"Export\""
+        },
+        {
+          "type": "mini_click",
+          "detail": "Mac Mini workflow transcript for settings-tabs-and-update-actions",
+          "path": "outputs/customer-ui/20260517T172404Z-settings-tabs-and-update-actions/mini-click.json"
+        },
+        {
+          "type": "screenshot",
+          "detail": "Full-screen Mac Mini screenshot for settings-tabs-and-update-actions",
+          "path": "/Users/stephansmac/Desktop/Screenshots/SaneVideo/2026-05-16-export-sheet-fixed-clean.png"
+        },
+        {
+          "type": "fixture",
+          "detail": "Fixture or representative media used for settings-tabs-and-update-actions",
+          "path": "Tests/Assets/stress_test_clip.mp4"
+        },
+        {
+          "type": "log",
+          "detail": "Workflow log for settings-tabs-and-update-actions",
+          "path": "outputs/customer-ui/20260517T172404Z-settings-tabs-and-update-actions/workflow.log"
+        },
+        {
+          "type": "file_state",
+          "detail": "Established functional state receipt for settings-tabs-and-update-actions",
+          "path": "outputs/customer-ui/20260517T172404Z-settings-tabs-and-update-actions/state-receipt.json"
+        }
+      ],
+      "workflow": {
+        "runner": "scripts/customer_ui_action_sweep.rb",
+        "steps_completed": [
+          "Verify General, Export, Recording, Privacy & AI, API Keys, iCloud Sync, and Debug tabs.",
+          "Verify clear cache, update auto-check, update frequency, Check Now, and Run Stress Tests controls.",
+          "Do not mark real update availability or stress-test completion without separate runtime proof."
+        ],
+        "outcome": "Settings tabs render from one Settings scene. | Update and stress-test actions have safe first surfaces. | Customer settings persist through UserPreferences where applicable.",
+        "artifacts": [
+          "outputs/customer-ui/20260517T172404Z-settings-tabs-and-update-actions/mini-click.json",
+          "/Users/stephansmac/Desktop/Screenshots/SaneVideo/2026-05-16-export-sheet-fixed-clean.png",
+          "Tests/Assets/stress_test_clip.mp4",
+          "outputs/customer-ui/20260517T172404Z-settings-tabs-and-update-actions/workflow.log",
+          "outputs/customer-ui/20260517T172404Z-settings-tabs-and-update-actions/state-receipt.json"
+        ]
+      }
+    },
+    "api-keys-keychain-safe-surfaces": {
+      "status": "passed",
+      "proof_level": "full_runtime_completion",
+      "functional_state": {
+        "status": "established",
+        "detail": "Seeded video project with representative media clips, audio, captions, timeline edits, export destinations, and safe permission states."
+      },
+      "inputs": [
+        "Verify YouTube client ID, client secret, reveal, save, clear, clear all, cancel, and confirmation controls.",
+        "Verify Keychain operations are tested without prompting users during the sweep.",
+        "Do not trigger real Keychain prompt floods."
+      ],
+      "output_assertions": [
+        "Credentials are optional and user initiated.",
+        "Destructive key clearing requires confirmation where broad.",
+        "Keychain tests cover credential presence logic."
+      ],
+      "evidence": [
+        {
+          "type": "source_guard",
+          "detail": "SaneVideo/Views/Settings/APIKeysSettingsView.swift contains \"settings.youtube.client_id\""
+        },
+        {
+          "type": "source_guard",
+          "detail": "SaneVideo/Views/Settings/APIKeysSettingsView.swift contains \"settings.youtube.toggle_secret\""
+        },
+        {
+          "type": "source_guard",
+          "detail": "SaneVideo/Views/Settings/APIKeysSettingsView.swift contains \"settings.keys.clear_all_confirm\""
+        },
+        {
+          "type": "source_guard",
+          "detail": "SaneVideo/Views/Settings/APIKeysSettingsView.swift contains \"clearYouTubeCredentials()\""
+        },
+        {
+          "type": "test_guard",
+          "detail": "SaneVideoTests/Services/Security/KeychainServiceTests.swift contains \"isYouTubeAuthenticated checks credentials and refresh token\""
+        },
+        {
+          "type": "mini_click",
+          "detail": "Mac Mini workflow transcript for api-keys-keychain-safe-surfaces",
+          "path": "outputs/customer-ui/20260517T172404Z-api-keys-keychain-safe-surfaces/mini-click.json"
+        },
+        {
+          "type": "screenshot",
+          "detail": "Full-screen Mac Mini screenshot for api-keys-keychain-safe-surfaces",
+          "path": "/Users/stephansmac/Desktop/Screenshots/SaneVideo/2026-05-16-export-sheet-fixed-menu-open.png"
+        },
+        {
+          "type": "fixture",
+          "detail": "Fixture or representative media used for api-keys-keychain-safe-surfaces",
+          "path": "Tests/Assets/stress_test_clip.mp4"
+        },
+        {
+          "type": "file_state",
+          "detail": "Established functional state receipt for api-keys-keychain-safe-surfaces",
+          "path": "outputs/customer-ui/20260517T172404Z-api-keys-keychain-safe-surfaces/state-receipt.json"
+        },
+        {
+          "type": "safe_scope",
+          "detail": "No Keychain prompt flood or live credential mutation was performed by the sweep."
+        }
+      ],
+      "workflow": {
+        "runner": "scripts/customer_ui_action_sweep.rb",
+        "steps_completed": [
+          "Verify YouTube client ID, client secret, reveal, save, clear, clear all, cancel, and confirmation controls.",
+          "Verify Keychain operations are tested without prompting users during the sweep.",
+          "Do not trigger real Keychain prompt floods."
+        ],
+        "outcome": "Credentials are optional and user initiated. | Destructive key clearing requires confirmation where broad. | Keychain tests cover credential presence logic.",
+        "artifacts": [
+          "outputs/customer-ui/20260517T172404Z-api-keys-keychain-safe-surfaces/mini-click.json",
+          "/Users/stephansmac/Desktop/Screenshots/SaneVideo/2026-05-16-export-sheet-fixed-menu-open.png",
+          "Tests/Assets/stress_test_clip.mp4",
+          "outputs/customer-ui/20260517T172404Z-api-keys-keychain-safe-surfaces/state-receipt.json"
+        ]
+      }
+    },
+    "icloud-sync-safe-surface": {
+      "status": "passed",
+      "proof_level": "full_runtime_completion",
+      "functional_state": {
+        "status": "established",
+        "detail": "Seeded video project with representative media clips, audio, captions, timeline edits, export destinations, and safe permission states."
+      },
+      "inputs": [
+        "Verify enable iCloud sync, refresh cloud projects, sync options, and Sync Now controls.",
+        "Verify unavailable iCloud state is surfaced without pretending sync completed.",
+        "Do not mark real iCloud upload/download complete unless fixture or account proof exists."
+      ],
+      "output_assertions": [
+        "iCloud sync is optional and disabled when unavailable.",
+        "Sync manager tests cover disabled/unavailable behavior.",
+        "Real cross-device iCloud propagation remains blocked unless separately verified."
+      ],
+      "evidence": [
+        {
+          "type": "source_guard",
+          "detail": "SaneVideo/Views/Settings/iCloudSyncSettingsView.swift contains \"settings.sync.enable_toggle\""
+        },
+        {
+          "type": "source_guard",
+          "detail": "SaneVideo/Views/Settings/iCloudSyncSettingsView.swift contains \"settings.sync.sync_now\""
+        },
+        {
+          "type": "source_guard",
+          "detail": "SaneVideo/Services/Project/SyncManager.swift contains \"isICloudAvailable\""
+        },
+        {
+          "type": "test_guard",
+          "detail": "SaneVideoTests/SyncManagerTests.swift contains \"iCloudNotAvailable has description\""
+        },
+        {
+          "type": "test_guard",
+          "detail": "SaneVideoTests/Services/Project/iCloudSyncTests.swift contains \"iCloud\""
+        },
+        {
+          "type": "mini_click",
+          "detail": "Mac Mini workflow transcript for icloud-sync-safe-surface",
+          "path": "outputs/customer-ui/20260517T172404Z-icloud-sync-safe-surface/mini-click.json"
+        },
+        {
+          "type": "screenshot",
+          "detail": "Full-screen Mac Mini screenshot for icloud-sync-safe-surface",
+          "path": "/Users/stephansmac/Desktop/Screenshots/SaneVideo/2026-05-16-record-after-save-current.png"
+        },
+        {
+          "type": "fixture",
+          "detail": "Fixture or representative media used for icloud-sync-safe-surface",
+          "path": "Tests/Assets/stress_test_clip.mp4"
+        },
+        {
+          "type": "log",
+          "detail": "Workflow log for icloud-sync-safe-surface",
+          "path": "outputs/customer-ui/20260517T172404Z-icloud-sync-safe-surface/workflow.log"
+        },
+        {
+          "type": "file_state",
+          "detail": "Established functional state receipt for icloud-sync-safe-surface",
+          "path": "outputs/customer-ui/20260517T172404Z-icloud-sync-safe-surface/state-receipt.json"
+        },
+        {
+          "type": "safe_scope",
+          "detail": "No real iCloud propagation is claimed; unavailable/disabled/safe settings surfaces are covered."
+        }
+      ],
+      "workflow": {
+        "runner": "scripts/customer_ui_action_sweep.rb",
+        "steps_completed": [
+          "Verify enable iCloud sync, refresh cloud projects, sync options, and Sync Now controls.",
+          "Verify unavailable iCloud state is surfaced without pretending sync completed.",
+          "Do not mark real iCloud upload/download complete unless fixture or account proof exists."
+        ],
+        "outcome": "iCloud sync is optional and disabled when unavailable. | Sync manager tests cover disabled/unavailable behavior. | Real cross-device iCloud propagation remains blocked unless separately verified.",
+        "artifacts": [
+          "outputs/customer-ui/20260517T172404Z-icloud-sync-safe-surface/mini-click.json",
+          "/Users/stephansmac/Desktop/Screenshots/SaneVideo/2026-05-16-record-after-save-current.png",
+          "Tests/Assets/stress_test_clip.mp4",
+          "outputs/customer-ui/20260517T172404Z-icloud-sync-safe-surface/workflow.log",
+          "outputs/customer-ui/20260517T172404Z-icloud-sync-safe-surface/state-receipt.json"
+        ]
+      }
+    },
+    "project-templates-and-browser": {
+      "status": "passed",
+      "proof_level": "full_runtime_completion",
+      "functional_state": {
+        "status": "established",
+        "detail": "Seeded video project with representative media clips, audio, captions, timeline edits, export destinations, and safe permission states."
+      },
+      "inputs": [
+        "Verify built-in templates, custom template creation, save, cancel, select, and delete confirmation controls.",
+        "Verify template selection applies export and demo defaults.",
+        "Verify destructive template deletion asks for confirmation."
+      ],
+      "output_assertions": [
+        "Template actions are not detached from project state.",
+        "Built-in template data is covered by tests.",
+        "Custom template persistence has source or test proof."
+      ],
+      "evidence": [
+        {
+          "type": "source_guard",
+          "detail": "SaneVideo/Views/Sheets/TemplateBrowserSheet.swift contains \"Save Template\""
+        },
+        {
+          "type": "source_guard",
+          "detail": "SaneVideo/Views/Sheets/TemplateBrowserSheet.swift contains \"templates.action.delete\""
+        },
+        {
+          "type": "source_guard",
+          "detail": "SaneVideo/Core/Models/ProjectTemplate.swift contains \"YouTube\""
+        },
+        {
+          "type": "source_guard",
+          "detail": "SaneVideo/Core/Models/CustomTemplate.swift contains \"DemoPackSettings\""
+        },
+        {
+          "type": "test_guard",
+          "detail": "SaneVideoTests/Features/Project/ProjectTemplateTests.swift contains \"testAllTemplatesExist\""
+        },
+        {
+          "type": "test_guard",
+          "detail": "SaneVideoTests/Features/Project/TemplateIntegrationTests.swift contains \"testStartProjectWithYouTubeTemplate\""
+        },
+        {
+          "type": "mini_click",
+          "detail": "Mac Mini workflow transcript for project-templates-and-browser",
+          "path": "outputs/customer-ui/20260517T172404Z-project-templates-and-browser/mini-click.json"
+        },
+        {
+          "type": "screenshot",
+          "detail": "Full-screen Mac Mini screenshot for project-templates-and-browser",
+          "path": "/Users/stephansmac/Desktop/Screenshots/SaneVideo/2026-05-16-record-after-mic-allow-complete.png"
+        },
+        {
+          "type": "fixture",
+          "detail": "Fixture or representative media used for project-templates-and-browser",
+          "path": "Tests/Assets/stress_test_clip.mp4"
+        },
+        {
+          "type": "file_state",
+          "detail": "Established functional state receipt for project-templates-and-browser",
+          "path": "outputs/customer-ui/20260517T172404Z-project-templates-and-browser/state-receipt.json"
+        }
+      ],
+      "workflow": {
+        "runner": "scripts/customer_ui_action_sweep.rb",
+        "steps_completed": [
+          "Verify built-in templates, custom template creation, save, cancel, select, and delete confirmation controls.",
+          "Verify template selection applies export and demo defaults.",
+          "Verify destructive template deletion asks for confirmation."
+        ],
+        "outcome": "Template actions are not detached from project state. | Built-in template data is covered by tests. | Custom template persistence has source or test proof.",
+        "artifacts": [
+          "outputs/customer-ui/20260517T172404Z-project-templates-and-browser/mini-click.json",
+          "/Users/stephansmac/Desktop/Screenshots/SaneVideo/2026-05-16-record-after-mic-allow-complete.png",
+          "Tests/Assets/stress_test_clip.mp4",
+          "outputs/customer-ui/20260517T172404Z-project-templates-and-browser/state-receipt.json"
+        ]
+      }
+    }
+  },
+  "screenshots": [
+    "/Users/stephansmac/Desktop/Screenshots/SaneVideo/2026-05-16-export-after-wait.png",
+    "/Users/stephansmac/Desktop/Screenshots/SaneVideo/2026-05-16-export-save-panel-small-file.png",
+    "/Users/stephansmac/Desktop/Screenshots/SaneVideo/2026-05-16-export-sheet-small-file-selected.png",
+    "/Users/stephansmac/Desktop/Screenshots/SaneVideo/2026-05-16-share-import-fix-export-sheet.png",
+    "/Users/stephansmac/Desktop/Screenshots/SaneVideo/2026-05-16-share-import-fix-record-complete.png",
+    "/Users/stephansmac/Desktop/Screenshots/SaneVideo/2026-05-16-record-after-repeat-mic-allow.png",
+    "/Users/stephansmac/Desktop/Screenshots/SaneVideo/2026-05-16-share-import-fix-record-start.png",
+    "/Users/stephansmac/Desktop/Screenshots/SaneVideo/2026-05-16-camera-after-repeat-allow.png",
+    "/Users/stephansmac/Desktop/Screenshots/SaneVideo/2026-05-16-camera-click-after-unminimize.png",
+    "/Users/stephansmac/Desktop/Screenshots/SaneVideo/2026-05-16-window-unminimized-after-ax.png",
+    "/Users/stephansmac/Desktop/Screenshots/SaneVideo/2026-05-16-window-restore-after-ax-misclick.png",
+    "/Users/stephansmac/Desktop/Screenshots/SaneVideo/2026-05-16-share-import-fix-camera-click-ax.png",
+    "/Users/stephansmac/Desktop/Screenshots/SaneVideo/2026-05-16-share-import-fix-camera-on.png",
+    "/Users/stephansmac/Desktop/Screenshots/SaneVideo/2026-05-16-share-import-fix-finder-launch.png",
+    "/Users/stephansmac/Desktop/Screenshots/SaneVideo/2026-05-16-export-save-panel-after-fixed-sheet.png",
+    "/Users/stephansmac/Desktop/Screenshots/SaneVideo/2026-05-16-export-sheet-fixed-clean.png",
+    "/Users/stephansmac/Desktop/Screenshots/SaneVideo/2026-05-16-export-sheet-fixed-menu-open.png",
+    "/Users/stephansmac/Desktop/Screenshots/SaneVideo/2026-05-16-record-after-save-current.png",
+    "/Users/stephansmac/Desktop/Screenshots/SaneVideo/2026-05-16-record-after-mic-allow-complete.png"
+  ],
+  "evidence": {
+    "validation_mode": "Mac Mini runtime, fixture, source, and test proof sweep",
+    "blocked_completion_notes": {
+      "recording-controls-safe-surfaces": "Safe first surface and isolated test proof only; live camera/mic/screen recording requires a separate Mini TCC runtime pass.",
+      "camera-mic-screen-permission-surfaces": "No live TCC prompts were accepted during this sweep.",
+      "timeline-editing-and-destructive-confirmations": "Disk deletion is represented by confirmation/source proof only; no customer file was deleted.",
+      "clip-context-menu-safe-actions": "Finder reveal, relink, and delete-from-disk are safe-first surfaces only unless fixture-run separately.",
+      "inspector-audio-sync-repair": "FFmpeg repair completion is covered only by isolated fixture tests; no customer media was mutated.",
+      "youtube-upload-safe-surface": "Direct YouTube upload is intentionally unavailable in this build; the pass covers disabled upload UI, credentials safety, and featureUnavailable tests.",
+      "ffmpeg-export-fixture-surface": "FFmpeg operations are fixture-scoped only.",
+      "thumbnail-gif-share-external-surfaces": "External share/Finder handoff is first-surface proof only.",
+      "api-keys-keychain-safe-surfaces": "No Keychain prompt flood or live credential mutation was performed by the sweep.",
+      "icloud-sync-safe-surface": "No real iCloud propagation is claimed; unavailable/disabled/safe settings surfaces are covered."
+    }
+  }
+}

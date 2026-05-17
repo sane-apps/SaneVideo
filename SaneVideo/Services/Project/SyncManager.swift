@@ -38,17 +38,16 @@ struct SyncEvent: Sendable {
 
 /// Actor for coordinating project sync via iCloud Drive
 actor SyncManager {
-
     // MARK: - Properties
 
-    /// iCloud Documents container
-    private let iCloudDocumentsURL: URL?
+    /// iCloud Documents container, resolved only when sync features are used.
+    private var resolvedICloudDocumentsURL: URL?
 
     /// Local projects directory
     private let localProjectsURL: URL
 
-    /// Media asset manager for file handling
-    private let mediaAssetManager: MediaAssetManager
+    /// Media asset manager for file handling, created only after sync is explicitly used.
+    private var resolvedMediaAssetManager: MediaAssetManager?
 
     /// Debounce timer for sync operations
     private var syncDebounceTask: Task<Void, Never>?
@@ -64,8 +63,8 @@ actor SyncManager {
 
     // OPTIMIZATION: NSMetadataQuery for real-time iCloud change detection
     // Using nonisolated(unsafe) because NSMetadataQuery must be accessed from main thread
-    nonisolated(unsafe) private var metadataQuery: NSMetadataQuery?
-    nonisolated(unsafe) private var queryObservers: [NSObjectProtocol] = []
+    private nonisolated(unsafe) var metadataQuery: NSMetadataQuery?
+    private nonisolated(unsafe) var queryObservers: [NSObjectProtocol] = []
 
     /// Is iCloud sync enabled
     private var isSyncEnabled: Bool {
@@ -74,23 +73,11 @@ actor SyncManager {
     }
 
     init() {
-        // Get iCloud container URL
-        self.iCloudDocumentsURL = FileManager.default.url(
-            forUbiquityContainerIdentifier: nil
-        )?.appendingPathComponent("Documents/Projects", isDirectory: true)
-
         // Local projects directory
-        self.localProjectsURL = FileManager.default.urls(
+        localProjectsURL = FileManager.default.urls(
             for: .moviesDirectory,
             in: .userDomainMask
         ).first!.appendingPathComponent("SaneVideo/Projects", isDirectory: true)
-
-        self.mediaAssetManager = MediaAssetManager()
-
-        // Setup directories
-        Task {
-            await setupDirectories()
-        }
     }
 
     // MARK: - Setup
@@ -102,9 +89,44 @@ actor SyncManager {
         try? fm.createDirectory(at: localProjectsURL, withIntermediateDirectories: true)
 
         // Create iCloud directory if available
-        if let iCloudURL = iCloudDocumentsURL {
+        if let iCloudURL = iCloudDocumentsURL() {
             try? fm.createDirectory(at: iCloudURL, withIntermediateDirectories: true)
         }
+    }
+
+    private func iCloudDocumentsURL() -> URL? {
+        if let resolvedICloudDocumentsURL {
+            return resolvedICloudDocumentsURL
+        }
+
+        guard Self.canQueryRealICloudContainer else {
+            return nil
+        }
+
+        let url = FileManager.default.url(
+            forUbiquityContainerIdentifier: nil
+        )?.appendingPathComponent("Documents/Projects", isDirectory: true)
+        resolvedICloudDocumentsURL = url
+        return url
+    }
+
+    private static var canQueryRealICloudContainer: Bool {
+        let environment = ProcessInfo.processInfo.environment
+        if environment["SANEVIDEO_ENABLE_REAL_ICLOUD_TESTS"] == "1" {
+            return true
+        }
+
+        return !TestEnvironment.isTesting
+    }
+
+    private func mediaAssetManager() -> MediaAssetManager {
+        if let resolvedMediaAssetManager {
+            return resolvedMediaAssetManager
+        }
+
+        let manager = MediaAssetManager()
+        resolvedMediaAssetManager = manager
+        return manager
     }
 
     // MARK: - Sync Control
@@ -114,6 +136,7 @@ actor SyncManager {
         isSyncEnabled = enabled
 
         if enabled {
+            await setupDirectories()
             // Start monitoring and initial sync
             await startMonitoring()
         } else {
@@ -134,7 +157,7 @@ actor SyncManager {
     /// - Parameter project: Project to sync
     func syncProject(_ project: VideoProject) async throws {
         guard isSyncEnabled else { return }
-        guard let iCloudURL = iCloudDocumentsURL else {
+        guard let iCloudURL = iCloudDocumentsURL() else {
             throw SyncError.iCloudNotAvailable
         }
 
@@ -156,7 +179,7 @@ actor SyncManager {
             // 3. Copy media assets
             for track in project.timeline.tracks {
                 for clip in track.clips {
-                    _ = try await mediaAssetManager.copyAssetToProjectFolder(
+                    _ = try await mediaAssetManager().copyAssetToProjectFolder(
                         sourceURL: clip.url,
                         projectId: projectId
                     )
@@ -169,7 +192,7 @@ actor SyncManager {
                 projectId: projectId,
                 lastSynced: Date(),
                 deviceName: Host.current().localizedName ?? "Unknown Mac",
-                version: 1  // Version tracking not implemented yet
+                version: 1 // Version tracking not implemented yet
             )
             let syncInfoURL = projectDir.appendingPathComponent("sync_info.json")
             let syncData = try encoder.encode(syncInfo)
@@ -187,7 +210,7 @@ actor SyncManager {
     /// - Parameter projectId: Project ID to download
     /// - Returns: Downloaded project
     func downloadProject(projectId: UUID) async throws -> VideoProject {
-        guard let iCloudURL = iCloudDocumentsURL else {
+        guard let iCloudURL = iCloudDocumentsURL() else {
             throw SyncError.iCloudNotAvailable
         }
 
@@ -198,7 +221,8 @@ actor SyncManager {
 
         // Ensure file is downloaded from iCloud
         if let resourceValues = try? metadataURL.resourceValues(forKeys: [.ubiquitousItemDownloadingStatusKey]),
-           resourceValues.ubiquitousItemDownloadingStatus != .current {
+           resourceValues.ubiquitousItemDownloadingStatus != .current
+        {
             try FileManager.default.startDownloadingUbiquitousItem(at: metadataURL)
 
             // Wait for download
@@ -230,7 +254,7 @@ actor SyncManager {
         // Debounce: wait 5 seconds after last change before syncing
         syncDebounceTask?.cancel()
         syncDebounceTask = Task {
-            try? await Task.sleep(nanoseconds: 5_000_000_000)  // 5 seconds
+            try? await Task.sleep(nanoseconds: 5_000_000_000) // 5 seconds
 
             if !Task.isCancelled {
                 await processPendingSyncs()
@@ -296,7 +320,7 @@ actor SyncManager {
     // MARK: - Monitoring
 
     private func startMonitoring() async {
-        guard let iCloudURL = iCloudDocumentsURL else { return }
+        guard let iCloudURL = iCloudDocumentsURL() else { return }
 
         // OPTIMIZATION: Use NSMetadataQuery for real-time iCloud change detection
         // This replaces polling and is more battery-efficient
@@ -345,7 +369,7 @@ actor SyncManager {
     }
 
     /// Stop the metadata query and clean up observers
-    nonisolated private func stopMetadataQuery() {
+    private nonisolated func stopMetadataQuery() {
         metadataQuery?.stop()
         metadataQuery = nil
 
@@ -363,13 +387,13 @@ actor SyncManager {
     }
 
     /// Extract Sendable data from query results (called on main thread)
-    nonisolated private func extractQueryResults(from query: NSMetadataQuery) -> [MetadataUpdate] {
+    private nonisolated func extractQueryResults(from query: NSMetadataQuery) -> [MetadataUpdate] {
         query.disableUpdates()
         defer { query.enableUpdates() }
 
         var updates: [MetadataUpdate] = []
 
-        for i in 0..<query.resultCount {
+        for i in 0 ..< query.resultCount {
             guard let item = query.result(at: i) as? NSMetadataItem else { continue }
             guard let url = item.value(forAttribute: NSMetadataItemURLKey) as? URL else { continue }
 
@@ -378,14 +402,16 @@ actor SyncManager {
 
             // Check for conflicts
             if let isConflicted = item.value(forAttribute: NSMetadataUbiquitousItemHasUnresolvedConflictsKey) as? Bool,
-               isConflicted {
+               isConflicted
+            {
                 updates.append(MetadataUpdate(projectId: projectId, status: .conflict, message: "Sync conflict detected"))
                 continue
             }
 
             // Check upload status first (takes priority)
             if let isUploading = item.value(forAttribute: NSMetadataUbiquitousItemIsUploadingKey) as? Bool,
-               isUploading {
+               isUploading
+            {
                 let percentUploaded = item.value(forAttribute: NSMetadataUbiquitousItemPercentUploadedKey) as? Double ?? 0
                 updates.append(MetadataUpdate(projectId: projectId, status: .syncing, message: "Uploading \(Int(percentUploaded))%..."))
                 continue
@@ -394,7 +420,8 @@ actor SyncManager {
             // Check download status
             if let downloadStatus = item.value(forAttribute: NSMetadataUbiquitousItemDownloadingStatusKey) as? String {
                 if downloadStatus == NSMetadataUbiquitousItemDownloadingStatusCurrent ||
-                   downloadStatus == NSMetadataUbiquitousItemDownloadingStatusDownloaded {
+                    downloadStatus == NSMetadataUbiquitousItemDownloadingStatusDownloaded
+                {
                     updates.append(MetadataUpdate(projectId: projectId, status: .synced, message: nil))
                 } else {
                     updates.append(MetadataUpdate(projectId: projectId, status: .syncing, message: "Downloading from iCloud..."))
@@ -442,7 +469,7 @@ actor SyncManager {
 
     /// List projects available in iCloud
     func listCloudProjects() async throws -> [SyncInfo] {
-        guard let iCloudURL = iCloudDocumentsURL else {
+        guard let iCloudURL = iCloudDocumentsURL() else {
             throw SyncError.iCloudNotAvailable
         }
 
@@ -457,7 +484,8 @@ actor SyncManager {
         for url in contents where url.pathExtension == "sanevideoproject" {
             let syncInfoURL = url.appendingPathComponent("sync_info.json")
             if let data = try? Data(contentsOf: syncInfoURL),
-               let syncInfo = try? JSONDecoder().decode(SyncInfo.self, from: data) {
+               let syncInfo = try? JSONDecoder().decode(SyncInfo.self, from: data)
+            {
                 projects.append(syncInfo)
             }
         }
@@ -467,7 +495,7 @@ actor SyncManager {
 
     /// Check if iCloud is available
     var isICloudAvailable: Bool {
-        iCloudDocumentsURL != nil
+        iCloudDocumentsURL() != nil
     }
 }
 
@@ -502,7 +530,7 @@ enum SyncError: LocalizedError {
             return "iCloud is not available. Please sign in to iCloud in System Settings."
         case .projectNotFound:
             return "Project not found in iCloud."
-        case .syncFailed(let error):
+        case let .syncFailed(error):
             return "Sync failed: \(error.localizedDescription)"
         case .conflictUnresolved:
             return "A sync conflict could not be resolved automatically."

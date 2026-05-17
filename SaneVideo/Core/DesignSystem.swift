@@ -47,8 +47,8 @@ enum Theme {
 
         // Semantic Text (Adapts to Light/Dark mode)
         static let textPrimary = Color(nsColor: .labelColor)
-        static let textSecondary = Color(nsColor: .secondaryLabelColor)
-        static let textTertiary = Color(nsColor: .tertiaryLabelColor)
+        static let textSecondary = Color.white.opacity(0.92)
+        static let textTertiary = Color.white.opacity(0.86)
 
         // UI ELEMENT COLORS
         static let cardBackground = Color.white.opacity(0.05)
@@ -201,7 +201,7 @@ extension Color {
     static let void = Color(hex: "0a0a0a")
     static let carbon = Color(hex: "141414")
     static let smoke = Color(hex: "222222")
-    static let stone = Color(nsColor: .secondaryLabelColor)
+    static let stone = Color.white.opacity(0.9)
     static let cloud = Color(nsColor: .labelColor)
     static let successGreen = Color(hex: "22c55e")
     static let warningOrange = Color(hex: "f59e0b")

@@ -2,6 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>AppStoreProductID</key>
+	<string>com.sanevideo.app.pro.unlock</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -18,28 +20,21 @@
 	<string>1</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>$(MACOSX_DEPLOYMENT_TARGET)</string>
-	<key>NSCameraUsageDescription</key>
-	<string>SaneVideo creates beautiful video content by accessing your camera. Your privacy is our priority—recordings stay on your Mac.</string>
 	<key>NSCameraReactionEffectsEnabled</key>
 	<false/>
+	<key>NSCameraUsageDescription</key>
+	<string>SaneVideo creates beautiful video content by accessing your camera. Your privacy is our priority—recordings stay on your Mac.</string>
+	<key>NSHighResolutionCapable</key>
+	<true/>
+	<key>NSHumanReadableCopyright</key>
+	<string>Copyright © 2026 SaneVideo. All rights reserved.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>SaneVideo captures crystal-clear audio to make your videos truly shine. Audio is processed locally and never leaves your device.</string>
-	<key>NSSpeechRecognitionUsageDescription</key>
-	<string>SaneVideo generates intelligent captions to make your content accessible to everyone. All processing happens on-device for maximum privacy.</string>
 	<key>NSScreenCaptureDescription</key>
 	<string>SaneVideo lets you record your screen effortlessly to create tutorials, demos, and professional content right from your Mac.</string>
 	<key>NSScreenCaptureUsageDescription</key>
 	<string>SaneVideo records your screen only when you start screen capture. Recordings stay on your Mac unless you export or share them.</string>
-	<key>NSHumanReadableCopyright</key>
-	<string>Copyright © 2025 SaneVideo. All rights reserved.</string>
-	<key>NSHighResolutionCapable</key>
-	<true/>
-	<!-- Sparkle Auto-Update Configuration -->
-	<key>SUFeedURL</key>
-	<string>https://sanevideo.com/appcast.xml</string>
-	<key>SUPublicEDKey</key>
-	<string>7Pl/8cwfb2vm4Dm65AByslkMCScLJ9tbGlwGGx81qYU=</string>
-	<!-- Private key stored in macOS Keychain as "EdDSA Private Key" -->
-	<!-- For launch: Manual check only (no automatic checks enabled) -->
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>SaneVideo generates intelligent captions to make your content accessible to everyone. All processing happens on-device for maximum privacy.</string>
 </dict>
 </plist>

@@ -5,25 +5,26 @@
     <link>https://sanevideo.com/appcast.xml</link>
     <description>Most recent SaneVideo updates.</description>
     <language>en</language>
-    <item>
-      <title>1.0</title>
-      <link>https://sanevideo.com/download</link>
-      <pubDate>Sun, 17 May 2026 14:23:31 -0400</pubDate>
-      <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
-      <description>
-        <![CDATA[
-        <h2>What's New</h2>
-        <ul>
-        <li>Initial SaneVideo release with local recording, editing, export, caption, and demo-pack workflows.</li>
-        </ul>
-        ]]>
-      </description>
-      <enclosure url="https://dist.sanevideo.com/updates/SaneVideo-1.0.zip"
-                 sparkle:version="1"
-                 sparkle:shortVersionString="1.0"
-                 length="8407803"
-                 type="application/octet-stream"
-                 sparkle:edSignature="F+KVmlChjoFJ5kCu/SLhmyeXdCL2VSaNveibgeZyHARLNLt/kXHJU8vfVLMTZFapBIdOjRZoCt/vUndDaxm2AA=="/>
-    </item>
-  </channel>
+    
+          <item>
+            <title>1.0</title>
+            <link>https://sanevideo.com/download</link>
+            <pubDate>Sun, 17 May 2026 15:06:47 -0400</pubDate>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <description>
+                <![CDATA[
+                <h2>What's New</h2>
+                <ul>
+                <li>Initial SaneVideo release with local recording, editing, export, caption, and demo-pack workflows.</li>
+                </ul>
+                ]]>
+            </description>
+            <enclosure url="https://dist.sanevideo.com/updates/SaneVideo-1.0.zip"
+                       sparkle:version="1"
+                       sparkle:shortVersionString="1.0"
+                       length="8406706"
+                       type="application/octet-stream"
+                       sparkle:edSignature="4vamIYslrEFLB50wWwOGH9dFPGeKYS7bV/9YgDzJR7ULgkh9PtsZLggjSwCAuqCFHHeLkJtHTANs96jMteC+Cg=="/>
+        </item>
+</channel>
 </rss>

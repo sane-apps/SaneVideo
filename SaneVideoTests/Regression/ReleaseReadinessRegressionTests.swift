@@ -78,6 +78,7 @@ final class ReleaseReadinessRegressionTests: XCTestCase {
     func testAppStoreLaneIsSeparateFromDirectSparkleLane() throws {
         let project = try String(contentsOf: sourceRoot.appendingPathComponent("project.yml"), encoding: .utf8)
         let appSource = try String(contentsOf: sourceRoot.appendingPathComponent("SaneVideo/SaneVideoApp.swift"), encoding: .utf8)
+        let directPlist = try String(contentsOf: sourceRoot.appendingPathComponent("SaneVideo/Info.plist"), encoding: .utf8)
         let appStorePlist = try String(contentsOf: sourceRoot.appendingPathComponent("SaneVideo/Info-AppStore.plist"), encoding: .utf8)
 
         XCTAssertTrue(project.contains("SaneVideoAppStore:"))
@@ -86,9 +87,13 @@ final class ReleaseReadinessRegressionTests: XCTestCase {
         XCTAssertTrue(project.contains("CODE_SIGN_IDENTITY: \"Apple Distribution\""))
         XCTAssertFalse(appSource.contains("https://go.saneapps.com/buy/sanevideo"))
         XCTAssertTrue(appSource.contains("LicenseService.directCheckoutURL(appSlug: \"sanevideo\")"))
+        XCTAssertTrue(directPlist.contains("<key>SUFeedURL</key>"))
+        XCTAssertTrue(directPlist.contains("<key>SUPublicEDKey</key>"))
+        XCTAssertTrue(directPlist.contains("<key>SUEnableInstallerLauncherService</key>"))
         XCTAssertTrue(appStorePlist.contains("<key>AppStoreProductID</key>"))
         XCTAssertFalse(appStorePlist.contains("SUFeedURL"))
         XCTAssertFalse(appStorePlist.contains("SUPublicEDKey"))
+        XCTAssertFalse(appStorePlist.contains("SUEnableInstallerLauncherService"))
     }
 
     func testAppStoreScreenshotStoryboardAndGeneratorCoverLaunchSellingPoints() throws {

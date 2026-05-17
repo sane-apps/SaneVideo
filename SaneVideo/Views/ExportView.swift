@@ -70,9 +70,8 @@ struct ExportView: View {
     // MARK: - Body
 
     var body: some View {
-        VStack(spacing: 24) {
-            // Header Section
-            VStack(spacing: 8) {
+        VStack(spacing: 16) {
+            HStack(spacing: 12) {
                 if isExporting {
                     LoadingIndicator(
                         message: exportProgress >= 1.0 ? "Finishing up..." : "Exporting...",
@@ -86,51 +85,31 @@ struct ExportView: View {
                     )
                     .transition(.smoothScale)
                 } else {
-                    Image(systemName: "film.stack")
-                        .font(.system(size: 48))
-                        .foregroundStyle(
-                            LinearGradient(
-                                colors: [Theme.Colors.accent, Theme.Colors.accentDeep],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        .padding(.bottom, 8)
-                        .smoothAppear()
-    
-                    Text(appState.currentProject?.name ?? "Untitled Project")
-                        .font(.title2)
-                        .fontWeight(.bold)
-                        .smoothAppear()
+                    ZStack {
+                        Circle()
+                            .fill(Theme.Colors.accent)
+                        Image(systemName: "square.and.arrow.up.fill")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundStyle(.white)
+                    }
+                    .frame(width: 34, height: 34)
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(String(localized: "export.title", defaultValue: "Export"))
+                            .saneReadableSectionTitle()
+                        Text(appState.currentProject?.name ?? "Untitled Project")
+                            .saneReadableSupportText()
+                            .lineLimit(1)
+                    }
+                    .smoothAppear()
+
+                    Spacer(minLength: 0)
                 }
             }
-            .padding(.top, 10)
             .animation(.smoothUI, value: isExporting)
             .animation(.smoothUI, value: youtubeService.isUploading)
 
-            FeatureCallout(
-                title: showYouTubeUpload ? "Local export first, upload second" : "Local-first export",
-                message: showYouTubeUpload
-                    ? "SaneVideo writes a local file to disk first, then uploads that file only because you turned YouTube on."
-                    : "Export File and Demo Pack write plain files to disk. Use YouTube only if you explicitly want a third-party upload.",
-                icon: showYouTubeUpload ? "arrow.up.circle.fill" : "externaldrive.fill.badge.checkmark",
-                tone: showYouTubeUpload ? .warning : .accent
-            )
-    
-            // YouTube Config
-            ExportYouTubeSection(
-                youtubeService: youtubeService,
-                showYouTubeUpload: $showYouTubeUpload,
-                videoTitle: $videoTitle,
-                videoDescription: $videoDescription,
-                isGeneratingAI: $isGeneratingAI,
-                hasCaptions: hasCaptions,
-                onGenerateAI: generateAITitleDescription
-            )
-    
-            // Primary Actions
             HStack(spacing: 16) {
-                // Hero Export Button (Most prominent)
                 Button {
                     ServiceContainer.shared.hapticsManager.impact()
                     if hasMultipleClipsSelected {
@@ -156,8 +135,7 @@ struct ExportView: View {
                 .keyboardShortcut(.defaultAction)
                 .accessibilityIdentifier("export.action.primary")
                 .help(hasMultipleClipsSelected ? "Exports each selected clip as its own local file." : (showYouTubeUpload ? "Exports a local file and then uploads it to YouTube." : "Exports a standalone local video file."))
-    
-                // YouTube Toggle
+
                 Button {
                     withAnimation {
                         showYouTubeUpload.toggle()
@@ -168,9 +146,9 @@ struct ExportView: View {
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.large)
-                .disabled(isExporting || youtubeService.isUploading)
+                .disabled(isExporting || youtubeService.isUploading || !YouTubeService.uploadFeatureEnabled)
                 .accessibilityIdentifier("export.action.toggle_youtube")
-                .help("Shows or hides the optional YouTube upload fields. Leave it off for a fully local workflow.")
+                .help(YouTubeService.uploadFeatureEnabled ? "Shows or hides the optional YouTube upload fields. Leave it off for a fully local workflow." : "YouTube upload is not available in this build. Export a local file and upload it manually.")
     
                 Button {
                     ServiceContainer.shared.hapticsManager.selection()
@@ -182,29 +160,37 @@ struct ExportView: View {
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.large)
-                .disabled(isExporting || youtubeService.isUploading)
+                .disabled(isExporting || youtubeService.isUploading || isTimelineEmpty)
                 .accessibilityIdentifier("export.action.share_link")
-                .help("Exports a local file and opens the system share sheet for that file.")
+                .help(isTimelineEmpty ? "Add a clip before sharing an exported file." : "Exports a local file and opens the system share sheet for that file.")
             }
 
-            HelperText(
-                text: hasMultipleClipsSelected
-                    ? "Batch Export writes one file per selected clip. Use Demo Pack when you want a packaged set of assets for one polished demo."
-                    : "Export File is the quick path. Use Demo Pack when you want the video plus thumbnail, transcript, notes, chapters, and metadata together.",
-                icon: "shippingbox.fill"
-            )
-    
-            // Export Settings Configuration
-            ExportConfigurationView(
-                exportSettings: $exportSettings,
-                selectedPreset: $selectedPreset,
-                mlEffects: $mlEffects,
-                estimateFileSize: estimateFileSize
-            )
-            .disabled(isExporting || youtubeService.isUploading)
+            ScrollView {
+                VStack(spacing: 12) {
+                    ExportYouTubeSection(
+                        youtubeService: youtubeService,
+                        showYouTubeUpload: $showYouTubeUpload,
+                        videoTitle: $videoTitle,
+                        videoDescription: $videoDescription,
+                        isGeneratingAI: $isGeneratingAI,
+                        hasCaptions: hasCaptions,
+                        onGenerateAI: generateAITitleDescription
+                    )
+
+                    ExportConfigurationView(
+                        exportSettings: $exportSettings,
+                        selectedPreset: $selectedPreset,
+                        mlEffects: $mlEffects,
+                        estimateFileSize: estimateFileSize
+                    )
+                    .disabled(isExporting || youtubeService.isUploading)
+                }
+                .padding(.vertical, 2)
+            }
+            .scrollIndicators(.visible)
+            .frame(maxHeight: 560)
     
             HStack {
-                // Additional Export Options
                 Menu {
                     Button(String(localized: "export.option.demo_pack", defaultValue: "Export Demo Pack"), action: exportDemoPack)
                     Button(String(localized: "export.option.demo_studio", defaultValue: "Demo Studio Settings")) {
@@ -234,8 +220,8 @@ struct ExportView: View {
                 .controlSize(.regular)
             }
         }
-        .padding(32)
-        .frame(width: 520)
+        .padding(20)
+        .frame(width: 560)
         .sanePanel(radius: 18, emphasized: true, accent: Theme.Colors.accentSoft)
         .accessibilityIdentifier(AccessibilityIdentifiers.exportSheet)
         .onAppear {

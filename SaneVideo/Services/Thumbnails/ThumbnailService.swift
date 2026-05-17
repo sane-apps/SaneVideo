@@ -183,6 +183,12 @@ actor ThumbnailService: ThumbnailServiceProtocol {
     ///   - strategy: Scoring strategy to use (defaults to .aesthetic)
     /// - Returns: The best-scored NSImage
     func generateBestThumbnail(for url: URL, strategy: ThumbnailScoringStrategy = .aesthetic) async throws -> UncheckedBox<NSImage> {
+        try await withSecurityScopedAccess(to: url) {
+            try await generateBestThumbnailWithAccess(for: url, strategy: strategy)
+        }
+    }
+
+    private func generateBestThumbnailWithAccess(for url: URL, strategy: ThumbnailScoringStrategy) async throws -> UncheckedBox<NSImage> {
         let asset = AVURLAsset(url: url)
         let duration = try await asset.load(.duration)
         let durationSeconds = CMTimeGetSeconds(duration)
@@ -245,6 +251,12 @@ actor ThumbnailService: ThumbnailServiceProtocol {
     /// Generates a smart thumbnail and saves it to disk (for project thumbnails)
     /// - Returns: The local URL of the saved JPEG thumbnail
     func generateSmartThumbnail(for url: URL, strategy: ThumbnailScoringStrategy = .faceQuality) async throws -> URL {
+        try await withSecurityScopedAccess(to: url) {
+            try await generateSmartThumbnailWithAccess(for: url, strategy: strategy)
+        }
+    }
+
+    private func generateSmartThumbnailWithAccess(for url: URL, strategy: ThumbnailScoringStrategy) async throws -> URL {
         AppLogger.vision.info("🖼️ ThumbnailService: Generating smart thumbnail for \(url.lastPathComponent)")
 
         let asset = AVURLAsset(url: url)
@@ -292,6 +304,20 @@ actor ThumbnailService: ThumbnailServiceProtocol {
         AppLogger.vision.info("🖼️ ThumbnailService: Selected frame at \(bestTime.seconds)s with score \(String(format: "%.2f", maxScore))")
 
         return try saveThumbnail(image: highResImage, filename: url.lastPathComponent)
+    }
+
+    private func withSecurityScopedAccess<T>(
+        to url: URL,
+        operation: () async throws -> T
+    ) async throws -> T {
+        let isAccessing = url.startAccessingSecurityScopedResource()
+        defer {
+            if isAccessing {
+                url.stopAccessingSecurityScopedResource()
+            }
+        }
+
+        return try await operation()
     }
 
     // MARK: - Private Scoring Helpers
@@ -348,8 +374,7 @@ actor ThumbnailService: ThumbnailServiceProtocol {
 
     private func saveThumbnail(image: CGImage, filename: String) throws -> URL {
         let fileManager = FileManager.default
-        let docs = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
-        let thumbDir = docs.appendingPathComponent("Thumbnails")
+        let thumbDir = try thumbnailDirectory(fileManager: fileManager)
 
         try fileManager.createDirectory(at: thumbDir, withIntermediateDirectories: true)
 
@@ -370,5 +395,15 @@ actor ThumbnailService: ThumbnailServiceProtocol {
 
         try (outputData as Data).write(to: fileURL)
         return fileURL
+    }
+
+    private func thumbnailDirectory(fileManager: FileManager) throws -> URL {
+        guard let supportURL = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else {
+            throw ThumbnailError.visionRequestFailed
+        }
+
+        return supportURL
+            .appendingPathComponent("SaneVideo", isDirectory: true)
+            .appendingPathComponent("Thumbnails", isDirectory: true)
     }
 }

@@ -44,7 +44,8 @@ settings:
   ENABLE_HARDENED_RUNTIME: YES
 packages:
   SaneUI:
-    path: ../../infra/SaneUI
+    url: https://github.com/sane-apps/SaneUI.git
+    branch: main
   argmax-oss-swift:
     url: https://github.com/argmaxinc/argmax-oss-swift
     from: 1.0.0
@@ -74,6 +75,12 @@ schemes:
       config: Debug
     archive:
       config: Release
+  SaneVideoAppStore:
+    build:
+      targets:
+        SaneVideoAppStore: all
+    archive:
+      config: Release-AppStore
 targets:
   SaneVideo:
     type: application
@@ -90,6 +97,8 @@ targets:
         INFOPLIST_FILE: SaneVideo/Info.plist
         PRODUCT_NAME: SaneVideo
         PRODUCT_BUNDLE_IDENTIFIER: com.sanevideo.app
+        MARKETING_VERSION: 1.0
+        CURRENT_PROJECT_VERSION: 1
         ENABLE_PREVIEWS: YES
         SWIFT_VERSION: 6.2
         SWIFT_STRICT_CONCURRENCY: complete
@@ -119,13 +128,6 @@ targets:
           DEVELOPMENT_TEAM: M78L6FXD48
           CODE_SIGN_IDENTITY: "Developer ID Application"
           CODE_SIGN_ENTITLEMENTS: SaneVideo/SaneVideo.entitlements
-        Release-AppStore:
-          PRODUCT_BUNDLE_IDENTIFIER: com.sanevideo.app
-          DEVELOPMENT_TEAM: M78L6FXD48
-          CODE_SIGN_IDENTITY: "Apple Development"
-          CODE_SIGN_STYLE: Automatic
-          CODE_SIGN_ENTITLEMENTS: SaneVideo/SaneVideo-AppStore.entitlements
-          OTHER_SWIFT_FLAGS: "-D APP_STORE"
     preCompileScripts:
       - script: |
           export PATH="$PATH:/opt/homebrew/bin"
@@ -151,39 +153,69 @@ targets:
           fi
         name: Run SwiftLint
         basedOnDependencyAnalysis: false
+  SaneVideoAppStore:
+    type: application
+    platform: macOS
+    productName: SaneVideo
+    bundleId: com.sanevideo.app
+    deploymentTarget:
+      macOS: 15.0
+    sources:
+      - path: SaneVideo
+        excludes:
+          - "**/CLAUDE.md"
+    settings:
+      base:
+        INFOPLIST_FILE: SaneVideo/Info-AppStore.plist
+        PRODUCT_NAME: SaneVideo
+        PRODUCT_BUNDLE_IDENTIFIER: com.sanevideo.app
+        MARKETING_VERSION: 1.0
+        CURRENT_PROJECT_VERSION: 1
+        ENABLE_PREVIEWS: YES
+        SWIFT_VERSION: 6.2
+        SWIFT_STRICT_CONCURRENCY: complete
+        MACOSX_DEPLOYMENT_TARGET: 15.0
+        ARCHS: arm64
+        VALID_ARCHS: arm64
+        MTL_ENABLE_APPLE_SILICON_ONLY_OPTIMIZATIONS: YES
+        ENABLE_USER_SCRIPT_SANDBOXING: NO
+        CODE_SIGN_INJECT_BASE_ENTITLEMENTS: YES
+        DEAD_CODE_STRIPPING: YES
+        SWIFT_EMIT_LOC_STRINGS: YES
+        ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS: YES
+        GCC_PREPROCESSOR_DEFINITIONS: CI_SILENCE_GL_DEPRECATION=1
+      configs:
+        Release-AppStore:
+          PRODUCT_BUNDLE_IDENTIFIER: com.sanevideo.app
+          DEVELOPMENT_TEAM: M78L6FXD48
+          CODE_SIGN_IDENTITY: "Apple Distribution"
+          CODE_SIGN_STYLE: Manual
+          CODE_SIGN_ENTITLEMENTS: SaneVideo/SaneVideo-AppStore.entitlements
+          PROVISIONING_PROFILE_SPECIFIER: "SaneVideo Mac App Store"
+          OTHER_SWIFT_FLAGS: "-D APP_STORE"
+          INFOPLIST_KEY_AppStoreProductID: com.sanevideo.app.pro.unlock
+    preCompileScripts:
       - script: |
-          if [ "$CONFIGURATION" == "Release-AppStore" ]; then
-            echo "Replacing Sparkle with empty stub for App Store build..."
-            SPARKLE_FW="${BUILT_PRODUCTS_DIR}/${FRAMEWORKS_FOLDER_PATH}/Sparkle.framework"
-            if [ -d "${SPARKLE_FW}" ]; then
-              # Preserve Info.plist before nuking
-              PLIST_TMP="/tmp/sparkle_info_$$.plist"
-              cp "${SPARKLE_FW}/Versions/B/Resources/Info.plist" "${PLIST_TMP}" 2>/dev/null || true
-              # Nuke entire framework (removes nested Updater.app, XPCServices, etc.)
-              rm -rf "${SPARKLE_FW}"
-              # Recreate clean minimal framework structure
-              mkdir -p "${SPARKLE_FW}/Versions/B/Resources"
-              # Create stub dylib that satisfies LC_LOAD_DYLIB
-              printf 'void __sparkle_stub(void){}\n' | \
-                xcrun clang -x c - -dynamiclib \
-                  -install_name "@rpath/Sparkle.framework/Versions/B/Sparkle" \
-                  -o "${SPARKLE_FW}/Versions/B/Sparkle" 2>/dev/null
-              # Restore preserved Info.plist
-              if [ -f "${PLIST_TMP}" ]; then
-                mv "${PLIST_TMP}" "${SPARKLE_FW}/Versions/B/Resources/Info.plist"
-              fi
-              # Create required framework symlinks
-              ln -sfn B "${SPARKLE_FW}/Versions/Current"
-              ln -sfn Versions/Current/Sparkle "${SPARKLE_FW}/Sparkle"
-              ln -sfn Versions/Current/Resources "${SPARKLE_FW}/Resources"
-              # Sign: stub binary first, then framework bundle
-              /usr/bin/codesign --force --sign "${EXPANDED_CODE_SIGN_IDENTITY}" "${SPARKLE_FW}/Versions/B/Sparkle" 2>&1
-              /usr/bin/codesign --force --sign "${EXPANDED_CODE_SIGN_IDENTITY}" "${SPARKLE_FW}" 2>&1
-              echo "Sparkle stubbed successfully"
-            fi
-            rm -rf "${BUILT_PRODUCTS_DIR}/${FRAMEWORKS_FOLDER_PATH}/Sparkle_XPCServices.framework" 2>/dev/null || true
+          export PATH="$PATH:/opt/homebrew/bin"
+          if which swiftformat >/dev/null; then
+            swiftformat .
+          else
+            echo "warning: SwiftFormat not installed"
           fi
-        name: Stub Sparkle (App Store)
+        name: SwiftFormat Auto-fix
+        basedOnDependencyAnalysis: false
+    dependencies:
+      - package: SaneUI
+      - package: argmax-oss-swift
+        product: WhisperKit
+    postCompileScripts:
+      - script: |
+          if which swiftlint >/dev/null; then
+            swiftlint "${SRCROOT}/SaneVideo" || true
+          else
+            echo "warning: SwiftLint not installed, download from https://github.com/realm/SwiftLint"
+          fi
+        name: Run SwiftLint
         basedOnDependencyAnalysis: false
   SaneVideoTests:
     type: bundle.unit-test

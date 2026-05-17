@@ -1,0 +1,57 @@
+product: SaneVideo
+audience: Mac creators who need private recording, editing, and export without a subscription.
+offer: Local-first video workflow with Basic recording/editing/export and an optional Pro unlock.
+primary_proof: Clean Mac screenshots that show recording, timeline editing, local export presets, and creator packaging without desktop clutter or disabled-feature messaging.
+generator: scripts/generate_appstore_screenshots.swift
+platforms:
+  macos:
+    - file: Screenshots/appstore-01-recording-dark-mac.png
+      title: Record screen, camera, and mic
+      purpose: Show SaneVideo as a native recording surface with camera, microphone, and screen controls ready.
+      must_show:
+        - SaneVideo branded recording window
+        - camera preview
+        - microphone, screen, and record controls
+        - permission clarity without a system prompt
+      must_not_show:
+        - menu bar
+        - Dock
+        - desktop files
+        - build timestamp
+        - disabled or coming-soon copy
+    - file: Screenshots/appstore-02-editing-dark-mac.png
+      title: Edit locally on a timeline
+      purpose: Show imported clips, timeline editing, and inspector tools in a populated local project.
+      must_show:
+        - populated media sidebar
+        - preview canvas
+        - timeline with clips and playhead
+        - inspector tools for polish
+      must_not_show:
+        - empty states
+        - debug controls
+        - Finder windows
+    - file: Screenshots/appstore-03-export-dark-mac.png
+      title: Export local files with presets
+      purpose: Show export presets and local file output as the app's strongest launch export story.
+      must_show:
+        - export sheet fitting fully on screen
+        - 4K, 1080p, vertical, and small-file presets
+        - local export emphasis
+        - readable format and estimated size controls
+      must_not_show:
+        - YouTube upload unavailable as the primary message
+        - clipped controls
+        - unreadable gray text
+    - file: Screenshots/appstore-04-captions-demo-pack-dark-mac.png
+      title: Captions and demo packs
+      purpose: Show creator packaging tools that turn local edits into publishable assets.
+      must_show:
+        - captions or transcript workflow
+        - demo pack outputs
+        - privacy/local-first reassurance
+        - polished completed state
+      must_not_show:
+        - disabled iCloud
+        - coming later language
+        - permission popups

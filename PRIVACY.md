@@ -1,41 +1,48 @@
 # Privacy Policy
 
-**Last updated: January 19, 2026**
+**Last updated: May 12, 2026**
 
 SaneVideo is designed with privacy as a core principle. This document explains how the app handles your data.
 
 ## Our Philosophy
 
-**Your data stays on your device.** Period.
+**Your projects stay local by default.** Recording, editing, and local export happen on your Mac unless you explicitly choose an external workflow.
 
 ## Data Collection
 
 ### What We DON'T Collect
-- No analytics or telemetry
 - No crash reports sent externally
-- No usage statistics
 - No personal information
-- No video content is ever uploaded
+- No video content is uploaded by default
 
 ### What Stays Local
 - **Video files** - Processed entirely on your device
 - **Preferences** - Stored in macOS defaults system
 - **Temporary files** - Cleaned up after processing
 
+### Limited Network Uses
+- **Updates** - Sparkle checks whether a newer app build exists
+- **Licensing** - License status may be checked when you activate or validate Pro
+- **Aggregate app counts** - SaneApps may receive privacy-safe aggregate counts that are not project content
+- **Optional integrations** - Third-party upload/API features only use the network when you configure and choose them
+
 ## Permissions Used
 
 ### File System Access
 - **Application Support** - To store preferences
 - **User-selected files** - Only files you explicitly open
+- **Movies/Desktop** - To save projects, recordings, and default exports
+- **iCloud Drive** - Only if you enable optional iCloud sync
 
-### Camera/Microphone (if applicable)
-- Only accessed when you explicitly record
+### Camera/Microphone/Screen Recording
+- Only accessed when you explicitly record or enable camera/screen capture
 - Never accessed in background
 - No data transmitted
+- Screen Recording is controlled by macOS System Settings and may require restarting SaneVideo after approval
 
 ## Third-Party Services
 
-SaneVideo uses no third-party services, SDKs, or analytics.
+SaneVideo does not send your project media to third-party services by default. Optional upload/API integrations are separate from normal local recording and editing and require your explicit setup.
 
 ## Auto-Updates
 
@@ -55,20 +62,20 @@ You have full control:
 
 To remove all SaneVideo data:
 ```bash
-# Remove application
-rm -rf /Applications/SaneVideo.app
+# Move application to Trash
+trash /Applications/SaneVideo.app
 
 # Remove preferences
 defaults delete com.sanevideo.app
 
-# Remove application data
-rm -rf ~/Library/Application\ Support/SaneVideo
-rm -rf ~/Library/Caches/com.sanevideo.app
+# Move application data to Trash
+trash ~/Library/Application\ Support/SaneVideo
+trash ~/Library/Caches/com.sanevideo.app
 ```
 
 ## Contact
 
-Questions about privacy? Open an issue on [GitHub](https://github.com/sane-apps/SaneVideo/issues/new?template=bug_report.md).
+Questions about privacy? Email [hi@saneapps.com](mailto:hi@saneapps.com). Do not put private video names, paths, or customer data in a public issue.
 
 ## Changes
 

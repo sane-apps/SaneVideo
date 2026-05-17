@@ -125,6 +125,41 @@ struct CameraStateTests {
         // No state change expected since camera wasn't active
     }
 
+    @Test("Stop camera tears down stale inactive session")
+    func stopCameraStopsStaleInactiveSession() {
+        let mock = CameraServiceProtocolMock(isActive: false, session: AVCaptureSession())
+        let cameraState = CameraState(cameraService: mock)
+
+        cameraState.stopCamera()
+
+        #expect(mock.stopCallCount == 1)
+    }
+
+    @Test("Start camera times out instead of loading forever")
+    func startCameraTimesOutInsteadOfLoadingForever() async {
+        let mock = CameraServiceProtocolMock()
+        mock.startHandler = {
+            try await Task.sleep(nanoseconds: 5_000_000_000)
+        }
+        let cameraState = CameraState(
+            cameraService: mock,
+            startTimeoutNanoseconds: 50_000_000,
+            usePermissionlessTestFastPath: false,
+            cameraAuthorizationStatus: { .authorized }
+        )
+
+        let didStart = await withCheckedContinuation { continuation in
+            cameraState.startCamera { didStart in
+                continuation.resume(returning: didStart)
+            }
+        }
+
+        #expect(didStart == false)
+        #expect(mock.stopCallCount == 1)
+        #expect(cameraState.lastError?.localizedDescription.contains("timed out") == true)
+        #expect(cameraState.shouldShowLivePreview == false)
+    }
+
     // MARK: - Camera Switching Tests
 
     @Test("Switch camera method exists", .disabled("Requires AVCaptureDevice"))
@@ -166,6 +201,38 @@ struct CameraStateTests {
 
         #expect(cameraState.shouldShowCameraSurface == true)
         #expect(cameraState.shouldShowLivePreview == false)
+    }
+
+    @Test("Session publisher updates camera preview state")
+    func sessionPublisherUpdatesCameraPreviewState() async throws {
+        let mock = CameraServiceProtocolMock()
+        let cameraState = CameraState(cameraService: mock)
+        let session = AVCaptureSession()
+
+        mock.session = session
+        mock.hasVideoSignal = true
+        mock.sessionPublisherSubject.send(session)
+
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        #expect(cameraState.session === session)
+        #expect(cameraState.shouldShowCameraSurface == true)
+        #expect(cameraState.shouldShowLivePreview == true)
+    }
+
+    @Test("Signal and error publishers update camera preview state")
+    func signalAndErrorPublishersUpdateCameraPreviewState() async throws {
+        let mock = CameraServiceProtocolMock(session: AVCaptureSession())
+        let cameraState = CameraState(cameraService: mock)
+
+        mock.hasVideoSignal = true
+        mock.lastError = .cameraUnavailable
+
+        try await Task.sleep(nanoseconds: 50_000_000)
+
+        #expect(cameraState.hasVideoSignal == true)
+        #expect(cameraState.shouldShowLivePreview == true)
+        #expect(cameraState.lastError?.localizedDescription == AppError.cameraUnavailable.localizedDescription)
     }
 
     @Test("Live preview becomes visible when active signal is present")

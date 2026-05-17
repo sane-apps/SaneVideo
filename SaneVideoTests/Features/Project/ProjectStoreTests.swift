@@ -20,6 +20,21 @@ struct ProjectStoreTests {
 
     // MARK: - Tests
 
+    @Test("Default project fallback stays out of Documents")
+    func defaultProjectFallbackStaysOutOfDocuments() {
+        let support = URL(fileURLWithPath: "/Users/tester/Library/Application Support")
+        let temporary = URL(fileURLWithPath: "/tmp")
+
+        let directory = ProjectStore.defaultProjectsDirectory(
+            moviesDirectory: nil,
+            applicationSupportDirectory: support,
+            temporaryDirectory: temporary
+        )
+
+        #expect(directory.path == "/Users/tester/Library/Application Support/SaneVideo/Projects")
+        #expect(!directory.path.contains("/Documents/"))
+    }
+
     @Test("Save and load project persistence")
     func saveAndLoadProject() async throws {
         let tempDir = Self.createTempDir()

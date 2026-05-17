@@ -18,7 +18,22 @@ struct ExportYouTubeSection: View {
     let onGenerateAI: () -> Void
 
     var body: some View {
-        if showYouTubeUpload {
+        if !YouTubeService.uploadFeatureEnabled {
+            HStack(spacing: 10) {
+                Image(systemName: "play.slash.fill")
+                    .foregroundStyle(.orange)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("YouTube upload unavailable")
+                        .saneReadableBodyStrong()
+                    Text("Export a local file and upload it manually.")
+                        .saneReadableSupportText()
+                }
+                Spacer(minLength: 0)
+            }
+            .padding(12)
+            .sanePanel(radius: 12, accent: .orange)
+            .accessibilityIdentifier("export.youtube.unavailable")
+        } else if showYouTubeUpload {
             GroupBox {
                 VStack(alignment: .leading, spacing: 12) {
                     FeatureCallout(

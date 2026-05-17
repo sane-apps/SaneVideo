@@ -30,12 +30,13 @@
   - App Store screenshots were regenerated as native `2880x1800` Mac assets from `scripts/generate_appstore_screenshots.swift`, uploaded to ASC, and the old rejected/human-image IAP review screenshot was deleted and replaced. Rejected local images were moved to `~/Desktop/Screenshots/SaneVideo-rejected-20260517/`.
   - Created/installed `SaneVideo Mac App Store` provisioning profile through App Store Connect API, bound to `Apple Distribution: Stephan Joseph (M78L6FXD48)`, UUID `d01d34c4-6379-4b57-a670-6ba7083cea7c`.
   - No open GitHub issues were returned by `gh issue list --limit 20`.
-  - Release pipeline note: first `release.sh --full --version 1.0 --deploy` attempt passed the public source-build guard after the SaneUI package fix, then stopped because the release script requires a clean git tree. Commit the release candidate, then rerun the same release command.
+  - Direct release pipeline stopped once on Sparkle sandbox validation because `SUEnableInstallerLauncherService` was missing from the direct Info.plist. Fixed by adding it to `SaneVideo/Info.plist` only and extending the App Store/direct-lane regression so App Store remains Sparkle-free.
+  - `./scripts/SaneMaster.rb verify` passed after the Sparkle launcher fix with `1198 tests` in `287s`.
 
 ## Active Research Topics
 
 - `.claude/research.md` topic `2026-05-16 Camera/Recording/Export V1 Runtime Proof` now includes 2026-05-17 release-readiness updates and should be graduated into `ARCHITECTURE.md`/`DEVELOPMENT.md` after the first published build.
-- Current active blockers: clean-tree release commit before rerunning `release.sh --full --version 1.0 --deploy`, pending customer email, and Homebrew cask 404. App Store app/IAP/screenshot setup is no longer a hard blocker.
+- Current active blockers: commit/push/sync the Sparkle launcher fix before rerunning `release.sh --full --version 1.0 --deploy`, pending customer email, and Homebrew cask 404. App Store app/IAP/screenshot setup is no longer a hard blocker.
 
 ## Feature Requests / Demand Signals
 

@@ -92,6 +92,8 @@ targets:
       - path: SaneVideo
         excludes:
           - "**/CLAUDE.md"
+          - "Info.plist"
+          - "Info-AppStore.plist"
     settings:
       base:
         INFOPLIST_FILE: SaneVideo/Info.plist
@@ -164,6 +166,8 @@ targets:
       - path: SaneVideo
         excludes:
           - "**/CLAUDE.md"
+          - "Info.plist"
+          - "Info-AppStore.plist"
     settings:
       base:
         INFOPLIST_FILE: SaneVideo/Info-AppStore.plist

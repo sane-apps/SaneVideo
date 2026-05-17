@@ -20,6 +20,23 @@
   - Important TCC lesson: repeated Camera/Microphone prompts during this debug cycle are expected because `/Applications/SaneVideo.app` is ad-hoc signed and the code hash changes after rebuilds. Use a stable Developer ID/App Store signed build before using "permission prompt only happens once" as release evidence. Finder launch gives more customer-equivalent permission behavior than Codex/test-mode launch.
 
 - 2026-05-17 release status:
+  - SaneVideo v1 direct-download release is live:
+    - ZIP: `https://dist.sanevideo.com/updates/SaneVideo-1.0.zip`
+    - Website/appcast: `https://sanevideo.com/` and `https://sanevideo.com/appcast.xml`
+    - Sparkle metadata: version `1.0`, build `1`, size `8406706`, signature `4vamIYslrEFLB50wWwOGH9dFPGeKYS7bV/9YgDzJR7ULgkh9PtsZLggjSwCAuqCFHHeLkJtHTANs96jMteC+Cg==`.
+  - SaneVideo v1 Mac App Store submission is complete. App Store Connect API reports macOS version `1.0` state `WAITING_FOR_REVIEW`.
+  - Final ASC blockers cleared on 2026-05-17:
+    - App Privacy published as `Data Not Collected` via signed-in Safari after full-screen visual confirmation.
+    - App pricing set to free via `POST /v1/appPriceSchedules` using the free USA app price point.
+    - Age rating declaration completed on the `appInfos` age-rating resource.
+    - App category mapped to `PHOTO_AND_VIDEO` from `public.app-category.video`.
+  - Product screenshots submitted to ASC are only the inspected deterministic Mac assets:
+    - `Screenshots/appstore-01-recording-dark-mac.png`
+    - `Screenshots/appstore-02-editing-dark-mac.png`
+    - `Screenshots/appstore-03-export-dark-mac.png`
+    - `Screenshots/appstore-04-captions-demo-pack-dark-mac.png`
+    - All four are `2880x1800`, have no human still, no permission prompt, no clipped source text, and cover camera loaded, editing, export, captions/demo pack, and no-cloud/local-first selling points.
+  - `./scripts/SaneMaster.rb verify --quiet --no-grant-permissions --timeout 900` passed on the Mini with `1198 tests` in `286s` after the App Store submission. The earlier `appstore_preflight` run hung because the permission-grant AppleScript stayed alive while `xcodebuild` idled; rerun preflight with `SANEMASTER_GRANT_PERMISSIONS=0` for unattended verification.
   - `./scripts/SaneMaster.rb verify` passed on the Mini after switching SaneUI from local path to remote package with `1197 tests` in about `297s`.
   - `./scripts/SaneMaster.rb release_preflight` **passes**. Warnings only: uncommitted files before the release commit, pending customer email, and Homebrew tap cask 404.
   - Customer UI contract now **passes** for 19 customer actions with current `.sane/customer_ui_action_receipt.json` source fingerprint and path-backed evidence. Caveat: this is contract/receipt evidence plus existing screenshots, not a fresh click-through recording for every action.
@@ -36,7 +53,7 @@
 ## Active Research Topics
 
 - `.claude/research.md` topic `2026-05-16 Camera/Recording/Export V1 Runtime Proof` now includes 2026-05-17 release-readiness updates and should be graduated into `ARCHITECTURE.md`/`DEVELOPMENT.md` after the first published build.
-- Current active blockers: commit/push/sync the Sparkle sandbox entitlement fix before rerunning `release.sh --full --version 1.0 --deploy`, pending customer email, and Homebrew cask 404. App Store app/IAP/screenshot setup is no longer a hard blocker.
+- Current active blockers: none for SaneVideo v1 direct release or App Store submission. Operational warnings remain outside the SaneVideo binary path: pending customer email surfaced by release preflight and Homebrew cask 404.
 
 ## Feature Requests / Demand Signals
 

@@ -220,7 +220,6 @@
 		4CC287A9110392002E7FA14F /* MemoryManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58F1FE2F80F34F0B4CB0640A /* MemoryManager.swift */; };
 		4D2A6100145B8A3266CAAE28 /* TransformCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 228FB3C2D1078B3A44B07192 /* TransformCalculator.swift */; };
 		4D3F475F7401256B4A0EA62B /* VideoClipTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B04BDF37EFB749EC2EF3FA80 /* VideoClipTests.swift */; };
-		4D8C7E05AA209AFE722816B6 /* Info-AppStore.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1EC0C8D09AE05BC1C8485D72 /* Info-AppStore.plist */; };
 		4DF53CC5D3B78AC02D17CAEF /* LogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3876A0E22E0EB36CBFCA8D6C /* LogView.swift */; };
 		4E5ED84EB1AD64DCF5512747 /* CameraManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F40AC7645DC3D543EFE8B0FD /* CameraManager.swift */; };
 		4EAAAEE797909FDA45D5FB05 /* SaneVideoCompositor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31BDEC6AAB2C0D05E6B51B10 /* SaneVideoCompositor.swift */; };
@@ -319,7 +318,6 @@
 		6E9BC1903B178E2F3E278E47 /* WaveformServiceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E95DD46C1AF59B7E00A732E /* WaveformServiceProtocol.swift */; };
 		6EA3DED19D062E1A0059E81A /* ClickTrackingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC7D45CC0198AEA7FA43B672 /* ClickTrackingService.swift */; };
 		6EB8949ED35EE9741FB7B578 /* VisionOrchestratorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F94EB4DA208EBADEC48DC3D3 /* VisionOrchestratorTests.swift */; };
-		6F0A399897D37A8895B6C017 /* Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = EFE94457572236D789E61F48 /* Info.plist */; };
 		6F0E642EA9B456EB09367F16 /* ProjectTemplateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A0AFBE47D79ECC695F88A91 /* ProjectTemplateTests.swift */; };
 		6F98C2B00609048A9CC38311 /* TemplateStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6299CB90275D2D5913FE2304 /* TemplateStoreTests.swift */; };
 		6FF5DC7397CED58733FB172D /* SaneAudioEnhancementService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20CD4449178A6006F4EA43A /* SaneAudioEnhancementService.swift */; };
@@ -774,7 +772,6 @@
 		1D4C444510E4293654872089 /* VideoClip+TimeMapping.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "VideoClip+TimeMapping.swift"; sourceTree = "<group>"; };
 		1D9D206CAEC553C2BDBF5417 /* ProjectState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectState.swift; sourceTree = "<group>"; };
 		1E95DD46C1AF59B7E00A732E /* WaveformServiceProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WaveformServiceProtocol.swift; sourceTree = "<group>"; };
-		1EC0C8D09AE05BC1C8485D72 /* Info-AppStore.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "Info-AppStore.plist"; sourceTree = "<group>"; };
 		1F3AA6410B030AF7E0B67886 /* PlatformPresetRegressionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlatformPresetRegressionTests.swift; sourceTree = "<group>"; };
 		1FFE8D509644A0AE3DDE5E32 /* stress_test_clip.mp4 */ = {isa = PBXFileReference; path = stress_test_clip.mp4; sourceTree = "<group>"; };
 		203694E166EB409E28F6FFEF /* AppState+Actions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppState+Actions.swift"; sourceTree = "<group>"; };
@@ -1111,7 +1108,6 @@
 		EEF55C3966A3B7D211C3B65B /* AppLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLogger.swift; sourceTree = "<group>"; };
 		EF15C922B8E2FF84DAF74B74 /* APIKeysSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIKeysSettingsView.swift; sourceTree = "<group>"; };
 		EF6AFC3AD3F0B7C8340415ED /* ServiceContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServiceContainer.swift; sourceTree = "<group>"; };
-		EFE94457572236D789E61F48 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		F00B1BA84A181A551D83445C /* BuildTimestampView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildTimestampView.swift; sourceTree = "<group>"; };
 		F04B1148BF6BC5690EC341CB /* ThermalManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThermalManagerTests.swift; sourceTree = "<group>"; };
 		F09011730614A0E4A6FBC804 /* SentimentAnalysisService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SentimentAnalysisService.swift; sourceTree = "<group>"; };
@@ -1629,8 +1625,6 @@
 			isa = PBXGroup;
 			children = (
 				49BDF61A4AC252EFBB5CEF9F /* Assets.xcassets */,
-				1EC0C8D09AE05BC1C8485D72 /* Info-AppStore.plist */,
-				EFE94457572236D789E61F48 /* Info.plist */,
 				578F5D49AE23B2ECB6C05B2F /* Localizable.xcstrings */,
 				91A08F63681B1FACF8864ED8 /* PrivacyInfo.xcprivacy */,
 				0ABE5281C384A47A46F8E644 /* SaneVideo-AppStore.entitlements */,
@@ -2299,7 +2293,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				558A020827BD40FB606F3F1E /* Assets.xcassets in Resources */,
-				6F0A399897D37A8895B6C017 /* Info.plist in Resources */,
 				F9F98638C019FFA3E3A9557B /* Localizable.xcstrings in Resources */,
 				F057876C7752F032D5C02342 /* PrivacyInfo.xcprivacy in Resources */,
 				A3846DE4AB4F56A80785F083 /* Secrets.template.txt in Resources */,
@@ -2327,7 +2320,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				35E208A44BBA7028B62AD7B7 /* Assets.xcassets in Resources */,
-				4D8C7E05AA209AFE722816B6 /* Info-AppStore.plist in Resources */,
 				F9168998A01C2D6971537AB0 /* Localizable.xcstrings in Resources */,
 				6DB9834F0DE57EB2FEFC47B7 /* PrivacyInfo.xcprivacy in Resources */,
 				D084129F4434B991B1B797CC /* Secrets.template.txt in Resources */,

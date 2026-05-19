@@ -65,6 +65,7 @@ class CameraState {
     private let cameraService: CameraServiceProtocol
     private let audioService: AudioService
     private let startTimeoutNanoseconds: UInt64
+    private let signalTimeoutNanoseconds: UInt64
     private let usePermissionlessTestFastPath: Bool
     private let cameraAuthorizationStatus: @Sendable () -> AVAuthorizationStatus
     private var cancellables = Set<AnyCancellable>()
@@ -76,6 +77,7 @@ class CameraState {
         cameraService: CameraServiceProtocol? = nil,
         audioService: AudioService? = nil,
         startTimeoutNanoseconds: UInt64 = 5_000_000_000,
+        signalTimeoutNanoseconds: UInt64 = 6_000_000_000,
         usePermissionlessTestFastPath: Bool = true,
         cameraAuthorizationStatus: @escaping @Sendable () -> AVAuthorizationStatus = {
             AVCaptureDevice.authorizationStatus(for: .video)
@@ -84,6 +86,7 @@ class CameraState {
         self.cameraService = cameraService ?? ServiceContainer.shared.cameraService
         self.audioService = audioService ?? ServiceContainer.shared.audioService
         self.startTimeoutNanoseconds = startTimeoutNanoseconds
+        self.signalTimeoutNanoseconds = signalTimeoutNanoseconds
         self.usePermissionlessTestFastPath = usePermissionlessTestFastPath
         self.cameraAuthorizationStatus = cameraAuthorizationStatus
         self.isActive = self.cameraService.isActive
@@ -188,6 +191,16 @@ class CameraState {
                     if attempt.completeStart() {
                         let didStart = cameraService.isActive
                         if didStart {
+                            do {
+                                try await waitForVideoSignal(timeoutNanoseconds: signalTimeoutNanoseconds)
+                            } catch {
+                                let appError = Self.normalizedCameraStartError(error)
+                                currentLastError = appError
+                                cameraService.stop()
+                                AppLogger.camera.error("Camera video signal timed out")
+                                completion(false)
+                                return
+                            }
                             currentLastError = nil
                             AppLogger.camera.info("Started camera")
                         } else if currentLastError == nil {
@@ -258,6 +271,32 @@ class CameraState {
             code: -1001,
             userInfo: [
                 NSLocalizedDescriptionKey: "Camera startup timed out. Check Camera permission and close other apps using the camera."
+            ]
+        ))
+    }
+
+    private func waitForVideoSignal(timeoutNanoseconds: UInt64) async throws {
+        guard cameraService.session != nil else { return }
+        guard cameraService.isActive else { return }
+        guard !cameraService.hasVideoSignal else { return }
+
+        let deadline = ContinuousClock.now + .nanoseconds(Int(timeoutNanoseconds))
+        while ContinuousClock.now < deadline {
+            try await Task.sleep(nanoseconds: 100_000_000)
+            if cameraService.hasVideoSignal || currentHasVideoSignal {
+                return
+            }
+        }
+
+        throw Self.cameraSignalTimeoutError()
+    }
+
+    private static func cameraSignalTimeoutError() -> AppError {
+        .cameraSetupFailed(NSError(
+            domain: "SaneVideo.CameraState",
+            code: -1002,
+            userInfo: [
+                NSLocalizedDescriptionKey: "Camera started, but no video signal arrived. Check Camera permission and close other apps using the camera."
             ]
         ))
     }

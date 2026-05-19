@@ -181,9 +181,9 @@ struct PermissionManagerTests {
         #expect(!PermissionManager.allowsRecordingStart(for: .unknown, canPromptInline: true))
     }
 
-    @Test("Camera preview auto-starts only when presenter mode is ready")
-    func cameraPreviewAutoStartsWhenReady() {
-        #expect(CameraPreviewStartupPolicy.shouldAutoStartOnAppear(
+    @Test("Camera preview does not auto-start just because permission is already granted")
+    func cameraPreviewDoesNotAutoStartWhenPermissionAlreadyGranted() {
+        #expect(!CameraPreviewStartupPolicy.shouldAutoStartOnAppear(
             isScreenSharing: false,
             cameraStatus: .granted,
             cameraEnabled: false,

@@ -119,15 +119,6 @@ class AppState {
     func prepareCameraPreviewIfNeeded() {
         let permissionManager = ServiceContainer.shared.permissionManager
         permissionManager.checkCameraPermission()
-
-        guard CameraPreviewStartupPolicy.shouldAutoStartOnAppear(
-            isScreenSharing: windowManager.isScreenSharing,
-            cameraStatus: permissionManager.cameraStatus,
-            cameraEnabled: cameraEnabled,
-            cameraSurfaceVisible: cameraState.shouldShowCameraSurface
-        ) else { return }
-
-        cameraEnabled = true
     }
 
     init(recordingState: RecordingState? = nil) {
@@ -496,10 +487,7 @@ enum CameraPreviewStartupPolicy {
         cameraEnabled: Bool,
         cameraSurfaceVisible: Bool
     ) -> Bool {
-        guard !isScreenSharing else { return false }
-        guard cameraStatus == .granted else { return false }
-        guard !cameraEnabled else { return false }
-        return !cameraSurfaceVisible
+        false
     }
 }
 

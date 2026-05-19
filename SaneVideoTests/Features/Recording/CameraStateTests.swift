@@ -160,6 +160,74 @@ struct CameraStateTests {
         #expect(cameraState.shouldShowLivePreview == false)
     }
 
+    @Test("Started camera times out when no video signal arrives")
+    func startedCameraTimesOutWhenNoVideoSignalArrives() async {
+        let mock = CameraServiceProtocolMock(session: AVCaptureSession())
+        mock.startHandler = {
+            await MainActor.run {
+                mock.isActive = true
+                mock.isActivePublisherSubject.send(true)
+            }
+        }
+        mock.stopHandler = {
+            MainActor.assumeIsolated {
+                mock.isActive = false
+                mock.session = nil
+                mock.hasVideoSignal = false
+                mock.isActivePublisherSubject.send(false)
+                mock.sessionPublisherSubject.send(nil)
+            }
+        }
+        let cameraState = CameraState(
+            cameraService: mock,
+            signalTimeoutNanoseconds: 50_000_000,
+            usePermissionlessTestFastPath: false,
+            cameraAuthorizationStatus: { .authorized }
+        )
+
+        let didStart = await withCheckedContinuation { continuation in
+            cameraState.startCamera { didStart in
+                continuation.resume(returning: didStart)
+            }
+        }
+
+        #expect(didStart == false)
+        #expect(mock.stopCallCount == 1)
+        #expect(cameraState.lastError?.localizedDescription.contains("no video signal") == true)
+        #expect(cameraState.shouldShowLivePreview == false)
+    }
+
+    @Test("Started camera succeeds when video signal arrives")
+    func startedCameraSucceedsWhenVideoSignalArrives() async {
+        let mock = CameraServiceProtocolMock(session: AVCaptureSession())
+        mock.startHandler = {
+            await MainActor.run {
+                mock.isActive = true
+                mock.isActivePublisherSubject.send(true)
+            }
+            Task { @MainActor in
+                try? await Task.sleep(nanoseconds: 20_000_000)
+                mock.hasVideoSignal = true
+            }
+        }
+        let cameraState = CameraState(
+            cameraService: mock,
+            signalTimeoutNanoseconds: 200_000_000,
+            usePermissionlessTestFastPath: false,
+            cameraAuthorizationStatus: { .authorized }
+        )
+
+        let didStart = await withCheckedContinuation { continuation in
+            cameraState.startCamera { didStart in
+                continuation.resume(returning: didStart)
+            }
+        }
+
+        #expect(didStart == true)
+        #expect(mock.stopCallCount == 0)
+        #expect(cameraState.shouldShowLivePreview == true)
+    }
+
     // MARK: - Camera Switching Tests
 
     @Test("Switch camera method exists", .disabled("Requires AVCaptureDevice"))

@@ -14,7 +14,7 @@
   - Xcode popup root cause is fixed in shared SaneProcess sync: `sane_test.rb` now preserves tracked `project.xcworkspace/contents.xcworkspacedata` even when `.gitignore` ignores `*.xcworkspace`. User visually confirmed the popup is gone; proof screenshot: `/Users/sj/Desktop/Screenshots/SaneVideo-e2e/xcode-no-popup-after-relaunch-160348.png`.
   - Camera auto-start regression is fixed: `prepareCameraPreviewIfNeeded()` no longer turns camera on during recording-screen appear. Fresh patched launch and onboarding now land on `Camera is Off` instead of `Camera Loading...`; proof: `/Users/sj/Desktop/Screenshots/SaneVideo-e2e/patched-after-onboarding.png`.
   - Camera button path is click-tested end to end after granting the real macOS Camera prompt. Prompt blocker proof: `/Users/sj/Desktop/Screenshots/SaneVideo-e2e/fullscreen-visible-prompt-detector-miss.png`; post-grant baseline: `/Users/sj/Desktop/Screenshots/SaneVideo-e2e/after-camera-allow-clean.png`; live camera after click: `/Users/sj/Desktop/Screenshots/SaneVideo-e2e/camera-click-permission-granted-plus1.png` and `/Users/sj/Desktop/Screenshots/SaneVideo-e2e/camera-click-permission-granted-plus9.png`.
-  - Mini verification after the camera-state fixes: `./scripts/SaneMaster.rb verify` passed with `1197 tests` in `282s`.
+  - Mini verification after the camera-state fixes: `./scripts/SaneMaster.rb verify` passed with `1199 tests` in `282s`.
 
 - 2026-05-16 v1 operational pass:
   - Runtime fixes are in place for the user-reported camera loading hang, repeated confusing permission surfaces, unreadable/offscreen export sheet, and Quick Access Share opening an empty export.

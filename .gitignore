@@ -198,3 +198,4 @@ MinimalTest/
 *.bak
 project.yml.bak
 scripts/*.swift
+!scripts/generate_appstore_screenshots.swift

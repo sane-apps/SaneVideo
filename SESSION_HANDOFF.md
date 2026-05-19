@@ -1,8 +1,20 @@
 # Session Handoff — SaneVideo
 
-**Last updated:** 2026-05-17
+**Last updated:** 2026-05-19
 
 ## Current State
+
+- 2026-05-19 SaneUI activation paste rollout:
+  - SaneVideo is updated to the shared SaneUI activation paste fix at SaneUI commit `5a9c021`.
+  - Mini `./scripts/SaneMaster.rb verify` passed twice with `1198 tests` before the attempted `1.0.1` release.
+  - `1.0.1` release was intentionally stopped during the archive/build stage after a user-reported camera button hang (`Camera` stuck on loading). Do not resume or republish SaneVideo until the camera flow is reproduced and click-tested end to end.
+  - No `v1.0.1` tag was pushed and `https://dist.sanevideo.com/updates/SaneVideo-1.0.1.zip` returned 404 after stopping, so the interrupted release did not publish the ZIP.
+  - Local MacBook Air cleanup after stopping the release: work-session caffeinate was turned off, stale `xcodebuildmcp` helpers and a leftover Playwright/Chrome headless session were terminated, and memory free percentage rose to 67%.
+  - During the follow-up hardware test setup, Xcode on the Mini showed: `The workspace file that was at “/Users/stephansmac/SaneApps/apps/SaneVideo/SaneVideo.xcodeproj/project.xcworkspace” has disappeared.` Screenshot evidence was saved locally at `/Users/sj/Desktop/Screenshots/sanevideo-xcode-workspace-popup-20260519.png`. Root cause observed: Mini workspace was missing `SaneVideo.xcodeproj/project.xcworkspace/contents.xcworkspacedata` while the Air copy still had it. The file was restored to the Mini and the stale Xcode dialog was closed before continuing.
+  - Xcode popup root cause is fixed in shared SaneProcess sync: `sane_test.rb` now preserves tracked `project.xcworkspace/contents.xcworkspacedata` even when `.gitignore` ignores `*.xcworkspace`. User visually confirmed the popup is gone; proof screenshot: `/Users/sj/Desktop/Screenshots/SaneVideo-e2e/xcode-no-popup-after-relaunch-160348.png`.
+  - Camera auto-start regression is fixed: `prepareCameraPreviewIfNeeded()` no longer turns camera on during recording-screen appear. Fresh patched launch and onboarding now land on `Camera is Off` instead of `Camera Loading...`; proof: `/Users/sj/Desktop/Screenshots/SaneVideo-e2e/patched-after-onboarding.png`.
+  - Camera button path is click-tested end to end after granting the real macOS Camera prompt. Prompt blocker proof: `/Users/sj/Desktop/Screenshots/SaneVideo-e2e/fullscreen-visible-prompt-detector-miss.png`; post-grant baseline: `/Users/sj/Desktop/Screenshots/SaneVideo-e2e/after-camera-allow-clean.png`; live camera after click: `/Users/sj/Desktop/Screenshots/SaneVideo-e2e/camera-click-permission-granted-plus1.png` and `/Users/sj/Desktop/Screenshots/SaneVideo-e2e/camera-click-permission-granted-plus9.png`.
+  - Mini verification after the camera-state fixes: `./scripts/SaneMaster.rb verify` passed with `1197 tests` in `282s`.
 
 - 2026-05-16 v1 operational pass:
   - Runtime fixes are in place for the user-reported camera loading hang, repeated confusing permission surfaces, unreadable/offscreen export sheet, and Quick Access Share opening an empty export.
@@ -53,7 +65,7 @@
 ## Active Research Topics
 
 - `.claude/research.md` topic `2026-05-16 Camera/Recording/Export V1 Runtime Proof` now includes 2026-05-17 release-readiness updates and should be graduated into `ARCHITECTURE.md`/`DEVELOPMENT.md` after the first published build.
-- Current active blockers: none for SaneVideo v1 direct release or App Store submission. Operational warnings remain outside the SaneVideo binary path: pending customer email surfaced by release preflight and Homebrew cask 404.
+- Current active blockers: 2026-05-19 user-reported camera button hang (`Camera` stuck on loading) blocks SaneVideo `1.0.1` release. Operational warnings remain outside the SaneVideo binary path: pending customer email surfaced by release preflight and Homebrew cask 404.
 
 ## Feature Requests / Demand Signals
 

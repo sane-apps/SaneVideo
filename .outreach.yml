@@ -1,5 +1,5 @@
 product: SaneVideo
-updated: "2026-05-14"
+updated: "2026-05-19"
 positioning:
   one_liner: "Private video workflow assistant for creators"
   status_note: "Do not use this as public positioning until upload/export/runtime proof is real."
@@ -33,6 +33,16 @@ launch_calendar:
       action: "If runtime proof passed, build launch package around real recording/edit/export workflow; otherwise keep product private."
       gate: "No launch around disabled or aspirational upload features."
       success_metric: "Launch package scheduled or no-go recorded."
+  last_launch_readiness:
+    date: "2026-05-19"
+    status: "no_go"
+    launch_readiness_exit: 1
+    blocker_summary:
+      - "Customer UI receipt is still not real runtime/visual proof."
+      - "YouTube upload/export story is still incomplete for honest public launch positioning."
+      - "Launch story still cannot be based on training/model work instead of a proven creator workflow."
+      - "Fresh Mini launch_readiness on 2026-05-19 also flagged empty proof assets and a stale failed release_preflight proof."
+    next_date: "2026-05-26"
 directory_submissions: {}
 queued_drafts: {}
 launch_package:

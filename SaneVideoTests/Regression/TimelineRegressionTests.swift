@@ -12,6 +12,23 @@ import XCTest
 
 final class TimelineRegressionTests: XCTestCase {
 
+  // MARK: - Editor Timeline Fit
+
+  func testTimelineFitZoomUsesActualVisibleWidthForLongRecordings() {
+    let zoom = TimelineZoomCalculator.fitZoom(duration: 7 * 60 + 47, visibleWidth: 936)
+    let renderedWidth = CGFloat(7 * 60 + 47) * AppConstants.pixelsPerSecond * zoom
+
+    XCTAssertLessThanOrEqual(renderedWidth, 912.5)
+    XCTAssertGreaterThan(zoom, TimelineZoomCalculator.minimumZoom)
+  }
+
+  func testTimelineFitZoomCanGoBelowOldPointOneClamp() {
+    let zoom = TimelineZoomCalculator.fitZoom(duration: 10 * 60, visibleWidth: 900)
+
+    XCTAssertLessThan(zoom, 0.1)
+    XCTAssertGreaterThanOrEqual(zoom, TimelineZoomCalculator.minimumZoom)
+  }
+
   // MARK: - Bug Fix: Clip Splitting Time Calculations
 
   // Regression Test for: "Splitting clips resulted in incorrect local times"

@@ -359,7 +359,7 @@ struct TimelineControls: View {
                     .font(.system(size: 9))
                     .foregroundColor(Color.stone)
 
-                Slider(value: $zoomLevel, in: 0.1 ... 5.0, step: 0.1)
+                Slider(value: $zoomLevel, in: TimelineZoomCalculator.minimumZoom ... TimelineZoomCalculator.maximumZoom, step: 0.01)
                     .frame(width: 60)
                     .tint(.accentColor)
                     .accessibilityIdentifier("timeline.zoom_slider")

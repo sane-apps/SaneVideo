@@ -27,19 +27,26 @@ struct StylesInspectorView: View {
 
     // CRITICAL FIX: Validate clip exists in current project
     private var validatedClip: VideoClip? {
-        guard let clip = selectedClip,
-              let project = appState.projectState.currentProject else {
+        guard let project = appState.projectState.currentProject else {
             return nil
         }
-        // CRITICAL FIX: Safely access timeline.tracks to prevent crash
-        guard !project.timeline.tracks.isEmpty else {
-            return nil
+
+        let allClips = project.timeline.tracks.flatMap(\.clips)
+
+        if let clip = selectedClip,
+           let currentClip = allClips.first(where: { $0.id == clip.id }) {
+            return currentClip
         }
-        // Verify clip still exists in project
-        for track in project.timeline.tracks where track.clips.contains(where: { $0.id == clip.id }) {
-            // CRITICAL FIX: Get fresh clip from project to ensure we have latest state
-            return track.clips.first(where: { $0.id == clip.id })
+
+        if let selectedId = appState.selectedClipIds.first,
+           let selectedClip = allClips.first(where: { $0.id == selectedId }) {
+            return selectedClip
         }
+
+        if allClips.count == 1 {
+            return allClips[0]
+        }
+
         return nil
     }
 

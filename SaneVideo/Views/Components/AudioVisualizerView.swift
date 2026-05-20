@@ -23,7 +23,6 @@ struct AudioVisualizerView: View {
     }
 
     @State private var audioLevel: Float = 0.0
-    @State private var rotation: Double = 0
     @State private var pulse: CGFloat = 1.0
     @State private var isActive = false
     @State private var cancellable: AnyCancellable?
@@ -36,8 +35,8 @@ struct AudioVisualizerView: View {
                     AngularGradient(
                         gradient: Gradient(colors: meteringColors),
                         center: .center,
-                        startAngle: .degrees(rotation),
-                        endAngle: .degrees(rotation + 360)
+                        startAngle: .degrees(0),
+                        endAngle: .degrees(360)
                     ),
                     lineWidth: 3 + CGFloat(audioLevel) * 4
                 )
@@ -51,8 +50,8 @@ struct AudioVisualizerView: View {
                     AngularGradient(
                         gradient: Gradient(colors: meteringColors),
                         center: .center,
-                        startAngle: .degrees(rotation),
-                        endAngle: .degrees(rotation + 360)
+                        startAngle: .degrees(0),
+                        endAngle: .degrees(360)
                     ),
                     lineWidth: 2 + CGFloat(audioLevel) * 2
                 )
@@ -63,10 +62,6 @@ struct AudioVisualizerView: View {
         .animation(.easeInOut(duration: 0.1), value: pulse)
         .onAppear {
             isActive = true
-            // Slow rotation animation
-            withAnimation(.linear(duration: 4).repeatForever(autoreverses: false)) {
-                rotation = 360
-            }
 
             // CRASH FIX: Store cancellable explicitly so we can cancel on disappear
             // Using weak self pattern to prevent retain cycles

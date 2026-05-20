@@ -66,6 +66,8 @@ class UserPreferences {
   @ObservationIgnored @AppStorage("RecordingFPS") private var _recordingFPS: Double = 60.0
   @ObservationIgnored @AppStorage("ExcludeAppFromRecording") private var _excludeAppFromRecording:
     Bool = true
+  @ObservationIgnored @AppStorage(CameraPreviewMirroring.appStorageKey) private var _mirrorCameraPreview:
+    Bool = CameraPreviewMirroring.defaultIsMirrored
 
   // Helper to get typed AVVideoCodecType (since AppStorage doesn't support it directly)
   var defaultAVCodec: AVVideoCodecType {
@@ -105,6 +107,18 @@ class UserPreferences {
     set {
       withMutation(keyPath: \.excludeAppFromRecording) {
         _excludeAppFromRecording = newValue
+      }
+    }
+  }
+
+  var mirrorCameraPreview: Bool {
+    get {
+      access(keyPath: \.mirrorCameraPreview)
+      return _mirrorCameraPreview
+    }
+    set {
+      withMutation(keyPath: \.mirrorCameraPreview) {
+        _mirrorCameraPreview = newValue
       }
     }
   }

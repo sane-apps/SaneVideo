@@ -60,14 +60,7 @@ struct TimeRulerView: View {
 
                 // Draw Label - adaptive based on zoom level
                 // When zoomed in (high pixelsPerSecond), show more frequent labels
-                let labelInterval: Int
-                if pixelsPerSecond > 100 {
-                    labelInterval = 1  // Every second when very zoomed in
-                } else if pixelsPerSecond > 50 {
-                    labelInterval = 2  // Every 2 seconds when moderately zoomed
-                } else {
-                    labelInterval = 5  // Every 5 seconds at normal/zoomed out
-                }
+                let labelInterval = labelInterval(for: pixelsPerSecond)
 
                 if second % labelInterval == 0 {
                     let timeString = formatTime(TimeInterval(second))
@@ -116,5 +109,21 @@ struct TimeRulerView: View {
         let mins = Int(seconds) / 60
         let secs = Int(seconds) % 60
         return String(format: "%02d:%02d", mins, secs)
+    }
+
+    private func labelInterval(for pixelsPerSecond: CGFloat) -> Int {
+        if pixelsPerSecond > 100 {
+            return 1
+        } else if pixelsPerSecond > 50 {
+            return 2
+        } else if pixelsPerSecond > 25 {
+            return 5
+        } else if pixelsPerSecond > 10 {
+            return 10
+        } else if pixelsPerSecond > 5 {
+            return 30
+        } else {
+            return 60
+        }
     }
 }

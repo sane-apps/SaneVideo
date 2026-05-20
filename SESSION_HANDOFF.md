@@ -1,8 +1,33 @@
 # Session Handoff — SaneVideo
 
-**Last updated:** 2026-05-19
+**Last updated:** 2026-05-20
 
 ## Current State
+
+- 2026-05-20 SaneVideo release-prep runtime verification:
+  - Popup discipline was enforced on the Mini before and after each customer-facing click. Fresh proof screenshots show no visible permission prompt, sheet, or hidden blocker:
+    - `/Users/sj/Desktop/Screenshots/SaneVideo-e2e-candidate/58-popup-check-current.png`
+    - `/Users/sj/Desktop/Screenshots/SaneVideo-e2e-candidate/59-post-saneui-pin-full.png`
+    - `/Users/sj/Desktop/Screenshots/SaneVideo-e2e-candidate/60-screen-picker-after-click.png`
+    - `/Users/sj/Desktop/Screenshots/SaneVideo-e2e-candidate/61-after-share-entire-updated.png`
+    - `/Users/sj/Desktop/Screenshots/SaneVideo-e2e-candidate/62-after-stop-updated.png`
+  - SaneVideo now consumes SaneUI commit `608ffe9e3d895504e1e850d01876b0dd9aa5b8eb`. This was required because the Release app was still using Xcode's remote `SourcePackages/checkouts/SaneUI` at old commit `5a9c021`, so local SaneUI edits alone did not affect Release runtime.
+  - SaneUI commit `608ffe9` was pushed to `sane-apps/SaneUI` with static-by-default `SaneGradientBackground`; SaneVideo `project.yml`, `project.pbxproj`, and `Package.resolved` were updated to that exact revision.
+  - Release runtime proof on the Mini:
+    - `xcodebuild -resolvePackageDependencies` resolved `SaneUI @ 608ffe9`.
+    - `./scripts/SaneMaster.rb test_mode --release` built and launched `/Applications/SaneVideo.app`.
+    - Xcode checkout proof showed `SaneGradientBackgroundMotion` and `motion: .static` in DerivedData `SourcePackages/checkouts/SaneUI/Sources/SaneUI/Backgrounds.swift`.
+    - Idle CPU after launch was `0.0%`; `sample` no longer showed `SaneGradientBackground.livingMesh`, `TimelineView`, `repeatForever`, or `AudioVisualizer` hotspots.
+  - Screen sharing was click-tested end to end:
+    - Clicked the in-app screen-share button.
+    - Apple picker appeared with `Share Entire Screen`.
+    - Clicked `Share Entire Screen`.
+    - Logs showed `SCStream startCaptureWithCompletionHandler` and `Screen Sharing State changed: active`.
+    - `replayd` health logs repeatedly showed screen/audio frames near `250/250` and `_screenTimeDriftSeconds=0.00000000000000000000`.
+    - Clicked the floating stop control; logs showed `SCStream stopCaptureWithCompletionHandler`, `Screen Sharing State changed: inactive`, and `SCStream dealloc`.
+    - Main SaneVideo window restored cleanly and settled back to `0.0%` CPU.
+  - Clean Mini verification after the SaneUI package pin update passed: `./scripts/SaneMaster.rb verify --clean --no-grant-permissions --timeout 1200` passed `1205 tests` in `319s`.
+  - Remaining release-readiness warning: SaneMaster still reports `Settings container not using shared SaneUI shell: SaneVideo`. This is separate from the screen-share/performance fix but should not be forgotten before final public release clearance.
 
 - 2026-05-19 SaneUI activation paste rollout:
   - SaneVideo is updated to the shared SaneUI activation paste fix at SaneUI commit `5a9c021`.

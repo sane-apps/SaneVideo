@@ -137,6 +137,7 @@ struct UnifiedStateChangeModifier: ViewModifier {
             // Tracks changed - reload player
             if let project = change.project {
                 appState.playbackState.loadProject(project)
+                selectFirstClipIfNeeded(in: project)
                 // PERFORMANCE: Avoid redundant disk writes during rapid timeline edits.
                 // ProjectState mutation entrypoints are responsible for persistence; this coordinator
                 // exists to keep playback composition in sync, not to persist state on every reload.
@@ -147,6 +148,16 @@ struct UnifiedStateChangeModifier: ViewModifier {
     private func handleClipAdded(_ project: VideoProject) {
         // Hash debounce in PlaybackState prevents duplicates
         appState.playbackState.loadProject(project)
+        selectFirstClipIfNeeded(in: project)
+    }
+
+    private func selectFirstClipIfNeeded(in project: VideoProject) {
+        let projectClipIds = Set(project.timeline.tracks.flatMap(\.clips).map(\.id))
+        guard appState.selectedClipIds.isDisjoint(with: projectClipIds) else { return }
+
+        if let firstClip = project.timeline.tracks.first(where: { !$0.clips.isEmpty })?.clips.first {
+            appState.selectedClipIds = [firstClip.id]
+        }
     }
 }
 

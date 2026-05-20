@@ -74,7 +74,10 @@ struct RecordingModeView: View {
                 } else {
                     // Camera Preview
                     if appState.cameraState.shouldShowLivePreview, let session = appState.cameraState.session {
-                        CameraPreviewView(session: session)
+                        CameraPreviewView(
+                            session: session,
+                            isMirrored: ServiceContainer.shared.userPreferences.mirrorCameraPreview
+                        )
                             .aspectRatio(16 / 9, contentMode: .fit)
                             .edgesIgnoringSafeArea(.all)
                     } else if wantsCameraPreview {

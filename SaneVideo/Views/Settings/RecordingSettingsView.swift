@@ -52,6 +52,15 @@ struct RecordingSettingsView: View {
           text: "30 fps is the normal demo default. Use 60 fps for motion-heavy recordings or very fluid cursor movement.",
           icon: "speedometer"
         )
+
+        Toggle("Mirror camera preview", isOn: $prefs.mirrorCameraPreview)
+          .help("Show the camera preview like a mirror. Leave this off when you want the preview to match normal recorded video orientation.")
+          .accessibilityIdentifier("settings.recording.mirror_camera_preview")
+
+        HelperText(
+          text: "Off matches normal video orientation. Turn it on only if you prefer a mirror-style preview while recording.",
+          icon: "arrow.left.and.right.righttriangle.left.righttriangle.right.fill"
+        )
       }
 
       Section(header: Text("Screen Recording").saneReadableSectionTitle()) {

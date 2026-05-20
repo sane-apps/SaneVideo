@@ -11,16 +11,21 @@ import SwiftUI
 
 struct CameraPreviewView: NSViewRepresentable {
     let session: AVCaptureSession
+    var isMirrored = CameraPreviewMirroring.defaultIsMirrored
 
     func makeNSView(context _: Context) -> PreviewView {
         let view = PreviewView()
+        view.isMirrored = isMirrored
         view.session = session
         return view
     }
 
     func updateNSView(_ nsView: PreviewView, context _: Context) {
+        nsView.isMirrored = isMirrored
         if nsView.session !== session {
             nsView.session = session
+        } else {
+            nsView.applyMirroringConfigurationSoon()
         }
     }
 
@@ -38,6 +43,12 @@ struct CameraPreviewView: NSViewRepresentable {
         // for cleanup. AVCaptureVideoPreviewLayer is not Sendable.
         // Made fileprivate to allow dismantleNSView to access it
         nonisolated(unsafe) fileprivate let previewLayer = AVCaptureVideoPreviewLayer()
+        var isMirrored = CameraPreviewMirroring.defaultIsMirrored {
+            didSet {
+                guard oldValue != isMirrored else { return }
+                applyMirroringConfigurationSoon()
+            }
+        }
 
         var session: AVCaptureSession? {
             get { previewLayer.session }
@@ -52,20 +63,29 @@ struct CameraPreviewView: NSViewRepresentable {
                     previewLayer.session = newValue
                     AppLogger.camera.debug("CameraPreviewView: Session updated")
 
-                    // CRITICAL FIX: Defer connection configuration with increased delay
-                    // to allow frame delivery to stabilize before any modifications.
-                    // macOS 26.2 appears to be stricter about queue expectations during first frame.
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
-                        guard let self = self, self.previewLayer.session === newValue, let connection = self.previewLayer.connection else { return }
-                        AppLogger.camera.info("Configuring camera connection (after stabilization delay)...")
-                        Self.safelyConfigureConnection(connection)
-                    }
+                    applyMirroringConfigurationSoon()
+                }
+            }
+        }
+
+        func applyMirroringConfigurationSoon() {
+            let expectedSession = previewLayer.session
+            let delays: [TimeInterval] = [0, 0.05, 0.2, 0.5]
+            for delay in delays {
+                DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
+                    guard let self,
+                          self.previewLayer.session === expectedSession,
+                          let connection = self.previewLayer.connection
+                    else { return }
+
+                    AppLogger.camera.info("Configuring camera connection mirroring...")
+                    Self.safelyConfigureConnection(connection, isMirrored: self.isMirrored)
                 }
             }
         }
 
         /// Safely configures the AVCaptureConnection
-        private static func safelyConfigureConnection(_ connection: AVCaptureConnection) {
+        private static func safelyConfigureConnection(_ connection: AVCaptureConnection, isMirrored: Bool) {
             let version = ProcessInfo.processInfo.operatingSystemVersion
             AppLogger.camera.info("Configuring connection on macOS \(version.majorVersion).\(version.minorVersion)")
 
@@ -77,8 +97,8 @@ struct CameraPreviewView: NSViewRepresentable {
                 AppLogger.camera.info("Disabled automatic video mirroring adjustment")
 
                 // Step 2: Now safe to set manual mirroring
-                connection.isVideoMirrored = false
-                AppLogger.camera.info("Set video mirrored to false")
+                connection.isVideoMirrored = isMirrored
+                AppLogger.camera.info("Set video mirrored to \(isMirrored)")
             }
 
             if #available(macOS 14.0, *) {
@@ -126,4 +146,9 @@ struct CameraPreviewView: NSViewRepresentable {
             previewLayer.removeFromSuperlayer()
         }
     }
+}
+
+enum CameraPreviewMirroring {
+    static let appStorageKey = "MirrorCameraPreview"
+    static let defaultIsMirrored = false
 }

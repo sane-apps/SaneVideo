@@ -104,18 +104,29 @@ final class CameraConcurrencyRegressionTests: XCTestCase {
     ///
     /// **Fix:** Always set automaticallyAdjustsVideoMirroring = false before isVideoMirrored.
     func testMirroringConfigurationOrder() {
-        // This test documents the correct order - actual AVCaptureConnection
-        // testing requires a real camera session, so this is a documentation test.
+        XCTAssertFalse(CameraPreviewMirroring.defaultIsMirrored, "Camera preview must not be mirrored by default")
+        XCTAssertEqual(CameraPreviewMirroring.appStorageKey, "MirrorCameraPreview")
+    }
 
-        // CORRECT ORDER (what we fixed):
-        // 1. connection.automaticallyAdjustsVideoMirroring = false
-        // 2. connection.isVideoMirrored = false
-        //
-        // INCORRECT ORDER (what caused crash):
-        // 1. connection.isVideoMirrored = false  // CRASH!
+    @MainActor
+    func testCameraPreviewMirroringPreferenceDefaultsOffAndPersists() {
+        let defaults = UserDefaults.standard
+        let oldValue = defaults.object(forKey: CameraPreviewMirroring.appStorageKey)
+        defer {
+            if let oldValue {
+                defaults.set(oldValue, forKey: CameraPreviewMirroring.appStorageKey)
+            } else {
+                defaults.removeObject(forKey: CameraPreviewMirroring.appStorageKey)
+            }
+        }
 
-        // The actual implementation is in CameraPreviewView.safelyConfigureConnection()
-        XCTAssertTrue(true, "See CameraPreviewView.safelyConfigureConnection() for implementation")
+        defaults.removeObject(forKey: CameraPreviewMirroring.appStorageKey)
+        let prefs = UserPreferences()
+
+        XCTAssertFalse(prefs.mirrorCameraPreview, "Fresh installs should show normal, non-mirrored camera orientation")
+
+        prefs.mirrorCameraPreview = true
+        XCTAssertTrue(defaults.bool(forKey: CameraPreviewMirroring.appStorageKey))
     }
 
     // MARK: - Issue #4: Source Switch Deallocation

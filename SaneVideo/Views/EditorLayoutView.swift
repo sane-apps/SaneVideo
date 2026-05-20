@@ -86,6 +86,8 @@ struct EditorLayoutView: View {
                 // CRITICAL FIX: Clear selection immediately - old clip doesn't exist in new project
                 // StateChangePipeline will auto-select first clip after debounce
                 selectedClip = nil
+                selectedClipIds.removeAll()
+                appState.selectedClipIds.removeAll()
                 // Restore playhead position when switching projects
                 if newProfile.currentTime > 0 {
                     appState.playbackState.seek(to: CMTime(seconds: newProfile.currentTime, preferredTimescale: 600))

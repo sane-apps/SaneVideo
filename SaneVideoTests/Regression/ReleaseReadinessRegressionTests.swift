@@ -124,4 +124,17 @@ final class ReleaseReadinessRegressionTests: XCTestCase {
         XCTAssertFalse(generator.contains("YouTube upload unavailable"))
         XCTAssertFalse(generator.contains("Disabled in v1"))
     }
+
+    func testIdleRecordingControlsAvoidContinuousGradientAnimation() throws {
+        let audioVisualizer = try String(
+            contentsOf: sourceRoot.appendingPathComponent("SaneVideo/Views/Components/AudioVisualizerView.swift"),
+            encoding: .utf8
+        )
+
+        XCTAssertFalse(
+            audioVisualizer.contains("repeatForever"),
+            "Idle mic controls must not continuously redraw conic gradients; update only on audio-level changes."
+        )
+        XCTAssertFalse(audioVisualizer.contains("@State private var rotation"))
+    }
 }

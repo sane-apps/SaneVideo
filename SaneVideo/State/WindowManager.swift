@@ -356,6 +356,7 @@ class WindowManager {
     if !foundMain {
       AppLogger.window.warning("Could not find main window, reopening default window scene")
       NSApp.unhide(nil)
+      MainWindowActionStorage.shared.showMainWindow()
       mainWindowOpener?()
     }
   }

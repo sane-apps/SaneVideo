@@ -39,6 +39,7 @@ struct SaneVideoApp: App {
                     prefs.appTheme == .system ? nil : (prefs.appTheme == .dark ? .dark : .light)
                 )
                 .background(MainWindowOpenRegistrar())
+                .background(MainWindowCaptureView())
                 .onAppear {
                     licenseService.checkCachedLicense()
                 }
@@ -48,7 +49,7 @@ struct SaneVideoApp: App {
                     }
                 }
                 .onAppear {
-                    NSLog("🚀 SaneVideoApp: WindowGroup onAppear")
+                    NSLog("🚀 SaneVideoApp: main window onAppear")
                     setupWindow()
 
                     // CRITICAL FIX: Force .editing mode if argument is present (handling init race conditions)
@@ -73,14 +74,14 @@ struct SaneVideoApp: App {
                         freeFeatures: [
                             (icon: "film", text: "Edit and trim local videos"),
                             (icon: "camera", text: "AI-powered cleanup & subtitles"),
-                            (icon: "bolt", text: "Project templates and export presets"),
+                            (icon: "bolt", text: "Project templates and export presets")
                         ],
                         proFeatures: [
                             (icon: "checkmark.seal", text: "All free features, plus:"),
                             (icon: "wand.and.rays", text: "Advanced motion, subtitle, and style controls"),
                             (icon: "rectangle.on.rectangle.circle", text: "Unlimited project history and presets"),
                             (icon: "sparkles", text: "Priority processing and batch workflows"),
-                            (icon: "square.stack.3d.up", text: "Pro export presets and creator workflow tools"),
+                            (icon: "square.stack.3d.up", text: "Pro export presets and creator workflow tools")
                         ],
                         licenseService: licenseService
                     )
@@ -316,6 +317,53 @@ enum MainWindowScenePolicy {
     static let allowsMultipleWindows = false
 }
 
+enum MainWindowReopenPolicy {
+    static func shouldShowMainWindow(hasVisibleWindows: Bool) -> Bool {
+        !hasVisibleWindows
+    }
+}
+
+@MainActor
+final class MainWindowActionStorage {
+    static let shared = MainWindowActionStorage()
+
+    var openWindow: ((String) -> Void)?
+    weak var mainWindow: NSWindow?
+
+    func capture(_ action: OpenWindowAction) {
+        openWindow = { id in
+            action(id: id)
+        }
+    }
+
+    func captureMainWindow(_ window: NSWindow?) {
+        guard let window, window.canBecomeMain, !window.isSheet else { return }
+        mainWindow = window
+    }
+
+    func showMainWindow() {
+        let window = mainWindow ?? NSApp.windows.first(where: {
+            $0.canBecomeMain &&
+                $0.contentView != nil &&
+                ($0.identifier?.rawValue.contains(MainWindowScenePolicy.sceneID) == true ||
+                    $0.title.contains(MainWindowScenePolicy.title) ||
+                    $0.title.isEmpty)
+        })
+
+        if let window {
+            if window.isMiniaturized {
+                window.deminiaturize(nil)
+            }
+            window.makeKeyAndOrderFront(nil)
+            mainWindow = window
+        } else {
+            openWindow?(MainWindowScenePolicy.sceneID)
+        }
+
+        NSApp.activate(ignoringOtherApps: true)
+    }
+}
+
 private struct MainWindowOpenRegistrar: View {
     @Environment(\.openWindow) private var openWindow
 
@@ -324,10 +372,27 @@ private struct MainWindowOpenRegistrar: View {
             .frame(width: 0, height: 0)
             .allowsHitTesting(false)
             .onAppear {
+                MainWindowActionStorage.shared.capture(openWindow)
                 ServiceContainer.shared.appState.windowManager.registerMainWindowOpener {
                     openWindow(id: MainWindowScenePolicy.sceneID)
                 }
             }
+    }
+}
+
+private struct MainWindowCaptureView: NSViewRepresentable {
+    func makeNSView(context _: Context) -> NSView {
+        let view = NSView()
+        DispatchQueue.main.async {
+            MainWindowActionStorage.shared.captureMainWindow(view.window)
+        }
+        return view
+    }
+
+    func updateNSView(_ nsView: NSView, context _: Context) {
+        DispatchQueue.main.async {
+            MainWindowActionStorage.shared.captureMainWindow(nsView.window)
+        }
     }
 }
 
@@ -388,8 +453,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 for file in contents {
                     if let attrs = try? file.resourceValues(forKeys: [.creationDateKey]),
                        let created = attrs.creationDate,
-                       created < cutoffDate
-                    {
+                       created < cutoffDate {
                         try? fileManager.removeItem(at: file)
                         AppLogger.general.info("Cleaned up orphaned temp file: \(file.lastPathComponent)")
                     }
@@ -413,8 +477,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                        let created = attrs.creationDate,
                        let size = attrs.fileSize,
                        created < cutoffDate,
-                       size < 1024 * 1024
-                    { // Less than 1MB = likely incomplete/corrupt
+                       size < 1024 * 1024 { // Less than 1MB = likely incomplete/corrupt
                         try? fileManager.removeItem(at: file)
                         AppLogger.general.info("Cleaned up orphaned recording: \(file.lastPathComponent)")
                     }
@@ -434,8 +497,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 for file in contents {
                     if let attrs = try? file.resourceValues(forKeys: [.creationDateKey]),
                        let created = attrs.creationDate,
-                       created < cutoffDate
-                    {
+                       created < cutoffDate {
                         try? fileManager.removeItem(at: file)
                         AppLogger.general.info("Cleaned up WhisperKit temp file: \(file.lastPathComponent)")
                     }
@@ -457,8 +519,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationShouldHandleReopen(_: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
-        guard !flag else { return false }
-        ServiceContainer.shared.appState.windowManager.restoreMainWindow()
+        if MainWindowReopenPolicy.shouldShowMainWindow(hasVisibleWindows: flag) {
+            MainWindowActionStorage.shared.showMainWindow()
+            ServiceContainer.shared.appState.windowManager.restoreMainWindow()
+        }
         return true
     }
 

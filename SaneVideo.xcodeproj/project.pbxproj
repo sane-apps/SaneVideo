@@ -3607,7 +3607,7 @@
 			repositoryURL = "https://github.com/sane-apps/SaneUI.git";
 			requirement = {
 				kind = revision;
-				revision = 5a9c02152cfe155e3d6d06c1a489ef426e2250e1;
+				revision = 608ffe9e3d895504e1e850d01876b0dd9aa5b8eb;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */

@@ -428,7 +428,6 @@ class ScreenRecorder: NSObject, ScreenRecorderProtocol, SCContentSharingPickerOb
   /// Handle user's content selection and start the stream
   func handleContentSelected(filter: SCContentFilter) async {
     suppressDynamicFilterUpdates = false
-    let effectiveFilter = await rebuildFilter(from: filter)
 
     // TAHOE OPTIMIZATION: If we already have an active stream, just update its filter.
     // This is much faster and completely flicker-free.
@@ -436,6 +435,7 @@ class ScreenRecorder: NSObject, ScreenRecorderProtocol, SCContentSharingPickerOb
       AppLogger.recording.info("🔄 Updating existing stream with new content selection...")
       self.baseFilter = filter
       self.baseFilterTimestamp = Date()
+      let effectiveFilter = await rebuildFilter(from: filter)
       do {
         try await stream.updateContentFilter(effectiveFilter)
         AppLogger.recording.info("✅ Existing stream filter updated successfully")
@@ -497,7 +497,10 @@ class ScreenRecorder: NSObject, ScreenRecorderProtocol, SCContentSharingPickerOb
       self.baseFilter = filter
       self.baseFilterTimestamp = Date()
 
-      let newStream = SCStream(filter: effectiveFilter, configuration: config, delegate: self)
+      // Start the first stream with the exact picker-provided filter. Rebuilding the
+      // filter before startCapture can lose the picker authorization and surface as
+      // SCStreamErrorDomain -3801 ("user declined TCC") even after permission is granted.
+      let newStream = SCStream(filter: filter, configuration: config, delegate: self)
 
       // NOTE: We removed the deferred updateContentFilter() task from here.
       // WindowManager.swift now handles this 150ms after the PiP appears,

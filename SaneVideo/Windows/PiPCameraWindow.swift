@@ -478,7 +478,7 @@ class PiPCameraWindow: NSPanel {
             // CRITICAL: Must disable automaticallyAdjustsVideoMirroring BEFORE setting isVideoMirrored
             if connection.isVideoMirroringSupported {
                 connection.automaticallyAdjustsVideoMirroring = false
-                connection.isVideoMirrored = false
+                connection.isVideoMirrored = UserDefaults.standard.bool(forKey: CameraPreviewMirroring.appStorageKey)
                 AppLogger.camera.info("PiP: Configured video mirroring")
             }
         }

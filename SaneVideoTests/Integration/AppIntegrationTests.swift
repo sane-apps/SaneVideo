@@ -206,6 +206,12 @@ struct AppIntegrationTests {
         #expect(!MainWindowScenePolicy.allowsMultipleWindows)
     }
 
+    @Test("Reopen without visible windows requests main window")
+    func mainWindowReopenPolicy_ShowsMainWindowWhenNoVisibleWindows() {
+        #expect(MainWindowReopenPolicy.shouldShowMainWindow(hasVisibleWindows: false))
+        #expect(!MainWindowReopenPolicy.shouldShowMainWindow(hasVisibleWindows: true))
+    }
+
     @Test("Recording launch schedules preview restore only for live recording mode")
     func launchRecordingPreviewPolicy_SchedulesOnlyForLiveRecording() {
         #expect(LaunchRecordingPreviewPolicy.shouldScheduleRestore(appMode: .recording, isTesting: false))

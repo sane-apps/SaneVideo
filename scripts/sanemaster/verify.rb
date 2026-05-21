@@ -131,8 +131,11 @@ module SaneMasterModules
 
     def run_lint
       puts '🎨 --- [ SANEMASTER LINT ] ---'
-      if system('bundle exec fastlane lint')
+      if run_fastlane_lane('lint')
         puts '✅ Linting complete.'
+      elsif command_available?('swiftlint')
+        ok = system('swiftlint', 'lint', '--quiet')
+        puts(ok ? '✅ SwiftLint complete.' : '❌ SwiftLint failed.')
       else
         puts '❌ Linting failed or SwiftLint not found.'
       end
@@ -140,10 +143,13 @@ module SaneMasterModules
 
     def run_quality_report
       puts '📊 --- [ SANEMASTER QUALITY ] ---'
-      if system('bundle exec fastlane quality')
+      if run_fastlane_lane('quality')
         puts '✅ Quality report generation complete.'
+      elsif command_available?('rubocop')
+        ok = system('rubocop', 'scripts', '--format', 'simple')
+        puts(ok ? '✅ RuboCop quality check complete.' : '❌ RuboCop quality check failed.')
       else
-        puts '❌ Quality report generation failed.'
+        puts '❌ Quality report generation failed; RuboCop not found.'
       end
     end
 
@@ -175,6 +181,24 @@ module SaneMasterModules
     end
 
     private
+
+    def run_fastlane_lane(lane)
+      if bundled_fastlane_available?
+        return true if system('bundle', 'exec', 'fastlane', lane)
+      end
+
+      return system('fastlane', lane) if command_available?('fastlane')
+
+      false
+    end
+
+    def bundled_fastlane_available?
+      system('bundle', 'info', 'fastlane', out: File::NULL, err: File::NULL)
+    end
+
+    def command_available?(name)
+      system('which', name, out: File::NULL, err: File::NULL)
+    end
 
     def test_targets_disabled?
       project_yml = File.join(Dir.pwd, 'project.yml')

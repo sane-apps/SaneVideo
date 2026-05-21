@@ -11,6 +11,12 @@ xcode-select --install
 
 For _fastlane_ installation instructions, see [Installing _fastlane_](https://docs.fastlane.tools/#installing-fastlane)
 
+SaneVideo intentionally does not bundle fastlane in `Gemfile` because current
+fastlane releases still constrain `jwt` below the patched 3.x line for
+GHSA-c32j-vqhx-rx3x. Use the system/Homebrew fastlane only when you explicitly
+need these legacy lanes; the canonical SaneApps release path is
+`./scripts/SaneMaster.rb`.
+
 # Available Actions
 
 ## Mac
@@ -18,7 +24,7 @@ For _fastlane_ installation instructions, see [Installing _fastlane_](https://do
 ### mac verify
 
 ```sh
-[bundle exec] fastlane mac verify
+fastlane mac verify
 ```
 
 Verify build and run tests
@@ -26,7 +32,7 @@ Verify build and run tests
 ### mac verify_full
 
 ```sh
-[bundle exec] fastlane mac verify_full
+fastlane mac verify_full
 ```
 
 Run full test suite including UI tests (requires graphical session)
@@ -34,7 +40,7 @@ Run full test suite including UI tests (requires graphical session)
 ### mac doctor
 
 ```sh
-[bundle exec] fastlane mac doctor
+fastlane mac doctor
 ```
 
 Run project health check (modularity audit)
@@ -42,7 +48,7 @@ Run project health check (modularity audit)
 ### mac lint
 
 ```sh
-[bundle exec] fastlane mac lint
+fastlane mac lint
 ```
 
 Run SwiftLint audit
@@ -50,7 +56,7 @@ Run SwiftLint audit
 ### mac quality
 
 ```sh
-[bundle exec] fastlane mac quality
+fastlane mac quality
 ```
 
 Generate Ruby quality report
@@ -58,7 +64,7 @@ Generate Ruby quality report
 ### mac coverage
 
 ```sh
-[bundle exec] fastlane mac coverage
+fastlane mac coverage
 ```
 
 Generate code coverage report
@@ -66,7 +72,7 @@ Generate code coverage report
 ### mac changelog
 
 ```sh
-[bundle exec] fastlane mac changelog
+fastlane mac changelog
 ```
 
 Generate release notes from git commits
@@ -74,7 +80,7 @@ Generate release notes from git commits
 ### mac screenshots
 
 ```sh
-[bundle exec] fastlane mac screenshots
+fastlane mac screenshots
 ```
 
 Automate macOS app screenshots
@@ -82,7 +88,7 @@ Automate macOS app screenshots
 ### mac release
 
 ```sh
-[bundle exec] fastlane mac release
+fastlane mac release
 ```
 
 Perform a full production release preparation

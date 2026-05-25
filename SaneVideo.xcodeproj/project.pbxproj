@@ -2262,7 +2262,6 @@
 				};
 			};
 			buildConfigurationList = E05965B4AB636ECD2988856C /* Build configuration list for PBXProject "SaneVideo" */;
-			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -2277,6 +2276,7 @@
 				31CA1F118162365A495BAB16 /* XCRemoteSwiftPackageReference "argmax-oss-swift" */,
 			);
 			preferredProjectObjectVersion = 77;
+			productRefGroup = 98218E58F28DE3559A97869F /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
@@ -3607,7 +3607,7 @@
 			repositoryURL = "https://github.com/sane-apps/SaneUI.git";
 			requirement = {
 				kind = revision;
-				revision = 608ffe9e3d895504e1e850d01876b0dd9aa5b8eb;
+				revision = 4e39f3fdc55f62567c7eb722bc8fd2c51b915ba6;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */

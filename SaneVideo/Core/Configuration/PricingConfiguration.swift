@@ -10,22 +10,22 @@ import Foundation
 
 /// Pricing configuration for the app
 enum PricingTier: String, Codable, Sendable {
-    case launch      // $29 (first 90 days)
-    case regular     // $49 (standard)
-    case premium     // $79 (future, if needed)
+    case launch      // 50% public testing offer
+    case regular     // Standard Pro price
+    case premium     // Future, if needed
 
     var displayPrice: String {
         switch self {
-        case .launch: return "$29"
-        case .regular: return "$49"
+        case .launch: return "$3.49"
+        case .regular: return "$6.99"
         case .premium: return "$79"
         }
     }
 
     var priceValue: Double {
         switch self {
-        case .launch: return 29.0
-        case .regular: return 49.0
+        case .launch: return 3.49
+        case .regular: return 6.99
         case .premium: return 79.0
         }
     }
@@ -64,7 +64,7 @@ class PricingConfiguration {
     /// Feature flags
     var featureFlags = FeatureFlags.default
 
-    /// Launch period end date (90 days from app launch)
+    /// Public testing offer end date (exclusive; through July 25, 2026)
     private let launchPeriodEndDate: Date
 
     /// Whether we're in the launch pricing period
@@ -85,17 +85,8 @@ class PricingConfiguration {
     // MARK: - Initialization
 
     init() {
-        // Calculate launch period end (90 days from first launch)
-        // Store in UserDefaults to persist across app launches
-        let defaults = UserDefaults.standard
-        if let storedDate = defaults.object(forKey: "LaunchPeriodEndDate") as? Date {
-            launchPeriodEndDate = storedDate
-        } else {
-            // First launch - set end date to 90 days from now
-            let endDate = Calendar.current.date(byAdding: .day, value: 90, to: Date()) ?? Date()
-            defaults.set(endDate, forKey: "LaunchPeriodEndDate")
-            launchPeriodEndDate = endDate
-        }
+        let components = DateComponents(calendar: .current, timeZone: .current, year: 2026, month: 7, day: 26)
+        launchPeriodEndDate = components.date ?? Date.distantPast
     }
 
     // MARK: - Feature Checks
@@ -123,7 +114,7 @@ class PricingConfiguration {
     /// Get pricing message for UI
     func pricingMessage() -> String {
         if isLaunchPeriod {
-            return "Launch Special: \(currentPrice) (Regular: \(regularPrice))"
+            return "Public Testing: \(currentPrice) (Regular: \(regularPrice)) through July 25, 2026"
         }
         return "\(currentPrice) one-time purchase"
     }

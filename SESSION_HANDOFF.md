@@ -4,6 +4,21 @@
 
 ## Current State
 
+- 2026-05-25 SaneVideo 1.0.1 publish pass:
+  - Rule 0 classification: release-readiness/runtime blocker. Do not publish direct download, website, App Store/TestFlight, or public launch copy from this state.
+  - Timeline review found and fixed a real trim bug: right-edge trim handles were sending `duration - trimEnd` even though `ProjectState.updateClipTrim` expects absolute `trimEnd`. `ClipTrimHandle` now resolves absolute trim positions and `TrimHandleTests.testRightTrimHandleReturnsAbsoluteTrimEnd` guards the regression.
+  - User reported a roughly 10 second black-screen gap after manually clicking Allow Video. Root-cause evidence in logs showed `AVCaptureVideoPreviewLayer` being added after `AVCaptureSession.startRunning`, triggering AVFoundation graph teardown/restart (`addVideoPreviewLayer` / `_stopAndTearDownGraph`). The current candidate replaces the preview-layer path with a sample-buffer renderer and publishes the session before capture start.
+  - Camera runtime proof on the Mini after the patch:
+    - Baseline off state: `/Users/sj/Desktop/Screenshots/SaneVideo-review/18-baseline-sample-buffer.png`
+    - Post-click full visual-smoke proof: `/Users/sj/Desktop/Screenshots/SaneVideo-review/19-after-sample-buffer-preview.png`
+    - Second post-click app-only proof: `/Users/sj/Desktop/Screenshots/SaneVideo-review/20-after-click-app-only.png`
+    - Logs after the sample-buffer preview no longer show `addVideoPreviewLayer` or `_stopAndTearDownGraph`.
+  - Mini verification passed after the camera/timeline patches: latest `./scripts/SaneMaster.rb verify --no-grant-permissions --timeout 1200` passed `1207 tests` in `298s`.
+  - `./scripts/SaneMaster.rb release_preflight` is red, so publish is blocked. Primary blocker: stale Customer UI action contract and missing May 16 screenshot/workflow artifacts. Warnings: dirty worktree, UserDefaults/migration code changed so upgrade-path testing is required, appcast still at 1.0 while project is 1.0.1, 5 pending customer emails, Homebrew tap cask 404.
+  - `SANEMASTER_GRANT_PERMISSIONS=0 ./scripts/SaneMaster.rb appstore_preflight` is red. Additional App Store blockers: missing `Screenshots/appstore-*-dark-mac.png`, active ASC macOS 1.0 lane is still `WAITING_FOR_REVIEW` while local target is 1.0.1, and the strict visual contract is stale. `.saneprocess` metadata declarations for copyright/content rights/export compliance were added locally and synced to the Mini after this failure.
+  - `./scripts/SaneMaster.rb launch_readiness --json --max-age-days 7` is red: no public launch until real creator workflow proof exists, `.outreach.yml` has proof assets, customer UI receipt is valid runtime/visual proof, and release preflight is green.
+  - Pricing/copy note: user wants public testing positioning with 50% off through 2026-07-25. Do not advertise this live until the actual App Store/IAP or direct-purchase price schedule is set; current preflight did not clear publish.
+
 - 2026-05-20 SaneVideo release-prep runtime verification:
   - Popup discipline was enforced on the Mini before and after each customer-facing click. Fresh proof screenshots show no visible permission prompt, sheet, or hidden blocker:
     - `/Users/sj/Desktop/Screenshots/SaneVideo-e2e-candidate/58-popup-check-current.png`

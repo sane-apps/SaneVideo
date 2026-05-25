@@ -11,6 +11,32 @@ Graduate verified findings to ARCHITECTURE.md or DEVELOPMENT.md.
 - Finding 2
 -->
 
+## 2026-05-25 Timeline Editor Competitive Baseline
+**Updated:** 2026-05-25 | **Status:** verified | **TTL:** 7d
+**Source:** Screen Studio docs (`screen.studio/guide/*`), Cap docs/features (`cap.so/features`, `cap.so/features/studio-mode`), TechSmith Camtasia pages/support, Descript Help, Apple Final Cut Pro pages/release notes, local SaneVideo source/tests
+- Current screen-recorder/editor baseline is not just trim/split. Screen Studio centers on click-derived auto zooms with editable zoom blocks, local Whisper captions, aspect-ratio/cursor-follow controls, and local MP4/GIF export; Cap Studio Mode advertises local processing, 4K/60, professional timeline, auto zoom, custom backgrounds/branding, separate audio controls, MP4/GIF/link export, and auto captions/transcripts; Camtasia emphasizes multitrack screen/camera/system/mic recording, cursor effects/annotations, dynamic captions, timeline selection export, batch export, and recent VTT caption support; Descript's differentiator is transcript-first editing plus timeline export to FCP/Premiere/AAF/EDL; Final Cut's pro baseline is Magnetic Timeline, captions/transcript features, beat detection, multicam, and mature export.
+- SaneVideo is competitive for its intended local-first creator niche if the 1.0.1 candidate proves: screen/camera/mic recording, import, magnetic timeline, split/trim/rotate/delete/undo, waveform/thumbnails, click/cursor sidecars, auto-zoom/keyframes, captions/transcript, demo pack, local export, GIF/thumbnail surfaces, and disabled YouTube honesty. It is not yet a Final Cut-class NLE and should not be marketed as one.
+- The release-critical gap found during code review was right-edge trim behavior: `ClipTrimHandle` was sending a relative `duration - clampedEnd` value where `ProjectState.updateClipTrim` expects an absolute `trimEnd`. This is now fixed in the 2026-05-25 candidate and guarded by `TrimHandleTests.testRightTrimHandleReturnsAbsoluteTrimEnd`.
+- Fresh publish proof must include a current Mini customer UI sweep and clean screenshots for timeline editing, export, recording/permission states, settings/license, and the disabled YouTube/manual-upload state. The 2026-05-17 receipt is stale for launch readiness.
+
+## 2026-05-25 Camera Preview Startup Blocker
+**Updated:** 2026-05-25 | **Status:** verified | **TTL:** 7d
+**Source:** Mini release runtime, `SaneMaster.rb verify`, visual-smoke receipts, unified logs, local SaneVideo source/tests
+- User reported roughly 10 seconds of black screen after clicking the macOS Allow Video prompt. Earlier release-candidate logs showed `AVCaptureVideoPreviewLayer` being attached after `AVCaptureSession.startRunning`, followed by AVFoundation graph teardown/restart (`addVideoPreviewLayer` / `_stopAndTearDownGraph`).
+- Current candidate removes `AVCaptureVideoPreviewLayer` from `CameraPreviewView` and renders `CameraFramePublisher` sample buffers through a `CIContext` into an `NSView` layer. This avoids preview-layer graph mutation and makes the camera view screenshot-verifiable.
+- `CameraManager.startSessionInternal` now publishes the session/active state before `startRunning()` and keeps a source-order regression in `APIDeprecationTests.testCameraPublishesSessionBeforeStartingCaptureGraph`.
+- Mini release runtime proof after the patch shows live video after clicking `Turn On Camera`: `/Users/sj/Desktop/Screenshots/SaneVideo-review/19-after-sample-buffer-preview.png` and `/Users/sj/Desktop/Screenshots/SaneVideo-review/20-after-click-app-only.png`. The post-patch log check no longer shows the old `addVideoPreviewLayer` or `_stopAndTearDownGraph` signature.
+- Latest Mini verification passed: `./scripts/SaneMaster.rb verify --no-grant-permissions --timeout 1200` passed `1207 tests` in `298s`.
+- Publish remains blocked despite the camera fix: `release_preflight`, `appstore_preflight`, and `launch_readiness` are red because the customer UI action contract is stale/missing artifacts, App Store screenshot assets are absent, ASC still has macOS 1.0 in `WAITING_FOR_REVIEW`, and launch proof assets/creator workflow proof are incomplete.
+
+## 2026-05-25 Public Testing Commerce Proof
+**Updated:** 2026-05-25 | **Status:** verified | **TTL:** 30d
+**Source:** Lemon Squeezy API/dashboard, Mini Safari checkout proof, Cloudflare Worker deploy, App Store Connect IAP readiness
+- Direct Pro checkout is now configured: Lemon Squeezy product `1087460` (`SaneVideo Pro`) is published at regular price `$6.99`, checkout UUID `478d2602-9808-4591-b01b-d555cccd0185`, default variant `1703963`, with license keys enabled and unlimited length/activation in the dashboard.
+- Direct public-testing discount is `SANEVIDEO50`, discount ID `1028858`, 50% percent discount, limited to variant `1703963`, published from `2026-05-25T04:00:00Z` through `2026-07-26T03:59:59Z`. Live checkout proof: `/Users/sj/Desktop/Screenshots/SaneVideo/sanevideo-checkout-total-349-20260525-155116.png` shows subtotal `$6.99`, discount `-$3.50`, total `$3.49`, and Pay `$3.49`.
+- `go.saneapps.com/buy/sanevideo` is live after Cloudflare Worker deploy version `46cf6dfc-014e-4e37-adec-98656b5d7602`, redirecting to the SaneVideo checkout with `checkout[discount_code]=SANEVIDEO50`.
+- App Store IAP readiness initially accepted an existing `$6.99` schedule as "ready"; `appstore_submit.rb` now verifies the existing USA manual price before returning success. The fixed helper created and then verified the `$3.49` USA IAP price schedule for `com.sanevideo.app.pro.unlock` (`6770295802`).
+
 ## 2026-05-16 Camera/Recording/Export V1 Runtime Proof
 **Updated:** 2026-05-19 | **Status:** verified | **TTL:** 7d
 **Source:** Mac Mini/Finder runtime, full-screen screenshots in `~/Desktop/Screenshots/SaneVideo/`, App Store Connect API/Safari, `SaneMaster.rb verify`, `SaneMaster.rb release_preflight`, `appstore_submit.rb`, `ffprobe`, local crash reports, user report during attempted `1.0.1` release

@@ -101,9 +101,28 @@ func drawTimeline(in rect: NSRect) {
 }
 
 func drawScreenshot(_ spec: ScreenshotSpec) throws {
-    let image = NSImage(size: canvasSize)
-    image.lockFocus()
-    defer { image.unlockFocus() }
+    guard let bitmap = NSBitmapImageRep(
+        bitmapDataPlanes: nil,
+        pixelsWide: Int(canvasSize.width),
+        pixelsHigh: Int(canvasSize.height),
+        bitsPerSample: 8,
+        samplesPerPixel: 4,
+        hasAlpha: true,
+        isPlanar: false,
+        colorSpaceName: .deviceRGB,
+        bytesPerRow: 0,
+        bitsPerPixel: 0
+    ),
+    let context = NSGraphicsContext(bitmapImageRep: bitmap)
+    else {
+        throw NSError(domain: "SaneVideoScreenshots", code: 1, userInfo: [NSLocalizedDescriptionKey: "Could not create bitmap context for \(spec.fileName)"])
+    }
+
+    NSGraphicsContext.saveGraphicsState()
+    NSGraphicsContext.current = context
+    context.cgContext.setShouldAntialias(true)
+    context.cgContext.setAllowsAntialiasing(true)
+    defer { NSGraphicsContext.restoreGraphicsState() }
 
     background.setFill()
     NSRect(origin: .zero, size: canvasSize).fill()
@@ -133,11 +152,7 @@ func drawScreenshot(_ spec: ScreenshotSpec) throws {
     drawString("Local files stay local. No personal customer data collection.", in: NSRect(x: 166, y: 265, width: 820, height: 70), size: 30, color: muted)
 
     let url = outputDirectory.appendingPathComponent(spec.fileName)
-    guard
-        let tiff = image.tiffRepresentation,
-        let bitmap = NSBitmapImageRep(data: tiff),
-        let data = bitmap.representation(using: .png, properties: [:])
-    else {
+    guard let data = bitmap.representation(using: .png, properties: [:]) else {
         throw NSError(domain: "SaneVideoScreenshots", code: 1, userInfo: [NSLocalizedDescriptionKey: "Could not render \(spec.fileName)"])
     }
     try data.write(to: url)

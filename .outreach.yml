@@ -1,23 +1,23 @@
 product: SaneVideo
-updated: "2026-05-19"
+updated: "2026-05-25"
 positioning:
   one_liner: "Private video workflow assistant for creators"
-  status_note: "Do not use this as public positioning until upload/export/runtime proof is real."
+  status_note: "Public testing positioning only: local recording, editing, captions, demo packs, local export, and deliberately disabled YouTube upload."
 public_posting_policy:
   approval_required: true
   disclosure_required: "Always say 'I built SaneVideo' when recommending it in public replies."
 launches: []
 launch_calendar:
   timezone: "America/New_York"
-  classification: "blocked_not_launch_ready"
-  rule: "No public launch, Product Hunt, Hacker News, Indie Hackers, creator-community push, or directory submission until real workflow proof exists."
+  classification: "public_testing_ready"
+  rule: "Website/App Store public testing is allowed after green release_preflight and appstore_preflight. Broad community launch still requires explicit user approval."
+  offer_window:
+    message: "SaneVideo Pro is 50% off at $3.49 during public testing."
+    ends: "2026-07-25"
   current_release_state:
-    status: "pre_live_blocked"
-    evidence: "SESSION_HANDOFF says Mini verify passed, but customer UI contract blocks release because current receipt is source-only/unsupported screenshot evidence. YouTube upload remains disabled until real OAuth/upload completion exists."
-  blockers:
-    - "Customer UI receipt is not real runtime/visual proof."
-    - "YouTube upload/export story is not complete enough for public launch positioning."
-    - "Launch story must be actual creator workflow completion, not training/model work."
+    status: "public_testing_candidate"
+    evidence: "2026-05-25 Mini customer_ui_sweep passed 19 actions with strict visual evidence; App Store screenshot dry-run passed; YouTube upload is intentionally unavailable and represented as manual-upload/local-export behavior."
+  blockers: []
   scheduled:
     - date: "2026-05-26"
       time: "10:00"
@@ -34,34 +34,41 @@ launch_calendar:
       gate: "No launch around disabled or aspirational upload features."
       success_metric: "Launch package scheduled or no-go recorded."
   last_launch_readiness:
-    date: "2026-05-19"
-    status: "no_go"
-    launch_readiness_exit: 1
+    date: "2026-05-25"
+    status: "pending_final_preflight"
+    launch_readiness_exit: null
     blocker_summary:
-      - "Customer UI receipt is still not real runtime/visual proof."
-      - "YouTube upload/export story is still incomplete for honest public launch positioning."
-      - "Launch story still cannot be based on training/model work instead of a proven creator workflow."
-      - "Fresh Mini launch_readiness on 2026-05-19 also flagged empty proof assets and a stale failed release_preflight proof."
-    next_date: "2026-05-26"
+      - "Final launch_readiness still depends on fresh green release_preflight for the 1.0.1 candidate."
+      - "Direct Lemon Squeezy checkout is configured: SaneVideo Pro product 1087460, checkout 478d2602-9808-4591-b01b-d555cccd0185, SANEVIDEO50 discount through 2026-07-25."
+    next_date: "2026-05-25"
 directory_submissions: {}
 queued_drafts: {}
 launch_package:
-  status: "blocked_until_creator_workflow_proof"
+  status: "public_testing_candidate"
   audience: "Creators who want a private Mac-first workflow for recording, importing, editing, exporting, and preparing video."
-  problem: "Video tools often promise AI workflows before the core creator path is proven end to end."
-  solution: "SaneVideo should only launch around a real, proven creator workflow: record/import, edit, export, and clearly disabled or complete upload behavior."
-  primary_story: "Private Mac video workflow assistance once the creator path is proven with real runtime evidence."
-  pricing_proof: "Not launch-ready; pricing should not be promoted until release proof and product surface are stable."
-  privacy_proof: "Not launch-ready; public privacy claims must match actual export/upload/network behavior."
-  proof_assets: []
+  problem: "Creator video tools often push cloud-first workflows when a local, auditable Mac workflow is enough for public testing."
+  solution: "SaneVideo offers a native public testing build for record/import, timeline editing, captions, demo-pack packaging, local export, and honest manual upload."
+  primary_story: "Private Mac video workflow for creators who want to test a local-first recording, editing, and export path."
+  pricing_proof: "Public testing offer: SaneVideo Pro is 50% off at $3.49 through July 25, 2026. Regular price is $6.99."
+  privacy_proof: "Privacy policy and App Store review notes state local media by default, update/license/aggregate-count network use, optional diagnostics, and no direct YouTube upload in this build."
+  proof_assets:
+    - type: "runtime_visual"
+      title: "Camera preview startup fixed"
+      path: "/Users/sj/Desktop/Screenshots/SaneVideo-review/19-after-sample-buffer-preview.png"
+      status: "verified"
+    - type: "runtime_visual"
+      title: "Customer UI action sweep receipt"
+      path: ".sane/customer_ui_action_receipt.json"
+      status: "verified"
+    - type: "app_store_screenshot"
+      title: "App Store screenshot set"
+      path: "Screenshots/appstore-01-recording-dark-mac.png"
+      status: "verified"
   channel_plan:
-    product_hunt: "no_go_until_creator_workflow_proof"
-    hacker_news: "no_go_until_creator_workflow_proof"
-    indie_hackers: "no_go_until_creator_workflow_proof"
-    creator_communities: "no_go_until_creator_workflow_proof"
+    product_hunt: "approval_required_after_public_testing_release"
+    hacker_news: "approval_required_after_public_testing_release"
+    indie_hackers: "approval_required_after_public_testing_release"
+    creator_communities: "approval_required_after_public_testing_release"
   go_no_go:
-    rule: "No public launch until Mini workflow proof covers recording/import/edit/export and the upload-disabled state honestly."
-  weak_launch_blockers:
-    - "Customer UI receipt is not real runtime/visual proof."
-    - "YouTube upload/export story is not complete enough for public positioning."
-    - "Launch story must be actual creator workflow completion, not training/model progress."
+    rule: "No broad launch post until release_preflight and appstore_preflight are green for 1.0.1 and the user explicitly approves the public post."
+  weak_launch_blockers: []

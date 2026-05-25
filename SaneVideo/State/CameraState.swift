@@ -50,6 +50,7 @@ class CameraState {
     private var currentSession: AVCaptureSession?
     private var currentHasVideoSignal = false
     private var currentLastError: AppError?
+    private(set) var isPreviewWarmingUp = false
 
     // MARK: - Computed Properties
 
@@ -57,8 +58,12 @@ class CameraState {
     var hasVideoSignal: Bool { currentHasVideoSignal }
     var lastError: AppError? { currentLastError }
     var shouldShowCameraSurface: Bool { isActive || session != nil }
-    var shouldShowLivePreview: Bool { session != nil && (isActive || hasVideoSignal) }
+    var shouldMountLivePreview: Bool { session != nil && isActive }
+    var shouldShowLivePreview: Bool { session != nil && hasVideoSignal }
     var audioLevelPublisher: AnyPublisher<Float, Never> { audioService.audioLevelSubject.eraseToAnyPublisher() }
+    var videoSampleBufferPublisher: AnyPublisher<CMSampleBuffer, Never> {
+        cameraService.sampleBufferSubject.eraseToAnyPublisher()
+    }
 
     // MARK: - Internal Properties
 
@@ -66,10 +71,12 @@ class CameraState {
     private let audioService: AudioService
     private let startTimeoutNanoseconds: UInt64
     private let signalTimeoutNanoseconds: UInt64
+    private let previewWarmupNanoseconds: UInt64
     private let usePermissionlessTestFastPath: Bool
     private let cameraAuthorizationStatus: @Sendable () -> AVAuthorizationStatus
     private var cancellables = Set<AnyCancellable>()
     private var hasDiscoveredCameras = false
+    private var previewWarmupTask: Task<Void, Never>?
 
     // MARK: - Initialization
 
@@ -78,6 +85,7 @@ class CameraState {
         audioService: AudioService? = nil,
         startTimeoutNanoseconds: UInt64 = 5_000_000_000,
         signalTimeoutNanoseconds: UInt64 = 6_000_000_000,
+        previewWarmupNanoseconds: UInt64 = 10_000_000_000,
         usePermissionlessTestFastPath: Bool = true,
         cameraAuthorizationStatus: @escaping @Sendable () -> AVAuthorizationStatus = {
             AVCaptureDevice.authorizationStatus(for: .video)
@@ -87,6 +95,7 @@ class CameraState {
         self.audioService = audioService ?? ServiceContainer.shared.audioService
         self.startTimeoutNanoseconds = startTimeoutNanoseconds
         self.signalTimeoutNanoseconds = signalTimeoutNanoseconds
+        self.previewWarmupNanoseconds = previewWarmupNanoseconds
         self.usePermissionlessTestFastPath = usePermissionlessTestFastPath
         self.cameraAuthorizationStatus = cameraAuthorizationStatus
         self.isActive = self.cameraService.isActive
@@ -153,6 +162,7 @@ class CameraState {
             .sink { [weak self] session in
                 self?.currentSession = session
                 self?.currentHasVideoSignal = self?.cameraService.hasVideoSignal ?? false
+                self?.handlePreviewWarmup(for: session)
             }
             .store(in: &cancellables)
     }
@@ -246,6 +256,7 @@ class CameraState {
             cameraService.stop()
             AppLogger.camera.info("Stopped camera")
         }
+        cancelPreviewWarmup()
     }
 
     // MARK: - Camera Switching
@@ -289,6 +300,29 @@ class CameraState {
         }
 
         throw Self.cameraSignalTimeoutError()
+    }
+
+    private func handlePreviewWarmup(for session: AVCaptureSession?) {
+        guard let session else {
+            cancelPreviewWarmup()
+            return
+        }
+
+        previewWarmupTask?.cancel()
+        isPreviewWarmingUp = true
+        let warmupNanoseconds = previewWarmupNanoseconds
+
+        previewWarmupTask = Task { @MainActor [weak self, weak session] in
+            try? await Task.sleep(nanoseconds: warmupNanoseconds)
+            guard let self, let session, self.currentSession === session else { return }
+            self.isPreviewWarmingUp = false
+        }
+    }
+
+    private func cancelPreviewWarmup() {
+        previewWarmupTask?.cancel()
+        previewWarmupTask = nil
+        isPreviewWarmingUp = false
     }
 
     private static func cameraSignalTimeoutError() -> AppError {

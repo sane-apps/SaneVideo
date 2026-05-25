@@ -81,6 +81,35 @@ final class TrimHandleTests: XCTestCase {
         XCTAssertNotNil(updatedClip, "Clip should still exist")
         XCTAssertLessThan(updatedClip?.trimEnd.seconds ?? 0, originalTrimEnd.seconds, "Trim end should be reduced")
     }
+
+    func testRightTrimHandleReturnsAbsoluteTrimEnd() {
+        let clip = VideoClip(
+            url: URL(fileURLWithPath: "/tmp/test.mov"),
+            duration: CMTime(seconds: 10, preferredTimescale: 600)
+        )
+        projectState.addClip(clip)
+
+        guard let addedClip = projectState.currentProject?.timeline.tracks.first?.clips.first else {
+            XCTFail("Clip should be added")
+            return
+        }
+
+        let dragDelta = CMTime(seconds: -2, preferredTimescale: 600)
+        let resolvedEnd = ClipTrimHandle.resolvedTrimEnd(for: addedClip, delta: dragDelta)
+
+        XCTAssertEqual(resolvedEnd.seconds, 8, accuracy: 0.01, "Right trim should resolve to an absolute media end time")
+
+        projectState.updateClipTrim(
+            clipId: addedClip.id,
+            trimStart: nil,
+            trimEnd: resolvedEnd,
+            startTime: nil
+        )
+
+        let updatedClip = projectState.currentProject?.timeline.tracks.first?.clips.first
+        XCTAssertEqual(updatedClip?.trimEnd.seconds ?? -1, 8, accuracy: 0.01)
+        XCTAssertEqual(updatedClip?.effectiveDuration.seconds ?? -1, 8, accuracy: 0.01)
+    }
     
     func testTrimHandleClamping() {
         // Create a clip

@@ -133,19 +133,24 @@ appstore:
   platforms: [macos]
   category: public.app-category.video
   age_rating: "4+"
+  copyright: "2026 SaneApps"
+  content_rights_declaration: DOES_NOT_USE_THIRD_PARTY_CONTENT
+  export_compliance:
+    uses_non_exempt_encryption: false
+    exemption_reason: "SaneVideo does not use non-exempt encryption. It relies on Apple platform security and local media processing for recording, editing, and export workflows."
   privacy_policy_url: "https://sanevideo.com/privacy"
   support_url: "https://www.sanevideo.com/support"
   marketing_url: "https://sanevideo.com"
   metadata:
     macos:
       subtitle: "Private Video Workflow"
-      promotional_text: "Record, edit, and export videos on your Mac with a local-first workflow and clear permission controls."
+      promotional_text: "Public testing is open: SaneVideo Pro is 50% off through July 25, 2026 while the native Mac recording, editing, and export workflow is refined."
       description: >-
         SaneVideo is a native Mac video workflow app for creators who want recording, editing, and export without uploading project media by default.
         Record your screen, camera, and microphone, import local clips, edit on a timeline, generate captions, prepare demo packs, and export files from your Mac.
         Direct YouTube upload is not included in this build; export a local file and upload manually.
       keywords: "video recorder,screen recording,camera,timeline,export,captions,creator,mac"
-      whats_new: "Initial SaneVideo release with local recording, editing, export, caption, and demo-pack workflows."
+      whats_new: "Improves camera preview startup after macOS permission prompts and fixes timeline right-edge trim accuracy."
       marketing_url: "https://sanevideo.com"
   review_notes: >-
     SaneVideo is a freemium Mac App Store app. Basic is free and includes local recording, import, editing, and export surfaces. SaneVideo Pro Unlock is an optional one-time non-consumable StoreKit in-app purchase exposed from onboarding and Settings > About / License surfaces. The app requests Camera and Microphone only for recording. Screen & System Audio Recording is used for screen capture and cannot function without Apple's screen capture permission. Direct YouTube upload is disabled in this build; reviewers should use local export and manual upload if they want to inspect the export path. No website license flow, external checkout links, or license keys are used in the App Store build.

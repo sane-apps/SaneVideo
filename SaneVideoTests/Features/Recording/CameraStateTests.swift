@@ -268,13 +268,31 @@ struct CameraStateTests {
         let cameraState = CameraState(cameraService: mock)
 
         #expect(cameraState.shouldShowCameraSurface == true)
+        #expect(cameraState.shouldMountLivePreview == false)
+        #expect(cameraState.shouldShowLivePreview == false)
+    }
+
+    @Test("Live preview waits for first video signal even when session is active")
+    func shouldNotShowLivePreviewForActiveSessionWithoutSignal() {
+        let mock = CameraServiceProtocolMock(
+            isActive: true,
+            hasVideoSignal: false,
+            session: AVCaptureSession()
+        )
+        let cameraState = CameraState(cameraService: mock)
+
+        #expect(cameraState.shouldShowCameraSurface == true)
+        #expect(cameraState.shouldMountLivePreview == true)
         #expect(cameraState.shouldShowLivePreview == false)
     }
 
     @Test("Session publisher updates camera preview state")
     func sessionPublisherUpdatesCameraPreviewState() async throws {
         let mock = CameraServiceProtocolMock()
-        let cameraState = CameraState(cameraService: mock)
+        let cameraState = CameraState(
+            cameraService: mock,
+            previewWarmupNanoseconds: 20_000_000
+        )
         let session = AVCaptureSession()
 
         mock.session = session
@@ -285,7 +303,30 @@ struct CameraStateTests {
 
         #expect(cameraState.session === session)
         #expect(cameraState.shouldShowCameraSurface == true)
+        #expect(cameraState.shouldMountLivePreview == false)
         #expect(cameraState.shouldShowLivePreview == true)
+        #expect(cameraState.isPreviewWarmingUp == false)
+    }
+
+    @Test("Preview warmup stays active briefly after session appears")
+    func previewWarmupStaysActiveAfterSessionAppears() async throws {
+        let mock = CameraServiceProtocolMock(isActive: true)
+        let cameraState = CameraState(
+            cameraService: mock,
+            previewWarmupNanoseconds: 50_000_000
+        )
+        let session = AVCaptureSession()
+
+        mock.session = session
+        mock.sessionPublisherSubject.send(session)
+
+        try await Task.sleep(nanoseconds: 10_000_000)
+
+        #expect(cameraState.isPreviewWarmingUp == true)
+
+        try await Task.sleep(nanoseconds: 80_000_000)
+
+        #expect(cameraState.isPreviewWarmingUp == false)
     }
 
     @Test("Signal and error publishers update camera preview state")
@@ -313,6 +354,7 @@ struct CameraStateTests {
         let cameraState = CameraState(cameraService: mock)
 
         #expect(cameraState.shouldShowCameraSurface == true)
+        #expect(cameraState.shouldMountLivePreview == true)
         #expect(cameraState.shouldShowLivePreview == true)
     }
 

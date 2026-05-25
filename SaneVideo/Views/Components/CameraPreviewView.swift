@@ -6,106 +6,84 @@
 //
 
 import AVFoundation
+import Combine
+import CoreImage
 import OSLog
 import SwiftUI
 
 struct CameraPreviewView: NSViewRepresentable {
     let session: AVCaptureSession
+    let sampleBufferPublisher: AnyPublisher<CMSampleBuffer, Never>
     var isMirrored = CameraPreviewMirroring.defaultIsMirrored
 
-    func makeNSView(context _: Context) -> PreviewView {
+    func makeCoordinator() -> Coordinator {
+        Coordinator(sampleBufferPublisher: sampleBufferPublisher)
+    }
+
+    func makeNSView(context: Context) -> PreviewView {
         let view = PreviewView()
         view.isMirrored = isMirrored
-        view.session = session
+        context.coordinator.attach(to: view)
         return view
     }
 
-    func updateNSView(_ nsView: PreviewView, context _: Context) {
+    func updateNSView(_ nsView: PreviewView, context: Context) {
         nsView.isMirrored = isMirrored
-        if nsView.session !== session {
-            nsView.session = session
-        } else {
-            nsView.applyMirroringConfigurationSoon()
+        context.coordinator.attach(to: nsView)
+    }
+
+    static func dismantleNSView(_ nsView: PreviewView, coordinator: Coordinator) {
+        coordinator.cancel()
+        nsView.teardown()
+    }
+
+    final class Coordinator: @unchecked Sendable {
+        private let sampleBufferPublisher: AnyPublisher<CMSampleBuffer, Never>
+        private let renderQueue = DispatchQueue(label: "com.sanevideo.camera-preview.render", qos: .userInteractive)
+        private let ciContext = CIContext()
+        private var cancellable: AnyCancellable?
+        private weak var previewView: PreviewView?
+
+        init(sampleBufferPublisher: AnyPublisher<CMSampleBuffer, Never>) {
+            self.sampleBufferPublisher = sampleBufferPublisher
+        }
+
+        func attach(to view: PreviewView) {
+            previewView = view
+            guard cancellable == nil else { return }
+
+            cancellable = sampleBufferPublisher.sink { [weak self] sampleBuffer in
+                self?.render(sampleBuffer)
+            }
+        }
+
+        func cancel() {
+            cancellable?.cancel()
+            cancellable = nil
+        }
+
+        private func render(_ sampleBuffer: CMSampleBuffer) {
+            guard let imageBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
+            nonisolated(unsafe) let unsafeImageBuffer = imageBuffer
+
+            renderQueue.async { [weak self] in
+                guard let self else { return }
+
+                let ciImage = CIImage(cvPixelBuffer: unsafeImageBuffer)
+                guard let cgImage = self.ciContext.createCGImage(ciImage, from: ciImage.extent) else { return }
+
+                DispatchQueue.main.async { [weak self] in
+                    self?.previewView?.display(cgImage)
+                }
+            }
         }
     }
 
-    // CRITICAL FIX: Proper cleanup to prevent use-after-free during autorelease
-    static func dismantleNSView(_ nsView: PreviewView, coordinator: ()) {
-        // Disconnect session FIRST to stop frame delivery
-        nsView.previewLayer.session = nil
-        // Then remove the layer from the hierarchy
-        nsView.previewLayer.removeFromSuperlayer()
-    }
-
-    // Internal NSView subclass to handle layout automatically
     class PreviewView: NSView {
-        // CRITICAL FIX: nonisolated(unsafe) allows safe access from deinit
-        // for cleanup. AVCaptureVideoPreviewLayer is not Sendable.
-        // Made fileprivate to allow dismantleNSView to access it
-        nonisolated(unsafe) fileprivate let previewLayer = AVCaptureVideoPreviewLayer()
+        private let previewLayer = CALayer()
         var isMirrored = CameraPreviewMirroring.defaultIsMirrored {
             didSet {
-                guard oldValue != isMirrored else { return }
-                applyMirroringConfigurationSoon()
-            }
-        }
-
-        var session: AVCaptureSession? {
-            get { previewLayer.session }
-            set {
-                // Ensure session assignment happens on Main thread (strictly Main Dispatch Queue for AVFoundation)
-                if !Thread.isMainThread {
-                    DispatchQueue.main.async { [weak self] in self?.session = newValue }
-                    return
-                }
-
-                if previewLayer.session !== newValue {
-                    previewLayer.session = newValue
-                    AppLogger.camera.debug("CameraPreviewView: Session updated")
-
-                    applyMirroringConfigurationSoon()
-                }
-            }
-        }
-
-        func applyMirroringConfigurationSoon() {
-            let expectedSession = previewLayer.session
-            let delays: [TimeInterval] = [0, 0.05, 0.2, 0.5]
-            for delay in delays {
-                DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
-                    guard let self,
-                          self.previewLayer.session === expectedSession,
-                          let connection = self.previewLayer.connection
-                    else { return }
-
-                    AppLogger.camera.info("Configuring camera connection mirroring...")
-                    Self.safelyConfigureConnection(connection, isMirrored: self.isMirrored)
-                }
-            }
-        }
-
-        /// Safely configures the AVCaptureConnection
-        private static func safelyConfigureConnection(_ connection: AVCaptureConnection, isMirrored: Bool) {
-            let version = ProcessInfo.processInfo.operatingSystemVersion
-            AppLogger.camera.info("Configuring connection on macOS \(version.majorVersion).\(version.minorVersion)")
-
-            // CRITICAL FIX: AVFoundation requires automaticallyAdjustsVideoMirroring to be disabled
-            // BEFORE manually setting isVideoMirrored. Failure to do so causes NSInvalidArgumentException.
-            if connection.isVideoMirroringSupported {
-                // Step 1: Disable automatic adjustment (MUST come first)
-                connection.automaticallyAdjustsVideoMirroring = false
-                AppLogger.camera.info("Disabled automatic video mirroring adjustment")
-
-                // Step 2: Now safe to set manual mirroring
-                connection.isVideoMirrored = isMirrored
-                AppLogger.camera.info("Set video mirrored to \(isMirrored)")
-            }
-
-            if #available(macOS 14.0, *) {
-                if connection.isVideoRotationAngleSupported(0.0) {
-                    connection.videoRotationAngle = 0.0
-                    AppLogger.camera.info("Set video rotation angle to 0.0")
-                }
+                applyMirroringConfiguration()
             }
         }
 
@@ -123,28 +101,39 @@ struct CameraPreviewView: NSViewRepresentable {
             wantsLayer = true
             if let layer = layer {
                 layer.backgroundColor = NSColor.black.cgColor
-                previewLayer.videoGravity = .resizeAspectFill
+                previewLayer.backgroundColor = NSColor.black.cgColor
+                previewLayer.contentsGravity = .resizeAspectFill
                 layer.addSublayer(previewLayer)
             }
+            applyMirroringConfiguration()
         }
 
         override func layout() {
             super.layout()
-            // Ensure layer always fills the view
             if previewLayer.frame != bounds {
                 CATransaction.begin()
                 CATransaction.setDisableActions(true)
                 previewLayer.frame = bounds
+                applyMirroringConfiguration()
                 CATransaction.commit()
             }
         }
 
-        // CRITICAL FIX: Clean up layer on deallocation to prevent use-after-free
-        // when the session is deallocated while the layer still references it
-        deinit {
-            previewLayer.session = nil
+        func display(_ image: CGImage) {
+            previewLayer.contents = image
+        }
+
+        func teardown() {
+            previewLayer.contents = nil
             previewLayer.removeFromSuperlayer()
         }
+
+        private func applyMirroringConfiguration() {
+            previewLayer.anchorPoint = CGPoint(x: 0.5, y: 0.5)
+            previewLayer.position = CGPoint(x: bounds.midX, y: bounds.midY)
+            previewLayer.setAffineTransform(isMirrored ? CGAffineTransform(scaleX: -1, y: 1) : .identity)
+        }
+
     }
 }
 

@@ -6,7 +6,27 @@
     <description>Most recent SaneVideo updates.</description>
     <language>en</language>
     
-          <item>
+                  <item>
+            <title>1.0.1</title>
+            <link>https://sanevideo.com/download</link>
+            <pubDate>Mon, 25 May 2026 16:55:43 -0400</pubDate>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <description>
+                <![CDATA[
+                <h2>What's New</h2>
+                <ul>
+                <li>Fixes camera preview startup reliability after permission prompts and improves timeline trim accuracy.</li>
+                </ul>
+                ]]>
+            </description>
+            <enclosure url="https://dist.sanevideo.com/updates/SaneVideo-1.0.1.zip"
+                       sparkle:version="2"
+                       sparkle:shortVersionString="1.0.1"
+                       length="8447038"
+                       type="application/octet-stream"
+                       sparkle:edSignature="jN/LI3sbxFIF/ysXvGHSOoFQocnLPHMR+By7f6uzqA9NRoDUa4A97ENCJWHr/m30UPnbfF36P1mtYvH+8uWpDA=="/>
+        </item>
+<item>
             <title>1.0</title>
             <link>https://sanevideo.com/download</link>
             <pubDate>Sun, 17 May 2026 15:06:47 -0400</pubDate>

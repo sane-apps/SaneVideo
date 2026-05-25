@@ -1,19 +1,25 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>SaneVideo - Native Mac video recording, editing, captions, and export</title>
-  <meta name="description" content="SaneVideo is a native Mac video workflow for local screen, camera, microphone, timeline editing, captions, demo packs, and export. Public testing is open with Pro 50% off.">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SaneVideo - Native Mac video recording and editing</title>
+  <meta name="description" content="SaneVideo is a native Mac app for screen, camera, microphone, timeline editing, captions, demo packs, and local export. Public testing is live with Pro 50% off.">
   <link rel="canonical" href="https://sanevideo.com/">
   <link rel="icon" type="image/png" href="images/icon.png">
-  <meta name="theme-color" content="#0a0d10">
+  <meta name="theme-color" content="#08080c">
   <meta property="og:type" content="website">
   <meta property="og:title" content="SaneVideo - Native Mac video workflow">
-  <meta property="og:description" content="Record, edit, caption, package, and export videos locally on your Mac. Public testing is open with Pro 50% off.">
+  <meta property="og:description" content="Record, edit, caption, package, and export videos locally on your Mac. Public testing is live with Pro 50% off.">
   <meta property="og:url" content="https://sanevideo.com/">
-  <meta property="og:image" content="https://sanevideo.com/images/sanevideo-recording.png">
+  <meta property="og:image" content="https://sanevideo.com/images/sanevideo-actual-edit-workflow.png">
   <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="SaneVideo - Native Mac video workflow">
+  <meta name="twitter:description" content="Record, edit, caption, package, and export videos locally on your Mac. Public testing is live with Pro 50% off.">
+  <meta name="twitter:image" content="https://sanevideo.com/images/sanevideo-actual-edit-workflow.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Playfair+Display:wght@500;600&display=swap" rel="stylesheet">
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -24,7 +30,7 @@
     "operatingSystem": "macOS 15 or later",
     "downloadUrl": "https://dist.sanevideo.com/updates/SaneVideo-1.0.1.zip",
     "softwareVersion": "1.0.1",
-    "screenshot": "https://sanevideo.com/images/sanevideo-recording.png",
+    "screenshot": "https://sanevideo.com/images/sanevideo-actual-edit-workflow.png",
     "offers": {
       "@type": "Offer",
       "price": "3.49",
@@ -48,670 +54,426 @@
   </script>
   <style>
     :root {
-      color-scheme: dark;
-      --bg: #090d10;
-      --bg-elevated: #10161a;
-      --bg-soft: #141b20;
-      --text: #ffffff;
-      --text-2: #eef5f6;
-      --text-3: #d7e4e6;
-      --line: rgba(255, 255, 255, 0.12);
-      --line-strong: rgba(255, 255, 255, 0.2);
-      --accent: #31e6ad;
-      --accent-2: #5ec7ff;
-      --warm: #ffcc66;
-      --danger: #ff6b6b;
-      --shadow: rgba(0, 0, 0, 0.52);
+      --bg-primary: #08080c;
+      --bg-secondary: #0f1118;
+      --bg-card: #171a22;
+      --text-primary: #ffffff;
+      --text-secondary: #eef4f6;
+      --text-muted: #dfe9ec;
+      --accent: #37b9f6;
+      --accent-soft: #1684da;
+      --accent-subtle: rgba(55, 185, 246, 0.14);
+      --accent-glow: rgba(55, 185, 246, 0.28);
+      --success: #34d399;
+      --success-soft: rgba(52, 211, 153, 0.14);
+      --border: rgba(255, 255, 255, 0.12);
+      --border-subtle: rgba(255, 255, 255, 0.07);
+      --phi-xs: 8px;
+      --phi-sm: 13px;
+      --phi-md: 21px;
+      --phi-lg: 34px;
+      --phi-xl: 55px;
+      --phi-2xl: 89px;
     }
 
-    * { box-sizing: border-box; }
-
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     html { scroll-behavior: smooth; }
-
     body {
-      margin: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif;
-      background: var(--bg);
-      color: var(--text);
+      font-family: "DM Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
       line-height: 1.6;
+      overflow-x: hidden;
     }
-
     img { display: block; max-width: 100%; }
     a { color: inherit; }
+    button { font: inherit; color: inherit; text-align: inherit; }
 
-    .site-nav {
+    .gradient-bg {
       position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      z-index: 20;
-      border-bottom: 1px solid var(--line);
-      background: rgba(9, 13, 16, 0.84);
+      inset: 0;
+      z-index: -1;
+      background:
+        radial-gradient(ellipse at 18% 12%, rgba(55, 185, 246, 0.14) 0%, transparent 45%),
+        radial-gradient(ellipse at 82% 84%, rgba(49, 230, 173, 0.09) 0%, transparent 45%),
+        var(--bg-primary);
+      pointer-events: none;
+    }
+
+    .container { max-width: 1180px; margin: 0 auto; padding: 0 24px; }
+
+    nav {
+      position: fixed;
+      inset: 0 0 auto;
+      z-index: 100;
+      padding: 16px 0;
+      background: rgba(8, 8, 12, 0.84);
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
     }
-
-    .nav-inner {
-      max-width: 1180px;
-      margin: 0 auto;
-      padding: 14px 24px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 24px;
-    }
-
-    .logo {
-      display: grid;
-      grid-template-columns: 36px auto;
-      grid-template-rows: auto auto;
-      column-gap: 12px;
-      align-items: center;
-      text-decoration: none;
-      min-width: 190px;
-    }
-
-    .logo img {
-      grid-row: 1 / span 2;
-      width: 36px;
-      height: 36px;
-      border-radius: 8px;
-      object-fit: cover;
-    }
-
-    .logo-name {
-      font-size: 20px;
-      font-weight: 760;
-      line-height: 1.05;
-      letter-spacing: 0;
-    }
-
-    .logo-family {
-      color: var(--text-3);
-      font-size: 13px;
-      line-height: 1.2;
-    }
-
-    .nav-links {
-      display: flex;
-      align-items: center;
-      justify-content: flex-end;
-      gap: 24px;
-      flex-wrap: wrap;
-    }
-
-    .nav-links a {
-      color: var(--text-2);
-      text-decoration: none;
-      font-size: 15px;
-      font-weight: 650;
-    }
-
-    .nav-links .nav-cta {
-      padding: 10px 16px;
-      border-radius: 8px;
-      background: var(--accent);
-      color: #06100d;
-      box-shadow: 0 10px 28px rgba(49, 230, 173, 0.24);
-    }
-
-    .hero {
-      min-height: min(820px, calc(100vh - 28px));
-      display: grid;
-      align-items: end;
-      position: relative;
-      padding: 120px 24px 58px;
-      overflow: hidden;
-      border-bottom: 1px solid var(--line);
-    }
-
-    .hero::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background:
-        linear-gradient(90deg, rgba(9, 13, 16, 0.98) 0%, rgba(9, 13, 16, 0.88) 33%, rgba(9, 13, 16, 0.46) 70%, rgba(9, 13, 16, 0.8) 100%),
-        linear-gradient(180deg, rgba(9, 13, 16, 0.82) 0%, rgba(9, 13, 16, 0.18) 46%, rgba(9, 13, 16, 0.96) 100%),
-        url("images/sanevideo-recording.png") center right / cover no-repeat;
-      transform: scale(1.01);
-    }
-
-    .hero-inner {
-      position: relative;
-      z-index: 1;
-      width: min(1180px, 100%);
-      margin: 0 auto;
-      display: grid;
-      gap: 34px;
-    }
-
-    .eyebrow {
-      display: inline-flex;
-      width: fit-content;
-      align-items: center;
-      gap: 10px;
-      color: var(--text);
-      font-size: 14px;
-      font-weight: 780;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-    }
-
-    .eyebrow::before {
-      content: "";
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: var(--accent);
-      box-shadow: 0 0 18px rgba(49, 230, 173, 0.8);
-    }
-
-    h1 {
-      max-width: 880px;
-      margin: 0;
-      font-size: clamp(50px, 7.5vw, 96px);
-      line-height: 0.94;
-      letter-spacing: 0;
-    }
-
-    .hero-copy {
-      max-width: 760px;
-      margin: 0;
-      color: var(--text-2);
-      font-size: clamp(20px, 2.2vw, 27px);
-      line-height: 1.35;
-    }
-
-    .hero-actions,
-    .button-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 14px;
-      align-items: center;
-    }
+    nav .container { display: flex; justify-content: space-between; align-items: center; gap: 24px; }
+    .logo { display: flex; align-items: center; gap: 12px; color: var(--text-primary); text-decoration: none; font-size: 1.25rem; font-weight: 700; }
+    .logo img { width: 34px; height: 34px; border-radius: 8px; }
+    .logo-group { display: flex; flex-direction: column; line-height: 1.05; }
+    .logo-family { color: var(--text-secondary); font-size: 0.78rem; font-weight: 500; text-decoration: none; margin-top: 3px; }
+    .nav-links { display: flex; gap: 28px; align-items: center; }
+    .nav-links a { color: var(--text-secondary); text-decoration: none; font-size: 0.95rem; font-weight: 600; }
+    .nav-links a:hover { color: var(--text-primary); }
 
     .btn {
-      min-height: 50px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       gap: 10px;
-      padding: 0 20px;
-      border-radius: 8px;
-      border: 1px solid var(--line-strong);
-      text-decoration: none;
-      font-size: 16px;
-      font-weight: 780;
-    }
-
-    .btn-primary {
-      background: var(--accent);
-      color: #06100d;
-      border-color: transparent;
-      box-shadow: 0 14px 34px rgba(49, 230, 173, 0.24);
-    }
-
-    .btn-secondary {
-      background: rgba(255, 255, 255, 0.08);
-      color: var(--text);
-    }
-
-    .btn-minor {
-      color: var(--text-2);
+      min-height: 50px;
+      padding: 0 22px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      color: var(--text-primary);
       text-decoration: none;
       font-weight: 700;
+      transition: transform 0.2s, border-color 0.2s, background 0.2s, box-shadow 0.2s;
     }
+    .btn:hover { transform: translateY(-2px); }
+    .btn-primary { background: linear-gradient(135deg, var(--accent), var(--accent-soft)); border-color: transparent; color: #ffffff; box-shadow: 0 12px 34px var(--accent-glow); }
+    .btn-secondary { background: var(--bg-card); }
+    .btn-secondary:hover { border-color: var(--accent); background: var(--accent-subtle); }
 
-    .hero-proof {
+    .hero { padding: 136px 0 80px; text-align: center; }
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      margin-bottom: 18px;
+      color: var(--accent);
+      font-size: 0.82rem;
+      font-weight: 800;
+      letter-spacing: 0.11em;
+      text-transform: uppercase;
+    }
+    .eyebrow::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: var(--success); box-shadow: 0 0 16px var(--success); }
+    h1, h2 { font-family: "Playfair Display", Georgia, serif; font-weight: 600; letter-spacing: 0; }
+    h1 { max-width: 780px; margin: 0 auto 22px; font-size: clamp(2.5rem, 5.4vw, 4.15rem); line-height: 1.05; }
+    h1 em { color: var(--accent); font-style: italic; }
+    .subtitle { max-width: 680px; margin: 0 auto 30px; color: var(--text-secondary); font-size: clamp(1.1rem, 2vw, 1.32rem); line-height: 1.55; }
+    .cta-buttons { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; margin-bottom: 24px; }
+    .trust-badges { display: flex; gap: 22px; justify-content: center; flex-wrap: wrap; margin-bottom: 40px; color: var(--text-secondary); font-size: 1rem; font-weight: 600; }
+
+    .hero-screenshot {
+      max-width: 1040px;
+      margin: 0 auto 38px;
+      border: 1px solid var(--border-subtle);
+      border-radius: 20px;
+      padding: 10px;
+      background: linear-gradient(160deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03));
+      box-shadow: 0 30px 80px rgba(0,0,0,0.46), 0 0 80px rgba(55,185,246,0.08);
+      cursor: zoom-in;
+    }
+    .hero-screenshot img { border-radius: 14px; width: 100%; height: auto; }
+    .hero-note { color: var(--text-muted); font-size: 0.95rem; margin-top: -18px; margin-bottom: 34px; }
+
+    .hero-pricing-grid {
       display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 12px;
-      max-width: 900px;
-    }
-
-    .proof-item {
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      padding: 13px 14px;
-      background: rgba(255, 255, 255, 0.06);
-    }
-
-    .proof-item strong {
-      display: block;
-      font-size: 15px;
-      line-height: 1.2;
-      margin-bottom: 4px;
-    }
-
-    .proof-item span {
-      color: var(--text-3);
-      font-size: 13px;
-      line-height: 1.35;
-    }
-
-    .section {
-      border-bottom: 1px solid var(--line);
-      background: var(--bg);
-    }
-
-    .section.alt { background: #0d1216; }
-
-    .section-inner {
-      width: min(1180px, 100%);
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 20px;
+      max-width: 880px;
       margin: 0 auto;
-      padding: 82px 24px;
     }
-
-    .section-head {
-      display: grid;
-      grid-template-columns: minmax(0, 0.9fr) minmax(280px, 0.6fr);
-      gap: 42px;
-      align-items: end;
-      margin-bottom: 32px;
-    }
-
-    h2 {
-      margin: 0;
-      font-size: clamp(34px, 4.6vw, 62px);
-      line-height: 1;
-      letter-spacing: 0;
-    }
-
-    .section-head p,
-    .large-copy {
-      margin: 0;
-      color: var(--text-2);
-      font-size: 20px;
-      line-height: 1.45;
-    }
-
-    .showcase {
-      display: grid;
-      grid-template-columns: 1.08fr 0.92fr;
-      gap: 24px;
-      align-items: stretch;
-    }
-
-    .showcase.reverse { grid-template-columns: 0.92fr 1.08fr; }
-
-    .shot {
-      overflow: hidden;
-      border-radius: 8px;
-      border: 1px solid var(--line);
-      background: #050708;
-      box-shadow: 0 28px 80px var(--shadow);
-    }
-
-    .shot img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .copy-panel {
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background: var(--bg-elevated);
+    .pricing-card {
+      background: linear-gradient(160deg, rgba(23,26,34,0.98), rgba(15,17,24,0.98));
+      border: 1px solid var(--border-subtle);
+      border-radius: 18px;
       padding: 30px;
+      text-align: left;
+      box-shadow: 0 18px 45px rgba(0,0,0,0.28);
+    }
+    .pricing-card.featured { border-color: rgba(55,185,246,0.55); box-shadow: 0 22px 60px rgba(55,185,246,0.16); }
+    .pricing-label { color: var(--accent); font-size: 0.78rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 10px; }
+    .pricing-price { font-size: clamp(2.4rem, 5vw, 3.4rem); line-height: 1; font-weight: 800; margin-bottom: 8px; }
+    .pricing-price span { margin-left: 10px; color: var(--text-muted); font-size: 1.05rem; text-decoration: line-through; }
+    .pricing-price-note { color: var(--text-secondary); margin-bottom: 18px; }
+    .pricing-features { display: grid; gap: 10px; margin: 0 0 24px; padding: 0; list-style: none; color: var(--text-secondary); }
+    .pricing-features li { display: grid; grid-template-columns: 18px 1fr; gap: 9px; align-items: start; }
+    .pricing-features li::before { content: ""; width: 8px; height: 8px; margin-top: 9px; border-radius: 50%; background: var(--success); }
+    .pricing-cta { width: 100%; }
+
+    .section { padding: var(--phi-2xl) 0; border-top: 1px solid var(--border-subtle); }
+    .section.alt { background: rgba(255,255,255,0.025); }
+    .section-title { font-size: clamp(2.1rem, 5vw, 3.4rem); text-align: center; margin-bottom: 16px; line-height: 1.12; }
+    .section-subtitle { max-width: 700px; margin: 0 auto 44px; color: var(--text-secondary); text-align: center; font-size: 1.12rem; line-height: 1.7; }
+
+    .showcase-grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 22px; align-items: stretch; }
+    .showcase-card {
       display: flex;
       flex-direction: column;
-      justify-content: center;
-      gap: 22px;
-    }
-
-    .copy-panel h3 {
-      margin: 0;
-      font-size: clamp(28px, 3vw, 40px);
-      line-height: 1.06;
-      letter-spacing: 0;
-    }
-
-    .copy-panel p {
-      margin: 0;
-      color: var(--text-2);
-      font-size: 18px;
-    }
-
-    .checklist {
-      display: grid;
-      gap: 10px;
-      margin: 0;
-      padding: 0;
-      list-style: none;
-      color: var(--text);
-      font-size: 16px;
-      font-weight: 650;
-    }
-
-    .checklist li {
-      display: grid;
-      grid-template-columns: 22px 1fr;
-      gap: 10px;
-      align-items: start;
-    }
-
-    .checklist li::before {
-      content: "";
-      width: 11px;
-      height: 11px;
-      margin-top: 8px;
-      border-radius: 50%;
-      background: var(--accent);
-    }
-
-    .feature-grid {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 16px;
-    }
-
-    .feature-card {
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background: var(--bg-elevated);
-      padding: 24px;
-      min-height: 170px;
-    }
-
-    .feature-card strong {
-      display: block;
-      margin-bottom: 10px;
-      font-size: 19px;
-      line-height: 1.2;
-    }
-
-    .feature-card p {
-      margin: 0;
-      color: var(--text-2);
-      font-size: 16px;
-    }
-
-    .pricing {
-      display: grid;
-      grid-template-columns: 0.95fr 1.05fr;
-      gap: 24px;
-      align-items: stretch;
-    }
-
-    .price-block {
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background: var(--bg-elevated);
-      padding: 30px;
-    }
-
-    .price {
-      display: flex;
-      align-items: baseline;
-      gap: 10px;
-      margin: 10px 0 14px;
-    }
-
-    .price strong {
-      font-size: 58px;
-      line-height: 1;
-      letter-spacing: 0;
-    }
-
-    .price span {
-      color: var(--text-3);
-      font-size: 18px;
-      text-decoration: line-through;
-    }
-
-    .banner {
-      display: inline-flex;
-      width: fit-content;
-      margin-bottom: 18px;
-      padding: 8px 12px;
-      border-radius: 8px;
-      background: rgba(255, 204, 102, 0.14);
-      color: var(--text);
-      border: 1px solid rgba(255, 204, 102, 0.32);
-      font-weight: 760;
-      font-size: 14px;
-    }
-
-    .privacy-strip {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 1px;
+      min-height: 360px;
       overflow: hidden;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background: var(--line);
+      border: 1px solid var(--border-subtle);
+      border-radius: 20px;
+      background: linear-gradient(160deg, rgba(23,26,34,0.98), rgba(10,12,18,0.98));
+      text-decoration: none;
+      cursor: zoom-in;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.28);
     }
+    .showcase-card:first-child { grid-row: span 2; }
+    .showcase-copy { padding: 24px 26px 18px; }
+    .showcase-eyebrow { color: var(--accent); font-size: 0.78rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 9px; }
+    .showcase-card h3 { font-size: clamp(1.35rem, 3vw, 2rem); line-height: 1.12; margin-bottom: 9px; }
+    .showcase-card p:last-child { color: var(--text-secondary); font-size: 1rem; }
+    .showcase-card img { width: 100%; height: 100%; min-height: 230px; object-fit: cover; object-position: center; border-top: 1px solid var(--border-subtle); }
+    .showcase-card:first-child img { min-height: 500px; }
 
-    .privacy-strip div {
-      background: var(--bg-elevated);
-      padding: 24px;
+    .feature-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+    .feature-card {
+      background: linear-gradient(160deg, rgba(23,26,34,0.98), rgba(15,17,24,0.98));
+      border: 1px solid var(--border-subtle);
+      border-radius: 18px;
+      padding: 28px;
+      min-height: 178px;
     }
-
-    .privacy-strip strong {
-      display: block;
-      margin-bottom: 6px;
-      font-size: 18px;
+    .feature-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      background: var(--accent-subtle);
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 18px;
+      font-weight: 800;
     }
+    .feature-card h3 { font-size: 1.16rem; margin-bottom: 10px; }
+    .feature-card p { color: var(--text-secondary); font-size: 0.98rem; }
 
-    .privacy-strip span {
-      color: var(--text-2);
-      font-size: 15px;
-    }
-
-    footer {
-      background: #070a0d;
-      color: var(--text-3);
-    }
-
-    .footer-inner {
-      width: min(1180px, 100%);
+    .privacy-card {
+      max-width: 920px;
       margin: 0 auto;
-      padding: 38px 24px 56px;
-      display: flex;
-      justify-content: space-between;
-      gap: 24px;
-      flex-wrap: wrap;
+      border: 1px solid var(--border-subtle);
+      border-radius: 22px;
+      padding: 40px;
+      background: linear-gradient(160deg, rgba(23,26,34,0.98), rgba(15,17,24,0.98));
+      text-align: center;
     }
+    .privacy-card h2 { font-size: clamp(2rem, 5vw, 3rem); margin-bottom: 14px; }
+    .privacy-card p { color: var(--text-secondary); font-size: 1.08rem; max-width: 710px; margin: 0 auto 26px; }
 
-    .footer-links {
-      display: flex;
-      gap: 18px;
-      flex-wrap: wrap;
+    footer { border-top: 1px solid var(--border-subtle); background: #07080c; color: var(--text-secondary); }
+    .footer-inner { display: flex; justify-content: space-between; gap: 20px; flex-wrap: wrap; padding: 38px 0 52px; }
+    .footer-links { display: flex; gap: 18px; flex-wrap: wrap; }
+    .footer-links a { text-decoration: none; }
+
+    .lightbox {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 28px;
+      background: rgba(0,0,0,0.88);
     }
-
-    .footer-links a { color: var(--text-2); text-decoration: none; }
+    .lightbox.active { display: flex; }
+    .lightbox img { max-width: min(94vw, 1500px); max-height: 88vh; border-radius: 16px; box-shadow: 0 30px 90px rgba(0,0,0,0.6); }
+    .lightbox button {
+      position: fixed;
+      top: 22px;
+      right: 24px;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      color: var(--text-primary);
+      font-size: 24px;
+      cursor: pointer;
+    }
 
     @media (max-width: 900px) {
-      .nav-inner { align-items: flex-start; flex-direction: column; gap: 14px; }
-      .nav-links { justify-content: flex-start; gap: 16px; }
-      .hero { padding-top: 156px; min-height: 760px; }
-      .hero-proof,
-      .feature-grid,
-      .pricing,
-      .privacy-strip,
-      .section-head,
-      .showcase,
-      .showcase.reverse {
-        grid-template-columns: 1fr;
-      }
-      .copy-panel { padding: 24px; }
+      nav .container { flex-direction: column; align-items: flex-start; }
+      .nav-links { gap: 16px; flex-wrap: wrap; }
+      .hero { padding-top: 178px; }
+      .hero-pricing-grid, .showcase-grid, .feature-grid { grid-template-columns: 1fr; }
+      .showcase-card:first-child { grid-row: auto; }
+      .showcase-card:first-child img { min-height: 260px; }
     }
 
     @media (max-width: 560px) {
-      .nav-links a { font-size: 14px; }
-      .nav-links .nav-cta { padding: 9px 12px; }
-      .hero { padding-left: 18px; padding-right: 18px; }
-      .section-inner { padding: 64px 18px; }
-      h1 { font-size: 48px; }
-      .hero-copy { font-size: 19px; }
-      .btn { width: 100%; }
+      .container { padding: 0 18px; }
+      .nav-links a { font-size: 0.9rem; }
+      .hero { padding-top: 192px; padding-bottom: 58px; }
+      h1 { font-size: 2.75rem; }
+      .btn, .pricing-cta { width: 100%; }
+      .pricing-card, .feature-card, .privacy-card { padding: 24px; }
       .footer-inner { flex-direction: column; }
     }
   </style>
 </head>
 <body>
-  <nav class="site-nav" aria-label="Primary navigation">
-    <div class="nav-inner">
+  <div class="gradient-bg" aria-hidden="true"></div>
+
+  <nav aria-label="Primary navigation">
+    <div class="container">
       <a class="logo" href="/">
         <img src="images/icon.png" alt="">
-        <span class="logo-name">SaneVideo</span>
-        <span class="logo-family">by SaneApps</span>
+        <span class="logo-group">
+          <span>SaneVideo</span>
+          <span class="logo-family">Part of the SaneApps family</span>
+        </span>
       </a>
       <div class="nav-links">
-        <a href="#workflow">Workflow</a>
         <a href="#screenshots">Screenshots</a>
-        <a href="#pricing">Public Testing</a>
+        <a href="#features">Features</a>
+        <a href="#pricing">Pricing</a>
         <a href="/privacy">Privacy</a>
-        <a class="nav-cta" href="https://dist.sanevideo.com/updates/SaneVideo-1.0.1.zip">Download</a>
+        <a class="btn btn-primary" href="https://dist.sanevideo.com/updates/SaneVideo-1.0.1.zip">Download</a>
       </div>
     </div>
   </nav>
 
-  <header class="hero">
-    <div class="hero-inner">
-      <span class="eyebrow">Public testing build 1.0.1</span>
-      <h1>SaneVideo is the Mac video workflow for demos, courses, and product clips.</h1>
-      <p class="hero-copy">Record screen, camera, and microphone. Cut clips on a timeline. Add captions, prepare demo packs, and export normal local video files without sending project media to a cloud editor.</p>
-      <div class="hero-actions">
-        <a class="btn btn-primary" href="https://dist.sanevideo.com/updates/SaneVideo-1.0.1.zip">Download for Mac</a>
-        <a class="btn btn-secondary" href="https://go.saneapps.com/buy/sanevideo?ref=site-hero">Buy Pro $3.49</a>
-        <a class="btn-minor" href="/download">Install notes</a>
-      </div>
-      <div class="hero-proof" aria-label="Release highlights">
-        <div class="proof-item"><strong>Basic is free</strong><span>Local recording, import, editing, and export surfaces are available for testing.</span></div>
-        <div class="proof-item"><strong>50% off Pro</strong><span>$3.49 through July 25, 2026 during public testing.</span></div>
-        <div class="proof-item"><strong>Local-first</strong><span>Media stays on your Mac unless you deliberately export or move it.</span></div>
-        <div class="proof-item"><strong>Transparent code</strong><span>Source-available under PolyForm Shield.</span></div>
-      </div>
-    </div>
-  </header>
-
   <main>
-    <section class="section" id="workflow">
-      <div class="section-inner">
-        <div class="section-head">
-          <h2>One native workflow from capture to finished clip.</h2>
-          <p>SaneVideo is built for people who make practical videos: app demos, tutorials, bug reports, walkthroughs, launch clips, and support explainers.</p>
+    <section class="hero">
+      <div class="container">
+        <p class="eyebrow">Public testing build 1.0.1 is live</p>
+        <h1>Edit Mac video on a real timeline, then ship local files.</h1>
+        <p class="subtitle">SaneVideo brings recording, preview, media management, inspector tools, timeline editing, captions, demo packs, and export into one native Mac workflow.</p>
+        <button class="hero-screenshot" type="button" onclick="openLightbox('images/sanevideo-actual-edit-workflow.png')" aria-label="Open SaneVideo app screenshot">
+          <img src="images/sanevideo-actual-edit-workflow.png" alt="Actual SaneVideo timeline editor with media bin, preview, inspector, and clip timeline">
+        </button>
+        <p class="hero-note">Actual editor workflow capture from the public testing build.</p>
+        <div class="cta-buttons">
+          <a class="btn btn-primary" href="https://dist.sanevideo.com/updates/SaneVideo-1.0.1.zip">Download for Mac</a>
+          <a class="btn btn-secondary" href="https://go.saneapps.com/buy/sanevideo?ref=site-hero">Buy Pro for $3.49</a>
         </div>
-        <div class="feature-grid">
-          <div class="feature-card"><strong>Record with intent</strong><p>Use camera, microphone, and screen capture controls from one Mac-native recording surface.</p></div>
-          <div class="feature-card"><strong>Edit without a cloud round trip</strong><p>Import clips, trim timeline edges, review playback, and keep the project local by default.</p></div>
-          <div class="feature-card"><strong>Package the work</strong><p>Prepare captions, demo packs, thumbnails, GIFs, and local exports for the places you already publish.</p></div>
+        <div class="trust-badges" aria-label="Product promises">
+          <span>Local-first media</span>
+          <span>No subscriptions</span>
+          <span>100% Transparent Code</span>
+        </div>
+
+        <div class="hero-pricing-grid" id="pricing">
+          <div class="pricing-card">
+            <p class="pricing-label">Basic</p>
+            <p class="pricing-price">Free</p>
+            <p class="pricing-price-note">Start testing the native recording and local workflow.</p>
+            <ul class="pricing-features">
+              <li>Screen, camera, and microphone recording surfaces</li>
+              <li>Import, timeline review, and local export paths</li>
+              <li>Privacy-first defaults with explicit permissions</li>
+            </ul>
+            <a class="btn btn-secondary pricing-cta" href="https://dist.sanevideo.com/updates/SaneVideo-1.0.1.zip">Download Free</a>
+          </div>
+          <div class="pricing-card featured">
+            <p class="pricing-label">Public testing special</p>
+            <p class="pricing-price">$3.49<span>$6.99</span></p>
+            <p class="pricing-price-note">50% off through July 25, 2026. One-time Pro unlock.</p>
+            <ul class="pricing-features">
+              <li>Everything in Basic, plus Pro workflow features</li>
+              <li>Captions, transcript editing, and demo pack surfaces</li>
+              <li>Early tester pricing while the app hardens in public</li>
+            </ul>
+            <a class="btn btn-primary pricing-cta" href="https://go.saneapps.com/buy/sanevideo?ref=site-pricing">Get Pro for $3.49</a>
+          </div>
         </div>
       </div>
     </section>
 
     <section class="section alt" id="screenshots">
-      <div class="section-inner">
-        <div class="showcase">
-          <figure class="shot">
-            <img src="images/sanevideo-editing.png" alt="SaneVideo timeline editing view with media library, preview, and tracks">
-          </figure>
-          <div class="copy-panel">
-            <h3>Timeline editing that stays understandable.</h3>
-            <p>Drag through a creator-focused editing surface with preview, tracks, inspector controls, and clear destructive confirmations for risky file actions.</p>
-            <ul class="checklist">
-              <li>Right-edge trim accuracy fixed in 1.0.1</li>
-              <li>Playback, zoom, split, delete, mute, and context-menu actions covered by release tests</li>
-              <li>Fixture-backed import/edit/export proof in the public testing sweep</li>
-            </ul>
-          </div>
+      <div class="container">
+        <h2 class="section-title">The actual editor is the proof.</h2>
+        <p class="section-subtitle">The primary screenshots show the running app: media bin, preview, inspector, timeline, clip handles, and export surfaces from the public testing workflow.</p>
+        <div class="showcase-grid">
+          <button class="showcase-card" type="button" onclick="openLightbox('images/sanevideo-actual-edit-workflow.png')">
+            <div class="showcase-copy">
+              <p class="showcase-eyebrow">Timeline</p>
+              <h3>Edit locally on a clear timeline.</h3>
+              <p>Trim, review, split, delete, mute, and prepare clips without uploading project media.</p>
+            </div>
+            <img src="images/sanevideo-actual-edit-workflow.png" alt="SaneVideo timeline editing surface">
+          </button>
+          <button class="showcase-card" type="button" onclick="openLightbox('images/sanevideo-camera-on-synthetic.png')">
+            <div class="showcase-copy">
+              <p class="showcase-eyebrow">Capture</p>
+              <h3>Record screen, camera, and mic.</h3>
+              <p>Synthetic on-camera preview used for website artwork; the window chrome and recording controls are from the real app.</p>
+            </div>
+            <img src="images/sanevideo-camera-on-synthetic.png" alt="SaneVideo recording controls with synthetic camera preview">
+          </button>
+          <button class="showcase-card" type="button" onclick="openLightbox('images/sanevideo-export.png')">
+            <div class="showcase-copy">
+              <p class="showcase-eyebrow">Export</p>
+              <h3>Export normal local files.</h3>
+              <p>Keep the reliable local path first while public testing expands.</p>
+            </div>
+            <img src="images/sanevideo-export.png" alt="SaneVideo export workflow screenshot">
+          </button>
         </div>
       </div>
     </section>
 
-    <section class="section">
-      <div class="section-inner">
-        <div class="showcase reverse">
-          <div class="copy-panel">
-            <h3>Captions, transcripts, and demo packs are part of the app.</h3>
-            <p>SaneVideo is not just a recorder. It keeps creator finishing work in the same native app so a rough capture can become something shareable.</p>
-            <ul class="checklist">
-              <li>Caption and transcript editing surfaces</li>
-              <li>Demo Studio packaging for launch/support clips</li>
-              <li>Local export path with direct YouTube upload intentionally disabled in this build</li>
-            </ul>
-          </div>
-          <figure class="shot">
-            <img src="images/sanevideo-captions-demo-pack.png" alt="SaneVideo captions and demo pack workflow">
-          </figure>
+    <section class="section" id="features">
+      <div class="container">
+        <h2 class="section-title">Built for practical video work.</h2>
+        <p class="section-subtitle">SaneVideo is for demos, bug reports, product clips, course snippets, support walkthroughs, and launch videos.</p>
+        <div class="feature-grid">
+          <div class="feature-card"><div class="feature-icon">01</div><h3>Capture in one place</h3><p>Screen, camera, microphone, and recording controls live together in a Mac-native surface.</p></div>
+          <div class="feature-card"><div class="feature-icon">02</div><h3>Timeline first</h3><p>Import clips, review playback, trim edges, and make the basic edits that turn a rough take into a usable clip.</p></div>
+          <div class="feature-card"><div class="feature-icon">03</div><h3>Finish locally</h3><p>Captions, transcripts, demo packs, and exports are part of the app instead of a separate cloud workflow.</p></div>
         </div>
       </div>
     </section>
 
     <section class="section alt">
-      <div class="section-inner">
-        <div class="showcase">
-          <figure class="shot">
-            <img src="images/sanevideo-export.png" alt="SaneVideo export view with local export presets and demo pack options">
-          </figure>
-          <div class="copy-panel">
-            <h3>Export real files from your Mac.</h3>
-            <p>Use local export presets and destination controls instead of locking your work inside a service account. Public testing focuses on making the core local path reliable first.</p>
-            <ul class="checklist">
-              <li>Local file export and demo pack surfaces</li>
-              <li>Readable permission boundaries</li>
-              <li>macOS 15 or later</li>
-            </ul>
+      <div class="container">
+        <div class="privacy-card">
+          <h2>Private by default. Explicit when media leaves.</h2>
+          <p>Project media stays on your Mac unless you export or move it. SaneVideo requests camera, microphone, and screen permissions only for the recording features that need them. Direct YouTube upload is intentionally disabled in this public testing build.</p>
+          <div class="cta-buttons">
+            <a class="btn btn-primary" href="https://dist.sanevideo.com/updates/SaneVideo-1.0.1.zip">Download SaneVideo</a>
+            <a class="btn btn-secondary" href="/privacy">Read Privacy Policy</a>
           </div>
-        </div>
-      </div>
-    </section>
-
-    <section class="section" id="pricing">
-      <div class="section-inner">
-        <div class="section-head">
-          <h2>Public testing is open now.</h2>
-          <p>Use Basic for free while SaneVideo hardens. Pro is discounted for early testers who want the full workflow during the public testing window.</p>
-        </div>
-        <div class="pricing">
-          <div class="price-block">
-            <span class="banner">Basic</span>
-            <h3>Free to start</h3>
-            <p class="large-copy">Download the direct Mac build, test the core local workflow, and send feedback from the support page.</p>
-            <div class="button-row" style="margin-top: 24px;">
-              <a class="btn btn-secondary" href="https://dist.sanevideo.com/updates/SaneVideo-1.0.1.zip">Download 1.0.1</a>
-            </div>
-          </div>
-          <div class="price-block">
-            <span class="banner">50% off through July 25, 2026</span>
-            <h3>SaneVideo Pro</h3>
-            <div class="price"><strong>$3.49</strong><span>$6.99</span></div>
-            <p class="large-copy">One-time public testing price. No subscription. Direct purchase uses the SaneApps checkout and license flow.</p>
-            <div class="button-row" style="margin-top: 24px;">
-              <a class="btn btn-primary" href="https://go.saneapps.com/buy/sanevideo?ref=site-pricing">Buy Pro $3.49</a>
-              <a class="btn btn-secondary" href="/download">Download page</a>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section class="section alt">
-      <div class="section-inner">
-        <div class="section-head">
-          <h2>Private by default, explicit when it leaves.</h2>
-          <p>SaneVideo is designed around local media work. Network-dependent surfaces are called out instead of hidden behind vague sync language.</p>
-        </div>
-        <div class="privacy-strip">
-          <div><strong>Local project media</strong><span>Recording, imports, timeline edits, captions, demo packs, and exports remain on your Mac unless you move or upload them.</span></div>
-          <div><strong>Clear permissions</strong><span>Camera, microphone, and Screen & System Audio Recording are requested for the recording features that need them.</span></div>
-          <div><strong>Honest integrations</strong><span>Direct YouTube upload is disabled in this build. Export locally and upload manually while the app is in public testing.</span></div>
         </div>
       </div>
     </section>
   </main>
 
   <footer>
-    <div class="footer-inner">
+    <div class="container footer-inner">
       <span>SaneVideo by SaneApps. 100% Transparent Code under PolyForm Shield.</span>
       <div class="footer-links">
         <a href="/download">Download</a>
         <a href="/privacy">Privacy</a>
         <a href="/support">Support</a>
         <a href="/appcast.xml">Appcast</a>
+        <a href="https://saneapps.com">More SaneApps</a>
       </div>
     </div>
   </footer>
+
+  <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Screenshot preview" onclick="closeLightbox()">
+    <button type="button" aria-label="Close screenshot" onclick="closeLightbox()">&times;</button>
+    <img id="lightboxImage" alt="">
+  </div>
+
+  <script>
+    function openLightbox(src) {
+      var lightbox = document.getElementById('lightbox');
+      var image = document.getElementById('lightboxImage');
+      image.src = src;
+      lightbox.classList.add('active');
+    }
+
+    function closeLightbox() {
+      var lightbox = document.getElementById('lightbox');
+      var image = document.getElementById('lightboxImage');
+      lightbox.classList.remove('active');
+      image.removeAttribute('src');
+    }
+
+    document.addEventListener('keydown', function(event) {
+      if (event.key === 'Escape') closeLightbox();
+    });
+  </script>
 </body>
 </html>

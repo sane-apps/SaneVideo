@@ -1,8 +1,40 @@
 # Session Handoff — SaneVideo
 
-**Last updated:** 2026-05-20
+**Last updated:** 2026-05-25
 
 ## Current State
+
+- 2026-05-25 SaneVideo 1.0.1 public testing release is live/submitted:
+  - Direct download channel is live and verified:
+    - ZIP: `https://dist.sanevideo.com/updates/SaneVideo-1.0.1.zip` returned HTTP 200 with `content-length: 8447038`.
+    - Appcast: `https://sanevideo.com/appcast.xml` contains exactly the `1.0.1` entry and `SaneVideo-1.0.1.zip`.
+    - Website/download copy advertises public testing and Pro 50% off at `$3.49` through `2026-07-25`.
+    - Email webhook live config was updated and verified for `SaneVideo-1.0.1.zip`.
+  - Mac App Store submission is complete:
+    - ASC macOS version `1.0.1` is `WAITING_FOR_REVIEW`.
+    - Review submission id `0599add7-ee35-4937-9b44-8671ea59a04c` is `WAITING_FOR_REVIEW`.
+    - Uploaded build `2` is `VALID`, id `d8e8ba90-6248-4995-aef0-a0f0bcec4f34`, uploaded `2026-05-25T14:49:30-07:00`.
+    - IAP `com.sanevideo.app.pro.unlock` is `WAITING_FOR_REVIEW` and USA price schedule verified at `$3.49`.
+  - App Store preflight passed before submission with warnings only for transient uncommitted receipt state; after commit `16bcb25`, the App Store submit wrapper rechecked the strict customer UI contract and submitted successfully.
+  - Final release commits on SaneVideo `main`:
+    - `75dbef8 Prepare SaneVideo 1.0.1 public testing release`
+    - `374c5e1 Use build settings for SaneVideo bundle versions`
+    - `572afb3 chore: sync 1.0.1 version metadata and site download links`
+    - `8ff29a5 chore: sync release metadata for v1.0.1`
+    - `16bcb25 Update App Review notes and UI receipt`
+    - `dda4c33 Redesign SaneVideo website for public testing`
+  - The live website was replaced after user review rejected the placeholder page. New page uses actual SaneVideo screenshots from `Screenshots/appstore-*-dark-mac.png`, SaneApps-style navigation/CTAs, workflow/product sections, Basic/Pro public-testing pricing, and privacy/local-first proof.
+  - Website deployment receipt:
+    - `bash ~/SaneApps/infra/SaneProcess/scripts/release.sh --project /Users/sj/SaneApps/apps/SaneVideo --website-only`
+    - Cloudflare Pages deployment: `https://45e7db06.sanevideo-site.pages.dev`
+    - Live curl verification found new H1, `images/sanevideo-recording.png`, `$3.49`, `July 25, 2026`, and `PolyForm Shield` on `https://sanevideo.com/`.
+    - Playwright visual checks on live/local desktop and mobile showed no broken images and no horizontal overflow. Saved local visual proof paths:
+      - `/Users/sj/SaneApps/apps/SaneVideo/.playwright-cli/page-2026-05-25T21-48-36-925Z.png` (local desktop, later trashed with generated Playwright artifacts)
+      - `/Users/sj/SaneApps/apps/SaneVideo/.playwright-cli/page-2026-05-25T21-48-49-960Z.png` (local mobile, later trashed with generated Playwright artifacts)
+      - `/Users/sj/SaneApps/apps/SaneVideo/.playwright-cli/page-2026-05-25T21-51-23-533Z.png` (live desktop, later trashed with generated Playwright artifacts)
+  - Mini verification after website commit `dda4c33` passed through pre-push: `./scripts/SaneMaster.rb verify` passed `1208 tests` in `389s`. Warnings remain existing SwiftLint/style/file-length warnings and `Settings container not using shared SaneUI shell: SaneVideo`.
+  - Runtime blocker/tooling lesson from this release: the Mini visual guard caught dirty workspace state after the user reported a visible update prompt/dialog. Treat Finder/frontmost non-target windows, helper apps, notifications, and failed prompt scans as invalid evidence. Do not count GUI verification from logs alone when any runtime command stalls or the user says a dialog is visible.
+  - Sparkle update prompt fix is included in 1.0.1: direct `Info.plist` sets `SUEnableAutomaticChecks=false`; App Store plist remains Sparkle-free. Clean proof screenshot from the fixed app: `/Users/sj/Desktop/Screenshots/SaneVideo/update-prompt-fixed-app-20260525-151343.png`.
 
 - 2026-05-25 SaneVideo 1.0.1 publish pass:
   - Rule 0 classification: release-readiness/runtime blocker. Do not publish direct download, website, App Store/TestFlight, or public launch copy from this state.
@@ -105,7 +137,7 @@
 ## Active Research Topics
 
 - `.claude/research.md` topic `2026-05-16 Camera/Recording/Export V1 Runtime Proof` now includes 2026-05-17 release-readiness updates and should be graduated into `ARCHITECTURE.md`/`DEVELOPMENT.md` after the first published build.
-- Current active blockers: 2026-05-19 user-reported camera button hang (`Camera` stuck on loading) blocks SaneVideo `1.0.1` release. Operational warnings remain outside the SaneVideo binary path: pending customer email surfaced by release preflight and Homebrew cask 404.
+- No active SaneVideo 1.0.1 publish blocker remains after the 2026-05-25 release. Operational warnings remain outside the SaneVideo binary path: pending customer email surfaced by release preflight, Homebrew tap cask 404 / not allowlisted, existing SwiftLint style/file-length warnings, and `Settings container not using shared SaneUI shell: SaneVideo`.
 
 ## Feature Requests / Demand Signals
 

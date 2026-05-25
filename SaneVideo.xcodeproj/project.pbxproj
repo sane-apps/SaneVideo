@@ -2262,6 +2262,7 @@
 				};
 			};
 			buildConfigurationList = E05965B4AB636ECD2988856C /* Build configuration list for PBXProject "SaneVideo" */;
+			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -2276,7 +2277,6 @@
 				31CA1F118162365A495BAB16 /* XCRemoteSwiftPackageReference "argmax-oss-swift" */,
 			);
 			preferredProjectObjectVersion = 77;
-			productRefGroup = 98218E58F28DE3559A97869F /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (

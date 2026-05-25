@@ -85,15 +85,13 @@ struct ClipTrimHandle: View {
 
                     if isLeft {
                         isDragging = false
-                        let newStart = CMTimeAdd(clip.trimStart, delta)
-                        let clampedStart = max(.zero, min(newStart, CMTimeSubtract(clip.trimEnd, CMTime(seconds: 0.1, preferredTimescale: 600))))
+                        let clampedStart = Self.resolvedTrimStart(for: clip, delta: delta)
                         onTrimStart?(clampedStart)
                         trimOffset = 0
                     } else {
                         isDragging = false
-                        let newEnd = CMTimeAdd(clip.trimEnd, delta)
-                        let clampedEnd = min(clip.duration, max(newEnd, CMTimeAdd(clip.trimStart, CMTime(seconds: 0.1, preferredTimescale: 600))))
-                        onTrimEnd?(CMTimeSubtract(clip.duration, clampedEnd))
+                        let clampedEnd = Self.resolvedTrimEnd(for: clip, delta: delta)
+                        onTrimEnd?(clampedEnd)
                         trimOffset = 0
                     }
                 }
@@ -101,6 +99,22 @@ struct ClipTrimHandle: View {
         .onTapGesture {
             // Do nothing - let the drag handle the interaction
         }
+    }
+
+    static func resolvedTrimStart(for clip: VideoClip, delta: CMTime) -> CMTime {
+        let newStart = CMTimeAdd(clip.trimStart, delta)
+        return max(
+            .zero,
+            min(newStart, CMTimeSubtract(clip.trimEnd, CMTime(seconds: 0.1, preferredTimescale: 600)))
+        )
+    }
+
+    static func resolvedTrimEnd(for clip: VideoClip, delta: CMTime) -> CMTime {
+        let newEnd = CMTimeAdd(clip.trimEnd, delta)
+        return min(
+            clip.duration,
+            max(newEnd, CMTimeAdd(clip.trimStart, CMTime(seconds: 0.1, preferredTimescale: 600)))
+        )
     }
 
     private func applyPlayheadSnapping(deltaSeconds: Double, isLeft: Bool) -> Double {

@@ -280,8 +280,21 @@ final class CameraManager: NSObject, CameraServiceProtocol {
   }
 
   private func startSessionInternal(_ session: AVCaptureSession) async throws {
+    if self.session !== session {
+      self.session = session
+    }
+    if !self.isActive {
+      self.isActive = true
+    }
+
     if !session.isRunning {
       AppLogger.camera.info("Attempting to start capture session...")
+
+      // Give SwiftUI one run-loop pass to mount AVCaptureVideoPreviewLayer before
+      // startRunning. Adding the preview layer after start causes AVFoundation to
+      // tear down and rebuild the capture graph, which can leave users on a black
+      // camera surface after granting permission.
+      try? await Task.sleep(nanoseconds: 100_000_000)
 
       // Move startRunning to background to avoid blocking MainActor
       await Task.detached(priority: .userInitiated) {
@@ -319,8 +332,6 @@ final class CameraManager: NSObject, CameraServiceProtocol {
       AppLogger.camera.info("Session already running")
     }
 
-    self.session = session
-    self.isActive = true
     AppLogger.camera.info("CameraManager set to active")
   }
 

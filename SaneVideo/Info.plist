@@ -41,6 +41,8 @@
 	<string>https://sanevideo.com/appcast.xml</string>
 	<key>SUPublicEDKey</key>
 	<string>7Pl/8cwfb2vm4Dm65AByslkMCScLJ9tbGlwGGx81qYU=</string>
+	<key>SUEnableAutomaticChecks</key>
+	<false/>
 	<key>SUEnableInstallerLauncherService</key>
 	<true/>
 	<!-- Private key stored in macOS Keychain as "EdDSA Private Key" -->

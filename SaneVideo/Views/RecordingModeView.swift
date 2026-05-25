@@ -73,20 +73,42 @@ struct RecordingModeView: View {
                     }
                 } else {
                     // Camera Preview
-                    if appState.cameraState.shouldShowLivePreview, let session = appState.cameraState.session {
-                        CameraPreviewView(
-                            session: session,
-                            isMirrored: ServiceContainer.shared.userPreferences.mirrorCameraPreview
-                        )
-                            .aspectRatio(16 / 9, contentMode: .fit)
-                            .edgesIgnoringSafeArea(.all)
+                    if appState.cameraState.shouldMountLivePreview, let session = appState.cameraState.session {
+                        ZStack {
+                            CameraPreviewView(
+                                session: session,
+                                sampleBufferPublisher: appState.cameraState.videoSampleBufferPublisher,
+                                isMirrored: ServiceContainer.shared.userPreferences.mirrorCameraPreview
+                            )
+                                .aspectRatio(16 / 9, contentMode: .fit)
+                                .opacity(
+                                    appState.cameraState.isPreviewWarmingUp || !appState.cameraState.shouldShowLivePreview
+                                        ? 0.001
+                                        : 1
+                                )
+                                .edgesIgnoringSafeArea(.all)
+
+                            if appState.cameraState.isPreviewWarmingUp || !appState.cameraState.shouldShowLivePreview {
+                                ZStack {
+                                    SaneVideoAmbientBackground()
+                                    VStack(spacing: 16) {
+                                        ProgressView().scaleEffect(1.5)
+                                        Text("Camera Loading...")
+                                            .font(.system(size: 22, weight: .semibold))
+                                            .foregroundColor(.white)
+                                    }
+                                }
+                                .edgesIgnoringSafeArea(.all)
+                                .transition(.opacity)
+                            }
+                        }
                     } else if wantsCameraPreview {
                         // Camera Loading State
                         VStack(spacing: 16) {
                             ProgressView().scaleEffect(1.5)
                             Text("Camera Loading...")
                                 .font(.system(size: 22, weight: .semibold))
-                                .foregroundColor(Theme.Colors.textSecondary)
+                                .foregroundColor(.white)
                         }
                     } else {
                         // Camera Off State

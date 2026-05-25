@@ -37,8 +37,7 @@ final class APIDeprecationTests: XCTestCase {
 
             // Check for deprecated faceCaptureQuality (but allow documented legacy usage)
             if contents.contains(".faceCaptureQuality"), !contents.contains("// Note:"),
-               !contents.contains("legacy")
-            {
+               !contents.contains("legacy") {
                 deprecatedUsages.append(
                     "\(fileURL.lastPathComponent): Uses deprecated faceCaptureQuality without documentation")
             }
@@ -92,7 +91,7 @@ final class APIDeprecationTests: XCTestCase {
             "Core/Engine/CompositionBuilder.swift":
                 "AVVideoComposition configuration APIs should be compiler-guarded in CompositionBuilder",
             "Core/Engine/VideoTrackBuilder.swift":
-                "AVVideoCompositionLayerInstruction configuration APIs should be compiler-guarded in VideoTrackBuilder",
+                "AVVideoCompositionLayerInstruction configuration APIs should be compiler-guarded in VideoTrackBuilder"
         ]
 
         for (relativePath, failureMessage) in guardedFiles {
@@ -192,7 +191,7 @@ final class APIDeprecationTests: XCTestCase {
             "NSPersistentStoreUbiquitousPeerTokenOption",
             "NSPersistentStoreRemoveUbiquitousMetadataOption",
             "NSPersistentStoreUbiquitousContainerIdentifierKey",
-            "NSPersistentStoreRebuildFromUbiquitousContentOption",
+            "NSPersistentStoreRebuildFromUbiquitousContentOption"
         ]
 
         let fileManager = FileManager.default
@@ -389,6 +388,37 @@ final class APIDeprecationTests: XCTestCase {
         )
     }
 
+    /// Regression: mounting AVCaptureVideoPreviewLayer after startRunning caused
+    /// AVFoundation to tear down and rebuild the capture graph, leaving a black
+    /// preview after the user allowed camera access.
+    func testCameraPublishesSessionBeforeStartingCaptureGraph() throws {
+        let sourceRoot = URL(fileURLWithPath: #file)
+            .deletingLastPathComponent() // Regression
+            .deletingLastPathComponent() // SaneVideoTests
+            .deletingLastPathComponent() // SaneVideo
+
+        let cameraManagerFile = sourceRoot
+            .appendingPathComponent("SaneVideo/Services/Camera/CameraManager.swift")
+        let contents = try String(contentsOf: cameraManagerFile, encoding: .utf8)
+
+        guard let publishRange = contents.range(of: "self.session = session"),
+              let startRange = contents.range(of: "session.startRunning()")
+        else {
+            XCTFail("CameraManager should publish the session and then start the capture graph.")
+            return
+        }
+
+        XCTAssertLessThan(
+            publishRange.lowerBound,
+            startRange.lowerBound,
+            "CameraManager should publish the session before startRunning so SwiftUI can mount the preview layer without forcing a post-start graph rebuild."
+        )
+        XCTAssertTrue(
+            contents.contains("Task.sleep(nanoseconds: 100_000_000)"),
+            "CameraManager should yield briefly so the preview layer can mount before the capture graph starts."
+        )
+    }
+
     /// Regression: the export sheet must fit normal laptop and desktop screens.
     /// A May 16, 2026 release check found the sheet running behind the Dock with
     /// hard-to-read dense helper copy.
@@ -458,6 +488,25 @@ final class APIDeprecationTests: XCTestCase {
             actions.contains("self.showExportSheet = true"),
             "Export sheet should open only after the recording has been prepared for the timeline."
         )
+    }
+
+    /// Regression: public testing pricing must stay aligned with the website and App Store copy.
+    func testPublicTestingPricingCopyMatchesReleaseOffer() throws {
+        let sourceRoot = URL(fileURLWithPath: #file)
+            .deletingLastPathComponent() // Regression
+            .deletingLastPathComponent() // SaneVideoTests
+            .deletingLastPathComponent() // SaneVideo
+
+        let pricing = try String(
+            contentsOf: sourceRoot.appendingPathComponent("SaneVideo/Core/Configuration/PricingConfiguration.swift"),
+            encoding: .utf8
+        )
+
+        XCTAssertTrue(pricing.contains("case .launch: return \"$3.49\""))
+        XCTAssertTrue(pricing.contains("case .regular: return \"$6.99\""))
+        XCTAssertTrue(pricing.contains("through July 25, 2026"))
+        XCTAssertFalse(pricing.contains("Launch Special: $29"))
+        XCTAssertFalse(pricing.contains("case .regular: return \"$49\""))
     }
 
     /// Regression: ExportEngine queue callbacks must not inherit main-actor isolation.

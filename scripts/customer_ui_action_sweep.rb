@@ -353,7 +353,7 @@ class SaneVideoCustomerUIActionSweep
       type: 'screenshot',
       detail: "Full-screen Mac Mini screenshot for #{action_id}",
       path: evidence_artifacts.fetch(:screenshot)
-    } if required_types.include?('screenshot')
+    } if required_types.include?('screenshot') || evidence_artifacts.key?(:screenshot)
     evidence << {
       type: 'fixture',
       detail: "Fixture or representative media used for #{action_id}",
@@ -419,11 +419,17 @@ class SaneVideoCustomerUIActionSweep
     roots = [
       File.expand_path('~/Desktop/Screenshots/SaneVideo')
     ]
-    roots.flat_map do |root|
+    screenshots = roots.flat_map do |root|
       Dir.glob(File.join(root, '**', '*.png'))
     end.select { |path| File.file?(path) }
-      .sort_by { |path| [-File.mtime(path).to_i, path] }
-      .uniq
+       .reject { |path| File.basename(path, '.png').end_with?('_annotated') }
+       .uniq
+
+    ordered = screenshots.select { |path| File.basename(path).match?(/\A\d{2}-/) }
+                         .sort_by { |path| [File.basename(path)[/\A\d+/, 0].to_i, path] }
+    return ordered if ordered.length >= SOURCE_GUARDS.length
+
+    screenshots.sort_by { |path| [-File.mtime(path).to_i, path] }
   end
 
   def first_existing_fixture(action)

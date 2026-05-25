@@ -4,6 +4,12 @@ All notable changes to SaneVideo are documented here.
 
 ---
 
+## [1.0.1] - 2026-05-25
+
+Fixes camera preview startup reliability after permission prompts and improves timeline trim accuracy.
+
+---
+
 ## [1.0] - 2026-05-17
 
 Initial SaneVideo release with local recording, editing, export, caption, and demo-pack workflows.

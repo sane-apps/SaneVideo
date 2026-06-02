@@ -4,7 +4,9 @@
 
 SaneVideo is a native macOS video recording and editing app. No subscriptions. Local recording, editing, and export run on your Mac.
 
-**Last updated:** 2026-05-12
+**Last updated:** 2026-06-01
+
+**Current direct-download release:** 1.0.1
 
 ---
 

@@ -19,9 +19,11 @@
 #
 
 require 'English'
+require 'fileutils'
 require 'net/http'
 require 'uri'
 require 'json'
+require 'time'
 
 class ProjectQA
   # Auto-detect project name from directory
@@ -35,6 +37,7 @@ class ProjectQA
   SOP_DOC = Dir.glob(File.join(__dir__, '..', 'docs', '*.md')).first || File.join(__dir__, '..', 'docs', 'SOP.md')
   HOOKS_README = File.join(__dir__, 'hooks', 'README.md')
   SETTINGS_JSON = File.join(__dir__, '..', '.claude', 'settings.json')
+  QA_STATUS_PATH = File.join(PROJECT_ROOT, 'outputs', 'qa_status.json')
 
   # Hooks that get registered in settings.json
   EXPECTED_HOOKS = %w[
@@ -120,9 +123,9 @@ class ProjectQA
     puts
     puts '═══════════════════════════════════════════════════════════════'
 
-    if @errors.empty? && @warnings.empty?
+    exit_code = if @errors.empty? && @warnings.empty?
       puts '✅ All checks passed!'
-      exit 0
+      0
     else
       unless @warnings.empty?
         puts "⚠️  Warnings (#{@warnings.count}):"
@@ -134,14 +137,35 @@ class ProjectQA
         puts "❌ Errors (#{@errors.count}):"
         @errors.each { |e| puts "   - #{e}" }
         puts
-        exit 1
+        1
+      else
+        0
       end
-
-      exit 0
     end
+
+    write_status_snapshot(exit_code: exit_code)
+    exit exit_code
   end
 
   private
+
+  def write_status_snapshot(exit_code:)
+    payload = {
+      generatedAt: Time.now.iso8601,
+      projectName: PROJECT_NAME,
+      exitCode: exit_code,
+      status: exit_code.zero? ? (@warnings.empty? ? 'passed' : 'passed_with_warnings') : 'failed',
+      errorCount: @errors.count,
+      warningCount: @warnings.count,
+      errors: @errors,
+      warnings: @warnings
+    }
+
+    FileUtils.mkdir_p(File.dirname(QA_STATUS_PATH))
+    File.write(QA_STATUS_PATH, JSON.pretty_generate(payload))
+  rescue StandardError => e
+    @warnings << "Failed to write QA status snapshot: #{e.message}"
+  end
 
   def check_hooks_exist
     print 'Checking hooks exist... '

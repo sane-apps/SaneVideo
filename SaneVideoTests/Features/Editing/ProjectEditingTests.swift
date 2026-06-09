@@ -301,11 +301,15 @@ final class ProjectEditingTests: XCTestCase {
             .appendingPathComponent("\(UUID().uuidString).svproj")
         let transcriptURL = FileManager.default.temporaryDirectory
             .appendingPathComponent("\(UUID().uuidString).txt")
+        let assetURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent("\(UUID().uuidString).mp4")
         try Data("{}".utf8).write(to: projectURL)
         try Data("[]".utf8).write(to: transcriptURL)
+        try Data("fake video".utf8).write(to: assetURL)
         defer {
             try? FileManager.default.removeItem(at: projectURL)
             try? FileManager.default.removeItem(at: transcriptURL)
+            try? FileManager.default.removeItem(at: assetURL)
             defaults.removePersistentDomain(forName: suiteName)
         }
 
@@ -323,9 +327,37 @@ final class ProjectEditingTests: XCTestCase {
                 environment: ["AUTOMATION_EXPORT_PATH": "/tmp/commentary.mp4"]
             )
         )
+        XCTAssertTrue(
+            TestEnvironment.shouldOpenEditor(
+                arguments: [],
+                userDefaults: defaults,
+                environment: ["SANEVIDEO_OPEN_EDITOR": "1"]
+            )
+        )
+        XCTAssertTrue(
+            TestEnvironment.shouldOpenEditor(
+                arguments: ["-test_asset_path", assetURL.path],
+                userDefaults: defaults,
+                environment: [:]
+            )
+        )
+        XCTAssertEqual(
+            TestEnvironment.explicitAssetURL(
+                arguments: ["--test-asset-path=\(assetURL.path)"],
+                environment: [:]
+            ),
+            assetURL
+        )
         XCTAssertEqual(
             TestEnvironment.automationTranscriptURL(
                 in: ["AUTOMATION_TRANSCRIPT_PATH": transcriptURL.path]
+            ),
+            transcriptURL
+        )
+        XCTAssertEqual(
+            TestEnvironment.automationTranscriptURL(
+                arguments: ["--automation-transcript-path", transcriptURL.path],
+                environment: [:]
             ),
             transcriptURL
         )

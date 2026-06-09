@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>AppStoreProductID</key>
-	<string>com.sanevideo.app.pro.unlock</string>
+	<string>com.sanevideo.app.pro.access.v2</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>

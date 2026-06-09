@@ -51,7 +51,7 @@ struct SmartToolsSection: View {
     HStack(alignment: .center) {
       Text("Magic Fix")
         .font(.system(size: Theme.Typography.fontSizeLG, weight: .bold))
-        .foregroundColor(.primary)
+        .foregroundColor(.white)
 
       Spacer()
 
@@ -83,13 +83,13 @@ struct SmartToolsSection: View {
       } label: {
         Label("Presets", systemImage: "slider.horizontal.3")
           .font(.system(size: Theme.Typography.fontSizeSM, weight: .semibold))
-          .padding(.horizontal, Theme.Dimensions.paddingSM)
-          .padding(.vertical, Theme.Dimensions.paddingXS)
-          .background(Theme.Colors.secondaryBackground)
-          .cornerRadius(Theme.Dimensions.smallCornerRadius)
+          .foregroundColor(.white)
+          .padding(.horizontal, Theme.Dimensions.paddingMD)
+          .padding(.vertical, Theme.Dimensions.paddingSM)
+          .background(Color.black.opacity(0.34), in: RoundedRectangle(cornerRadius: 7, style: .continuous))
           .overlay(
-            RoundedRectangle(cornerRadius: Theme.Dimensions.smallCornerRadius)
-              .stroke(Color.stone.opacity(Theme.Opacity.medium), lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: 7, style: .continuous)
+              .stroke(Color.white.opacity(0.24), lineWidth: 1)
           )
       }
       .menuStyle(.button)
@@ -108,7 +108,7 @@ struct SmartToolsSection: View {
 
   private var coreCleanupCard: some View {
     ToolCard(title: "Core Cleanup", icon: "waveform.badge.magnifyingglass", color: .blue) {
-      VStack(spacing: Theme.Dimensions.spacingMD) {
+      VStack(spacing: Theme.Dimensions.spacingSM) {
         // 1. Remove Silence
         InspectorToggle(
           title: "Remove Silence",
@@ -135,20 +135,23 @@ struct SmartToolsSection: View {
             HStack {
               Text("Threshold")
                 .font(.system(size: Theme.Typography.fontSizeSM, weight: .medium))
-                .foregroundColor(Color.stone)
+                .foregroundColor(.white)
               Spacer()
               Text("\(Int(options.silenceThreshold)) dB")
                 .font(.system(size: Theme.Typography.fontSizeSM, weight: .semibold, design: .monospaced))
-                .foregroundColor(.primary)
+                .foregroundColor(.white)
             }
             Slider(value: $options.silenceThreshold, in: -60 ... -20, step: 1)
               .controlSize(.small)
               .tint(.accentColor)
           }
-          .padding(.vertical, Theme.Dimensions.paddingXS)
-          .padding(.horizontal, Theme.Dimensions.paddingXS)
-          .background(Color.accentColor.opacity(Theme.Opacity.subtle))
-          .cornerRadius(Theme.Dimensions.smallCornerRadius)
+          .padding(.vertical, Theme.Dimensions.paddingSM)
+          .padding(.horizontal, Theme.Dimensions.paddingSM)
+          .background(Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+          .overlay(
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+              .stroke(Color.white.opacity(0.12), lineWidth: 1)
+          )
         }
 
         // 2. Remove Fillers
@@ -198,8 +201,8 @@ struct SmartToolsSection: View {
           if options.enhanceAudio {
             Text("Voice isolation applies during playback only")
               .font(.system(size: Theme.Typography.fontSizeXS))
-              .foregroundStyle(Color.stone)
-              .padding(.leading, 28) // Align with toggle text
+              .foregroundStyle(.white.opacity(0.9))
+              .padding(.leading, 42)
           }
         }
 
@@ -277,10 +280,20 @@ struct SmartToolsSection: View {
           }
           .frame(maxWidth: .infinity)
           .padding(.vertical, Theme.Dimensions.paddingLG)
-          .background(Theme.Colors.accentGradient)
+          .background(
+            LinearGradient(
+              colors: [Theme.Colors.accentSoft, Theme.Colors.accent, Theme.Colors.accentDeep],
+              startPoint: .topLeading,
+              endPoint: .bottomTrailing
+            ),
+            in: RoundedRectangle(cornerRadius: Theme.Dimensions.largeCornerRadius, style: .continuous)
+          )
           .foregroundColor(.white)
-          .cornerRadius(Theme.Dimensions.largeCornerRadius)
-          .shadow(color: Theme.Colors.accent.opacity(Theme.Opacity.heavy), radius: 12, x: 0, y: 6)
+          .overlay(
+            RoundedRectangle(cornerRadius: Theme.Dimensions.largeCornerRadius, style: .continuous)
+              .stroke(Color.white.opacity(0.28), lineWidth: 1)
+          )
+          .shadow(color: Theme.Colors.accent.opacity(0.42), radius: 12, x: 0, y: 6)
         }
         .buttonStyle(.plain)
         .disabled(clip.isMissing || isOperationInProgress)
@@ -328,9 +341,12 @@ struct SmartToolsSection: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, Theme.Dimensions.paddingMD)
-        .background(Color.stone.opacity(0.1))
-        .foregroundColor(Color.stone)
-        .cornerRadius(Theme.Dimensions.cornerRadius)
+        .background(Color.white.opacity(0.10), in: RoundedRectangle(cornerRadius: Theme.Dimensions.cornerRadius, style: .continuous))
+        .foregroundColor(.white)
+        .overlay(
+          RoundedRectangle(cornerRadius: Theme.Dimensions.cornerRadius, style: .continuous)
+            .stroke(Color.white.opacity(0.18), lineWidth: 1)
+        )
       }
       .buttonStyle(.plain)
       .disabled(isOperationInProgress)

@@ -20,12 +20,10 @@ final class ProjectStore: ProjectStoreProtocol {
         } else {
             // Check for Test Mode / Editor Mode via UserDefaults (which we confirmed works)
             let isTesting = UserDefaults.standard.bool(forKey: "ui_testing") ||
-                            UserDefaults.standard.bool(forKey: "open_editor") ||
                             ProcessInfo.processInfo.environment["UI_TESTING"] != nil ||
-                            ProcessInfo.processInfo.environment["OPEN_EDITOR"] != nil ||
                             ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil ||
                             ProcessInfo.processInfo.arguments.contains("-ui_testing") ||
-                            ProcessInfo.processInfo.arguments.contains("-open_editor")
+                            TestEnvironment.shouldOpenEditor
 
             if isTesting {
                 // Use a dedicated, isolated temporary directory for EACH instance during tests

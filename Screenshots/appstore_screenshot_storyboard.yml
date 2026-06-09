@@ -1,0 +1,46 @@
+product: SaneVideo
+audience: Mac creators who need private recording, editing, and export without a subscription.
+offer: Local-first video workflow with Basic recording/editing/export and an optional Pro unlock.
+primary_proof: Clean Mac screenshots that show a populated timeline editor, Magic Fix running, and the recording-complete workflow without desktop clutter, debug stamps, blank previews, or disabled-feature messaging.
+source_rule: Use actual SaneVideo app screenshots only. Fill the editor preview/timeline with stock or fixture video, capture the real app at meaningful timestamps/states, and crop only to remove debug stamps or desktop clutter. Do not create fake UI, color bars, browser mockups, synthetic controls, generated product composites, or feature claims without matching real captures for App Store or launch proof.
+generator: scripts/generate_appstore_screenshots.swift
+platforms:
+  macos:
+    - file: Screenshots/appstore-01-editing-dark-mac.png
+      title: Edit locally with Magic Fix tools
+      purpose: Show imported clips, timeline editing, and the visible Magic Fix inspector button in a populated local project.
+      must_show:
+        - populated media sidebar
+        - preview canvas
+        - timeline with clips and playhead
+        - Magic Fix button in the inspector
+        - inspector tools for polish
+      must_not_show:
+        - empty states
+        - debug controls
+        - Finder windows
+    - file: Screenshots/appstore-02-magic-fix-dark-mac.png
+      title: Polish clips with Magic Fix
+      purpose: Give Magic Fix its own real app screenshot instead of burying it in the general editor view.
+      must_show:
+        - Magic Fix button in the inspector
+        - visible inspector tools
+        - selected clip on the timeline
+        - local on-device status
+      must_not_show:
+        - fake Magic Fix result
+        - generated UI
+        - build timestamp
+        - desktop clutter
+    - file: Screenshots/appstore-03-recording-complete-dark-mac.png
+      title: Save, edit, or share a recording
+      purpose: Show the actual post-recording choice point after a capture finishes.
+      must_show:
+        - Recording Complete dialog
+        - Edit Now action
+        - Save action
+        - Share action
+      must_not_show:
+        - export preset claims
+        - captions or demo-pack claims
+        - permission popups

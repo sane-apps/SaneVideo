@@ -1,5 +1,5 @@
 product: SaneVideo
-updated: "2026-05-25"
+updated: "2026-06-04"
 positioning:
   one_liner: "Private video workflow assistant for creators"
   status_note: "Public testing positioning only: local recording, editing, captions, demo packs, local export, and deliberately disabled YouTube upload."
@@ -15,36 +15,44 @@ launch_calendar:
     message: "SaneVideo Pro is 50% off at $3.49 during public testing."
     ends: "2026-07-25"
   current_release_state:
-    status: "public_testing_candidate"
-    evidence: "2026-05-25 Mini customer_ui_sweep passed 19 actions with strict visual evidence; App Store screenshot dry-run passed; YouTube upload is intentionally unavailable and represented as manual-upload/local-export behavior."
-  blockers: []
+    status: "proof_rebuild_no_go"
+    evidence: "2026-06-04 Mini LaunchServices proof opens a real editor window with website-demo-video-call.mp4 imported, five transcript captions applied, selected timeline clip, and inspector visible. Website stays paused/noindex until Transcript, Export, Thumbnail, Voiceover, Shorts, and end-to-end workflow proof are captured."
+  blockers:
+    - "Canonical Mini `launch_readiness` on 2026-05-26 is red because `release_preflight` is failed for the 1.0.1 candidate with 170 issues and 4 warnings."
   scheduled:
     - date: "2026-05-26"
       time: "10:00"
       channel: "Runtime workflow proof"
-      status: "scheduled_by_cross_product_launch_ops"
+      status: "completed_no_go_gate_red"
       action: "Run Mini-first release-proof workflow matrix for recording/import/edit/export/upload-disabled states and regenerate real customer UI evidence."
       gate: "If real workflow proof is incomplete, keep public launch paused."
       success_metric: "Release-proof pass with evidence paths, or no-go list of missing workflows."
+      last_reviewed: "2026-06-01"
+      result: "On 2026-06-01, canonical `launch_readiness` reran and the wrapper reported `Mac mini is unreachable. Falling back to local execution.` before returning a nonzero gate again. The runtime-proof lane stayed no-go because the latest local `release_preflight` for the 1.0.1 candidate is failed, 10.99 days old, and still carries 170 issues plus 4 warnings. The shared validation report generated at 2026-06-01 01:29:50 EDT still says BROKEN RELEASE PIPELINE and flags SaneVideo customer UI proof as stale while the recorded Mini screenshot set is missing from the expected paths. No public-testing launch, directory, scheduling, or public reply action was executed."
     - date: "2026-05-30"
       time: "10:00"
       channel: "Creator launch decision"
-      status: "conditional"
+      status: "completed_no_go_gate_red"
       action: "If runtime proof passed, build launch package around real recording/edit/export workflow; otherwise keep product private."
       gate: "No launch around disabled or aspirational upload features."
       success_metric: "Launch package scheduled or no-go recorded."
+      last_reviewed: "2026-06-01"
+      result: "On 2026-06-01, canonical `launch_readiness` reran and the wrapper reported `Mac mini is unreachable. Falling back to local execution.` before returning a nonzero gate again. The overdue creator-launch decision stayed no-go because the latest local `release_preflight` for the 1.0.1 candidate is failed, 10.99 days old, and still carries 170 issues plus 4 warnings. The shared validation report generated at 2026-06-01 01:29:50 EDT still says BROKEN RELEASE PIPELINE and flags SaneVideo customer UI proof as stale while the recorded Mini screenshot set is missing from the expected paths. No public-testing launch, directory, scheduling, or public reply action was executed."
   last_launch_readiness:
-    date: "2026-05-25"
-    status: "pending_final_preflight"
-    launch_readiness_exit: null
+    date: "2026-06-04"
+    status: "no_go"
+    launch_readiness_exit: 1
     blocker_summary:
-      - "Final launch_readiness still depends on fresh green release_preflight for the 1.0.1 candidate."
-      - "Direct Lemon Squeezy checkout is configured: SaneVideo Pro product 1087460, checkout 478d2602-9808-4591-b01b-d555cccd0185, SANEVIDEO50 discount through 2026-07-25."
-    next_date: "2026-05-25"
+      - "Mini runtime proof is partially restored: editor fixture launch and real app-window screenshot now pass."
+      - "Full `./scripts/SaneMaster.rb verify` remains red because release-readiness intentionally expects the full marketing site to reference finished proof media while `docs/index.html` is paused/noindex."
+      - "Direct Lemon Squeezy checkout remains configured: SaneVideo Pro product 1087460, checkout 478d2602-9808-4591-b01b-d555cccd0185, SANEVIDEO50 discount through 2026-07-25."
+      - "Still missing screenshot-level proof for Transcript, Export, Thumbnail, Voiceover, Shorts, and an end-to-end workflow video."
+      - "No public-testing launch, directory, scheduling, or public reply action should run until the proof set is complete and release gates are green."
+    next_date: "2026-06-04"
 directory_submissions: {}
 queued_drafts: {}
 launch_package:
-  status: "public_testing_candidate"
+  status: "proof_rebuild_no_go"
   audience: "Creators who want a private Mac-first workflow for recording, importing, editing, exporting, and preparing video."
   problem: "Creator video tools often push cloud-first workflows when a local, auditable Mac workflow is enough for public testing."
   solution: "SaneVideo offers a native public testing build for record/import, timeline editing, captions, demo-pack packaging, local export, and honest manual upload."
@@ -52,6 +60,14 @@ launch_package:
   pricing_proof: "Public testing offer: SaneVideo Pro is 50% off at $3.49 through July 25, 2026. Regular price is $6.99."
   privacy_proof: "Privacy policy and App Store review notes state local media by default, update/license/aggregate-count network use, optional diagnostics, and no direct YouTube upload in this build."
   proof_assets:
+    - type: "canva_folder"
+      title: "SaneVideo Real Proof Kit"
+      path: "https://www.canva.com/folder/FAHLkTNji6g"
+      status: "created_empty"
+    - type: "runtime_visual"
+      title: "Real editor fixture proof"
+      path: "outputs/visual-audit-20260603/01-editor-real-fixture.png"
+      status: "verified"
     - type: "runtime_visual"
       title: "Camera preview startup fixed"
       path: "/Users/sj/Desktop/Screenshots/SaneVideo-review/19-after-sample-buffer-preview.png"
@@ -65,10 +81,24 @@ launch_package:
       path: "Screenshots/appstore-01-recording-dark-mac.png"
       status: "verified"
   channel_plan:
-    product_hunt: "approval_required_after_public_testing_release"
-    hacker_news: "approval_required_after_public_testing_release"
-    indie_hackers: "approval_required_after_public_testing_release"
-    creator_communities: "approval_required_after_public_testing_release"
+    product_hunt: "blocked_until_real_proof_set_and_user_approval"
+    hacker_news: "blocked_until_real_proof_set_and_user_approval"
+    indie_hackers: "blocked_until_real_proof_set_and_user_approval"
+    creator_communities: "blocked_until_real_proof_set_and_user_approval"
+  canva_proof_kit:
+    folder_url: "https://www.canva.com/folder/FAHLkTNji6g"
+    recommended_assets:
+      - "01 editor/timeline proof using outputs/visual-audit-20260603/01-editor-real-fixture.png"
+      - "02 transcript/captions proof after reliable left-rail capture exists"
+      - "03 export preset/completed export proof"
+      - "04 thumbnail creator proof"
+      - "05 voiceover proof"
+      - "06 shorts/repurposing proof"
+    design_direction:
+      - "Use real app-window screenshots as the primary visual, not abstract graphics or generated UI."
+      - "Lead with local Mac workflow: import or record, edit, caption, export."
+      - "Avoid YouTube-upload, cloud editing, or AI magic claims that are not visible in the proof."
+      - "Use bright white text over the SaneVideo dark blue/cyan palette; avoid gray helper text."
   go_no_go:
     rule: "No broad launch post until release_preflight and appstore_preflight are green for 1.0.1 and the user explicitly approves the public post."
   weak_launch_blockers: []

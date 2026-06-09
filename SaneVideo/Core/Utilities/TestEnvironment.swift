@@ -57,6 +57,9 @@ enum TestEnvironment {
   ) -> Bool {
     arguments.contains("-open_editor")
       || userDefaults.bool(forKey: "open_editor")
+      || environment["OPEN_EDITOR"] == "1"
+      || environment["SANEVIDEO_OPEN_EDITOR"] == "1"
+      || explicitAssetURL(arguments: arguments, environment: environment) != nil
       || bootstrapProjectURL(in: environment) != nil
       || automationExportURL(in: environment) != nil
   }
@@ -83,11 +86,24 @@ enum TestEnvironment {
   }
 
   static var automationTranscriptURL: URL? {
-    automationTranscriptURL(in: env)
+    automationTranscriptURL(
+      arguments: ProcessInfo.processInfo.arguments,
+      environment: env
+    )
   }
 
   static func automationTranscriptURL(in environment: [String: String]) -> URL? {
-    guard let rawPath = environment["AUTOMATION_TRANSCRIPT_PATH"] else {
+    automationTranscriptURL(arguments: [], environment: environment)
+  }
+
+  static func automationTranscriptURL(
+    arguments: [String],
+    environment: [String: String]
+  ) -> URL? {
+    guard let rawPath = argumentValue(
+      for: ["-automation_transcript_path", "--automation-transcript-path"],
+      in: arguments
+    ) ?? environment["AUTOMATION_TRANSCRIPT_PATH"] else {
       return nil
     }
 
@@ -127,6 +143,13 @@ enum TestEnvironment {
   /// Standard path for the mock test video asset.
   /// Prioritizes persistent Tests/Assets over transient /tmp.
   static var mockAssetURL: URL {
+    if let explicitURL = explicitAssetURL(
+      arguments: ProcessInfo.processInfo.arguments,
+      environment: env
+    ) {
+      return explicitURL
+    }
+
     let filename = ProcessInfo.processInfo.environment["TEST_ASSET_NAME"] ?? "test_video.mp4"
 
     // 1. Check for explicit environment variable (Best for automated tests)
@@ -170,6 +193,42 @@ enum TestEnvironment {
     // 5. Ultimate fallback - create temp directory
     let tmpPath = "/tmp/SaneVideo/" + filename
     return URL(fileURLWithPath: tmpPath)
+  }
+
+  static func explicitAssetURL(
+    arguments: [String],
+    environment: [String: String]
+  ) -> URL? {
+    guard let rawPath = argumentValue(
+      for: ["-test_asset_path", "--test-asset-path"],
+      in: arguments
+    ) ?? environment["TEST_ASSET_PATH"] else {
+      return nil
+    }
+
+    let path = rawPath.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !path.isEmpty, FileManager.default.fileExists(atPath: path) else {
+      return nil
+    }
+
+    return URL(fileURLWithPath: path)
+  }
+
+  private static func argumentValue(for names: Set<String>, in arguments: [String]) -> String? {
+    for (index, argument) in arguments.enumerated() {
+      if names.contains(argument), arguments.indices.contains(index + 1) {
+        return arguments[index + 1]
+      }
+
+      for name in names {
+        let prefix = "\(name)="
+        if argument.hasPrefix(prefix) {
+          return String(argument.dropFirst(prefix.count))
+        }
+      }
+    }
+
+    return nil
   }
 
   /// Get a specific test asset by name

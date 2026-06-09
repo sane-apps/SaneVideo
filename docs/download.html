@@ -3,30 +3,34 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Download SaneVideo</title>
-  <meta name="description" content="Download SaneVideo 1.0.1 public testing build for macOS 15 or later.">
+  <title>Download SaneVideo - Public Testing Build</title>
+  <meta name="description" content="Download the SaneVideo 1.0.1 public testing build for macOS 15 or later on Apple Silicon.">
   <link rel="canonical" href="https://sanevideo.com/download">
   <style>
-    :root { color-scheme: dark; --bg:#081014; --panel:#101b20; --text:#fff; --muted:#eef7f8; --accent:#2ee6a6; --border:rgba(255,255,255,.14); }
+    :root { color-scheme: dark; --bg:#081014; --panel:#101b20; --soft:rgba(255,255,255,.06); --text:#fff; --muted:#eef7f8; --accent:#2ee6a6; --border:rgba(255,255,255,.14); }
     * { box-sizing: border-box; }
     body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",sans-serif; background:var(--bg); color:var(--text); line-height:1.6; }
     main { max-width: 880px; margin: 0 auto; padding: 92px 24px; }
     h1 { font-size: clamp(42px, 7vw, 70px); line-height: 1; margin: 0 0 18px; letter-spacing: 0; }
     p, li { color: var(--muted); font-size: 18px; }
+    .actions { display:flex; flex-wrap:wrap; gap:10px; margin-top: 18px; }
     .button { display:inline-flex; align-items:center; justify-content:center; min-height:50px; padding:0 22px; border-radius:8px; background:var(--accent); color:#07110f; font-weight:800; text-decoration:none; }
-    .button + .button { margin-left: 10px; }
     .button.secondary { background: transparent; color: var(--text); border: 1px solid var(--border); }
     .panel { margin-top: 28px; padding: 24px; border:1px solid var(--border); border-radius:8px; background:var(--panel); }
+    .notice { margin: 0 0 24px; padding: 16px 18px; border: 1px solid var(--border); border-radius: 8px; background: var(--soft); color: var(--muted); }
     a { color: var(--text); }
   </style>
 </head>
 <body>
   <main>
+    <div class="notice">SaneVideo is in public testing for local Mac recording and editing workflows.</div>
     <h1>Download SaneVideo 1.0.1</h1>
-    <p>Public testing is open now. Requires macOS 15 or later on Apple Silicon.</p>
-    <p>Pro is 50% off at $3.49 through July 25, 2026.</p>
-    <a class="button" href="https://dist.sanevideo.com/updates/SaneVideo-1.0.1.zip">Download SaneVideo-1.0.1.zip</a>
-    <a class="button secondary" href="https://go.saneapps.com/buy/sanevideo?ref=download-page">Buy Pro $3.49</a>
+    <p>Public testing build for macOS 15 or later on Apple Silicon.</p>
+    <p>Test local recording, timeline editing, and post-recording save/edit/share workflows. Public testing is free. Early Pro support is optional at $3.49 through July 25, 2026.</p>
+    <div class="actions">
+      <a class="button" href="https://dist.sanevideo.com/updates/SaneVideo-1.0.1.zip">Download SaneVideo-1.0.1.zip</a>
+      <a class="button secondary" href="https://go.saneapps.com/buy/sanevideo?ref=download-page">Support early Pro for $3.49</a>
+    </div>
     <div class="panel">
       <h2>Install</h2>
       <ol>
@@ -34,6 +38,10 @@
         <li>Move SaneVideo to Applications.</li>
         <li>Grant camera, microphone, and screen recording permissions when macOS asks.</li>
       </ol>
+    </div>
+    <div class="panel">
+      <h2>Good first test</h2>
+      <p>Open SaneVideo, add a local clip or make a short recording, review it in the timeline, try Magic Fix on the selected clip, then use the post-recording save, edit, or share actions.</p>
     </div>
     <p><a href="/">Back to SaneVideo</a></p>
   </main>

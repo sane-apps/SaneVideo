@@ -30,7 +30,7 @@ struct SaneVideoApp: App {
     #endif
 
     var body: some Scene {
-        Window(MainWindowScenePolicy.title, id: MainWindowScenePolicy.sceneID) {
+        WindowGroup(MainWindowScenePolicy.title, id: MainWindowScenePolicy.sceneID) {
             MainContentView()
                 .environment(licenseService)
                 .environment(appState)
@@ -52,9 +52,8 @@ struct SaneVideoApp: App {
                     NSLog("🚀 SaneVideoApp: main window onAppear")
                     setupWindow()
 
-                    // CRITICAL FIX: Force .editing mode if argument is present (handling init race conditions)
-                    let args = ProcessInfo.processInfo.arguments
-                    if args.contains("-open_editor") || UserDefaults.standard.bool(forKey: "open_editor") {
+                    // Force .editing mode for automation launches after the window is available.
+                    if TestEnvironment.shouldOpenEditor {
                         NSLog("🚀 SaneVideoApp: Forcing .editing mode from onAppear")
                         appState.appMode = .editing
                         Task { await appState.bootstrapEditorForTesting() }
@@ -77,11 +76,11 @@ struct SaneVideoApp: App {
                             (icon: "bolt", text: "Project templates and export presets")
                         ],
                         proFeatures: [
-                            (icon: "checkmark.seal", text: "All free features, plus:"),
-                            (icon: "wand.and.rays", text: "Advanced motion, subtitle, and style controls"),
-                            (icon: "rectangle.on.rectangle.circle", text: "Unlimited project history and presets"),
-                            (icon: "sparkles", text: "Priority processing and batch workflows"),
-                            (icon: "square.stack.3d.up", text: "Pro export presets and creator workflow tools")
+                            (icon: "checkmark.seal", text: "Optional during public testing"),
+                            (icon: "wand.and.rays", text: "Support the app while the workflow hardens"),
+                            (icon: "rectangle.on.rectangle.circle", text: "Keep Pro access as paid features land"),
+                            (icon: "sparkles", text: "Early supporter pricing through July 25, 2026"),
+                            (icon: "square.stack.3d.up", text: "One-time unlock, no subscription")
                         ],
                         licenseService: licenseService
                     )

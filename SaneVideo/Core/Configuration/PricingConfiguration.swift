@@ -114,14 +114,14 @@ class PricingConfiguration {
     /// Get pricing message for UI
     func pricingMessage() -> String {
         if isLaunchPeriod {
-            return "Public Testing: \(currentPrice) (Regular: \(regularPrice)) through July 25, 2026"
+            return "Optional early Pro support: \(currentPrice) (Regular: \(regularPrice)) through July 25, 2026"
         }
         return "\(currentPrice) one-time purchase"
     }
 
     /// Get value proposition message
     func valueProposition() -> String {
-        "Everything included. One price. Forever."
+        "Public testing is free. Early Pro support keeps future Pro access."
     }
 }
 

@@ -84,6 +84,7 @@ struct EditorThumbnailPreviewView: View {
     let currentTime: CMTime
     let onPlay: () -> Void
     let isPlayerReady: Bool
+    let isPreparingPreview: Bool
     let captionData: (Caption, CMTime)?
 
     var body: some View {
@@ -113,17 +114,17 @@ struct EditorThumbnailPreviewView: View {
             .buttonStyle(.plain)
             .opacity(isPlayerReady ? 0.7 : 0.9)
 
-            // Loading indicator if composition is in progress
-            if !isPlayerReady {
+            // Loading indicator only while composition is actually in progress.
+            if !isPlayerReady && isPreparingPreview {
                 VStack {
                     Spacer()
                     HStack {
                         ProgressView()
                             .scaleEffect(0.7)
                             .tint(.white)
-                        Text("Loading...")
+                        Text("Preparing preview...")
                             .font(.caption)
-                            .foregroundColor(.white.opacity(0.8))
+                            .foregroundColor(.white)
                     }
                     .padding(8)
                     .background(.black.opacity(0.6), in: Capsule())

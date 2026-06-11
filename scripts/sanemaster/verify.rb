@@ -33,6 +33,7 @@ module SaneMasterModules
       timeout = args.include?('--timeout') ? args[args.index('--timeout') + 1].to_i : 180
 
       clean([]) if clean_first
+      ensure_sanevideo_test_assets!
 
       puts '🔨 --- [ SANEMASTER VERIFY ] ---'
       puts 'Building and running tests with progress monitoring...'
@@ -58,6 +59,30 @@ module SaneMasterModules
       ensure
         cleanup_test_processes(permission_monitor_pid)
       end
+    end
+
+    def ensure_sanevideo_test_assets!
+      return unless respond_to?(:generate_test_assets)
+
+      required_assets = %w[
+        test_video.mp4
+        test_silence.mp4
+        test.mov
+        file.mov
+        IMG_7668.MOV
+        German.MOV
+        IMG_0422.MOV
+        IMG_6091.MOV
+        stress_test_clip.mp4
+        website-demo-video-call.mp4
+      ]
+      missing_assets = required_assets.reject do |filename|
+        File.exist?(File.join('Tests', 'Assets', filename))
+      end
+      return if missing_assets.empty?
+
+      puts "📦 Generating missing SaneVideo test assets: #{missing_assets.join(', ')}"
+      generate_test_assets
     end
 
     def clean(args)

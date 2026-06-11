@@ -1,0 +1,23 @@
+updated: 2026-06-07
+source_rule: Use only actual SaneVideo app captures for public website and App Store screenshots.
+retained_captures:
+  - public_asset: docs/images/sanevideo-actual-edit-workflow.png
+    appstore_asset: Screenshots/appstore-01-editing-dark-mac.png
+    source_capture: outputs/visual-audit-20260603/01-editor-real-fixture.png
+    visible_state: Populated local editor with fixture video, timeline clip, playhead, and Magic Fix inspector row.
+  - public_asset: docs/images/sanevideo-magic-fix.png
+    appstore_asset: Screenshots/appstore-02-magic-fix-dark-mac.png
+    source_capture: outputs/appstore-real-captures/04-inspector-magic-fix.png
+    visible_state: Loaded editor with selected clip, Magic Fix visible, and on-device status.
+  - public_asset: docs/images/sanevideo-recording-complete.png
+    appstore_asset: Screenshots/appstore-03-recording-complete-dark-mac.png
+    source_capture: outputs/appstore-real-captures/05-recording-complete.png
+    visible_state: Recording Complete dialog with Edit Now, Save, and Share actions.
+removed_bad_captures:
+  - camera-off recording surface
+  - camera-off baseline capture with desktop clutter and system notification
+  - blank-preview timeline capture
+  - old playback capture with unsuitable media
+  - desktop/system-dialog captures
+  - stock/media source stills not captured inside SaneVideo UI
+  - unused duplicate website jpg captures

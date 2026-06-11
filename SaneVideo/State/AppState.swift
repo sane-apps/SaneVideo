@@ -258,7 +258,7 @@ class AppState {
         guard let transcriptURL = TestEnvironment.automationTranscriptURL,
               let clip = projectState.currentProject?.timeline.tracks
                 .flatMap(\.clips)
-                .first(where: { !$0.captions.isEmpty })
+                .first
         else {
             return
         }

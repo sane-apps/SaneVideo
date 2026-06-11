@@ -505,8 +505,11 @@ final class APIDeprecationTests: XCTestCase {
         XCTAssertTrue(pricing.contains("case .launch: return \"$3.49\""))
         XCTAssertTrue(pricing.contains("case .regular: return \"$6.99\""))
         XCTAssertTrue(pricing.contains("through July 25, 2026"))
+        XCTAssertTrue(pricing.contains("Optional early Pro support"))
+        XCTAssertTrue(pricing.contains("Public testing is free"))
         XCTAssertFalse(pricing.contains("Launch Special: $29"))
         XCTAssertFalse(pricing.contains("case .regular: return \"$49\""))
+        XCTAssertFalse(pricing.contains("Everything included. One price. Forever."))
     }
 
     /// Regression: ExportEngine queue callbacks must not inherit main-actor isolation.

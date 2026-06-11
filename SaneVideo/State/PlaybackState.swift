@@ -18,6 +18,7 @@ class PlaybackState {
     var currentTime: CMTime = .zero
     var duration: CMTime = .zero
     var player: AVPlayer?
+    var isPreparingComposition = false
 
     // MARK: - In/Out Points (for selection range)
 
@@ -144,6 +145,7 @@ class PlaybackState {
         loadingTask = nil
         pendingProject = nil
         isCompositionReady = false
+        isPreparingComposition = false
         unload()
         lastLoadedProjectID = nil
         lastLoadedClipsHash = 0
@@ -158,6 +160,7 @@ class PlaybackState {
             unload()
             pendingProject = nil
             isCompositionReady = false
+            isPreparingComposition = false
             return
         }
 
@@ -198,6 +201,7 @@ class PlaybackState {
         self.duration = project.timeline.duration
         self.pendingProject = project
         self.isCompositionReady = false
+        self.isPreparingComposition = true
 
         // Update tracking
         lastLoadedProjectID = project.id
@@ -225,11 +229,15 @@ class PlaybackState {
                     self.unload()
                     self.setupPlayer(with: playerItem, duration: project.timeline.duration)
                     self.isCompositionReady = true
+                    self.isPreparingComposition = false
                     self.pendingProject = nil
                     AppLogger.playback.info("Loaded project \(project.name)")
                 }
             } catch {
                 guard !Task.isCancelled else { return }
+                await MainActor.run {
+                    self.isPreparingComposition = false
+                }
                 AppLogger.playback.error("Failed to compose project timeline: \(error)")
             }
         }
@@ -241,6 +249,7 @@ class PlaybackState {
 
         // Cancel debounced task and compose immediately
         loadingTask?.cancel()
+        isPreparingComposition = true
 
         do {
             AppLogger.playback.debug("Immediate composition for play: \(project.name)")
@@ -250,9 +259,11 @@ class PlaybackState {
                 self.unload()
                 self.setupPlayer(with: playerItem, duration: project.timeline.duration)
                 self.isCompositionReady = true
+                self.isPreparingComposition = false
                 self.pendingProject = nil
             }
         } catch {
+            isPreparingComposition = false
             AppLogger.playback.error("Failed to compose for play: \(error)")
         }
     }
@@ -347,6 +358,7 @@ class PlaybackState {
         // ServiceContainer.shared.realTimeAudioProcessor.cleanup()
         player = nil
         tokenHolder.player = nil
+        isPreparingComposition = false
 
         // CRITICAL FIX: Release security-scoped resource access
         tokenHolder.stopAccessing()

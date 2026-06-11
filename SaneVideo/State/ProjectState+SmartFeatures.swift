@@ -167,7 +167,7 @@ extension ProjectState {
                 return nil
             }.value
 
-            if options.enhanceAudio {
+            if await MagicFixService.shouldAttemptAudioEnhancement(for: clip, options: options) {
                 try Task.checkCancellation()
                 do {
                     // CRITICAL FIX: Add timeout and proper error handling for audio enhancement
@@ -182,6 +182,8 @@ extension ProjectState {
                     // Continue execution - do not fail the whole process (graceful degradation)
                     // User can still benefit from other Magic Fix features
                 }
+            } else if options.enhanceAudio {
+                AppLogger.project.info("✨ Magic Fix: Skipping audio enhancement — no audio track")
             }
 
             // CRITICAL FIX: Verify clip still exists after audio enhancement

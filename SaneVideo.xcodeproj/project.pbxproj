@@ -361,6 +361,7 @@
 		7C984DF90E1F0EAF5257C65B /* CaptionStylePreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0583D14281B6481C7CF82BF1 /* CaptionStylePreview.swift */; };
 		7D4A686313DD4FA5F616010A /* IMG_0422.MOV in Resources */ = {isa = PBXBuildFile; fileRef = 64FF3198B028CC1820C25C36 /* IMG_0422.MOV */; };
 		7D665623D1C19E75ED3D7149 /* TimelineEmptyStateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5ED10F4257585E2BAB3EABE0 /* TimelineEmptyStateView.swift */; };
+		7FCAE060C14268A28E7C4CC5 /* website-demo-video-call.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = 545B72DF0A4E57B018FA4BE0 /* website-demo-video-call.mp4 */; };
 		8140621AC78E2F6D58324A31 /* ThumbnailPickerSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CBA9ECDF9E31D7CBF88683F /* ThumbnailPickerSheet.swift */; };
 		81717D6FA6B695DE93F87E42 /* ErrorRecovery.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E1A8BE7244EF6E968EA8DED /* ErrorRecovery.swift */; };
 		8179608773D411A4E6AB516F /* AppLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = EEF55C3966A3B7D211C3B65B /* AppLogger.swift */; };
@@ -612,6 +613,7 @@
 		D6819748D35F631B5C4089A8 /* ProjectState+Commentary.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7BA315DE14A2078BA7D42C9 /* ProjectState+Commentary.swift */; };
 		D6942279AB53F8D459DC606C /* German.MOV in Resources */ = {isa = PBXBuildFile; fileRef = A45A6983F0D32796DAAFE791 /* German.MOV */; };
 		D72449F1E4C491835E0855F5 /* SidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DF30A42313A70762DA814A4 /* SidebarView.swift */; };
+		D7440EEBB7EEBFAE84A09606 /* website-demo-captions.srt in Resources */ = {isa = PBXBuildFile; fileRef = C95613DA5B788493C6F9C7EB /* website-demo-captions.srt */; };
 		D74E6B6589AD8D99A5D9DE18 /* test_silence.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = EA79DA8C3F68E63776DAAC7D /* test_silence.mp4 */; };
 		D78E80092796B716219AAAB1 /* VoiceIsolationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB7313A7B80D763CF1D81002 /* VoiceIsolationService.swift */; };
 		D7EFC69425E319BE4BDC52DF /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 50FF80EF90D0C5624E43E98B /* Sparkle */; };
@@ -858,6 +860,7 @@
 		526BDA59F49210AC91EE5851 /* DriftTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DriftTracker.swift; sourceTree = "<group>"; };
 		52AED578D28DE2FAA70CA777 /* ClipContextMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipContextMenu.swift; sourceTree = "<group>"; };
 		53A01837B81316A4F6E6F4EE /* FileImporterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileImporterView.swift; sourceTree = "<group>"; };
+		545B72DF0A4E57B018FA4BE0 /* website-demo-video-call.mp4 */ = {isa = PBXFileReference; path = "website-demo-video-call.mp4"; sourceTree = "<group>"; };
 		54F92AE3FAB37D3F5E6A5BB2 /* RecordingSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingSettingsView.swift; sourceTree = "<group>"; };
 		54F9EA59DE76685114B98673 /* TranscriptionError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptionError.swift; sourceTree = "<group>"; };
 		5501D90EC5771351E146669C /* BatchCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatchCoordinator.swift; sourceTree = "<group>"; };
@@ -1051,6 +1054,7 @@
 		C6636025028F3B172DA9B70C /* TranscriptionProtocols.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptionProtocols.swift; sourceTree = "<group>"; };
 		C8828331DECF65321F5267E5 /* RecordingModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingModels.swift; sourceTree = "<group>"; };
 		C8CA2CF88E0430DE4DD28903 /* TrimHandleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrimHandleTests.swift; sourceTree = "<group>"; };
+		C95613DA5B788493C6F9C7EB /* website-demo-captions.srt */ = {isa = PBXFileReference; path = "website-demo-captions.srt"; sourceTree = "<group>"; };
 		CA951B00F54D5687CD826B39 /* AudioProcessingIntegrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioProcessingIntegrationTests.swift; sourceTree = "<group>"; };
 		CB2616C74A603F7F29EBC1F6 /* ExportPresetTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportPresetTests.swift; sourceTree = "<group>"; };
 		CC7D07B3313D1684B12846E3 /* DesignSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignSystem.swift; sourceTree = "<group>"; };
@@ -1732,6 +1736,8 @@
 				EA79DA8C3F68E63776DAAC7D /* test_silence.mp4 */,
 				18C600CEA1A3D943C2205611 /* test_video.mp4 */,
 				DA104161CC8F2AFB30EEA712 /* test.mov */,
+				C95613DA5B788493C6F9C7EB /* website-demo-captions.srt */,
+				545B72DF0A4E57B018FA4BE0 /* website-demo-video-call.mp4 */,
 			);
 			name = Assets;
 			path = Tests/Assets;
@@ -2312,6 +2318,8 @@
 				5D65538396F4A457A0E7A8FC /* test.mov in Resources */,
 				D74E6B6589AD8D99A5D9DE18 /* test_silence.mp4 in Resources */,
 				A14AA2C00D7281FE219DC4F8 /* test_video.mp4 in Resources */,
+				D7440EEBB7EEBFAE84A09606 /* website-demo-captions.srt in Resources */,
+				7FCAE060C14268A28E7C4CC5 /* website-demo-video-call.mp4 in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -3091,7 +3099,7 @@
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = YES;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				DEAD_CODE_STRIPPING = YES;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
@@ -3122,7 +3130,7 @@
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = YES;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				DEAD_CODE_STRIPPING = YES;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
@@ -3258,14 +3266,14 @@
 				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = YES;
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = M78L6FXD48;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = "CI_SILENCE_GL_DEPRECATION=1";
 				INFOPLIST_FILE = "SaneVideo/Info-AppStore.plist";
-				INFOPLIST_KEY_AppStoreProductID = com.sanevideo.app.pro.unlock;
+				INFOPLIST_KEY_AppStoreProductID = com.sanevideo.app.pro.access.v2;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -3444,7 +3452,7 @@
 				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = YES;
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = M78L6FXD48;
 				ENABLE_CODE_COVERAGE = YES;
@@ -3479,7 +3487,7 @@
 				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = YES;
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				DEAD_CODE_STRIPPING = YES;
 				ENABLE_CODE_COVERAGE = YES;
 				ENABLE_PREVIEWS = YES;
@@ -3515,7 +3523,7 @@
 				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = YES;
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				DEAD_CODE_STRIPPING = YES;
 				ENABLE_CODE_COVERAGE = YES;
 				ENABLE_PREVIEWS = YES;

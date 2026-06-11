@@ -11,6 +11,14 @@ Graduate verified findings to ARCHITECTURE.md or DEVELOPMENT.md.
 - Finding 2
 -->
 
+## 2026-06-11 Clean Verify Fixture Hydration
+**Updated:** 2026-06-11 | **Status:** verified | **TTL:** 30d
+**Source:** Mini `./scripts/SaneMaster.rb verify --timeout 1200`, `SaneVideo.xcodeproj/project.pbxproj`, `project.yml`
+- Clean Mini verification on the branch generated the first fixture set, then Xcode failed before tests because additional ignored `Tests/Assets` resources referenced by the checked-in project were absent: `German.MOV`, `IMG_0422.MOV`, and `IMG_6091.MOV`.
+- Root cause is not one missing local file; `project.yml` includes the whole `Tests/Assets` directory and the checked-in Xcode project contains static resource references for ignored media files. Any clean checkout must hydrate every media filename referenced by the project/test target before `xcodebuild test`.
+- Decision: keep binary media ignored, generate lightweight deterministic fixtures through `gen_assets`, and make SaneVideo verify run that generator before the repo cleanliness snapshot.
+- Fixture semantics matter: `test_video.mp4` must have video and audio, `test_silence.mp4` must have video and silent audio, and `website-demo-video-call.mp4` must be video-only because Magic Fix tests assert audio-enhancement behavior from those stream layouts.
+
 ## 2026-05-25 Website Copy And Proof Audit
 **Updated:** 2026-05-26 | **Status:** verified | **TTL:** 7d
 **Source:** subagent audits, live `https://sanevideo.com/`, local `docs/`, Cloudflare Pages deploy/verification, Playwright screenshots

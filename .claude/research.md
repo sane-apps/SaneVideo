@@ -11,6 +11,28 @@ Graduate verified findings to ARCHITECTURE.md or DEVELOPMENT.md.
 - Finding 2
 -->
 
+## 2026-05-25 Website Copy And Proof Audit
+**Updated:** 2026-05-26 | **Status:** verified | **TTL:** 7d
+**Source:** subagent audits, live `https://sanevideo.com/`, local `docs/`, Cloudflare Pages deploy/verification, Playwright screenshots
+- The live SaneVideo site copy sounded robotic because it used internal terms like “workflow,” “surfaces,” “hardens,” and “support Pro” where video-editor pages usually say record, trim, captions, auto-zoom, export, MP4/GIF, and local files.
+- Homepage and download copy were rewritten and deployed on 2026-05-25. Production verification found the new hero “Record the demo. Cut the dead air. Ship the clip.” on `https://sanevideo.com/` and the new download copy on `/download`.
+- Screenshot proof was remediated on 2026-05-26 with real-media assets and generated product-composition screenshots for a loaded sample project, active recording, Magic Fix cleanup, captions/demo-pack, and export. Hero loop and source provenance are tracked in `Screenshots/asset_sources.yml`.
+- Final live visual proof is saved at `/Users/sj/SaneApps/apps/SaneVideo/outputs/website-assets/sanevideo-live-desktop-proof.png` and `/Users/sj/SaneApps/apps/SaneVideo/outputs/website-assets/sanevideo-live-mobile-proof.png`.
+- Public internal docs were removed from deploy: old audit/session notes redirect to `/`, and the screenshot storyboard moved from `docs/` to `Screenshots/`.
+- Live sitemap and robots now exist. `https://www.sanevideo.com/` still needs a Cloudflare zone-level Bulk Redirect/Redirect Rule to redirect to `https://sanevideo.com/`; Pages `_redirects` cannot fix host-level canonicalization.
+
+## 2026-05-27 Video Editor Website Screenshot Benchmark
+**Updated:** 2026-05-27 | **Status:** verified | **TTL:** 30d
+**Source:** official sites: Screen Studio (`https://screen.studio/`), Cap (`https://cap.so/`, `https://cap.so/features/studio-mode`), Descript (`https://www.descript.com/`, `https://www.descript.com/video-editing`, `https://www.descript.com/screen-recording`), CapCut (`https://www.capcut.com/`, `https://www.capcut.com/tools/desktop-video-editor`), VEED (`https://www.veed.io/`, `https://www.veed.io/tools/video-editor`), Loom (`https://www.loom.com/`)
+- Screen Studio leads with polished product-demo output and then backs it with concrete UI/product states: automatic zoom, editable zoom timeline, cursor smoothing, background/spacing/shadow controls, webcam/audio/transcript, and MP4/GIF export. SaneVideo should show the same level of concrete controls, not abstract blocks.
+- Cap's strongest proof is named workflow UI: a recording file, Share/Export controls, cursor/background/padding/corner/shadow/cursor-size values, plus an Instant share page with title, comments, transcript, summary, and chapters. SaneVideo should use a real sample project with visible control values and a final export/share state.
+- Descript sells a distinct editing model: transcript/text editing beside scenes/layout/timeline, plus AI tools like filler-word removal, captions, Studio Sound, and generated B-roll. SaneVideo should only borrow this pattern where the UI really exists, e.g. transcript/captions beside the timeline, and avoid "AI co-editor" implications.
+- CapCut and VEED communicate broad creator suites with vivid footage, captions/subtitles, effects, backgrounds, templates, social formats, and AI generation. SaneVideo should not mimic their cloud/template/generative breadth unless those flows are real; use native-screen-recorder clarity instead.
+- Loom's visuals and copy are about async communication: quick screen/camera recording, instant sharing, comments, integrations, transcripts/captions, and AI bug reports. SaneVideo should avoid Loom-style collaboration claims unless a real share/review surface is captured.
+- Across the official sites, credible screenshots combine real media, readable app chrome, named controls, and one obvious job-to-be-done. SaneVideo's future site must use screenshot-level accurate captures from a real sample video: active recording, loaded editor timeline with waveform/thumbnails, captions/transcript, auto-zoom/cursor sidecar controls, demo-pack/share, and export.
+- Avoid: generated-looking faux windows, blank or decorative timelines, stock hero stills, unreadable cropped UI, invented controls, vague "AI magic" copy, and screenshots that do not prove the claim beside them.
+- Copy tone benchmark: short concrete verbs win. "Record, trim, caption, zoom, export" reads more credible than internal terms like workflow, surfaces, hardens, or pipeline; local-first/privacy claims need a screenshot or exact UI state that proves local capture/export.
+
 ## 2026-05-25 Timeline Editor Competitive Baseline
 **Updated:** 2026-05-25 | **Status:** verified | **TTL:** 7d
 **Source:** Screen Studio docs (`screen.studio/guide/*`), Cap docs/features (`cap.so/features`, `cap.so/features/studio-mode`), TechSmith Camtasia pages/support, Descript Help, Apple Final Cut Pro pages/release notes, local SaneVideo source/tests
@@ -141,3 +163,22 @@ Graduate verified findings to ARCHITECTURE.md or DEVELOPMENT.md.
 - Adding `SaneVideo/Services/Diagnostics/SaneVideoDiagnosticsService.swift` requires regenerating `SaneVideo.xcodeproj` from `project.yml`; otherwise the file exists on disk but is not compiled into the app target.
 - Symptom before regeneration: `SettingsView.swift` fails with `type 'SaneDiagnosticsService' has no member 'shared'` because the extension defining `shared` is in the new unreferenced file.
 - Correct fix is project regeneration, not changing call syntax or retrying tests.
+## 2026-05-25 Mini Watchdog Panic From SaneVideo Full Verify | Updated: 2026-05-25 | Status: verified | TTL: 30d
+**Sources:** Mini `/Library/Logs/DiagnosticReports/panic-full-2026-05-25-233949.0002.panic`, Mini `~/SaneApps/apps/SaneVideo/test_output.txt`, local `SESSION_HANDOFF.md`.
+- Running full `./scripts/SaneMaster.rb verify` for a website/icon-only SaneVideo change caused the Mini to become unreachable and reboot at about 2026-05-25 23:39 ET.
+- Panic string: `watchdog timeout: no checkins from watchdogd in 93 seconds`; backtrace involved `AppleARMWatchdogTimer` and `AppleInterruptController`, panicked task `kernel_task`.
+- The SaneVideo test log immediately before the reboot was in export-heavy integration coverage, including repeated 4K AVAssetWriter/custom compositor export cases.
+- Operational decision: do not run full SaneVideo verify on the 8GB Mini for website-only, screenshot-only, docs-only, or icon-only changes. Use static asset checks, generator verification, browser visual proof, and website deploy verification instead. If icon/app build proof is required, get explicit approval for a narrow build/test path and avoid export integration tests unless export/audio/compositor code changed.
+
+## AI-Generic Website Design Markers | Updated: 2026-06-07 | Status: verified | TTL: 30d
+
+Current design research flags the common "AI-generated website" look as generic
+gradients, bento/card grids, fake screenshots, vague "modern/professional"
+positioning, inconsistent brand systems, weak mobile hierarchy, and decorative
+effects that do not explain the product. Stronger product pages use specific
+audience context, one clear brand palette, concrete copy, real product visuals,
+short scannable sections, and product screenshots or demos near the core CTA.
+
+Sources: AYSA "7 AI Website Mistakes That Hurt SEO, Trust and Conversions";
+Pineable "SaaS Landing Page: Anatomy, Examples and Best Practices"; TechRadar
+"How to write effective prompts for AI website builders".

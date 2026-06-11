@@ -227,8 +227,8 @@ class ProjectState {
 
         // Skip auto-loading in UI tests to prevent race conditions with bootstrap
         let isTesting = UserDefaults.standard.bool(forKey: "ui_testing") ||
-                        UserDefaults.standard.bool(forKey: "open_editor") ||
-                        ProcessInfo.processInfo.arguments.contains("-ui_testing")
+                        ProcessInfo.processInfo.arguments.contains("-ui_testing") ||
+                        TestEnvironment.shouldOpenEditor
 
         if !isTesting {
             Task {
@@ -305,13 +305,11 @@ class ProjectState {
     func loadProjects() async {
         // Prevent loading during UI tests to avoid race conditions and file access issues
         let isTesting = UserDefaults.standard.bool(forKey: "ui_testing") ||
-                        UserDefaults.standard.bool(forKey: "open_editor") ||
                         UserDefaults.standard.string(forKey: "UI_TESTING") != nil ||
                         ProcessInfo.processInfo.environment["UI_TESTING"] != nil ||
-                        ProcessInfo.processInfo.environment["OPEN_EDITOR"] != nil ||
                         ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil ||
                         ProcessInfo.processInfo.arguments.contains("-ui_testing") ||
-                        ProcessInfo.processInfo.arguments.contains("-open_editor")
+                        TestEnvironment.shouldOpenEditor
 
         if isTesting {
             AppLogger.project.info("🧪 ProjectState: Skipping loadProjects (UI Test Environment)")

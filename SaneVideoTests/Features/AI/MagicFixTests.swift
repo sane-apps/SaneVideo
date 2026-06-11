@@ -11,6 +11,13 @@ import AVFoundation
 
 @MainActor
 final class MagicFixTests: XCTestCase {
+    private var sourceRoot: URL {
+        URL(fileURLWithPath: #file)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+    }
     
     // MARK: - Options Tests
     
@@ -19,6 +26,38 @@ final class MagicFixTests: XCTestCase {
         XCTAssertTrue(options.removeSilence)
         XCTAssertTrue(options.removeFillers)
         XCTAssertTrue(options.generateCaptions)
+    }
+
+    func testAudioEnhancementIsSkippedForVideoOnlyClips() async {
+        let videoOnlyURL = sourceRoot.appendingPathComponent("Tests/Assets/website-demo-video-call.mp4")
+        let audioURL = sourceRoot.appendingPathComponent("Tests/Assets/test_video.mp4")
+        let videoOnlyClip = VideoClip(url: videoOnlyURL, duration: CMTime(seconds: 12, preferredTimescale: 600))
+        let audioClip = VideoClip(url: audioURL, duration: CMTime(seconds: 12, preferredTimescale: 600))
+        let shouldEnhanceVideoOnly = await MagicFixService.shouldAttemptAudioEnhancement(
+            for: videoOnlyClip,
+            options: MagicFixOptions()
+        )
+        let shouldEnhanceAudio = await MagicFixService.shouldAttemptAudioEnhancement(
+            for: audioClip,
+            options: MagicFixOptions()
+        )
+
+        XCTAssertFalse(
+            shouldEnhanceVideoOnly,
+            "Magic Fix should not surface audio-enhancement failures for video-only clips."
+        )
+        XCTAssertTrue(
+            shouldEnhanceAudio,
+            "Magic Fix should still enhance audio when the source clip has an audio track."
+        )
+
+        var disabledOptions = MagicFixOptions()
+        disabledOptions.enhanceAudio = false
+        let shouldEnhanceDisabled = await MagicFixService.shouldAttemptAudioEnhancement(
+            for: audioClip,
+            options: disabledOptions
+        )
+        XCTAssertFalse(shouldEnhanceDisabled)
     }
     
     // MARK: - Range Calculation Tests

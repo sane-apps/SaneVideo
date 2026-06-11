@@ -375,6 +375,7 @@ struct EditorLayoutView: View {
                             currentTime: appState.playbackState.currentTime,
                             onPlay: { appState.playbackState.play() },
                             isPlayerReady: appState.playbackState.player != nil,
+                            isPreparingPreview: appState.playbackState.isPreparingComposition,
                             captionData: currentCaption(for: selectedClip, at: appState.playbackState.currentTime)
                         )
                     } else {

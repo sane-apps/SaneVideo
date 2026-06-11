@@ -11,6 +11,17 @@ import Foundation
 
 /// Service for performing Magic Fix operations on clips
 enum MagicFixService {
+
+    /// Audio enhancement should only run when the user enabled it and the source
+    /// clip actually contains audio. Video-only clips still benefit from the
+    /// rest of Magic Fix without surfacing a failed audio-enhancement toast.
+    @MainActor static func shouldAttemptAudioEnhancement(
+        for clip: VideoClip,
+        options: MagicFixOptions
+    ) async -> Bool {
+        guard options.enhanceAudio else { return false }
+        return await SilenceDetector.hasAudioTrack(url: clip.url)
+    }
     
     /// Applies a series of Magic Fix operations to a video clip.
     /// Returns a list of time ranges to KEEP (the "good" parts).

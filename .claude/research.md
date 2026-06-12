@@ -11,21 +11,14 @@ Graduate verified findings to ARCHITECTURE.md or DEVELOPMENT.md.
 - Finding 2
 -->
 
-## 2026-06-11 Clean Verify Fixture Hydration
-**Updated:** 2026-06-11 | **Status:** verified | **TTL:** 30d
-**Source:** Mini `./scripts/SaneMaster.rb verify --timeout 1200`, `SaneVideo.xcodeproj/project.pbxproj`, `project.yml`
-- Clean Mini verification on the branch generated the first fixture set, then Xcode failed before tests because additional ignored `Tests/Assets` resources referenced by the checked-in project were absent: `German.MOV`, `IMG_0422.MOV`, and `IMG_6091.MOV`.
-- Root cause is not one missing local file; `project.yml` includes the whole `Tests/Assets` directory and the checked-in Xcode project contains static resource references for ignored media files. Any clean checkout must hydrate every media filename referenced by the project/test target before `xcodebuild test`.
-- Decision: keep binary media ignored, generate lightweight deterministic fixtures through `gen_assets`, and make SaneVideo verify run that generator before the repo cleanliness snapshot.
-- Fixture semantics matter: `test_video.mp4` must have video and audio, `test_silence.mp4` must have video and silent audio, and `website-demo-video-call.mp4` must be video-only because Magic Fix tests assert audio-enhancement behavior from those stream layouts.
-
 ## 2026-05-25 Website Copy And Proof Audit
-**Updated:** 2026-05-26 | **Status:** verified | **TTL:** 7d
-**Source:** subagent audits, live `https://sanevideo.com/`, local `docs/`, Cloudflare Pages deploy/verification, Playwright screenshots
+**Updated:** 2026-06-04 | **Status:** partial | **TTL:** 7d
+**Source:** subagent audits, live `https://sanevideo.com/`, local `docs/`, Cloudflare Pages deploy/verification, Playwright screenshots, Mini runtime proof captures
 - The live SaneVideo site copy sounded robotic because it used internal terms like “workflow,” “surfaces,” “hardens,” and “support Pro” where video-editor pages usually say record, trim, captions, auto-zoom, export, MP4/GIF, and local files.
 - Homepage and download copy were rewritten and deployed on 2026-05-25. Production verification found the new hero “Record the demo. Cut the dead air. Ship the clip.” on `https://sanevideo.com/` and the new download copy on `/download`.
-- Screenshot proof was remediated on 2026-05-26 with real-media assets and generated product-composition screenshots for a loaded sample project, active recording, Magic Fix cleanup, captions/demo-pack, and export. Hero loop and source provenance are tracked in `Screenshots/asset_sources.yml`.
-- Final live visual proof is saved at `/Users/sj/SaneApps/apps/SaneVideo/outputs/website-assets/sanevideo-live-desktop-proof.png` and `/Users/sj/SaneApps/apps/SaneVideo/outputs/website-assets/sanevideo-live-mobile-proof.png`.
+- 2026-06-04 correction: the generated product-composition screenshots were rejected as inaccurate. The local homepage is now a `noindex, follow` proof-rebuild page and loads only `images/icon.png`; do not restore the full marketing page until every product image is a real app screenshot or video capture.
+- The staged `docs/images/sanevideo-*.{png,jpg}` proof files were overwritten on 2026-06-04 with real SaneVideo app captures from `outputs/mini-runtime-proof/` and `outputs/website-real-proof/`. These are acceptable as real app screenshots, but feature-labeled use still requires the visible state to prove that feature.
+- Current local visual proof is saved at `/Users/sj/SaneApps/apps/SaneVideo/outputs/website-real-proof/sanevideo-paused-site-desktop-20260604.png` and `/Users/sj/SaneApps/apps/SaneVideo/outputs/website-real-proof/sanevideo-paused-site-mobile-20260604.png`.
 - Public internal docs were removed from deploy: old audit/session notes redirect to `/`, and the screenshot storyboard moved from `docs/` to `Screenshots/`.
 - Live sitemap and robots now exist. `https://www.sanevideo.com/` still needs a Cloudflare zone-level Bulk Redirect/Redirect Rule to redirect to `https://sanevideo.com/`; Pages `_redirects` cannot fix host-level canonicalization.
 
@@ -177,16 +170,3 @@ Graduate verified findings to ARCHITECTURE.md or DEVELOPMENT.md.
 - Panic string: `watchdog timeout: no checkins from watchdogd in 93 seconds`; backtrace involved `AppleARMWatchdogTimer` and `AppleInterruptController`, panicked task `kernel_task`.
 - The SaneVideo test log immediately before the reboot was in export-heavy integration coverage, including repeated 4K AVAssetWriter/custom compositor export cases.
 - Operational decision: do not run full SaneVideo verify on the 8GB Mini for website-only, screenshot-only, docs-only, or icon-only changes. Use static asset checks, generator verification, browser visual proof, and website deploy verification instead. If icon/app build proof is required, get explicit approval for a narrow build/test path and avoid export integration tests unless export/audio/compositor code changed.
-
-## AI-Generic Website Design Markers | Updated: 2026-06-07 | Status: verified | TTL: 30d
-
-Current design research flags the common "AI-generated website" look as generic
-gradients, bento/card grids, fake screenshots, vague "modern/professional"
-positioning, inconsistent brand systems, weak mobile hierarchy, and decorative
-effects that do not explain the product. Stronger product pages use specific
-audience context, one clear brand palette, concrete copy, real product visuals,
-short scannable sections, and product screenshots or demos near the core CTA.
-
-Sources: AYSA "7 AI Website Mistakes That Hurt SEO, Trust and Conversions";
-Pineable "SaaS Landing Page: Anatomy, Examples and Best Practices"; TechRadar
-"How to write effective prompts for AI website builders".

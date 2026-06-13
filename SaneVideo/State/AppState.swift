@@ -244,21 +244,38 @@ class AppState {
 
             let projectName = self.projectState.currentProject?.name ?? "nil"
             AppLogger.general.info(
-                "🧪 Switched to Editing Mode and restored window. Project: \(projectName)")
+                "🧪 Switched to Editing Mode and restored window. Project: \(projectName)"
+            )
             NSLog("🧪 Switched to Editing Mode and restored window. Project: \(projectName)")
         }
 
         // Final settle delay for UI layout
         try? await Task.sleep(nanoseconds: 1_000_000_000) // 1 second
+        applyAutomationRailStateIfNeeded()
         await runAutomationExportIfNeeded()
         NSLog("🧪 AppState: Bootstrap complete and settled.")
+    }
+
+    private func applyAutomationRailStateIfNeeded() {
+        guard let railState = TestEnvironment.automationRailState else { return }
+        activateAutomationRailState(railState)
+    }
+
+    /// Posts the same notification the matching left-rail control posts when clicked,
+    /// so automation reaches pixel-identical UI state without synthetic clicks.
+    func activateAutomationRailState(_ railState: AutomationRailState) {
+        NotificationCenter.default.post(name: railState.notificationName, object: nil)
+        AppLogger.general.info("🧪 Automation rail state activated: \(railState.rawValue)")
+        NSLog(
+            "🧪 Automation rail state activated: \(railState.rawValue) → \(railState.notificationName.rawValue)"
+        )
     }
 
     private func applyAutomationTranscriptCorrectionsIfNeeded() async {
         guard let transcriptURL = TestEnvironment.automationTranscriptURL,
               let clip = projectState.currentProject?.timeline.tracks
-                .flatMap(\.clips)
-                .first
+              .flatMap(\.clips)
+              .first
         else {
             return
         }
@@ -315,19 +332,19 @@ class AppState {
 
             if isActive {
                 AppLogger.recording.info("⚠️ System Presenter Overlay Active. Hiding App PiP.")
-                self.windowManager.forceHidePiPForSystemOverlay()
+                windowManager.forceHidePiPForSystemOverlay()
             } else {
                 AppLogger.recording.info("✅ System Presenter Overlay Inactive. Restoring App PiP.")
-                self.windowManager.updatePiPState(
-                    isCameraActive: self.cameraState.isActive,
-                    isRecording: self.recordingState.isRecording
+                windowManager.updatePiPState(
+                    isCameraActive: cameraState.isActive,
+                    isRecording: recordingState.isRecording
                 )
             }
         }
 
         // 3. Listen for Recording State changes (Automatic PiP Update)
         recordingState.onRecordingStateChanged = { [weak self] _ in
-            guard let self = self else { return }
+            guard let self else { return }
             Task { @MainActor in
                 self.windowManager.updatePiPState(
                     isCameraActive: self.cameraState.isActive,
@@ -339,18 +356,18 @@ class AppState {
         // 4. Listen for Content Selection (Show PiP after picker selection)
         // This prevents PiP from appearing in the picker's window list
         recordingState.onContentSelected = { [weak self] in
-            guard let self = self else { return }
+            guard let self else { return }
             NSLog("🖥️ Content selected - NOW showing PiP window")
-            self.windowManager.updatePiPState(
-                isCameraActive: self.cameraState.isActive,
-                isRecording: self.recordingState.isRecording
+            windowManager.updatePiPState(
+                isCameraActive: cameraState.isActive,
+                isRecording: recordingState.isRecording
             )
 
             // CRITICAL FIX: If already recording, switch source to screen
             // Without this, currentSource stays .camera and screen frames are filtered out
-            if self.recordingState.isRecording {
+            if recordingState.isRecording {
                 NSLog("🖥️ Already recording - switching source to screen")
-                self.recordingState.switchSource(.screen)
+                recordingState.switchSource(.screen)
             }
         }
     }
@@ -414,25 +431,55 @@ class AppState {
 
     // MARK: - Proxy Properties (Backward Compatibility / Convenience)
 
-    var isRecording: Bool { recordingState.isRecording }
-    var isPreparing: Bool { recordingState.isPreparing }
-    var isPaused: Bool { recordingState.isPaused }
-    var isScreenSharing: Bool { windowManager.isScreenSharing }
-    var isMicActive: Bool { recordingState.isMicActive }
-    var recordingDuration: TimeInterval { recordingState.recordingDuration }
+    var isRecording: Bool {
+        recordingState.isRecording
+    }
+
+    var isPreparing: Bool {
+        recordingState.isPreparing
+    }
+
+    var isPaused: Bool {
+        recordingState.isPaused
+    }
+
+    var isScreenSharing: Bool {
+        windowManager.isScreenSharing
+    }
+
+    var isMicActive: Bool {
+        recordingState.isMicActive
+    }
+
+    var recordingDuration: TimeInterval {
+        recordingState.recordingDuration
+    }
 
     /// Access to AudioService for microphone selection
-    var audioService: AudioService { ServiceContainer.shared.audioService }
+    var audioService: AudioService {
+        ServiceContainer.shared.audioService
+    }
 
-    var currentProject: VideoProject? { projectState.currentProject }
-    var projects: [VideoProject] { projectState.projects }
-    var recentlyAddedClip: VideoClip? { projectState.recentlyAddedClip }
+    var currentProject: VideoProject? {
+        projectState.currentProject
+    }
+
+    var projects: [VideoProject] {
+        projectState.projects
+    }
+
+    var recentlyAddedClip: VideoClip? {
+        projectState.recentlyAddedClip
+    }
+
     var showingImportPicker: Bool {
         get { projectState.showingImportPicker }
         set { projectState.showingImportPicker = newValue }
     }
 
-    var screenPreviewLayer: AVSampleBufferDisplayLayer? { recordingState.screenPreviewLayer }
+    var screenPreviewLayer: AVSampleBufferDisplayLayer? {
+        recordingState.screenPreviewLayer
+    }
 
     // MARK: - Actions (Coordinated)
 
@@ -476,16 +523,17 @@ class AppState {
         )
 
         AppLogger.general.info(
-            "💾 AppState: Saved current state with time: \(playbackState.currentTime.seconds)")
+            "💾 AppState: Saved current state with time: \(playbackState.currentTime.seconds)"
+        )
     }
 }
 
 enum CameraPreviewStartupPolicy {
     static func shouldAutoStartOnAppear(
-        isScreenSharing: Bool,
-        cameraStatus: PermissionStatus,
-        cameraEnabled: Bool,
-        cameraSurfaceVisible: Bool
+        isScreenSharing _: Bool,
+        cameraStatus _: PermissionStatus,
+        cameraEnabled _: Bool,
+        cameraSurfaceVisible _: Bool
     ) -> Bool {
         false
     }

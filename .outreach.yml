@@ -1,5 +1,5 @@
 product: SaneVideo
-updated: "2026-06-11"
+updated: "2026-06-13"
 positioning:
   one_liner: "Private video workflow assistant for creators"
   status_note: "Public testing positioning only: local recording, editing, captions, demo packs, local export, and deliberately disabled YouTube upload."
@@ -27,8 +27,8 @@ launch_calendar:
       action: "Run Mini-first release-proof workflow matrix for recording/import/edit/export/upload-disabled states and regenerate real customer UI evidence."
       gate: "If real workflow proof is incomplete, keep public launch paused."
       success_metric: "Release-proof pass with evidence paths, or no-go list of missing workflows."
-      last_reviewed: "2026-06-11"
-      result: "On 2026-06-11, canonical Mini `launch_readiness --json` reran from the repo root and returned `ok: false`: the latest `release_preflight` for the 1.0.1 candidate is still failed, now 21.32 days old, and still carries 170 issues plus 4 warnings. The fresh shared validation receipt at `/Users/sj/SaneApps/infra/SaneProcess/outputs/validation/2026-06-11.json` also keeps the lane red with stale customer-UI proof and missing screenshot-path evidence. No public-testing launch, directory, scheduling, or public reply action was executed."
+      last_reviewed: "2026-06-13"
+      result: "On 2026-06-13, canonical Mini `launch_readiness --json` reran from the repo root and returned `ok: false`: the latest `release_preflight` for the 1.0.1 candidate is still failed, now 23.32 days old, and still carries 170 issues plus 4 warnings. Shared validation evidence is now `/Users/sj/SaneApps/infra/SaneProcess/outputs/validation/2026-06-13.json`, and it still keeps the lane red with stale customer UI proof plus missing screenshot-path evidence for the customer UI contract. No public-testing launch, directory, scheduling, or public reply action was executed."
     - date: "2026-05-30"
       time: "10:00"
       channel: "Creator launch decision"
@@ -36,21 +36,21 @@ launch_calendar:
       action: "If runtime proof passed, build launch package around real recording/edit/export workflow; otherwise keep product private."
       gate: "No launch around disabled or aspirational upload features."
       success_metric: "Launch package scheduled or no-go recorded."
-      last_reviewed: "2026-06-11"
-      result: "On 2026-06-11, canonical Mini `launch_readiness --json` reran from the repo root and returned `ok: false`: the latest `release_preflight` for the 1.0.1 candidate is still failed, now 21.32 days old, and still carries 170 issues plus 4 warnings. The fresh shared validation receipt at `/Users/sj/SaneApps/infra/SaneProcess/outputs/validation/2026-06-11.json` also keeps the lane red with stale customer-UI proof and missing screenshot-path evidence. No public-testing launch, directory, scheduling, or public reply action was executed."
+      last_reviewed: "2026-06-13"
+      result: "On 2026-06-13, canonical Mini `launch_readiness --json` reran from the repo root and returned `ok: false`: the latest `release_preflight` for the 1.0.1 candidate is still failed, now 23.32 days old, and still carries 170 issues plus 4 warnings. Shared validation evidence is now `/Users/sj/SaneApps/infra/SaneProcess/outputs/validation/2026-06-13.json`, and it still keeps the lane red with stale customer UI proof plus missing screenshot-path evidence for the customer UI contract. No public-testing launch, directory, scheduling, or public reply action was executed."
   last_launch_readiness:
-    date: "2026-06-11"
+    date: "2026-06-13"
     status: "no_go"
     launch_readiness_exit: 1
     blocker_summary:
-      - "Canonical Mini `launch_readiness --json` reran on 2026-06-11 and exited nonzero."
+      - "Canonical Mini `launch_readiness --json` reran on 2026-06-13 and exited nonzero."
       - "Mini runtime proof is still only partially restored: editor fixture launch and real app-window screenshot pass, but the full proof set is incomplete."
-      - "Latest local `release_preflight` for the 1.0.1 candidate is failed, 21.32 days old, and still carries 170 issues plus 4 warnings."
+      - "Latest local `release_preflight` for the 1.0.1 candidate is failed, 23.32 days old, and still carries 170 issues plus 4 warnings."
       - "Direct Lemon Squeezy checkout remains configured: SaneVideo Pro product 1087460, checkout 478d2602-9808-4591-b01b-d555cccd0185, SANEVIDEO50 discount through 2026-07-25."
       - "Still missing screenshot-level proof for Transcript, Export, Thumbnail, Voiceover, Shorts, and an end-to-end workflow video."
-      - "Shared validation remains `BROKEN RELEASE PIPELINE` at `/Users/sj/SaneApps/infra/SaneProcess/outputs/validation/2026-06-11.json`, with stale customer-UI proof and missing screenshot-path evidence still blocking launch confidence."
+      - "Shared validation remains red at `/Users/sj/SaneApps/infra/SaneProcess/outputs/validation/2026-06-13.json`, with stale customer UI proof and missing screenshot-path evidence still blocking launch confidence."
       - "No public-testing launch, directory, scheduling, or public reply action should run until the proof set is complete and release gates are green."
-    next_date: "2026-06-18"
+    next_date: "2026-06-20"
 directory_submissions: {}
 queued_drafts: {}
 launch_package:

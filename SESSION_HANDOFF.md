@@ -1,6 +1,25 @@
 # Session Handoff — SaneVideo
 
-**Last updated:** 2026-06-04
+**Last updated:** 2026-06-13
+
+## 2026-06-13 Customer UI Receipt Mirror
+
+- SaneVideo customer UI runner now writes the same receipt to both
+  `.sane/customer_ui_action_receipt.json` and
+  `outputs/customer_ui_action_receipt.json`. This fixes the SaneMaster
+  Mini-route contract, which syncs/checks the `outputs/` receipt.
+- Mini verification passed:
+  - `ruby -c scripts/customer_ui_action_sweep.rb`
+  - `./scripts/SaneMaster.rb test_mode --release --no-logs`
+  - `./scripts/SaneMaster.rb customer_ui_sweep --json`
+  - `./scripts/SaneMaster.rb customer_ui_contract --json --strict-visual --no-exit`
+- Strict customer UI contract is green with receipt generated
+  `2026-06-13T14:21:03Z`, action count `19`.
+- Cross-product validation still blocks release on Q11 because Lemon Squeezy
+  product `1087460`, variant `1703963` has no hosted
+  `SaneVideo-1.0.1.zip` file. The ZIP is staged on the Mini at
+  `~/Desktop/LemonSqueezy-Uploads/SaneVideo-1.0.1.zip`; the remaining action is
+  dashboard-only.
 
 ## 2026-06-03 Website Proof Reset / Mini Access Restored
 

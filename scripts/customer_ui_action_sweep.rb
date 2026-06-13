@@ -12,6 +12,7 @@ class SaneVideoCustomerUIActionSweep
   PROJECT_ROOT = File.expand_path('..', __dir__)
   MANIFEST_PATH = File.join(PROJECT_ROOT, 'Tests', 'CustomerUIActions.yml')
   RECEIPT_PATH = File.join(PROJECT_ROOT, '.sane', 'customer_ui_action_receipt.json')
+  OUTPUT_RECEIPT_PATH = File.join(PROJECT_ROOT, 'outputs', 'customer_ui_action_receipt.json')
   OUTPUT_DIR = File.join(PROJECT_ROOT, 'outputs', 'customer-ui')
   APP_NAME = 'SaneVideo'
 
@@ -191,6 +192,7 @@ class SaneVideoCustomerUIActionSweep
       evidence = write_evidence_artifacts(manifest.fetch('actions'))
       write_receipt(manifest.fetch('actions'), action_ids, report, evidence)
       puts "Customer UI action receipt written: #{relative(RECEIPT_PATH)}"
+      puts "Customer UI action receipt mirrored: #{relative(OUTPUT_RECEIPT_PATH)}"
     end
   rescue StandardError => e
     warn "Customer UI action sweep failed: #{e.message}"
@@ -319,6 +321,7 @@ class SaneVideoCustomerUIActionSweep
 
   def write_receipt(actions, action_ids, report, evidence)
     FileUtils.mkdir_p(File.dirname(RECEIPT_PATH))
+    FileUtils.mkdir_p(File.dirname(OUTPUT_RECEIPT_PATH))
     receipt = {
       app: APP_NAME,
       status: 'passed',
@@ -334,7 +337,9 @@ class SaneVideoCustomerUIActionSweep
         blocked_completion_notes: BLOCKED_COMPLETION_NOTES
       }
     }
-    File.write(RECEIPT_PATH, JSON.pretty_generate(receipt))
+    payload = JSON.pretty_generate(receipt)
+    File.write(RECEIPT_PATH, payload)
+    File.write(OUTPUT_RECEIPT_PATH, payload)
   end
 
   def action_result(action, evidence_artifacts)

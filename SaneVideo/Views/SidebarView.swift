@@ -46,7 +46,7 @@ struct SidebarView: View {
                 .help("Create Shorts (⇧⌘R)")
 
                 Spacer()
-                
+
                 // Help link at bottom (non-intrusive)
                 Button {
                     NotificationCenter.default.post(
@@ -101,6 +101,10 @@ struct SidebarView: View {
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ShowSidebarProjects"))) { _ in
             selectedTab = 2
         }
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ShowSidebarTranscript"))) { _ in
+            selectedTab = 1
+            AppLogger.uiLog.info("🎨 SidebarView: Transcript rail tab selected")
+        }
     }
 }
 
@@ -112,7 +116,9 @@ private struct SidebarRailItem: View {
     let tag: Int
     @Binding var selection: Int
 
-    var isSelected: Bool { selection == tag }
+    var isSelected: Bool {
+        selection == tag
+    }
 
     var body: some View {
         Button {

@@ -39,6 +39,9 @@ struct GlobalSheetModifier: ViewModifier {
             // 6. Repurposing Sheet
             .sheet(isPresented: $showRepurposing) {
                 RepurposingSheet(sourceClip: repurposingClip)
+                    .onAppear {
+                        AppLogger.uiLog.info("🎨 GlobalSheetModifier: Repurposing (Shorts) sheet appeared")
+                    }
             }
 
             // 6. Rename Project Alert
@@ -77,7 +80,7 @@ struct GlobalSheetModifier: ViewModifier {
                 if let clip = notification.object as? VideoClip {
                     repurposingClip = clip
                 } else if let project = appState.currentProject,
-                          let firstClip = project.timeline.tracks.flatMap({ $0.clips }).first {
+                          let firstClip = project.timeline.tracks.flatMap(\.clips).first {
                     repurposingClip = firstClip
                 }
                 showRepurposing = true

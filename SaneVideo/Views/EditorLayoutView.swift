@@ -22,7 +22,7 @@ struct EditorLayoutView: View {
     @State private var isInspectorCollapsed = false
     @State private var lastLoadedProjectId: UUID? // For playhead restoration
 
-    // Video display mode - persisted per user preference
+    /// Video display mode - persisted per user preference
     @AppStorage("editor.videoDisplayMode") private var videoDisplayMode: VideoDisplayMode = .fit
 
     // SWIFT 6 FIX: Track async tasks to prevent fire-and-forget pile-up
@@ -34,11 +34,10 @@ struct EditorLayoutView: View {
     // Layout constants
     private let sidebarExpandedWidth: CGFloat = 260
     private let inspectorExpandedWidth: CGFloat = 320
-    private let collapsedWidth: CGFloat = 20  // Collapsed width for sidebar toggle button
+    private let collapsedWidth: CGFloat = 20 // Collapsed width for sidebar toggle button
 
     var body: some View {
         VStack(spacing: 0) {
-
             Divider()
 
             // MAIN LAYOUT: HStack with explicit sizing (replaces HSplitView for better collapse behavior)
@@ -60,7 +59,9 @@ struct EditorLayoutView: View {
             .animation(.easeInOut(duration: 0.25), value: isSidebarCollapsed)
             .animation(.easeInOut(duration: 0.25), value: isInspectorCollapsed)
         }
+
         // MARK: - Timeline Navigation Keyboard Shortcuts
+
         .modifier(TimelineKeyboardModifier(
             onPrevBoundary: goToPreviousClipBoundary,
             onNextBoundary: goToNextClipBoundary,
@@ -139,6 +140,12 @@ struct EditorLayoutView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ShowSidebarProjects"))) { _ in
             // Expand sidebar if collapsed, then SidebarView will select Projects tab
+            if isSidebarCollapsed {
+                withAnimation { isSidebarCollapsed = false }
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ShowSidebarTranscript"))) { _ in
+            // Expand sidebar if collapsed, then SidebarView will select Transcript tab
             if isSidebarCollapsed {
                 withAnimation { isSidebarCollapsed = false }
             }
@@ -328,7 +335,6 @@ struct EditorLayoutView: View {
 
     // MARK: - Layout Panes
 
-    @ViewBuilder
     private var sidebarPane: some View {
         ZStack(alignment: .trailing) {
             if !isSidebarCollapsed {
@@ -344,7 +350,6 @@ struct EditorLayoutView: View {
         .background(SaneVideoEditorPanelBackground())
     }
 
-    @ViewBuilder
     private var centerPane: some View {
         VStack(spacing: 0) {
             // PLAYER STAGE - Video fills available space using GeometryReader
@@ -396,7 +401,6 @@ struct EditorLayoutView: View {
         }
     }
 
-    @ViewBuilder
     private var inspectorPane: some View {
         ZStack(alignment: .leading) {
             CollapseButton(isCollapsed: $isInspectorCollapsed, edge: .trailing)
@@ -420,8 +424,8 @@ struct EditorLayoutView: View {
     /// Select all clips in the current project timeline
     private func selectAllClips() {
         guard let project = appState.projectState.currentProject else { return }
-        let allClips = project.timeline.tracks.flatMap { $0.clips }
-        selectedClipIds = Set(allClips.map { $0.id })
+        let allClips = project.timeline.tracks.flatMap(\.clips)
+        selectedClipIds = Set(allClips.map(\.id))
         // Select the first clip as the primary selection
         if selectedClip == nil, let first = allClips.first {
             selectedClip = first
@@ -436,7 +440,7 @@ struct EditorLayoutView: View {
         for track in project.timeline.tracks {
             for clip in track.clips {
                 let clipEnd = CMTimeAdd(clip.startTime, clip.effectiveDuration)
-                if currentTime >= clip.startTime && currentTime < clipEnd {
+                if currentTime >= clip.startTime, currentTime < clipEnd {
                     selectedClip = clip
                     selectedClipIds = [clip.id]
                     return
@@ -457,7 +461,7 @@ struct EditorLayoutView: View {
 
         // Get all clips sorted by start time
         let allClips = project.timeline.tracks
-            .flatMap { $0.clips }
+            .flatMap(\.clips)
             .sorted { $0.startTime < $1.startTime }
 
         guard !allClips.isEmpty else { return }
@@ -489,7 +493,7 @@ struct EditorLayoutView: View {
 
         // Get all clips sorted by start time
         let allClips = project.timeline.tracks
-            .flatMap { $0.clips }
+            .flatMap(\.clips)
             .sorted { $0.startTime < $1.startTime }
 
         guard !allClips.isEmpty else { return }
@@ -676,7 +680,7 @@ struct EditorLayoutView: View {
 
     /// Returns the caption and the corresponding media time that should be displayed at the given time for the selected clip
     private func currentCaption(for clip: VideoClip?, at time: CMTime) -> (Caption, CMTime)? {
-        guard let clip = clip else {
+        guard let clip else {
             // No clip selected - check all clips in timeline
             guard let project = appState.projectState.currentProject else { return nil }
             for track in project.timeline.tracks {

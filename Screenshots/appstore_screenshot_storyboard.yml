@@ -1,30 +1,30 @@
 product: SaneVideo
 audience: Mac creators who need private recording, editing, and export without a subscription.
 offer: Local-first video workflow with Basic recording/editing/export and an optional Pro unlock.
-primary_proof: Clean Mac screenshots that show a populated timeline editor, Magic Fix running, and the recording-complete workflow without desktop clutter, debug stamps, blank previews, or disabled-feature messaging.
+primary_proof: Clean Mac screenshots that show varied real footage in populated timeline/editor states without desktop clutter, debug stamps, blank previews, repeated sample subjects, or disabled-feature messaging.
 source_rule: Use actual SaneVideo app screenshots only. Fill the editor preview/timeline with stock or fixture video, capture the real app at meaningful timestamps/states, and crop only to remove debug stamps or desktop clutter. Do not create fake UI, color bars, browser mockups, synthetic controls, generated product composites, or feature claims without matching real captures for App Store or launch proof.
 generator: scripts/generate_appstore_screenshots.swift
 platforms:
   macos:
     - file: Screenshots/appstore-01-editing-dark-mac.png
-      title: Edit locally with Magic Fix tools
-      purpose: Show imported clips, timeline editing, and the visible Magic Fix inspector button in a populated local project.
+      title: Edit meeting footage locally
+      purpose: Show imported meeting footage, timeline editing, and the visible inspector tools in a populated local project.
       must_show:
         - populated media sidebar
         - preview canvas
         - timeline with clips and playhead
-        - Magic Fix button in the inspector
         - inspector tools for polish
       must_not_show:
         - empty states
         - debug controls
         - Finder windows
-    - file: Screenshots/appstore-02-magic-fix-dark-mac.png
-      title: Polish clips with Magic Fix
-      purpose: Give Magic Fix its own real app screenshot instead of burying it in the general editor view.
+        - repeated woman-at-laptop fixture
+    - file: Screenshots/appstore-02-captions-dark-mac.png
+      title: Transcribe captions locally
+      purpose: Show a different clip with the real captions/transcription surface active.
       must_show:
-        - Magic Fix button in the inspector
-        - visible inspector tools
+        - captions or transcription overlay
+        - loaded laptop clip
         - selected clip on the timeline
         - local on-device status
       must_not_show:
@@ -32,15 +32,17 @@ platforms:
         - generated UI
         - build timestamp
         - desktop clutter
-    - file: Screenshots/appstore-03-recording-complete-dark-mac.png
-      title: Save, edit, or share a recording
-      purpose: Show the actual post-recording choice point after a capture finishes.
+        - repeated woman-at-laptop fixture
+    - file: Screenshots/appstore-03-review-phone-dark-mac.png
+      title: Review phone footage before sharing
+      purpose: Show a third, visually distinct clip loaded in the same local editor workflow.
       must_show:
-        - Recording Complete dialog
-        - Edit Now action
-        - Save action
-        - Share action
+        - populated preview canvas
+        - phone footage
+        - selected clip on the timeline
+        - inspector tools
       must_not_show:
+        - blank recording preview
         - export preset claims
-        - captions or demo-pack claims
         - permission popups
+        - repeated woman-at-laptop fixture

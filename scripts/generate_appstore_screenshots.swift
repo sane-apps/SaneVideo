@@ -13,21 +13,21 @@ struct RealShotSpec {
 let specs: [RealShotSpec] = [
     RealShotSpec(
         fileName: "appstore-01-editing-dark-mac.png",
-        websiteName: "sanevideo-actual-edit-workflow.png",
-        title: "Edit locally with Magic Fix tools",
-        realAppSource: "outputs/visual-audit-20260603/01-editor-real-fixture.png"
+        websiteName: "sanevideo-meeting-workflow.jpg",
+        title: "Edit meeting footage locally",
+        realAppSource: "outputs/appstore-real-captures/01-editor-meeting.png"
     ),
     RealShotSpec(
-        fileName: "appstore-02-magic-fix-dark-mac.png",
-        websiteName: "sanevideo-magic-fix.png",
-        title: "Polish clips with Magic Fix",
-        realAppSource: "outputs/appstore-real-captures/04-inspector-magic-fix.png"
+        fileName: "appstore-02-captions-dark-mac.png",
+        websiteName: "sanevideo-captions-transcribing.jpg",
+        title: "Transcribe captions locally",
+        realAppSource: "outputs/appstore-real-captures/04-inspector-magic-fix-varied.png"
     ),
     RealShotSpec(
-        fileName: "appstore-03-recording-complete-dark-mac.png",
-        websiteName: "sanevideo-recording-complete.png",
-        title: "Save, edit, or share a recording",
-        realAppSource: "outputs/appstore-real-captures/05-recording-complete.png"
+        fileName: "appstore-03-review-phone-dark-mac.png",
+        websiteName: "sanevideo-review-phone.jpg",
+        title: "Review phone footage before sharing",
+        realAppSource: "outputs/appstore-real-captures/03-editor-phone.png"
     )
 ]
 
@@ -45,6 +45,7 @@ enum ScreenshotGenerationError: Error, CustomStringConvertible {
     case missingRealAppSource(String)
     case cannotLoadRealAppSource(String)
     case cannotEncodePNG(String)
+    case cannotEncodeImage(String)
     case duplicateRealAppSources([String])
 
     var description: String {
@@ -55,6 +56,8 @@ enum ScreenshotGenerationError: Error, CustomStringConvertible {
             return "Could not load real SaneVideo app capture: \(path)."
         case .cannotEncodePNG(let path):
             return "Could not encode PNG: \(path)."
+        case .cannotEncodeImage(let path):
+            return "Could not encode website image: \(path)."
         case .duplicateRealAppSources(let paths):
             return "App Store screenshots must use feature-specific real app captures. Duplicate source(s): \(paths.joined(separator: ", "))."
         }
@@ -69,10 +72,23 @@ if !duplicateSources.isEmpty {
     throw ScreenshotGenerationError.duplicateRealAppSources(duplicateSources)
 }
 
+let validatedSources: [(spec: RealShotSpec, image: NSImage)] = try specs.map { spec in
+    let sourceURL = root.appendingPathComponent(spec.realAppSource)
+    guard FileManager.default.fileExists(atPath: sourceURL.path) else {
+        throw ScreenshotGenerationError.missingRealAppSource(spec.realAppSource)
+    }
+    guard let sourceImage = NSImage(contentsOf: sourceURL) else {
+        throw ScreenshotGenerationError.cannotLoadRealAppSource(spec.realAppSource)
+    }
+    return (spec, sourceImage)
+}
+
 let staleWebsiteImageNames = [
     "sanevideo-actual-edit-workflow.jpg",
+    "sanevideo-actual-edit-workflow.png",
     "sanevideo-recording.jpg",
     "sanevideo-recording.png",
+    "sanevideo-recording-complete.png",
     "sanevideo-captions-demo-pack.jpg",
     "sanevideo-captions-demo-pack.png",
     "sanevideo-export.jpg",
@@ -80,7 +96,12 @@ let staleWebsiteImageNames = [
     "sanevideo-inspector-tools.jpg",
     "sanevideo-inspector-tools.png",
     "sanevideo-magic-fix.jpg",
-    "sanevideo-magic-fix.png"
+    "sanevideo-magic-fix.png",
+    "sanevideo-captions-transcribing.png",
+    "sanevideo-captions-transcribing.jpg",
+    "sanevideo-review-phone.png",
+    "sanevideo-review-phone.jpg",
+    "sanevideo-meeting-workflow.jpg"
 ]
 
 func removeGeneratedOutputs() throws {
@@ -137,22 +158,25 @@ func writePNG(_ image: NSImage, to url: URL) throws {
     try png.write(to: url)
 }
 
+func writeJPEG(_ image: NSImage, to url: URL) throws {
+    guard
+        let tiff = image.tiffRepresentation,
+        let bitmap = NSBitmapImageRep(data: tiff),
+        let jpeg = bitmap.representation(using: .jpeg, properties: [.compressionFactor: 0.88])
+    else {
+        throw ScreenshotGenerationError.cannotEncodeImage(url.path)
+    }
+    try jpeg.write(to: url)
+}
+
 try removeGeneratedOutputs()
 
-for spec in specs {
-    let sourceURL = root.appendingPathComponent(spec.realAppSource)
-    guard FileManager.default.fileExists(atPath: sourceURL.path) else {
-        throw ScreenshotGenerationError.missingRealAppSource(spec.realAppSource)
-    }
-    guard let sourceImage = NSImage(contentsOf: sourceURL) else {
-        throw ScreenshotGenerationError.cannotLoadRealAppSource(spec.realAppSource)
-    }
-
+for (spec, sourceImage) in validatedSources {
     let appStoreImage = drawRealAppShot(sourceImage, targetSize: appStoreSize)
     try writePNG(appStoreImage, to: screenshotsDirectory.appendingPathComponent(spec.fileName))
 
     let websiteImage = drawRealAppShot(sourceImage, targetSize: websiteSize)
-    try writePNG(websiteImage, to: websiteImagesDirectory.appendingPathComponent(spec.websiteName))
+    try writeJPEG(websiteImage, to: websiteImagesDirectory.appendingPathComponent(spec.websiteName))
 
     print("Generated \(spec.fileName) from real app capture: \(spec.realAppSource) — \(spec.title)")
 }

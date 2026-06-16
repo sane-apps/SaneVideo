@@ -490,7 +490,7 @@ final class APIDeprecationTests: XCTestCase {
         )
     }
 
-    /// Regression: public testing pricing must stay aligned with the website and App Store copy.
+    /// Regression: public testing pricing must stay aligned with the website and direct checkout.
     func testPublicTestingPricingCopyMatchesReleaseOffer() throws {
         let sourceRoot = URL(fileURLWithPath: #file)
             .deletingLastPathComponent() // Regression
@@ -502,10 +502,10 @@ final class APIDeprecationTests: XCTestCase {
             encoding: .utf8
         )
 
-        XCTAssertTrue(pricing.contains("case .launch: return \"$3.49\""))
-        XCTAssertTrue(pricing.contains("case .regular: return \"$6.99\""))
-        XCTAssertTrue(pricing.contains("through July 25, 2026"))
-        XCTAssertTrue(pricing.contains("Optional early Pro support"))
+        XCTAssertTrue(pricing.contains("case .launch: return \"$14.99\""))
+        XCTAssertTrue(pricing.contains("case .regular: return \"$14.99\""))
+        XCTAssertTrue(pricing.contains("Public testing no longer uses discounted launch pricing."))
+        XCTAssertTrue(pricing.contains("Optional Pro support"))
         XCTAssertTrue(pricing.contains("Public testing is free"))
         XCTAssertFalse(pricing.contains("Launch Special: $29"))
         XCTAssertFalse(pricing.contains("case .regular: return \"$49\""))

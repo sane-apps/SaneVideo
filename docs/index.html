@@ -7,14 +7,43 @@
   <meta name="description" content="SaneVideo is a private Mac video recorder and editor for local screen, camera, microphone, timeline editing, and post-recording workflow.">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://sanevideo.com/">
-  <link rel="icon" type="image/png" href="/images/icon.png">
-  <meta name="theme-color" content="#080b10">
-
   <meta property="og:type" content="website">
   <meta property="og:title" content="SaneVideo - Private Mac Video Recorder and Editor">
-  <meta property="og:description" content="Record, review, and edit Mac video locally with real recording and timeline tools.">
+  <meta property="og:description" content="SaneVideo is a private Mac video recorder and editor for local screen, camera, microphone, timeline editing, and post-recording workflow.">
   <meta property="og:url" content="https://sanevideo.com/">
-  <meta property="og:image" content="https://sanevideo.com/images/sanevideo-actual-edit-workflow.png">
+  <meta property="og:image" content="https://sanevideo.com/images/og-image.png?v=20260616-card">
+  <meta property="og:image:secure_url" content="https://sanevideo.com/images/og-image.png?v=20260616-card">
+  <meta property="og:image:type" content="image/png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="SaneVideo preview card for private Mac video workflow">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:url" content="https://sanevideo.com/">
+  <meta name="twitter:title" content="SaneVideo - Private Mac Video Recorder and Editor">
+  <meta name="twitter:description" content="SaneVideo is a private Mac video recorder and editor for local screen, camera, microphone, timeline editing, and post-recording workflow.">
+  <meta name="twitter:image" content="https://sanevideo.com/images/og-image.png?v=20260616-card">
+  <meta name="twitter:image:alt" content="SaneVideo preview card for private Mac video workflow">
+  <link rel="icon" type="image/png" href="/images/icon.png">
+  <meta name="theme-color" content="#080b10">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "SaneVideo",
+    "description": "SaneVideo is a private Mac video recorder and editor for local screen, camera, microphone, timeline editing, and post-recording workflow.",
+    "url": "https://sanevideo.com/",
+    "image": "https://sanevideo.com/images/og-image.png?v=20260616-card",
+    "operatingSystem": "macOS",
+    "applicationCategory": "MultimediaApplication",
+    "publisher": {
+      "@type": "Organization",
+      "name": "SaneApps",
+      "url": "https://saneapps.com"
+    }
+  }
+  </script>
+
+
 
   <style>
     :root {
@@ -294,6 +323,12 @@
       background: #05080c;
     }
 
+    .workflow img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
     .workflow figcaption {
       padding: 14px 16px 16px;
       color: var(--muted);
@@ -397,7 +432,7 @@
   <header>
     <nav class="wrap" aria-label="Main navigation">
       <a class="brand" href="/">
-        <img src="/images/icon.png" width="38" height="38" alt="">
+        <img src="/images/icon.png" width="38" height="38" alt="SaneVideo app icon">
         <span>SaneVideo</span>
       </a>
       <div class="nav-links">
@@ -411,7 +446,7 @@
 
   <main>
     <section class="hero" aria-label="SaneVideo">
-      <img class="hero-shot" src="/images/sanevideo-actual-edit-workflow.png" alt="SaneVideo editor showing fixture footage, project clips, timeline, playback controls, and the Magic Fix button in the inspector" width="1512" height="1012">
+      <img class="hero-shot" src="/images/sanevideo-meeting-workflow.jpg" alt="SaneVideo editor showing meeting footage, project clips, timeline, playback controls, and inspector tools" width="1512" height="1012">
       <div class="wrap hero-content">
         <p class="kicker">Local Mac recording and editing.</p>
         <h1>SaneVideo</h1>
@@ -432,19 +467,19 @@
     <section id="workflow">
       <div class="wrap">
         <h2>The workflow you actually use.</h2>
-        <p class="section-lead">Open a local project, clean up the timeline, run Magic Fix on a selected clip, then save, edit, or share when the recording is complete.</p>
+        <p class="section-lead">Open a local project, review real footage, run local cleanup or captioning tools, then trim and share when the cut is ready.</p>
         <div class="workflow">
           <figure>
-            <img src="/images/sanevideo-actual-edit-workflow.png" alt="SaneVideo editor with fixture video loaded, timeline clip, playhead, and Magic Fix visible in the inspector" width="1512" height="1012">
-            <figcaption>Edit locally with Magic Fix visible.</figcaption>
+            <img src="/images/sanevideo-meeting-workflow.jpg" alt="SaneVideo editor with meeting footage loaded, timeline clip, playhead, and inspector tools" width="1512" height="1012">
+            <figcaption>Edit a meeting walkthrough with a real timeline.</figcaption>
           </figure>
           <figure>
-            <img src="/images/sanevideo-magic-fix.png" alt="SaneVideo editor with a loaded video, selected timeline clip, on-device status, and Magic Fix actively analyzing cuts" width="1512" height="1012">
-            <figcaption>Magic Fix actively analyzing a selected clip.</figcaption>
+            <img src="/images/sanevideo-captions-transcribing.jpg" alt="SaneVideo editor transcribing captions over a loaded laptop clip with a selected timeline clip" width="1512" height="1012">
+            <figcaption>Transcribe captions while the clip stays local.</figcaption>
           </figure>
           <figure>
-            <img src="/images/sanevideo-recording-complete.png" alt="SaneVideo recording complete dialog with Edit Now, Save, and Share actions" width="1512" height="1012">
-            <figcaption>Save, edit, or share after capture.</figcaption>
+            <img src="/images/sanevideo-review-phone.jpg" alt="SaneVideo editor showing phone footage loaded in the preview with a selected timeline clip" width="1512" height="1012">
+            <figcaption>Review phone footage before trimming or sharing.</figcaption>
           </figure>
         </div>
       </div>
@@ -457,7 +492,7 @@
           <p class="section-lead">SaneVideo focuses on local capture and editing for product demos, walkthroughs, support clips, and short videos where you want control before anything leaves your Mac.</p>
         </div>
         <div class="shot-frame">
-          <img src="/images/sanevideo-magic-fix.png" alt="SaneVideo Magic Fix progress dialog analyzing cuts over a loaded editor preview and selected timeline clip" width="1512" height="1012">
+          <img src="/images/sanevideo-review-phone.jpg" alt="SaneVideo editor showing phone footage loaded in the preview with a selected timeline clip" width="1512" height="1012">
         </div>
       </div>
     </section>
@@ -488,9 +523,15 @@
         <div class="band-callout">
           <div>
             <h2>Public testing build</h2>
-            <p>Download SaneVideo 1.0.1 for macOS 15 or later on Apple Silicon. Early Pro support is optional during public testing.</p>
+            <p>Download SaneVideo 1.0.1 for macOS 15 or later on Apple Silicon. Pro support is optional during public testing.</p>
           </div>
           <a class="button primary" href="/download">Download</a>
+        </div>
+        <div style="margin-top: 18px; padding: 20px; border: 1px solid var(--border); border-radius: 8px; background: rgba(46, 230, 166, 0.08);">
+          <h2 style="font-size: 22px; margin: 0 0 6px;">Buying more than one SaneApps Mac app?</h2>
+          <p style="margin: 0 0 14px;">Get the Everything Bundle for $49.99 once. All current direct Mac Pro apps, including SaneVideo.</p>
+          <a class="button primary" href="https://go.saneapps.com/buy/bundle?ref=sanevideo-home">Get the bundle</a>
+          <a class="button" href="https://saneapps.com/bundle">See included apps</a>
         </div>
       </div>
     </section>

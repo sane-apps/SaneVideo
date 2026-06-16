@@ -10,22 +10,22 @@ import Foundation
 
 /// Pricing configuration for the app
 enum PricingTier: String, Codable, Sendable {
-    case launch      // 50% public testing offer
+    case launch      // Legacy public-testing offer path
     case regular     // Standard Pro price
     case premium     // Future, if needed
 
     var displayPrice: String {
         switch self {
-        case .launch: return "$3.49"
-        case .regular: return "$6.99"
+        case .launch: return "$14.99"
+        case .regular: return "$14.99"
         case .premium: return "$79"
         }
     }
 
     var priceValue: Double {
         switch self {
-        case .launch: return 3.49
-        case .regular: return 6.99
+        case .launch: return 14.99
+        case .regular: return 14.99
         case .premium: return 79.0
         }
     }
@@ -55,16 +55,13 @@ class PricingConfiguration {
 
     /// Current pricing tier
     var currentTier: PricingTier {
-        if isLaunchPeriod {
-            return .launch
-        }
         return .regular
     }
 
     /// Feature flags
     var featureFlags = FeatureFlags.default
 
-    /// Public testing offer end date (exclusive; through July 25, 2026)
+    /// Public testing no longer uses discounted launch pricing.
     private let launchPeriodEndDate: Date
 
     /// Whether we're in the launch pricing period
@@ -114,14 +111,14 @@ class PricingConfiguration {
     /// Get pricing message for UI
     func pricingMessage() -> String {
         if isLaunchPeriod {
-            return "Optional early Pro support: \(currentPrice) (Regular: \(regularPrice)) through July 25, 2026"
+            return "Optional Pro support: \(currentPrice) one-time purchase"
         }
         return "\(currentPrice) one-time purchase"
     }
 
     /// Get value proposition message
     func valueProposition() -> String {
-        "Public testing is free. Early Pro support keeps future Pro access."
+        "Public testing is free. Pro support keeps future Pro access."
     }
 }
 

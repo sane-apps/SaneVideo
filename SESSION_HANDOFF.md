@@ -1,6 +1,191 @@
 # Session Handoff — SaneVideo
 
-**Last updated:** 2026-06-13
+**Last updated:** 2026-06-16
+
+## 2026-06-16 Pricing and Website Receipt
+
+- User set SaneVideo target price to `$14.99` once and reported Lemon Squeezy
+  pricing was updated.
+- Direct app config, App Store IAP config, public download page, and outreach
+  pricing proof now use `$14.99` with no `SANEVIDEO50`, `$3.49`, `$6.99`, or
+  July 25 discount copy in current public pricing surfaces.
+- Lemon Squeezy API confirmed the default SaneVideo variant price is now `1499`
+  cents; `https://go.saneapps.com/buy/sanevideo` redirects through Lemon
+  checkout to HTTP 200.
+- App Store Connect IAP helper observed USA `$3.49`, created the USA `$14.99`
+  price schedule, and left the IAP in `APPROVED` state.
+- Mini `SaneMaster verify --timeout 1200` passed `1211` tests in `307s`.
+- `sanevideo.com` was deployed from the Mini via website-only release; social
+  card and SEO audits passed for 4 pages, and live `/download` plus appcast
+  checks passed.
+- Live page check confirmed `https://sanevideo.com/download` contains `$14.99`
+  and no stale `$3.49`, `$6.99`, `SANEVIDEO50`, or `July 25` copy.
+
+## 2026-06-14 Pricing, Checkout, and SaneApps Listing
+
+- SaneVideo Pro public price is now `$14.99` one-time purchase across app
+  pricing config, regression tests, and the public download page.
+- Lemon Squeezy public API only allows `GET/HEAD` for variant `1703963`, so the
+  dashboard variant still reports its old base price via API. A live non-test
+  Lemon Squeezy custom checkout was created instead with `custom_price: 1499`,
+  `variant_id: 1703963`, no expiration, and id
+  `dc3fd28c-8e5c-4a97-8825-9a8d8d02d0d7`.
+- `https://go.saneapps.com/buy/sanevideo` now redirects to that $14.99 custom
+  checkout and no longer appends stale automatic discount codes.
+- SaneVideo variant `1703963` now also backs the live SaneApps Everything
+  Bundle custom checkout because its license limit is unlimited. Bundle checkout
+  id: `b2566137-793d-4d72-8860-3f85cdf44bbb`; price: `$49.99`; route:
+  `https://go.saneapps.com/buy/bundle`. Scope is current direct Mac apps only:
+  SaneBar, SaneClip, SaneClick, SaneHosts, SaneSales for Mac, and SaneVideo.
+  App Store purchases, SaneScan, and App Store builds remain Apple-managed and
+  are not unlocked by the Lemon license key.
+- SaneVideo site adds the bundle as a secondary, non-interruptive upsell near
+  the public testing download/Pro purchase surfaces. No modal or popup was
+  added. Visual receipts:
+  `/Users/sj/SaneApps/outputs/visual-audit-20260614-bundle/`.
+- Bundle copy was refined after user feedback to keep public pages as sales
+  copy only: "all current direct Mac Pro apps in one purchase." Avoid
+  fulfillment instructions, key-pasting steps, and defensive App Store
+  exclusion language on marketing surfaces; purchase instructions belong in the
+  post-purchase email/receipt.
+- Central SaneApps site was updated so live projects are listed correctly:
+  SaneBar, SaneClip, SaneHosts, SaneClick, SaneSales, SaneScan, and SaneVideo
+  are shown as live; SaneSync is not shown as live.
+- SaneApps and SaneVideo sites were deployed from the Mini:
+  `https://882c896f.saneapps-site.pages.dev` and
+  `https://afa7ba5d.sanevideo-site.pages.dev`.
+- Verification receipts:
+  - Mini SaneVideo `./scripts/SaneMaster.rb verify --timeout 600` passed
+    `1212` tests in `291s`.
+  - SaneProcess checkout/link validation tests passed `60/60` locally and on
+    the Mini.
+  - Live HTTP checks confirmed `saneapps.com` includes SaneVideo/SaneSales/
+    SaneScan, omits SaneSync as live, and contains no stale `$6.99` copy.
+  - Live HTTP checks confirmed `sanevideo.com/download` contains `$14.99`, no
+    old `$3.49`, and the buy route redirects to the custom checkout without a
+    `checkout[discount_code]` parameter.
+  - Visual receipts are in
+    `/Users/sj/SaneApps/outputs/visual-audit-20260614-saneapps-sanevideo/`.
+
+## 2026-06-14 Website Workflow Overflow Fix
+
+- User reported the live SaneVideo website looked horrible in Safari. The
+  visible failure was the Workflow section: three huge screenshot cards filled
+  the viewport and pushed the page sideways/vertically.
+- Root cause: `docs/index.html` gave the workflow screenshots `width="1512"`
+  and `height="1012"` attributes but had no `.workflow img` CSS constraint, so
+  the browser rendered each image at natural width inside a three-column grid.
+- Fix: added `.workflow img { display: block; width: 100%; height: auto; }` so
+  the images scale to their cards instead of breaking the grid.
+- Local Browser verification:
+  - Desktop viewport `1952x1094`: no horizontal overflow; workflow cards are
+    about `381x311`, images about `379x254`.
+  - Mobile viewport `390x844`: no horizontal overflow; workflow cards stay
+    within the viewport.
+  - Screenshot receipts:
+    `/Users/sj/Desktop/Screenshots/sanevideo-website-workflow-fixed-desktop-20260614.png`
+    and
+    `/Users/sj/Desktop/Screenshots/sanevideo-website-workflow-fixed-mobile-20260614.png`.
+- This fixes the obvious live layout bug. It does not resolve the deeper
+  governance drift below: prior handoff says the full homepage should stay
+  paused/noindex until all real proof assets exist, but current live/source
+  homepage is a full indexed marketing page.
+
+## 2026-06-14 Website Proof Asset Refresh
+
+- User rejected the public proof images because the video-complete/recording
+  proof had a blank preview and the workflow used the same woman-at-laptop
+  stock clip repeatedly.
+- Replaced the public workflow proof set with three varied real SaneVideo app
+  captures made on the Mini from local stock clips:
+  - `docs/images/sanevideo-meeting-workflow.jpg` from
+    `outputs/appstore-real-captures/01-editor-meeting.png` and
+    `outputs/stock-source/mixkit-business-people-meeting-4809.mp4`.
+  - `docs/images/sanevideo-captions-transcribing.jpg` from
+    `outputs/appstore-real-captures/04-inspector-magic-fix-varied.png` and
+    `outputs/stock-source/mixkit-man-working-on-laptop-308.mp4`.
+  - `docs/images/sanevideo-review-phone.jpg` from
+    `outputs/appstore-real-captures/03-editor-phone.png` and
+    `outputs/stock-source/mixkit-typing-on-cell-phone-4915.mp4`.
+- Switched website image outputs from same-name PNG replacements to fresh JPEG
+  filenames. This avoids Safari/Cloudflare showing cached stale images and
+  reduces the three website proof assets from about `47 MB` total to under
+  `1 MB` total in the Mini-generated deploy directory.
+- Removed stale public proof files from `docs/images`, including the blank
+  `sanevideo-recording-complete.png`. `scripts/generate_appstore_screenshots.swift`
+  now includes those stale names in cleanup so they do not come back.
+- Added `_redirects` entries for stale proof-asset URLs so cached/old HTML and
+  direct image requests route to the new proof images instead of showing blank
+  or repeated assets.
+- Fixed a generator safety bug found during Mini verification:
+  `scripts/generate_appstore_screenshots.swift` now validates every
+  `realAppSource` before deleting generated outputs. Before this fix, missing
+  Mini source captures could wipe `docs/images` and then fail.
+- `docs/index.html`, `Screenshots/asset_sources.yml`,
+  `Screenshots/appstore_screenshot_storyboard.yml`, and
+  `ReleaseReadinessRegressionTests` now require varied real captures and block
+  blank recording-complete proof, repeated woman-at-laptop fixtures, fake UI,
+  and stale public image references.
+- Local Browser verification after the refresh:
+  - Desktop and mobile both reported no horizontal overflow, all three workflow
+    images loaded, and no stale image references.
+  - Screenshot receipts:
+    `/Users/sj/Desktop/Screenshots/sanevideo-website-varied-full-desktop-20260614.png`
+    and
+    `/Users/sj/Desktop/Screenshots/sanevideo-website-varied-fresh-mobile-20260614.png`.
+- Mini generator verification passed after syncing the real source captures:
+  `swift scripts/generate_appstore_screenshots.swift` generated all three
+  App Store screenshots and website JPEGs from real app captures.
+- Live deployment completed twice via the canonical website-only path:
+  `bash ~/SaneApps/infra/SaneProcess/scripts/release.sh --project "$PWD" --website-only`.
+  Final Cloudflare Pages deployment: `https://aa375a25.sanevideo-site.pages.dev`.
+- Live verification:
+  - `https://sanevideo.com/` references only
+    `sanevideo-meeting-workflow.jpg`,
+    `sanevideo-captions-transcribing.jpg`, and
+    `sanevideo-review-phone.jpg`.
+  - Old URLs including `/images/sanevideo-recording-complete.png`,
+    `/images/sanevideo-actual-edit-workflow.png`,
+    `/images/sanevideo-captions-transcribing.png`, and
+    `/images/sanevideo-review-phone.png` return `301` to replacement JPEGs.
+  - Browser receipt:
+    `/Users/sj/Desktop/Screenshots/sanevideo-live-varied-workflow-desktop-20260614.png`.
+- Mini focused XCTest attempts did not reach the assertion. Both result bundles
+  reported `The test runner hung before establishing connection.`:
+  `Test-SaneVideo-2026.06.14_01-03-20--0400.xcresult` and
+  `Test-SaneVideo-2026.06.14_01-32-07--0400.xcresult`. Treat this as a
+  Mini/Xcode runner blocker, not as a release-readiness assertion failure.
+  Runtime-blocker screenshot was captured at
+  `outputs/visual-audit-20260614/codex-shot-2026-06-14_01-35-15.png` and the
+  Mini visual workspace was clean.
+
+## 2026-06-14 App Store Availability Repair
+
+- Root cause for SaneVideo being `READY_FOR_SALE` in App Store Connect but
+  invisible publicly: app id `6770294375` had no app-level
+  `/v1/apps/6770294375/appAvailabilityV2` resource. SaneClip, SaneSales, and
+  SaneScan all had that resource; SaneVideo returned 404 before the repair.
+- Repair applied on the Mini via App Store Connect API:
+  `POST /v2/appAvailabilities` created availability for 175 territories with
+  `availableInNewTerritories: true`.
+- Important ASC API detail: inline `territoryAvailabilities` must use local IDs
+  like `${territory-0}` in both `relationships.territoryAvailabilities.data`
+  and `included`. Do not use the final encoded territory availability IDs for
+  creation. For immediate availability with `preOrderEnabled: false`, omit
+  `releaseDate`; ASC rejects releaseDate unless preorder is enabled.
+- Verification: `/v1/apps/6770294375/appAvailabilityV2` now returns HTTP 200,
+  `/v2/appAvailabilities/6770294375/relationships/territoryAvailabilities`
+  reports total `175`, and all territory content statuses transitioned to
+  `AVAILABLE` by `2026-06-14T04:05Z`.
+- Public verification: iTunes bundle lookup
+  `lookup?bundleId=com.sanevideo.app&country=us` returned `resultCount=1`,
+  `trackName: SaneVideo`, `version: 1.0.1`, `kind: mac-software`, and App
+  Store URL `https://apps.apple.com/us/app/sanevideo/id6770294375?mt=12&uo=4`.
+  ID-only lookup still returned `resultCount=0` immediately after propagation,
+  so use bundle-id lookup as the Mac listing verification signal.
+- SaneProcess follow-up completed: `appstore_submit.rb` now creates missing
+  app-level availability, and `SaneMaster.rb appstore_preflight` now blocks when
+  app-level availability is missing or territory rows are not all `AVAILABLE`.
 
 ## 2026-06-13 Customer UI Receipt Mirror
 

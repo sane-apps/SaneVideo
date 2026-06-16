@@ -1,22 +1,27 @@
-updated: 2026-06-07
+updated: 2026-06-14
 source_rule: Use only actual SaneVideo app captures for public website and App Store screenshots.
 retained_captures:
-  - public_asset: docs/images/sanevideo-actual-edit-workflow.png
+  - public_asset: docs/images/sanevideo-meeting-workflow.jpg
     appstore_asset: Screenshots/appstore-01-editing-dark-mac.png
-    source_capture: outputs/visual-audit-20260603/01-editor-real-fixture.png
-    visible_state: Populated local editor with fixture video, timeline clip, playhead, and Magic Fix inspector row.
-  - public_asset: docs/images/sanevideo-magic-fix.png
-    appstore_asset: Screenshots/appstore-02-magic-fix-dark-mac.png
-    source_capture: outputs/appstore-real-captures/04-inspector-magic-fix.png
-    visible_state: Loaded editor with selected clip, Magic Fix visible, and on-device status.
-  - public_asset: docs/images/sanevideo-recording-complete.png
-    appstore_asset: Screenshots/appstore-03-recording-complete-dark-mac.png
-    source_capture: outputs/appstore-real-captures/05-recording-complete.png
-    visible_state: Recording Complete dialog with Edit Now, Save, and Share actions.
+    source_capture: outputs/appstore-real-captures/01-editor-meeting.png
+    source_media: outputs/stock-source/mixkit-business-people-meeting-4809.mp4
+    visible_state: Populated local editor with meeting footage, media sidebar, preview canvas, timeline clip, playhead, and inspector tools.
+  - public_asset: docs/images/sanevideo-captions-transcribing.jpg
+    appstore_asset: Screenshots/appstore-02-captions-dark-mac.png
+    source_capture: outputs/appstore-real-captures/04-inspector-magic-fix-varied.png
+    source_media: outputs/stock-source/mixkit-man-working-on-laptop-308.mp4
+    visible_state: Populated local editor with laptop footage, selected timeline clip, and real captions/transcription overlay.
+  - public_asset: docs/images/sanevideo-review-phone.jpg
+    appstore_asset: Screenshots/appstore-03-review-phone-dark-mac.png
+    source_capture: outputs/appstore-real-captures/03-editor-phone.png
+    source_media: outputs/stock-source/mixkit-typing-on-cell-phone-4915.mp4
+    visible_state: Populated local editor with phone footage, selected timeline clip, playhead, and inspector tools.
 removed_bad_captures:
   - camera-off recording surface
   - camera-off baseline capture with desktop clutter and system notification
   - blank-preview timeline capture
+  - recording-complete dialog with blank/gray preview
+  - repeated woman-at-laptop fixture across multiple public screenshots
   - old playback capture with unsuitable media
   - desktop/system-dialog captures
   - stock/media source stills not captured inside SaneVideo UI

@@ -79,7 +79,7 @@ struct SaneVideoApp: App {
                             (icon: "checkmark.seal", text: "Optional during public testing"),
                             (icon: "wand.and.rays", text: "Support the app while the workflow hardens"),
                             (icon: "rectangle.on.rectangle.circle", text: "Keep Pro access as paid features land"),
-                            (icon: "sparkles", text: "Early supporter pricing through July 25, 2026"),
+                            (icon: "sparkles", text: "Support Pro for $14.99 once"),
                             (icon: "square.stack.3d.up", text: "One-time unlock, no subscription")
                         ],
                         licenseService: licenseService

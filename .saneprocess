@@ -129,6 +129,7 @@ appstore:
   app_id: "6770294375"
   scheme: SaneVideoAppStore
   product_id: "com.sanevideo.app.pro.access.v2"
+  iap_price_usd: "14.99"
   configuration: Release-AppStore
   platforms: [macos]
   category: public.app-category.video
@@ -144,7 +145,7 @@ appstore:
   metadata:
     macos:
       subtitle: "Private Video Workflow"
-      promotional_text: "Public testing is open: SaneVideo Pro is 50% off through July 25, 2026 while the native Mac recording, editing, and export workflow is refined."
+      promotional_text: "Public testing is open: test the native Mac recording, editing, and export workflow, then support Pro with a one-time purchase."
       description: >-
         SaneVideo is a native Mac video workflow app for creators who want recording, editing, and export without uploading project media by default.
         Record your screen, camera, and microphone, import local clips, edit on a timeline, generate captions, prepare demo packs, and export files from your Mac.
@@ -163,7 +164,7 @@ appstore:
       Screen capture requires Screen & System Audio Recording permission because SaneVideo records the selected screen/window using Apple's screen capture APIs. Direct YouTube upload is unavailable in this build; export a local file and upload manually outside the app. Any optional external provider account/API-key surfaces are for a user's existing account created outside the app, are not sold by SaneVideo, and do not unlock paid app features or digital content. No external paid content is accessed in the app; no account signup, no payment is required, and no enterprise services are involved for review or for Basic. Review does not require any paid provider account, merchant account, sales data, analytics, orders, products, or refunds.
   iap:
     display_name: "SaneVideo Pro Access"
-    price_usd: 3.49
+    price_usd: 14.99
     description: "Unlock Pro video workflow features."
     review_note: "SaneVideo Pro Access is a one-time non-consumable StoreKit purchase. No external checkout links or license keys are used in the App Store build."
   accessibility_declarations:
@@ -179,4 +180,4 @@ appstore:
     phone: "+17277589785"
     email: "hi@saneapps.com"
 
-website: false
+website: true

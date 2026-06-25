@@ -370,7 +370,92 @@
 
     footer a { color: #ffffff; }
 
+    /* Trust strip */
+    .trust-strip { padding: 0 !important; background: var(--band) !important; }
+    .trust-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      padding: 30px 0;
+    }
+    .trust { padding: 2px 20px; border-left: 1px solid rgba(255, 255, 255, 0.12); }
+    .trust:first-child { border-left: 0; padding-left: 0; }
+    .trust strong { display: block; color: #fff; font-size: 16px; margin-bottom: 4px; }
+    .trust span { color: var(--muted); font-size: 14px; line-height: 1.4; }
+
+    /* Pricing */
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 20px;
+      margin-top: 36px;
+      max-width: 860px;
+    }
+    .price-card {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      padding: 32px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel);
+    }
+    .price-card.featured {
+      border-color: rgba(34, 240, 220, 0.45);
+      background:
+        linear-gradient(135deg, rgba(34, 240, 220, 0.10), rgba(30, 110, 169, 0.08)),
+        rgba(3, 13, 22, 0.7);
+      box-shadow: 0 24px 74px rgba(0, 0, 0, 0.40);
+    }
+    .price-badge {
+      position: absolute;
+      top: -13px;
+      right: 24px;
+      padding: 6px 13px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, var(--cyan), var(--green));
+      color: var(--ink);
+      font-size: 12px;
+      font-weight: 850;
+      letter-spacing: 0.01em;
+    }
+    .price-tier {
+      color: var(--green);
+      font-size: 14px;
+      font-weight: 850;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .price-amount {
+      margin: 10px 0 4px;
+      font-size: 54px;
+      font-weight: 850;
+      line-height: 1;
+    }
+    .price-sub { font-size: 17px; font-weight: 750; color: var(--muted); margin-left: 8px; }
+    .price-note { margin: 0 0 22px; color: var(--muted); font-size: 14px; }
+    .price-list {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 26px;
+      display: grid;
+      gap: 12px;
+      flex: 1;
+    }
+    .price-list li { position: relative; padding-left: 28px; color: var(--muted); font-size: 16px; }
+    .price-list li::before {
+      content: "✓";
+      position: absolute;
+      left: 0;
+      top: -1px;
+      color: var(--cyan);
+      font-weight: 850;
+    }
+    .price-card .button { width: 100%; }
+
     @media (max-width: 900px) {
+      .pricing-grid { grid-template-columns: 1fr; }
+      .trust-row { grid-template-columns: repeat(2, 1fr); gap: 22px 0; }
+      .trust { border-left: 0; padding-left: 0; }
       .hero {
         min-height: auto;
         display: flex;
@@ -437,6 +522,7 @@
       </a>
       <div class="nav-links">
         <a href="#workflow">Workflow</a>
+        <a href="#pricing">Pricing</a>
         <a href="/privacy">Privacy</a>
         <a href="/support">Support</a>
         <a class="button" href="/download">Download</a>
@@ -452,8 +538,8 @@
         <h1>SaneVideo</h1>
         <p class="lead">Record, review, and edit Mac video with native capture controls, a timeline editor, and a post-recording workflow that keeps your files on your machine.</p>
         <div class="actions">
-          <a class="button primary" href="/download">Download public test build</a>
-          <a class="button" href="#workflow">View workflow</a>
+          <a class="button primary" href="/download">Download for Mac</a>
+          <a class="button" href="#pricing">See pricing</a>
         </div>
         <div class="proof-row" aria-label="Product proof">
           <span class="proof">Screen + camera + mic</span>
@@ -461,6 +547,15 @@
           <span class="proof">Magic Fix on device</span>
           <span class="proof">Local files</span>
         </div>
+      </div>
+    </section>
+
+    <section class="trust-strip" aria-label="Why SaneVideo">
+      <div class="wrap trust-row">
+        <div class="trust"><strong>100% on device</strong><span>Recording and editing stay on your Mac. Nothing is uploaded.</span></div>
+        <div class="trust"><strong>No subscription</strong><span>Pay once for Pro. It is yours to keep.</span></div>
+        <div class="trust"><strong>No account</strong><span>Nothing to sign up for. Download and record.</span></div>
+        <div class="trust"><strong>Signed and notarized</strong><span>Checked by Apple, updated automatically.</span></div>
       </div>
     </section>
 
@@ -499,8 +594,8 @@
 
     <section>
       <div class="wrap">
-        <h2>Ready in the public test build.</h2>
-        <p class="section-lead">The current build focuses on the core recorder/editor path: capture, review, timeline cleanup, Magic Fix, and post-recording decisions.</p>
+        <h2>Everything you need to record and edit.</h2>
+        <p class="section-lead">A focused recorder and editor for the work you actually ship: capture, review, timeline cleanup, Magic Fix, and the call on what to do next.</p>
         <div class="feature-grid">
           <article class="feature">
             <strong>Local project review</strong>
@@ -518,12 +613,47 @@
       </div>
     </section>
 
+    <section id="pricing">
+      <div class="wrap">
+        <h2>Simple, honest pricing.</h2>
+        <p class="section-lead">Try every Pro feature free for 14 days — no credit card, no account. Keep Basic for as long as you like, or unlock Pro once. No subscription, ever.</p>
+        <div class="pricing-grid">
+          <article class="price-card">
+            <span class="price-tier">Basic</span>
+            <p class="price-amount">Free<span class="price-sub">forever</span></p>
+            <p class="price-note">Everything you need to record and trim.</p>
+            <ul class="price-list">
+              <li>Screen, camera, and mic recording</li>
+              <li>Native timeline editor and playback</li>
+              <li>Your files stay on your Mac</li>
+              <li>No account, no cloud, no tracking</li>
+            </ul>
+            <a class="button" href="/download">Download free</a>
+          </article>
+          <article class="price-card featured">
+            <span class="price-badge">14-day free trial</span>
+            <span class="price-tier">Pro</span>
+            <p class="price-amount">$14.99<span class="price-sub">once</span></p>
+            <p class="price-note">Pay one time. Yours to keep, with free updates.</p>
+            <ul class="price-list">
+              <li>Everything in Basic</li>
+              <li>Magic Fix cleanup, on device</li>
+              <li>Captions and transcription, local</li>
+              <li>Full export presets and sharing</li>
+              <li>No subscription, ever</li>
+            </ul>
+            <a class="button primary" href="https://go.saneapps.com/buy/sanevideo?ref=website-pricing" data-cta="buy_pro">Unlock Pro — $14.99</a>
+          </article>
+        </div>
+      </div>
+    </section>
+
     <section>
       <div class="wrap">
         <div class="band-callout">
           <div>
-            <h2>Public testing build</h2>
-            <p>Download SaneVideo 1.0.1 for macOS 15 or later on Apple Silicon. Pro support is optional during public testing.</p>
+            <h2>Download SaneVideo</h2>
+            <p>SaneVideo 1.0.1 for macOS 15 or later on Apple Silicon. Pro is free to try for 14 days, no credit card required. Basic stays free if you do not upgrade.</p>
           </div>
           <a class="button primary" href="/download">Download</a>
         </div>

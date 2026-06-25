@@ -3,26 +3,26 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>SaneVideo - Private Mac Video Recorder and Editor</title>
-  <meta name="description" content="SaneVideo is a private Mac video recorder and editor for local screen, camera, microphone, timeline editing, and post-recording workflow.">
+  <title>SaneVideo - Local Mac Screen Recorder That Never Uploads</title>
+  <meta name="description" content="SaneVideo records, edits, captions, and transcribes screen and camera video entirely on your Mac. No cloud, no account, no uploads - built for confidential and proprietary footage that can't leave your machine.">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://sanevideo.com/">
   <meta property="og:type" content="website">
-  <meta property="og:title" content="SaneVideo - Private Mac Video Recorder and Editor">
-  <meta property="og:description" content="SaneVideo is a private Mac video recorder and editor for local screen, camera, microphone, timeline editing, and post-recording workflow.">
+  <meta property="og:title" content="SaneVideo - Local Mac Screen Recorder That Never Uploads">
+  <meta property="og:description" content="SaneVideo records, edits, captions, and transcribes screen and camera video entirely on your Mac. No cloud, no account, no uploads - built for confidential and proprietary footage that can't leave your machine.">
   <meta property="og:url" content="https://sanevideo.com/">
   <meta property="og:image" content="https://sanevideo.com/images/og-image.png?v=20260616-card">
   <meta property="og:image:secure_url" content="https://sanevideo.com/images/og-image.png?v=20260616-card">
   <meta property="og:image:type" content="image/png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="SaneVideo preview card for private Mac video workflow">
+  <meta property="og:image:alt" content="SaneVideo preview card for local, no-cloud Mac video workflow">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:url" content="https://sanevideo.com/">
-  <meta name="twitter:title" content="SaneVideo - Private Mac Video Recorder and Editor">
-  <meta name="twitter:description" content="SaneVideo is a private Mac video recorder and editor for local screen, camera, microphone, timeline editing, and post-recording workflow.">
+  <meta name="twitter:title" content="SaneVideo - Local Mac Screen Recorder That Never Uploads">
+  <meta name="twitter:description" content="SaneVideo records, edits, captions, and transcribes screen and camera video entirely on your Mac. No cloud, no account, no uploads - built for confidential and proprietary footage that can't leave your machine.">
   <meta name="twitter:image" content="https://sanevideo.com/images/og-image.png?v=20260616-card">
-  <meta name="twitter:image:alt" content="SaneVideo preview card for private Mac video workflow">
+  <meta name="twitter:image:alt" content="SaneVideo preview card for local, no-cloud Mac video workflow">
   <link rel="icon" type="image/png" href="/images/icon.png">
   <meta name="theme-color" content="#080b10">
   <script type="application/ld+json">
@@ -30,7 +30,7 @@
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
     "name": "SaneVideo",
-    "description": "SaneVideo is a private Mac video recorder and editor for local screen, camera, microphone, timeline editing, and post-recording workflow.",
+    "description": "SaneVideo records, edits, captions, and transcribes screen and camera video entirely on your Mac. No cloud, no account, no uploads - built for confidential and proprietary footage that can't leave your machine.",
     "url": "https://sanevideo.com/",
     "image": "https://sanevideo.com/images/og-image.png?v=20260616-card",
     "operatingSystem": "macOS",
@@ -452,8 +452,30 @@
     }
     .price-card .button { width: 100%; }
 
+    /* Audience grid */
+    .audience-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 16px;
+      margin-top: 34px;
+    }
+    .audience {
+      padding: 22px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel);
+    }
+    .audience strong {
+      display: block;
+      margin-bottom: 8px;
+      color: #fff;
+      font-size: 18px;
+    }
+    .audience p { margin: 0; color: var(--muted); font-size: 15px; line-height: 1.45; }
+
     @media (max-width: 900px) {
       .pricing-grid { grid-template-columns: 1fr; }
+      .audience-grid { grid-template-columns: repeat(2, 1fr); }
       .trust-row { grid-template-columns: repeat(2, 1fr); gap: 22px 0; }
       .trust { border-left: 0; padding-left: 0; }
       .hero {
@@ -534,35 +556,35 @@
     <section class="hero" aria-label="SaneVideo">
       <img class="hero-shot" src="/images/sanevideo-meeting-workflow.jpg" alt="SaneVideo editor showing meeting footage, project clips, timeline, playback controls, and inspector tools" width="1512" height="1012">
       <div class="wrap hero-content">
-        <p class="kicker">Local Mac recording and editing.</p>
+        <p class="kicker">Screen recording that never touches the cloud.</p>
         <h1>SaneVideo</h1>
-        <p class="lead">Record, review, and edit Mac video with native capture controls, a timeline editor, and a post-recording workflow that keeps your files on your machine.</p>
+        <p class="lead">Record your screen, camera, and mic, then edit, caption, and transcribe — entirely on your Mac. No upload, no account, no third-party servers. Built for footage that legally or contractually can't leave your machine.</p>
         <div class="actions">
           <a class="button primary" href="/download">Download for Mac</a>
           <a class="button" href="#pricing">See pricing</a>
         </div>
         <div class="proof-row" aria-label="Product proof">
-          <span class="proof">Screen + camera + mic</span>
+          <span class="proof">Nothing uploaded</span>
+          <span class="proof">On-device transcription</span>
           <span class="proof">Timeline editing</span>
-          <span class="proof">Magic Fix on device</span>
-          <span class="proof">Local files</span>
+          <span class="proof">No account</span>
         </div>
       </div>
     </section>
 
     <section class="trust-strip" aria-label="Why SaneVideo">
       <div class="wrap trust-row">
-        <div class="trust"><strong>100% on device</strong><span>Recording and editing stay on your Mac. Nothing is uploaded.</span></div>
-        <div class="trust"><strong>No subscription</strong><span>Pay once for Pro. It is yours to keep.</span></div>
-        <div class="trust"><strong>No account</strong><span>Nothing to sign up for. Download and record.</span></div>
-        <div class="trust"><strong>Signed and notarized</strong><span>Checked by Apple, updated automatically.</span></div>
+        <div class="trust"><strong>Nothing leaves your Mac</strong><span>Capture, editing, and transcription all run on device. Zero uploads.</span></div>
+        <div class="trust"><strong>No cloud, no account</strong><span>No servers to trust, no sign-up, no data collected about you.</span></div>
+        <div class="trust"><strong>Safe for proprietary work</strong><span>NDA footage, customer data, and unreleased products stay confidential.</span></div>
+        <div class="trust"><strong>Signed and notarized</strong><span>Checked by Apple. Pay once, no subscription.</span></div>
       </div>
     </section>
 
     <section id="workflow">
       <div class="wrap">
-        <h2>The workflow you actually use.</h2>
-        <p class="section-lead">Open a local project, review real footage, run local cleanup or captioning tools, then trim and share when the cut is ready.</p>
+        <h2>Every step runs on your machine.</h2>
+        <p class="section-lead">Open a local project, review real footage, generate captions on device, then trim and export when the cut is ready. No clip is ever sent to a server to be processed.</p>
         <div class="workflow">
           <figure>
             <img src="/images/sanevideo-meeting-workflow.jpg" alt="SaneVideo editor with meeting footage loaded, timeline clip, playhead, and inspector tools" width="1512" height="1012">
@@ -583,8 +605,8 @@
     <section>
       <div class="wrap split">
         <div>
-          <h2>Built for private creator workflows.</h2>
-          <p class="section-lead">SaneVideo focuses on local capture and editing for product demos, walkthroughs, support clips, and short videos where you want control before anything leaves your Mac.</p>
+          <h2>Built for footage you can't put in the cloud.</h2>
+          <p class="section-lead">Loom, Descript, and most recorders upload every clip to their servers to store, process, and transcribe it. SaneVideo doesn't. Record product demos under NDA, internal training, support sessions with customer data, and unreleased features — and keep every frame on your Mac, where compliance and common sense say it belongs.</p>
         </div>
         <div class="shot-frame">
           <img src="/images/sanevideo-review-phone.jpg" alt="SaneVideo editor showing phone footage loaded in the preview with a selected timeline clip" width="1512" height="1012">
@@ -592,22 +614,47 @@
       </div>
     </section>
 
+    <section id="who">
+      <div class="wrap">
+        <h2>Who records locally.</h2>
+        <p class="section-lead">If your footage can show customer data, internal systems, unreleased work, or anything under contract, it shouldn't pass through a vendor's servers to get recorded.</p>
+        <div class="audience-grid">
+          <article class="audience">
+            <strong>Enterprise &amp; IT</strong>
+            <p>Capture internal demos and training without routing screen recordings through a third-party SaaS or a new vendor review.</p>
+          </article>
+          <article class="audience">
+            <strong>Legal &amp; compliance</strong>
+            <p>Record privileged or regulated material where a cloud upload would break policy. Files stay on the machine and on your network.</p>
+          </article>
+          <article class="audience">
+            <strong>Healthcare &amp; finance</strong>
+            <p>Walkthroughs that touch PII, PHI, or financial data never leave the device, so there's no new data-processor to vet.</p>
+          </article>
+          <article class="audience">
+            <strong>Founders &amp; product</strong>
+            <p>Demo unreleased features and prototypes without your roadmap sitting on someone else's server.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
     <section>
       <div class="wrap">
-        <h2>Everything you need to record and edit.</h2>
-        <p class="section-lead">A focused recorder and editor for the work you actually ship: capture, review, timeline cleanup, Magic Fix, and the call on what to do next.</p>
+        <h2>Full recorder and editor. Zero cloud.</h2>
+        <p class="section-lead">Everything a screen recorder needs — capture, edit, caption, export — with every step running on your Mac instead of someone else's servers.</p>
         <div class="feature-grid">
           <article class="feature">
-            <strong>Local project review</strong>
-            <p>Open a recording or imported clip in a native Mac editor with project clips, playback, timeline selection, and inspector controls.</p>
+            <strong>On-device transcription</strong>
+            <p>Captions and transcripts are generated locally on Apple Silicon. Your audio is never sent to a cloud speech service.</p>
           </article>
           <article class="feature">
-            <strong>Timeline editing + Magic Fix</strong>
-            <p>Review clips in a local project with playback controls, a visible playhead, timeline selection, and Magic Fix running on a selected clip.</p>
+            <strong>Native timeline + Magic Fix</strong>
+            <p>Trim, review, and clean up clips in a real Mac timeline with playback, a visible playhead, and Magic Fix running on the selected clip — all on the machine.</p>
           </article>
           <article class="feature">
-            <strong>Post-recording actions</strong>
-            <p>Choose whether to edit immediately, save for later, or share after a recording completes.</p>
+            <strong>Local-only by design</strong>
+            <p>No account, no telemetry, no sync. Recordings live in your files, and you decide whether to edit now, save, or export when you're done.</p>
           </article>
         </div>
       </div>
@@ -616,7 +663,7 @@
     <section id="pricing">
       <div class="wrap">
         <h2>Simple, honest pricing.</h2>
-        <p class="section-lead">Try every Pro feature free for 14 days — no credit card, no account. Keep Basic for as long as you like, or unlock Pro once. No subscription, ever.</p>
+        <p class="section-lead">No per-seat plans, no cloud storage fees, no subscription. Try every Pro feature free for 14 days — no credit card, no account — then keep Basic as long as you like or unlock Pro once.</p>
         <div class="pricing-grid">
           <article class="price-card">
             <span class="price-tier">Basic</span>

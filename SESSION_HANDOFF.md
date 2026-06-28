@@ -431,3 +431,9 @@
 - Older training, launch-readiness, and Mini incident details live in
   `ARCHITECTURE.md`, `DEVELOPMENT.md`, `.claude/research.md`, and git history.
   Keep this handoff focused on the active website-proof/runtime blockers above.
+
+## Launch Ops - 2026-06-23
+
+- Cross-product launch ops reran canonical Mini `./scripts/SaneMaster.rb launch_readiness --json` from the SaneVideo repo. It stayed red.
+- Blocking state is still release-lane first: runtime proof is incomplete, `release_preflight` for `1.0.1` is still failed, and `launch_calendar.offer_window.ends` is still blank, so date-bound offer copy stays structurally incomplete.
+- Fresh proof state: `release_preflight` is 33.32 days old with 170 issues and 4 warnings, and the shared validation receipt [`/Users/sj/SaneApps/infra/SaneProcess/outputs/validation/2026-06-23.json`](/Users/sj/SaneApps/infra/SaneProcess/outputs/validation/2026-06-23.json) remains `NOT READY FOR RELEASE` with stale SaneVideo customer-UI proof plus missing screenshot-path evidence. No public-testing launch/directory/scheduling/public-reply action ran today.

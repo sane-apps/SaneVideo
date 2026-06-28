@@ -19,7 +19,8 @@ struct SaneVideoApp: App {
     @State private var prefs = ServiceContainer.shared.userPreferences
     @State private var licenseService = LicenseService(
         appName: "SaneVideo",
-        checkoutURL: LicenseService.directCheckoutURL(appSlug: "sanevideo")
+        checkoutURL: LicenseService.directCheckoutURL(appSlug: "sanevideo"),
+        proTrial: .init(storageKeyPrefix: "sanevideo.pro_trial")
     )
     @AppStorage("hasSeenWelcome") private var hasSeenWelcome = false
     @Environment(\.scenePhase) private var scenePhase
@@ -76,11 +77,11 @@ struct SaneVideoApp: App {
                             (icon: "bolt", text: "Project templates and export presets")
                         ],
                         proFeatures: [
-                            (icon: "checkmark.seal", text: "Optional during public testing"),
-                            (icon: "wand.and.rays", text: "Support the app while the workflow hardens"),
-                            (icon: "rectangle.on.rectangle.circle", text: "Keep Pro access as paid features land"),
-                            (icon: "sparkles", text: "Support Pro for $14.99 once"),
-                            (icon: "square.stack.3d.up", text: "One-time unlock, no subscription")
+                            (icon: "checkmark.seal", text: "Enjoy 14 days of Pro"),
+                            (icon: "wand.and.rays", text: "Try the full local video workflow first"),
+                            (icon: "rectangle.on.rectangle.circle", text: "Basic stays available after the trial"),
+                            (icon: "sparkles", text: "Keep Pro for $14.99 once"),
+                            (icon: "square.stack.3d.up", text: "One-time upgrade, no subscription")
                         ],
                         licenseService: licenseService
                     )

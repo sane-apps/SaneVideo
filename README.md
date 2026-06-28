@@ -26,7 +26,7 @@ Most tools fall into two traps: **bloated professionals** that overwhelm everyda
 
 **Local-First Video Workflow**
 
-> *I wanted to make it $5, but processing fees and taxes were... insane. — Mr. Sane*
+Pro is free for 14 days. After that, Basic stays available and Pro is a $14.99 one-time upgrade.
 
 ---
 

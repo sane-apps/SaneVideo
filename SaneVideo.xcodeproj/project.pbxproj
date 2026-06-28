@@ -302,6 +302,7 @@
 		6816AEBD65F70F3EB88881E1 /* MagicFixRegressionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB62CE34AA404CA0A6FBA407 /* MagicFixRegressionTests.swift */; };
 		68415BB3AE3C83563FE73533 /* ProjectState+Commentary.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7BA315DE14A2078BA7D42C9 /* ProjectState+Commentary.swift */; };
 		689C7ABD9F0505469CCEB4B3 /* SidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DF30A42313A70762DA814A4 /* SidebarView.swift */; };
+		689E09DD85FACEDA15882A5E /* AutomationRailStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C43DA5E42D3C209A17456BA /* AutomationRailStateTests.swift */; };
 		68A887F57CCBF7AA4BE7FA8B /* TranscriptionError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54F9EA59DE76685114B98673 /* TranscriptionError.swift */; };
 		68D630F8C2C87F8D5D3B3058 /* DesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC7D07B3313D1684B12846E3 /* DesignSystem.swift */; };
 		69ADB6A5B9F49911F9FA65C4 /* LocalSaneAIWorkflowRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02C8D6406ED6BC9AFCCB290F /* LocalSaneAIWorkflowRunner.swift */; };
@@ -441,6 +442,7 @@
 		9CACC10F38E09C4D75B4334F /* StateChangePipeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B962D11F86A94D932866A67 /* StateChangePipeline.swift */; };
 		9DB23D37442BB0130811A917 /* HapticsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 432F8F1A2304768337B8CEA9 /* HapticsManager.swift */; };
 		9DBE596F4A36B95EC63FD1EA /* RecordingBenchmark.swift in Sources */ = {isa = PBXBuildFile; fileRef = 456429910D1215E787D6CBA4 /* RecordingBenchmark.swift */; };
+		9E6EA532DCBAB7151022DBBB /* LocalSaneAIWorkflowRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02C8D6406ED6BC9AFCCB290F /* LocalSaneAIWorkflowRunner.swift */; };
 		9F9AE490FEDA546571F4CAD9 /* FloatingControlsWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42D32D7AFEEEA896D051187F /* FloatingControlsWindow.swift */; };
 		9FA6D2DE5E546A7ED63B0860 /* TimeRulerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDFEC4DC6B55BD6C8EE282FB /* TimeRulerView.swift */; };
 		A0555A2E66B0776CC0923024 /* DesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC7D07B3313D1684B12846E3 /* DesignSystem.swift */; };
@@ -772,6 +774,7 @@
 		18C600CEA1A3D943C2205611 /* test_video.mp4 */ = {isa = PBXFileReference; path = test_video.mp4; sourceTree = "<group>"; };
 		1906594AEB0E34C35AC29837 /* LabeledSliderControl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LabeledSliderControl.swift; sourceTree = "<group>"; };
 		1923359F61E94B07B77CD9F8 /* VideoWriterProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoWriterProtocol.swift; sourceTree = "<group>"; };
+		1C43DA5E42D3C209A17456BA /* AutomationRailStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutomationRailStateTests.swift; sourceTree = "<group>"; };
 		1CFB079EA41F214E254EE5A7 /* ToastManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToastManagerTests.swift; sourceTree = "<group>"; };
 		1D4C444510E4293654872089 /* VideoClip+TimeMapping.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "VideoClip+TimeMapping.swift"; sourceTree = "<group>"; };
 		1D9D206CAEC553C2BDBF5417 /* ProjectState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectState.swift; sourceTree = "<group>"; };
@@ -2112,6 +2115,7 @@
 			isa = PBXGroup;
 			children = (
 				F0D1D8FFF8AA6DC076641F00 /* AppLoggerTests.swift */,
+				1C43DA5E42D3C209A17456BA /* AutomationRailStateTests.swift */,
 				491A6F811E1901FFF71B5623 /* CancellationTests.swift */,
 				0700627C48853F025BC74042 /* CompositionBuilderTests.swift */,
 				0E4ACC871FFEDF06D5840C8F /* ErrorHandlingTests.swift */,
@@ -2271,7 +2275,6 @@
 				};
 			};
 			buildConfigurationList = E05965B4AB636ECD2988856C /* Build configuration list for PBXProject "SaneVideo" */;
-			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -2286,6 +2289,7 @@
 				31CA1F118162365A495BAB16 /* XCRemoteSwiftPackageReference "argmax-oss-swift" */,
 			);
 			preferredProjectObjectVersion = 77;
+			productRefGroup = 98218E58F28DE3559A97869F /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
@@ -2394,6 +2398,7 @@
 				2B321EC986964B798715F997 /* AudioPlaybackRegressionTests.swift in Sources */,
 				EF4D0DA897713E99E41FD1AE /* AudioProcessingIntegrationTests.swift in Sources */,
 				0FEA8ACAE933509954AFE708 /* AudioServiceTests.swift in Sources */,
+				689E09DD85FACEDA15882A5E /* AutomationRailStateTests.swift in Sources */,
 				41C6A060E104DFFE28D41EFA /* BatchExportServiceTests.swift in Sources */,
 				1C6E0687500C1EB2BF2E5C1E /* CameraConcurrencyRegressionTests.swift in Sources */,
 				D266BBB03DDCA7E9138B3579 /* CameraFPSRegressionTests.swift in Sources */,
@@ -2909,6 +2914,7 @@
 				1FF92BD79E19131E2996D249 /* LiquidGlassNSView.swift in Sources */,
 				39DB3A7F0E4463E7FEB17075 /* LiquidGlassStyle.swift in Sources */,
 				1FA85F0EB0BD6E027FB0B65C /* LoadingStateModifier.swift in Sources */,
+				9E6EA532DCBAB7151022DBBB /* LocalSaneAIWorkflowRunner.swift in Sources */,
 				17962BE299B341727AFA32D8 /* LogExportService.swift in Sources */,
 				21DF1B825ECF2B19FE98D3F2 /* LogManager.swift in Sources */,
 				096E8986935F9858907B4C8C /* LogView.swift in Sources */,
@@ -3619,7 +3625,7 @@
 			repositoryURL = "https://github.com/sane-apps/SaneUI.git";
 			requirement = {
 				kind = revision;
-				revision = 4e39f3fdc55f62567c7eb722bc8fd2c51b915ba6;
+				revision = 922fd8987ec53756e9ef430ba98c6d3b01e04608;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */

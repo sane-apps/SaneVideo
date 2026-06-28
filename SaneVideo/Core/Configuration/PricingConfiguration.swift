@@ -111,14 +111,14 @@ class PricingConfiguration {
     /// Get pricing message for UI
     func pricingMessage() -> String {
         if isLaunchPeriod {
-            return "Optional Pro support: \(currentPrice) one-time purchase"
+            return "Enjoy 14 days of Pro, then keep it for \(currentPrice) once"
         }
         return "\(currentPrice) one-time purchase"
     }
 
     /// Get value proposition message
     func valueProposition() -> String {
-        "Public testing is free. Pro support keeps future Pro access."
+        "Try Pro free for 14 days. Basic stays available after the trial."
     }
 }
 

@@ -22,6 +22,7 @@ require 'English'
 require 'net/http'
 require 'uri'
 require 'json'
+require 'shellwords'
 
 class ProjectQA
   # Auto-detect project name from directory
@@ -270,25 +271,60 @@ class ProjectQA
     print 'Checking SaneMaster syntax... '
 
     invalid = []
+    cli_content = ''
 
     # Check main CLI
     if File.exist?(SANEMASTER_CLI)
+      cli_content = File.read(SANEMASTER_CLI)
       first_line = begin
         File.open(SANEMASTER_CLI, &:readline).strip
       rescue StandardError
         ''
       end
       if first_line.start_with?('#!/bin/bash', '#!/usr/bin/env bash', '#!/bin/sh', '#!/usr/bin/env sh')
-        result = `bash -n #{SANEMASTER_CLI} 2>&1`
+        result = `bash -n #{SANEMASTER_CLI.shellescape} 2>&1`
         invalid << 'SaneMaster.rb (bash)' unless $CHILD_STATUS.success?
       else
-        result = `ruby -c #{SANEMASTER_CLI} 2>&1`
+        result = `ruby -c #{SANEMASTER_CLI.shellescape} 2>&1`
         invalid << 'SaneMaster.rb' unless $CHILD_STATUS.success?
       end
     else
       @errors << 'SaneMaster.rb not found'
       puts '❌ Missing'
       return
+    end
+
+    if invalid.empty? && cli_content.include?('find_saneprocess_infra') && cli_content.include?('SaneMaster_standalone')
+      shared_cli = File.expand_path('../../../infra/SaneProcess/scripts/SaneMaster.rb', __dir__)
+      standalone_cli = File.join(__dir__, 'SaneMaster_standalone.rb')
+
+      if File.exist?(shared_cli)
+        result = `ruby -c #{shared_cli.shellescape} 2>&1`
+        if $CHILD_STATUS.success?
+          puts '✅ SaneMaster wrapper + shared SaneProcess CLI valid'
+          return
+        end
+
+        @errors << 'Shared SaneProcess SaneMaster syntax invalid'
+        puts '❌ Shared SaneProcess CLI invalid'
+        puts result.lines.last(5).join if result.lines.any?
+        return
+      elsif File.exist?(standalone_cli)
+        result = `ruby -c #{standalone_cli.shellescape} 2>&1`
+        if $CHILD_STATUS.success?
+          puts '✅ SaneMaster wrapper + standalone fallback valid'
+          return
+        end
+
+        @errors << 'SaneMaster standalone fallback syntax invalid'
+        puts '❌ Standalone fallback invalid'
+        puts result.lines.last(5).join if result.lines.any?
+        return
+      else
+        @errors << 'SaneMaster wrapper found no shared infra or standalone fallback'
+        puts '❌ Missing shared infra and standalone fallback'
+        return
+      end
     end
 
     # Check all modules exist and have valid syntax
@@ -300,7 +336,7 @@ class ProjectQA
         next
       end
 
-      result = `ruby -c #{path} 2>&1`
+      result = `ruby -c #{path.shellescape} 2>&1`
       invalid << mod unless $CHILD_STATUS.success?
     end
 

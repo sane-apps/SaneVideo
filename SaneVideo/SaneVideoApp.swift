@@ -32,61 +32,71 @@ struct SaneVideoApp: App {
 
     var body: some Scene {
         WindowGroup(MainWindowScenePolicy.title, id: MainWindowScenePolicy.sceneID) {
-            MainContentView()
-                .environment(licenseService)
-                .environment(appState)
-                .environment(ServiceContainer.shared.errorPresenter)
-                .preferredColorScheme(
-                    prefs.appTheme == .system ? nil : (prefs.appTheme == .dark ? .dark : .light)
-                )
-                .background(MainWindowOpenRegistrar())
-                .background(MainWindowCaptureView())
-                .onAppear {
-                    licenseService.checkCachedLicense()
-                }
-                .onChange(of: scenePhase) { _, newPhase in
-                    if newPhase == .background || newPhase == .inactive {
-                        appState.saveCurrentState()
-                    }
-                }
-                .onAppear {
-                    NSLog("🚀 SaneVideoApp: main window onAppear")
-                    setupWindow()
-
-                    // Force .editing mode for automation launches after the window is available.
-                    if TestEnvironment.shouldOpenEditor {
-                        NSLog("🚀 SaneVideoApp: Forcing .editing mode from onAppear")
-                        appState.appMode = .editing
-                        Task { await appState.bootstrapEditorForTesting() }
-                    }
-                }
-                .sheet(isPresented: Binding(
-                    get: { !hasSeenWelcome },
-                    set: { isShowing in
-                        if !isShowing {
-                            hasSeenWelcome = true
+            Group {
+                if licenseService.hasExpiredProTrial {
+                    LicenseGateView(licenseService: licenseService, appIcon: "play.tv")
+                        .preferredColorScheme(.dark)
+                        .onAppear {
+                            licenseService.checkCachedLicense()
                         }
-                    }
-                )) {
-                    WelcomeGateView(
-                        appName: "SaneVideo",
-                        appIcon: "play.tv",
-                        freeFeatures: [
-                            (icon: "film", text: "Edit and trim local videos"),
-                            (icon: "camera", text: "AI-powered cleanup & subtitles"),
-                            (icon: "bolt", text: "Project templates and export presets")
-                        ],
-                        proFeatures: [
-                            (icon: "checkmark.seal", text: "Enjoy 14 days of Pro"),
-                            (icon: "wand.and.rays", text: "Try the full local video workflow first"),
-                            (icon: "rectangle.on.rectangle.circle", text: "Basic stays available after the trial"),
-                            (icon: "sparkles", text: "Keep Pro for $14.99 once"),
-                            (icon: "square.stack.3d.up", text: "One-time upgrade, no subscription")
-                        ],
-                        licenseService: licenseService
-                    )
-                    .preferredColorScheme(.dark)
+                } else {
+                    MainContentView()
+                        .environment(licenseService)
+                        .environment(appState)
+                        .environment(ServiceContainer.shared.errorPresenter)
+                        .preferredColorScheme(
+                            prefs.appTheme == .system ? nil : (prefs.appTheme == .dark ? .dark : .light)
+                        )
+                        .background(MainWindowOpenRegistrar())
+                        .background(MainWindowCaptureView())
+                        .onAppear {
+                            licenseService.checkCachedLicense()
+                        }
+                        .onChange(of: scenePhase) { _, newPhase in
+                            if newPhase == .background || newPhase == .inactive {
+                                appState.saveCurrentState()
+                            }
+                        }
+                        .onAppear {
+                            NSLog("🚀 SaneVideoApp: main window onAppear")
+                            setupWindow()
+
+                            // Force .editing mode for automation launches after the window is available.
+                            if TestEnvironment.shouldOpenEditor {
+                                NSLog("🚀 SaneVideoApp: Forcing .editing mode from onAppear")
+                                appState.appMode = .editing
+                                Task { await appState.bootstrapEditorForTesting() }
+                            }
+                        }
+                        .sheet(isPresented: Binding(
+                            get: { !hasSeenWelcome },
+                            set: { isShowing in
+                                if !isShowing {
+                                    hasSeenWelcome = true
+                                }
+                            }
+                        )) {
+                            WelcomeGateView(
+                                appName: "SaneVideo",
+                                appIcon: "play.tv",
+                                freeFeatures: [
+                                    (icon: "film", text: "Edit and trim local videos"),
+                                    (icon: "camera", text: "AI-powered cleanup & subtitles"),
+                                    (icon: "bolt", text: "Project templates and export presets")
+                                ],
+                                proFeatures: [
+                                    (icon: "checkmark.seal", text: "Enjoy 14 days of Pro"),
+                                    (icon: "wand.and.rays", text: "Try the full local video workflow first"),
+                                    (icon: "lock.fill", text: "Pro is required after the trial"),
+                                    (icon: "sparkles", text: "Keep Pro for $14.99 once"),
+                                    (icon: "square.stack.3d.up", text: "One-time upgrade, no subscription")
+                                ],
+                                licenseService: licenseService
+                            )
+                            .preferredColorScheme(.dark)
+                        }
                 }
+            }
         }
         .defaultSize(width: AppConstants.defaultWindowWidth, height: AppConstants.defaultWindowHeight)
 

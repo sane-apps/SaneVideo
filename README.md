@@ -26,7 +26,7 @@ Most tools fall into two traps: **bloated professionals** that overwhelm everyda
 
 **Local-First Video Workflow**
 
-Pro is free for 14 days. After that, Basic stays available and Pro is a $14.99 one-time upgrade.
+Pro is free for 14 days. After that, Pro is required and remains a $14.99 one-time upgrade.
 
 ---
 

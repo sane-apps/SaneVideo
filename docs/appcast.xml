@@ -5,7 +5,7 @@
     <link>https://sanevideo.com/appcast.xml</link>
     <description>Most recent SaneVideo updates.</description>
     <language>en</language>
-            <item>
+<item>
             <title>1.0.2</title>
             <link>https://sanevideo.com/download</link>
             <pubDate>Sat, 04 Jul 2026 18:57:06 -0400</pubDate>
@@ -25,18 +25,5 @@
                        type="application/octet-stream"
                        sparkle:edSignature="kWD9LAKMlGAcFqp30H+g+9rOWAGO8HXRXyobBMOHHbahh7JxU5a1nuJMs+gePfjMfpyQclWK41Chgw6aYlK9DA=="/>
         </item>
-<item>
-      <title>1.0.1</title>
-      <link>https://sanevideo.com/download</link>
-      <pubDate>Mon, 25 May 2026 16:55:43 -0400</pubDate>
-      <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
-      <description><![CDATA[
-    <h2>Important Update</h2>
-    <ul>
-    <li>Important update for continued app access, reliability, and compatibility. Recommended for all users.</li>
-    </ul>
-    ]]></description>
-      <enclosure url="https://dist.sanevideo.com/updates/SaneVideo-1.0.1.zip" sparkle:version="2" sparkle:shortVersionString="1.0.1" length="8447038" type="application/octet-stream" sparkle:edSignature="jN/LI3sbxFIF/ysXvGHSOoFQocnLPHMR+By7f6uzqA9NRoDUa4A97ENCJWHr/m30UPnbfF36P1mtYvH+8uWpDA=="/>
-    </item>
-  </channel>
+</channel>
 </rss>

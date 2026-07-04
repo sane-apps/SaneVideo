@@ -118,7 +118,7 @@ class PricingConfiguration {
 
     /// Get value proposition message
     func valueProposition() -> String {
-        "Try Pro free for 14 days. Basic stays available after the trial."
+        "Try Pro free for 14 days. Pro is required after the trial."
     }
 }
 

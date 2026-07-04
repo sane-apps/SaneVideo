@@ -70,7 +70,8 @@ final class ReleaseReadinessRegressionTests: XCTestCase {
 
         XCTAssertFalse(appSource.contains("Cloud sync for project assets"))
         XCTAssertTrue(appSource.contains("Enjoy 14 days of Pro"))
-        XCTAssertTrue(appSource.contains("Basic stays available after the trial"))
+        XCTAssertTrue(appSource.contains("Pro is required after the trial"))
+        XCTAssertFalse(appSource.contains("Basic stays available after the trial"))
         XCTAssertTrue(appSource.contains("Keep Pro for $14.99 once"))
         XCTAssertTrue(appError.contains("Screen Recording Permission Required"))
         XCTAssertTrue(appError.contains("Screen & System Audio Recording access"))

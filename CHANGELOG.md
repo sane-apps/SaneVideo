@@ -4,6 +4,12 @@ All notable changes to SaneVideo are documented here.
 
 ---
 
+## [1.0.2] - 2026-07-04
+
+Important update to onboarding, licensing, and reliability. Recommended for all users.
+
+---
+
 ## [1.0.1] - 2026-05-25
 
 Fixes camera preview startup reliability after permission prompts and improves timeline trim accuracy.

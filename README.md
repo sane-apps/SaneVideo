@@ -4,8 +4,8 @@
 
 SaneVideo is a native macOS video recording and editing app. No subscriptions. Local recording, editing, and export run on your Mac.
 
-**Last updated:** 2026-06-08
-**Current public testing release:** 1.0.1
+**Last updated:** 2026-07-04
+**Current direct release:** 1.0.2
 
 ---
 
@@ -26,7 +26,15 @@ Most tools fall into two traps: **bloated professionals** that overwhelm everyda
 
 **Local-First Video Workflow**
 
-Pro is free for 14 days. After that, Pro is required and remains a $14.99 one-time upgrade.
+SaneVideo Pro starts with a free 14-day trial. After that, Pro is required and remains a $14.99 one-time upgrade.
+
+---
+
+## Download
+
+**[Download SaneVideo](https://sanevideo.com)** to start a free 14-day Pro trial. After the trial, Pro is required and remains a $14.99 one-time purchase.
+
+Current direct release: **1.0.2**. The app is signed, notarized, and built for local screen, camera, and microphone recording without uploading your footage to SaneApps servers.
 
 ---
 
@@ -41,6 +49,7 @@ Pro is free for 14 days. After that, Pro is required and remains a $14.99 one-ti
 - **Full Screen Recording**: Capture your entire screen in high resolution
 - **Window Recording**: Select specific windows to record
 - **Camera Overlay**: Front camera support for picture-in-picture style recordings
+- **Microphone Capture**: Record narration or meetings locally on your Mac
 - **Keyboard Controls**: Start a new recording with `⌘N`; direct builds may also expose `⌥⌘R` global recording where macOS permissions allow it
 
 ### Editing
@@ -67,6 +76,7 @@ Pro is free for 14 days. After that, Pro is required and remains a $14.99 one-ti
 - **HEVC 4K Export**: Smart bitrate encoding for optimal file size
 - **Progress Tracking**: Real-time export progress
 - **Desktop Save**: Quick access to exported videos
+- **No Cloud Handoff**: Export locally when the edit is ready
 
 ### UI/UX Polish
 

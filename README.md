@@ -26,7 +26,7 @@ Most tools fall into two traps: **bloated professionals** that overwhelm everyda
 
 **Local-First Video Workflow**
 
-SaneVideo Pro starts with a free 14-day trial. After that, Pro is required and remains a $14.99 one-time upgrade.
+SaneVideo starts with full Pro for 14 days. After that, Pro is required and remains $14.99 once.
 
 ---
 

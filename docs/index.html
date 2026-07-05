@@ -515,10 +515,8 @@
       .wrap { width: min(100% - 28px, 1180px); }
       nav { min-height: 64px; }
       .nav-links {
-        gap: 14px;
-        font-size: 13px;
+        display: none;
       }
-      .nav-links .button { display: none; }
       .hero-shot {
         aspect-ratio: 1512 / 1012;
         object-fit: contain;
@@ -660,36 +658,26 @@
       </div>
     </section>
 
-    <section id="pricing">
+    <section id="pricing" style="scroll-margin-top: 120px;">
       <div class="wrap">
         <h2>Simple, honest pricing.</h2>
-        <p class="section-lead">No per-seat plans, no cloud storage fees, no subscription. Try every Pro feature free for 14 days — no credit card, no account — then unlock Pro once to keep using it.</p>
-        <div class="pricing-grid">
-          <article class="price-card">
-            <span class="price-tier">Free Trial</span>
-            <p class="price-amount">14 days<span class="price-sub">free</span></p>
-            <p class="price-note">Every Pro feature, no credit card required.</p>
+        <p class="section-lead">No per-seat plans, no cloud storage fees, no subscription. Try every Pro feature free for 14 days — no credit card, no account — then buy Pro once to keep using it.</p>
+        <div class="pricing-grid" style="max-width: 520px; grid-template-columns: 1fr;">
+          <article class="price-card featured">
+            <span class="price-badge">Full Pro for 14 days</span>
+            <span class="price-tier">Full Pro Trial</span>
+            <p class="price-amount">$14.99<span class="price-sub">once</span></p>
+            <p class="price-note">Every Pro feature free for 14 days. Then Pro is required.</p>
             <ul class="price-list">
               <li>Screen, camera, and mic recording</li>
               <li>Native timeline editor and playback</li>
               <li>Your files stay on your Mac</li>
-              <li>No account, no cloud, no tracking</li>
-            </ul>
-            <a class="button" href="/download">Start free trial</a>
-          </article>
-          <article class="price-card featured">
-            <span class="price-badge">14-day free trial</span>
-            <span class="price-tier">Pro</span>
-            <p class="price-amount">$14.99<span class="price-sub">once</span></p>
-            <p class="price-note">Pay one time. Yours to keep, with free updates.</p>
-            <ul class="price-list">
-              <li>Everything in the free trial</li>
               <li>Magic Fix cleanup, on device</li>
               <li>Captions and transcription, local</li>
               <li>Full export presets and sharing</li>
               <li>No subscription, ever</li>
             </ul>
-            <a class="button primary" href="https://go.saneapps.com/buy/sanevideo?ref=website-pricing" data-cta="buy_pro">Unlock Pro — $14.99</a>
+            <a class="button primary" href="/download" data-cta="download_trial">Start Full Pro Trial</a>
           </article>
         </div>
       </div>
@@ -700,7 +688,7 @@
         <div class="band-callout">
           <div>
             <h2>Download SaneVideo</h2>
-            <p>SaneVideo 1.0.2 for macOS 15 or later on Apple Silicon. Pro is free to try for 14 days, no credit card required. Pro is required after the trial.</p>
+            <p>SaneVideo 1.0.2 for macOS 15 or later on Apple Silicon. Every Pro feature is included for 14 days, no credit card required. Pro is required after the trial.</p>
           </div>
           <a class="button primary" href="/download">Download</a>
         </div>

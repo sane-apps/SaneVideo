@@ -80,17 +80,21 @@ struct SaneVideoApp: App {
                                 appName: "SaneVideo",
                                 appIcon: "play.tv",
                                 freeFeatures: [
-                                    (icon: "film", text: "Edit and trim local videos"),
-                                    (icon: "camera", text: "AI-powered cleanup & subtitles"),
-                                    (icon: "bolt", text: "Project templates and export presets")
+                                    (icon: "film", text: "Record, edit, and trim local videos"),
+                                    (icon: "wand.and.rays", text: "Try the complete local video workflow"),
+                                    (icon: "bolt", text: "Use every export preset, template, and polish tool")
                                 ],
                                 proFeatures: [
-                                    (icon: "checkmark.seal", text: "Enjoy 14 days of Pro"),
-                                    (icon: "wand.and.rays", text: "Try the full local video workflow first"),
-                                    (icon: "lock.fill", text: "Pro is required after the trial"),
+                                    (icon: "checkmark.seal", text: "Keep every Pro tool after your trial"),
+                                    (icon: "lock.fill", text: "Pro is required after the 14-day trial"),
                                     (icon: "sparkles", text: "Keep Pro for $14.99 once"),
                                     (icon: "square.stack.3d.up", text: "One-time upgrade, no subscription")
                                 ],
+                                freeTierTitle: "14-day Pro trial",
+                                freeTierPrice: "All Pro features included",
+                                proTierTitleOverride: "Keep Pro",
+                                proTierPriceOverride: "$14.99 once — yours forever",
+                                permissionConfig: welcomePermissionConfig,
                                 licenseService: licenseService
                             )
                             .preferredColorScheme(.dark)
@@ -310,6 +314,58 @@ struct SaneVideoApp: App {
                 }
             }
         }
+    }
+
+    private var welcomePermissionConfig: WelcomeGatePermissionConfig {
+        let permissions = ServiceContainer.shared.permissionManager
+
+        return WelcomeGatePermissionConfig(
+            title: "Set Up Recording",
+            sections: [
+                .init(
+                    title: "Screen Recording",
+                    bullets: [
+                        ("rectangle.on.rectangle.fill", "Record a display or a single app window for walkthroughs and demos."),
+                        ("lock.shield.fill", "macOS controls this permission. Your video stays on this Mac unless you choose to share it."),
+                        ("arrow.clockwise", "If you grant access in System Settings, quit and reopen SaneVideo before your first screen recording.")
+                    ],
+                    grantedMessage: "Screen Recording is enabled. You can record a window or display.",
+                    actionLabel: "Enable Screen Recording",
+                    actionHint: "SaneVideo asks macOS for permission and opens the right Settings pane if needed.",
+                    initiallyGranted: permissions.screenRecordingStatus == .granted,
+                    refreshGranted: {
+                        permissions.checkScreenRecordingPermission()
+                        return permissions.screenRecordingStatus == .granted
+                    },
+                    action: {
+                        permissions.requestScreenRecordingPermission()
+                    }
+                ),
+                .init(
+                    title: "Camera & Microphone",
+                    bullets: [
+                        ("camera.fill", "Use the camera when you want a face-to-camera recording or picture-in-picture."),
+                        ("mic.fill", "Use the microphone when you want narration. You can record screen-only demos without either."),
+                        ("hand.tap.fill", "SaneVideo asks only when you choose a recording mode that needs these inputs.")
+                    ],
+                    grantedMessage: "Camera and microphone are enabled for narrated recordings.",
+                    actionLabel: "Enable Camera & Microphone",
+                    actionHint: "You can skip this for screen-only demos and enable it later from the recording screen.",
+                    initiallyGranted: permissions.cameraStatus == .granted && permissions.microphoneStatus == .granted,
+                    refreshGranted: {
+                        permissions.checkCameraPermission()
+                        permissions.checkMicrophonePermission()
+                        return permissions.cameraStatus == .granted && permissions.microphoneStatus == .granted
+                    },
+                    action: {
+                        Task {
+                            _ = await permissions.requestCameraPermission()
+                            _ = await permissions.requestMicrophonePermission()
+                        }
+                    }
+                )
+            ]
+        )
     }
 
     private func setupWindow() {

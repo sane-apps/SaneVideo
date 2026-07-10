@@ -96,10 +96,10 @@ private struct AboutSettingsView: View {
             licenses: [
                 SaneAboutLicenseCatalog.saneUI,
                 SaneAboutLicenseCatalog.sparkle,
-                SaneAboutLicenseCatalog.whisperKit,
+                SaneAboutLicenseCatalog.whisperKit
             ],
             feedbackExtraAttachments: [
-                ("video.badge.waveform", "Recent recording, export, permission, and project state"),
+                ("video.badge.waveform", "Recent recording, export, permission, and project state")
             ],
             identitySymbolName: "video.fill",
             identitySymbolColor: .cyan
@@ -115,7 +115,7 @@ struct GeneralSettingsView: View {
     @State private var showingCacheAlert = false
     #if !APP_STORE
         @State private var automaticallyChecksForUpdates = false
-        @State private var updateCheckFrequency = SaneSparkleCheckFrequency.daily
+        @State private var updateCheckFrequency = SaneVideoUpdateCheckFrequency.daily
     #endif
 
     var body: some View {
@@ -238,7 +238,7 @@ struct GeneralSettingsView: View {
                         .help("Let SaneVideo check for updates on this Mac.")
 
                     Picker("Check frequency", selection: $updateCheckFrequency) {
-                        ForEach(SaneSparkleCheckFrequency.allCases) { frequency in
+                        ForEach(SaneVideoUpdateCheckFrequency.allCases) { frequency in
                             Text(frequency.title).tag(frequency)
                         }
                     }

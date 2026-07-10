@@ -4,6 +4,10 @@ All notable changes to SaneVideo are documented here.
 
 ---
 
+## [1.0.3] - 2026-07-10
+
+Clearer first-run recording permissions, an explicit recorder path from the empty editor, and simpler Export and Focus & Framing labels.
+
 ## [1.0.2] - 2026-07-04
 
 Important update to onboarding, licensing, and reliability. Recommended for all users.

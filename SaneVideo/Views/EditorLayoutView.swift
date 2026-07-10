@@ -385,7 +385,14 @@ struct EditorLayoutView: View {
                         )
                     } else {
                         // EMPTY STATE: No project or no clips
-                        EditorEmptyStateView(onImport: { appState.importVideo() })
+                        EditorEmptyStateView(
+                            onImport: { appState.importVideo() },
+                            onRecord: {
+                                withAnimation(.smoothUI) {
+                                    appState.appMode = .recording
+                                }
+                            }
+                        )
                     }
                 }
             }

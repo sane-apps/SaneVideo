@@ -69,13 +69,70 @@ final class ReleaseReadinessRegressionTests: XCTestCase {
         )
 
         XCTAssertFalse(appSource.contains("Cloud sync for project assets"))
-        XCTAssertTrue(appSource.contains("Enjoy 14 days of Pro"))
-        XCTAssertTrue(appSource.contains("Pro is required after the trial"))
+        XCTAssertTrue(appSource.contains("14-day Pro trial"))
+        XCTAssertTrue(appSource.contains("All Pro features included"))
+        XCTAssertTrue(appSource.contains("Pro is required after the 14-day trial"))
         XCTAssertFalse(appSource.contains("Basic stays available after the trial"))
         XCTAssertTrue(appSource.contains("Keep Pro for $14.99 once"))
+        XCTAssertFalse(appSource.contains("AI-powered cleanup & subtitles"))
         XCTAssertTrue(appError.contains("Screen Recording Permission Required"))
         XCTAssertTrue(appError.contains("Screen & System Audio Recording access"))
         XCTAssertTrue(exportConfiguration.contains(".frame(minWidth: 220, maxWidth: 260"))
+        XCTAssertTrue(appSource.contains("permissionConfig: welcomePermissionConfig"))
+        XCTAssertTrue(appSource.contains("title: \"Screen Recording\""))
+        XCTAssertTrue(appSource.contains("title: \"Camera & Microphone\""))
+        XCTAssertTrue(appSource.contains("You can record screen-only demos without either."))
+        XCTAssertFalse(appSource.contains("No screen recording."))
+    }
+
+    func testEmptyEditorOffersBothImportAndRecorderPaths() throws {
+        let emptyState = try String(
+            contentsOf: sourceRoot.appendingPathComponent("SaneVideo/Views/EditorLayoutView+VideoViews.swift"),
+            encoding: .utf8
+        )
+        let editor = try String(
+            contentsOf: sourceRoot.appendingPathComponent("SaneVideo/Views/EditorLayoutView.swift"),
+            encoding: .utf8
+        )
+
+        XCTAssertTrue(emptyState.contains("let onRecord: () -> Void"))
+        XCTAssertTrue(emptyState.contains("Label(\"Import Video\", systemImage: \"plus.circle.fill\")"))
+        XCTAssertTrue(emptyState.contains("Label(\"Open Recorder\", systemImage: \"record.circle\")"))
+        XCTAssertTrue(editor.contains("onRecord: {"))
+        XCTAssertTrue(editor.contains("appState.appMode = .recording"))
+    }
+
+    func testEditingLabelsDescribeTheActualNextStep() throws {
+        let mainContent = try String(
+            contentsOf: sourceRoot.appendingPathComponent("SaneVideo/Views/MainContentView.swift"),
+            encoding: .utf8
+        )
+        let inspector = try String(
+            contentsOf: sourceRoot.appendingPathComponent("SaneVideo/Views/Components/StylesInspectorView.swift"),
+            encoding: .utf8
+        )
+
+        XCTAssertTrue(mainContent.contains("Label(\"Export\", systemImage: \"square.and.arrow.up\")"))
+        XCTAssertTrue(mainContent.contains("label: \"Export\""))
+        XCTAssertTrue(inspector.contains("title: \"Focus & Framing\""))
+        XCTAssertFalse(inspector.contains("title: \"Reframe\""))
+    }
+
+    func testUpdateFrequencyStaysOwnedBySaneVideo() throws {
+        let updater = try String(
+            contentsOf: sourceRoot.appendingPathComponent("SaneVideo/Services/Update/UpdaterService.swift"),
+            encoding: .utf8
+        )
+        let settings = try String(
+            contentsOf: sourceRoot.appendingPathComponent("SaneVideo/Views/SettingsView.swift"),
+            encoding: .utf8
+        )
+
+        XCTAssertTrue(updater.contains("enum SaneVideoUpdateCheckFrequency"))
+        XCTAssertTrue(updater.contains("SaneVideoUpdateCheckFrequency.normalizedInterval"))
+        XCTAssertTrue(settings.contains("SaneVideoUpdateCheckFrequency.allCases"))
+        XCTAssertFalse(updater.contains("SaneSparkleCheckFrequency"))
+        XCTAssertFalse(settings.contains("SaneSparkleCheckFrequency"))
     }
 
     func testAppStoreLaneIsSeparateFromDirectSparkleLane() throws {

@@ -4,7 +4,7 @@
 //
 //  2025-12-31: Simplified inspector layout
 //  - Captions moved to Transcript tab (left sidebar)
-//  - Sections: Magic Fix, Reframe, Background, Effects, Audio Analysis, Clip Info
+//  - Sections: Magic Fix, Focus & Framing, Background, Effects, Audio Analysis, Clip Info
 //  - Fresh start each launch (all collapsed, no persistence)
 //
 
@@ -74,7 +74,7 @@ struct StylesInspectorView: View {
                         }
 
                         CollapsibleSection(
-                            title: "Reframe",
+                            title: "Focus & Framing",
                             icon: "crop",
                             isExpanded: $showReframe
                         ) {

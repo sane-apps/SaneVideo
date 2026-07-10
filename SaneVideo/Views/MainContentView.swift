@@ -375,11 +375,11 @@ struct MainContentView: View {
 
             ToolbarItem(placement: .primaryAction) {
                 if appState.appMode == .editing {
-                    // SHARE/EXPORT - Magic Fix is in Inspector panel, no need for duplicate
+                    // Export is the primary next step; sharing remains available after a file exists.
                     Button(
                         action: { appState.showExportSheet = true },
                         label: {
-                            Label("Share", systemImage: "square.and.arrow.up")
+                            Label("Export", systemImage: "square.and.arrow.up")
                         }
                     )
                     .buttonStyle(.borderedProminent)
@@ -390,7 +390,7 @@ struct MainContentView: View {
                     .keyboardShortcut("e", modifiers: [.command])
                     .accessibilityIdentifier(AccessibilityIdentifiers.exportButton)
                     .enhancedAccessibility(
-                        label: "Share",
+                        label: "Export",
                         hint: (appState.currentProject?.timeline.tracks.allSatisfy(\.clips.isEmpty) ?? true) ? "Add clips to timeline first" : "Export your video project",
                         traits: .isButton
                     )

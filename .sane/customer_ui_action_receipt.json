@@ -2,9 +2,9 @@
   "app": "SaneVideo",
   "status": "passed",
   "host": "mini",
-  "generated_at": "2026-07-04T21:13:58Z",
+  "generated_at": "2026-07-10T16:59:31Z",
   "manifest_sha256": "2dc929b6e4cb4ccdab7df8eb38315d0a95d4aaa1cebff3445fe6ffc0aac53ab0",
-  "source_fingerprint": "bcf27a16f4b4201bd048898ddd64db84567b20a1dd85ce894c117c8093691222",
+  "source_fingerprint": "d04d3214d879076f6d9fc07336c2fccdf7af9ba567703b15f5c9e4d84cec0e7e",
   "tested_action_ids": [
     "app-shell-menus-and-welcome",
     "recording-controls-safe-surfaces",
@@ -68,7 +68,7 @@
         {
           "type": "mini_click",
           "detail": "Mac Mini workflow transcript for app-shell-menus-and-welcome",
-          "path": "outputs/customer-ui/20260704T211358Z-app-shell-menus-and-welcome/mini-click.json"
+          "path": "outputs/customer-ui/20260710T165931Z-app-shell-menus-and-welcome/mini-click.json"
         },
         {
           "type": "screenshot",
@@ -83,12 +83,12 @@
         {
           "type": "log",
           "detail": "Workflow log for app-shell-menus-and-welcome",
-          "path": "outputs/customer-ui/20260704T211358Z-app-shell-menus-and-welcome/workflow.log"
+          "path": "outputs/customer-ui/20260710T165931Z-app-shell-menus-and-welcome/workflow.log"
         },
         {
           "type": "file_state",
           "detail": "Established functional state receipt for app-shell-menus-and-welcome",
-          "path": "outputs/customer-ui/20260704T211358Z-app-shell-menus-and-welcome/state-receipt.json"
+          "path": "outputs/customer-ui/20260710T165931Z-app-shell-menus-and-welcome/state-receipt.json"
         }
       ],
       "workflow": {
@@ -100,11 +100,11 @@
         ],
         "outcome": "The first-run welcome surface names the shipped Basic and Pro feature families. | Menu commands expose the same customer workflows as the visible UI. | Help and shortcut commands open a safe local surface.",
         "artifacts": [
-          "outputs/customer-ui/20260704T211358Z-app-shell-menus-and-welcome/mini-click.json",
+          "outputs/customer-ui/20260710T165931Z-app-shell-menus-and-welcome/mini-click.json",
           "/Users/stephansmac/Desktop/Screenshots/SaneVideo/01-app-shell-menus-and-welcome.png",
           "Tests/Assets/German.MOV",
-          "outputs/customer-ui/20260704T211358Z-app-shell-menus-and-welcome/workflow.log",
-          "outputs/customer-ui/20260704T211358Z-app-shell-menus-and-welcome/state-receipt.json"
+          "outputs/customer-ui/20260710T165931Z-app-shell-menus-and-welcome/workflow.log",
+          "outputs/customer-ui/20260710T165931Z-app-shell-menus-and-welcome/state-receipt.json"
         ]
       }
     },
@@ -157,7 +157,7 @@
         {
           "type": "mini_click",
           "detail": "Mac Mini workflow transcript for recording-controls-safe-surfaces",
-          "path": "outputs/customer-ui/20260704T211358Z-recording-controls-safe-surfaces/mini-click.json"
+          "path": "outputs/customer-ui/20260710T165931Z-recording-controls-safe-surfaces/mini-click.json"
         },
         {
           "type": "screenshot",
@@ -172,12 +172,12 @@
         {
           "type": "log",
           "detail": "Workflow log for recording-controls-safe-surfaces",
-          "path": "outputs/customer-ui/20260704T211358Z-recording-controls-safe-surfaces/workflow.log"
+          "path": "outputs/customer-ui/20260710T165931Z-recording-controls-safe-surfaces/workflow.log"
         },
         {
           "type": "file_state",
           "detail": "Established functional state receipt for recording-controls-safe-surfaces",
-          "path": "outputs/customer-ui/20260704T211358Z-recording-controls-safe-surfaces/state-receipt.json"
+          "path": "outputs/customer-ui/20260710T165931Z-recording-controls-safe-surfaces/state-receipt.json"
         },
         {
           "type": "safe_scope",
@@ -193,11 +193,11 @@
         ],
         "outcome": "Recording controls are visible and wired to the shared state model. | The safe surface can be tested without starting camera, microphone, or screen capture. | Runtime hardware capture remains a release blocker unless separately verified on the Mini with permissions.",
         "artifacts": [
-          "outputs/customer-ui/20260704T211358Z-recording-controls-safe-surfaces/mini-click.json",
+          "outputs/customer-ui/20260710T165931Z-recording-controls-safe-surfaces/mini-click.json",
           "/Users/stephansmac/Desktop/Screenshots/SaneVideo/02-recording-controls-safe-surfaces.png",
           "Tests/Assets/German.MOV",
-          "outputs/customer-ui/20260704T211358Z-recording-controls-safe-surfaces/workflow.log",
-          "outputs/customer-ui/20260704T211358Z-recording-controls-safe-surfaces/state-receipt.json"
+          "outputs/customer-ui/20260710T165931Z-recording-controls-safe-surfaces/workflow.log",
+          "outputs/customer-ui/20260710T165931Z-recording-controls-safe-surfaces/state-receipt.json"
         ]
       }
     },
@@ -246,7 +246,7 @@
         {
           "type": "mini_click",
           "detail": "Mac Mini workflow transcript for camera-mic-screen-permission-surfaces",
-          "path": "outputs/customer-ui/20260704T211358Z-camera-mic-screen-permission-surfaces/mini-click.json"
+          "path": "outputs/customer-ui/20260710T165931Z-camera-mic-screen-permission-surfaces/mini-click.json"
         },
         {
           "type": "screenshot",
@@ -261,12 +261,12 @@
         {
           "type": "log",
           "detail": "Workflow log for camera-mic-screen-permission-surfaces",
-          "path": "outputs/customer-ui/20260704T211358Z-camera-mic-screen-permission-surfaces/workflow.log"
+          "path": "outputs/customer-ui/20260710T165931Z-camera-mic-screen-permission-surfaces/workflow.log"
         },
         {
           "type": "file_state",
           "detail": "Established functional state receipt for camera-mic-screen-permission-surfaces",
-          "path": "outputs/customer-ui/20260704T211358Z-camera-mic-screen-permission-surfaces/state-receipt.json"
+          "path": "outputs/customer-ui/20260710T165931Z-camera-mic-screen-permission-surfaces/state-receipt.json"
         },
         {
           "type": "safe_scope",
@@ -282,11 +282,11 @@
         ],
         "outcome": "Permission recovery UI is present for camera, microphone, and screen capture. | Permission preflight tests cover safe state transitions. | Real TCC prompt acceptance is not claimed by this source/test sweep.",
         "artifacts": [
-          "outputs/customer-ui/20260704T211358Z-camera-mic-screen-permission-surfaces/mini-click.json",
+          "outputs/customer-ui/20260710T165931Z-camera-mic-screen-permission-surfaces/mini-click.json",
           "/Users/stephansmac/Desktop/Screenshots/SaneVideo/03-camera-mic-screen-permission-surfaces.png",
           "Tests/Assets/German.MOV",
-          "outputs/customer-ui/20260704T211358Z-camera-mic-screen-permission-surfaces/workflow.log",
-          "outputs/customer-ui/20260704T211358Z-camera-mic-screen-permission-surfaces/state-receipt.json"
+          "outputs/customer-ui/20260710T165931Z-camera-mic-screen-permission-surfaces/workflow.log",
+          "outputs/customer-ui/20260710T165931Z-camera-mic-screen-permission-surfaces/state-receipt.json"
         ]
       }
     },
@@ -335,7 +335,7 @@
         {
           "type": "mini_click",
           "detail": "Mac Mini workflow transcript for project-import-library-selection",
-          "path": "outputs/customer-ui/20260704T211358Z-project-import-library-selection/mini-click.json"
+          "path": "outputs/customer-ui/20260710T165931Z-project-import-library-selection/mini-click.json"
         },
         {
           "type": "screenshot",
@@ -350,12 +350,12 @@
         {
           "type": "log",
           "detail": "Workflow log for project-import-library-selection",
-          "path": "outputs/customer-ui/20260704T211358Z-project-import-library-selection/workflow.log"
+          "path": "outputs/customer-ui/20260710T165931Z-project-import-library-selection/workflow.log"
         },
         {
           "type": "file_state",
           "detail": "Established functional state receipt for project-import-library-selection",
-          "path": "outputs/customer-ui/20260704T211358Z-project-import-library-selection/state-receipt.json"
+          "path": "outputs/customer-ui/20260710T165931Z-project-import-library-selection/state-receipt.json"
         }
       ],
       "workflow": {
@@ -367,11 +367,11 @@
         ],
         "outcome": "Import is local-first and uses security-scoped file importer URLs. | Project and library destructive actions require confirmation. | Project selection state is covered by tests.",
         "artifacts": [
-          "outputs/customer-ui/20260704T211358Z-project-import-library-selection/mini-click.json",
+          "outputs/customer-ui/20260710T165931Z-project-import-library-selection/mini-click.json",
           "/Users/stephansmac/Desktop/Screenshots/SaneVideo/04-project-import-library-selection.png",
           "Tests/Assets/German.MOV",
-          "outputs/customer-ui/20260704T211358Z-project-import-library-selection/workflow.log",
-          "outputs/customer-ui/20260704T211358Z-project-import-library-selection/state-receipt.json"
+          "outputs/customer-ui/20260710T165931Z-project-import-library-selection/workflow.log",
+          "outputs/customer-ui/20260710T165931Z-project-import-library-selection/state-receipt.json"
         ]
       }
     },
@@ -420,7 +420,7 @@
         {
           "type": "mini_click",
           "detail": "Mac Mini workflow transcript for editor-playback-and-view-controls",
-          "path": "outputs/customer-ui/20260704T211358Z-editor-playback-and-view-controls/mini-click.json"
+          "path": "outputs/customer-ui/20260710T165931Z-editor-playback-and-view-controls/mini-click.json"
         },
         {
           "type": "screenshot",
@@ -435,12 +435,12 @@
         {
           "type": "log",
           "detail": "Workflow log for editor-playback-and-view-controls",
-          "path": "outputs/customer-ui/20260704T211358Z-editor-playback-and-view-controls/workflow.log"
+          "path": "outputs/customer-ui/20260710T165931Z-editor-playback-and-view-controls/workflow.log"
         },
         {
           "type": "file_state",
           "detail": "Established functional state receipt for editor-playback-and-view-controls",
-          "path": "outputs/customer-ui/20260704T211358Z-editor-playback-and-view-controls/state-receipt.json"
+          "path": "outputs/customer-ui/20260710T165931Z-editor-playback-and-view-controls/state-receipt.json"
         }
       ],
       "workflow": {
@@ -452,11 +452,11 @@
         ],
         "outcome": "Editor controls are not dead decorative UI. | Playback state and shortcut surfaces are covered by tests where feasible. | View toggles route through named notifications or state.",
         "artifacts": [
-          "outputs/customer-ui/20260704T211358Z-editor-playback-and-view-controls/mini-click.json",
+          "outputs/customer-ui/20260710T165931Z-editor-playback-and-view-controls/mini-click.json",
           "/Users/stephansmac/Desktop/Screenshots/SaneVideo/05-editor-playback-and-view-controls.png",
           "Tests/Assets/German.MOV",
-          "outputs/customer-ui/20260704T211358Z-editor-playback-and-view-controls/workflow.log",
-          "outputs/customer-ui/20260704T211358Z-editor-playback-and-view-controls/state-receipt.json"
+          "outputs/customer-ui/20260710T165931Z-editor-playback-and-view-controls/workflow.log",
+          "outputs/customer-ui/20260710T165931Z-editor-playback-and-view-controls/state-receipt.json"
         ]
       }
     },
@@ -505,7 +505,7 @@
         {
           "type": "mini_click",
           "detail": "Mac Mini workflow transcript for timeline-editing-and-destructive-confirmations",
-          "path": "outputs/customer-ui/20260704T211358Z-timeline-editing-and-destructive-confirmations/mini-click.json"
+          "path": "outputs/customer-ui/20260710T165931Z-timeline-editing-and-destructive-confirmations/mini-click.json"
         },
         {
           "type": "screenshot",
@@ -520,7 +520,7 @@
         {
           "type": "file_state",
           "detail": "Established functional state receipt for timeline-editing-and-destructive-confirmations",
-          "path": "outputs/customer-ui/20260704T211358Z-timeline-editing-and-destructive-confirmations/state-receipt.json"
+          "path": "outputs/customer-ui/20260710T165931Z-timeline-editing-and-destructive-confirmations/state-receipt.json"
         },
         {
           "type": "safe_scope",
@@ -536,10 +536,10 @@
         ],
         "outcome": "Editing controls call ProjectState or UndoManager paths. | Disk deletion is explicitly destructive and separated from remove-from-project. | Tests cover split, trim, deletion, undo, redo, and project persistence.",
         "artifacts": [
-          "outputs/customer-ui/20260704T211358Z-timeline-editing-and-destructive-confirmations/mini-click.json",
+          "outputs/customer-ui/20260710T165931Z-timeline-editing-and-destructive-confirmations/mini-click.json",
           "/Users/stephansmac/Desktop/Screenshots/SaneVideo/06-timeline-editing-and-destructive-confirmations.png",
           "Tests/Assets/German.MOV",
-          "outputs/customer-ui/20260704T211358Z-timeline-editing-and-destructive-confirmations/state-receipt.json"
+          "outputs/customer-ui/20260710T165931Z-timeline-editing-and-destructive-confirmations/state-receipt.json"
         ]
       }
     },
@@ -588,7 +588,7 @@
         {
           "type": "mini_click",
           "detail": "Mac Mini workflow transcript for clip-context-menu-safe-actions",
-          "path": "outputs/customer-ui/20260704T211358Z-clip-context-menu-safe-actions/mini-click.json"
+          "path": "outputs/customer-ui/20260710T165931Z-clip-context-menu-safe-actions/mini-click.json"
         },
         {
           "type": "screenshot",
@@ -603,12 +603,12 @@
         {
           "type": "log",
           "detail": "Workflow log for clip-context-menu-safe-actions",
-          "path": "outputs/customer-ui/20260704T211358Z-clip-context-menu-safe-actions/workflow.log"
+          "path": "outputs/customer-ui/20260710T165931Z-clip-context-menu-safe-actions/workflow.log"
         },
         {
           "type": "file_state",
           "detail": "Established functional state receipt for clip-context-menu-safe-actions",
-          "path": "outputs/customer-ui/20260704T211358Z-clip-context-menu-safe-actions/state-receipt.json"
+          "path": "outputs/customer-ui/20260710T165931Z-clip-context-menu-safe-actions/state-receipt.json"
         },
         {
           "type": "safe_scope",
@@ -624,11 +624,11 @@
         ],
         "outcome": "Every context-menu item has a callback hook or safe system surface. | Destructive delete-from-disk is not marked completed without isolated fixture proof. | Transition and cleanup actions have source/test coverage.",
         "artifacts": [
-          "outputs/customer-ui/20260704T211358Z-clip-context-menu-safe-actions/mini-click.json",
+          "outputs/customer-ui/20260710T165931Z-clip-context-menu-safe-actions/mini-click.json",
           "/Users/stephansmac/Desktop/Screenshots/SaneVideo/07-clip-context-menu-safe-actions.png",
           "Tests/Assets/German.MOV",
-          "outputs/customer-ui/20260704T211358Z-clip-context-menu-safe-actions/workflow.log",
-          "outputs/customer-ui/20260704T211358Z-clip-context-menu-safe-actions/state-receipt.json"
+          "outputs/customer-ui/20260710T165931Z-clip-context-menu-safe-actions/workflow.log",
+          "outputs/customer-ui/20260710T165931Z-clip-context-menu-safe-actions/state-receipt.json"
         ]
       }
     },
@@ -687,12 +687,12 @@
         {
           "type": "state_receipt",
           "detail": "State receipt for inspector-video-smart-actions",
-          "path": "outputs/customer-ui/20260704T211358Z-inspector-video-smart-actions/state-receipt.json"
+          "path": "outputs/customer-ui/20260710T165931Z-inspector-video-smart-actions/state-receipt.json"
         },
         {
           "type": "file_state",
           "detail": "Established functional state receipt for inspector-video-smart-actions",
-          "path": "outputs/customer-ui/20260704T211358Z-inspector-video-smart-actions/state-receipt.json"
+          "path": "outputs/customer-ui/20260710T165931Z-inspector-video-smart-actions/state-receipt.json"
         }
       ]
     },
@@ -741,7 +741,7 @@
         {
           "type": "mini_click",
           "detail": "Mac Mini workflow transcript for inspector-audio-sync-repair",
-          "path": "outputs/customer-ui/20260704T211358Z-inspector-audio-sync-repair/mini-click.json"
+          "path": "outputs/customer-ui/20260710T165931Z-inspector-audio-sync-repair/mini-click.json"
         },
         {
           "type": "screenshot",
@@ -756,12 +756,12 @@
         {
           "type": "log",
           "detail": "Workflow log for inspector-audio-sync-repair",
-          "path": "outputs/customer-ui/20260704T211358Z-inspector-audio-sync-repair/workflow.log"
+          "path": "outputs/customer-ui/20260710T165931Z-inspector-audio-sync-repair/workflow.log"
         },
         {
           "type": "file_state",
           "detail": "Established functional state receipt for inspector-audio-sync-repair",
-          "path": "outputs/customer-ui/20260704T211358Z-inspector-audio-sync-repair/state-receipt.json"
+          "path": "outputs/customer-ui/20260710T165931Z-inspector-audio-sync-repair/state-receipt.json"
         },
         {
           "type": "safe_scope",
@@ -777,11 +777,11 @@
         ],
         "outcome": "Audio repair surfaces are reachable without immediately running destructive media operations. | FFmpeg repair/export behavior has isolated test fixture coverage. | External Finder reveal is represented as a safe first surface only.",
         "artifacts": [
-          "outputs/customer-ui/20260704T211358Z-inspector-audio-sync-repair/mini-click.json",
+          "outputs/customer-ui/20260710T165931Z-inspector-audio-sync-repair/mini-click.json",
           "/Users/stephansmac/Desktop/Screenshots/SaneVideo/09-inspector-audio-sync-repair.png",
           "Tests/Assets/German.MOV",
-          "outputs/customer-ui/20260704T211358Z-inspector-audio-sync-repair/workflow.log",
-          "outputs/customer-ui/20260704T211358Z-inspector-audio-sync-repair/state-receipt.json"
+          "outputs/customer-ui/20260710T165931Z-inspector-audio-sync-repair/workflow.log",
+          "outputs/customer-ui/20260710T165931Z-inspector-audio-sync-repair/state-receipt.json"
         ]
       }
     },
@@ -830,7 +830,7 @@
         {
           "type": "mini_click",
           "detail": "Mac Mini workflow transcript for captions-transcript-voiceover",
-          "path": "outputs/customer-ui/20260704T211358Z-captions-transcript-voiceover/mini-click.json"
+          "path": "outputs/customer-ui/20260710T165931Z-captions-transcript-voiceover/mini-click.json"
         },
         {
           "type": "screenshot",
@@ -845,7 +845,7 @@
         {
           "type": "file_state",
           "detail": "Established functional state receipt for captions-transcript-voiceover",
-          "path": "outputs/customer-ui/20260704T211358Z-captions-transcript-voiceover/state-receipt.json"
+          "path": "outputs/customer-ui/20260710T165931Z-captions-transcript-voiceover/state-receipt.json"
         }
       ],
       "workflow": {
@@ -857,10 +857,10 @@
         ],
         "outcome": "Caption and transcript controls are wired to project state or local export helpers. | Voiceover save panel has safe window-selection tests. | Transcript export has model or document proof.",
         "artifacts": [
-          "outputs/customer-ui/20260704T211358Z-captions-transcript-voiceover/mini-click.json",
+          "outputs/customer-ui/20260710T165931Z-captions-transcript-voiceover/mini-click.json",
           "/Users/stephansmac/Desktop/Screenshots/SaneVideo/10-captions-transcript-voiceover.png",
           "Tests/Assets/German.MOV",
-          "outputs/customer-ui/20260704T211358Z-captions-transcript-voiceover/state-receipt.json"
+          "outputs/customer-ui/20260710T165931Z-captions-transcript-voiceover/state-receipt.json"
         ]
       }
     },
@@ -909,7 +909,7 @@
         {
           "type": "mini_click",
           "detail": "Mac Mini workflow transcript for export-local-presets-and-demo-pack",
-          "path": "outputs/customer-ui/20260704T211358Z-export-local-presets-and-demo-pack/mini-click.json"
+          "path": "outputs/customer-ui/20260710T165931Z-export-local-presets-and-demo-pack/mini-click.json"
         },
         {
           "type": "screenshot",
@@ -924,7 +924,7 @@
         {
           "type": "file_state",
           "detail": "Established functional state receipt for export-local-presets-and-demo-pack",
-          "path": "outputs/customer-ui/20260704T211358Z-export-local-presets-and-demo-pack/state-receipt.json"
+          "path": "outputs/customer-ui/20260710T165931Z-export-local-presets-and-demo-pack/state-receipt.json"
         }
       ],
       "workflow": {
@@ -936,10 +936,10 @@
         ],
         "outcome": "Export UI exposes local-first output before optional third-party upload. | Presets and export settings are tested. | Demo Pack writes expected artifacts in fixture tests.",
         "artifacts": [
-          "outputs/customer-ui/20260704T211358Z-export-local-presets-and-demo-pack/mini-click.json",
+          "outputs/customer-ui/20260710T165931Z-export-local-presets-and-demo-pack/mini-click.json",
           "/Users/stephansmac/Desktop/Screenshots/SaneVideo/11-export-local-presets-and-demo-pack.png",
           "Tests/Assets/German.MOV",
-          "outputs/customer-ui/20260704T211358Z-export-local-presets-and-demo-pack/state-receipt.json"
+          "outputs/customer-ui/20260710T165931Z-export-local-presets-and-demo-pack/state-receipt.json"
         ]
       }
     },
@@ -988,7 +988,7 @@
         {
           "type": "mini_click",
           "detail": "Mac Mini workflow transcript for youtube-upload-safe-surface",
-          "path": "outputs/customer-ui/20260704T211358Z-youtube-upload-safe-surface/mini-click.json"
+          "path": "outputs/customer-ui/20260710T165931Z-youtube-upload-safe-surface/mini-click.json"
         },
         {
           "type": "screenshot",
@@ -1003,7 +1003,7 @@
         {
           "type": "file_state",
           "detail": "Established functional state receipt for youtube-upload-safe-surface",
-          "path": "outputs/customer-ui/20260704T211358Z-youtube-upload-safe-surface/state-receipt.json"
+          "path": "outputs/customer-ui/20260710T165931Z-youtube-upload-safe-surface/state-receipt.json"
         },
         {
           "type": "safe_scope",
@@ -1019,10 +1019,10 @@
         ],
         "outcome": "Local export remains first. | Direct YouTube upload is not presented as available. | Real third-party upload remains blocked until OAuth and upload completion are separately verified.",
         "artifacts": [
-          "outputs/customer-ui/20260704T211358Z-youtube-upload-safe-surface/mini-click.json",
+          "outputs/customer-ui/20260710T165931Z-youtube-upload-safe-surface/mini-click.json",
           "/Users/stephansmac/Desktop/Screenshots/SaneVideo/12-youtube-upload-safe-surface.png",
           "Tests/Assets/German.MOV",
-          "outputs/customer-ui/20260704T211358Z-youtube-upload-safe-surface/state-receipt.json"
+          "outputs/customer-ui/20260710T165931Z-youtube-upload-safe-surface/state-receipt.json"
         ]
       }
     },
@@ -1071,7 +1071,7 @@
         {
           "type": "mini_click",
           "detail": "Mac Mini workflow transcript for ffmpeg-export-fixture-surface",
-          "path": "outputs/customer-ui/20260704T211358Z-ffmpeg-export-fixture-surface/mini-click.json"
+          "path": "outputs/customer-ui/20260710T165931Z-ffmpeg-export-fixture-surface/mini-click.json"
         },
         {
           "type": "screenshot",
@@ -1086,12 +1086,12 @@
         {
           "type": "log",
           "detail": "Workflow log for ffmpeg-export-fixture-surface",
-          "path": "outputs/customer-ui/20260704T211358Z-ffmpeg-export-fixture-surface/workflow.log"
+          "path": "outputs/customer-ui/20260710T165931Z-ffmpeg-export-fixture-surface/workflow.log"
         },
         {
           "type": "file_state",
           "detail": "Established functional state receipt for ffmpeg-export-fixture-surface",
-          "path": "outputs/customer-ui/20260704T211358Z-ffmpeg-export-fixture-surface/state-receipt.json"
+          "path": "outputs/customer-ui/20260710T165931Z-ffmpeg-export-fixture-surface/state-receipt.json"
         },
         {
           "type": "safe_scope",
@@ -1107,11 +1107,11 @@
         ],
         "outcome": "FFmpeg workflows are not marked fully complete from source presence alone. | Fixture tests prove the isolated repair/export path. | Customer files are not used as destructive proof.",
         "artifacts": [
-          "outputs/customer-ui/20260704T211358Z-ffmpeg-export-fixture-surface/mini-click.json",
+          "outputs/customer-ui/20260710T165931Z-ffmpeg-export-fixture-surface/mini-click.json",
           "/Users/stephansmac/Desktop/Screenshots/SaneVideo/13-ffmpeg-export-fixture-surface.png",
           "Tests/Assets/German.MOV",
-          "outputs/customer-ui/20260704T211358Z-ffmpeg-export-fixture-surface/workflow.log",
-          "outputs/customer-ui/20260704T211358Z-ffmpeg-export-fixture-surface/state-receipt.json"
+          "outputs/customer-ui/20260710T165931Z-ffmpeg-export-fixture-surface/workflow.log",
+          "outputs/customer-ui/20260710T165931Z-ffmpeg-export-fixture-surface/state-receipt.json"
         ]
       }
     },
@@ -1160,7 +1160,7 @@
         {
           "type": "mini_click",
           "detail": "Mac Mini workflow transcript for demo-studio-commentary-teleprompter",
-          "path": "outputs/customer-ui/20260704T211358Z-demo-studio-commentary-teleprompter/mini-click.json"
+          "path": "outputs/customer-ui/20260710T165931Z-demo-studio-commentary-teleprompter/mini-click.json"
         },
         {
           "type": "screenshot",
@@ -1175,12 +1175,12 @@
         {
           "type": "log",
           "detail": "Workflow log for demo-studio-commentary-teleprompter",
-          "path": "outputs/customer-ui/20260704T211358Z-demo-studio-commentary-teleprompter/workflow.log"
+          "path": "outputs/customer-ui/20260710T165931Z-demo-studio-commentary-teleprompter/workflow.log"
         },
         {
           "type": "file_state",
           "detail": "Established functional state receipt for demo-studio-commentary-teleprompter",
-          "path": "outputs/customer-ui/20260704T211358Z-demo-studio-commentary-teleprompter/state-receipt.json"
+          "path": "outputs/customer-ui/20260710T165931Z-demo-studio-commentary-teleprompter/state-receipt.json"
         }
       ],
       "workflow": {
@@ -1192,11 +1192,11 @@
         ],
         "outcome": "Demo Studio actions update project state. | Teleprompter actions do not start camera or microphone automatically. | Commentary reel behavior has tests.",
         "artifacts": [
-          "outputs/customer-ui/20260704T211358Z-demo-studio-commentary-teleprompter/mini-click.json",
+          "outputs/customer-ui/20260710T165931Z-demo-studio-commentary-teleprompter/mini-click.json",
           "/Users/stephansmac/Desktop/Screenshots/SaneVideo/14-demo-studio-commentary-teleprompter.png",
           "Tests/Assets/German.MOV",
-          "outputs/customer-ui/20260704T211358Z-demo-studio-commentary-teleprompter/workflow.log",
-          "outputs/customer-ui/20260704T211358Z-demo-studio-commentary-teleprompter/state-receipt.json"
+          "outputs/customer-ui/20260710T165931Z-demo-studio-commentary-teleprompter/workflow.log",
+          "outputs/customer-ui/20260710T165931Z-demo-studio-commentary-teleprompter/state-receipt.json"
         ]
       }
     },
@@ -1245,7 +1245,7 @@
         {
           "type": "mini_click",
           "detail": "Mac Mini workflow transcript for thumbnail-gif-share-external-surfaces",
-          "path": "outputs/customer-ui/20260704T211358Z-thumbnail-gif-share-external-surfaces/mini-click.json"
+          "path": "outputs/customer-ui/20260710T165931Z-thumbnail-gif-share-external-surfaces/mini-click.json"
         },
         {
           "type": "screenshot",
@@ -1260,12 +1260,12 @@
         {
           "type": "log",
           "detail": "Workflow log for thumbnail-gif-share-external-surfaces",
-          "path": "outputs/customer-ui/20260704T211358Z-thumbnail-gif-share-external-surfaces/workflow.log"
+          "path": "outputs/customer-ui/20260710T165931Z-thumbnail-gif-share-external-surfaces/workflow.log"
         },
         {
           "type": "file_state",
           "detail": "Established functional state receipt for thumbnail-gif-share-external-surfaces",
-          "path": "outputs/customer-ui/20260704T211358Z-thumbnail-gif-share-external-surfaces/state-receipt.json"
+          "path": "outputs/customer-ui/20260710T165931Z-thumbnail-gif-share-external-surfaces/state-receipt.json"
         },
         {
           "type": "safe_scope",
@@ -1281,11 +1281,11 @@
         ],
         "outcome": "External app handoff is explicit and user initiated. | Thumbnail and GIF surfaces are reachable from menus or export options. | No external destination is modified during the sweep.",
         "artifacts": [
-          "outputs/customer-ui/20260704T211358Z-thumbnail-gif-share-external-surfaces/mini-click.json",
+          "outputs/customer-ui/20260710T165931Z-thumbnail-gif-share-external-surfaces/mini-click.json",
           "/Users/stephansmac/Desktop/Screenshots/SaneVideo/15-thumbnail-gif-share-external-surfaces.png",
           "Tests/Assets/German.MOV",
-          "outputs/customer-ui/20260704T211358Z-thumbnail-gif-share-external-surfaces/workflow.log",
-          "outputs/customer-ui/20260704T211358Z-thumbnail-gif-share-external-surfaces/state-receipt.json"
+          "outputs/customer-ui/20260710T165931Z-thumbnail-gif-share-external-surfaces/workflow.log",
+          "outputs/customer-ui/20260710T165931Z-thumbnail-gif-share-external-surfaces/state-receipt.json"
         ]
       }
     },
@@ -1334,7 +1334,7 @@
         {
           "type": "mini_click",
           "detail": "Mac Mini workflow transcript for settings-tabs-and-update-actions",
-          "path": "outputs/customer-ui/20260704T211358Z-settings-tabs-and-update-actions/mini-click.json"
+          "path": "outputs/customer-ui/20260710T165931Z-settings-tabs-and-update-actions/mini-click.json"
         },
         {
           "type": "screenshot",
@@ -1349,12 +1349,12 @@
         {
           "type": "log",
           "detail": "Workflow log for settings-tabs-and-update-actions",
-          "path": "outputs/customer-ui/20260704T211358Z-settings-tabs-and-update-actions/workflow.log"
+          "path": "outputs/customer-ui/20260710T165931Z-settings-tabs-and-update-actions/workflow.log"
         },
         {
           "type": "file_state",
           "detail": "Established functional state receipt for settings-tabs-and-update-actions",
-          "path": "outputs/customer-ui/20260704T211358Z-settings-tabs-and-update-actions/state-receipt.json"
+          "path": "outputs/customer-ui/20260710T165931Z-settings-tabs-and-update-actions/state-receipt.json"
         }
       ],
       "workflow": {
@@ -1366,11 +1366,11 @@
         ],
         "outcome": "Settings tabs render from one Settings scene. | Update and stress-test actions have safe first surfaces. | Customer settings persist through UserPreferences where applicable.",
         "artifacts": [
-          "outputs/customer-ui/20260704T211358Z-settings-tabs-and-update-actions/mini-click.json",
+          "outputs/customer-ui/20260710T165931Z-settings-tabs-and-update-actions/mini-click.json",
           "/Users/stephansmac/Desktop/Screenshots/SaneVideo/16-settings-tabs-and-update-actions.png",
           "Tests/Assets/German.MOV",
-          "outputs/customer-ui/20260704T211358Z-settings-tabs-and-update-actions/workflow.log",
-          "outputs/customer-ui/20260704T211358Z-settings-tabs-and-update-actions/state-receipt.json"
+          "outputs/customer-ui/20260710T165931Z-settings-tabs-and-update-actions/workflow.log",
+          "outputs/customer-ui/20260710T165931Z-settings-tabs-and-update-actions/state-receipt.json"
         ]
       }
     },
@@ -1415,7 +1415,7 @@
         {
           "type": "mini_click",
           "detail": "Mac Mini workflow transcript for api-keys-keychain-safe-surfaces",
-          "path": "outputs/customer-ui/20260704T211358Z-api-keys-keychain-safe-surfaces/mini-click.json"
+          "path": "outputs/customer-ui/20260710T165931Z-api-keys-keychain-safe-surfaces/mini-click.json"
         },
         {
           "type": "screenshot",
@@ -1430,7 +1430,7 @@
         {
           "type": "file_state",
           "detail": "Established functional state receipt for api-keys-keychain-safe-surfaces",
-          "path": "outputs/customer-ui/20260704T211358Z-api-keys-keychain-safe-surfaces/state-receipt.json"
+          "path": "outputs/customer-ui/20260710T165931Z-api-keys-keychain-safe-surfaces/state-receipt.json"
         },
         {
           "type": "safe_scope",
@@ -1446,10 +1446,10 @@
         ],
         "outcome": "Credentials are optional and user initiated. | Destructive key clearing requires confirmation where broad. | Keychain tests cover credential presence logic.",
         "artifacts": [
-          "outputs/customer-ui/20260704T211358Z-api-keys-keychain-safe-surfaces/mini-click.json",
+          "outputs/customer-ui/20260710T165931Z-api-keys-keychain-safe-surfaces/mini-click.json",
           "/Users/stephansmac/Desktop/Screenshots/SaneVideo/17-api-keys-keychain-safe-surfaces.png",
           "Tests/Assets/German.MOV",
-          "outputs/customer-ui/20260704T211358Z-api-keys-keychain-safe-surfaces/state-receipt.json"
+          "outputs/customer-ui/20260710T165931Z-api-keys-keychain-safe-surfaces/state-receipt.json"
         ]
       }
     },
@@ -1494,7 +1494,7 @@
         {
           "type": "mini_click",
           "detail": "Mac Mini workflow transcript for icloud-sync-safe-surface",
-          "path": "outputs/customer-ui/20260704T211358Z-icloud-sync-safe-surface/mini-click.json"
+          "path": "outputs/customer-ui/20260710T165931Z-icloud-sync-safe-surface/mini-click.json"
         },
         {
           "type": "screenshot",
@@ -1509,12 +1509,12 @@
         {
           "type": "log",
           "detail": "Workflow log for icloud-sync-safe-surface",
-          "path": "outputs/customer-ui/20260704T211358Z-icloud-sync-safe-surface/workflow.log"
+          "path": "outputs/customer-ui/20260710T165931Z-icloud-sync-safe-surface/workflow.log"
         },
         {
           "type": "file_state",
           "detail": "Established functional state receipt for icloud-sync-safe-surface",
-          "path": "outputs/customer-ui/20260704T211358Z-icloud-sync-safe-surface/state-receipt.json"
+          "path": "outputs/customer-ui/20260710T165931Z-icloud-sync-safe-surface/state-receipt.json"
         },
         {
           "type": "safe_scope",
@@ -1530,11 +1530,11 @@
         ],
         "outcome": "iCloud sync is optional and disabled when unavailable. | Sync manager tests cover disabled/unavailable behavior. | Real cross-device iCloud propagation remains blocked unless separately verified.",
         "artifacts": [
-          "outputs/customer-ui/20260704T211358Z-icloud-sync-safe-surface/mini-click.json",
+          "outputs/customer-ui/20260710T165931Z-icloud-sync-safe-surface/mini-click.json",
           "/Users/stephansmac/Desktop/Screenshots/SaneVideo/18-icloud-sync-safe-surface.png",
           "Tests/Assets/German.MOV",
-          "outputs/customer-ui/20260704T211358Z-icloud-sync-safe-surface/workflow.log",
-          "outputs/customer-ui/20260704T211358Z-icloud-sync-safe-surface/state-receipt.json"
+          "outputs/customer-ui/20260710T165931Z-icloud-sync-safe-surface/workflow.log",
+          "outputs/customer-ui/20260710T165931Z-icloud-sync-safe-surface/state-receipt.json"
         ]
       }
     },
@@ -1583,7 +1583,7 @@
         {
           "type": "mini_click",
           "detail": "Mac Mini workflow transcript for project-templates-and-browser",
-          "path": "outputs/customer-ui/20260704T211358Z-project-templates-and-browser/mini-click.json"
+          "path": "outputs/customer-ui/20260710T165931Z-project-templates-and-browser/mini-click.json"
         },
         {
           "type": "screenshot",
@@ -1598,7 +1598,7 @@
         {
           "type": "file_state",
           "detail": "Established functional state receipt for project-templates-and-browser",
-          "path": "outputs/customer-ui/20260704T211358Z-project-templates-and-browser/state-receipt.json"
+          "path": "outputs/customer-ui/20260710T165931Z-project-templates-and-browser/state-receipt.json"
         }
       ],
       "workflow": {
@@ -1610,10 +1610,10 @@
         ],
         "outcome": "Template actions are not detached from project state. | Built-in template data is covered by tests. | Custom template persistence has source or test proof.",
         "artifacts": [
-          "outputs/customer-ui/20260704T211358Z-project-templates-and-browser/mini-click.json",
+          "outputs/customer-ui/20260710T165931Z-project-templates-and-browser/mini-click.json",
           "/Users/stephansmac/Desktop/Screenshots/SaneVideo/19-project-templates-and-browser.png",
           "Tests/Assets/German.MOV",
-          "outputs/customer-ui/20260704T211358Z-project-templates-and-browser/state-receipt.json"
+          "outputs/customer-ui/20260710T165931Z-project-templates-and-browser/state-receipt.json"
         ]
       }
     }

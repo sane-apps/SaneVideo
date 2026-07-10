@@ -14,6 +14,7 @@ import SwiftUI
 
 struct EditorEmptyStateView: View {
     let onImport: () -> Void
+    let onRecord: () -> Void
 
     var body: some View {
         VStack(spacing: 32) {
@@ -32,18 +33,33 @@ struct EditorEmptyStateView: View {
                     .frame(maxWidth: 300)
             }
 
-            Button(
-                action: onImport,
-                label: {
-                    Label("Import Your First Video", systemImage: "plus.circle.fill")
-                        .font(.headline)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                }
-            )
-            .buttonStyle(.borderedProminent)
-            .tint(.accentColor)
-            .controlSize(.large)
+            HStack(spacing: 12) {
+                Button(
+                    action: onImport,
+                    label: {
+                        Label("Import Video", systemImage: "plus.circle.fill")
+                            .font(.headline)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                    }
+                )
+                .buttonStyle(.borderedProminent)
+                .tint(.accentColor)
+                .controlSize(.large)
+
+                Button(
+                    action: onRecord,
+                    label: {
+                        Label("Open Recorder", systemImage: "record.circle")
+                            .font(.headline)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                    }
+                )
+                .buttonStyle(.bordered)
+                .controlSize(.large)
+                .help("Open SaneVideo's recorder to capture a screen demo or camera recording.")
+            }
         }
     }
 }

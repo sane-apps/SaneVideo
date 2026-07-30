@@ -170,3 +170,12 @@ Graduate verified findings to ARCHITECTURE.md or DEVELOPMENT.md.
 - Panic string: `watchdog timeout: no checkins from watchdogd in 93 seconds`; backtrace involved `AppleARMWatchdogTimer` and `AppleInterruptController`, panicked task `kernel_task`.
 - The SaneVideo test log immediately before the reboot was in export-heavy integration coverage, including repeated 4K AVAssetWriter/custom compositor export cases.
 - Operational decision: do not run full SaneVideo verify on the 8GB Mini for website-only, screenshot-only, docs-only, or icon-only changes. Use static asset checks, generator verification, browser visual proof, and website deploy verification instead. If icon/app build proof is required, get explicit approval for a narrow build/test path and avoid export integration tests unless export/audio/compositor code changed.
+
+## 2026-07-30 Ruby JSON 2.19.9 Security Update
+**Updated:** 2026-07-30 | **Status:** verified | **TTL:** 90d
+**Source:** upstream `ruby/json` v2.19.9 release and changelog, Apple Foundation `JSONSerialization` documentation, Mini lockfile and July 15 verify logs
+- PR #18 changes only `Gemfile.lock`, moving the indirect Ruby `json` gem from 2.19.3 to 2.19.9. It changes no Swift source, app package, or Apple framework API.
+- Upstream 2.19.9 fixes CVE-2026-54696, a buffer overflow and possible crash when `JSON.generate(object, io)` writes directly to an IO. Intermediate 2.19.x releases also fix a one-byte overread and parser/generator edge cases. Keeping 2.19.3 is not justified.
+- Apple Foundation `JSONSerialization` is a separate native API and is unaffected by this Ruby build-tool dependency update. The Apple-docs MCP is not callable from the active Codex tool surface; the official Apple documentation page was checked directly instead.
+- The verify escalation came from two July 15 app tests, not the gem: a missing `recording.permission.fixture.all_denied` semantic identifier and a settings evidence-bridge assertion. Those test names are absent from current `main`, so the old failure log cannot prove the current branch red or green.
+- Required decision: run one canonical Mini verify on the exact replacement branch. Merge only if that current suite passes; if it fails, use the new failure output rather than the stale July 15 fingerprint.

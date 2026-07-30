@@ -1,6 +1,18 @@
 # Session Handoff — SaneVideo
 
-**Last updated:** 2026-06-16
+**Last updated:** 2026-07-30
+
+## 2026-07-30 json security update
+
+- PR #19 updated Ruby `json` from `2.19.3` to `2.19.9`, including the
+  CVE-2026-54696 generator overflow fix, and recorded the upstream findings in
+  the existing research cache.
+- The canonical Mini suite passed twice: 1,223 tests with receipts
+  `a6918f6a6a19ac71a89a2ddbc4e6122e` and
+  `936e2206eb337df257ea40002eb2122a`.
+- PR #19 merged to `main` as
+  `09f1a243f39b23e4df108a364aeadb3ca81298f3`; Dependabot PR #18 was closed
+  as superseded. No release or app launch ran.
 
 ## 2026-06-16 Pricing and Website Receipt
 

@@ -139,8 +139,6 @@ struct AppIntegrationTests {
             AppLifecyclePolicy.shouldTerminateAfterLastWindowClosed(
                 isRecording: false,
                 isExporting: false,
-                isScreenSharing: false,
-                isTogglingScreenShare: false,
                 isTesting: false
             )
         )
@@ -152,8 +150,6 @@ struct AppIntegrationTests {
             !AppLifecyclePolicy.shouldTerminateAfterLastWindowClosed(
                 isRecording: true,
                 isExporting: false,
-                isScreenSharing: false,
-                isTogglingScreenShare: false,
                 isTesting: false
             )
         )
@@ -161,26 +157,17 @@ struct AppIntegrationTests {
             !AppLifecyclePolicy.shouldTerminateAfterLastWindowClosed(
                 isRecording: false,
                 isExporting: true,
-                isScreenSharing: false,
-                isTogglingScreenShare: false,
                 isTesting: false
             )
         )
+    }
+
+    @Test("Stuck screen-share flags do not keep the app alive after close")
+    func appLifecyclePolicy_ScreenShareFlagsDoNotBlockQuit() {
         #expect(
-            !AppLifecyclePolicy.shouldTerminateAfterLastWindowClosed(
+            AppLifecyclePolicy.shouldTerminateAfterLastWindowClosed(
                 isRecording: false,
                 isExporting: false,
-                isScreenSharing: true,
-                isTogglingScreenShare: false,
-                isTesting: false
-            )
-        )
-        #expect(
-            !AppLifecyclePolicy.shouldTerminateAfterLastWindowClosed(
-                isRecording: false,
-                isExporting: false,
-                isScreenSharing: false,
-                isTogglingScreenShare: true,
                 isTesting: false
             )
         )
@@ -192,11 +179,29 @@ struct AppIntegrationTests {
             !AppLifecyclePolicy.shouldTerminateAfterLastWindowClosed(
                 isRecording: false,
                 isExporting: false,
-                isScreenSharing: false,
-                isTogglingScreenShare: false,
                 isTesting: true
             )
         )
+    }
+
+    @Test("Welcome and license windows hug their content instead of the editor frame")
+    func mainWindowLayoutPolicy_WelcomeAndLicenseHugContent() {
+        let welcome = MainWindowLayoutPolicy.size(showingWelcome: true, showingLicenseGate: false)
+        let license = MainWindowLayoutPolicy.size(showingWelcome: false, showingLicenseGate: true)
+        let editor = MainWindowLayoutPolicy.size(showingWelcome: false, showingLicenseGate: false)
+        #expect(welcome == MainWindowLayoutPolicy.welcomeSize)
+        #expect(license == MainWindowLayoutPolicy.licenseSize)
+        #expect(editor == MainWindowLayoutPolicy.editorSize)
+        #expect(welcome.width < editor.width)
+        #expect(welcome.height < editor.height)
+        #expect(MainWindowLayoutPolicy.shouldHugContent(showingWelcome: true, showingLicenseGate: false))
+        #expect(MainWindowLayoutPolicy.shouldHugContent(showingWelcome: false, showingLicenseGate: true))
+        #expect(!MainWindowLayoutPolicy.shouldHugContent(showingWelcome: false, showingLicenseGate: false))
+        let frame = MainWindowLayoutPolicy.centeredFrame(
+            size: welcome,
+            on: nil
+        )
+        #expect(frame.size == welcome)
     }
 
     @Test("Main window scene uses singleton policy")
@@ -210,6 +215,50 @@ struct AppIntegrationTests {
     func mainWindowReopenPolicy_ShowsMainWindowWhenNoVisibleWindows() {
         #expect(MainWindowReopenPolicy.shouldShowMainWindow(hasVisibleWindows: false))
         #expect(!MainWindowReopenPolicy.shouldShowMainWindow(hasVisibleWindows: true))
+    }
+
+    @Test("Close click does not count as a reopen request")
+    func mainWindowReopenPolicy_IgnoresImmediateCloseReopen() {
+        let closedAt = Date()
+        #expect(
+            !MainWindowReopenPolicy.shouldShowMainWindow(
+                hasVisibleWindows: false,
+                lastUserCloseAt: closedAt,
+                now: closedAt,
+                isRecording: false,
+                isExporting: false
+            )
+        )
+        #expect(
+            MainWindowReopenPolicy.shouldShowMainWindow(
+                hasVisibleWindows: false,
+                lastUserCloseAt: closedAt,
+                now: closedAt,
+                isRecording: true,
+                isExporting: false
+            )
+        )
+        #expect(
+            MainWindowReopenPolicy.shouldShowMainWindow(
+                hasVisibleWindows: false,
+                lastUserCloseAt: closedAt.addingTimeInterval(-2),
+                now: closedAt,
+                isRecording: false,
+                isExporting: false
+            )
+        )
+    }
+
+    @Test("Stale welcome sheet restore keys are purged")
+    func welcomeSheetResidue_PurgesRestoredSheetKeys() {
+        let defaults = UserDefaults(suiteName: "sanevideo.welcome-sheet-residue.tests")!
+        defaults.removePersistentDomain(forName: "sanevideo.welcome-sheet-residue.tests")
+        defaults.set(true, forKey: "NSWindow.SheetPresentationModifier-WelcomeGateView")
+        defaults.set("keep", forKey: "unrelated")
+        #expect(WelcomeSheetResidue.purge(defaults: defaults) == 1)
+        #expect(defaults.object(forKey: "NSWindow.SheetPresentationModifier-WelcomeGateView") == nil)
+        #expect(defaults.string(forKey: "unrelated") == "keep")
+        defaults.removePersistentDomain(forName: "sanevideo.welcome-sheet-residue.tests")
     }
 
     @Test("Recording launch schedules preview restore only for live recording mode")

@@ -36,9 +36,31 @@ struct SaneVideoApp: App {
                 if licenseService.hasExpiredProTrial {
                     LicenseGateView(licenseService: licenseService, appIcon: "play.tv")
                         .preferredColorScheme(.dark)
-                        .onAppear {
-                            licenseService.checkCachedLicense()
-                        }
+                } else if !hasSeenWelcome {
+                    // In-window welcome, not a sheet: a sheet disables the window close button.
+                    WelcomeGateView(
+                        appName: "SaneVideo",
+                        appIcon: "play.tv",
+                        freeFeatures: [
+                            (icon: "film", text: "Record, edit, and trim local videos"),
+                            (icon: "wand.and.rays", text: "Try the complete local video workflow"),
+                            (icon: "bolt", text: "Use every export preset, template, and polish tool")
+                        ],
+                        proFeatures: [
+                            (icon: "checkmark.seal", text: "Keep every Pro tool after your trial"),
+                            (icon: "lock.fill", text: "Pro is required after the 14-day trial"),
+                            (icon: "sparkles", text: "Keep Pro for $14.99 once"),
+                            (icon: "square.stack.3d.up", text: "One-time upgrade, no subscription")
+                        ],
+                        freeTierTitle: "14-day Pro trial",
+                        freeTierPrice: "All Pro features included",
+                        proTierTitleOverride: "Keep Pro",
+                        proTierPriceOverride: "$14.99 once — yours forever",
+                        permissionConfig: welcomePermissionConfig,
+                        licenseService: licenseService,
+                        onComplete: { hasSeenWelcome = true }
+                    )
+                    .preferredColorScheme(.dark)
                 } else {
                     MainContentView()
                         .environment(licenseService)
@@ -47,62 +69,51 @@ struct SaneVideoApp: App {
                         .preferredColorScheme(
                             prefs.appTheme == .system ? nil : (prefs.appTheme == .dark ? .dark : .light)
                         )
-                        .background(MainWindowOpenRegistrar())
-                        .background(MainWindowCaptureView())
-                        .onAppear {
-                            licenseService.checkCachedLicense()
-                        }
                         .onChange(of: scenePhase) { _, newPhase in
                             if newPhase == .background || newPhase == .inactive {
                                 appState.saveCurrentState()
                             }
                         }
-                        .onAppear {
-                            NSLog("🚀 SaneVideoApp: main window onAppear")
-                            setupWindow()
-
-                            // Force .editing mode for automation launches after the window is available.
-                            if TestEnvironment.shouldOpenEditor {
-                                NSLog("🚀 SaneVideoApp: Forcing .editing mode from onAppear")
-                                appState.appMode = .editing
-                                Task { await appState.bootstrapEditorForTesting() }
-                            }
-                        }
-                        .sheet(isPresented: Binding(
-                            get: { !hasSeenWelcome },
-                            set: { isShowing in
-                                if !isShowing {
-                                    hasSeenWelcome = true
-                                }
-                            }
-                        )) {
-                            WelcomeGateView(
-                                appName: "SaneVideo",
-                                appIcon: "play.tv",
-                                freeFeatures: [
-                                    (icon: "film", text: "Record, edit, and trim local videos"),
-                                    (icon: "wand.and.rays", text: "Try the complete local video workflow"),
-                                    (icon: "bolt", text: "Use every export preset, template, and polish tool")
-                                ],
-                                proFeatures: [
-                                    (icon: "checkmark.seal", text: "Keep every Pro tool after your trial"),
-                                    (icon: "lock.fill", text: "Pro is required after the 14-day trial"),
-                                    (icon: "sparkles", text: "Keep Pro for $14.99 once"),
-                                    (icon: "square.stack.3d.up", text: "One-time upgrade, no subscription")
-                                ],
-                                freeTierTitle: "14-day Pro trial",
-                                freeTierPrice: "All Pro features included",
-                                proTierTitleOverride: "Keep Pro",
-                                proTierPriceOverride: "$14.99 once — yours forever",
-                                permissionConfig: welcomePermissionConfig,
-                                licenseService: licenseService
-                            )
-                            .preferredColorScheme(.dark)
-                        }
                 }
             }
+            .background(MainWindowOpenRegistrar())
+            .background(MainWindowCaptureView())
+            .onAppear {
+                licenseService.checkCachedLicense()
+                NSLog("🚀 SaneVideoApp: main window onAppear")
+                applyMainWindowChrome()
+
+                if MainWindowActionStorage.shared.shouldSuppressAutomaticRestore {
+                    NSLog("🚀 SaneVideoApp: closing auto-restored window after user close")
+                    NSApp.terminate(nil)
+                    return
+                }
+
+                // Force .editing mode for automation launches after the window is available.
+                if TestEnvironment.shouldOpenEditor {
+                    NSLog("🚀 SaneVideoApp: Forcing .editing mode from onAppear")
+                    appState.appMode = .editing
+                    Task { await appState.bootstrapEditorForTesting() }
+                }
+            }
+            .onChange(of: hasSeenWelcome) { _, _ in
+                applyMainWindowChrome()
+            }
+            .onChange(of: licenseService.hasExpiredProTrial) { _, _ in
+                applyMainWindowChrome()
+            }
         }
-        .defaultSize(width: AppConstants.defaultWindowWidth, height: AppConstants.defaultWindowHeight)
+        .defaultSize(
+            width: MainWindowLayoutPolicy.size(
+                showingWelcome: !hasSeenWelcome,
+                showingLicenseGate: licenseService.hasExpiredProTrial
+            ).width,
+            height: MainWindowLayoutPolicy.size(
+                showingWelcome: !hasSeenWelcome,
+                showingLicenseGate: licenseService.hasExpiredProTrial
+            ).height
+        )
+        .windowResizability(.automatic)
 
         Settings {
             SettingsView()
@@ -368,12 +379,11 @@ struct SaneVideoApp: App {
         )
     }
 
-    private func setupWindow() {
-        if let window = NSApplication.shared.windows.first {
-            window.titlebarAppearsTransparent = true
-            window.backgroundColor = NSColor(white: 0.1, alpha: 1.0)
-            window.isOpaque = false
-        }
+    private func applyMainWindowChrome() {
+        MainWindowChrome.apply(
+            showingWelcome: !hasSeenWelcome && !licenseService.hasExpiredProTrial,
+            showingLicenseGate: licenseService.hasExpiredProTrial
+        )
     }
 }
 
@@ -383,9 +393,144 @@ enum MainWindowScenePolicy {
     static let allowsMultipleWindows = false
 }
 
+enum MainWindowLayoutPolicy {
+    static let welcomeSize = CGSize(width: 800, height: 700)
+    static let licenseSize = CGSize(width: 520, height: 680)
+    static let editorSize = CGSize(
+        width: AppConstants.defaultWindowWidth,
+        height: AppConstants.defaultWindowHeight
+    )
+
+    static func size(showingWelcome: Bool, showingLicenseGate: Bool) -> CGSize {
+        if showingLicenseGate { return licenseSize }
+        if showingWelcome { return welcomeSize }
+        return editorSize
+    }
+
+    static func shouldHugContent(showingWelcome: Bool, showingLicenseGate: Bool) -> Bool {
+        showingWelcome || showingLicenseGate
+    }
+
+    static func centeredFrame(size: CGSize, on screen: NSScreen?) -> NSRect {
+        let visible = screen?.visibleFrame ?? NSRect(x: 0, y: 0, width: size.width, height: size.height)
+        return NSRect(
+            x: visible.midX - size.width / 2,
+            y: visible.midY - size.height / 2,
+            width: size.width,
+            height: size.height
+        )
+    }
+}
+
+@MainActor
+enum MainWindowChrome {
+    static func apply(showingWelcome: Bool, showingLicenseGate: Bool) {
+        MainWindowActionStorage.shared.showingWelcome = showingWelcome
+        MainWindowActionStorage.shared.showingLicenseGate = showingLicenseGate
+        let window = MainWindowActionStorage.shared.mainWindow
+            ?? NSApplication.shared.windows.first(where: { $0.canBecomeMain && !$0.isSheet })
+        guard let window else { return }
+        apply(to: window, showingWelcome: showingWelcome, showingLicenseGate: showingLicenseGate)
+        DispatchQueue.main.async {
+            apply(to: window, showingWelcome: showingWelcome, showingLicenseGate: showingLicenseGate)
+        }
+    }
+
+    static func apply(to window: NSWindow, showingWelcome: Bool, showingLicenseGate: Bool) {
+        window.titlebarAppearsTransparent = true
+        window.backgroundColor = NSColor(red: 0.08, green: 0.10, blue: 0.18, alpha: 1.0)
+        window.isOpaque = true
+        MainWindowChrome.enableCloseButton(on: window)
+
+        guard showingWelcome || showingLicenseGate else {
+            window.isRestorable = true
+            window.minSize = NSSize(width: 900, height: 600)
+            window.maxSize = NSSize(
+                width: CGFloat.greatestFiniteMagnitude,
+                height: CGFloat.greatestFiniteMagnitude
+            )
+            let editor = MainWindowLayoutPolicy.editorSize
+            if window.frame.width < 1000 || window.frame.height < 800 {
+                let frame = MainWindowLayoutPolicy.centeredFrame(
+                    size: editor,
+                    on: window.screen ?? NSScreen.main
+                )
+                window.setFrame(frame, display: true)
+            }
+            return
+        }
+        let size = MainWindowLayoutPolicy.size(
+            showingWelcome: showingWelcome,
+            showingLicenseGate: showingLicenseGate
+        )
+        window.isRestorable = false
+        window.setFrameAutosaveName("")
+        let currentContent = window.contentView?.frame.size ?? .zero
+        if abs(currentContent.width - size.width) > 8 || abs(currentContent.height - size.height) > 8 {
+            window.setContentSize(size)
+        }
+        let fitted = window.frame.size
+        window.minSize = fitted
+        window.maxSize = fitted
+        let frame = MainWindowLayoutPolicy.centeredFrame(size: fitted, on: window.screen ?? NSScreen.main)
+        if abs(window.frame.origin.x - frame.origin.x) > 8 ||
+            abs(window.frame.origin.y - frame.origin.y) > 8 {
+            window.setFrame(frame, display: true)
+        }
+    }
+
+    static func enableCloseButton(on window: NSWindow) {
+        window.styleMask.insert(.closable)
+        window.standardWindowButton(.closeButton)?.isHidden = false
+        window.standardWindowButton(.closeButton)?.isEnabled = true
+    }
+}
+
+enum WelcomeSheetResidue {
+    @discardableResult
+    static func purge(defaults: UserDefaults = .standard) -> Int {
+        let staleKeys = defaults.dictionaryRepresentation().keys.filter { key in
+            key.contains("SheetPresentationModifier") &&
+                (key.contains("WelcomeView") || key.contains("WelcomeGateView"))
+        }
+        staleKeys.forEach { defaults.removeObject(forKey: $0) }
+        return staleKeys.count
+    }
+}
+
+enum MainWindowClosePolicy {
+    static let reopenSuppressionInterval: TimeInterval = 0.75
+
+    static func isRestoreSuppressed(
+        lastUserCloseAt: Date?,
+        now: Date = Date(),
+        isRecording: Bool,
+        isExporting: Bool
+    ) -> Bool {
+        guard let lastUserCloseAt else { return false }
+        guard now.timeIntervalSince(lastUserCloseAt) < reopenSuppressionInterval else { return false }
+        return !isRecording && !isExporting
+    }
+}
+
 enum MainWindowReopenPolicy {
-    static func shouldShowMainWindow(hasVisibleWindows: Bool) -> Bool {
-        !hasVisibleWindows
+    static func shouldShowMainWindow(
+        hasVisibleWindows: Bool,
+        lastUserCloseAt: Date? = nil,
+        now: Date = Date(),
+        isRecording: Bool = false,
+        isExporting: Bool = false
+    ) -> Bool {
+        guard !hasVisibleWindows else { return false }
+        if MainWindowClosePolicy.isRestoreSuppressed(
+            lastUserCloseAt: lastUserCloseAt,
+            now: now,
+            isRecording: isRecording,
+            isExporting: isExporting
+        ) {
+            return false
+        }
+        return true
     }
 }
 
@@ -395,6 +540,21 @@ final class MainWindowActionStorage {
 
     var openWindow: ((String) -> Void)?
     weak var mainWindow: NSWindow?
+    var lastUserCloseAt: Date?
+    var showingWelcome = false
+    var showingLicenseGate = false
+
+    var shouldSuppressAutomaticRestore: Bool {
+        MainWindowClosePolicy.isRestoreSuppressed(
+            lastUserCloseAt: lastUserCloseAt,
+            isRecording: ServiceContainer.shared.appState.recordingState.isRecording,
+            isExporting: ServiceContainer.shared.exportService.isExporting
+        )
+    }
+
+    func markUserClosedMainWindow() {
+        lastUserCloseAt = Date()
+    }
 
     func capture(_ action: OpenWindowAction) {
         openWindow = { id in
@@ -408,6 +568,10 @@ final class MainWindowActionStorage {
     }
 
     func showMainWindow() {
+        if shouldSuppressAutomaticRestore {
+            return
+        }
+
         let window = mainWindow ?? NSApp.windows.first(where: {
             $0.canBecomeMain &&
                 $0.contentView != nil &&
@@ -422,7 +586,7 @@ final class MainWindowActionStorage {
             }
             window.makeKeyAndOrderFront(nil)
             mainWindow = window
-        } else {
+        } else if !shouldSuppressAutomaticRestore {
             openWindow?(MainWindowScenePolicy.sceneID)
         }
 
@@ -440,6 +604,9 @@ private struct MainWindowOpenRegistrar: View {
             .onAppear {
                 MainWindowActionStorage.shared.capture(openWindow)
                 ServiceContainer.shared.appState.windowManager.registerMainWindowOpener {
+                    if MainWindowActionStorage.shared.shouldSuppressAutomaticRestore {
+                        return
+                    }
                     openWindow(id: MainWindowScenePolicy.sceneID)
                 }
             }
@@ -451,6 +618,10 @@ private struct MainWindowCaptureView: NSViewRepresentable {
         let view = NSView()
         DispatchQueue.main.async {
             MainWindowActionStorage.shared.captureMainWindow(view.window)
+            MainWindowCloseObserver.shared.attach(to: view.window)
+            if let window = view.window {
+                MainWindowChrome.enableCloseButton(on: window)
+            }
         }
         return view
     }
@@ -458,7 +629,62 @@ private struct MainWindowCaptureView: NSViewRepresentable {
     func updateNSView(_ nsView: NSView, context _: Context) {
         DispatchQueue.main.async {
             MainWindowActionStorage.shared.captureMainWindow(nsView.window)
+            MainWindowCloseObserver.shared.attach(to: nsView.window)
+            if let window = nsView.window {
+                window.styleMask.insert(.closable)
+                window.standardWindowButton(.closeButton)?.isHidden = false
+                window.standardWindowButton(.closeButton)?.isEnabled = true
+            }
         }
+    }
+}
+
+@MainActor
+final class MainWindowCloseObserver {
+    static let shared = MainWindowCloseObserver()
+
+    private var tokens: [ObjectIdentifier: NSObjectProtocol] = [:]
+
+    func attach(to window: NSWindow?) {
+        guard let window, window.canBecomeMain, !window.isSheet else { return }
+        let id = ObjectIdentifier(window)
+        guard tokens[id] == nil else { return }
+        tokens[id] = NotificationCenter.default.addObserver(
+            forName: NSWindow.willCloseNotification,
+            object: window,
+            queue: .main
+        ) { notification in
+            guard let closed = notification.object as? NSWindow else { return }
+            Task { @MainActor in
+                MainWindowCloseObserver.shared.handleClose(closed)
+            }
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            MainWindowChrome.enableCloseButton(on: window)
+        }
+    }
+
+    private func handleClose(_ window: NSWindow) {
+        guard isMainAppWindow(window) else { return }
+        MainWindowActionStorage.shared.markUserClosedMainWindow()
+        let shouldQuit = AppLifecyclePolicy.shouldTerminateAfterLastWindowClosed(
+            isRecording: ServiceContainer.shared.appState.recordingState.isRecording,
+            isExporting: ServiceContainer.shared.exportService.isExporting,
+            isTesting: TestEnvironment.isTesting
+        )
+        if shouldQuit {
+            NSApp.terminate(nil)
+        }
+    }
+
+    private func isMainAppWindow(_ window: NSWindow) -> Bool {
+        if window === MainWindowActionStorage.shared.mainWindow {
+            return true
+        }
+        if window.identifier?.rawValue.contains(MainWindowScenePolicy.sceneID) == true {
+            return true
+        }
+        return window.title.contains(MainWindowScenePolicy.title)
     }
 }
 
@@ -466,11 +692,11 @@ enum AppLifecyclePolicy {
     static func shouldTerminateAfterLastWindowClosed(
         isRecording: Bool,
         isExporting: Bool,
-        isScreenSharing: Bool,
-        isTogglingScreenShare: Bool,
         isTesting: Bool = false
     ) -> Bool {
-        !isTesting && !isRecording && !isExporting && !isScreenSharing && !isTogglingScreenShare
+        // Screen-share / toggle flags must not keep the app alive. Those flags
+        // can stick true and make close reopen the window forever.
+        !isTesting && !isRecording && !isExporting
     }
 }
 
@@ -479,6 +705,8 @@ enum AppLifecyclePolicy {
 @MainActor
 class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_: Notification) {
+        WelcomeSheetResidue.purge()
+
         // Initialize global hotkey manager
         #if !APP_STORE
             ServiceContainer.shared.globalHotkeyManager.start()
@@ -578,14 +806,17 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         return AppLifecyclePolicy.shouldTerminateAfterLastWindowClosed(
             isRecording: ServiceContainer.shared.appState.recordingState.isRecording,
             isExporting: ServiceContainer.shared.exportService.isExporting,
-            isScreenSharing: ServiceContainer.shared.appState.windowManager.isScreenSharing,
-            isTogglingScreenShare: ServiceContainer.shared.appState.windowManager.isTogglingScreenShare,
             isTesting: TestEnvironment.isTesting
         )
     }
 
     func applicationShouldHandleReopen(_: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
-        if MainWindowReopenPolicy.shouldShowMainWindow(hasVisibleWindows: flag) {
+        if MainWindowReopenPolicy.shouldShowMainWindow(
+            hasVisibleWindows: flag,
+            lastUserCloseAt: MainWindowActionStorage.shared.lastUserCloseAt,
+            isRecording: ServiceContainer.shared.appState.recordingState.isRecording,
+            isExporting: ServiceContainer.shared.exportService.isExporting
+        ) {
             MainWindowActionStorage.shared.showMainWindow()
             ServiceContainer.shared.appState.windowManager.restoreMainWindow()
         }

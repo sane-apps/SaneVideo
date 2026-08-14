@@ -1,6 +1,18 @@
 # Session Handoff — SaneVideo
 
-**Last updated:** 2026-07-30
+**Last updated:** 2026-08-14
+
+## 2026-08-14 close, welcome size, camera-loading freeze
+
+- Welcome is in-window content, not a sheet, so the window close button stays enabled.
+- Close while idle quits. Reopen from the close click is suppressed. Screen-share flags no longer keep the app alive.
+- Welcome window is 800x700, centered. Editor can grow back to 1400x900.
+- Recording with camera off no longer shows a stuck Camera Loading spinner. Mini has no camera; that spinner was the freeze.
+- Removed a per-frame `NSWindow.didUpdate` resize loop that froze the UI after leaving welcome.
+- Owner Pro seeded on Air and Mini for SaneBar, SaneClip, SaneClick, SaneHosts, SaneSales, SaneVideo.
+- Visual receipt: `outputs/visual-audit-20260814-close/receipt.md`
+- Focused Mini tests: AppIntegrationTests 21/21, PermissionManagerTests 20/20, ReleaseReadiness 10/10.
+- Republish still needs Mini `verify` + `release.sh --full --version 1.0.4`.
 
 ## 2026-07-30 json security update
 

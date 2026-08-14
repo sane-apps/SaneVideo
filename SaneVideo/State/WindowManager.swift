@@ -305,6 +305,10 @@ class WindowManager {
 
   func restoreMainWindow() {
     if TestEnvironment.isTesting && !TestEnvironment.isUITesting { return }
+    if MainWindowActionStorage.shared.shouldSuppressAutomaticRestore {
+      AppLogger.window.info("Skipping restore; user just closed the main window")
+      return
+    }
     AppLogger.window.info("Restoring main window...")
 
     NSApp.activate(ignoringOtherApps: true)

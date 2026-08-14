@@ -5,7 +5,27 @@
     <link>https://sanevideo.com/appcast.xml</link>
     <description>Most recent SaneVideo updates.</description>
     <language>en</language>
-        <item>
+                <item>
+            <title>1.0.4</title>
+            <link>https://sanevideo.com/download</link>
+            <pubDate>Fri, 14 Aug 2026 13:50:02 -0400</pubDate>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <description>
+                <![CDATA[
+                <h2>What's New</h2>
+                <ul>
+                <li>Fix window close so SaneVideo quits and stays closed. Welcome is sized to its content. Recording with the camera off no longer hangs on Camera Loading.</li>
+                </ul>
+                ]]>
+            </description>
+            <enclosure url="https://dist.sanevideo.com/updates/SaneVideo-1.0.4.zip"
+                       sparkle:version="6"
+                       sparkle:shortVersionString="1.0.4"
+                       length="7970752"
+                       type="application/octet-stream"
+                       sparkle:edSignature="BdaqSK5jsIpG8f6Fm4gelT5jBDjLURqgyMTrledhmEz8MEb1bd0eOcj+Mw3EqW2DLA76Ck/jl7eaFLfKT3woBA=="/>
+        </item>
+<item>
             <title>1.0.3</title>
             <link>https://sanevideo.com/download</link>
             <pubDate>Fri, 10 Jul 2026 13:42:36 -0400</pubDate>

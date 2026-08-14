@@ -249,7 +249,10 @@ class SaneVideoCustomerUIActionSweep
     output, status = Open3.capture2e('./scripts/SaneMaster.rb', 'customer_ui_contract', '--json', '--no-exit')
     raise "customer_ui_contract report failed: #{output}" unless status.success?
 
-    JSON.parse(output)
+    json_text = output.lines.drop_while { |line| !line.lstrip.start_with?('{') }.join
+    raise "customer_ui_contract report missing JSON: #{output}" if json_text.strip.empty?
+
+    JSON.parse(json_text)
   end
 
   def write_evidence_artifacts(actions)

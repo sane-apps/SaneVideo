@@ -181,6 +181,22 @@ struct PermissionManagerTests {
         #expect(!PermissionManager.allowsRecordingStart(for: .unknown, canPromptInline: true))
     }
 
+    @Test("Recording without camera does not show a camera loading spinner")
+    func recordingWithoutCameraDoesNotWantPreview() {
+        #expect(!RecordingCameraPreviewPolicy.wantsCameraPreview(
+            isScreenSharing: false,
+            cameraEnabled: false
+        ))
+        #expect(RecordingCameraPreviewPolicy.wantsCameraPreview(
+            isScreenSharing: false,
+            cameraEnabled: true
+        ))
+        #expect(!RecordingCameraPreviewPolicy.wantsCameraPreview(
+            isScreenSharing: true,
+            cameraEnabled: true
+        ))
+    }
+
     @Test("Camera preview does not auto-start just because permission is already granted")
     func cameraPreviewDoesNotAutoStartWhenPermissionAlreadyGranted() {
         #expect(!CameraPreviewStartupPolicy.shouldAutoStartOnAppear(

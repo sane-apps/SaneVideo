@@ -19,6 +19,11 @@ release:
   r2_bucket: sanebar-downloads
   use_sparkle: true
   min_system_version: "15.0"
+  upgrade_path_test:
+    scheme: SaneVideo
+    test_selector: SaneVideoTests/AppIntegrationTests
+    from_version: "1.0.3"
+    timeout_seconds: 600
   dmg:
     volume_icon: Resources/DMGIcon.icns
     file_icon: Resources/DMGIcon.icns

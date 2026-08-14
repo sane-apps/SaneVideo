@@ -22,7 +22,7 @@ release:
   upgrade_path_test:
     scheme: SaneVideo
     test_selector: SaneVideoTests/AppIntegrationTests
-    from_version: "1.0.3"
+    from_version: "1.0.2"
     timeout_seconds: 600
   dmg:
     volume_icon: Resources/DMGIcon.icns

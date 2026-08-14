@@ -528,6 +528,15 @@ class AppState {
     }
 }
 
+enum RecordingCameraPreviewPolicy {
+    static func wantsCameraPreview(
+        isScreenSharing: Bool,
+        cameraEnabled: Bool
+    ) -> Bool {
+        !isScreenSharing && cameraEnabled
+    }
+}
+
 enum CameraPreviewStartupPolicy {
     static func shouldAutoStartOnAppear(
         isScreenSharing _: Bool,

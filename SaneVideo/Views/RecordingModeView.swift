@@ -18,11 +18,9 @@ struct RecordingModeView: View {
             let buttonScale = min(max(geo.size.width / 1000, 0.6), 1.2)
             // Use .medium as base (52pt) and scale from there
             let scaledButtonSize: CGFloat = IconCircleButton.Size.medium.diameter * buttonScale
-            let wantsCameraPreview = !appState.isScreenSharing && (
-                appState.cameraEnabled
-                    || appState.recordingState.isPreparing
-                    || appState.isRecording
-                    || appState.cameraState.shouldShowCameraSurface
+            let wantsCameraPreview = RecordingCameraPreviewPolicy.wantsCameraPreview(
+                isScreenSharing: appState.isScreenSharing,
+                cameraEnabled: appState.cameraEnabled
             )
 
             ZStack {

@@ -74,6 +74,8 @@ final class ReleaseReadinessRegressionTests: XCTestCase {
         XCTAssertTrue(appSource.contains("Pro is required after the 14-day trial"))
         XCTAssertFalse(appSource.contains("Basic stays available after the trial"))
         XCTAssertTrue(appSource.contains("Keep Pro for $14.99 once"))
+        XCTAssertTrue(appSource.contains("onComplete: { hasSeenWelcome = true }"))
+        XCTAssertFalse(appSource.contains(".sheet(isPresented: Binding("))
         XCTAssertFalse(appSource.contains("AI-powered cleanup & subtitles"))
         XCTAssertTrue(appError.contains("Screen Recording Permission Required"))
         XCTAssertTrue(appError.contains("Screen & System Audio Recording access"))

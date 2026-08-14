@@ -4,6 +4,12 @@ All notable changes to SaneVideo are documented here.
 
 ---
 
+## [1.0.4] - 2026-08-14
+
+Fix window close so SaneVideo quits and stays closed. Welcome is sized to its content. Recording with the camera off no longer hangs on Camera Loading.
+
+---
+
 ## [1.0.3] - 2026-07-10
 
 Clearer first-run recording permissions, an explicit recorder path from the empty editor, and simpler Export and Focus & Framing labels.

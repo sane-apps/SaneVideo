@@ -1,6 +1,12 @@
 # Session Handoff — SaneVideo
 
-**Last updated:** 2026-08-14
+**Last updated:** 2026-08-14 14:28 EDT
+
+## 2026-08-14 1.0.4 publish
+
+- Sparkle, website, ZIP, and email webhook are live at 1.0.4 build 6.
+- Lemon Squeezy hosted file is only `SaneVideo-1.0.4.zip` (1.0.3 removed). Post-release checks passed.
+- App Store not submitted. Review notes were fixed (`786455d`) and the 1.0.3 DEVELOPER_REJECTED lane was retargeted to 1.0.4. Preflight still wants a fresh customer UI receipt after that notes commit.
 
 ## 2026-08-14 close, welcome size, camera-loading freeze
 

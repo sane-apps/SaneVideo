@@ -1,6 +1,14 @@
 # Session Handoff — SaneVideo
 
-**Last updated:** 2026-08-14 14:28 EDT
+**Last updated:** 2026-08-14 23:22 EDT
+
+## 2026-08-14 customer-UI + preflight
+
+Customer UI contract `--strict-visual` passed (19 actions, fingerprint
+`07fdea6fbddf61151ea13e58efeeaa72ba27685a92ea9278680e1044adf1bfda`).
+`appstore_preflight` with grant-permissions off: tests 1228 passed,
+review notes OK, ASC macOS 1.0.4 DEVELOPER_REJECTED. Blocked only on
+uncommitted source until this receipt commit. Did not Submit.
 
 ## 2026-08-14 1.0.4 publish
 

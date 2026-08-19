@@ -37,14 +37,7 @@ struct SaneVideoApp: App {
     var body: some Scene {
         WindowGroup(MainWindowScenePolicy.title, id: MainWindowScenePolicy.sceneID) {
             Group {
-                if licenseService.hasExpiredProTrial {
-                    LicenseGateView(
-                        licenseService: licenseService,
-                        appIcon: "play.tv",
-                        donationURL: OpenSourceRelease.donationURL
-                    )
-                        .preferredColorScheme(.dark)
-                } else if !hasSeenWelcome {
+                if !hasSeenWelcome {
                     // In-window welcome, not a sheet: a sheet disables the window close button.
                     WelcomeGateView(
                         appName: "SaneVideo",

@@ -200,7 +200,7 @@ struct DemoStudioSheet: View {
 
             TextField("Call To Action", text: $publishCTA)
                 .textFieldStyle(.roundedBorder)
-                .help("Simple next step such as Learn more, Start a trial, or Book a demo.")
+                .help("Simple next step such as Learn more or Book a demo.")
 
             TextEditor(text: $publishDescription)
                 .font(Theme.Typography.body)

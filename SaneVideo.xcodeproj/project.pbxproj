@@ -475,6 +475,7 @@
 		AA4AA7F03CE318247AD7D619 /* GIFExportSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 168B46724094D3DB80AF8610 /* GIFExportSheet.swift */; };
 		AA7A20FB261918E441AAF07A /* SaneVideoApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7148B92CCE94A12DE46147A0 /* SaneVideoApp.swift */; };
 		AA98F2184D842050D84AD4DF /* ScreenPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45D6D73E3FDA0C4472B32324 /* ScreenPreviewView.swift */; };
+		AAA26901772F71123B14CED9 /* OpenSourceRelease.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B1F46CD9BE9059F28C74687 /* OpenSourceRelease.swift */; };
 		AB4A6229BBF7FADDDF8A610B /* ProjectState+Import.swift in Sources */ = {isa = PBXBuildFile; fileRef = E44F00DCFBC718AFEC92ABB1 /* ProjectState+Import.swift */; };
 		ABC8427C75A9E5B9A3B55448 /* CrashReporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = E52F5808D87DC54B5CAD5590 /* CrashReporter.swift */; };
 		ABD8D1205215A780E5C7CECA /* MetalOptimization.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3F951E6DB7B23087DD5FE01 /* MetalOptimization.swift */; };
@@ -547,6 +548,7 @@
 		C137712A165E95DDF359028D /* KeychainService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAF4B03D09AD9474FAAAEFB3 /* KeychainService.swift */; };
 		C171C2B983E8B6CD78676C3A /* RealTimeAudioProcessorProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 036F8EFCE2BA39CE3BB7D9C4 /* RealTimeAudioProcessorProtocol.swift */; };
 		C1A6E9BB5648BEEA52F58B9B /* SaneVideoCompositionInstruction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E8125B381D2B418F62F430E /* SaneVideoCompositionInstruction.swift */; };
+		C1FE92B28F83E484BFCB1752 /* OpenSourceRelease.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B1F46CD9BE9059F28C74687 /* OpenSourceRelease.swift */; };
 		C202634843C31973BC7CC5AC /* AnimationModifiers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0370603FB35B5E437E15A1FB /* AnimationModifiers.swift */; };
 		C2632AF8A10C2AD431AB2A0C /* ExportUIModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1200C35354B58086C0DFA21D /* ExportUIModels.swift */; };
 		C2A0AFC6A57ADEDB1FAE43A7 /* ErrorHandlingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E4ACC871FFEDF06D5840C8F /* ErrorHandlingTests.swift */; };
@@ -797,6 +799,7 @@
 		26AC8CDF8551EE6B0A95BE5A /* WaveformService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WaveformService.swift; sourceTree = "<group>"; };
 		26C801249A9120E82DFFE996 /* VideoSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoSection.swift; sourceTree = "<group>"; };
 		29E2E80D424936C20D07B098 /* ClipWaveformCalculator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipWaveformCalculator.swift; sourceTree = "<group>"; };
+		2B1F46CD9BE9059F28C74687 /* OpenSourceRelease.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenSourceRelease.swift; sourceTree = "<group>"; };
 		2B54863F4B18A43BA9D96989 /* KeyboardNavigationRegressionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardNavigationRegressionTests.swift; sourceTree = "<group>"; };
 		2B71585E1BB771ED66DFC8CC /* VideoEffectGenerators.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoEffectGenerators.swift; sourceTree = "<group>"; };
 		2B917AF37164ED8D18BAFBA5 /* ComprehensiveFeatureTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComprehensiveFeatureTests.swift; sourceTree = "<group>"; };
@@ -1518,6 +1521,7 @@
 				7FFED499B0C58F7E40E93FF0 /* GlobalHotkeyManager.swift */,
 				432F8F1A2304768337B8CEA9 /* HapticsManager.swift */,
 				B23833037EFA870933C1856B /* KeyboardShortcutHelper.swift */,
+				2B1F46CD9BE9059F28C74687 /* OpenSourceRelease.swift */,
 				ADECD46DE6680A0000F612F8 /* PDFExportDocument.swift */,
 				77FECBC52A0C9A18A9E79370 /* ToolbarButtonStyle.swift */,
 				E7E5F1828AC6C23763895AFB /* Configuration */,
@@ -2638,6 +2642,7 @@
 				BD1BA7294FA1A5C2C3E65F36 /* MediaAssetManager.swift in Sources */,
 				5BB83DFF85A08552D53126AF /* MemoryManager.swift in Sources */,
 				F087F405C4E489C965F0E9D9 /* MetalOptimization.swift in Sources */,
+				AAA26901772F71123B14CED9 /* OpenSourceRelease.swift in Sources */,
 				FCEA60890C52E917C8EBFF65 /* OptionButtonGroup.swift in Sources */,
 				D045E773D7F3125F368B1678 /* PDFExportDocument.swift in Sources */,
 				F641F4F3DD6FCCEE14179520 /* PDFGeneratorService.swift in Sources */,
@@ -2929,6 +2934,7 @@
 				1BEE31B09F9B3D767812CED5 /* MediaAssetManager.swift in Sources */,
 				4CC287A9110392002E7FA14F /* MemoryManager.swift in Sources */,
 				ABD8D1205215A780E5C7CECA /* MetalOptimization.swift in Sources */,
+				C1FE92B28F83E484BFCB1752 /* OpenSourceRelease.swift in Sources */,
 				4FA6FF5782C3D99A10A04F52 /* OptionButtonGroup.swift in Sources */,
 				09E71C1A1A9FD2DD834C0B72 /* PDFExportDocument.swift in Sources */,
 				5DA7B48BB92B8A66608546F2 /* PDFGeneratorService.swift in Sources */,
@@ -3109,7 +3115,7 @@
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = YES;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 6;
+				CURRENT_PROJECT_VERSION = 7;
 				DEAD_CODE_STRIPPING = YES;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
@@ -3120,7 +3126,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 15.0;
-				MARKETING_VERSION = 1.0.4;
+				MARKETING_VERSION = 1.0.5;
 				MTL_ENABLE_APPLE_SILICON_ONLY_OPTIMIZATIONS = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.sanevideo.app;
 				PRODUCT_NAME = SaneVideo;
@@ -3140,7 +3146,7 @@
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = YES;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 6;
+				CURRENT_PROJECT_VERSION = 7;
 				DEAD_CODE_STRIPPING = YES;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
@@ -3151,7 +3157,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 15.0;
-				MARKETING_VERSION = 1.0.4;
+				MARKETING_VERSION = 1.0.5;
 				MTL_ENABLE_APPLE_SILICON_ONLY_OPTIMIZATIONS = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.sanevideo.app;
 				PRODUCT_NAME = SaneVideo;
@@ -3276,7 +3282,7 @@
 				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = YES;
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 6;
+				CURRENT_PROJECT_VERSION = 7;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = M78L6FXD48;
 				ENABLE_PREVIEWS = YES;
@@ -3289,7 +3295,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 15.0;
-				MARKETING_VERSION = 1.0.4;
+				MARKETING_VERSION = 1.0.5;
 				MTL_ENABLE_APPLE_SILICON_ONLY_OPTIMIZATIONS = YES;
 				OTHER_SWIFT_FLAGS = "-D APP_STORE";
 				PRODUCT_BUNDLE_IDENTIFIER = com.sanevideo.app;
@@ -3462,7 +3468,7 @@
 				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = YES;
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 6;
+				CURRENT_PROJECT_VERSION = 7;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = M78L6FXD48;
 				ENABLE_CODE_COVERAGE = YES;
@@ -3476,7 +3482,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 15.0;
-				MARKETING_VERSION = 1.0.4;
+				MARKETING_VERSION = 1.0.5;
 				MTL_ENABLE_APPLE_SILICON_ONLY_OPTIMIZATIONS = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.sanevideo.app;
 				PRODUCT_NAME = SaneVideo;
@@ -3497,7 +3503,7 @@
 				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = YES;
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 6;
+				CURRENT_PROJECT_VERSION = 7;
 				DEAD_CODE_STRIPPING = YES;
 				ENABLE_CODE_COVERAGE = YES;
 				ENABLE_PREVIEWS = YES;
@@ -3510,7 +3516,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 15.0;
-				MARKETING_VERSION = 1.0.4;
+				MARKETING_VERSION = 1.0.5;
 				MTL_ENABLE_APPLE_SILICON_ONLY_OPTIMIZATIONS = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.sanevideo.app;
 				PRODUCT_NAME = SaneVideo;
@@ -3533,7 +3539,7 @@
 				CODE_SIGN_INJECT_BASE_ENTITLEMENTS = YES;
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 6;
+				CURRENT_PROJECT_VERSION = 7;
 				DEAD_CODE_STRIPPING = YES;
 				ENABLE_CODE_COVERAGE = YES;
 				ENABLE_PREVIEWS = YES;
@@ -3546,7 +3552,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 15.0;
-				MARKETING_VERSION = 1.0.4;
+				MARKETING_VERSION = 1.0.5;
 				MTL_ENABLE_APPLE_SILICON_ONLY_OPTIMIZATIONS = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.sanevideo.app;
 				PRODUCT_NAME = SaneVideo;
@@ -3625,7 +3631,7 @@
 			repositoryURL = "https://github.com/sane-apps/SaneUI.git";
 			requirement = {
 				kind = revision;
-				revision = 7f87b04bd74c6903a34e715ff46adf583d854f87;
+				revision = 8568997e8d7e8570cb376fd2f5f1f206a3d77e5a;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */

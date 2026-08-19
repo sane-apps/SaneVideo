@@ -40,11 +40,13 @@ struct MainContentView: View {
                     MagicOverlayView()
                 }
                 .overlay(alignment: .bottomTrailing) {
-                    #if DEBUG
-                        // Build timestamp for cross-referencing screenshots with logs.
-                        BuildTimestampView()
-                            .padding(12)
-                    #endif
+                    VStack(alignment: .trailing, spacing: 8) {
+                        #if DEBUG
+                            BuildTimestampView()
+                        #endif
+                        SaneStickyDonateButton(url: OpenSourceRelease.donationURL)
+                    }
+                    .padding(16)
                 }
                 .overlay {
                     // Quick Access Overlay (post-recording)

@@ -25,6 +25,10 @@ struct SaneVideoApp: App {
     @AppStorage("hasSeenWelcome") private var hasSeenWelcome = false
     @Environment(\.scenePhase) private var scenePhase
 
+    init() {
+        OpenSourceRelease.activate()
+    }
+
     #if !APP_STORE
         // Sparkle auto-update service (manual check only for launch)
         @State private var updaterService = ServiceContainer.shared.updaterService
@@ -34,7 +38,11 @@ struct SaneVideoApp: App {
         WindowGroup(MainWindowScenePolicy.title, id: MainWindowScenePolicy.sceneID) {
             Group {
                 if licenseService.hasExpiredProTrial {
-                    LicenseGateView(licenseService: licenseService, appIcon: "play.tv")
+                    LicenseGateView(
+                        licenseService: licenseService,
+                        appIcon: "play.tv",
+                        donationURL: OpenSourceRelease.donationURL
+                    )
                         .preferredColorScheme(.dark)
                 } else if !hasSeenWelcome {
                     // In-window welcome, not a sheet: a sheet disables the window close button.
@@ -43,21 +51,22 @@ struct SaneVideoApp: App {
                         appIcon: "play.tv",
                         freeFeatures: [
                             (icon: "film", text: "Record, edit, and trim local videos"),
-                            (icon: "wand.and.rays", text: "Try the complete local video workflow"),
+                            (icon: "wand.and.rays", text: "Use the complete local video workflow"),
                             (icon: "bolt", text: "Use every export preset, template, and polish tool")
                         ],
                         proFeatures: [
-                            (icon: "checkmark.seal", text: "Keep every Pro tool after your trial"),
-                            (icon: "lock.fill", text: "Pro is required after the 14-day trial"),
-                            (icon: "sparkles", text: "Keep Pro for $14.99 once"),
-                            (icon: "square.stack.3d.up", text: "One-time upgrade, no subscription")
+                            (icon: "checkmark.seal", text: "Every recording and edit tool is included"),
+                            (icon: "lock.open", text: "No trial and no paywall"),
+                            (icon: "heart.fill", text: "Donate only if you want to support it"),
+                            (icon: "square.stack.3d.up", text: "Local export. No subscription")
                         ],
-                        freeTierTitle: "14-day Pro trial",
-                        freeTierPrice: "All Pro features included",
-                        proTierTitleOverride: "Keep Pro",
-                        proTierPriceOverride: "$14.99 once — yours forever",
+                        freeTierTitle: "Free and open source",
+                        freeTierPrice: "All features included",
+                        proTierTitleOverride: "Support SaneVideo",
+                        proTierPriceOverride: "Donate if it helps you",
                         permissionConfig: welcomePermissionConfig,
                         licenseService: licenseService,
+                        donationURL: OpenSourceRelease.donationURL,
                         onComplete: { hasSeenWelcome = true }
                     )
                     .preferredColorScheme(.dark)
@@ -394,8 +403,8 @@ enum MainWindowScenePolicy {
 }
 
 enum MainWindowLayoutPolicy {
-    static let welcomeSize = CGSize(width: 800, height: 700)
-    static let licenseSize = CGSize(width: 520, height: 680)
+    static let welcomeSize = WelcomeGateLayoutPolicy.frameSize(appSlug: "sanevideo")
+    static let licenseSize = LicenseGateLayoutPolicy.frameSize
     static let editorSize = CGSize(
         width: AppConstants.defaultWindowWidth,
         height: AppConstants.defaultWindowHeight

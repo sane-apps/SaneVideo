@@ -502,11 +502,13 @@ final class APIDeprecationTests: XCTestCase {
             encoding: .utf8
         )
 
-        XCTAssertTrue(pricing.contains("case .launch: return \"$14.99\""))
-        XCTAssertTrue(pricing.contains("case .regular: return \"$14.99\""))
-        XCTAssertTrue(pricing.contains("Public testing no longer uses discounted launch pricing."))
-        XCTAssertTrue(pricing.contains("Enjoy 14 days of Pro"))
-        XCTAssertTrue(pricing.contains("Try Pro free for 14 days"))
+        XCTAssertTrue(pricing.contains("case .launch: return \"Free\""))
+        XCTAssertTrue(pricing.contains("case .regular: return \"Free\""))
+        XCTAssertTrue(pricing.contains("Launch-period discount path is retired. SaneVideo is free."))
+        XCTAssertTrue(pricing.contains("Free and open source. Donate only if you want to support it."))
+        XCTAssertTrue(pricing.contains("Every recording and edit tool stays unlocked."))
+        XCTAssertFalse(pricing.contains("Enjoy 14 days of Pro"))
+        XCTAssertFalse(pricing.contains("Try Pro free for 14 days"))
         XCTAssertFalse(pricing.contains("Launch Special: $29"))
         XCTAssertFalse(pricing.contains("case .regular: return \"$49\""))
         XCTAssertFalse(pricing.contains("Everything included. One price. Forever."))

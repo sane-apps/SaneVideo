@@ -16,9 +16,9 @@ enum PricingTier: String, Codable, Sendable {
 
     var displayPrice: String {
         switch self {
-        case .launch: return "$14.99"
-        case .regular: return "$14.99"
-        case .premium: return "$79"
+        case .launch: return "Free"
+        case .regular: return "Free"
+        case .premium: return "Free"
         }
     }
 
@@ -61,7 +61,7 @@ class PricingConfiguration {
     /// Feature flags
     var featureFlags = FeatureFlags.default
 
-    /// Public testing no longer uses discounted launch pricing.
+    /// Launch-period discount path is retired. SaneVideo is free.
     private let launchPeriodEndDate: Date
 
     /// Whether we're in the launch pricing period
@@ -110,15 +110,12 @@ class PricingConfiguration {
 
     /// Get pricing message for UI
     func pricingMessage() -> String {
-        if isLaunchPeriod {
-            return "Enjoy 14 days of Pro, then keep it for \(currentPrice) once"
-        }
-        return "\(currentPrice) one-time purchase"
+        "Free and open source. Donate only if you want to support it."
     }
 
     /// Get value proposition message
     func valueProposition() -> String {
-        "Try Pro free for 14 days. Pro is required after the trial."
+        "Every recording and edit tool stays unlocked."
     }
 }
 

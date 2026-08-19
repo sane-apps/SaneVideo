@@ -39,7 +39,7 @@ struct PricingBadge: View {
             HStack(spacing: 4) {
                 Text(pricingConfig.currentPrice)
                     .font(.caption.bold())
-                Text("one-time")
+                Text("MIT")
                     .font(.caption2)
                     .foregroundColor(Color.stone)
             }

@@ -26,15 +26,15 @@ Most tools fall into two traps: **bloated professionals** that overwhelm everyda
 
 **Local-First Video Workflow**
 
-SaneVideo starts with full Pro for 14 days. After that, Pro is required and remains $14.99 once.
+SaneVideo is free and open source. Setup stays. Every recording and edit tool stays unlocked. Donate only if you want to support it.
 
 ---
 
 ## Download
 
-**[Download SaneVideo](https://sanevideo.com)** to start a free 14-day Pro trial. After the trial, Pro is required and remains a $14.99 one-time purchase.
+**[Download SaneVideo](https://sanevideo.com)** or clone the source. Current release: **1.0.5**. The app is signed, notarized, and built for local screen, camera, and microphone recording without uploading your footage to SaneApps servers.
 
-Current direct release: **1.0.2**. The app is signed, notarized, and built for local screen, camera, and microphone recording without uploading your footage to SaneApps servers.
+Support: [GitHub Sponsors](https://github.com/sponsors/MrSaneApps) · Contribute: https://github.com/sane-apps/SaneVideo
 
 ---
 

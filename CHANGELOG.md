@@ -4,6 +4,12 @@ All notable changes to SaneVideo are documented here.
 
 ---
 
+## [1.0.5] - 2026-08-18
+
+SaneVideo is now free and open source under the MIT License. Setup stays. Every feature stays unlocked. Buy is now Donate.
+
+---
+
 ## [1.0.4] - 2026-08-14
 
 Fix window close so SaneVideo quits and stays closed. Welcome is sized to its content. Recording with the camera off no longer hangs on Camera Loading.

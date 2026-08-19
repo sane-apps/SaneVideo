@@ -60,7 +60,11 @@ struct SettingsView: View {
                 }
                 .tag("icloud")
 
-            LicenseSettingsView(licenseService: licenseService, style: .panel)
+            LicenseSettingsView(
+                licenseService: licenseService,
+                style: .panel,
+                donationURL: OpenSourceRelease.donationURL
+            )
                 .tabItem {
                     Label("License", systemImage: "key.fill")
                 }

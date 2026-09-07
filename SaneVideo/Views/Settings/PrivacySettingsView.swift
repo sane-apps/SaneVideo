@@ -35,7 +35,7 @@ struct PrivacySettingsView: View {
                             NSWorkspace.shared.open(webURL)
                         }
                     } label: {
-                        Label(String(localized: "settings.privacy.view_policy", defaultValue: "View Privacy Policy"), systemImage: "doc.text.fill")
+                        Label(String(localized: "settings.privacy.view_policy", defaultValue: "View Privacy Policy"), systemImage: "arrow.up.right.square")
                     }
                     .buttonStyle(SaneActionButtonStyle())
                     .help("Open the full privacy policy.")
@@ -45,7 +45,7 @@ struct PrivacySettingsView: View {
                             NSWorkspace.shared.open(webURL)
                         }
                     } label: {
-                        Label(String(localized: "settings.privacy.view_license", defaultValue: "View License"), systemImage: "doc.text.fill")
+                        Label(String(localized: "settings.privacy.view_license", defaultValue: "View License"), systemImage: "arrow.up.right.square")
                     }
                     .buttonStyle(SaneActionButtonStyle())
                     .help("Open SaneVideo’s MIT license.")

@@ -40,13 +40,8 @@ struct MainContentView: View {
                     MagicOverlayView()
                 }
                 .overlay(alignment: .bottomTrailing) {
-                    VStack(alignment: .trailing, spacing: 8) {
-                        #if DEBUG
-                            BuildTimestampView()
-                        #endif
-                        SaneStickyDonateButton(url: OpenSourceRelease.donationURL)
-                    }
-                    .padding(16)
+                    SaneStickyDonateButton(url: OpenSourceRelease.donationURL)
+                        .padding(16)
                 }
                 .overlay {
                     // Quick Access Overlay (post-recording)
@@ -74,8 +69,9 @@ struct MainContentView: View {
                 // Global Keyboard Shortcuts
                 .background {
                     Button("") {
-                        showLogs.toggle()
+                        appState.performProjectCommand { showLogs.toggle() }
                     }
+                    .disabled(!appState.projectCommandsEnabled)
                     .keyboardShortcut("l", modifiers: [.command])
                     .opacity(0)
                 }
@@ -141,7 +137,9 @@ struct MainContentView: View {
                 }
                 // Menu command handlers for export features
                 .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ExportAsGIF"))) { _ in
-                    showGIFSheet = true
+                    appState.performProjectCommand {
+                        showGIFSheet = true
+                    }
                 }
                 .sheet(isPresented: $showGIFSheet) {
                     if let project = appState.projectState.currentProject,
@@ -156,7 +154,9 @@ struct MainContentView: View {
                 .onReceive(
                     NotificationCenter.default.publisher(for: NSNotification.Name("ExportTranscriptPDF"))
                 ) { _ in
-                    showTranscriptSheet = true
+                    appState.performProjectCommand {
+                        showTranscriptSheet = true
+                    }
                 }
                 .sheet(isPresented: $showTranscriptSheet) {
                     if let project = appState.projectState.currentProject {
@@ -172,7 +172,9 @@ struct MainContentView: View {
                 .onReceive(
                     NotificationCenter.default.publisher(for: NSNotification.Name("GenerateVoiceover"))
                 ) { _ in
-                    showVoiceoverSheet = true
+                    appState.performProjectCommand {
+                        showVoiceoverSheet = true
+                    }
                 }
                 .sheet(isPresented: $showVoiceoverSheet) {
                     if let project = appState.projectState.currentProject {
@@ -197,7 +199,9 @@ struct MainContentView: View {
                 .onReceive(
                     NotificationCenter.default.publisher(for: NSNotification.Name("GenerateThumbnail"))
                 ) { _ in
-                    showThumbnailSheet = true
+                    appState.performProjectCommand {
+                        showThumbnailSheet = true
+                    }
                 }
                 .sheet(isPresented: $showThumbnailSheet) {
                     if let project = appState.projectState.currentProject,
@@ -355,21 +359,21 @@ struct MainContentView: View {
                 if appState.appMode == .editing {
                     ControlGroup {
                         Button(
-                            action: { undoManager?.undo() },
+                            action: { appState.performProjectCommand { undoManager?.undo() } },
                             label: {
                                 Label("Undo", systemImage: "arrow.uturn.backward")
                             }
                         )
-                        .disabled(!(undoManager?.canUndo ?? false))
+                        .disabled(!appState.projectCommandsEnabled || !(undoManager?.canUndo ?? false))
                         .keyboardShortcut("z", modifiers: [.command])
 
                         Button(
-                            action: { undoManager?.redo() },
+                            action: { appState.performProjectCommand { undoManager?.redo() } },
                             label: {
                                 Label("Redo", systemImage: "arrow.uturn.forward")
                             }
                         )
-                        .disabled(!(undoManager?.canRedo ?? false))
+                        .disabled(!appState.projectCommandsEnabled || !(undoManager?.canRedo ?? false))
                         .keyboardShortcut("z", modifiers: [.command, .shift])
                     }
                 }
@@ -379,7 +383,7 @@ struct MainContentView: View {
                 if appState.appMode == .editing {
                     // Export is the primary next step; sharing remains available after a file exists.
                     Button(
-                        action: { appState.showExportSheet = true },
+                        action: { appState.performProjectCommand { appState.showExportSheet = true } },
                         label: {
                             Label("Export", systemImage: "square.and.arrow.up")
                         }
@@ -387,7 +391,7 @@ struct MainContentView: View {
                     .buttonStyle(.borderedProminent)
                     // .borderedProminent uses system accent automatically
                     .hoverScale(1.05)
-                    .disabled(appState.currentProject?.timeline.tracks.allSatisfy(\.clips.isEmpty) ?? true)
+                    .disabled(!appState.projectCommandsEnabled || (appState.currentProject?.timeline.tracks.allSatisfy(\.clips.isEmpty) ?? true))
                     .help((appState.currentProject?.timeline.tracks.allSatisfy(\.clips.isEmpty) ?? true) ? "Add clips to timeline first" : "Export (Cmd+E)")
                     .keyboardShortcut("e", modifiers: [.command])
                     .accessibilityIdentifier(AccessibilityIdentifiers.exportButton)

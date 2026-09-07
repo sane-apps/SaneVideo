@@ -41,7 +41,7 @@ enum TranscriptionEngine: String, CaseIterable, Identifiable, Codable {
     }
 
     var description: String {
-        "Industry-leading accuracy for accents, non-English, technical jargon, and noisy audio (~800MB download)"
+        "Create captions and transcripts on your Mac. Requires a model download before first use."
     }
 
     var icon: String {

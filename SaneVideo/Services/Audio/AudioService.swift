@@ -294,52 +294,37 @@ class AudioService: NSObject, AudioServiceProtocol {
   // MARK: - Audio Level Calculation
 
   private func calculateAudioLevel(from sampleBuffer: CMSampleBuffer) {
-    guard let blockBuffer = CMSampleBufferGetDataBuffer(sampleBuffer),
-      let formatDescription = CMSampleBufferGetFormatDescription(sampleBuffer)
-    else { return }
-
-    let asbd = CMAudioFormatDescriptionGetStreamBasicDescription(formatDescription)?.pointee
-    let isFloat = (asbd?.mFormatFlags ?? 0) & kAudioFormatFlagIsFloat != 0
-
-    var length = 0
-    var dataPointer: UnsafeMutablePointer<Int8>?
-
-    guard
-      CMBlockBufferGetDataPointer(
-        blockBuffer,
-        atOffset: 0,
-        lengthAtOffsetOut: nil,
-        totalLengthOut: &length,
-        dataPointerOut: &dataPointer
-      ) == kCMBlockBufferNoErr,
-      let data = dataPointer
-    else { return }
-
+    guard let pcmBuffer = AVAudioPCMBuffer(sampleBuffer: sampleBuffer) else { return }
+    let channelSpans = pcmBuffer.format.isInterleaved ? 1 : Int(pcmBuffer.format.channelCount)
+    let samplesPerSpan = Int(pcmBuffer.frameLength) * pcmBuffer.stride
     var sum: Float = 0
     var sampleCount = 0
 
-    if isFloat {
-      // Float32 (Standard for macOS audio)
-      let samples = length / 4
-      let ptr = data.withMemoryRebound(to: Float.self, capacity: samples) { $0 }
-
-      // RMS over all samples
-      for index in 0..<samples {
-        let sample = ptr[index]
-        sum += sample * sample
+    let supported = withExtendedLifetime(pcmBuffer) {
+      switch pcmBuffer.format.commonFormat {
+      case .pcmFormatFloat32:
+        guard let channels = pcmBuffer.floatChannelData else { return false }
+        for channel in 0..<channelSpans {
+          for index in 0..<samplesPerSpan {
+            let sample = channels[channel][index]
+            sum += sample * sample
+          }
+        }
+      case .pcmFormatInt16:
+        guard let channels = pcmBuffer.int16ChannelData else { return false }
+        for channel in 0..<channelSpans {
+          for index in 0..<samplesPerSpan {
+            let sample = Float(channels[channel][index]) / Float(Int16.max)
+            sum += sample * sample
+          }
+        }
+      default:
+        return false
       }
-      sampleCount = samples
-    } else {
-      // Int16 (Fallback)
-      let samples = length / 2
-      let ptr = data.withMemoryRebound(to: Int16.self, capacity: samples) { $0 }
-
-      for index in 0..<samples {
-        let sample = Float(ptr[index]) / Float(Int16.max)
-        sum += sample * sample
-      }
-      sampleCount = samples
+      return true
     }
+    guard supported else { return }
+    sampleCount = channelSpans * samplesPerSpan
 
     guard sampleCount > 0 else { return }
 

@@ -24,7 +24,7 @@ Product roster (canonical): macOS = SaneHosts, SaneClip, SaneClick, SaneSales, S
 
 ## Build & Test (Mini-first)
 
-- Canonical route: run `ruby scripts/SaneMaster.rb verify` on the Mac Mini (build + unit tests). `scripts/SaneMaster.rb` is the main CLI (build, test, verify, gen_test, gen_mock, etc.); use it instead of raw `xcodebuild`.
+- Canonical route: run `./scripts/SaneMaster.rb verify` on the Mac Mini (build + unit tests). `scripts/SaneMaster.rb` is the main CLI (build, test, verify, gen_test, gen_mock, etc.); use it instead of raw `xcodebuild`.
 - Local Xcode builds on the Air are an explicitly-approved fallback only.
 - Release: `bash ~/SaneApps/infra/SaneProcess/scripts/release.sh --project <path> --full` (ships ZIPs).
 - Hooks are managed globally at `~/SaneApps/infra/SaneProcess/`; MCP health checks go through the shared `check-mcps` / `mcp_watchdog` tooling there.

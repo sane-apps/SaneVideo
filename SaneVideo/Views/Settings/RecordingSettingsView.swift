@@ -1,76 +1,53 @@
-//
-//  RecordingSettingsView.swift
-//  SaneVideo
-//
-//  Created by SaneVideo Refactor
-//
-
 import AVFoundation
+import SaneUI
 import SwiftUI
 
 struct RecordingSettingsView: View {
-  @Bindable var prefs = ServiceContainer.shared.userPreferences
+    @Bindable var prefs = ServiceContainer.shared.userPreferences
 
-  var body: some View {
-    Form {
-      Section {
-        InformationBox(
-          text: "These defaults affect new recordings on this Mac. They do not change existing clips already in your projects.",
-          color: Theme.Colors.accent,
-          icon: "record.circle.fill"
-        )
-      }
+    var body: some View {
+        SaneSettingsPage {
+            Text("Defaults for new camera recordings. Existing clips keep their original settings.")
+                .saneReadableSupportText()
+                .fixedSize(horizontal: false, vertical: true)
 
-      Section(header: Text("Recording Configuration").saneReadableSectionTitle()) {
-        Text(
-          "These settings apply to camera recordings. Screen recording resolution is determined by the screen source."
-        )
-        .saneReadableSupportText()
-        .padding(.bottom, 8)
+            CompactSection("Camera", icon: "video", iconColor: .red) {
+                CompactRow("Resolution") {
+                    Picker("Resolution", selection: $prefs.recordingResolution) {
+                        Text("720p HD").tag(SaneExportSettings.ExportResolution.hd720)
+                        Text("1080p HD").tag(SaneExportSettings.ExportResolution.hd1080)
+                        Text("4K UHD").tag(SaneExportSettings.ExportResolution.uhd4K)
+                    }
+                    .labelsHidden()
+                    .help("Choose the resolution for new camera recordings.")
+                    .accessibilityIdentifier("settings.recording.resolution_picker")
+                }
+                CompactDivider()
+                CompactRow("Frame rate") {
+                    Picker("Frame Rate", selection: $prefs.recordingFPS) {
+                        Text("30 fps").tag(30.0)
+                        Text("60 fps").tag(60.0)
+                    }
+                    .labelsHidden()
+                    .help("30 fps suits most videos. Use 60 fps for fast movement.")
+                    .accessibilityIdentifier("settings.recording.fps_picker")
+                }
+                CompactDivider()
+                CompactToggle(label: "Mirror camera preview", isOn: $prefs.mirrorCameraPreview)
+                    .help("Show a mirrored preview while recording.")
+                    .accessibilityIdentifier("settings.recording.mirror_camera_preview")
+            }
 
-        Picker("Resolution", selection: $prefs.recordingResolution) {
-          Text("1080p HD").tag(SaneExportSettings.ExportResolution.hd1080)
-          Text("4K UHD").tag(SaneExportSettings.ExportResolution.uhd4K)
-          Text("720p HD").tag(SaneExportSettings.ExportResolution.hd720)
+            CompactSection("Screen Recording", icon: "display", iconColor: .cyan) {
+                CompactToggle(label: "Hide SaneVideo", isOn: $prefs.excludeAppFromRecording)
+                    .help("Exclude SaneVideo windows from screen recordings.")
+                    .accessibilityIdentifier("settings.recording.exclude_app")
+                HelperText(
+                    text: "Screen resolution follows the screen or window you select.",
+                    icon: "viewfinder"
+                )
+                .padding(12)
+            }
         }
-        .help("Choose the default quality for camera recordings on this Mac.")
-        .accessibilityIdentifier("settings.recording.resolution_picker")
-
-        HelperText(
-          text: "Use 1080p for normal demos. Use 4K if you want extra room for reframing and cropping later.",
-          icon: "viewfinder.circle.fill"
-        )
-
-        Picker("Frame Rate", selection: $prefs.recordingFPS) {
-          Text("30 fps").tag(30.0)
-          Text("60 fps").tag(60.0)
-        }
-        .help("Choose the default smoothness for camera recordings.")
-        .accessibilityIdentifier("settings.recording.fps_picker")
-
-        HelperText(
-          text: "30 fps is the normal demo default. Use 60 fps for motion-heavy recordings or very fluid cursor movement.",
-          icon: "speedometer"
-        )
-
-        Toggle("Mirror camera preview", isOn: $prefs.mirrorCameraPreview)
-          .help("Show the camera preview like a mirror. Leave this off when you want the preview to match normal recorded video orientation.")
-          .accessibilityIdentifier("settings.recording.mirror_camera_preview")
-
-        HelperText(
-          text: "Off matches normal video orientation. Turn it on only if you prefer a mirror-style preview while recording.",
-          icon: "arrow.left.and.right.righttriangle.left.righttriangle.right.fill"
-        )
-      }
-
-      Section(header: Text("Screen Recording").saneReadableSectionTitle()) {
-        Toggle("Exclude SaneVideo from Recording", isOn: $prefs.excludeAppFromRecording)
-          .help("Hide the SaneVideo window from screen captures when you record your screen.")
-          .accessibilityIdentifier("settings.recording.exclude_app")
-        Text("When enabled, the SaneVideo window will not appear in screen recordings.")
-          .saneReadableSupportText()
-      }
     }
-    .padding()
-  }
 }

@@ -328,6 +328,7 @@ struct EditorLayoutView: View {
                 .keyboardShortcut("m", modifiers: [.command, .shift])
                 .accessibilityIdentifier("shortcut.magic_fix")
             }
+            .disabled(!appState.projectCommandsEnabled)
             .opacity(0)
             .allowsHitTesting(false)
         }

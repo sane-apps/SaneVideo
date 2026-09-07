@@ -136,38 +136,53 @@ struct SaneVideoApp: App {
 
             CommandGroup(replacing: .newItem) {
                 Button(String(localized: "menu.file.new_recording", defaultValue: "New Recording")) {
-                    appState.startNewRecording()
+                    appState.performProjectCommand {
+                        appState.startNewRecording()
+                    }
                 }
+                .disabled(!appState.projectCommandsEnabled)
                 .keyboardShortcut("n", modifiers: [.command])
                 .accessibilityIdentifier("menu.file.new_recording")
             }
 
             CommandGroup(after: .importExport) {
                 Button(String(localized: "menu.file.open_project", defaultValue: "Show Projects")) {
-                    NotificationCenter.default.post(
-                        name: NSNotification.Name("ShowSidebarProjects"), object: nil
-                    )
+                    appState.performProjectCommand {
+                        NotificationCenter.default.post(
+                            name: NSNotification.Name("ShowSidebarProjects"), object: nil
+                        )
+                    }
                 }
+                .disabled(!appState.projectCommandsEnabled)
                 .keyboardShortcut("o", modifiers: [.command])
                 .accessibilityIdentifier("menu.file.show_projects")
 
                 Button(String(localized: "menu.file.import_video", defaultValue: "Import Video...")) {
-                    appState.importVideo()
+                    appState.performProjectCommand {
+                        appState.importVideo()
+                    }
                 }
+                .disabled(!appState.projectCommandsEnabled)
                 .keyboardShortcut("i", modifiers: [.command])
                 .accessibilityIdentifier("menu.file.import_video")
             }
 
             CommandGroup(after: .sidebar) {
                 Button(String(localized: "menu.view.toggle_sidebar", defaultValue: "Toggle Sidebar")) {
-                    NotificationCenter.default.post(name: NSNotification.Name("ToggleSidebar"), object: nil)
+                    appState.performProjectCommand {
+                        NotificationCenter.default.post(name: NSNotification.Name("ToggleSidebar"), object: nil)
+                    }
                 }
+                .disabled(!appState.projectCommandsEnabled)
                 .keyboardShortcut("s", modifiers: [.command, .option])
                 .accessibilityIdentifier("menu.view.toggle_sidebar")
 
                 Button(String(localized: "menu.view.toggle_inspector", defaultValue: "Toggle Inspector")) {
-                    NotificationCenter.default.post(name: NSNotification.Name("ToggleInspector"), object: nil)
+                    appState.performProjectCommand {
+                        NotificationCenter.default.post(name: NSNotification.Name("ToggleInspector"), object: nil)
+                    }
                 }
+                .disabled(!appState.projectCommandsEnabled)
                 .keyboardShortcut("i", modifiers: [.command, .option])
                 .accessibilityIdentifier("menu.view.toggle_inspector")
             }
@@ -179,16 +194,22 @@ struct SaneVideoApp: App {
                 Divider()
 
                 Button(String(localized: "menu.edit.magic_fix", defaultValue: "Magic Fix Selected Clip")) {
-                    NotificationCenter.default.post(name: NSNotification.Name("TriggerMagicFix"), object: nil)
+                    appState.performProjectCommand {
+                        NotificationCenter.default.post(name: NSNotification.Name("TriggerMagicFix"), object: nil)
+                    }
                 }
+                .disabled(!appState.projectCommandsEnabled)
                 .keyboardShortcut("m", modifiers: [.command, .shift])
                 .accessibilityIdentifier("menu.edit.magic_fix")
 
                 Button(String(localized: "menu.edit.magic_fix_all", defaultValue: "Magic Fix All Clips")) {
-                    NotificationCenter.default.post(
-                        name: NSNotification.Name("TriggerMagicFixAll"), object: nil
-                    )
+                    appState.performProjectCommand {
+                        NotificationCenter.default.post(
+                            name: NSNotification.Name("TriggerMagicFixAll"), object: nil
+                        )
+                    }
                 }
+                .disabled(!appState.projectCommandsEnabled)
                 .accessibilityIdentifier("menu.edit.magic_fix_all")
 
                 Divider()
@@ -198,64 +219,91 @@ struct SaneVideoApp: App {
                         localized: "menu.edit.generate_all_captions", defaultValue: "Generate All Captions"
                     )
                 ) {
-                    NotificationCenter.default.post(
-                        name: NSNotification.Name("GenerateAllCaptions"), object: nil
-                    )
+                    appState.performProjectCommand {
+                        NotificationCenter.default.post(
+                            name: NSNotification.Name("GenerateAllCaptions"), object: nil
+                        )
+                    }
                 }
+                .disabled(!appState.projectCommandsEnabled)
                 .accessibilityIdentifier("menu.edit.generate_all_captions")
 
                 Button(String(localized: "menu.edit.clean_all_audio", defaultValue: "Clean All Audio")) {
-                    NotificationCenter.default.post(name: NSNotification.Name("CleanAllAudio"), object: nil)
+                    appState.performProjectCommand {
+                        NotificationCenter.default.post(name: NSNotification.Name("CleanAllAudio"), object: nil)
+                    }
                 }
+                .disabled(!appState.projectCommandsEnabled)
                 .accessibilityIdentifier("menu.edit.clean_all_audio")
             }
 
             CommandGroup(replacing: .saveItem) {
                 Button(String(localized: "menu.file.save_project", defaultValue: "Save Project")) {
-                    if let project = appState.projectState.currentProject {
-                        appState.projectState.saveProject(project)
+                    appState.performProjectCommand {
+                        if let project = appState.projectState.currentProject {
+                            appState.projectState.saveProject(project)
+                        }
                     }
                 }
+                .disabled(!appState.projectCommandsEnabled)
                 .keyboardShortcut("s", modifiers: [.command])
                 .accessibilityIdentifier("menu.file.save_project")
 
                 Button(String(localized: "menu.file.rename_project", defaultValue: "Rename Project...")) {
-                    NotificationCenter.default.post(
-                        name: NSNotification.Name("ShowRenameProjectDialog"), object: nil
-                    )
+                    appState.performProjectCommand {
+                        NotificationCenter.default.post(
+                            name: NSNotification.Name("ShowRenameProjectDialog"), object: nil
+                        )
+                    }
                 }
+                .disabled(!appState.projectCommandsEnabled)
                 .accessibilityIdentifier("menu.file.rename_project")
             }
 
             CommandGroup(after: .importExport) {
                 Button(String(localized: "menu.file.export_video", defaultValue: "Export Video...")) {
-                    appState.showExportSheet = true
+                    appState.performProjectCommand {
+                        appState.showExportSheet = true
+                    }
                 }
+                .disabled(!appState.projectCommandsEnabled)
                 .keyboardShortcut("e", modifiers: [.command])
                 .accessibilityIdentifier("menu.file.export_video")
 
                 Button(String(localized: "menu.file.demo_studio", defaultValue: "Demo Studio...")) {
-                    appState.openDemoStudio()
+                    appState.performProjectCommand {
+                        appState.openDemoStudio()
+                    }
                 }
+                .disabled(!appState.projectCommandsEnabled)
                 .keyboardShortcut("d", modifiers: [.command, .shift])
                 .accessibilityIdentifier("menu.file.demo_studio")
 
                 Button(String(localized: "menu.file.build_commentary_reel", defaultValue: "Build Commentary Reel")) {
-                    appState.buildCommentaryReel()
+                    appState.performProjectCommand {
+                        appState.buildCommentaryReel()
+                    }
                 }
+                .disabled(!appState.projectCommandsEnabled)
                 .keyboardShortcut("b", modifiers: [.command, .option])
                 .accessibilityIdentifier("menu.file.build_commentary_reel")
 
                 Button(String(localized: "menu.view.teleprompter", defaultValue: "Toggle Teleprompter")) {
-                    appState.toggleTeleprompter()
+                    appState.performProjectCommand {
+                        appState.toggleTeleprompter()
+                    }
                 }
+                .disabled(!appState.projectCommandsEnabled)
                 .accessibilityIdentifier("menu.view.teleprompter")
 
                 Divider()
 
                 Button(String(localized: "menu.file.export_gif", defaultValue: "Export as GIF...")) {
-                    NotificationCenter.default.post(name: NSNotification.Name("ExportAsGIF"), object: nil)
+                    appState.performProjectCommand {
+                        NotificationCenter.default.post(name: NSNotification.Name("ExportAsGIF"), object: nil)
+                    }
                 }
+                .disabled(!appState.projectCommandsEnabled)
                 .keyboardShortcut("g", modifiers: [.command, .shift])
                 .accessibilityIdentifier("menu.file.export_gif")
 
@@ -264,10 +312,13 @@ struct SaneVideoApp: App {
                         localized: "menu.file.export_transcript", defaultValue: "Export Transcript (PDF)..."
                     )
                 ) {
-                    NotificationCenter.default.post(
-                        name: NSNotification.Name("ExportTranscriptPDF"), object: nil
-                    )
+                    appState.performProjectCommand {
+                        NotificationCenter.default.post(
+                            name: NSNotification.Name("ExportTranscriptPDF"), object: nil
+                        )
+                    }
                 }
+                .disabled(!appState.projectCommandsEnabled)
                 .keyboardShortcut("t", modifiers: [.command, .option])
                 .accessibilityIdentifier("menu.file.export_transcript")
 
@@ -276,55 +327,73 @@ struct SaneVideoApp: App {
                 Button(
                     String(localized: "menu.file.generate_thumbnail", defaultValue: "Generate AI Thumbnail")
                 ) {
-                    NotificationCenter.default.post(
-                        name: NSNotification.Name("GenerateThumbnail"), object: nil
-                    )
+                    appState.performProjectCommand {
+                        NotificationCenter.default.post(
+                            name: NSNotification.Name("GenerateThumbnail"), object: nil
+                        )
+                    }
                 }
+                .disabled(!appState.projectCommandsEnabled)
                 .keyboardShortcut("t", modifiers: [.command])
                 .accessibilityIdentifier("menu.file.generate_thumbnail")
 
                 Button(
                     String(localized: "menu.file.generate_voiceover", defaultValue: "Generate Voiceover")
                 ) {
-                    NotificationCenter.default.post(
-                        name: NSNotification.Name("GenerateVoiceover"), object: nil
-                    )
+                    appState.performProjectCommand {
+                        NotificationCenter.default.post(
+                            name: NSNotification.Name("GenerateVoiceover"), object: nil
+                        )
+                    }
                 }
+                .disabled(!appState.projectCommandsEnabled)
                 .accessibilityIdentifier("menu.file.generate_voiceover")
 
                 Button(
                     String(localized: "menu.file.create_shorts", defaultValue: "Create Shorts...")
                 ) {
-                    NotificationCenter.default.post(
-                        name: NSNotification.Name("ShowRepurposingSheet"), object: nil
-                    )
+                    appState.performProjectCommand {
+                        NotificationCenter.default.post(
+                            name: NSNotification.Name("ShowRepurposingSheet"), object: nil
+                        )
+                    }
                 }
+                .disabled(!appState.projectCommandsEnabled)
                 .keyboardShortcut("r", modifiers: [.command, .shift])
                 .accessibilityIdentifier("menu.file.create_shorts")
 
                 Divider()
 
                 Button(String(localized: "menu.file.share", defaultValue: "Share...")) {
-                    NotificationCenter.default.post(name: NSNotification.Name("ShareProject"), object: nil)
+                    appState.performProjectCommand {
+                        NotificationCenter.default.post(name: NSNotification.Name("ShareProject"), object: nil)
+                    }
                 }
+                .disabled(!appState.projectCommandsEnabled)
                 .keyboardShortcut("s", modifiers: [.command, .shift])
                 .accessibilityIdentifier("menu.file.share")
             }
 
             CommandGroup(replacing: .help) {
                 Button(String(localized: "menu.help.shortcuts", defaultValue: "Keyboard Shortcuts")) {
-                    NotificationCenter.default.post(
-                        name: NSNotification.Name("ShowKeyboardShortcuts"), object: nil
-                    )
+                    appState.performProjectCommand {
+                        NotificationCenter.default.post(
+                            name: NSNotification.Name("ShowKeyboardShortcuts"), object: nil
+                        )
+                    }
                 }
+                .disabled(!appState.projectCommandsEnabled)
                 .keyboardShortcut("?", modifiers: [.command])
                 .accessibilityIdentifier("menu.help.shortcuts")
 
                 Button(String(localized: "menu.help.sane_video_help", defaultValue: "SaneVideo Help")) {
-                    NotificationCenter.default.post(
-                        name: NSNotification.Name("ShowKeyboardShortcuts"), object: nil
-                    )
+                    appState.performProjectCommand {
+                        NotificationCenter.default.post(
+                            name: NSNotification.Name("ShowKeyboardShortcuts"), object: nil
+                        )
+                    }
                 }
+                .disabled(!appState.projectCommandsEnabled)
             }
         }
     }
@@ -725,83 +794,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             _ = ServiceContainer.shared.memoryManager // Initialize to start memory pressure observer
         }
 
-        // Clean up orphaned temp files from previous crash/incomplete sessions
-        Task.detached(priority: .utility) {
-            await Self.cleanupOrphanedTempFiles()
-        }
+        // Media age and size do not prove it is disposable. Saved projects may
+        // reference enhanced audio and small recordings, so startup preserves them.
 
         // NOTE: Apple Speech Recognition is used for captions (no model download needed)
         // Camera is NOT started on app launch for privacy.
         // It will start automatically when user clicks Record or toggles Camera on.
-    }
-
-    /// Clean up orphaned temp files that may have been left from crashed sessions
-    private static func cleanupOrphanedTempFiles() async {
-        let fileManager = FileManager.default
-
-        // 1. Clean up EnhancedAudio temp directory
-        let enhancedAudioDir = fileManager.temporaryDirectory.appendingPathComponent("EnhancedAudio")
-        if fileManager.fileExists(atPath: enhancedAudioDir.path) {
-            do {
-                let contents = try fileManager.contentsOfDirectory(at: enhancedAudioDir, includingPropertiesForKeys: [.creationDateKey])
-                let cutoffDate = Date().addingTimeInterval(-24 * 60 * 60) // 24 hours ago
-
-                for file in contents {
-                    if let attrs = try? file.resourceValues(forKeys: [.creationDateKey]),
-                       let created = attrs.creationDate,
-                       created < cutoffDate {
-                        try? fileManager.removeItem(at: file)
-                        AppLogger.general.info("Cleaned up orphaned temp file: \(file.lastPathComponent)")
-                    }
-                }
-            } catch {
-                AppLogger.general.warning("Failed to clean EnhancedAudio temp dir: \(error.localizedDescription)")
-            }
-        }
-
-        // 2. Clean up orphaned recordings (incomplete MP4s from crashed sessions)
-        guard let moviesDir = fileManager.urls(for: .moviesDirectory, in: .userDomainMask).first else { return }
-        let recordingsDir = moviesDir.appendingPathComponent("SaneVideo/Recordings")
-
-        if fileManager.fileExists(atPath: recordingsDir.path) {
-            do {
-                let contents = try fileManager.contentsOfDirectory(at: recordingsDir, includingPropertiesForKeys: [.creationDateKey, .fileSizeKey])
-                let cutoffDate = Date().addingTimeInterval(-24 * 60 * 60) // 24 hours ago
-
-                for file in contents where file.pathExtension.lowercased() == "mp4" {
-                    if let attrs = try? file.resourceValues(forKeys: [.creationDateKey, .fileSizeKey]),
-                       let created = attrs.creationDate,
-                       let size = attrs.fileSize,
-                       created < cutoffDate,
-                       size < 1024 * 1024 { // Less than 1MB = likely incomplete/corrupt
-                        try? fileManager.removeItem(at: file)
-                        AppLogger.general.info("Cleaned up orphaned recording: \(file.lastPathComponent)")
-                    }
-                }
-            } catch {
-                AppLogger.general.warning("Failed to clean recordings dir: \(error.localizedDescription)")
-            }
-        }
-
-        // 3. Clean up WhisperKit temp files
-        let whisperTempDir = fileManager.temporaryDirectory.appendingPathComponent("whisperkit_temp")
-        if fileManager.fileExists(atPath: whisperTempDir.path) {
-            do {
-                let contents = try fileManager.contentsOfDirectory(at: whisperTempDir, includingPropertiesForKeys: [.creationDateKey])
-                let cutoffDate = Date().addingTimeInterval(-24 * 60 * 60)
-
-                for file in contents {
-                    if let attrs = try? file.resourceValues(forKeys: [.creationDateKey]),
-                       let created = attrs.creationDate,
-                       created < cutoffDate {
-                        try? fileManager.removeItem(at: file)
-                        AppLogger.general.info("Cleaned up WhisperKit temp file: \(file.lastPathComponent)")
-                    }
-                }
-            } catch {
-                AppLogger.general.warning("Failed to clean WhisperKit temp dir: \(error.localizedDescription)")
-            }
-        }
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_: NSApplication) -> Bool {

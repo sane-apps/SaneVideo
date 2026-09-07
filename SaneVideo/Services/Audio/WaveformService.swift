@@ -157,20 +157,17 @@ actor WaveformService: WaveformServiceProtocol {
             guard let sampleBuffer = trackOutput.copyNextSampleBuffer() else { break }
             guard let blockBuffer = CMSampleBufferGetDataBuffer(sampleBuffer) else { continue }
 
-            var length = 0
-            var dataPointer: UnsafeMutablePointer<Int8>?
-
-            guard CMBlockBufferGetDataPointer(
-                blockBuffer,
-                atOffset: 0,
-                lengthAtOffsetOut: nil,
-                totalLengthOut: &length,
-                dataPointerOut: &dataPointer
-            ) == kCMBlockBufferNoErr,
-                let data = dataPointer else { continue }
-
-            let sampleCount = length / 2 // 16-bit
-            let ptr = data.withMemoryRebound(to: Int16.self, capacity: sampleCount) { $0 }
+            // AVAssetReader supplies interleaved, little-endian signed PCM16.
+            // CopyDataBytes handles noncontiguous blocks and keeps pointers scoped.
+            let length = CMBlockBufferGetDataLength(blockBuffer)
+            guard length > 0, length.isMultiple(of: MemoryLayout<Int16>.size) else { continue }
+            let sampleCount = length / MemoryLayout<Int16>.size
+            var pcm = [Int16](repeating: 0, count: sampleCount)
+            let copyStatus = pcm.withUnsafeMutableBytes { bytes in
+                CMBlockBufferCopyDataBytes(blockBuffer, atOffset: 0, dataLength: length,
+                                           destination: bytes.baseAddress!)
+            }
+            guard copyStatus == kCMBlockBufferNoErr else { continue }
 
             // Downsample: Take max amplitude in chunk
             // Dynamic rate based on clip length to ensure ~2000 total samples
@@ -178,7 +175,7 @@ actor WaveformService: WaveformServiceProtocol {
             var count = 0
 
             for i in stride(from: 0, to: sampleCount, by: calculatedSkip) {
-                let val = Float(abs(ptr[i])) / Float(Int16.max)
+                let val = min(1, abs(Float(Int16(littleEndian: pcm[i]))) / Float(Int16.max))
                 if val > maxAmp {
                     maxAmp = val
                 }

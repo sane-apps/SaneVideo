@@ -79,11 +79,6 @@ class SoundAnalysisService: @unchecked Sendable, SoundAnalysisServiceProtocol {
   // MARK: - Internal Processing
 
   private func processBuffer(_ buffer: CMSampleBuffer) {
-    guard let formatDescription = CMSampleBufferGetFormatDescription(buffer) else { return }
-
-    // 1. Convert CMFormat to AVAudioFormat
-    let format = AVAudioFormat(cmAudioFormatDescription: formatDescription)
-
     // 2. Check for format change or initialization
     // Note: If format changes, we likely need to restart streamAnalyzer,
     // but startRealTimeAnalysis is called by engine with specific format.
@@ -95,7 +90,7 @@ class SoundAnalysisService: @unchecked Sendable, SoundAnalysisServiceProtocol {
     }
 
     // 3. Convert CMSampleBuffer to AVAudioPCMBuffer
-    if let pcmBuffer = createPCMBuffer(from: buffer, format: format) {
+    if let pcmBuffer = AVAudioPCMBuffer(sampleBuffer: buffer) {
       if let analyzer = streamAnalyzer {
         analyzer.analyze(pcmBuffer, atAudioFramePosition: -1)
       }
@@ -106,64 +101,6 @@ class SoundAnalysisService: @unchecked Sendable, SoundAnalysisServiceProtocol {
 
   // Re-implementation of reinitializeAnalyzer to support request persistence would be needed
   // if format changes. For now, we assume format constant from Microphone.
-
-  private func createPCMBuffer(from sampleBuffer: CMSampleBuffer, format: AVAudioFormat)
-    -> AVAudioPCMBuffer? {
-    let numSamples = CMSampleBufferGetNumSamples(sampleBuffer)
-    guard
-      let pcmBuffer = AVAudioPCMBuffer(
-        pcmFormat: format, frameCapacity: AVAudioFrameCount(numSamples))
-    else { return nil }
-    pcmBuffer.frameLength = AVAudioFrameCount(numSamples)
-
-    guard let blockBuffer = CMSampleBufferGetDataBuffer(sampleBuffer) else { return nil }
-
-    // Copy audio data from CMSampleBuffer to AVAudioPCMBuffer
-    // For M1+, we assume standard Float32/Int16 formats
-    var length = 0
-    var dataPointer: UnsafeMutablePointer<Int8>?
-
-    guard
-      CMBlockBufferGetDataPointer(
-        blockBuffer,
-        atOffset: 0,
-        lengthAtOffsetOut: nil,
-        totalLengthOut: &length,
-        dataPointerOut: &dataPointer
-      ) == kCMBlockBufferNoErr, let data = dataPointer
-    else { return nil }
-
-    // Simple copy for interleaved/non-interleaved based on format
-    // Note: SoundAnalysis usually expects PCM data.
-    // We use pcmBuffer.floatChannelData or pcmBuffer.int16ChannelData
-    if format.commonFormat == .pcmFormatFloat32 {
-      for channel in 0..<Int(format.channelCount) {
-        if let channelData = pcmBuffer.floatChannelData?[channel] {
-          let source = data.withMemoryRebound(
-            to: Float.self, capacity: numSamples * Int(format.channelCount)
-          ) { $0 }
-          // If interleaved, we need to pick every Nth sample. If non-interleaved, it's easier.
-          // AVCaptureAudioDataOutput usually provides interleaved data.
-          for frame in 0..<numSamples {
-            channelData[frame] = source[frame * Int(format.channelCount) + channel]
-          }
-        }
-      }
-    } else if format.commonFormat == .pcmFormatInt16 {
-      for channel in 0..<Int(format.channelCount) {
-        if let channelData = pcmBuffer.int16ChannelData?[channel] {
-          let source = data.withMemoryRebound(
-            to: Int16.self, capacity: numSamples * Int(format.channelCount)
-          ) { $0 }
-          for frame in 0..<numSamples {
-            channelData[frame] = source[frame * Int(format.channelCount) + channel]
-          }
-        }
-      }
-    }
-
-    return pcmBuffer
-  }
 
   private func areFormatsCompatible(_ newFormat: AVAudioFormat, _ currentFormat: AVAudioFormat?)
     -> Bool {

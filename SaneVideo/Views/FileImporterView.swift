@@ -20,6 +20,14 @@ struct FileImporterView: View {
             Text(String(localized: "import.title", defaultValue: "Import Video"))
                 .font(.headline)
 
+            if let project = appState.currentProject {
+                Text("Add videos to \(project.name)")
+                    .font(.body)
+                    .foregroundStyle(.white)
+                    .multilineTextAlignment(.center)
+                    .accessibilityIdentifier("import.destination")
+            }
+
             // Drop Zone
             Button {
                 isImporting = true

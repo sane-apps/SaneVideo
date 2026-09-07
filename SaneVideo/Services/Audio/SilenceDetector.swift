@@ -123,22 +123,18 @@ actor SilenceDetector {
                 await Task.yield()
             }
             guard let buffer = output.copyNextSampleBuffer() else { break }
-            guard let blockBuffer = CMSampleBufferGetDataBuffer(buffer) else { continue }
+            guard let pcmBuffer = AVAudioPCMBuffer(sampleBuffer: buffer),
+                  pcmBuffer.format.commonFormat == .pcmFormatInt16,
+                  pcmBuffer.format.isInterleaved,
+                  let channels = pcmBuffer.int16ChannelData else { continue }
+            let sampleCount = Int(pcmBuffer.frameLength) * Int(pcmBuffer.format.channelCount)
 
-            var length = 0
-            var dataPointer: UnsafeMutablePointer<Int8>?
-
-            guard CMBlockBufferGetDataPointer(blockBuffer, atOffset: 0, lengthAtOffsetOut: nil, totalLengthOut: &length, dataPointerOut: &dataPointer) == kCMBlockBufferNoErr,
-                  let data = dataPointer else { continue }
-
-            let sampleCount = length / 2
-            let samples = data.withMemoryRebound(to: Int16.self, capacity: sampleCount) { $0 }
-
-            // PERFORMANCE: Use Accelerate for M1 optimization
-            // Convert Int16 to Float32 for vDSP
+            // Keep the native PCM storage alive through the existing conversion.
             var floatSamples = [Float](repeating: 0, count: sampleCount)
-            vDSP_vflt16(samples, 1, &floatSamples, 1, vDSP_Length(sampleCount))
-            
+            withExtendedLifetime(pcmBuffer) {
+                vDSP_vflt16(channels[0], 1, &floatSamples, 1, vDSP_Length(sampleCount))
+            }
+
             // Normalize to -1.0 to 1.0 range
             var normalized = [Float](repeating: 0, count: sampleCount)
             var scale: Float = 1.0 / Float(Int16.max)

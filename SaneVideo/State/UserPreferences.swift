@@ -139,26 +139,16 @@ class UserPreferences {
 
   // MARK: - Cache Management
 
-  func clearCache() {
-    // Clear temp directory
-    let tempDir = FileManager.default.temporaryDirectory
-    Task.detached(priority: .utility) {
-      do {
-        let fileURLs = try FileManager.default.contentsOfDirectory(
-          at: tempDir, includingPropertiesForKeys: nil)
-        for fileURL in fileURLs {
-          try FileManager.default.removeItem(at: fileURL)
-        }
-        await MainActor.run {
-          AppLogger.uiLog.info("Cache cleared successfully")
-        }
-      } catch {
-        await MainActor.run {
-          AppLogger.uiLog.error("Failed to clear cache: \(error)")
-        }
-      }
-    }
+  func clearCache(
+    thumbnailService: any ThumbnailServiceProtocol,
+    waveformService: any WaveformServiceProtocol
+  ) async {
+    // Preview caches are disposable; recordings and project assets are not.
+    await thumbnailService.clearCache()
+    await waveformService.clearCache()
+    AppLogger.uiLog.info("Preview caches cleared successfully")
   }
+
 }
 
 enum AppTheme: String, CaseIterable, Identifiable {

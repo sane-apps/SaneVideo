@@ -58,65 +58,82 @@ struct GlobalSheetModifier: ViewModifier {
             }
             // 7. Hidden Shortcut for Logs
             .background {
-                Button("") { showLogs = true }
+                Button("") { appState.performProjectCommand { showLogs = true } }
+                    .disabled(!appState.projectCommandsEnabled)
                     .keyboardShortcut("l", modifiers: .command)
                     .opacity(0)
                     .accessibilityIdentifier("global.show_logs")
             }
             // 8. Event Listeners
             .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ShowRenameProjectDialog"))) { _ in
-                if let currentName = appState.projectState.currentProject?.name {
-                    newProjectName = currentName
-                    showingRenameAlert = true
+                appState.performProjectCommand {
+                    if let currentName = appState.projectState.currentProject?.name {
+                        newProjectName = currentName
+                        showingRenameAlert = true
+                    }
                 }
             }
             .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ShowKeyboardShortcuts"))) { _ in
-                showShortcuts = true
+                appState.performProjectCommand {
+                    showShortcuts = true
+                }
             }
             .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ShowTemplateBrowser"))) { _ in
-                showTemplateBrowser = true
+                appState.performProjectCommand {
+                    showTemplateBrowser = true
+                }
             }
             .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ShowRepurposingSheet"))) { notification in
-                if let clip = notification.object as? VideoClip {
-                    repurposingClip = clip
-                } else if let project = appState.currentProject,
-                          let firstClip = project.timeline.tracks.flatMap(\.clips).first {
-                    repurposingClip = firstClip
+                appState.performProjectCommand {
+                    if let clip = notification.object as? VideoClip {
+                        repurposingClip = clip
+                    } else if let project = appState.currentProject,
+                              let firstClip = project.timeline.tracks.flatMap(\.clips).first {
+                        repurposingClip = firstClip
+                    }
+                    showRepurposing = true
                 }
-                showRepurposing = true
             }
             // 9. Share Project
             .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ShareProject"))) { _ in
-                if let project = appState.projectState.currentProject {
-                    let url = appState.projectState.getProjectFileURL(project)
-                    // Use standard system share sheet for the project file
-                    ServiceContainer.shared.shareLinkService.shareFile(at: url, from: nil)
+                appState.performProjectCommand {
+                    if let project = appState.projectState.currentProject {
+                        let url = appState.projectState.getProjectFileURL(project)
+                        // Use standard system share sheet for the project file
+                        ServiceContainer.shared.shareLinkService.shareFile(at: url, from: nil)
+                    }
                 }
             }
             // 10. Rename Specific Project (from context menu)
             .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("RenameProject"))) { notification in
-                if let projectId = notification.object as? UUID,
-                   let project = appState.projectState.projects.first(where: { $0.id == projectId }) {
-                    // Switch to this project first, then show rename dialog
-                    appState.projectState.openProject(project)
-                    newProjectName = project.name
-                    showingRenameAlert = true
+                appState.performProjectCommand {
+                    if let projectId = notification.object as? UUID,
+                       let project = appState.projectState.projects.first(where: { $0.id == projectId }) {
+                        // Switch to this project first, then show rename dialog
+                        appState.projectState.openProject(project)
+                        newProjectName = project.name
+                        showingRenameAlert = true
+                    }
                 }
             }
             // 11. Duplicate Specific Project (from context menu)
             .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("DuplicateProject"))) { notification in
-                if let projectId = notification.object as? UUID,
-                   let project = appState.projectState.projects.first(where: { $0.id == projectId }) {
-                    appState.projectState.duplicateProject(project)
-                    ServiceContainer.shared.toastManager.show("Project duplicated")
+                appState.performProjectCommand {
+                    if let projectId = notification.object as? UUID,
+                       let project = appState.projectState.projects.first(where: { $0.id == projectId }) {
+                        appState.projectState.duplicateProject(project)
+                        ServiceContainer.shared.toastManager.show("Project duplicated")
+                    }
                 }
             }
             // 12. Delete Specific Project (from context menu)
             .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("DeleteProject"))) { notification in
-                if let projectId = notification.object as? UUID,
-                   let project = appState.projectState.projects.first(where: { $0.id == projectId }) {
-                    appState.projectState.deleteProject(project)
-                    ServiceContainer.shared.toastManager.show("Project deleted", type: .info)
+                appState.performProjectCommand {
+                    if let projectId = notification.object as? UUID,
+                       let project = appState.projectState.projects.first(where: { $0.id == projectId }) {
+                        appState.projectState.deleteProject(project)
+                        ServiceContainer.shared.toastManager.show("Project deleted", type: .info)
+                    }
                 }
             }
     }

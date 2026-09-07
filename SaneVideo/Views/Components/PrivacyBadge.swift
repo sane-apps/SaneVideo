@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-/// Badge showing privacy status of AI processing - always 100% on-device
+/// Identifies the local editing workflow; optional cloud services are separate.
 struct PrivacyBadge: View {
     var body: some View {
         // ACCESSIBILITY FIX: Improved contrast for light mode visibility
@@ -16,10 +16,8 @@ struct PrivacyBadge: View {
                 .font(.caption2)
                 .foregroundColor(.green)
 
-            Text("100% On-Device")
-                .font(.caption2)
-                .fontWeight(.semibold)
-                .foregroundColor(.green)
+            Text("Local Processing")
+                .saneReadableBodyStrong()
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 4)
@@ -41,9 +39,8 @@ struct CompactPrivacyBadge: View {
             Image(systemName: "lock.shield.fill")
                 .font(.caption2)
                 .foregroundColor(.green)
-            Text("On-Device")
-                .font(.caption2)
-                .foregroundColor(Color.stone)
+            Text("Local Processing")
+                .saneReadableSupportText()
         }
     }
 }

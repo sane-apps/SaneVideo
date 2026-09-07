@@ -52,8 +52,9 @@ final class ReleaseReadinessRegressionTests: XCTestCase {
         )
 
         XCTAssertTrue(settings.contains("#if DEBUG"))
-        XCTAssertTrue(mainContent.contains("#if DEBUG"))
-        XCTAssertTrue(mainContent.contains("BuildTimestampView()"))
+        XCTAssertFalse(mainContent.contains("BuildTimestampView()"),
+                       "Build diagnostics belong in About and logs, not over the editor")
+        XCTAssertTrue(mainContent.contains("SaneStickyDonateButton"))
         XCTAssertTrue(settings.contains("PrivacySettingsView(selectedTab: $selectedTab)"))
         XCTAssertTrue(privacySettings.contains("selectedTab = \"apikeys\""))
         XCTAssertFalse(privacySettings.contains("NavigationLink"))

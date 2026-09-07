@@ -1,6 +1,103 @@
+## 2026-09-07 10:42 ET — Bottom-right build label verified removed
+
+- Owner requested removal of the debug build label. Deleted its only caller and unused component, retained the shared pink Donate button, regenerated project. Focused regression passed1/1 (c7f7acb6472de4c8577f9f0d1314440d); prior full suite1233/1233 (860ef3771019d37b2305a1ac34f572d1).
+- Signed Release1.0.5/build7 rebuilt and launched with continuous logs. Inspected clean full-window screenshot outputs/portfolio-finish-20260907/codex-shot-2026-09-07_10-38-50.png: no timestamp label; pink Donate remains, controls unobstructed. Private QA camera-off state, not a marketing image. build-label-proof.json records source/image hashes and runtime.
+- Normal Quit stopped PID96573 and the capture at14:40:00.885376Z. No Video app/log remains active. No new permission or signing-identity change.
+- Mini fast-forwarded848d75e to origin/Air28680d6 after preserving dirty work in stash portfolio-video-before-main-sync-20260907. Four inspected conflicts resolved to tested SaneUI60176f3 and requested timestamp removal. All29 native candidate source/project hashes unchanged after merge and equal on Air. Source commit/public release remain pending.
+
+## 2026-09-07 10:38 ET — Video finish pass and build label removal
+
+- Full canonical Mini verify passed 1,233 tests, workflow 860ef3771019d37b2305a1ac34f572d1, including real audio/export integration and cache-preservation regressions. This run preceded the owner-requested build-label removal.
+- Removed the editor BuildTimestampView overlay and its unused component; flattened the existing Donate overlay. Regenerated the Xcode project and updated the existing release-policy assertion. Focused native test passed 1/1, workflow c7f7acb6472de4c8577f9f0d1314440d. Main view, test and project synced to Air with backups; obsolete component moved to Trash on both.
+- Signed Release rebuild is active for the clean visual check: outputs/portfolio-finish-20260907/label-free-launch.log. No timestamp-free runtime claim yet. About version details remain in the shared About view.
+- Mini checkout 848d75e is two commits behind current origin/Air 28680d6. The 29 changed native files matched Air before the three timestamp-removal deltas. Merge must preserve pending work and be done after active build/runtime completes. Other native fixes, release proof and public release remain unfinished.
+
 # Session Handoff — SaneVideo
 
-**Last updated:** 2026-08-14 23:22 EDT
+## 2026-09-06 21:10 ET current settings verified
+
+- Signed Release1.0.5/build7 rebuilt with published SaneUI60176f3, workflowe04d5489dbd822dfcadbbf43b22e9513. Actual720x600 review covers all eight settings tabs plus complete About bottom. Privacy & AI paragraph no longer clips or repeats; all three buttons visible. Actual Manage API Keys action reached the intended page. Both license/About Donate hearts are filled pink with white labels.
+- Current9-image hashes and limits: infra/SaneProcess/outputs/portfolio-review-20260906/video-runtime-20260906/settings-visual-verification.json, adaptive_shared_followup. Source/app actions and browser-destination proof from prior phases remain separately dated; this follow-up does not claim new policy/donation browser clicks.
+- Live log apps/SaneVideo/outputs/runtime-logs/20260907T003855Z-20260906-69616-3byfax/live.log was ready00:38:55.403699Z before launch00:38:55.922800Z, and ended normally with PID70560 at00:57:16.726877Z. Settings close left the main window; separate Quit ended app. No active Video process remains.
+- Both old valid media fixtures retain exact original size/hash after this startup (adaptive-startup-media-verification.json). Full19 action families/public release/LS replacement remain open. Shared60176f3 package tests152/152 already pass. Broader current queue is in SaneProcess/SESSION_HANDOFF.md.
+
+## 2026-09-06 20:38 ET Clip settings review and Video rebuild
+
+- Clip settings evidence is now saved as clip-settings-visual/settings-visual-verification.json under this portfolio output directory on both hosts. Eighteen inspected image entries include complete Shortcuts/Sync scroll coverage, Storage, paid License, About with both pink Donate hearts, General sections and Snippet draft/empty-search states. Scope remains settings visual review and the actual recorded safe actions, not all app actions or release clearance.
+- Actual Settings close button removed all windows while Clip remained running. Separate normal Quit ended PID47588 and its original runtime capture at2026-09-07T00:35:48.316900Z, stop_reason app_exited. No Clip test surface remains active.
+- SettingsColorTests stale green-text assertion updated to white permission text; excluded-app colored status icon policy retained. Mini canonical focused verify passed3/3, workflowedcb0a77f963be796d42f3f01073d69c. These are source-policy assertions, not behavioral visual proof. Continuous test capture ready00:35:48.846267Z survived through explicit stop00:36:30.256120Z. Existing fixture runner now rejects unhealthy final log state. Source/test hashes match Air and Mini; diff --check passes.
+- Video shared60176f3 rebuild is in progress via canonical GUI launch. It detected the newer Package.resolved and correctly rejected the old binary. Log video-settings-layout-patches/adaptive-shared-launch.log, status adjacent. New runtime and current Privacy & AI inspection pending; prior verified screenshots remain historical.
+- No public app release, LS upload/removal, new OS grant, TCC reset, or credential change in this phase. The portfolio goal remains incomplete.
+
+## 2026-09-06 20:23 ET active verification
+
+- SaneClip signed Release 2.3.24/2324 now runs shared SaneUI 60176f3, PID 47588, workflow 465a6551b519a8b616ae64178e180b63. Continuous log was ready 23:58:42.258539Z before launch 23:58:42.640216Z: apps/SaneClip/outputs/runtime-logs/20260906T235842Z-20260906-47092-3mv5qc/live.log; bounded deadline 00:58:42Z. This supersedes earlier pending-build entries.
+- Current native proof under infra/SaneProcess/outputs/portfolio-review-20260906/clip-settings-visual/: 19-45-51 full Per-app paste mode after shared adaptive layout; 20-03-19 real search p gives No Results and bottom-aligned 0 of 3 snippets; clear button restores list. 20-10-23 filled draft has enabled Save; 20-12-08 bottom scroll exposes complete live Preview. Actual Cancel removed sheet and preserved three saved snippets. Save was not clicked. 20-15-13 confirms list bottom reachable; 20-17-12 confirms current Shortcuts top. All named images inspected. Snippet list uses normal scrolling with sticky category header; upper offscreen row is not a full-row screenshot. Further tab checks are active.
+- SaneClip SnippetsSettingsView now has white Search label, wrapped instructions, full-height empty results, filtered count, shared editor buttons/background and 520pt minimum. General Granted status is white. Scoped source/pins synchronized with backups; unrelated owner changes preserved. No public Clip release.
+- Peekaboo 4.3.1 installed on Mini and Air from official openclaw/tap. Mini retains prior signing team and observed grants; Air old unmanaged 3.4.0 binary retained in portfolio output before install. Air GUI/permissions were not exercised. Dependency baseline now preserves qualified tap names; Mini 31 tests pass, both host checks PASS. No TCC resets or permission requests. Manual Mini helper PID 51635 stopped; auto helper has bounded idle exit.
+- SaneCite exact prior Worker/parser pair remains the last verified live state (19:27 entry); newer release remains unshipped. Paired recovery tool/workflow/tests are still unpublished candidate changes. Video is source-pinned 60176f3 but has not rebuilt since prior verified 5931685 run.
+- Portfolio goal remains active. Three delegated agents stopped on account usage limits; continue root work without retrying delegation to bypass limits. All-app, release, full action coverage and complete Air/Mini parity remain unproven.
+
+## 2026-09-06 19:42 ET active shared layout correction
+
+- Shared SaneUI60176f30007e0f931195785aa769e4ef5172f7ee is published and synchronized to Air. CompactRow uses native ViewThatFits: full label beside controls when space permits, label above controls when crowded. CompactToggle labels wrap. Native400pt-vs700pt layout regression passes fixed source and fails old source; complete152tests/29suites pass. Two unchanged onboarding-copy/donation assertions were stale and updated; the former source assertion banning vertical wrapping was superseded by the native regression.
+- Actual Clip760x532 General screenshot19:28:26 exposed truncated Per-app paste mode, motivating shared root repair. General sections at scroll0.43,0.65,0.85,1 were inspected; no security/history settings changed. Source status text is now white. Clip search now uses a visible white Search label because native placeholder ignored explicit white prompt. Snippet Add sheet was opened, scrolled to bottom and Cancel clicked; zero sheets afterward, no saved snippet changes. Editor shared style,520pt minimum and scroll indicators prepared for verification.
+- Clip old PID24822/log3c0df2a3062011b78d2e3f35b61c488d ended normally23:40:45.432Z. New signed Release launch is building via canonical wrapper, log file infra/SaneProcess/outputs/portfolio-review-20260906/clip-settings-visual/adaptive-release-launch.log. Actual new UI proof pending; no public Clip2.3.24 release.
+- Clip/Video source pins now60176f3 on both machines. Video has not rebuilt after its verified5931685 settings run; no claim of current601 runtime. Air per-file before backups and hashes in clip-settings-visual/air-adaptive-sync.json; unrelated metadata preserved.
+
+## 2026-09-06 17:45 ET settings visual review and active work
+
+- Updated 18:37 ET: Video's eight settings pages are visually inspected at the actual 720x600 window size. Privacy no longer clips/repeats; About was scrolled to its complete bottom. Final General17:51:03 and Privacy17:46:07 replace earlier incomplete evidence. Actual API Keys navigation, Clear All confirmation/Cancel, privacy policy and MIT license destinations, and Clear Cache success were exercised under saved live logs. Both old valid media fixtures retained their exact hashes and sizes after startup and Clear Cache.
+- Shared SaneUI5931685 is published and exact on Air/Mini. LicenseSettingsView reuses the existing pink-heart Donate button and white status text. Two package contract tests passed; actual rebuilt Video License screenshot18:14:11 was inspected, and the real Donate action opened the correct GitHub Sponsors page in existing Mini Brave. Proof tabs were closed and original tab restored. Video workflow f24cd9339bc91acad545138e3213c3c4 had log ready22:11:16.314Z before launch22:11:16.620Z and normal app exit22:17:34.003Z.
+- Seven Video settings/action files plus three shared-package pins have exact scoped Air/Mini parity with before backups. Full evidence: outputs/portfolio-review-20260906/video-runtime-20260906/settings-visual-verification.json. No640px proof, full19-action clearance, or public release is claimed.
+- All three subagents stopped on account usage limit; root retains unfinished work. Shared verify log-reaper repair passed fixed3/3 versus original0/3 fixtures and is exact across hosts. Actual Clip gate rerun started22:36:50Z with continuous log receipt apps/SaneClip/outputs/runtime-logs/20260906T223650Z-20260906-6873-fsa5h3/receipt.json; result pending.
+- Clip source now uses white shared secondary/muted colors and published SaneUI5931685. Existing stale pin assertion updated. Five exact changes/backups are in clip-settings-visual/source-manifest.json. Air's divergent project/pin state still needs safe reconciliation. Native Clip settings proof has not begun.
+- SaneCite PR7 remains unmerged/unreleased. Isolated production-baseline candidate has pypdf6.17.0, matched parser identity2026-09-06.1-security, two identity assertions, macOS Homebrew-library path in the existing Python check runner, and existing headless test launches routed to installed Mini Brave. Full npm check now passes13 real Python regression groups and142 Node/browser tests. npm audit identifies four high findings through the old dev-only Wrangler/miniflare/sharp/undici chain; targeted Wrangler update and final gates pending. No billing or AI-policy changes.
+
+## 2026-09-06 Video settings clipping repair prepared
+
+The owner flagged the visibly ellipsized Privacy & AI paragraph in clean screenshot15:59:50. That screenshot is failure evidence, not visual clearance. The fixed500x400 TabView and plain Forms constrained prose and repeated the same privacy fact across three elements.
+
+A scoped seven-file patch now uses existing SaneSettingsContainer defaults and SaneSettingsPage/CompactSection/CompactRow. Selected detail is constructed lazily; General contains appearance/cache/updates, Privacy owns the single local-processing paragraph and caption/model guidance. Disabled YouTube/iCloud pages give File > Export Video directions without engineering language. API status refresh is skipped while upload is disabled; saved-key removal remains explicit. All24 existing action identifiers remain. Existing customer-action expectations now cover all8release pages, Debug only in Debug builds, normal/minimum widths and fixture-only credential removal.
+
+Patch/before backups/hashes: infra/SaneProcess/outputs/portfolio-review-20260906/video-settings-layout-patches/. Source diff and action YAML syntax checks passed. No compiler, app build/test, or new visual evidence yet. Parent owns the serial build slot and complete8page action/screenshot proof; shared sidebar source alone does not prove window resizing or clipping fixed. No service, media/PCM, modal, credential storage or shared typography code changed. App-specific legal-link fallbacks were preserved; their current hosted destination/content is not verified by this patch.
+
+## 2026-09-06 Video cache and PCM regression verified
+
+- Canonical focused class `SaneVideoTests/WaveformServiceTests` passed 10/10 tests with xcresult verification, including real preview-cache isolation and real signed PCM negative-extreme decoding. Receipt: `apps/SaneVideo/outputs/monitor-tests/20260906T192325.856432Z-46736-3a8d6442/receipt.json`. Build and tests completed successfully; no nonempty-output failure occurred.
+- Runtime log was ready before the test and stopped afterward: `apps/SaneVideo/outputs/runtime-logs/20260906T192325Z-20260906-46733-f5gwom/receipt.json`, 19:23:25–19:23:51 UTC. The test host exited. The earlier one-test/two-assertion failure remains historical evidence, not the current result.
+- Both reserved old valid media fixtures still match their original hashes and sizes after tests. Parent owns the next Release rebuild, real startup preservation check, and actual Preview Cache UI action/visual proof. These tests do not clear full 18-action verification or public release.
+- Six-file task-only source patch is synchronized to Air with all before/after hashes matching Mini. Host-local before backups and `air-sync.json` are in `infra/SaneProcess/outputs/portfolio-review-20260906/video-cache-safety-patches/`. Preserve the two startup fixtures until the remaining runtime proof completes.
+
+## 2026-09-06 Video focused cache test and PCM follow-up
+
+- Canonical monitor run `20260906T191340.710091Z-43413-55773e96` compiled and executed one real cache test; two assertions failed by comparing different waveform generations exactly. Media bytes, thumbnail invalidation, and post-clear missing-file behavior passed those checks. The failed monitor receipt incorrectly reports zero tests, while xcodebuild reports one executed with two failures; this is a separate reporting defect.
+- Pre-test runtime log `20260906T191340Z-20260906-43410-iwlq3o` was ready before the test and stopped in ensure. Testhost 43789 exited. Clean desktop screenshot15:16:49 was inspected: no app window or native permission dialog. Two reserved startup media fixtures remain hash-identical.
+- Current six-file patch now also repairs WaveformService: no escaped rebound pointer; typed PCM16 buffer populated through CMBlockBufferCopyDataBytes handles noncontiguous blocks; Float conversion before abs avoids Int16.min overflow, bounded to1. Existing output contract is signed16-bit interleaved little-endian. Downsampling algorithm unchanged.
+- Test compares cached samples to the immediately preceding warm generation. Added real two-second negative-extreme PCM WAV regression, requiring nonempty finite full-scale output and stable regeneration. Corrected focused class rerun passed 10/10; see the current verification entry above. Other audio pointer callers are being audited independently.
+- Primary references read2026-09-06: installed Apple SDK CMBlockBuffer.h420–443/491–524 and Swift.org `https://www.swift.org/migration-guide-swift3/se-0107-migrate.html` (rebound pointer must stay inside closure). Cause of original waveform differences is not proved merely by seeing numeric variance.
+
+## 2026-09-06 Video media-preservation repair prepared
+
+- Confirmed source defect: Clear Cache deleted all temporary-directory children; startup also deleted old EnhancedAudio and old/small recordings without proving they were unused. EnhancedAudio URLs are saved in projects. No actual customer data loss was exercised.
+- Approved five-file patch is prepared under `infra/SaneProcess/outputs/portfolio-review-20260906/video-cache-safety-patches/`: clear only existing preview caches and await completion, truthful Preview Cache copy/wrapping, remove unsafe startup cleanup. The later six-file patch and focused 10/10 test result supersede this prepared status; actual new startup/UI and release proof remain pending.
+- Preserve the two UUID-named old valid media fixtures until parent completes real rebuilt startup proof. Exact paths, hashes and timestamps: `startup-media-fixtures.json` in that folder. They are test-owned; no owner file was modified. Q1 findings and proof limits: `q1-video-ux.md` in portfolio outputs.
+
+## 2026-09-06 rebuilt Video pink candidate proof
+
+- Main-screen Donate heart is VISUALLY VERIFIED pink, with white text, in the newly rebuilt candidate consuming SaneUI `7f425682151792572f0cd7b638ffaad2ec5691ab`. Parent observed fixed canonical launch detect newer Package.resolved, rebuild with Developer ID, then launch workflow `3e6defbe8173dbd62416bfc763ef6e40`.
+- Clean parent-inspected screenshots are in `infra/SaneProcess/outputs/portfolio-review-20260906/video-runtime-20260906/`: `codex-shot-2026-09-06_14-47-36.png` (main pink heart), `14-49-15` (General partial view, Temporary Files helper truncated, persisted scroll position), `14-50-55` (License shows Licensed and plain-text Donate without a heart, ample blank space). Full filenames use the same date/prefix. Structured proof: `pink-candidate-verification.json`. General is not fully visually verified; absence from a filtered AX query does not prove Donate inaccessible.
+- Continuous runtime receipt/log: `apps/SaneVideo/outputs/runtime-logs/20260906T184638Z-20260906-32396-oqrog9/`. PID 32839 exited at 18:52:07 UTC; saved capture confirms `app_exited`. Source/runtime evidence is a candidate, not a public release.
+- Full 18-action customer UI proof, complete settings coverage, release, and verified customer hosted-file replacement/removal remain pending. This supersedes the earlier pink-unbuilt status only for Video; other consumers retain their own proof status.
+
+## 2026-09-06 active Video verification
+
+- Modal command isolation is verified on the Mini: nine of nine TeleprompterActionTests passed with xcresult verification. Receipt: `apps/SaneVideo/outputs/monitor-tests/20260906T180031.868270Z-13902-92a7414f/receipt.json`.
+- Parent inspected clean real UI evidence: Command-I opened one Import Video sheet; Command-Shift-G left the same sheet; clicking the actual Cancel button left zero sheets and no queued GIF panel. Saved screenshots: `infra/SaneProcess/outputs/portfolio-review-20260906/video-runtime-20260906/codex-shot-2026-09-06_14-10-31.png` and `codex-shot-2026-09-06_14-14-22.png`. The 14:08:58 capture is invalid because Finder occluded the app. Structured receipt: `modal-verification.json` beside the valid images.
+- Launch workflow `9b585b5b216fa8582c5d81c987771123`; continuous log and receipt: `apps/SaneVideo/outputs/runtime-logs/20260906T180423Z-20260906-14858-oeym4/`. This run used PID 15166 and ended at 18:19:06 UTC with `app_exited`. Earlier prepatch PID 86455 was quit before this run and is not current runtime evidence.
+- Pink dependency status is superseded by the rebuilt candidate proof above: main pink heart verified. Full 18-action proof and release remain pending.
+
+**Last updated:** 2026-09-06 (active verification above; older sections retain their historical scope)
 
 ## 2026-08-14 customer-UI + preflight
 
@@ -475,3 +572,18 @@ uncommitted source until this receipt commit. Did not Submit.
 - Cross-product launch ops reran canonical Mini `./scripts/SaneMaster.rb launch_readiness --json` from the SaneVideo repo. It stayed red.
 - Blocking state is still release-lane first: runtime proof is incomplete, `release_preflight` for `1.0.1` is still failed, and `launch_calendar.offer_window.ends` is still blank, so date-bound offer copy stays structurally incomplete.
 - Fresh proof state: `release_preflight` is 33.32 days old with 170 issues and 4 warnings, and the shared validation receipt [`/Users/stephansmac/SaneApps/infra/SaneProcess/outputs/validation/2026-06-23.json`](/Users/stephansmac/SaneApps/infra/SaneProcess/outputs/validation/2026-06-23.json) remains `NOT READY FOR RELEASE` with stale SaneVideo customer-UI proof plus missing screenshot-path evidence. No public-testing launch/directory/scheduling/public-reply action ran today.
+
+## 2026-09-06 pink Donate dependency publication
+
+- Shared SaneUI main published and verified at `7f425682151792572f0cd7b638ffaad2ec5691ab`: only AGENTS pink-heart policy, SaneStickyDonateButton pink icon, and donation-only LicenseSettingsView pink icon.
+- Mini first fast-forwarded569922a to existing upstream3850741. Ten pre-existing dirty files exactly matched upstream; their bytes are retained in private custody and named stash9aceeab8dc402ca27a70e36948decc6b7a5857d7. No duplicate hunks reapplied.
+- Isolated3850741 plus the three approved files passed SaneUI library build (29.53s); no catalog launch or app build. Package test suite and customer visual proof were not run by this dependency lane.
+- Video and Sales now pin the exact published commit in project.yml, generated project and Package.resolved. Native Mini resolve-only commands passed; only saneui dependency state changed.
+- Sales adds the localized moreAppsButtonTitle argument required by upstream3850741. XcodeGen preserved entitlement bytes; its existing target-list ordering changed without adding/removing targets.
+- Air shared SaneUI fast-forward and seven consumer-file scoped patch are hash-verified; existing handoff and unrelated source were preserved. Consumer edits remain uncommitted; parent owns app build, runtime/visual proof and release.
+- Receipts: `~/SaneApps/infra/SaneProcess/outputs/portfolio-review-20260906/donate-heart-patches/`, including shared/consumer custody manifests, upstream build, resolution logs and exact patches.
+
+## 2026-09-06 shared license-feedback dependency
+
+- SaneUI0f04e753 exact dependency resolved on Mini (resolve-only exit0,19:40:27Z) and all3pin files hash-equal on Air. All other resolved package states unchanged; no source edits/build/launch by this lane. Parent owns current release/runtime.
+- Custody and exact patch: SaneProcess outputs/portfolio-review-20260906/license-entry-feedback/SaneVideo-repin/.

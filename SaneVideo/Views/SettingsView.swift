@@ -1,93 +1,97 @@
-//
-//  SettingsView.swift
-//  SaneVideo
-//
-//  Created by SaneVideo Refactor
-//
-
 import AVFoundation
 import SaneUI
 import SwiftUI
 
+private enum VideoSettingsTab: String, SaneSettingsTab {
+    case general, recording, export, privacy, apikeys, icloud, license, about
+    #if DEBUG
+        case debug
+    #endif
+
+    var title: String {
+        switch self {
+        case .general: String(localized: "settings.tab.general", defaultValue: "General")
+        case .recording: "Recording"
+        case .export: String(localized: "settings.tab.export", defaultValue: "Export")
+        case .privacy: String(localized: "settings.tab.privacy", defaultValue: "Privacy & AI")
+        case .apikeys: "API Keys"
+        case .icloud: "iCloud Sync"
+        case .license: "License"
+        case .about: "About"
+        #if DEBUG
+            case .debug: String(localized: "settings.tab.debug", defaultValue: "Debug")
+        #endif
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .general: "gearshape"
+        case .recording: "record.circle"
+        case .export: "arrow.up.circle"
+        case .privacy: "lock.shield"
+        case .apikeys: "key.fill"
+        case .icloud: "icloud"
+        case .license: "checkmark.seal.fill"
+        case .about: "info.circle"
+        #if DEBUG
+            case .debug: "ladybug"
+        #endif
+        }
+    }
+
+    var iconColor: Color {
+        switch self {
+        case .general: .orange
+        case .recording: .red
+        case .export: .cyan
+        case .privacy: .green
+        case .apikeys: .yellow
+        case .icloud: .blue
+        case .license: .mint
+        case .about: .cyan
+        #if DEBUG
+            case .debug: .purple
+        #endif
+        }
+    }
+}
+
 struct SettingsView: View {
-    var prefs = ServiceContainer.shared.userPreferences
     @Environment(LicenseService.self) private var licenseService
     @State private var selectedTab = "general"
 
+    private var selection: Binding<VideoSettingsTab?> {
+        Binding(
+            get: { VideoSettingsTab(rawValue: selectedTab) ?? .general },
+            set: { selectedTab = ($0 ?? .general).rawValue }
+        )
+    }
+
     var body: some View {
-        TabView(selection: $selectedTab) {
-            GeneralSettingsView(selectedTab: $selectedTab)
-                .tabItem {
-                    Label(
-                        String(localized: "settings.tab.general", defaultValue: "General"), systemImage: "gear"
+        SaneSettingsContainer(defaultTab: VideoSettingsTab.general, selection: selection) { tab in
+            switch tab {
+            case .general: GeneralSettingsView()
+            case .recording: RecordingSettingsView()
+            case .export: ExportSettingsView()
+            case .privacy: PrivacySettingsView(selectedTab: $selectedTab)
+            case .apikeys: APIKeysSettingsView()
+            case .icloud: iCloudSyncSettingsView(isSelected: selectedTab == "icloud")
+            case .license:
+                SaneSettingsPage {
+                    LicenseSettingsView(
+                        licenseService: licenseService,
+                        style: .panel,
+                        donationURL: OpenSourceRelease.donationURL
                     )
                 }
-                .tag("general")
-
-            ExportSettingsView()
-                .tabItem {
-                    Label(
-                        String(localized: "settings.tab.export", defaultValue: "Export"),
-                        systemImage: "arrow.up.circle"
-                    )
-                }
-                .tag("export")
-
-            RecordingSettingsView()
-                .tabItem {
-                    Label("Recording", systemImage: "record.circle")
-                }
-                .tag("recording")
-
-            PrivacySettingsView(selectedTab: $selectedTab)
-                .tabItem {
-                    Label(
-                        String(localized: "settings.tab.privacy", defaultValue: "Privacy & AI"),
-                        systemImage: "lock.shield"
-                    )
-                }
-                .tag("privacy")
-
-            APIKeysSettingsView()
-                .tabItem {
-                    Label("API Keys", systemImage: "key.fill")
-                }
-                .tag("apikeys")
-
-            iCloudSyncSettingsView(isSelected: selectedTab == "icloud")
-                .tabItem {
-                    Label("iCloud Sync", systemImage: "icloud")
-                }
-                .tag("icloud")
-
-            LicenseSettingsView(
-                licenseService: licenseService,
-                style: .panel,
-                donationURL: OpenSourceRelease.donationURL
-            )
-                .tabItem {
-                    Label("License", systemImage: "key.fill")
-                }
-                .tag("license")
-
-            AboutSettingsView()
-                .tabItem {
-                    Label("About", systemImage: "info.circle")
-                }
-                .tag("about")
-
+            case .about: AboutSettingsView()
             #if DEBUG
-                DebugSettingsView()
-                    .tabItem {
-                        Label(
-                            String(localized: "settings.tab.debug", defaultValue: "Debug"), systemImage: "ladybug"
-                        )
-                    }
-                    .tag("debug")
+                case .debug: DebugSettingsView()
             #endif
+            }
         }
-        .frame(width: 500, height: 400)
-        .padding()
+        .preferredColorScheme(.dark)
     }
 }
 
@@ -115,155 +119,81 @@ private struct AboutSettingsView: View {
 
 struct GeneralSettingsView: View {
     @Bindable var prefs = ServiceContainer.shared.userPreferences
-    @Binding var selectedTab: String
     @State private var showingCacheAlert = false
+    @State private var isClearingCache = false
     #if !APP_STORE
         @State private var automaticallyChecksForUpdates = false
         @State private var updateCheckFrequency = SaneVideoUpdateCheckFrequency.daily
     #endif
 
     var body: some View {
-        Form {
-            Section {
-                InformationBox(
-                    text: "These settings change the defaults for this Mac. Your current projects keep their own project-specific recording, export, and Demo Studio settings.",
-                    color: Theme.Colors.accent,
-                    icon: "gearshape.fill"
-                )
-            }
-
-            Section(
-                header: Text(String(localized: "settings.appearance.header", defaultValue: "Appearance"))
-                    .saneReadableSectionTitle()
-            ) {
-                Picker(
-                    String(localized: "settings.appearance.theme", defaultValue: "Theme"),
-                    selection: $prefs.appTheme
-                ) {
-                    ForEach(AppTheme.allCases) { theme in
-                        Text(theme.rawValue).tag(theme)
+        SaneSettingsPage {
+            CompactSection("Appearance", icon: "paintpalette", iconColor: .purple) {
+                CompactRow("Theme") {
+                    Picker("Theme", selection: $prefs.appTheme) {
+                        ForEach(AppTheme.allCases) { theme in
+                            Text(theme.rawValue).tag(theme)
+                        }
                     }
+                    .labelsHidden()
+                    .help("Choose how SaneVideo looks on this Mac.")
+                    .accessibilityIdentifier("settings.theme_picker")
                 }
-                .pickerStyle(.radioGroup)
-                .help("Choose how SaneVideo looks on this Mac.")
-                .accessibilityIdentifier("settings.theme_picker")
-
-                HelperText(
-                    text: "Theme changes the app chrome only. It does not affect exported video colors.",
-                    icon: "paintpalette.fill"
-                )
             }
-            .padding(.bottom, 20)
 
-            Section(
-                header: Text(
-                    String(localized: "settings.transcription.header", defaultValue: "Transcription Engine")
-                ).saneReadableSectionTitle()
-            ) {
-                TranscriptionEnginePicker()
-                HelperText(
-                    text: "Pick the speech-to-text engine you want to use for captions and transcripts.",
-                    icon: "captions.bubble.fill"
-                )
-            }
-            .padding(.bottom, 20)
-
-            Section(
-                header: Text(
-                    String(localized: "settings.storage.header", defaultValue: "Storage & Performance")
-                ).saneReadableSectionTitle()
-            ) {
-                HStack {
-                    VStack(alignment: .leading) {
-                        Text(String(localized: "settings.storage.temp_files", defaultValue: "Temporary Files"))
-                            .saneReadableBodyStrong()
-                        Text(
-                            String(
-                                localized: "settings.storage.description",
-                                defaultValue: "Clear cached previews and temporary recordings to free up space."
-                            )
-                        )
+            CompactSection("Preview Cache", icon: "internaldrive", iconColor: .orange) {
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Reset thumbnails and waveforms if previews look stale. Recordings and projects stay intact.")
                         .saneReadableSupportText()
-                    }
-                    Spacer()
+                        .fixedSize(horizontal: false, vertical: true)
                     Button(String(localized: "settings.action.clear_cache", defaultValue: "Clear Cache")) {
-                        prefs.clearCache()
-                        showingCacheAlert = true
+                        isClearingCache = true
+                        Task { @MainActor in
+                            await prefs.clearCache(
+                                thumbnailService: ServiceContainer.shared.thumbnailService,
+                                waveformService: ServiceContainer.shared.waveformService
+                            )
+                            isClearingCache = false
+                            showingCacheAlert = true
+                        }
                     }
-                    .help("Remove cached previews and temporary files from this Mac.")
+                    .buttonStyle(SaneActionButtonStyle())
+                    .disabled(isClearingCache)
+                    .help("Reset generated previews without removing media files.")
                     .accessibilityIdentifier("settings.clear_cache")
                 }
-
-                HelperText(
-                    text: "Use this if the app is taking more disk space than expected or previews look stale.",
-                    icon: "internaldrive.fill"
-                )
-            }
-            .padding(.bottom, 20)
-
-            // MARK: - Privacy Section
-
-            Section(header: Text("Privacy & AI").saneReadableSectionTitle()) {
-                VStack(alignment: .leading, spacing: 12) {
-                    HStack {
-                        CompactPrivacyBadge()
-                        Spacer()
-                    }
-
-                    Text(
-                        "SaneVideo processes all AI features on-device using Apple Intelligence. Your videos never leave your Mac."
-                    )
-                    .saneReadableSupportText()
-
-                    HStack {
-                        Text("Cloud AI:")
-                            .saneReadableLabel()
-                        Spacer()
-                        Text("Optional (your API keys)")
-                            .saneReadableMeta()
-                    }
-
-                    Button("Configure API Keys") {
-                        selectedTab = "apikeys"
-                    }
-                    .buttonStyle(.link)
-                    .help("Open the optional API Keys tab inside SaneVideo.")
-
-                    HelperText(
-                        text: YouTubeService.uploadFeatureEnabled ? "You only need API keys for optional direct upload or cloud-powered extras. The normal local demo workflow does not depend on them." : "YouTube direct upload is disabled in this build. The normal local demo workflow does not depend on API keys.",
-                        icon: "lock.shield.fill"
-                    )
-                }
+                .padding(12)
             }
 
             #if !APP_STORE
-                Section(header: Text("Software Updates").saneReadableSectionTitle()) {
-                    Toggle("Check for updates automatically", isOn: $automaticallyChecksForUpdates)
-                        .help("Let SaneVideo check for updates on this Mac.")
-
-                    Picker("Check frequency", selection: $updateCheckFrequency) {
-                        ForEach(SaneVideoUpdateCheckFrequency.allCases) { frequency in
-                            Text(frequency.title).tag(frequency)
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                    .help("Choose how often automatic update checks run.")
-                    .disabled(!automaticallyChecksForUpdates)
-
-                    Button("Check Now") {
-                        ServiceContainer.shared.updaterService.checkForUpdates()
-                    }
-                    .help("Check for an update right now.")
-                    .disabled(!ServiceContainer.shared.updaterService.canCheckForUpdates)
-
-                    HelperText(
-                        text: "Automatic updates do not upload your projects. This only checks whether a newer app build exists.",
-                        icon: "arrow.down.circle.fill"
+                CompactSection("Software Updates", icon: "arrow.down.circle", iconColor: .blue) {
+                    CompactToggle(
+                        label: "Check automatically",
+                        isOn: $automaticallyChecksForUpdates
                     )
+                    .help("Let SaneVideo check for updates on this Mac.")
+                    CompactDivider()
+                    CompactRow("Check frequency") {
+                        Picker("Check frequency", selection: $updateCheckFrequency) {
+                            ForEach(SaneVideoUpdateCheckFrequency.allCases) { frequency in
+                                Text(frequency.title).tag(frequency)
+                            }
+                        }
+                        .labelsHidden()
+                        .disabled(!automaticallyChecksForUpdates)
+                    }
+                    CompactDivider()
+                    CompactRow("Available updates") {
+                        Button("Check Now") {
+                            ServiceContainer.shared.updaterService.checkForUpdates()
+                        }
+                        .buttonStyle(SaneActionButtonStyle())
+                        .help("Check for an update now.")
+                        .disabled(!ServiceContainer.shared.updaterService.canCheckForUpdates)
+                    }
                 }
             #endif
         }
-        .padding()
         #if !APP_STORE
             .onAppear {
                 automaticallyChecksForUpdates = ServiceContainer.shared.updaterService.automaticallyChecksForUpdates
@@ -277,7 +207,7 @@ struct GeneralSettingsView: View {
             }
         #endif
             .alert(
-                String(localized: "settings.cache_cleared.title", defaultValue: "Cache Cleared"),
+                String(localized: "settings.cache_cleared.title", defaultValue: "Preview Cache Cleared"),
                 isPresented: $showingCacheAlert
             ) {
                 Button(String(localized: "settings.action.ok", defaultValue: "OK"), role: .cancel) {}
@@ -292,65 +222,37 @@ struct ExportSettingsView: View {
     @Bindable var prefs = ServiceContainer.shared.userPreferences
 
     var body: some View {
-        Form {
-            Section {
-                InformationBox(
-                    text: "These export defaults are the starting point for new exports. You can still override them per project or per export later.",
-                    color: Theme.Colors.accent,
-                    icon: "arrow.up.circle.fill"
-                )
-            }
-
-            Section(
-                header: Text(
-                    String(localized: "settings.export.header", defaultValue: "Default Export Configuration")
-                ).saneReadableSectionTitle()
-            ) {
-                Text(
-                    String(
-                        localized: "settings.export.description",
-                        defaultValue: "These settings will be used as the default for new exports."
-                    )
-                )
+        SaneSettingsPage {
+            Text("Defaults for new exports. You can change them again when exporting.")
                 .saneReadableSupportText()
-                .padding(.bottom, 8)
+                .fixedSize(horizontal: false, vertical: true)
 
-                Picker(
-                    String(localized: "settings.export.resolution", defaultValue: "Resolution"),
-                    selection: $prefs.defaultResolution
-                ) {
-                    Text(String(localized: "settings.export.resolution.1080p", defaultValue: "1080p HD")).tag(
-                        SaneExportSettings.ExportResolution.hd1080)
-                    Text(String(localized: "settings.export.resolution.4k", defaultValue: "4K UHD")).tag(
-                        SaneExportSettings.ExportResolution.uhd4K)
+            CompactSection("Video", icon: "film", iconColor: .cyan) {
+                CompactRow("Resolution") {
+                    Picker("Resolution", selection: $prefs.defaultResolution) {
+                        Text("1080p HD").tag(SaneExportSettings.ExportResolution.hd1080)
+                        Text("4K UHD").tag(SaneExportSettings.ExportResolution.uhd4K)
+                    }
+                    .labelsHidden()
+                    .accessibilityIdentifier("settings.resolution_picker")
+                    .help("Choose the default export resolution.")
                 }
-                .help("Choose the default export resolution for new export jobs.")
-                .accessibilityIdentifier("settings.resolution_picker")
-
-                HelperText(
-                    text: "Use 1080p for the normal product-demo master. Use 4K when you want maximum detail or more room for crop/reframe work.",
-                    icon: "rectangle.compress.vertical"
-                )
-
-                Picker(
-                    String(localized: "settings.export.codec", defaultValue: "Codec"),
-                    selection: $prefs.defaultAVCodec
-                ) {
-                    Text(String(localized: "settings.export.codec.hevc", defaultValue: "HEVC (H.265)")).tag(
-                        AVVideoCodecType.hevc)
-                    Text(String(localized: "settings.export.codec.h264", defaultValue: "H.264")).tag(
-                        AVVideoCodecType.h264)
+                HelperText(text: "1080p suits most videos. Choose 4K for extra detail.", icon: "viewfinder")
+                    .padding(12)
+                CompactDivider()
+                CompactRow("Codec") {
+                    Picker("Codec", selection: $prefs.defaultAVCodec) {
+                        Text("HEVC (H.265)").tag(AVVideoCodecType.hevc)
+                        Text("H.264").tag(AVVideoCodecType.h264)
+                    }
+                    .labelsHidden()
+                    .accessibilityIdentifier("settings.codec_picker")
+                    .help("Choose the default video codec.")
                 }
-                .help("Choose the default video codec for new export jobs.")
-                .accessibilityIdentifier("settings.codec_picker")
-
-                HelperText(
-                    text: "HEVC makes smaller files at the same quality. H.264 is the safer compatibility default when you need broad support.",
-                    icon: "film.stack.fill"
-                )
+                HelperText(text: "HEVC saves space. H.264 works with more players.", icon: "film.stack")
+                    .padding(12)
             }
         }
-        .padding()
     }
 }
 
@@ -360,66 +262,43 @@ struct DebugSettingsView: View {
     private var runner = ServiceContainer.shared.stressTestRunner
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text(String(localized: "settings.debug.header", defaultValue: "Stress Testing & Limits"))
-                .saneReadableSectionTitle()
-
-            Text(
-                String(
-                    localized: "settings.debug.description",
-                    defaultValue:
-                    "Run automated stress tests to identify performance bottlenecks and breaking points."
-                )
-            )
-            .saneReadableSupportText()
-
-            HelperText(
-                text: "This is for validation and diagnostics. Normal recording and editing do not require it.",
-                icon: "ladybug.fill"
-            )
-
-            HStack {
-                Button(
-                    action: {
+        SaneSettingsPage {
+            CompactSection("Stress Tests", icon: "ladybug", iconColor: .purple) {
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Run diagnostics for recording and export performance.")
+                        .saneReadableSupportText()
+                        .fixedSize(horizontal: false, vertical: true)
+                    Button {
                         runner.runAllTests(appState: ServiceContainer.shared.appState)
-                    },
-                    label: {
+                    } label: {
                         if runner.isRunning {
                             ProgressView().controlSize(.small)
-                            Text(String(localized: "settings.debug.running", defaultValue: "Running..."))
+                            Text("Running…")
                         } else {
-                            Image(systemName: "play.fill")
-                            Text(String(localized: "settings.debug.run_tests", defaultValue: "Run Stress Tests"))
+                            Label("Run Stress Tests", systemImage: "play.fill")
                         }
                     }
-                )
-                .help("Run the built-in stress test suite for diagnostics.")
-                .disabled(runner.isRunning)
-                .accessibilityIdentifier("settings.run_stress_tests")
-
-                Spacer()
-
-                Text(runner.statusMessage)
-                    .saneReadableSupportText()
+                    .buttonStyle(SaneActionButtonStyle())
+                    .disabled(runner.isRunning)
+                    .accessibilityIdentifier("settings.run_stress_tests")
+                    Text(runner.statusMessage)
+                        .saneReadableSupportText()
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .padding(12)
             }
-
-            Divider()
-
-            Text(String(localized: "settings.debug.logs", defaultValue: "Logs:"))
-                .saneReadableLabel()
-
-            ScrollView {
-                VStack(alignment: .leading) {
+            CompactSection("Logs", icon: "text.alignleft", iconColor: .blue) {
+                VStack(alignment: .leading, spacing: 8) {
                     ForEach(runner.logs, id: \.self) { log in
                         Text(log)
-                            .font(.system(.caption, design: .monospaced))
+                            .font(.system(size: 13, design: .monospaced))
+                            .foregroundStyle(.white)
+                            .fixedSize(horizontal: false, vertical: true)
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
                 }
-                .padding(8)
+                .padding(12)
             }
-            .sanePanel(radius: 10, accent: Theme.Colors.accentDeep)
         }
-        .padding()
     }
 }

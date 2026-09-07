@@ -794,14 +794,16 @@ actions:
   - Privacy settings
   - Debug settings
   steps:
-  - Verify General, Export, Recording, Privacy & AI, API Keys, iCloud Sync, and Debug
-    tabs.
+  - Verify General, Recording, Export, Privacy & AI, API Keys, iCloud Sync, License,
+    and About pages; Debug appears only in Debug builds.
   - Verify clear cache, update auto-check, update frequency, Check Now, and Run Stress
     Tests controls.
   - Do not mark real update availability or stress-test completion without separate
     runtime proof.
   assertions:
-  - Settings tabs render from one Settings scene.
+  - Settings pages use the shared sidebar and scroll without clipping at normal and minimum window sizes.
+  - Privacy & AI owns caption-model guidance; General contains appearance, preview cache, and updates.
+  - Disabled upload and sync pages give export directions without requesting credentials or folder access.
   - Update and stress-test actions have safe first surfaces.
   - Customer settings persist through UserPreferences where applicable.
   evidence:
@@ -835,14 +837,16 @@ actions:
     fixture_paths:
     - Tests/Assets/
   user_inputs:
-  - Verify General, Export, Recording, Privacy & AI, API Keys, iCloud Sync, and Debug
-    tabs.
+  - Verify General, Recording, Export, Privacy & AI, API Keys, iCloud Sync, License,
+    and About pages; Debug appears only in Debug builds.
   - Verify clear cache, update auto-check, update frequency, Check Now, and Run Stress
     Tests controls.
   - Do not mark real update availability or stress-test completion without separate
     runtime proof.
   expected_outputs:
-  - Settings tabs render from one Settings scene.
+  - Settings pages use the shared sidebar and scroll without clipping at normal and minimum window sizes.
+  - Privacy & AI owns caption-model guidance; General contains appearance, preview cache, and updates.
+  - Disabled upload and sync pages give export directions without requesting credentials or folder access.
   - Update and stress-test actions have safe first surfaces.
   - Customer settings persist through UserPreferences where applicable.
 - id: api-keys-keychain-safe-surfaces
@@ -851,8 +855,9 @@ actions:
   - APIKeysSettingsView
   - KeychainService
   steps:
-  - Verify YouTube client ID, client secret, reveal, save, clear, clear all, cancel,
-    and confirmation controls.
+  - Verify the disabled-upload explanation and File > Export Video direction.
+  - Verify Clear All API Keys opens a cancellable confirmation using fixture credentials only.
+  - Credential entry, reveal, and save controls appear only in an upload-enabled build.
   - Verify Keychain operations are tested without prompting users during the sweep.
   - Do not trigger real Keychain prompt floods.
   assertions:
@@ -883,8 +888,9 @@ actions:
     fixture_paths:
     - Tests/Assets/
   user_inputs:
-  - Verify YouTube client ID, client secret, reveal, save, clear, clear all, cancel,
-    and confirmation controls.
+  - Verify the disabled-upload explanation and File > Export Video direction.
+  - Verify Clear All API Keys opens a cancellable confirmation using fixture credentials only.
+  - Credential entry, reveal, and save controls appear only in an upload-enabled build.
   - Verify Keychain operations are tested without prompting users during the sweep.
   - Do not trigger real Keychain prompt floods.
   expected_outputs:
@@ -898,8 +904,8 @@ actions:
   - SyncManager
   - Cloud project rows
   steps:
-  - Verify enable iCloud sync, refresh cloud projects, sync options, and Sync Now
-    controls.
+  - Verify the disabled iCloud toggle and manual export direction.
+  - Confirm no iCloud account or Documents-folder access is requested by this disabled page.
   - Verify unavailable iCloud state is surfaced without pretending sync completed.
   - Do not mark real iCloud upload/download complete unless fixture or account proof
     exists.
@@ -935,8 +941,8 @@ actions:
     fixture_paths:
     - Tests/Assets/
   user_inputs:
-  - Verify enable iCloud sync, refresh cloud projects, sync options, and Sync Now
-    controls.
+  - Verify the disabled iCloud toggle and manual export direction.
+  - Confirm no iCloud account or Documents-folder access is requested by this disabled page.
   - Verify unavailable iCloud state is surfaced without pretending sync completed.
   - Do not mark real iCloud upload/download complete unless fixture or account proof
     exists.

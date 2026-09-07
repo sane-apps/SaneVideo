@@ -88,13 +88,16 @@ private struct FormatDescriptor: Equatable {
     }
 }
 
-private extension AVAudioPCMBuffer {
+extension AVAudioPCMBuffer {
     convenience init?(sampleBuffer: CMSampleBuffer) {
         guard let formatDesc = CMSampleBufferGetFormatDescription(sampleBuffer),
               let asbd = CMAudioFormatDescriptionGetStreamBasicDescription(formatDesc) else { return nil }
 
         guard let format = AVAudioFormat(streamDescription: asbd) else { return nil }
-        let frameCount = AVAudioFrameCount(CMSampleBufferGetNumSamples(sampleBuffer))
+        let sampleCount = CMSampleBufferGetNumSamples(sampleBuffer)
+        guard asbd.pointee.mFormatID == kAudioFormatLinearPCM,
+              sampleCount > 0, sampleCount <= Int(Int32.max) else { return nil }
+        let frameCount = AVAudioFrameCount(sampleCount)
 
         self.init(pcmFormat: format, frameCapacity: frameCount)
         frameLength = frameCount

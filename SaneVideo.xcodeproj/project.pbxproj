@@ -33,7 +33,6 @@
 		0A772AC5F996F4FE88DF3BE8 /* MagicFixService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D12515A45FEEFCBB8B160DC7 /* MagicFixService.swift */; };
 		0A9F9E28ED0A100538EADD25 /* ProjectState+SmartFeatures.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5832D3BB043F933F59BE70AB /* ProjectState+SmartFeatures.swift */; };
 		0AAA61899ED056FC3BF2BC6C /* ProjectState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D9D206CAEC553C2BDBF5417 /* ProjectState.swift */; };
-		0B6E32A9FF98CCFD2D4D4A45 /* BuildTimestampView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00B1BA84A181A551D83445C /* BuildTimestampView.swift */; };
 		0B8356EFB53D86B1E05AF940 /* TranscriptionServiceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4FF2A6242043B20F32C5FAE /* TranscriptionServiceProtocol.swift */; };
 		0B9D7F47D63B0F261C78DE3A /* WaveformService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26AC8CDF8551EE6B0A95BE5A /* WaveformService.swift */; };
 		0C4DE48EFF369F3F4EF18B34 /* ProjectState+Timeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = C521D2D0B4FD9D8A40DC541D /* ProjectState+Timeline.swift */; };
@@ -539,7 +538,6 @@
 		BD30F2E12699E5597906E1AC /* DemoStudioSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35D8269C84F7268B9712F425 /* DemoStudioSheet.swift */; };
 		BE0C037B12B9989DB9FB444B /* ExportConfigurationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C57C35E7B1B22382A021048B /* ExportConfigurationView.swift */; };
 		BFDD0E3235582EA689991A79 /* CameraState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 304BF0B1E8E01A3ACF4AED0E /* CameraState.swift */; };
-		BFE5BC1287241DA5559D911A /* BuildTimestampView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00B1BA84A181A551D83445C /* BuildTimestampView.swift */; };
 		BFEEBD79CD6E77656C04DA5F /* TeleprompterWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE76E29ED31D2106FFBCE007 /* TeleprompterWindow.swift */; };
 		C03DA9891DB36CDE347BACC2 /* CaptionModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA6051160AE774788045E51E /* CaptionModels.swift */; };
 		C04410A977EE77EEEFC6E3DF /* LibraryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1561CBC2129BAA71E34963ED /* LibraryView.swift */; };
@@ -1120,7 +1118,6 @@
 		EEF55C3966A3B7D211C3B65B /* AppLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLogger.swift; sourceTree = "<group>"; };
 		EF15C922B8E2FF84DAF74B74 /* APIKeysSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIKeysSettingsView.swift; sourceTree = "<group>"; };
 		EF6AFC3AD3F0B7C8340415ED /* ServiceContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServiceContainer.swift; sourceTree = "<group>"; };
-		F00B1BA84A181A551D83445C /* BuildTimestampView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BuildTimestampView.swift; sourceTree = "<group>"; };
 		F04B1148BF6BC5690EC341CB /* ThermalManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThermalManagerTests.swift; sourceTree = "<group>"; };
 		F09011730614A0E4A6FBC804 /* SentimentAnalysisService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SentimentAnalysisService.swift; sourceTree = "<group>"; };
 		F0D1D8FFF8AA6DC076641F00 /* AppLoggerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLoggerTests.swift; sourceTree = "<group>"; };
@@ -1564,7 +1561,6 @@
 				64160BA9108DD329F0DE71E5 /* AudioSection.swift */,
 				F4159CAD0FE645437B51AA97 /* AudioVisualizerView.swift */,
 				8D888C05E3EECCC09946312F /* BackgroundEffectsView.swift */,
-				F00B1BA84A181A551D83445C /* BuildTimestampView.swift */,
 				426421BD035EDC770BDEAEFE /* CameraPreviewView.swift */,
 				C2B36FD2A23D7945C2D91BC4 /* CanvasOverlay.swift */,
 				78C145848175BDE6200111ED /* CaptionListEditor.swift */,
@@ -2542,7 +2538,6 @@
 				F3F21A37C6850F22DC288AE8 /* BatchCoordinator.swift in Sources */,
 				B4E5BC48BD27195BE533D881 /* BatchExportService.swift in Sources */,
 				5130B05EBB6FA78672963B27 /* BodyPoseService.swift in Sources */,
-				BFE5BC1287241DA5559D911A /* BuildTimestampView.swift in Sources */,
 				86CBF8853A454E764700F3BC /* CMTime+Extensions.swift in Sources */,
 				95EE377AD3DE35D10F133680 /* CameraFramePublisher.swift in Sources */,
 				4E5ED84EB1AD64DCF5512747 /* CameraManager.swift in Sources */,
@@ -2834,7 +2829,6 @@
 				3B41485D302265E972D455CA /* BatchCoordinator.swift in Sources */,
 				A2B3A0713A7FAA86144DE3A6 /* BatchExportService.swift in Sources */,
 				1114539BF3511A7466E72648 /* BodyPoseService.swift in Sources */,
-				0B6E32A9FF98CCFD2D4D4A45 /* BuildTimestampView.swift in Sources */,
 				71528C2375D28F09273ADDAE /* CMTime+Extensions.swift in Sources */,
 				40B6DE53D2819DD7F852B12F /* CameraFramePublisher.swift in Sources */,
 				846BA819CB3099D00DB9CE76 /* CameraManager.swift in Sources */,
@@ -3631,7 +3625,7 @@
 			repositoryURL = "https://github.com/sane-apps/SaneUI.git";
 			requirement = {
 				kind = revision;
-				revision = 569922a6533a0ae04ebb3ccd7e7b16b3a76f0b57;
+				revision = 60176f30007e0f931195785aa769e4ef5172f7ee;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */

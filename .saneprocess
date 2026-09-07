@@ -133,8 +133,7 @@ appstore:
   enabled: true
   app_id: "6770294375"
   scheme: SaneVideoAppStore
-  product_id: "com.sanevideo.app.pro.access.v2"
-  iap_price_usd: "14.99"
+  iap_policy: none
   configuration: Release-AppStore
   platforms: [macos]
   category: public.app-category.video
@@ -161,17 +160,12 @@ appstore:
   review_notes: >-
     The app is free. Donate is optional. SaneVideo is a Mac App Store app for local recording, import, editing, and export. No account, sign-in, API key, credentials, or payment is required to launch or review. Setup stays. Every feature stays unlocked. No paywall. No in-app purchase is required.
 
-    The app requests Camera and Microphone only for recording. Screen & System Audio Recording is used for screen capture and cannot function without Apple's screen capture permission. Direct YouTube upload is disabled in this build; reviewers should use local export and manual upload outside the app if they want to inspect the export path. Any optional external provider account/API-key surfaces are for a user's existing account created outside the app, are not sold by SaneVideo, and do not unlock paid app features or digital content. No external paid content is accessed in the app; no account signup, no payment is required, and no enterprise services are involved for review or for Basic. Review does not require any paid provider account, merchant account, sales data, analytics, orders, products, or refunds.
+    The app requests Camera and Microphone only for recording. Screen & System Audio Recording is used for screen capture and cannot function without Apple's screen capture permission. Direct YouTube upload is disabled in this build; reviewers should use local export and manual upload outside the app if they want to inspect the export path. Any optional external provider account/API-key surfaces are for a user's existing account created outside the app, are not sold by SaneVideo, and do not unlock paid app features or digital content. No external paid content is accessed in the app; no account signup, no payment is required, and no enterprise services are involved for review or use. Review does not require any paid provider account, merchant account, sales data, analytics, orders, products, or refunds.
   review_notes_by_platform:
     macos: >-
       Fastest review path: launch SaneVideo; no account, sign-in, API key, credentials, or payment is required. Grant Camera/Microphone if prompted, inspect recording controls, import a local video if available, open Export, and verify local export settings. The app is free. Donate is optional. Setup stays. Every feature stays unlocked.
 
-      Screen capture requires Screen & System Audio Recording permission because SaneVideo records the selected screen/window using Apple's screen capture APIs. Direct YouTube upload is unavailable in this build; export a local file and upload manually outside the app. Any optional external provider account/API-key surfaces are for a user's existing account created outside the app, are not sold by SaneVideo, and do not unlock paid app features or digital content. No external paid content is accessed in the app; no account signup, no payment is required, and no enterprise services are involved for review or for Basic. Review does not require any paid provider account, merchant account, sales data, analytics, orders, products, or refunds.
-  iap:
-    display_name: "SaneVideo Pro Access"
-    price_usd: 14.99
-    description: "Unlock Pro video workflow features."
-    review_note: "SaneVideo Pro Access is a one-time non-consumable StoreKit purchase. No external checkout links or license keys are used in the App Store build."
+      Screen capture requires Screen & System Audio Recording permission because SaneVideo records the selected screen/window using Apple's screen capture APIs. Direct YouTube upload is unavailable in this build; export a local file and upload manually outside the app. Any optional external provider account/API-key surfaces are for a user's existing account created outside the app, are not sold by SaneVideo, and do not unlock paid app features or digital content. No external paid content is accessed in the app; no account signup, no payment is required, and no enterprise services are involved for review or use. Review does not require any paid provider account, merchant account, sales data, analytics, orders, products, or refunds.
   accessibility_declarations:
     publish: true
     mac:

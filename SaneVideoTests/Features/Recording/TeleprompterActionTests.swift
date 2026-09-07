@@ -1,3 +1,4 @@
+import CoreMedia
 import Foundation
 import Testing
 
@@ -65,6 +66,60 @@ struct TeleprompterActionTests {
 
         #expect(appState.appMode == .recording)
         #expect(appState.currentProject != nil)
+    }
+
+    @Test("Import blocks document commands without deferring them until dismissal")
+    func importDoesNotQueueProjectCommands() {
+        let appState = AppState()
+        appState.projectState = ProjectState(projectStore: MockProjectStore())
+        appState.projectState.startNewProject()
+        let originalID = appState.currentProject?.id
+        var showGIF = false
+
+        appState.importVideo()
+        #expect(!appState.projectCommandsEnabled)
+        appState.performProjectCommand { showGIF = true }
+        appState.performProjectCommand { appState.startNewRecording() }
+        #expect(!showGIF)
+        #expect(appState.currentProject?.id == originalID)
+
+        appState.showingImportPicker = false
+        #expect(appState.projectCommandsEnabled)
+        #expect(!showGIF)
+        appState.performProjectCommand { showGIF = true }
+        #expect(showGIF)
+        appState.performProjectCommand { appState.startNewRecording() }
+        #expect(appState.currentProject?.id != originalID)
+    }
+
+    @Test("Import appends to a restored project; New Recording isolates the next clip")
+    func restoredProjectAndFreshRecordingStaySeparate() async throws {
+        let appState = AppState()
+        appState.projectState = ProjectState(projectStore: MockProjectStore())
+        appState.projectState.startNewProject()
+        let originalClip = VideoClip(url: TestEnvironment.mockAssetURL,
+                                     duration: CMTime(seconds: 2, preferredTimescale: 600))
+        appState.projectState.addClip(originalClip)
+        let restored = try #require(appState.currentProject)
+        appState.projectState.openProject(restored)
+        appState.switchToRecording()
+
+        await appState.projectState.addVideoToTimeline(url: TestEnvironment.mockAssetURL)
+        let appended = try #require(appState.currentProject)
+        #expect(appended.id == restored.id)
+        #expect(appended.timeline.tracks.flatMap(\.clips).count == 2)
+        #expect(appended.timeline.tracks.flatMap(\.clips).first?.id == originalClip.id)
+
+        appState.startNewRecording()
+        let freshID = try #require(appState.currentProject?.id)
+        #expect(freshID != restored.id)
+        #expect(appState.currentProject?.timeline.tracks.flatMap(\.clips).isEmpty == true)
+        appState.projectState.addClip(originalClip)
+        #expect(appState.currentProject?.id == freshID)
+        #expect(appState.currentProject?.timeline.tracks.flatMap(\.clips).count == 1)
+        appState.projectState.openProject(appended)
+        #expect(appState.currentProject?.id == restored.id)
+        #expect(appState.currentProject?.timeline.tracks.flatMap(\.clips).count == 2)
     }
 
     @Test("Importing a video from AppState switches into editing mode")

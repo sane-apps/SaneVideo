@@ -1,81 +1,57 @@
-//
-//  PrivacySettingsView.swift
-//  SaneVideo
-//
-//  Privacy and AI settings view
-//
-
+import SaneUI
 import SwiftUI
 
 struct PrivacySettingsView: View {
     @Binding var selectedTab: String
 
     var body: some View {
-        Form {
-            Section {
-                InformationBox(
-                    text: "SaneVideo is local-first. Recording, editing, teleprompter, and export work on your Mac without sending media to SaneApps servers.",
-                    color: Theme.Colors.accent,
-                    icon: "lock.shield.fill"
-                )
+        SaneSettingsPage {
+            CompactSection("Your Media", icon: "lock.shield", iconColor: .green) {
+                Text("Recording, editing, and export stay on your Mac. SaneVideo does not send your media to SaneApps servers.")
+                    .saneReadableSupportText()
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(12)
             }
 
-            Section(header: Text(String(localized: "settings.privacy.header", defaultValue: "Privacy & AI")).saneReadableSectionTitle()) {
+            CompactSection("Captions & Transcripts", icon: "captions.bubble", iconColor: .cyan) {
+                TranscriptionEnginePicker()
+                    .padding(12)
+            }
+
+            CompactSection("Services & Policies", icon: "doc.text", iconColor: .blue) {
                 VStack(alignment: .leading, spacing: 12) {
-                    Text(String(localized: "settings.privacy.description", defaultValue: "SaneVideo prioritizes your privacy. All core AI features run 100% on your Mac, ensuring your data never leaves your device."))
-                        .saneReadableSupportText()
-
-                    PrivacyBadge()
-                        .padding(.vertical, 4)
-
-                    Text(String(localized: "settings.privacy.cloud_note", defaultValue: "All AI features run 100% on-device using Apple Intelligence. No cloud services required."))
-                        .saneReadableSupportText()
-
-                    HelperText(
-                        text: YouTubeService.uploadFeatureEnabled ? "If you choose optional cloud-connected features like direct upload or third-party APIs, they stay separate from the normal local demo workflow." : "YouTube direct upload is disabled in this build. Optional API settings stay separate from the normal local demo workflow.",
-                        icon: "externaldrive.badge.icloud"
-                    )
-
-                    Divider()
-                        .padding(.vertical, 4)
-
                     Button {
                         selectedTab = "apikeys"
                     } label: {
                         Label(String(localized: "settings.privacy.manage_api_keys", defaultValue: "Manage API Keys"), systemImage: "key.fill")
                     }
-                    .buttonStyle(.link)
-                    .help(YouTubeService.uploadFeatureEnabled ? "Open optional API key settings for direct upload and cloud-powered extras." : "Open optional API key settings. YouTube direct upload is disabled in this build.")
+                    .buttonStyle(SaneActionButtonStyle())
+                    .help("View optional upload settings and saved credential controls.")
                     .accessibilityIdentifier("settings.privacy.manage_api_keys_button")
 
                     Button {
-                        // Try to open PRIVACY.md from bundle, fallback to web
-                        if let privacyURL = Bundle.main.url(forResource: "PRIVACY", withExtension: "md") {
-                            NSWorkspace.shared.open(privacyURL)
-                        } else if let webURL = URL(string: "https://sanevideo.app/privacy") {
+                        if let webURL = URL(string: "https://sanevideo.com/privacy") {
                             NSWorkspace.shared.open(webURL)
                         }
                     } label: {
                         Label(String(localized: "settings.privacy.view_policy", defaultValue: "View Privacy Policy"), systemImage: "doc.text.fill")
                     }
-                    .buttonStyle(.link)
+                    .buttonStyle(SaneActionButtonStyle())
                     .help("Open the full privacy policy.")
 
                     Button {
-                        // Try to open TERMS.md from bundle, fallback to web
-                        if let termsURL = Bundle.main.url(forResource: "TERMS", withExtension: "md") {
-                            NSWorkspace.shared.open(termsURL)
-                        } else if let webURL = URL(string: "https://sanevideo.app/terms") {
+                        if let webURL = URL(string: "https://github.com/sane-apps/SaneVideo/blob/main/LICENSE") {
                             NSWorkspace.shared.open(webURL)
                         }
                     } label: {
-                        Label(String(localized: "settings.privacy.view_terms", defaultValue: "View Terms of Service"), systemImage: "doc.text.fill")
+                        Label(String(localized: "settings.privacy.view_license", defaultValue: "View License"), systemImage: "doc.text.fill")
                     }
-                    .buttonStyle(.link)
-                    .help("Open the full terms of service.")
+                    .buttonStyle(SaneActionButtonStyle())
+                    .help("Open SaneVideo’s MIT license.")
                 }
+                .padding(12)
             }
         }
-        .padding()
     }
 }

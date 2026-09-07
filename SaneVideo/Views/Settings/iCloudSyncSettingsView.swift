@@ -5,6 +5,7 @@
 //  Settings view for iCloud project sync configuration
 //
 
+import SaneUI
 import SwiftUI
 
 // swiftlint:disable:next type_name
@@ -22,73 +23,36 @@ struct iCloudSyncSettingsView: View {
     @State private var syncManager: SyncManager?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            InformationBox(
-                text: "iCloud sync is optional and is disabled in this v1 build while the project sync engine is finished. Recording, editing, and export stay local on this Mac.",
-                color: Theme.Colors.accent,
-                icon: "icloud.fill"
-            )
-
-            // Header
-            HStack {
-                Image(systemName: "icloud.fill")
-                    .font(.title)
-                    .foregroundStyle(Theme.Colors.accent)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("iCloud Sync")
-                        .saneReadableSectionTitle()
-                    Text("Project sync is not enabled in this build")
-                        .saneReadableSupportText()
-                }
-                Spacer()
-            }
-
-            Divider()
-
-            // Availability Status
-            HStack {
-                Circle()
-                    .fill(syncFeatureEnabledInThisBuild && isCloudAvailable ? Color.green : Color.orange)
-                    .frame(width: 8, height: 8)
-                Text(syncFeatureEnabledInThisBuild && isCloudAvailable ? "iCloud Available" : "Disabled in v1")
-                    .saneReadableMeta()
-
-                Spacer()
-
-                if let lastSync = lastSyncDate {
-                    Text("Last sync: \(lastSync, style: .relative)")
-                        .saneReadableMeta()
-                }
-            }
-
-            // Main Toggle
-            Toggle(isOn: $isSyncEnabled) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Enable iCloud Sync")
+        SaneSettingsPage {
+            CompactSection("iCloud Sync", icon: "icloud", iconColor: .blue) {
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Project sync is not available in this version.")
                         .saneReadableBodyStrong()
-                    Text("Coming in a future update after project sync is fully verified")
-                        .saneReadableSupportText()
-                }
-            }
-            .help("iCloud Sync is disabled in this build so SaneVideo does not request Documents access for an unfinished feature.")
-            .disabled(!syncFeatureEnabledInThisBuild || !isCloudAvailable)
-            .accessibilityIdentifier("settings.sync.enable_toggle")
-            .onChange(of: isSyncEnabled) { _, newValue in
-                guard syncFeatureEnabledInThisBuild else {
-                    isSyncEnabled = false
-                    UserDefaults.standard.set(false, forKey: "iCloudSyncEnabled")
-                    return
-                }
-                Task {
-                    await manager().setSyncEnabled(newValue)
-                    UserDefaults.standard.set(newValue, forKey: "iCloudSyncEnabled")
-                }
-            }
+                        .fixedSize(horizontal: false, vertical: true)
 
-            HelperText(
-                text: "SaneVideo stores projects and exports locally by default. This avoids macOS Documents-folder prompts for a sync feature that is not ready for v1.",
-                icon: "lock.shield"
-            )
+                    Toggle("Enable iCloud Sync", isOn: $isSyncEnabled)
+                        .toggleStyle(.switch)
+                        .disabled(!syncFeatureEnabledInThisBuild || !isCloudAvailable)
+                        .help("iCloud project sync is unavailable in this version.")
+                        .accessibilityIdentifier("settings.sync.enable_toggle")
+                        .onChange(of: isSyncEnabled) { _, newValue in
+                            guard syncFeatureEnabledInThisBuild else {
+                                isSyncEnabled = false
+                                UserDefaults.standard.set(false, forKey: "iCloudSyncEnabled")
+                                return
+                            }
+                            Task {
+                                await manager().setSyncEnabled(newValue)
+                                UserDefaults.standard.set(newValue, forKey: "iCloudSyncEnabled")
+                            }
+                        }
+
+                    Text("To share a finished video, choose File > Export Video and save it in the folder you want.")
+                        .saneReadableSupportText()
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .padding(12)
+            }
 
             if isSyncEnabled && isCloudAvailable {
                 Divider()
@@ -183,26 +147,7 @@ struct iCloudSyncSettingsView: View {
                 }
             }
 
-            // Help Text
-            GroupBox {
-                VStack(alignment: .leading, spacing: 8) {
-                    Label("About iCloud Sync", systemImage: "info.circle")
-                        .saneReadableLabel()
-
-                    Text("""
-                    iCloud Sync keeps your SaneVideo projects synchronized across all your Mac computers. \
-                    Project sync is intentionally unavailable in this build.
-
-                    Note: Recording, editing, and export do not require iCloud Drive or Documents-folder access.
-                    """)
-                    .saneReadableSupportText()
-                }
-            }
-            .sanePanel(radius: 12, accent: Theme.Colors.accentSoft)
-
-            Spacer()
         }
-        .padding()
         .task(id: isSelected) {
             guard isSelected else { return }
             if !syncFeatureEnabledInThisBuild {

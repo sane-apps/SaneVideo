@@ -364,6 +364,14 @@ extension AppState {
 
     // MARK: - Project Actions
 
+    /// Import owns the document until its sheet closes. Do not queue another command behind it.
+    var projectCommandsEnabled: Bool { !showingImportPicker }
+
+    func performProjectCommand(_ action: () -> Void) {
+        guard projectCommandsEnabled else { return }
+        action()
+    }
+
     func importVideo() {
         projectState.showImportPicker()
     }

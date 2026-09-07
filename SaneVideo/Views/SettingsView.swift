@@ -28,7 +28,7 @@ private enum VideoSettingsTab: String, SaneSettingsTab {
         switch self {
         case .general: "gearshape"
         case .recording: "record.circle"
-        case .export: "arrow.up.circle"
+        case .export: "square.and.arrow.up"
         case .privacy: "lock.shield"
         case .apikeys: "key.fill"
         case .icloud: "icloud"
@@ -42,7 +42,7 @@ private enum VideoSettingsTab: String, SaneSettingsTab {
 
     var iconColor: Color {
         switch self {
-        case .general: .orange
+        case .general: SaneSettingsIconSemantic.general.color
         case .recording: .red
         case .export: .cyan
         case .privacy: .green
@@ -141,6 +141,40 @@ struct GeneralSettingsView: View {
                 }
             }
 
+            #if !APP_STORE
+                CompactSection("Software Updates", icon: "arrow.down.circle", iconColor: .blue) {
+                    CompactToggle(
+                        label: "Check automatically",
+                        isOn: $automaticallyChecksForUpdates
+                    )
+                    .help("Let SaneVideo check for updates on this Mac.")
+                    CompactDivider()
+                    CompactRow("Check frequency") {
+                        if automaticallyChecksForUpdates {
+                            Picker("Check frequency", selection: $updateCheckFrequency) {
+                                ForEach(SaneVideoUpdateCheckFrequency.allCases) { frequency in
+                                    Text(frequency.title).tag(frequency)
+                                }
+                            }
+                            .labelsHidden()
+                        } else {
+                            Text(updateCheckFrequency.title)
+                                .foregroundStyle(.white)
+                                .help("Turn on automatic checks to change the frequency.")
+                        }
+                    }
+                    CompactDivider()
+                    CompactRow("Available updates") {
+                        Button("Check Now") {
+                            ServiceContainer.shared.updaterService.checkForUpdates()
+                        }
+                        .buttonStyle(SaneActionButtonStyle())
+                        .help("Check for an update now.")
+                        .disabled(!ServiceContainer.shared.updaterService.canCheckForUpdates)
+                    }
+                }
+            #endif
+
             CompactSection("Preview Cache", icon: "internaldrive", iconColor: .orange) {
                 VStack(alignment: .leading, spacing: 12) {
                     Text("Reset thumbnails and waveforms if previews look stale. Recordings and projects stay intact.")
@@ -164,35 +198,6 @@ struct GeneralSettingsView: View {
                 }
                 .padding(12)
             }
-
-            #if !APP_STORE
-                CompactSection("Software Updates", icon: "arrow.down.circle", iconColor: .blue) {
-                    CompactToggle(
-                        label: "Check automatically",
-                        isOn: $automaticallyChecksForUpdates
-                    )
-                    .help("Let SaneVideo check for updates on this Mac.")
-                    CompactDivider()
-                    CompactRow("Check frequency") {
-                        Picker("Check frequency", selection: $updateCheckFrequency) {
-                            ForEach(SaneVideoUpdateCheckFrequency.allCases) { frequency in
-                                Text(frequency.title).tag(frequency)
-                            }
-                        }
-                        .labelsHidden()
-                        .disabled(!automaticallyChecksForUpdates)
-                    }
-                    CompactDivider()
-                    CompactRow("Available updates") {
-                        Button("Check Now") {
-                            ServiceContainer.shared.updaterService.checkForUpdates()
-                        }
-                        .buttonStyle(SaneActionButtonStyle())
-                        .help("Check for an update now.")
-                        .disabled(!ServiceContainer.shared.updaterService.canCheckForUpdates)
-                    }
-                }
-            #endif
         }
         #if !APP_STORE
             .onAppear {

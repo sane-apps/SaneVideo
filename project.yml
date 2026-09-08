@@ -45,7 +45,7 @@ settings:
 packages:
   SaneUI:
     url: https://github.com/sane-apps/SaneUI.git
-    revision: 7286410171399b8cb0ba2ef7b253f267bd3d26d0
+    revision: cd766fdb5f7b75e03ba69a38fca330a4554f00b1
   argmax-oss-swift:
     url: https://github.com/argmaxinc/argmax-oss-swift
     from: 1.0.0

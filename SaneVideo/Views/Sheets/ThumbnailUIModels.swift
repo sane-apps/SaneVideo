@@ -103,7 +103,7 @@ struct ThumbnailCard: View {
             .padding(6)
             .background(
                 RoundedRectangle(cornerRadius: 8)
-                    .fill(isSelected ? Color.accentColor.opacity(0.2) : Color.white.opacity(0.05))
+                    .fill(isSelected ? Theme.Colors.rowSelected : Theme.Colors.rowIdle)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 8)

@@ -221,7 +221,7 @@ struct ThumbnailPickerSheet: View {
                         .padding(.vertical, 8)
                         .background(
                             RoundedRectangle(cornerRadius: 8)
-                                .fill(selectedStyle == style ? Color.accentColor.opacity(0.2) : Color.white.opacity(0.05))
+                                .fill(selectedStyle == style ? Theme.Colors.rowSelected : Theme.Colors.rowIdle)
                         )
                         .overlay(
                             RoundedRectangle(cornerRadius: 8)

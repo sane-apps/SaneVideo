@@ -68,17 +68,7 @@ struct SheetHeader: View {
             .help(String(localized: "sheet.close.help", defaultValue: "Close"))
         }
         .padding(16)
-        .background(
-            LinearGradient(
-                colors: [
-                    Theme.Colors.helperTintStrong.opacity(0.38),
-                    .clear,
-                    Theme.Colors.accentGlow.opacity(0.18)
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-        )
+        .background(Theme.Colors.editorPanelElevated.opacity(0.95))
     }
 }
 
@@ -121,6 +111,7 @@ struct SheetFooter: View {
             Button(cancelTitle) {
                 onCancel()
             }
+            .buttonStyle(SaneSheetButtonStyle(kind: .secondary, isEnabled: true))
             .keyboardShortcut(.cancelAction)
             .accessibilityIdentifier(cancelID)
 
@@ -140,11 +131,12 @@ struct SheetFooter: View {
                     Label(actionTitle, systemImage: "square.and.arrow.up")
                 }
             }
-            .buttonStyle(.borderedProminent)
+            .buttonStyle(SaneSheetButtonStyle(kind: .primary, isEnabled: !(isLoading || isDisabled)))
             .disabled(isLoading || isDisabled)
             .keyboardShortcut(.defaultAction)
             .accessibilityIdentifier(actionID)
         }
         .padding(16)
+        .background(Theme.Colors.editorPanelElevated.opacity(0.95))
     }
 }

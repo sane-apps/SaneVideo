@@ -86,6 +86,7 @@ struct GIFExportSheet: View {
             )
         }
         .frame(width: 420, height: 520)
+        .sanePanel(radius: 18, emphasized: true, accent: Theme.Colors.accentSoft)
         .subtleGlass(radius: 12)
         .onAppear {
             endTime = clipDuration

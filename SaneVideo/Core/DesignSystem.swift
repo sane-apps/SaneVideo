@@ -45,26 +45,30 @@ enum Theme {
         static let warning = Color.orange
         static let destructive = Color.red
 
-        // Semantic Text (Adapts to Light/Dark mode)
-        static let textPrimary = Color(nsColor: .labelColor)
-        static let textSecondary = Color.white.opacity(0.92)
-        static let textTertiary = Color.white.opacity(0.86)
+        // Sheet/editor text stays bright white on opaque navy (settings parity).
+        static let textPrimary = Color.white
+        static let textSecondary = Color.white
+        static let textTertiary = Color.white.opacity(0.92)
 
         // UI ELEMENT COLORS
-        static let cardBackground = Color.white.opacity(0.05)
-        static let border = Color.white.opacity(0.1)
-        static let divider = Color.white.opacity(0.08)
-        static let helperBackground = Color(nsColor: .controlBackgroundColor)
+        static let cardBackground = Color.white.opacity(0.08)
+        static let border = Color.white.opacity(0.18)
+        static let divider = Color.white.opacity(0.16)
+        static let helperBackground = Color(red: 0.08, green: 0.13, blue: 0.28)
         static let helperTint = SaneVideoPalette.ambientGlow.opacity(0.30)
         static let helperTintStrong = accentDeep.opacity(0.46)
         static let accentGlow = accent.opacity(0.28)
         static let accentGlowStrong = accentSoft.opacity(0.40)
         static let ambientDeep = SaneVideoPalette.ambientDeep
         static let ambientMid = SaneVideoPalette.ambientMid
-        static let editorBase = Color(red: 0.04, green: 0.06, blue: 0.13)
-        static let editorPanel = Color(red: 0.06, green: 0.10, blue: 0.21)
-        static let editorPanelElevated = Color(red: 0.08, green: 0.13, blue: 0.28)
-        static let editorStroke = accentSoft.opacity(0.22)
+        static let editorBase = Color(red: 0.05, green: 0.07, blue: 0.14)
+        static let editorPanel = Color(red: 0.08, green: 0.11, blue: 0.22)
+        static let editorPanelElevated = Color(red: 0.10, green: 0.15, blue: 0.30)
+        static let editorStroke = Color.white.opacity(0.18)
+        static let rowIdle = Color.white.opacity(0.06)
+        static let rowSelected = accent.opacity(0.28)
+        static let disabledFill = Color.white.opacity(0.20)
+        static let disabledText = Color.white.opacity(0.88)
 
     }
 
@@ -201,7 +205,7 @@ extension Color {
     static let void = Color(hex: "0a0a0a")
     static let carbon = Color(hex: "141414")
     static let smoke = Color(hex: "222222")
-    static let stone = Color.white.opacity(0.9)
+    static let stone = Color.white
     static let cloud = Color(nsColor: .labelColor)
     static let successGreen = Color(hex: "22c55e")
     static let warningOrange = Color(hex: "f59e0b")
@@ -242,6 +246,19 @@ extension View {
     func sanePanel(radius: CGFloat = 14, emphasized: Bool = false, accent: Color? = nil) -> some View {
         modifier(SanePanelModifier(radius: radius, emphasized: emphasized, accent: accent))
     }
+
+    /// Nested section chrome inside an already-opaque sheet (no second heavy shadow).
+    func saneInsetSection(radius: CGFloat = 12) -> some View {
+        background(
+            RoundedRectangle(cornerRadius: radius, style: .continuous)
+                .fill(Theme.Colors.editorPanelElevated)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: radius, style: .continuous)
+                .strokeBorder(Color.white.opacity(0.14), lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: radius, style: .continuous))
+    }
 }
 
 private struct SanePanelModifier: ViewModifier {
@@ -256,71 +273,36 @@ private struct SanePanelModifier: ViewModifier {
     func body(content: Content) -> some View {
         content
             .background {
-                ZStack {
-                    RoundedRectangle(cornerRadius: radius, style: .continuous)
-                        .fill(.ultraThinMaterial)
-
-                    RoundedRectangle(cornerRadius: radius, style: .continuous)
-                        .fill(
-                            LinearGradient(
-                                colors: [
-                                    Theme.Colors.secondaryBackground.opacity(0.96),
-                                    Theme.Colors.ambientDeep.opacity(emphasized ? 0.70 : 0.52),
-                                    accentColor.opacity(emphasized ? 0.16 : 0.08)
+                RoundedRectangle(cornerRadius: radius, style: .continuous)
+                    .fill(
+                        LinearGradient(
+                            colors: emphasized
+                                ? [
+                                    Theme.Colors.editorPanelElevated,
+                                    Theme.Colors.editorPanel
+                                ]
+                                : [
+                                    Theme.Colors.editorPanel,
+                                    Theme.Colors.editorBase
                                 ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
                         )
-
-                    RoundedRectangle(cornerRadius: radius, style: .continuous)
-                        .fill(
-                            RadialGradient(
-                                colors: [
-                                    accentColor.opacity(emphasized ? 0.42 : 0.22),
-                                    .clear
-                                ],
-                                center: .topLeading,
-                                startRadius: 8,
-                                endRadius: emphasized ? 250 : 160
-                            )
-                        )
-
-                    RoundedRectangle(cornerRadius: radius, style: .continuous)
-                        .fill(
-                            LinearGradient(
-                                colors: [
-                                    Color.white.opacity(emphasized ? 0.10 : 0.06),
-                                    .clear,
-                                    Theme.Colors.accentEdge.opacity(emphasized ? 0.10 : 0.04)
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                }
+                    )
             }
             .clipShape(RoundedRectangle(cornerRadius: radius, style: .continuous))
             .overlay {
                 RoundedRectangle(cornerRadius: radius, style: .continuous)
                     .strokeBorder(
-                        LinearGradient(
-                            colors: [
-                                Color.white.opacity(emphasized ? 0.24 : 0.14),
-                                accentColor.opacity(emphasized ? 0.42 : 0.24),
-                                Theme.Colors.accentEdge.opacity(emphasized ? 0.16 : 0.08)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        lineWidth: emphasized ? 1.1 : 1
+                        Color.white.opacity(emphasized ? 0.22 : 0.14),
+                        lineWidth: 1
                     )
             }
             .shadow(
-                color: accentColor.opacity(emphasized ? 0.22 : 0.10),
-                radius: emphasized ? 22 : 12,
+                color: Color.black.opacity(emphasized ? 0.35 : 0.22),
+                radius: emphasized ? 18 : 10,
                 x: 0,
-                y: emphasized ? 12 : 7
+                y: emphasized ? 10 : 6
             )
     }
 }
@@ -353,41 +335,45 @@ struct FeatureCallout: View {
 
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
-            ZStack {
-                Circle()
-                    .fill(
-                        LinearGradient(
-                            colors: [tone.color.opacity(0.95), Theme.Colors.accentDeep.opacity(0.85)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
+            RoundedRectangle(cornerRadius: 3, style: .continuous)
+                .fill(tone.color)
+                .frame(width: 4)
+                .padding(.vertical, 2)
 
-                Image(systemName: icon)
-                    .font(.system(size: Theme.Typography.iconSizeMD, weight: .semibold))
-                    .foregroundStyle(.white)
-            }
-            .frame(width: 34, height: 34)
+            Image(systemName: icon)
+                .font(.system(size: Theme.Typography.iconSizeMD, weight: .semibold))
+                .foregroundStyle(.white)
+                .frame(width: 22, alignment: .center)
+                .padding(.top, 2)
 
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 6) {
                 Text(title)
-                    .saneReadableBodyStrong()
+                    .font(Theme.Typography.bodyStrong)
+                    .foregroundStyle(.white)
                 Text(message)
-                    .saneReadableSupportText()
+                    .font(Theme.Typography.support)
+                    .foregroundStyle(.white)
                     .fixedSize(horizontal: false, vertical: true)
             }
 
             Spacer(minLength: 0)
         }
         .padding(14)
-        .sanePanel(radius: 16, emphasized: true, accent: tone.color)
+        .background(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(Theme.Colors.editorPanelElevated)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .strokeBorder(Color.white.opacity(0.16), lineWidth: 1)
+        )
     }
 }
 
 struct HelperText: View {
     let text: String
     var icon: String = "info.circle.fill"
-    var color: Color = Theme.Colors.accent
+    var color: Color = Theme.Colors.accentSoft
 
     var body: some View {
         HStack(alignment: .top, spacing: 8) {
@@ -397,10 +383,72 @@ struct HelperText: View {
                 .padding(.top, 1)
 
             Text(text)
-                .saneReadableSupportText()
+                .font(Theme.Typography.support)
+                .foregroundStyle(.white)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+/// Sheet footer/action chrome: stays readable when disabled.
+struct SaneSheetButtonStyle: ButtonStyle {
+    enum Kind {
+        case primary
+        case secondary
+        case quiet
+    }
+
+    var kind: Kind = .secondary
+    var isEnabled: Bool = true
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(Theme.Typography.label)
+            .foregroundStyle(foreground)
+            .padding(.horizontal, kind == .quiet ? 10 : 14)
+            .padding(.vertical, 8)
+            .background(background(configuration.isPressed))
+            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .strokeBorder(stroke, lineWidth: 1)
+            )
+            .opacity(configuration.isPressed ? 0.92 : 1)
+    }
+
+    private var foreground: Color {
+        guard isEnabled else { return Theme.Colors.disabledText }
+        switch kind {
+        case .primary:
+            return .white
+        case .secondary, .quiet:
+            return Theme.Colors.textPrimary
+        }
+    }
+
+    private func background(_ pressed: Bool) -> Color {
+        guard isEnabled else { return Theme.Colors.disabledFill }
+        switch kind {
+        case .primary:
+            return pressed ? Theme.Colors.accentDeep : Theme.Colors.accent
+        case .secondary:
+            return pressed ? Color.white.opacity(0.14) : Color.white.opacity(0.10)
+        case .quiet:
+            return pressed ? Color.white.opacity(0.10) : Color.clear
+        }
+    }
+
+    private var stroke: Color {
+        guard isEnabled else { return Color.white.opacity(0.28) }
+        switch kind {
+        case .primary:
+            return Theme.Colors.accentSoft.opacity(0.55)
+        case .secondary:
+            return Color.white.opacity(0.22)
+        case .quiet:
+            return Color.clear
+        }
     }
 }
 

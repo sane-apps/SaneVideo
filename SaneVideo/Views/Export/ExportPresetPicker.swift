@@ -119,7 +119,7 @@ struct TemplateQuickApplyButton: View {
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 8)
-            .background(isSelected ? Color.accentColor.opacity(0.15) : Color.clear)
+            .background(isSelected ? Theme.Colors.rowSelected : Theme.Colors.rowIdle)
             .cornerRadius(6)
             .overlay(
                 RoundedRectangle(cornerRadius: 6)

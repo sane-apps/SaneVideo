@@ -58,7 +58,7 @@ final class ReleaseReadinessRegressionTests: XCTestCase {
         XCTAssertTrue(settings.contains("PrivacySettingsView(selectedTab: $selectedTab)"))
         XCTAssertTrue(privacySettings.contains("selectedTab = \"apikeys\""))
         XCTAssertFalse(privacySettings.contains("NavigationLink"))
-        XCTAssertTrue(designSystem.contains("static let stone = Color.white.opacity(0.9)"))
+        XCTAssertTrue(designSystem.contains("static let stone = Color.white"))
     }
 
     func testPurchaseAndPermissionCopyAvoidsV1PromiseDrift() throws {

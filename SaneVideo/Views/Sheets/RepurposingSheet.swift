@@ -91,6 +91,7 @@ struct RepurposingSheet: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Label("Create Shorts", systemImage: "scissors")
                         .font(.title2.bold())
+                        .foregroundStyle(.white)
 
                     if let clip = sourceClip {
                         Text("From: \(clip.url.lastPathComponent)")
@@ -119,7 +120,7 @@ struct RepurposingSheet: View {
 
             FeatureCallout(
                 title: "Local short variants",
-                message: "Analyze the source clip locally, pick the candidates you want, then export plain files only. Optional iCloud sync is separate and no SaneApps hosting is involved.",
+                message: "Analyze locally, pick candidates, export files. Optional iCloud sync is separate.",
                 icon: "film.stack.fill"
             )
         }
@@ -130,16 +131,11 @@ struct RepurposingSheet: View {
 
     private var settingsPanel: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
+            VStack(alignment: .leading, spacing: 18) {
                 // Platform Preset
                 VStack(alignment: .leading, spacing: 8) {
                     Label("Platform", systemImage: "square.grid.2x2")
                         .saneReadableSectionTitle()
-
-                    HelperText(
-                        text: "Pick a starting profile, then fine-tune duration and crop below if needed.",
-                        icon: "square.grid.2x2.fill"
-                    )
 
                     ForEach(ShortPlatform.allCases, id: \.id) { platform in
                         Button {
@@ -147,23 +143,34 @@ struct RepurposingSheet: View {
                                 settings.applyPlatformPreset(platform)
                             }
                         } label: {
-                            HStack {
+                            HStack(spacing: 10) {
                                 Image(systemName: platform.icon)
+                                    .foregroundStyle(.white)
                                     .frame(width: 20)
                                 Text(platform.rawValue)
+                                    .foregroundStyle(.white)
+                                    .font(Theme.Typography.bodyStrong)
                                 Spacer()
                                 if settings.platform == platform {
-                                    Image(systemName: "checkmark")
-                                        .foregroundStyle(Color.accentColor)
+                                    Image(systemName: "checkmark.circle.fill")
+                                        .foregroundStyle(Theme.Colors.accentSoft)
                                 }
                             }
-                            .padding(.vertical, 6)
+                            .padding(.vertical, 8)
                             .padding(.horizontal, 10)
                             .background(
-                                RoundedRectangle(cornerRadius: 8, style: .continuous)
-                                    .fill(settings.platform == platform ? Theme.Colors.accentSoft.opacity(0.18) : Color.white.opacity(0.03))
+                                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                    .fill(settings.platform == platform ? Theme.Colors.rowSelected : Theme.Colors.rowIdle)
                             )
-                            .cornerRadius(6)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                    .strokeBorder(
+                                        settings.platform == platform
+                                            ? Theme.Colors.accentSoft.opacity(0.55)
+                                            : Color.white.opacity(0.12),
+                                        lineWidth: 1
+                                    )
+                            )
                         }
                         .buttonStyle(.plain)
                         .accessibilityIdentifier("repurposing.platform.\(platform.rawValue)")
@@ -171,7 +178,7 @@ struct RepurposingSheet: View {
                     }
                 }
 
-                Divider()
+                Divider().overlay(Theme.Colors.divider)
 
                 // Duration
                 VStack(alignment: .leading, spacing: 8) {
@@ -186,7 +193,8 @@ struct RepurposingSheet: View {
                     .pickerStyle(.segmented)
                     .accessibilityIdentifier("repurposing.duration")
 
-                    HelperText(text: settings.targetDuration.description, icon: settings.targetDuration.icon)
+                    Text(settings.targetDuration.description)
+                        .saneReadableSupportText()
                 }
 
                 // Aspect Ratio
@@ -202,7 +210,8 @@ struct RepurposingSheet: View {
                     .pickerStyle(.segmented)
                     .accessibilityIdentifier("repurposing.aspect")
 
-                    HelperText(text: settings.aspectRatio.description, icon: settings.aspectRatio.icon)
+                    Text(settings.aspectRatio.description)
+                        .saneReadableSupportText()
                 }
 
                 // Max Shorts
@@ -220,24 +229,15 @@ struct RepurposingSheet: View {
                         set: { settings.maxShorts = Int($0) }
                     ), in: 1...10, step: 1)
                     .accessibilityIdentifier("repurposing.max_shorts")
-
-                    HelperText(
-                        text: "Raise this when you want more options to review. Lower it when you want a tighter, faster shortlist.",
-                        icon: "list.number"
-                    )
+                    .help("Raise for more options; lower for a tighter shortlist.")
                 }
 
-                Divider()
+                Divider().overlay(Theme.Colors.divider)
 
                 // Analysis Options
-                VStack(alignment: .leading, spacing: 8) {
+                VStack(alignment: .leading, spacing: 10) {
                     Label("Analysis", systemImage: "waveform.badge.magnifyingglass")
                         .saneReadableSectionTitle()
-
-                    HelperText(
-                        text: "These switches change what SaneVideo looks for while building candidate clips.",
-                        icon: "waveform.badge.magnifyingglass"
-                    )
 
                     Toggle("Detect faces", isOn: $settings.detectFaces)
                         .help("Biases toward moments where the presenter is visible and engaged.")
@@ -253,17 +253,12 @@ struct RepurposingSheet: View {
                         .accessibilityIdentifier("repurposing.avoid_silence")
                 }
 
-                Divider()
+                Divider().overlay(Theme.Colors.divider)
 
                 // Export Options
-                VStack(alignment: .leading, spacing: 8) {
-                    Label("Export Options", systemImage: "square.and.arrow.up")
+                VStack(alignment: .leading, spacing: 10) {
+                    Label("Export", systemImage: "square.and.arrow.up")
                         .saneReadableSectionTitle()
-
-                    HelperText(
-                        text: "These settings affect how the chosen short variants are rendered on export.",
-                        icon: "square.and.arrow.up.fill"
-                    )
 
                     Toggle("Add captions", isOn: $settings.addCaptions)
                         .help("Burns captions into the short exports.")
@@ -276,9 +271,10 @@ struct RepurposingSheet: View {
                         .accessibilityIdentifier("repurposing.normalize_audio")
                 }
             }
-            .padding()
+            .padding(14)
+            .foregroundStyle(.white)
         }
-        .sanePanel(radius: 16, accent: Theme.Colors.accentSoft)
+        .background(Theme.Colors.editorBase.opacity(0.55))
     }
 
     // MARK: - Candidates Panel
@@ -296,12 +292,12 @@ struct RepurposingSheet: View {
                     Button("Select All") {
                         selectedCandidateIds = Set(candidates.map { $0.id })
                     }
-                    .buttonStyle(.borderless)
+                    .buttonStyle(SaneSheetButtonStyle(kind: .quiet, isEnabled: true))
 
                     Button("Clear") {
                         selectedCandidateIds.removeAll()
                     }
-                    .buttonStyle(.borderless)
+                    .buttonStyle(SaneSheetButtonStyle(kind: .quiet, isEnabled: true))
                 }
             }
             .padding(.horizontal)
@@ -311,24 +307,25 @@ struct RepurposingSheet: View {
 
             if candidates.isEmpty {
                 // Empty state
-                VStack(spacing: 16) {
+                VStack(spacing: 14) {
                     Image(systemName: "film.stack")
-                        .font(.system(size: 48))
-                        .foregroundStyle(Color.stone)
+                        .font(.system(size: 44, weight: .medium))
+                        .foregroundStyle(.white)
 
                     Text(isAnalyzing ? "Analyzing video..." : "No candidates yet")
-                        .font(.title3)
-                        .foregroundStyle(Theme.Colors.textPrimary)
+                        .font(.title3.weight(.semibold))
+                        .foregroundStyle(.white)
 
                     if !isAnalyzing {
-                        FeatureCallout(
-                            title: "No candidates yet",
-                            message: "Click Analyze to find short clips from the current source video using the settings on the left.",
-                            icon: "play.circle.fill"
-                        )
+                        Text("Choose a platform on the left, then click Analyze.")
+                            .font(Theme.Typography.support)
+                            .foregroundStyle(.white)
+                            .multilineTextAlignment(.center)
+                            .frame(maxWidth: 280)
                     }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .padding(24)
             } else {
                 // Candidates grid
                 ScrollView {
@@ -358,6 +355,7 @@ struct RepurposingSheet: View {
             Button("Cancel") {
                 dismiss()
             }
+            .buttonStyle(SaneSheetButtonStyle(kind: .secondary, isEnabled: true))
             .keyboardShortcut(.cancelAction)
             .accessibilityIdentifier("repurposing.cancel")
 
@@ -369,6 +367,7 @@ struct RepurposingSheet: View {
                 } label: {
                     Label("Analyze", systemImage: "waveform.badge.magnifyingglass")
                 }
+                .buttonStyle(SaneSheetButtonStyle(kind: .secondary, isEnabled: canAnalyze))
                 .disabled(!canAnalyze)
                 .accessibilityIdentifier("repurposing.analyze")
 
@@ -380,13 +379,14 @@ struct RepurposingSheet: View {
                         systemImage: "square.and.arrow.up"
                     )
                 }
-                .buttonStyle(.borderedProminent)
+                .buttonStyle(SaneSheetButtonStyle(kind: .primary, isEnabled: canExport))
                 .keyboardShortcut(.defaultAction)
                 .disabled(!canExport)
                 .accessibilityIdentifier("repurposing.export")
             }
         }
         .padding()
+        .background(Theme.Colors.editorPanelElevated.opacity(0.85))
     }
 
     // MARK: - Actions

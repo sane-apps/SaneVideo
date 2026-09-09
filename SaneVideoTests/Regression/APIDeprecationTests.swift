@@ -458,8 +458,12 @@ final class APIDeprecationTests: XCTestCase {
             "ExportView should not add dense explanatory paragraphs above the export controls."
         )
         XCTAssertTrue(
-            designSystem.contains("textSecondary = Color.white.opacity(0.92)"),
-            "SaneVideo support text should stay bright enough on dark materials."
+            designSystem.contains("textSecondary = Color.white"),
+            "SaneVideo support text should stay bright white on opaque dark sheets."
+        )
+        XCTAssertFalse(
+            designSystem.contains(".fill(.ultraThinMaterial)"),
+            "Sheet panels must not use washed glass materials."
         )
     }
 

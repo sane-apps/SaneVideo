@@ -142,7 +142,7 @@ struct DemoStudioSheet: View {
                 .foregroundStyle(Theme.Colors.textPrimary)
                 .scrollContentBackground(.hidden)
                 .background(Theme.Colors.cardBackground.opacity(0.92))
-                .sanePanel(radius: 12, accent: Theme.Colors.accentSoft)
+                .saneInsetSection(radius: 12)
 
             HStack(spacing: 16) {
                 sliderField(title: "Font", value: $speakerNotesFontSize, range: 18...56, step: 1, format: "%.0f")
@@ -209,7 +209,7 @@ struct DemoStudioSheet: View {
                 .foregroundStyle(Theme.Colors.textPrimary)
                 .scrollContentBackground(.hidden)
                 .background(Theme.Colors.cardBackground.opacity(0.92))
-                .sanePanel(radius: 12, accent: Theme.Colors.accentSoft)
+                .saneInsetSection(radius: 12)
 
             HelperText(
                 text: "Use the description for the fuller launch copy, onboarding summary, or support context you want to ship with the demo.",
@@ -232,7 +232,7 @@ struct DemoStudioSheet: View {
                 .foregroundStyle(Theme.Colors.textPrimary)
                 .scrollContentBackground(.hidden)
                 .background(Theme.Colors.cardBackground.opacity(0.92))
-                .sanePanel(radius: 12, accent: Theme.Colors.accentSoft)
+                .saneInsetSection(radius: 12)
 
             Button("Use Clip Boundaries") {
                 chapterLines = clipBoundaryChapterLines()
@@ -265,7 +265,7 @@ struct DemoStudioSheet: View {
                 .foregroundStyle(Theme.Colors.textPrimary)
                 .scrollContentBackground(.hidden)
                 .background(Theme.Colors.cardBackground.opacity(0.92))
-                .sanePanel(radius: 12, accent: Theme.Colors.accentSoft)
+                .saneInsetSection(radius: 12)
 
             HelperText(
                 text: "Write the focus in plain English. Example: group the errors by concept, keep the source timestamps visible, and start each clip before the key statement.",
@@ -345,7 +345,7 @@ struct DemoStudioSheet: View {
                             .foregroundStyle(Theme.Colors.textPrimary)
                             .scrollContentBackground(.hidden)
                             .background(Theme.Colors.cardBackground.opacity(0.92))
-                            .sanePanel(radius: 12, accent: Theme.Colors.accentSoft)
+                            .saneInsetSection(radius: 12)
 
                         HelperText(
                             text: "Format: `mm:ss-mm:ss | Concept | Point | Verse refs`",

@@ -215,6 +215,7 @@ struct ExportView: View {
                     if isExporting { exportEngine.cancelExport() }
                     dismiss()
                 }
+                .buttonStyle(SaneSheetButtonStyle(kind: .secondary, isEnabled: true))
                 .accessibilityIdentifier(AccessibilityIdentifiers.cancelExportButton) // Changed from "CloseExportButton" to "CancelExportButton"
                 .keyboardShortcut(.cancelAction)
                 .controlSize(.regular)

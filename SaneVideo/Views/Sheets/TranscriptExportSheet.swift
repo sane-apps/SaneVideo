@@ -111,6 +111,7 @@ struct TranscriptExportSheet: View {
             )
         }
         .frame(width: 450, height: 480)
+        .sanePanel(radius: 18, emphasized: true, accent: Theme.Colors.accentSoft)
         .subtleGlass(radius: 12)
     }
 
@@ -445,11 +446,11 @@ private struct FormatButton: View {
             .padding(10)
             .background(
                 RoundedRectangle(cornerRadius: 8)
-                    .fill(isSelected ? Color.accentColor.opacity(0.15) : Color.white.opacity(0.05))
+                    .fill(isSelected ? Theme.Colors.rowSelected : Theme.Colors.rowIdle)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 8)
-                    .stroke(isSelected ? Color.accentColor : Color.white.opacity(0.1), lineWidth: 1)
+                    .stroke(isSelected ? Theme.Colors.accentSoft.opacity(0.7) : Color.white.opacity(0.14), lineWidth: 1)
             )
         }
         .buttonStyle(.plain)

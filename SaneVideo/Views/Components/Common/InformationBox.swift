@@ -10,7 +10,7 @@ import SwiftUI
 /// A styled box for displaying analysis results, status messages, etc.
 struct InformationBox: View {
     let text: String
-    var color: Color = Color.stone
+    var color: Color = Theme.Colors.accentSoft
     var icon: String?
 
     var body: some View {

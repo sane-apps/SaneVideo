@@ -5,7 +5,29 @@
     <link>https://sanevideo.com/appcast.xml</link>
     <description>Most recent SaneVideo updates.</description>
     <language>en</language>
-                <item>
+                        <item>
+            <title>1.0.5</title>
+            <link>https://sanevideo.com/download</link>
+            <pubDate>Wed, 09 Sep 2026 10:34:16 -0400</pubDate>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <description>
+                <![CDATA[
+                <h2>What's New</h2>
+                <ul>
+                <li>SaneVideo is free under PolyForm Shield. Setup stays. Every feature stays unlocked. Buy is Donate.</li>
+                <li>Keep license unlocks after Sparkle updates.</li>
+                <li>Make Create Shorts and other editor sheets opaque and easier to read.</li>
+                </ul>
+                ]]>
+            </description>
+            <enclosure url="https://dist.sanevideo.com/updates/SaneVideo-1.0.5.zip"
+                       sparkle:version="7"
+                       sparkle:shortVersionString="1.0.5"
+                       length="7990919"
+                       type="application/octet-stream"
+                       sparkle:edSignature="mFzvpKlGbFbtSXaUUEEf/ouFN8rMutSlAJp1mALvJROXrsFTFm1bNMMSA9AYC+i/4++tqxinw5fXHaMTumVVCA=="/>
+        </item>
+<item>
             <title>1.0.4</title>
             <link>https://sanevideo.com/download</link>
             <pubDate>Fri, 14 Aug 2026 13:50:02 -0400</pubDate>

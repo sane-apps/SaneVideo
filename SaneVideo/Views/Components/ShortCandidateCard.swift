@@ -22,8 +22,7 @@ struct ShortCandidateCard: View {
             ZStack {
                 if let thumbnail {
                     Image(nsImage: thumbnail)
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
+                        .resizable().scaledToFill()
                         .frame(height: 120)
                         .clipped()
                 } else {
@@ -46,7 +45,8 @@ struct ShortCandidateCard: View {
                             .font(Theme.Typography.badge)
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
-                            .background(.ultraThinMaterial)
+                            .background(Theme.Colors.editorPanelElevated)
+                            .foregroundStyle(.white)
                             .cornerRadius(4)
                             .padding(6)
                     }
@@ -93,11 +93,14 @@ struct ShortCandidateCard: View {
             }
         }
         .padding(8)
-        .background(isSelected ? Color.accentColor.opacity(0.12) : Theme.Colors.secondaryBackground.opacity(0.55))
+        .background(isSelected ? Theme.Colors.rowSelected : Theme.Colors.rowIdle)
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(isSelected ? Color.accentColor : Color.clear, lineWidth: 2)
+                .stroke(
+                    isSelected ? Theme.Colors.accentSoft.opacity(0.7) : Color.white.opacity(0.12),
+                    lineWidth: isSelected ? 2 : 1
+                )
         )
         .contentShape(Rectangle())
         .onTapGesture(perform: onTap)

@@ -121,6 +121,7 @@ struct KeyboardShortcutsSheet: View {
             }
         }
         .frame(width: 500, height: 800)
+        .sanePanel(radius: 18, emphasized: true, accent: Theme.Colors.accentSoft)
         .subtleGlass(radius: 12)
     }
 }
@@ -143,7 +144,7 @@ struct ShortcutSection: View {
                         .font(.system(size: Theme.Typography.fontSizeSM, weight: .medium, design: .monospaced))
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
-                        .background(Theme.Colors.secondaryBackground.opacity(0.8))
+                        .background(Theme.Colors.editorPanelElevated)
                         .cornerRadius(4)
                 }
             }

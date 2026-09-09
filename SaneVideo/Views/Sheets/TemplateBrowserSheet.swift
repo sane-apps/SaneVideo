@@ -279,7 +279,7 @@ private struct BuiltInTemplateCard: View {
                 Spacer()
             }
             .padding(12)
-            .sanePanel(radius: 12, accent: colorFromString(template.color))
+            .saneInsetSection(radius: 12)
         }
         .buttonStyle(.plain)
         .accessibilityIdentifier("templates.builtin.\(template.name.lowercased())")
@@ -342,7 +342,7 @@ private struct CustomTemplateCard: View {
                 }
             }
             .padding(12)
-            .sanePanel(radius: 12, accent: colorFromString(template.color))
+            .saneInsetSection(radius: 12)
         }
         .buttonStyle(.plain)
         .onHover { isHovered = $0 }
@@ -458,7 +458,7 @@ private struct TemplateEditorSheet: View {
                                     Image(systemName: icon)
                                         .font(.title3)
                                         .frame(width: 36, height: 36)
-                                        .background(selectedIcon == icon ? Color.accentColor.opacity(0.2) : Color.clear)
+                                        .background(selectedIcon == icon ? Theme.Colors.rowSelected : Theme.Colors.rowIdle)
                                         .cornerRadius(6)
                                 }
                                 .buttonStyle(.plain)

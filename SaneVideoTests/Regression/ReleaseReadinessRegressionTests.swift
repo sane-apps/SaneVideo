@@ -8,6 +8,31 @@ final class ReleaseReadinessRegressionTests: XCTestCase {
             .deletingLastPathComponent()
     }
 
+    /// Anti-footgun: keep the paid-unlock SaneUI pin on the release-tested revision.
+    /// Mirrors Clip/Click/Hosts so Sparkle updates do not mint a false "no license" state.
+    func testSaneUIDependencyPinnedToPaidUnlockRevision() throws {
+        let expected = "cd766fdb5f7b75e03ba69a38fca330a4554f00b1"
+        let projectYml = try String(
+            contentsOf: sourceRoot.appendingPathComponent("project.yml"),
+            encoding: .utf8
+        )
+        let resolved = try String(
+            contentsOf: sourceRoot.appendingPathComponent(
+                "SaneVideo.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved"
+            ),
+            encoding: .utf8
+        )
+
+        XCTAssertTrue(
+            projectYml.contains("revision: \(expected)"),
+            "project.yml must pin SaneUI to the paid-unlock revision"
+        )
+        XCTAssertTrue(
+            resolved.contains("\"revision\" : \"\(expected)\""),
+            "Package.resolved must pin SaneUI to the paid-unlock revision"
+        )
+    }
+
     func testLibraryDeleteFromDiskHasReachableConfirmation() throws {
         let libraryView = try String(
             contentsOf: sourceRoot.appendingPathComponent("SaneVideo/Views/Components/LibraryView.swift"),

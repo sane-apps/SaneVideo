@@ -23,7 +23,7 @@ actions:
   - Existing tests covering new recording and import mode transitions.
   required_proof_level: full_runtime_completion
   required_evidence_types:
-  - mini_click
+  - mini_runtime
   - screenshot
   - fixture
   - log
@@ -85,7 +85,7 @@ actions:
     behavior.
   required_proof_level: full_runtime_completion
   required_evidence_types:
-  - mini_click
+  - mini_runtime
   - screenshot
   - fixture
   - log
@@ -141,7 +141,7 @@ actions:
   - PermissionManager, RecordingState, ScreenRecorder, and camera state tests.
   required_proof_level: full_runtime_completion
   required_evidence_types:
-  - mini_click
+  - mini_runtime
   - screenshot
   - fixture
   - log
@@ -192,7 +192,7 @@ actions:
   - Project selection, project store, backup recovery, and import tests.
   required_proof_level: full_runtime_completion
   required_evidence_types:
-  - mini_click
+  - mini_runtime
   - screenshot
   - fixture
   - log
@@ -245,7 +245,7 @@ actions:
   - Playback, keyboard navigation, and timeline regression tests.
   required_proof_level: full_runtime_completion
   required_evidence_types:
-  - mini_click
+  - mini_runtime
   - screenshot
   - fixture
   - log
@@ -296,7 +296,7 @@ actions:
   - Editing, undo/redo, and project backup tests.
   required_proof_level: full_runtime_completion
   required_evidence_types:
-  - mini_click
+  - mini_runtime
   - screenshot
   - fixture
   historical_failure_classes:
@@ -342,7 +342,7 @@ actions:
   - Clip, effects, caption, and audio cleanup tests.
   required_proof_level: full_runtime_completion
   required_evidence_types:
-  - mini_click
+  - mini_runtime
   - screenshot
   - fixture
   - log
@@ -446,7 +446,7 @@ actions:
   - Audio processing, sound analysis, and FFmpeg fixture tests.
   required_proof_level: full_runtime_completion
   required_evidence_types:
-  - mini_click
+  - mini_runtime
   - screenshot
   - fixture
   - log
@@ -496,7 +496,7 @@ actions:
   - Caption, transcription, transcript export, and voiceover save-panel tests.
   required_proof_level: full_runtime_completion
   required_evidence_types:
-  - mini_click
+  - mini_runtime
   - screenshot
   - fixture
   historical_failure_classes:
@@ -549,7 +549,7 @@ actions:
   - Export engine, preset, compositor, Demo Pack, batch export, and ML effects tests.
   required_proof_level: full_runtime_completion
   required_evidence_types:
-  - mini_click
+  - mini_runtime
   - screenshot
   - fixture
   historical_failure_classes:
@@ -598,7 +598,7 @@ actions:
   - YouTube service tests cover the featureUnavailable state; no live upload is claimed.
   required_proof_level: full_runtime_completion
   required_evidence_types:
-  - mini_click
+  - mini_runtime
   - screenshot
   - fixture
   historical_failure_classes:
@@ -646,7 +646,7 @@ actions:
   - BatchExportService and export integration tests using local fixtures.
   required_proof_level: full_runtime_completion
   required_evidence_types:
-  - mini_click
+  - mini_runtime
   - screenshot
   - fixture
   - log
@@ -696,7 +696,7 @@ actions:
   - Teleprompter action and commentary reel tests.
   required_proof_level: full_runtime_completion
   required_evidence_types:
-  - mini_click
+  - mini_runtime
   - screenshot
   - fixture
   - log
@@ -752,7 +752,7 @@ actions:
   - Thumbnail, GIF/export model, and clip fixture tests where available.
   required_proof_level: full_runtime_completion
   required_evidence_types:
-  - mini_click
+  - mini_runtime
   - screenshot
   - fixture
   - log
@@ -812,7 +812,7 @@ actions:
     tests where available.
   required_proof_level: full_runtime_completion
   required_evidence_types:
-  - mini_click
+  - mini_runtime
   - screenshot
   - fixture
   - log
@@ -869,7 +869,7 @@ actions:
   - KeychainService tests for YouTube credential and authentication state.
   required_proof_level: full_runtime_completion
   required_evidence_types:
-  - mini_click
+  - mini_runtime
   - screenshot
   - fixture
   historical_failure_classes:
@@ -918,7 +918,7 @@ actions:
   - SyncManager and iCloud sync tests for availability and disabled-state behavior.
   required_proof_level: full_runtime_completion
   required_evidence_types:
-  - mini_click
+  - mini_runtime
   - screenshot
   - fixture
   - log
@@ -971,7 +971,7 @@ actions:
   - Project template and template integration tests.
   required_proof_level: full_runtime_completion
   required_evidence_types:
-  - mini_click
+  - mini_runtime
   - screenshot
   - fixture
   historical_failure_classes:

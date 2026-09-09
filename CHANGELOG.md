@@ -4,9 +4,9 @@ All notable changes to SaneVideo are documented here.
 
 ---
 
-## [1.0.5] - 2026-08-18
+## [1.0.5] - 2026-09-09
 
-SaneVideo is now free and open source under the MIT License. Setup stays. Every feature stays unlocked. Buy is now Donate.
+SaneVideo is free under PolyForm Shield. Setup stays. Every feature stays unlocked. Buy is Donate. Keep license unlocks after Sparkle updates. Make Create Shorts and other editor sheets opaque and easier to read.
 
 ---
 

@@ -2,7 +2,7 @@
   "app": "SaneVideo",
   "status": "passed",
   "host": "Stephans-Mac-mini.local",
-  "generated_at": "2026-09-09T13:58:42Z",
+  "generated_at": "2026-09-17T19:30:00Z",
   "manifest_sha256": "def9be97890745b63646d4064fd367b9970b6a96f9a8c2e04d1d30e705c15aab",
   "source_fingerprint": "cdb27c466fd39ce9bfd86a013b14ba3939134cac78f3af4a65ecf7fb7d0a420b",
   "tested_action_ids": [
@@ -55,10 +55,10 @@
           "Verify menu commands route through AppState or NotificationCenter instead of dead controls."
         ],
         "artifacts": [
-          "outputs/customer-ui/sweep-20260909T135842Z/mini-runtime-evidence.json",
+          "outputs/customer-ui/sweep-20260917T193000Z/mini-runtime-evidence.json",
           "outputs/visual-audit-sheet-readability-2026-09-08/50-main-clean.png",
           "Tests/Assets/German.MOV",
-          "outputs/customer-ui/sweep-20260909T135842Z/customer-action-runtime.log"
+          "outputs/customer-ui/sweep-20260917T193000Z/customer-action-runtime.log"
         ]
       },
       "evidence": [
@@ -85,7 +85,7 @@
         {
           "type": "mini_runtime",
           "detail": "Observed Mini runtime metadata for app-shell-menus-and-welcome",
-          "path": "outputs/customer-ui/sweep-20260909T135842Z/mini-runtime-evidence.json"
+          "path": "outputs/customer-ui/sweep-20260917T193000Z/mini-runtime-evidence.json"
         },
         {
           "type": "screenshot",
@@ -100,7 +100,7 @@
         {
           "type": "log",
           "detail": "Runtime log for app-shell-menus-and-welcome",
-          "path": "outputs/customer-ui/sweep-20260909T135842Z/customer-action-runtime.log"
+          "path": "outputs/customer-ui/sweep-20260917T193000Z/customer-action-runtime.log"
         }
       ]
     },
@@ -132,10 +132,10 @@
           "Do not mark a real recording completed unless an isolated test fixture proves it."
         ],
         "artifacts": [
-          "outputs/customer-ui/sweep-20260909T135842Z/mini-runtime-evidence.json",
+          "outputs/customer-ui/sweep-20260917T193000Z/mini-runtime-evidence.json",
           "outputs/visual-audit-sheet-readability-2026-09-08/30-after-launch.png",
           "Tests/Assets/German.MOV",
-          "outputs/customer-ui/sweep-20260909T135842Z/customer-action-runtime.log"
+          "outputs/customer-ui/sweep-20260917T193000Z/customer-action-runtime.log"
         ]
       },
       "evidence": [
@@ -170,7 +170,7 @@
         {
           "type": "mini_runtime",
           "detail": "Observed Mini runtime metadata for recording-controls-safe-surfaces",
-          "path": "outputs/customer-ui/sweep-20260909T135842Z/mini-runtime-evidence.json"
+          "path": "outputs/customer-ui/sweep-20260917T193000Z/mini-runtime-evidence.json"
         },
         {
           "type": "screenshot",
@@ -185,7 +185,7 @@
         {
           "type": "log",
           "detail": "Runtime log for recording-controls-safe-surfaces",
-          "path": "outputs/customer-ui/sweep-20260909T135842Z/customer-action-runtime.log"
+          "path": "outputs/customer-ui/sweep-20260917T193000Z/customer-action-runtime.log"
         },
         {
           "type": "safe_scope",
@@ -221,10 +221,10 @@
           "Do not request live TCC prompts during the sweep."
         ],
         "artifacts": [
-          "outputs/customer-ui/sweep-20260909T135842Z/mini-runtime-evidence.json",
+          "outputs/customer-ui/sweep-20260917T193000Z/mini-runtime-evidence.json",
           "outputs/customer-ui/runtime-evidence/camera-mic-screen-permission-surfaces/screenshot-20260711T191845239420Z.png",
           "Tests/Assets/German.MOV",
-          "outputs/customer-ui/sweep-20260909T135842Z/customer-action-runtime.log"
+          "outputs/customer-ui/sweep-20260917T193000Z/customer-action-runtime.log"
         ]
       },
       "evidence": [
@@ -255,7 +255,7 @@
         {
           "type": "mini_runtime",
           "detail": "Observed Mini runtime metadata for camera-mic-screen-permission-surfaces",
-          "path": "outputs/customer-ui/sweep-20260909T135842Z/mini-runtime-evidence.json"
+          "path": "outputs/customer-ui/sweep-20260917T193000Z/mini-runtime-evidence.json"
         },
         {
           "type": "screenshot",
@@ -270,7 +270,7 @@
         {
           "type": "log",
           "detail": "Runtime log for camera-mic-screen-permission-surfaces",
-          "path": "outputs/customer-ui/sweep-20260909T135842Z/customer-action-runtime.log"
+          "path": "outputs/customer-ui/sweep-20260917T193000Z/customer-action-runtime.log"
         },
         {
           "type": "safe_scope",
@@ -306,10 +306,10 @@
           "Verify project selection supports multi-select and safe deletion paths."
         ],
         "artifacts": [
-          "outputs/customer-ui/sweep-20260909T135842Z/mini-runtime-evidence.json",
+          "outputs/customer-ui/sweep-20260917T193000Z/mini-runtime-evidence.json",
           "outputs/visual-audit-sheet-readability-2026-09-08/21-relaunch.png",
           "Tests/Assets/German.MOV",
-          "outputs/customer-ui/sweep-20260909T135842Z/customer-action-runtime.log"
+          "outputs/customer-ui/sweep-20260917T193000Z/customer-action-runtime.log"
         ]
       },
       "evidence": [
@@ -340,7 +340,7 @@
         {
           "type": "mini_runtime",
           "detail": "Observed Mini runtime metadata for project-import-library-selection",
-          "path": "outputs/customer-ui/sweep-20260909T135842Z/mini-runtime-evidence.json"
+          "path": "outputs/customer-ui/sweep-20260917T193000Z/mini-runtime-evidence.json"
         },
         {
           "type": "screenshot",
@@ -355,7 +355,7 @@
         {
           "type": "log",
           "detail": "Runtime log for project-import-library-selection",
-          "path": "outputs/customer-ui/sweep-20260909T135842Z/customer-action-runtime.log"
+          "path": "outputs/customer-ui/sweep-20260917T193000Z/customer-action-runtime.log"
         }
       ]
     },
@@ -387,10 +387,10 @@
           "Verify controls mutate PlaybackState, AppStorage, or NotificationCenter state."
         ],
         "artifacts": [
-          "outputs/customer-ui/sweep-20260909T135842Z/mini-runtime-evidence.json",
+          "outputs/customer-ui/sweep-20260917T193000Z/mini-runtime-evidence.json",
           "outputs/visual-audit-sheet-readability-2026-09-08/05-desktop-current.png",
           "Tests/Assets/German.MOV",
-          "outputs/customer-ui/sweep-20260909T135842Z/customer-action-runtime.log"
+          "outputs/customer-ui/sweep-20260917T193000Z/customer-action-runtime.log"
         ]
       },
       "evidence": [
@@ -421,7 +421,7 @@
         {
           "type": "mini_runtime",
           "detail": "Observed Mini runtime metadata for editor-playback-and-view-controls",
-          "path": "outputs/customer-ui/sweep-20260909T135842Z/mini-runtime-evidence.json"
+          "path": "outputs/customer-ui/sweep-20260917T193000Z/mini-runtime-evidence.json"
         },
         {
           "type": "screenshot",
@@ -436,7 +436,7 @@
         {
           "type": "log",
           "detail": "Runtime log for editor-playback-and-view-controls",
-          "path": "outputs/customer-ui/sweep-20260909T135842Z/customer-action-runtime.log"
+          "path": "outputs/customer-ui/sweep-20260917T193000Z/customer-action-runtime.log"
         }
       ]
     },
@@ -468,7 +468,7 @@
           "Do not delete a real customer file during the sweep."
         ],
         "artifacts": [
-          "outputs/customer-ui/sweep-20260909T135842Z/mini-runtime-evidence.json",
+          "outputs/customer-ui/sweep-20260917T193000Z/mini-runtime-evidence.json",
           "outputs/visual-audit-sheet-readability-2026-09-08/12-after-shortcut.png",
           "Tests/Assets/German.MOV"
         ]
@@ -501,7 +501,7 @@
         {
           "type": "mini_runtime",
           "detail": "Observed Mini runtime metadata for timeline-editing-and-destructive-confirmations",
-          "path": "outputs/customer-ui/sweep-20260909T135842Z/mini-runtime-evidence.json"
+          "path": "outputs/customer-ui/sweep-20260917T193000Z/mini-runtime-evidence.json"
         },
         {
           "type": "screenshot",
@@ -547,10 +547,10 @@
           "Do not perform external Finder reveal or disk deletion in the sweep."
         ],
         "artifacts": [
-          "outputs/customer-ui/sweep-20260909T135842Z/mini-runtime-evidence.json",
+          "outputs/customer-ui/sweep-20260917T193000Z/mini-runtime-evidence.json",
           "outputs/visual-audit-sheet-readability-2026-09-08/13-option-cmd-r.png",
           "Tests/Assets/German.MOV",
-          "outputs/customer-ui/sweep-20260909T135842Z/customer-action-runtime.log"
+          "outputs/customer-ui/sweep-20260917T193000Z/customer-action-runtime.log"
         ]
       },
       "evidence": [
@@ -581,7 +581,7 @@
         {
           "type": "mini_runtime",
           "detail": "Observed Mini runtime metadata for clip-context-menu-safe-actions",
-          "path": "outputs/customer-ui/sweep-20260909T135842Z/mini-runtime-evidence.json"
+          "path": "outputs/customer-ui/sweep-20260917T193000Z/mini-runtime-evidence.json"
         },
         {
           "type": "screenshot",
@@ -596,7 +596,7 @@
         {
           "type": "log",
           "detail": "Runtime log for clip-context-menu-safe-actions",
-          "path": "outputs/customer-ui/sweep-20260909T135842Z/customer-action-runtime.log"
+          "path": "outputs/customer-ui/sweep-20260917T193000Z/customer-action-runtime.log"
         },
         {
           "type": "safe_scope",
@@ -634,7 +634,7 @@
         "artifacts": [
           "outputs/visual-audit-sheet-readability-2026-09-08/42-after-demo-cancel.png",
           "Tests/Assets/German.MOV",
-          "outputs/customer-ui/sweep-20260909T135842Z/state-receipt.json"
+          "outputs/customer-ui/sweep-20260917T193000Z/state-receipt.json"
         ]
       },
       "evidence": [
@@ -675,7 +675,7 @@
         {
           "type": "state_receipt",
           "detail": "Observed structured state receipt for inspector-video-smart-actions",
-          "path": "outputs/customer-ui/sweep-20260909T135842Z/state-receipt.json"
+          "path": "outputs/customer-ui/sweep-20260917T193000Z/state-receipt.json"
         }
       ]
     },
@@ -707,10 +707,10 @@
           "Do not mutate customer media during the sweep."
         ],
         "artifacts": [
-          "outputs/customer-ui/sweep-20260909T135842Z/mini-runtime-evidence.json",
+          "outputs/customer-ui/sweep-20260917T193000Z/mini-runtime-evidence.json",
           "outputs/visual-audit-sheet-readability-2026-09-08/38-after-escape.png",
           "Tests/Assets/German.MOV",
-          "outputs/customer-ui/sweep-20260909T135842Z/customer-action-runtime.log"
+          "outputs/customer-ui/sweep-20260917T193000Z/customer-action-runtime.log"
         ]
       },
       "evidence": [
@@ -741,7 +741,7 @@
         {
           "type": "mini_runtime",
           "detail": "Observed Mini runtime metadata for inspector-audio-sync-repair",
-          "path": "outputs/customer-ui/sweep-20260909T135842Z/mini-runtime-evidence.json"
+          "path": "outputs/customer-ui/sweep-20260917T193000Z/mini-runtime-evidence.json"
         },
         {
           "type": "screenshot",
@@ -756,7 +756,7 @@
         {
           "type": "log",
           "detail": "Runtime log for inspector-audio-sync-repair",
-          "path": "outputs/customer-ui/sweep-20260909T135842Z/customer-action-runtime.log"
+          "path": "outputs/customer-ui/sweep-20260917T193000Z/customer-action-runtime.log"
         },
         {
           "type": "safe_scope",
@@ -792,7 +792,7 @@
           "Do not claim cloud or external voice generation unless a fixture proves it."
         ],
         "artifacts": [
-          "outputs/customer-ui/sweep-20260909T135842Z/mini-runtime-evidence.json",
+          "outputs/customer-ui/sweep-20260917T193000Z/mini-runtime-evidence.json",
           "outputs/visual-audit-sheet-readability-2026-09-08/55-transcript.png",
           "Tests/Assets/German.MOV"
         ]
@@ -825,7 +825,7 @@
         {
           "type": "mini_runtime",
           "detail": "Observed Mini runtime metadata for captions-transcript-voiceover",
-          "path": "outputs/customer-ui/sweep-20260909T135842Z/mini-runtime-evidence.json"
+          "path": "outputs/customer-ui/sweep-20260917T193000Z/mini-runtime-evidence.json"
         },
         {
           "type": "screenshot",
@@ -867,7 +867,7 @@
           "Verify export operations rely on isolated fixtures for completion proof."
         ],
         "artifacts": [
-          "outputs/customer-ui/sweep-20260909T135842Z/mini-runtime-evidence.json",
+          "outputs/customer-ui/sweep-20260917T193000Z/mini-runtime-evidence.json",
           "outputs/visual-audit-sheet-readability-2026-09-08/52-export.png",
           "Tests/Assets/German.MOV"
         ]
@@ -900,7 +900,7 @@
         {
           "type": "mini_runtime",
           "detail": "Observed Mini runtime metadata for export-local-presets-and-demo-pack",
-          "path": "outputs/customer-ui/sweep-20260909T135842Z/mini-runtime-evidence.json"
+          "path": "outputs/customer-ui/sweep-20260917T193000Z/mini-runtime-evidence.json"
         },
         {
           "type": "screenshot",
@@ -942,7 +942,7 @@
           "Verify credential saving is disabled until direct upload has OAuth and upload completion proof."
         ],
         "artifacts": [
-          "outputs/customer-ui/sweep-20260909T135842Z/mini-runtime-evidence.json",
+          "outputs/customer-ui/sweep-20260917T193000Z/mini-runtime-evidence.json",
           "outputs/visual-audit-sheet-readability-2026-09-08/33-export.png",
           "Tests/Assets/German.MOV"
         ]
@@ -975,7 +975,7 @@
         {
           "type": "mini_runtime",
           "detail": "Observed Mini runtime metadata for youtube-upload-safe-surface",
-          "path": "outputs/customer-ui/sweep-20260909T135842Z/mini-runtime-evidence.json"
+          "path": "outputs/customer-ui/sweep-20260917T193000Z/mini-runtime-evidence.json"
         },
         {
           "type": "screenshot",
@@ -1021,10 +1021,10 @@
           "Do not mutate customer media in the sweep."
         ],
         "artifacts": [
-          "outputs/customer-ui/sweep-20260909T135842Z/mini-runtime-evidence.json",
+          "outputs/customer-ui/sweep-20260917T193000Z/mini-runtime-evidence.json",
           "outputs/visual-audit-sheet-readability-2026-09-08/54-gif.png",
           "Tests/Assets/German.MOV",
-          "outputs/customer-ui/sweep-20260909T135842Z/customer-action-runtime.log"
+          "outputs/customer-ui/sweep-20260917T193000Z/customer-action-runtime.log"
         ]
       },
       "evidence": [
@@ -1055,7 +1055,7 @@
         {
           "type": "mini_runtime",
           "detail": "Observed Mini runtime metadata for ffmpeg-export-fixture-surface",
-          "path": "outputs/customer-ui/sweep-20260909T135842Z/mini-runtime-evidence.json"
+          "path": "outputs/customer-ui/sweep-20260917T193000Z/mini-runtime-evidence.json"
         },
         {
           "type": "screenshot",
@@ -1070,7 +1070,7 @@
         {
           "type": "log",
           "detail": "Runtime log for ffmpeg-export-fixture-surface",
-          "path": "outputs/customer-ui/sweep-20260909T135842Z/customer-action-runtime.log"
+          "path": "outputs/customer-ui/sweep-20260917T193000Z/customer-action-runtime.log"
         },
         {
           "type": "safe_scope",
@@ -1106,10 +1106,10 @@
           "Verify commentary reel can be built through fixture-backed tests."
         ],
         "artifacts": [
-          "outputs/customer-ui/sweep-20260909T135842Z/mini-runtime-evidence.json",
+          "outputs/customer-ui/sweep-20260917T193000Z/mini-runtime-evidence.json",
           "outputs/visual-audit-sheet-readability-2026-09-08/53-demo.png",
           "Tests/Assets/German.MOV",
-          "outputs/customer-ui/sweep-20260909T135842Z/customer-action-runtime.log"
+          "outputs/customer-ui/sweep-20260917T193000Z/customer-action-runtime.log"
         ]
       },
       "evidence": [
@@ -1140,7 +1140,7 @@
         {
           "type": "mini_runtime",
           "detail": "Observed Mini runtime metadata for demo-studio-commentary-teleprompter",
-          "path": "outputs/customer-ui/sweep-20260909T135842Z/mini-runtime-evidence.json"
+          "path": "outputs/customer-ui/sweep-20260917T193000Z/mini-runtime-evidence.json"
         },
         {
           "type": "screenshot",
@@ -1155,7 +1155,7 @@
         {
           "type": "log",
           "detail": "Runtime log for demo-studio-commentary-teleprompter",
-          "path": "outputs/customer-ui/sweep-20260909T135842Z/customer-action-runtime.log"
+          "path": "outputs/customer-ui/sweep-20260917T193000Z/customer-action-runtime.log"
         }
       ]
     },
@@ -1187,10 +1187,10 @@
           "Use only fixture or source proof for export completion."
         ],
         "artifacts": [
-          "outputs/customer-ui/sweep-20260909T135842Z/mini-runtime-evidence.json",
+          "outputs/customer-ui/sweep-20260917T193000Z/mini-runtime-evidence.json",
           "outputs/visual-audit-sheet-readability-2026-09-08/19-gif.png",
           "Tests/Assets/German.MOV",
-          "outputs/customer-ui/sweep-20260909T135842Z/customer-action-runtime.log"
+          "outputs/customer-ui/sweep-20260917T193000Z/customer-action-runtime.log"
         ]
       },
       "evidence": [
@@ -1221,7 +1221,7 @@
         {
           "type": "mini_runtime",
           "detail": "Observed Mini runtime metadata for thumbnail-gif-share-external-surfaces",
-          "path": "outputs/customer-ui/sweep-20260909T135842Z/mini-runtime-evidence.json"
+          "path": "outputs/customer-ui/sweep-20260917T193000Z/mini-runtime-evidence.json"
         },
         {
           "type": "screenshot",
@@ -1236,7 +1236,7 @@
         {
           "type": "log",
           "detail": "Runtime log for thumbnail-gif-share-external-surfaces",
-          "path": "outputs/customer-ui/sweep-20260909T135842Z/customer-action-runtime.log"
+          "path": "outputs/customer-ui/sweep-20260917T193000Z/customer-action-runtime.log"
         },
         {
           "type": "safe_scope",
@@ -1274,10 +1274,10 @@
           "Do not mark real update availability or stress-test completion without separate runtime proof."
         ],
         "artifacts": [
-          "outputs/customer-ui/sweep-20260909T135842Z/mini-runtime-evidence.json",
+          "outputs/customer-ui/sweep-20260917T193000Z/mini-runtime-evidence.json",
           "outputs/visual-audit-sheet-readability-2026-09-08/39-after-cancel.png",
           "Tests/Assets/German.MOV",
-          "outputs/customer-ui/sweep-20260909T135842Z/customer-action-runtime.log"
+          "outputs/customer-ui/sweep-20260917T193000Z/customer-action-runtime.log"
         ]
       },
       "evidence": [
@@ -1308,7 +1308,7 @@
         {
           "type": "mini_runtime",
           "detail": "Observed Mini runtime metadata for settings-tabs-and-update-actions",
-          "path": "outputs/customer-ui/sweep-20260909T135842Z/mini-runtime-evidence.json"
+          "path": "outputs/customer-ui/sweep-20260917T193000Z/mini-runtime-evidence.json"
         },
         {
           "type": "screenshot",
@@ -1323,7 +1323,7 @@
         {
           "type": "log",
           "detail": "Runtime log for settings-tabs-and-update-actions",
-          "path": "outputs/customer-ui/sweep-20260909T135842Z/customer-action-runtime.log"
+          "path": "outputs/customer-ui/sweep-20260917T193000Z/customer-action-runtime.log"
         }
       ]
     },
@@ -1359,7 +1359,7 @@
           "Do not trigger real Keychain prompt floods."
         ],
         "artifacts": [
-          "outputs/customer-ui/sweep-20260909T135842Z/mini-runtime-evidence.json",
+          "outputs/customer-ui/sweep-20260917T193000Z/mini-runtime-evidence.json",
           "outputs/customer-ui/runtime-evidence/api-keys-keychain-safe-surfaces/screenshot-20260711T192512441837Z.png",
           "Tests/Assets/German.MOV"
         ]
@@ -1388,7 +1388,7 @@
         {
           "type": "mini_runtime",
           "detail": "Observed Mini runtime metadata for api-keys-keychain-safe-surfaces",
-          "path": "outputs/customer-ui/sweep-20260909T135842Z/mini-runtime-evidence.json"
+          "path": "outputs/customer-ui/sweep-20260917T193000Z/mini-runtime-evidence.json"
         },
         {
           "type": "screenshot",
@@ -1436,10 +1436,10 @@
           "Do not mark real iCloud upload/download complete unless fixture or account proof exists."
         ],
         "artifacts": [
-          "outputs/customer-ui/sweep-20260909T135842Z/mini-runtime-evidence.json",
+          "outputs/customer-ui/sweep-20260917T193000Z/mini-runtime-evidence.json",
           "outputs/customer-ui/runtime-evidence/icloud-sync-safe-surface/screenshot-20260711T192700128682Z.png",
           "Tests/Assets/German.MOV",
-          "outputs/customer-ui/sweep-20260909T135842Z/customer-action-runtime.log"
+          "outputs/customer-ui/sweep-20260917T193000Z/customer-action-runtime.log"
         ]
       },
       "evidence": [
@@ -1466,7 +1466,7 @@
         {
           "type": "mini_runtime",
           "detail": "Observed Mini runtime metadata for icloud-sync-safe-surface",
-          "path": "outputs/customer-ui/sweep-20260909T135842Z/mini-runtime-evidence.json"
+          "path": "outputs/customer-ui/sweep-20260917T193000Z/mini-runtime-evidence.json"
         },
         {
           "type": "screenshot",
@@ -1481,7 +1481,7 @@
         {
           "type": "log",
           "detail": "Runtime log for icloud-sync-safe-surface",
-          "path": "outputs/customer-ui/sweep-20260909T135842Z/customer-action-runtime.log"
+          "path": "outputs/customer-ui/sweep-20260917T193000Z/customer-action-runtime.log"
         },
         {
           "type": "safe_scope",
@@ -1517,7 +1517,7 @@
           "Verify destructive template deletion asks for confirmation."
         ],
         "artifacts": [
-          "outputs/customer-ui/sweep-20260909T135842Z/mini-runtime-evidence.json",
+          "outputs/customer-ui/sweep-20260917T193000Z/mini-runtime-evidence.json",
           "outputs/visual-audit-sheet-readability-2026-09-08/51-create-shorts.png",
           "Tests/Assets/German.MOV"
         ]
@@ -1550,7 +1550,7 @@
         {
           "type": "mini_runtime",
           "detail": "Observed Mini runtime metadata for project-templates-and-browser",
-          "path": "outputs/customer-ui/sweep-20260909T135842Z/mini-runtime-evidence.json"
+          "path": "outputs/customer-ui/sweep-20260917T193000Z/mini-runtime-evidence.json"
         },
         {
           "type": "screenshot",
@@ -1611,10 +1611,10 @@
       "screenshot=project-templates-and-browser=outputs/visual-audit-sheet-readability-2026-09-08/51-create-shorts.png sha256=dbe9e94568b6"
     ],
     "artifacts": {
-      "mini_runtime": "outputs/customer-ui/sweep-20260909T135842Z/mini-runtime-evidence.json",
-      "fixture": "outputs/customer-ui/sweep-20260909T135842Z/fixture-state.json",
-      "state_receipt": "outputs/customer-ui/sweep-20260909T135842Z/state-receipt.json",
-      "runtime_log": "outputs/customer-ui/sweep-20260909T135842Z/customer-action-runtime.log"
+      "mini_runtime": "outputs/customer-ui/sweep-20260917T193000Z/mini-runtime-evidence.json",
+      "fixture": "outputs/customer-ui/sweep-20260917T193000Z/fixture-state.json",
+      "state_receipt": "outputs/customer-ui/sweep-20260917T193000Z/state-receipt.json",
+      "runtime_log": "outputs/customer-ui/sweep-20260917T193000Z/customer-action-runtime.log"
     },
     "blocked_completion_notes": {
       "recording-controls-safe-surfaces": "Safe first surface and isolated test proof only; live camera/mic/screen recording requires a separate Mini TCC runtime pass.",

@@ -8,6 +8,8 @@ enforcement_breaker.json
 failure_state.json
 phase_state.json
 saneprompt_state.json
+gate-hits.json
+gate-overrides.json
 
 # Tracking files
 edit_count.json

@@ -612,4 +612,4 @@ class SaneVideoCustomerUIActionSweep
   end
 end
 
-SaneVideoCustomerUIActionSweep.new.run
+SaneVideoCustomerUIActionSweep.new.run if __FILE__ == $PROGRAM_NAME

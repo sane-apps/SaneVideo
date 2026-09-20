@@ -19,88 +19,105 @@ struct ExportYouTubeSection: View {
 
     var body: some View {
         if !YouTubeService.uploadFeatureEnabled {
-            HStack(spacing: 10) {
-                Image(systemName: "play.slash.fill")
-                    .foregroundStyle(.orange)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("YouTube upload unavailable")
-                        .saneReadableBodyStrong()
-                    Text("Export a local file and upload it manually.")
-                        .saneReadableSupportText()
-                }
-                Spacer(minLength: 0)
-            }
-            .padding(12)
-            .sanePanel(radius: 12, accent: .orange)
-            .accessibilityIdentifier("export.youtube.unavailable")
+            unavailablePanel
         } else if showYouTubeUpload {
-            GroupBox {
-                VStack(alignment: .leading, spacing: 12) {
-                    FeatureCallout(
-                        title: "Optional YouTube upload",
-                        message: "Skip this section if you want a fully local workflow. When enabled, SaneVideo still exports a local file first.",
-                        icon: "play.rectangle.fill",
-                        tone: .warning
-                    )
+            uploadForm
+        }
+    }
 
-                    HStack {
-                        Label(String(localized: "export.youtube.header", defaultValue: "YouTube Details"), systemImage: "play.rectangle.fill")
-                            .saneReadableLabel()
-                            .foregroundStyle(.red)
+    // Split from body: one giant builder expression trips the Swift 6.4 solver
+    // ("failed to produce diagnostic for expression"). No behavior change.
+    private var unavailablePanel: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "play.slash.fill")
+                .foregroundStyle(.orange)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("YouTube upload unavailable")
+                    .saneReadableBodyStrong()
+                Text("Export a local file and upload it manually.")
+                    .saneReadableSupportText()
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(12)
+        .sanePanel(radius: 12, accent: .orange)
+        .accessibilityIdentifier("export.youtube.unavailable")
+    }
 
-                        Spacer()
+    private var uploadForm: some View {
+        GroupBox {
+            VStack(alignment: .leading, spacing: 12) {
+                FeatureCallout(
+                    title: "Optional YouTube upload",
+                    message: "Skip this section if you want a fully local workflow. When enabled, SaneVideo still exports a local file first.",
+                    icon: "play.rectangle.fill",
+                    tone: .warning
+                )
 
-                        Button {
-                            onGenerateAI()
-                        } label: {
-                            Group {
-                                if isGeneratingAI {
-                                    ProgressView().controlSize(.small)
-                                } else {
-                                    Label(String(localized: "action.auto_generate", defaultValue: "Auto-Generate"), systemImage: "wand.and.stars")
-                                }
-                            }
-                            .font(.caption)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
-                            .background(
-                                LinearGradient(
-                                    colors: [Theme.Colors.accentSoft, Theme.Colors.accent],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                                .opacity(hasCaptions ? 0.8 : 0.4)
-                            )
-                            .foregroundColor(.white)
-                            .cornerRadius(6)
-                        }
-                        .buttonStyle(.plain)
-                        .disabled(!hasCaptions || isGeneratingAI)
-                        .help(hasCaptions ? "Generate title & description from transcript" : "Requires captions - generate them first")
-                    }
+                aiHeaderRow
 
-                    HelperText(
-                        text: hasCaptions
-                            ? "Auto-Generate uses the local transcript to draft a starting title and description."
-                            : "Generate captions first if you want SaneVideo to draft the title and description for you.",
-                        icon: "wand.and.stars"
-                    )
+                HelperText(
+                    text: hasCaptions
+                        ? "Auto-Generate uses the local transcript to draft a starting title and description."
+                        : "Generate captions first if you want SaneVideo to draft the title and description for you.",
+                    icon: "wand.and.stars"
+                )
 
-                    TextField(String(localized: "export.youtube.title", defaultValue: "Title"), text: $videoTitle)
-                        .textFieldStyle(.roundedBorder)
-                        .accessibilityIdentifier("export.youtube.title_field")
-                    TextField(String(localized: "export.youtube.description", defaultValue: "Description"), text: $videoDescription)
-                        .textFieldStyle(.roundedBorder)
-                        .accessibilityIdentifier("export.youtube.description_field")
+                TextField(String(localized: "export.youtube.title", defaultValue: "Title"), text: $videoTitle)
+                    .textFieldStyle(.roundedBorder)
+                    .accessibilityIdentifier("export.youtube.title_field")
+                TextField(String(localized: "export.youtube.description", defaultValue: "Description"), text: $videoDescription)
+                    .textFieldStyle(.roundedBorder)
+                    .accessibilityIdentifier("export.youtube.description_field")
 
-                    if youtubeService.isUploading {
-                        ProgressView(String(localized: "export.youtube.uploading", defaultValue: "Uploading..."), value: youtubeService.uploadProgress, total: 1.0)
+                if youtubeService.isUploading {
+                    ProgressView(String(localized: "export.youtube.uploading", defaultValue: "Uploading..."), value: youtubeService.uploadProgress, total: 1.0)
+                }
+            }
+            .padding(8)
+        }
+        .sanePanel(radius: 14, accent: .red)
+        .transition(.move(edge: .top).combined(with: .opacity))
+    }
+
+    private var aiButtonOpacity: Double { hasCaptions ? 0.8 : 0.4 }
+
+    // Split from uploadForm: the header row's nesting trips the Swift 6.4
+    // solver when checked as part of the whole form. No behavior change.
+    private var aiHeaderRow: some View {
+        HStack {
+            Label(String(localized: "export.youtube.header", defaultValue: "YouTube Details"), systemImage: "play.rectangle.fill")
+                .saneReadableLabel()
+                .foregroundStyle(.red)
+
+            Spacer()
+
+            Button {
+                onGenerateAI()
+            } label: {
+                Group {
+                    if isGeneratingAI {
+                        ProgressView().controlSize(.small)
+                    } else {
+                        Label(String(localized: "action.auto_generate", defaultValue: "Auto-Generate"), systemImage: "wand.and.stars")
                     }
                 }
-                .padding(8)
+                .font(.caption)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(
+                    LinearGradient(
+                        colors: [Theme.Colors.accentSoft.opacity(aiButtonOpacity), Theme.Colors.accent.opacity(aiButtonOpacity)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .foregroundColor(.white)
+                .cornerRadius(6)
             }
-            .sanePanel(radius: 14, accent: .red)
-            .transition(.move(edge: .top).combined(with: .opacity))
+            .buttonStyle(.plain)
+            .disabled(!hasCaptions || isGeneratingAI)
+            .help(hasCaptions ? "Generate title & description from transcript" : "Requires captions - generate them first")
         }
     }
 }

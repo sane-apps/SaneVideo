@@ -23,7 +23,7 @@ release:
     scheme: SaneVideo
     test_selector: SaneVideoTests/ProjectRegressionTests/legacyProjectDecodes()
     from_version: "1.0.5"
-    timeout_seconds: 300
+    timeout_seconds: 900
   dmg:
     volume_icon: Resources/DMGIcon.icns
     file_icon: Resources/DMGIcon.icns

@@ -108,7 +108,8 @@ final class ExportPipelineIntegrationTests: XCTestCase {
             throw XCTSkip("Test asset not available at \(testAssetURL.path)")
         }
 
-        // The default is 4K. Hosted CI Macs have a virtual GPU that runs out of memory at 4K.
+        // The default is 4K. Hosted CI Macs have a virtual GPU that runs out of memory at 4K,
+        // so every other export test renders 1080p.
         if MTLCreateSystemDefaultDevice()?.name.contains("Paravirtual") == true {
             throw XCTSkip("4K export needs a real GPU; this Mac has a virtual one")
         }

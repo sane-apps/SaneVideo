@@ -94,7 +94,7 @@ final class ExportAudioIntegrationTests: XCTestCase {
         }
 
         let (project, _) = try await createProjectWithClip()
-        let settings = SaneExportSettings()
+        let settings = SaneExportSettings(resolution: .hd1080)
 
         let outputURL = try await exportEngine.export(
             project: project,
@@ -123,7 +123,7 @@ final class ExportAudioIntegrationTests: XCTestCase {
 
         let outputURL = try await exportEngine.export(
             project: project,
-            settings: SaneExportSettings(),
+            settings: SaneExportSettings(resolution: .hd1080),
             outputURL: tempOutputURL
         ) { _ in }
 
@@ -166,7 +166,7 @@ final class ExportAudioIntegrationTests: XCTestCase {
 
         _ = try await exportEngine.export(
             project: projectFull,
-            settings: SaneExportSettings(),
+            settings: SaneExportSettings(resolution: .hd1080),
             outputURL: tempFull
         ) { _ in }
 
@@ -187,7 +187,7 @@ final class ExportAudioIntegrationTests: XCTestCase {
 
         _ = try await exportEngine.export(
             project: projectReduced,
-            settings: SaneExportSettings(),
+            settings: SaneExportSettings(resolution: .hd1080),
             outputURL: tempReduced
         ) { _ in }
 

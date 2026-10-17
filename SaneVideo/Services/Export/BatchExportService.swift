@@ -16,6 +16,12 @@ actor BatchExportService {
 
     private let logger = Logger(subsystem: "com.sanevideo.SaneVideo", category: "BatchExport")
     private var isExporting = false
+    private let outputDirectory: URL?
+
+    /// - Parameter outputDirectory: Where shorts are written. Defaults to ~/Movies/SaneVideo/Shorts; tests pass a temp folder.
+    init(outputDirectory: URL? = nil) {
+        self.outputDirectory = outputDirectory
+    }
 
     private struct UncheckedExportSession: @unchecked Sendable {
         let session: AVAssetExportSession
@@ -91,13 +97,17 @@ actor BatchExportService {
 
     private func createOutputDirectory() throws -> URL {
         let fileManager = FileManager.default
-        guard let moviesDir = fileManager.urls(for: .moviesDirectory, in: .userDomainMask).first else {
-            throw BatchExportError.outputDirectoryCreationFailed
+        let shortsDir: URL
+        if let outputDirectory {
+            shortsDir = outputDirectory
+        } else {
+            guard let moviesDir = fileManager.urls(for: .moviesDirectory, in: .userDomainMask).first else {
+                throw BatchExportError.outputDirectoryCreationFailed
+            }
+            shortsDir = moviesDir
+                .appendingPathComponent("SaneVideo")
+                .appendingPathComponent("Shorts")
         }
-
-        let shortsDir = moviesDir
-            .appendingPathComponent("SaneVideo")
-            .appendingPathComponent("Shorts")
 
         if !fileManager.fileExists(atPath: shortsDir.path) {
             try fileManager.createDirectory(at: shortsDir, withIntermediateDirectories: true)

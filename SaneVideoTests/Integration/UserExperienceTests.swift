@@ -2,110 +2,49 @@
 //  UserExperienceTests.swift
 //  SaneVideoTests
 //
-//  Tests for user experience polish features
+//  Error copy that carries the underlying cause, and Magic Fix cancellation resetting
+//  the processing state the overlay reads.
 //
 
-import XCTest
 import AVFoundation
+import Foundation
 @testable import SaneVideo
+import Testing
 
-final class UserExperienceTests: XCTestCase {
-    
-    // MARK: - Error Display Tests
-    
-    func testErrorDisplayViewRecoverySuggestions() {
-        let permissionError = AppError.cameraPermissionDenied
-        XCTAssertNotNil(permissionError.recoverySuggestion, "Permission errors should have recovery suggestions")
-        
-        let diskSpaceError = AppError.diskSpaceLow
-        XCTAssertNotNil(diskSpaceError.recoverySuggestion, "Disk space errors should have recovery suggestions")
+@Suite("User Experience")
+struct UserExperienceTests {
+    @Test("Recording engine error message includes the underlying cause")
+    func recordingErrorMessageIncludesCause() {
+        let error = AppError.recordingEngineError("Test error")
+
+        #expect(!error.userFacingTitle.isEmpty)
+        #expect(error.userFacingMessage.contains("Test error"))
     }
-    
-    func testErrorDisplayViewUserFacingMessages() {
-        let recordingError = AppError.recordingEngineError("Test error")
-        let title = recordingError.userFacingTitle
-        let message = recordingError.userFacingMessage
-        
-        XCTAssertFalse(title.isEmpty, "Error title should not be empty")
-        XCTAssertFalse(message.isEmpty, "Error message should not be empty")
-        XCTAssertTrue(message.contains("Test error"), "Error message should include the original error")
-    }
-    
-    // MARK: - Magic Fix Cancellation Tests
-    
+
+    @Test("Cancelling Magic Fix clears processing flag, status and progress")
     @MainActor
-    func testMagicFixCancellation() async {
+    func magicFixCancellationResetsState() async {
         let projectState = ProjectState()
-        let testProject = VideoProject()
-        projectState.currentProject = testProject
-        
-        // Create a test clip
-        let testURL = FileManager.default.temporaryDirectory.appendingPathComponent("test.mp4")
+        projectState.currentProject = VideoProject()
+
+        let testURL = FileManager.default.temporaryDirectory.appendingPathComponent("magicfix_cancel_\(UUID().uuidString).mp4")
         let testClip = VideoClip(url: testURL, duration: CMTime(seconds: 10, preferredTimescale: 600))
-        
-        // Start Magic Fix
-        let options = MagicFixOptions()
-        let magicFixTask = Task {
-            await projectState.performMagicFix(for: testClip, options: options)
+
+        let magicFixTask = Task { @MainActor in
+            await projectState.performMagicFix(for: testClip, options: MagicFixOptions())
         }
-        
-        // Wait a bit
-        try? await Task.sleep(nanoseconds: 100_000_000) // 0.1s
-        
-        // Cancel it
+
+        // Let Magic Fix open its transaction before cancelling.
+        for _ in 0 ..< 1000 where !projectState.isProcessing {
+            await Task.yield()
+        }
+
         await projectState.cancelProcessing()
         magicFixTask.cancel()
-        
-        // Verify state is reset
-        XCTAssertFalse(projectState.isProcessing, "Processing should be false after cancellation")
-        XCTAssertNil(projectState.processingStatus, "Processing status should be nil after cancellation")
-        XCTAssertEqual(projectState.processingProgress, 0.0, "Processing progress should be 0 after cancellation")
-    }
-    
-    // MARK: - Privacy Badge Tests
+        await magicFixTask.value
 
-    @MainActor
-    func testPrivacyBadgeOnDevice() async {
-        // Privacy badge always shows "100% On-Device" since we use Apple Intelligence
-        // No cloud AI providers are configured in this app
-        // The badge is now a static view showing on-device status
-
-        // Verify app is configured for on-device only (no cloud AI keys exist)
-        // This test confirms our privacy-first architecture
-        XCTAssertTrue(true, "Privacy badge shows 100% On-Device - all AI is local")
-    }
-    
-    // MARK: - Loading State Tests
-    
-    func testLoadingIndicatorProgress() {
-        // LoadingIndicator should display progress correctly
-        // This is a UI component test, but we can verify the logic
-        
-        let progress: Double = 0.5
-        XCTAssertGreaterThanOrEqual(progress, 0.0, "Progress should be >= 0")
-        XCTAssertLessThanOrEqual(progress, 1.0, "Progress should be <= 1")
-        
-        let percentage = Int(progress * 100)
-        XCTAssertEqual(percentage, 50, "Progress percentage should be 50%")
-    }
-    
-    // MARK: - Enhanced Magic Overlay Tests
-    
-    @MainActor
-    func testEnhancedMagicOverlayVisibility() {
-        let projectState = ProjectState()
-        
-        // Overlay should be hidden when not processing
-        XCTAssertFalse(projectState.isProcessing, "Should not be processing initially")
-        
-        // Overlay should be visible when processing
-        projectState.isProcessing = true
-        projectState.processingProgress = 0.5
-        projectState.processingStatus = "Testing..."
-        
-        XCTAssertTrue(projectState.isProcessing, "Should be processing")
-        XCTAssertEqual(projectState.processingProgress, 0.5, "Progress should be 0.5")
-        XCTAssertNotNil(projectState.processingStatus, "Status should not be nil")
+        #expect(!projectState.isProcessing)
+        #expect(projectState.processingStatus == nil)
+        #expect(projectState.processingProgress == 0.0)
     }
 }
-

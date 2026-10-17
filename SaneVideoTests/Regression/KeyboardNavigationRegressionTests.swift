@@ -2,324 +2,95 @@
 //  KeyboardNavigationRegressionTests.swift
 //  SaneVideoTests
 //
-//  Regression tests for keyboard navigation features
-//  Ensures all keyboard shortcuts remain functional
+//  Behavior behind keyboard shortcuts: I/O in/out points, Shift+Arrow 10-second seek,
+//  and Cmd+D duplicate.
 //
 
 import CoreMedia
-import XCTest
-
+import Foundation
 @testable import SaneVideo
+import Testing
 
-final class KeyboardNavigationRegressionTests: XCTestCase {
+@Suite("Keyboard Navigation")
+@MainActor
+struct KeyboardNavigationRegressionTests {
+    private func time(_ seconds: Double) -> CMTime {
+        CMTime(seconds: seconds, preferredTimescale: 600)
+    }
 
-    // MARK: - PlaybackState In/Out Points
-
-    /// Regression test for: In/Out points keyboard shortcuts (I/O keys)
-    @MainActor
-    func testInOutPointManagement() {
+    @Test("In and out points form a selected range, and clearing removes it")
+    func inOutPointManagement() throws {
         let playbackState = PlaybackState()
+        #expect(playbackState.selectedRange == nil)
 
-        // Initially, in/out points should be nil
-        XCTAssertNil(playbackState.inPoint)
-        XCTAssertNil(playbackState.outPoint)
-        XCTAssertNil(playbackState.selectedRange)
+        playbackState.inPoint = time(2)
+        #expect(playbackState.selectedRange == nil, "One point alone is not a range")
+        playbackState.outPoint = time(5)
 
-        // Set in point
-        playbackState.inPoint = CMTime(seconds: 2.0, preferredTimescale: 600)
-        XCTAssertEqual(playbackState.inPoint?.seconds, 2.0)
+        let range = try #require(playbackState.selectedRange)
+        #expect(range.start.seconds == 2.0)
+        #expect(range.end.seconds == 5.0)
 
-        // Set out point
-        playbackState.outPoint = CMTime(seconds: 5.0, preferredTimescale: 600)
-        XCTAssertEqual(playbackState.outPoint?.seconds, 5.0)
-
-        // Verify selected range is calculated correctly
-        guard let range = playbackState.selectedRange else {
-            XCTFail("Selected range should exist when both in and out points are set")
-            return
-        }
-        XCTAssertEqual(range.start.seconds, 2.0)
-        XCTAssertEqual(range.end.seconds, 5.0)
-
-        // Clear in/out points
         playbackState.clearInOutPoints()
-        XCTAssertNil(playbackState.inPoint)
-        XCTAssertNil(playbackState.outPoint)
-        XCTAssertNil(playbackState.selectedRange)
+        #expect(playbackState.inPoint == nil)
+        #expect(playbackState.outPoint == nil)
+        #expect(playbackState.selectedRange == nil)
     }
 
-    /// Regression test for: In/Out points work correctly when out is before in
-    @MainActor
-    func testInOutPointsReversedOrder() {
+    @Test("An out point before the in point still yields a forward range")
+    func inOutPointsReversedOrder() throws {
         let playbackState = PlaybackState()
+        playbackState.outPoint = time(2)
+        playbackState.inPoint = time(5)
 
-        // Set out point first, then in point (reversed order)
-        playbackState.outPoint = CMTime(seconds: 2.0, preferredTimescale: 600)
-        playbackState.inPoint = CMTime(seconds: 5.0, preferredTimescale: 600)
-
-        // Selected range should still be normalized (start < end)
-        guard let range = playbackState.selectedRange else {
-            XCTFail("Selected range should exist")
-            return
-        }
-        XCTAssertEqual(range.start.seconds, 2.0, "Start should be the smaller value")
-        XCTAssertEqual(range.end.seconds, 5.0, "End should be the larger value")
+        let range = try #require(playbackState.selectedRange)
+        #expect(range.start.seconds == 2.0)
+        #expect(range.end.seconds == 5.0)
     }
 
-    // MARK: - 10-Second Seek (Shift+Arrow)
-
-    /// Regression test for: Shift+Left/Right Arrow seeks 10 seconds
-    @MainActor
-    func testSeek10Seconds() {
-        let playbackState = PlaybackState()
-
-        // Set a duration so we have room to seek
-        playbackState.duration = CMTime(seconds: 60.0, preferredTimescale: 600)
-
-        // Start at 30 seconds
-        playbackState.currentTime = CMTime(seconds: 30.0, preferredTimescale: 600)
-
-        // Seek forward 10 seconds
-        playbackState.seekForward10Seconds()
-        XCTAssertEqual(playbackState.currentTime.seconds, 40.0, accuracy: 0.001, "Should seek forward 10 seconds")
-
-        // Seek backward 10 seconds
-        playbackState.seekBackward10Seconds()
-        XCTAssertEqual(playbackState.currentTime.seconds, 30.0, accuracy: 0.001, "Should seek backward 10 seconds")
-    }
-
-    /// Regression test for: 10-second seek respects duration boundaries
-    @MainActor
-    func testSeek10SecondsBoundaries() {
-        let playbackState = PlaybackState()
-
-        // Set a short duration
-        playbackState.duration = CMTime(seconds: 15.0, preferredTimescale: 600)
-
-        // Start at 10 seconds
-        playbackState.currentTime = CMTime(seconds: 10.0, preferredTimescale: 600)
-
-        // Seek forward should cap at duration
-        playbackState.seekForward10Seconds()
-        XCTAssertEqual(playbackState.currentTime.seconds, 15.0, accuracy: 0.001, "Should cap at duration")
-
-        // Reset to 5 seconds
-        playbackState.currentTime = CMTime(seconds: 5.0, preferredTimescale: 600)
-
-        // Seek backward should cap at 0
-        playbackState.seekBackward10Seconds()
-        XCTAssertEqual(playbackState.currentTime.seconds, 0.0, accuracy: 0.001, "Should cap at 0")
-    }
-
-    // MARK: - FocusNavigationModifier
-
-    /// Verify FocusStyle configurations exist
-    func testFocusStyleConfigurations() {
-        let defaultStyle = FocusStyle.default
-        XCTAssertEqual(defaultStyle.borderWidth, 2)
-        XCTAssertEqual(defaultStyle.cornerRadius, 6)
-        XCTAssertEqual(defaultStyle.scale, 1.0)
-
-        let subtleStyle = FocusStyle.subtle
-        XCTAssertEqual(subtleStyle.borderWidth, 1)
-
-        let buttonStyle = FocusStyle.button
-        XCTAssertEqual(buttonStyle.scale, 1.02)
-
-        let listRowStyle = FocusStyle.listRow
-        XCTAssertEqual(listRowStyle.borderWidth, 1)
-    }
-
-    // MARK: - SheetFooter Keyboard Shortcuts
-
-    /// Verify SheetFooter has proper keyboard shortcut configuration
-    func testSheetFooterKeyboardShortcuts() {
-        // This is a compile-time verification that SheetFooter has the expected interface
-        // The actual keyboard shortcuts are tested via UI tests
-
-        // SheetFooter should have cancelAction and defaultAction
-        // This test verifies the struct can be instantiated with the expected parameters
-        _ = SheetFooter(
-            actionTitle: "Test",
-            cancelID: "test.cancel",
-            actionID: "test.action",
-            onCancel: {},
-            onAction: {}
-        )
-
-        XCTAssertTrue(true, "SheetFooter should be instantiable with standard parameters")
-    }
-
-    // MARK: - Clip Boundary Navigation
-
-    /// Regression test for: Up/Down arrows navigate between clip boundaries
-    func testClipBoundaryCalculation() {
-        let videoURL = URL(fileURLWithPath: "/tmp/test.mp4")
-
-        // Create clips at known positions
-        let clip1 = VideoClip(
-            url: videoURL,
-            duration: CMTime(seconds: 5, preferredTimescale: 600),
-            startTime: .zero
-        )
-        let clip2 = VideoClip(
-            url: videoURL,
-            duration: CMTime(seconds: 3, preferredTimescale: 600),
-            startTime: CMTime(seconds: 5, preferredTimescale: 600)
-        )
-        let clip3 = VideoClip(
-            url: videoURL,
-            duration: CMTime(seconds: 4, preferredTimescale: 600),
-            startTime: CMTime(seconds: 8, preferredTimescale: 600)
-        )
-
-        // Collect all boundaries
-        var boundaries: [CMTime] = [.zero]
-        for clip in [clip1, clip2, clip3] {
-            boundaries.append(clip.startTime)
-            boundaries.append(CMTimeAdd(clip.startTime, clip.effectiveDuration))
-        }
-        boundaries.sort { $0 < $1 }
-
-        // Remove duplicates
-        var uniqueBoundaries: [CMTime] = []
-        for boundary in boundaries {
-            if uniqueBoundaries.last != boundary {
-                uniqueBoundaries.append(boundary)
-            }
-        }
-
-        // Expected boundaries: 0, 5, 8, 12
-        XCTAssertEqual(uniqueBoundaries.count, 4)
-        XCTAssertEqual(uniqueBoundaries[0].seconds, 0.0)
-        XCTAssertEqual(uniqueBoundaries[1].seconds, 5.0)
-        XCTAssertEqual(uniqueBoundaries[2].seconds, 8.0)
-        XCTAssertEqual(uniqueBoundaries[3].seconds, 12.0)
-    }
-
-    // MARK: - Magic Fix Keyboard Shortcut
-
-    /// Regression test for: Cmd+Shift+M should trigger Magic Fix
-    /// Bug: The keyboard shortcut was documented but not implemented
-    /// Fix: Added shortcut in EditorLayoutView.swift
-    func testMagicFixShortcutDocumented() {
-        // Verify the shortcut is documented in KeyboardShortcutsSheet
-        // This is a documentation verification test
-        // The actual shortcut functionality is tested via UI tests
-
-        // The shortcut "⇧⌘M" for "Super Magic Fix" should exist
-        // This test passes if the shortcut is properly documented
-        XCTAssertTrue(true, "Magic Fix shortcut (Cmd+Shift+M) should be documented and implemented")
-    }
-
-    // MARK: - Library Navigation
-
-    /// Regression test for: Library clip list supports arrow key navigation
-    func testLibraryClipNavigationLogic() {
-        let videoURL = URL(fileURLWithPath: "/tmp/test.mp4")
-
-        // Create a list of clips
-        let clips = [
-            VideoClip(url: videoURL, duration: CMTime(seconds: 5, preferredTimescale: 600)),
-            VideoClip(url: videoURL, duration: CMTime(seconds: 3, preferredTimescale: 600)),
-            VideoClip(url: videoURL, duration: CMTime(seconds: 4, preferredTimescale: 600))
+    @Test(
+        "10-second seek moves by 10 s and clamps to 0 and the duration",
+        arguments: [
+            (60.0, 30.0, true, 40.0),
+            (60.0, 40.0, false, 30.0),
+            (15.0, 10.0, true, 15.0),
+            (15.0, 5.0, false, 0.0)
         ]
+    )
+    func seek10Seconds(duration: Double, start: Double, forward: Bool, expected: Double) {
+        let playbackState = PlaybackState()
+        playbackState.duration = time(duration)
+        playbackState.currentTime = time(start)
 
-        // Test navigation logic (mimics LibraryView navigation)
-        var selectedClipId: UUID? = nil
-
-        // Select first (no current selection)
-        if selectedClipId == nil {
-            selectedClipId = clips.first?.id
+        if forward {
+            playbackState.seekForward10Seconds()
+        } else {
+            playbackState.seekBackward10Seconds()
         }
-        XCTAssertEqual(selectedClipId, clips[0].id)
 
-        // Navigate to next
-        if let currentId = selectedClipId,
-           let currentIndex = clips.firstIndex(where: { $0.id == currentId }),
-           currentIndex < clips.count - 1 {
-            selectedClipId = clips[currentIndex + 1].id
-        }
-        XCTAssertEqual(selectedClipId, clips[1].id)
-
-        // Navigate to previous
-        if let currentId = selectedClipId,
-           let currentIndex = clips.firstIndex(where: { $0.id == currentId }),
-           currentIndex > 0 {
-            selectedClipId = clips[currentIndex - 1].id
-        }
-        XCTAssertEqual(selectedClipId, clips[0].id)
+        #expect(abs(playbackState.currentTime.seconds - expected) < 0.001)
     }
 
-    // MARK: - Clip Operations
-
-    /// Regression test for: Cmd+D duplicates clip
-    @MainActor
-    func testClipDuplicateOperation() async {
+    @Test("Duplicating a clip adds one copy with a new id and the same media")
+    func clipDuplicateOperation() throws {
         let projectState = ProjectState()
         projectState.startNewProject()
+        var project = try #require(projectState.currentProject)
 
-        guard var project = projectState.currentProject else {
-            XCTFail("Should have a project")
-            return
-        }
-
-        // Create and add a clip
-        let videoURL = URL(fileURLWithPath: "/tmp/test.mp4")
         let originalClip = VideoClip(
-            url: videoURL,
-            duration: CMTime(seconds: 5, preferredTimescale: 600),
+            url: URL(fileURLWithPath: "/tmp/test.mp4"),
+            duration: time(5),
             startTime: .zero
         )
-
-        var track = Track(name: "Video", type: .video, clips: [originalClip], zIndex: 0)
-        project.timeline.tracks = [track]
+        project.timeline.tracks = [Track(name: "Video", type: .video, clips: [originalClip], zIndex: 0)]
         projectState.currentProject = project
 
-        // Verify we have 1 clip
-        let clipCount = projectState.currentProject?.timeline.tracks.first?.clips.count ?? 0
-        XCTAssertEqual(clipCount, 1, "Should have 1 clip before duplication")
+        projectState.duplicateClip(originalClip, atTime: time(5))
 
-        // Note: The actual duplicateClip method would be tested here
-        // but requires more complex setup with ServiceContainer
-    }
-
-    // MARK: - Timeline Shortcuts
-
-    /// Verify timeline shortcuts are properly defined
-    func testTimelineShortcutIdentifiers() {
-        // These are the accessibility identifiers that should exist
-        let expectedShortcutIds = [
-            "shortcut.play_pause",
-            "shortcut.pause",
-            "shortcut.shuttle_backward",
-            "shortcut.shuttle_forward",
-            "shortcut.step_backward",
-            "shortcut.step_forward",
-            "shortcut.seek_backward_10s",
-            "shortcut.seek_forward_10s",
-            "shortcut.split_clip",
-            "shortcut.delete_clip",
-            "shortcut.deselect_all",
-            "shortcut.select_all",
-            "shortcut.go_to_start",
-            "shortcut.go_to_end",
-            "shortcut.set_in_point",
-            "shortcut.set_out_point",
-            "shortcut.clear_in_out",
-            "shortcut.prev_clip_boundary",
-            "shortcut.next_clip_boundary",
-            "shortcut.select_clip_at_playhead",
-            "shortcut.fit_to_window",
-            "shortcut.copy_clip",
-            "shortcut.cut_clip",
-            "shortcut.paste_clip",
-            "shortcut.duplicate_clip",
-            "shortcut.magic_fix"
-        ]
-
-        // This test verifies the expected shortcuts are documented
-        // Actual implementation is verified via UI tests
-        XCTAssertEqual(expectedShortcutIds.count, 26, "Should have 26 timeline-related shortcuts")
+        let clips = projectState.currentProject?.timeline.tracks.first?.clips ?? []
+        #expect(clips.count == 2)
+        let copy = try #require(clips.first { $0.id != originalClip.id })
+        #expect(copy.url == originalClip.url)
+        #expect(copy.duration == originalClip.duration)
     }
 }

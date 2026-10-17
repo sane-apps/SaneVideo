@@ -2,160 +2,61 @@
 //  ToastManagerTests.swift
 //  SaneVideoTests
 //
-//  Tests for ToastManager - user feedback toast system
+//  Toasts appear for every alert type, clear immediately, and queue in order.
+//  Waits poll the real toast state instead of sleeping.
 //
 
-import Testing
 import Foundation
 @testable import SaneVideo
+import Testing
 
 @Suite("Toast Manager Tests")
 @MainActor
 struct ToastManagerTests {
-
-    // MARK: - AlertType Tests
-
-    @Test("AlertType has all expected cases")
-    func alertTypeHasAllCases() {
-        // Arrange & Assert - verify all cases exist and are distinct
-        let info = ToastManager.AlertType.info
-        let success = ToastManager.AlertType.success
-        let error = ToastManager.AlertType.error
-
-        // Verify cases are distinct (tests runtime behavior, not compilation)
-        #expect(info != success, "Info and success should be distinct")
-        #expect(success != error, "Success and error should be distinct")
-        #expect(error != info, "Error and info should be distinct")
+    /// Yields the main actor until the toast shows `expected`, or gives up after a bounded number of turns.
+    private func waitForToast(_ manager: ToastManager, _ expected: String) async {
+        for _ in 0 ..< 1000 where manager.toastMessage != expected {
+            await Task.yield()
+        }
     }
 
-    // MARK: - Initial State Tests
+    @Test("show displays the message for info, success and error toasts")
+    func showDisplaysMessageForEveryType() async {
+        let cases: [(ToastManager.AlertType, String)] = [
+            (.info, "Info message"),
+            (.success, "Success message"),
+            (.error, "Error message")
+        ]
 
-    @Test("Initial toastMessage is nil")
-    func initialToastMessageNil() {
-        // Arrange & Act
-        let manager = ToastManager()
-
-        // Assert
-        #expect(manager.toastMessage == nil)
+        for (type, message) in cases {
+            let manager = ToastManager()
+            manager.show(message, type: type)
+            await waitForToast(manager, message)
+            #expect(manager.toastMessage == message)
+        }
     }
 
-    // MARK: - Show Method Tests
-
-    @Test("Show sets toastMessage")
-    func showSetsToastMessage() async throws {
-        // Arrange
-        let manager = ToastManager()
-        let message = "Test message"
-
-        // Act
-        manager.show(message)
-        // Allow async task to complete
-        try await Task.sleep(nanoseconds: 100_000_000) // 100ms
-
-        // Assert
-        #expect(manager.toastMessage == message)
-    }
-
-    @Test("Show with info type works")
-    func showWithInfoType() async throws {
-        // Arrange
-        let manager = ToastManager()
-        let message = "Info message"
-
-        // Act
-        manager.show(message, type: .info)
-        try await Task.sleep(nanoseconds: 100_000_000)
-
-        // Assert
-        #expect(manager.toastMessage == message)
-    }
-
-    @Test("Show with error type works")
-    func showWithErrorType() async throws {
-        // Arrange
-        let manager = ToastManager()
-        let message = "Error message"
-
-        // Act
-        manager.show(message, type: .error)
-        try await Task.sleep(nanoseconds: 100_000_000)
-
-        // Assert
-        #expect(manager.toastMessage == message)
-    }
-
-    @Test("Show with success type works")
-    func showWithSuccessType() async throws {
-        // Arrange
-        let manager = ToastManager()
-        let message = "Success message"
-
-        // Act
-        manager.show(message, type: .success)
-        try await Task.sleep(nanoseconds: 100_000_000)
-
-        // Assert
-        #expect(manager.toastMessage == message)
-    }
-
-    // MARK: - Clear Method Tests
-
-    @Test("Clear resets toastMessage to nil")
-    func clearResetsToastMessage() async throws {
-        // Arrange
+    @Test("clear hides the current toast")
+    func clearResetsToastMessage() async {
         let manager = ToastManager()
         manager.show("Test message")
-        try await Task.sleep(nanoseconds: 100_000_000)
-        #expect(manager.toastMessage != nil)
+        await waitForToast(manager, "Test message")
+        #expect(manager.toastMessage == "Test message")
 
-        // Act
         manager.clear()
 
-        // Assert
         #expect(manager.toastMessage == nil)
     }
 
-    @Test("Clear can be called when no toast is showing")
-    func clearWhenNoToast() {
-        // Arrange
-        let manager = ToastManager()
-        #expect(manager.toastMessage == nil)
-
-        // Act - should not crash
-        manager.clear()
-
-        // Assert
-        #expect(manager.toastMessage == nil)
-    }
-
-    // MARK: - Queue Behavior Tests
-
-    @Test("Rapid successive toasts are handled")
-    func rapidSuccessiveToasts() async throws {
-        // Arrange
+    @Test("Rapid toasts show the first one first and queue the rest")
+    func rapidSuccessiveToasts() async {
         let manager = ToastManager()
 
-        // Act - show multiple toasts rapidly
         manager.show("Message 1")
         manager.show("Message 2")
         manager.show("Message 3")
+        await waitForToast(manager, "Message 1")
 
-        // Wait for first message to display
-        try await Task.sleep(nanoseconds: 100_000_000)
-
-        // Assert - some message is showing (queue handles the rest)
-        #expect(manager.toastMessage != nil)
-    }
-
-    // MARK: - Observable Tests
-
-    @Test("ToastManager conforms to Observable")
-    func managerIsObservable() {
-        // Arrange & Act
-        let manager = ToastManager()
-
-        // Assert - Verify Observable works by checking initial state
-        // If @Observable works, we can read the property
-        #expect(manager.toastMessage == nil, "Initial toastMessage should be nil")
+        #expect(manager.toastMessage == "Message 1")
     }
 }

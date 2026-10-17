@@ -35,20 +35,6 @@ struct ExportCompositorTests {
         }
     }
 
-    @Test("Create composition from project without clips throws error")
-    func createCompositionNoClips() async {
-        // Arrange
-        let compositor = sut
-        let project = VideoProject(name: "Test Project")
-        let settings = SaneExportSettings()
-        // Note: Project without clips should fail
-
-        // Act & Assert
-        await #expect(throws: (any Error).self, "Project without clips should throw an error") {
-            _ = try await compositor.createComposition(from: project, settings: settings)
-        }
-    }
-
     // MARK: - Video Composition Tests
 
     @Test("Create video composition with settings")

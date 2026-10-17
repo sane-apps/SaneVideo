@@ -14,7 +14,6 @@ struct GlobalSheetModifier: ViewModifier {
     @State private var showLogs = false
     @State private var showShortcuts = false
     @State private var showTemplateBrowser = false
-    @State private var showRepurposing = false
     @State private var repurposingClip: VideoClip?
 
     // Rename Alert State
@@ -37,8 +36,8 @@ struct GlobalSheetModifier: ViewModifier {
                 TemplateBrowserSheet()
             }
             // 6. Repurposing Sheet
-            .sheet(isPresented: $showRepurposing) {
-                RepurposingSheet(sourceClip: repurposingClip)
+            .sheet(item: $repurposingClip) { clip in
+                RepurposingSheet(sourceClip: clip)
                     .onAppear {
                         AppLogger.uiLog.info("🎨 GlobalSheetModifier: Repurposing (Shorts) sheet appeared")
                     }
@@ -87,11 +86,12 @@ struct GlobalSheetModifier: ViewModifier {
                 appState.performProjectCommand {
                     if let clip = notification.object as? VideoClip {
                         repurposingClip = clip
-                    } else if let project = appState.currentProject,
-                              let firstClip = project.timeline.tracks.flatMap(\.clips).first {
-                        repurposingClip = firstClip
+                    } else if let project = appState.currentProject {
+                        // The selected clip, else the longest one: shorts come from the main recording.
+                        let clips = project.timeline.tracks.flatMap(\.clips)
+                        repurposingClip = clips.first { appState.selectedClipIds.contains($0.id) }
+                            ?? clips.max { $0.effectiveDuration.seconds < $1.effectiveDuration.seconds }
                     }
-                    showRepurposing = true
                 }
             }
             // 9. Share Project

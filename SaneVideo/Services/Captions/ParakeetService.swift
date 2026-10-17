@@ -19,9 +19,10 @@ actor ParakeetService: TranscriptionServiceProtocol {
         for videoURL: URL,
         progressHandler: (@Sendable (Int, Int, Int) -> Void)? = nil
     ) async throws -> [Caption] {
-        let manager = try await loadedManager()
+        // Read the audio first so a clip with no sound never triggers the model download.
         let audioURL = try await AudioExtractor.extract(from: videoURL)
         defer { try? FileManager.default.removeItem(at: audioURL) }
+        let manager = try await loadedManager()
 
         var state = await TdtDecoderState.make(decoderLayers: manager.decoderLayerCount)
         let result = try await manager.transcribe(audioURL, decoderState: &state)

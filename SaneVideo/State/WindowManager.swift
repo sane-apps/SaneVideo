@@ -19,6 +19,8 @@ class WindowManager {
   var isScreenSharing = false
   var isTogglingScreenShare = false
   var isTeleprompterVisible = false
+  /// The app hid its own main window for a recording; closing it was not the user's choice.
+  private(set) var isMainWindowHiddenForRecording = false
 
   // CRITICAL FIX: Flag to prevent concurrent PiP show/hide operations
   private var isTogglingPiP = false
@@ -30,9 +32,7 @@ class WindowManager {
   private var teleprompterWindow: TeleprompterWindow?
   private var mainWindowOpener: (@MainActor () -> Void)?
 
-  private var currentPresenterLayout: PresenterOverlayLayout? {
-    ServiceContainer.shared.appState.currentProject?.presentationPreset.presenterLayout
-  }
+  private var currentPresenterLayout: PresenterOverlayLayout? { .standard }
 
   // MARK: - Validation Helpers
 
@@ -296,6 +296,7 @@ class WindowManager {
 
       if window.isVisible {
         AppLogger.window.info("Ordering out window: '\(window.title)'")
+        isMainWindowHiddenForRecording = true
         window.orderOut(nil)
       }
     }
@@ -310,6 +311,7 @@ class WindowManager {
       return
     }
     AppLogger.window.info("Restoring main window...")
+    isMainWindowHiddenForRecording = false
 
     NSApp.activate(ignoringOtherApps: true)
 

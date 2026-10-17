@@ -2,7 +2,6 @@ import SaneUI
 import SwiftUI
 
 struct PrivacySettingsView: View {
-    @Binding var selectedTab: String
 
     var body: some View {
         SaneSettingsPage {
@@ -21,15 +20,6 @@ struct PrivacySettingsView: View {
 
             CompactSection("Services & Policies", icon: "doc.text", iconColor: .blue) {
                 VStack(alignment: .leading, spacing: 12) {
-                    Button {
-                        selectedTab = "apikeys"
-                    } label: {
-                        Label(String(localized: "settings.privacy.manage_api_keys", defaultValue: "Manage API Keys"), systemImage: "key.fill")
-                    }
-                    .buttonStyle(SaneActionButtonStyle())
-                    .help("View optional upload settings and saved credential controls.")
-                    .accessibilityIdentifier("settings.privacy.manage_api_keys_button")
-
                     Button {
                         if let webURL = URL(string: "https://sanevideo.com/privacy") {
                             NSWorkspace.shared.open(webURL)

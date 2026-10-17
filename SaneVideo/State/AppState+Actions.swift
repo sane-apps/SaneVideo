@@ -312,9 +312,6 @@ extension AppState {
             // first-use privacy expectations.
             NSLog("🖥️ toggleScreenShare: Leaving camera state unchanged for screen-only capture")
 
-            // Hide main window BEFORE picker shows for cleaner look
-            windowManager.minimizeMainWindow()
-
             // Update state for new mode
             windowManager.isScreenSharing = true
 
@@ -399,35 +396,9 @@ extension AppState {
         }
     }
 
-    func openDemoStudio() {
+    func openTeleprompterScript() {
         ensureCurrentProjectExists()
-        showDemoStudioSheet = true
-    }
-
-    @discardableResult
-    func buildCommentaryReel() -> Bool {
-        ensureCurrentProjectExists()
-
-        do {
-            let reel = try projectState.buildCommentaryReel()
-            switchToEditing()
-            windowManager.restoreMainWindow()
-            ServiceContainer.shared.toastManager.show("Built \(reel.name)", type: .success)
-            return true
-        } catch CommentaryReelBuildError.noCommentaryMarkers {
-            showDemoStudioSheet = true
-            ServiceContainer.shared.toastManager.show(
-                "Add commentary cues in Demo Studio first.",
-                type: .info
-            )
-            return false
-        } catch {
-            ServiceContainer.shared.toastManager.show(
-                error.localizedDescription,
-                type: .error
-            )
-            return false
-        }
+        showTeleprompterScriptSheet = true
     }
 
     func toggleTeleprompter() {
@@ -435,7 +406,7 @@ extension AppState {
 
         guard let project = projectState.currentProject else { return }
         if !project.speakerNotes.hasContent, !project.speakerNotes.isVisible {
-            showMissingTeleprompterTextToast()
+            showTeleprompterScriptSheet = true
             return
         }
 
@@ -451,8 +422,8 @@ extension AppState {
         if visible, !notes.hasContent {
             notes.isVisible = false
             projectState.updateSpeakerNotes(notes)
-            showMissingTeleprompterTextToast()
             windowManager.hideTeleprompter()
+            showTeleprompterScriptSheet = true
             return
         }
 
@@ -470,9 +441,5 @@ extension AppState {
         if projectState.currentProject == nil {
             projectState.startNewProject()
         }
-    }
-
-    private func showMissingTeleprompterTextToast() {
-        ServiceContainer.shared.toastManager.show("Add teleprompter text in Demo Studio first.", type: .info)
     }
 }

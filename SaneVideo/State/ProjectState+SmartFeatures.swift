@@ -44,17 +44,6 @@ extension ProjectState {
         updatedClip.isVoiceIsolationEnabled = false // Reset voice isolation
         updatedClip.isGatingEnabled = false // Reset AI gating
 
-        // Remove Magic Fix visual effects (autoEnhance only - smartCrop/autoFraming are transforms, not effects)
-        updatedClip.effects.removeAll { effect in
-            effect.type == .autoEnhance
-        }
-
-        // Clear privacy regions added by Magic Fix
-        updatedClip.privacyRegions = []
-
-        // Clear smart crop and auto-framing transforms
-        updatedClip.transform = .identity
-
         project.timeline.tracks[trackIndex].clips[clipIndex] = updatedClip
         currentProject = project
         saveProject(project)
@@ -83,10 +72,7 @@ extension ProjectState {
                clip.enhancedAudioURL != nil ||
                clip.isVoiceIsolationEnabled ||
                clip.isGatingEnabled ||
-               clip.useSmoothCutForRemovals ||
-               clip.effects.contains { $0.type == .autoEnhance } ||
-               !clip.privacyRegions.isEmpty ||
-               clip.transform != .identity // Smart crop/auto-framing modify transform
+               clip.useSmoothCutForRemovals
     }
 
     /// Performs Magic Fix on a single clip
@@ -127,7 +113,7 @@ extension ProjectState {
             defer {
                 let duration = Date().timeIntervalSince(startTime)
                 let optionsDescription =
-                    "\(options.removeSilence ? "silence " : "")\(options.removeFillers ? "fillers " : "")\(options.autoEnhance ? "enhance" : "")"
+                    "\(options.removeSilence ? "silence " : "")\(options.removeFillers ? "fillers" : "")"
                 performanceMetrics.recordOperation(
                     name: "Magic Fix",
                     duration: duration,
@@ -142,30 +128,6 @@ extension ProjectState {
             }
 
             try Task.checkCancellation()
-
-            async let visionTask: VisionAnalysisResult? = await Task.detached(priority: .utility) {
-                let config = VisionAnalysisConfig(
-                    detectText: options.scanForText,
-                    detectFaces: options.autoFraming,
-                    detectSaliency: options.smartCrop,
-                    detectPrivacy: options.scanForText
-                )
-
-                if config.detectText || config.detectFaces || config.detectSaliency {
-                    AppLogger.vision.info(
-                        "👁️ Magic Fix: Starting Vision Orchestrator (Unified Pipeline)...")
-                    do {
-                        return try await withTimeout(seconds: 300.0) {
-                            try await ServiceContainer.shared.visionOrchestrator.analyze(
-                                videoURL: clip.url, config: config)
-                        }
-                    } catch {
-                        AppLogger.vision.error("Vision pipeline failed: \(error)")
-                        return nil
-                    }
-                }
-                return nil
-            }.value
 
             if await MagicFixService.shouldAttemptAudioEnhancement(for: clip, options: options) {
                 try Task.checkCancellation()
@@ -195,7 +157,7 @@ extension ProjectState {
                 return
             }
 
-            if (options.generateCaptions || options.removeFillers || options.autoEnhance)
+            if (options.generateCaptions || options.removeFillers)
                 && preAnalysisClip.captions.isEmpty {
                 try Task.checkCancellation()
                 processingStatus = "🎤 Transcribing audio..."
@@ -224,25 +186,6 @@ extension ProjectState {
                 try await processCutsAndSmoothing(
                     for: readyForCutsClip, options: options, transactionId: transactionId)
                 updateTransactionProgress(transactionId, progress: 0.6)
-
-                // CRITICAL FIX: Verify clip still exists before applying visual effects
-                guard let visualClip = getClip(by: readyForCutsClip.id) else {
-                    AppLogger.project.warning("⚠️ Magic Fix: Clip \(readyForCutsClip.id) no longer exists before visual effects")
-                    return
-                }
-
-                let visionResult = await visionTask
-
-                try Task.checkCancellation()
-                try await applyVisualEffects(
-                    to: visualClip, options: options, visionResult: visionResult,
-                    transactionId: transactionId)
-
-                try Task.checkCancellation()
-                try await withTimeout(seconds: 120.0) {
-                    try await self.applyAIGenerativeFeatures(
-                        to: visualClip, options: options, transactionId: transactionId)
-                }
 
                 updateTransactionProgress(transactionId, progress: 1.0)
                 processingStatus = "✅ Magic Fix Completed"
@@ -350,63 +293,6 @@ extension ProjectState {
                 code: -1,
                 userInfo: [NSLocalizedDescriptionKey: "Audio enhancement completed but enhanced URL was not set"]
             )
-        }
-    }
-
-    private func applyVisualEffects(
-        to clip: VideoClip, options: MagicFixOptions, visionResult: VisionAnalysisResult? = nil,
-        transactionId: UUID
-    ) async throws {
-        if let result = visionResult {
-            if !result.privacyRegions.isEmpty {
-                await MainActor.run {
-                    self.updateClipPrivacyRegions(
-                        clipId: clip.id, regions: result.privacyRegions, transactionId: transactionId)
-                    ServiceContainer.shared.toastManager.show(
-                        "🔒 Applied \(result.privacyRegions.count) privacy blurs (Unified)")
-                }
-            }
-
-            if options.smartCrop && !result.saliency.isEmpty {
-                await applySmartCropFromAnalysis(
-                    clip: clip, analysis: result.saliency, transactionId: transactionId)
-            } else if options.autoFraming && !result.faces.isEmpty {
-                await applyAutoFramingFromAnalysis(
-                    clip: clip, analysis: result.faces, transactionId: transactionId)
-            }
-        } else {
-            if options.smartCrop {
-                await applySmartCrop(to: clip, transactionId: transactionId)
-            } else if options.autoFraming {
-                await applyAutoFraming(to: clip, transactionId: transactionId)
-            }
-        }
-
-        updateTransactionProgress(transactionId, progress: 0.8)
-
-        if options.autoEnhance {
-            processingStatus = "🪄 Enhancing visuals..."
-            self.applyEffect(to: clip, effect: VideoEffect(type: .autoEnhance), transactionId: transactionId)
-        }
-
-        if options.analyzeMood {
-            processingStatus = "🎨 Grading colors..."
-            await applySmartColorGrade(to: clip, transactionId: transactionId)
-        }
-        updateTransactionProgress(transactionId, progress: 0.9)
-    }
-
-    private func applyAIGenerativeFeatures(
-        to clip: VideoClip, options: MagicFixOptions, transactionId: UUID
-    ) async throws {
-        if options.magicRemovePeople || options.generativeStyle {
-            processingStatus = "🤖 Running AI Generative models..."
-            if options.magicRemovePeople {
-                await applyMagicRemove(to: clip, transactionId: transactionId)
-            }
-            if options.generativeStyle {
-                await applyCinematicStyle(to: clip, transactionId: transactionId)
-            }
         }
     }
 

@@ -120,7 +120,7 @@ struct RepurposingSheet: View {
 
             FeatureCallout(
                 title: "Local short variants",
-                message: "Analyze locally, pick candidates, export files. Optional iCloud sync is separate.",
+                message: "Find the best moments and export them as short clips.",
                 icon: "film.stack.fill"
             )
         }

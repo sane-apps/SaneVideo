@@ -63,7 +63,7 @@ enum MagicFixService {
         // 2. Filler Detection & AI Analysis
         progressHandler(30, 100)
         
-        if options.removeFillers || options.autoEnhance {
+        if options.removeFillers {
             let transcript = clip.captions.sorted { $0.startTime.seconds < $1.startTime.seconds }
                 .map { $0.text }
                 .joined(separator: " ")

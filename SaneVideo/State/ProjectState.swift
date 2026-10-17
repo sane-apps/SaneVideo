@@ -259,29 +259,13 @@ class ProjectState {
         return "\(baseName) \(number)"
     }
 
-    func startNewProject(template: ProjectTemplate? = nil) {
+    func startNewProject() {
         var project = VideoProject()
-
-        // Apply template settings if provided
-        if let template = template {
-            project.name = template.name
-            // Note: Aspect ratio and export settings are applied at export time
-            // Caption style can be set here
-            project.captionStyleName = template.defaultCaptionStyle
-            project.presentationPreset = template.defaultPresentationPreset
-            project.demoPackSettings = template.defaultPresentationPreset.recommendedDemoPackSettings
-            project.publishMetadata = .default(for: template.name)
-            project.publishMetadata.subtitle = template.description
-        } else {
-            // Generate unique name following Apple convention
-            project.name = generateUniqueProjectName()
-            project.publishMetadata = .default(for: project.name)
-        }
-
+        project.name = generateUniqueProjectName()
         updateCurrentProject(project)
         projects.insert(project, at: 0)
         saveProject(project)
-        AppLogger.project.info("Started new project \(project.id) with template: \(template?.name ?? "none")")
+        AppLogger.project.info("Started new project \(project.id)")
     }
 
     func openProject(_ project: VideoProject) {
@@ -414,58 +398,9 @@ class ProjectState {
         AppLogger.project.info("Updated caption style to \(style.name)")
     }
 
-    func updatePresentationPreset(_ preset: PresentationPreset) {
-        guard var project = currentProject else { return }
-        project.updatePresentationPreset(preset)
-        currentProject = project
-        saveProject(project)
-    }
-
     func updateSpeakerNotes(_ notes: SpeakerNotes) {
         guard var project = currentProject else { return }
         project.updateSpeakerNotes(notes)
-        currentProject = project
-        saveProject(project)
-    }
-
-    func updateChapterMarkers(_ markers: [ChapterMarker]) {
-        guard var project = currentProject else { return }
-        project.updateChapterMarkers(markers)
-        currentProject = project
-        saveProject(project)
-    }
-
-    func updateWorkflowBrief(_ brief: WorkflowBrief) {
-        guard var project = currentProject else { return }
-        project.updateWorkflowBrief(brief)
-        currentProject = project
-        saveProject(project)
-    }
-
-    func updateCommentaryPlanItems(_ items: [CommentaryPlanItem]) {
-        guard var project = currentProject else { return }
-        project.updateCommentaryPlanItems(items)
-        currentProject = project
-        saveProject(project)
-    }
-
-    func updateCommentaryMarkers(_ markers: [CommentaryMarker]) {
-        guard var project = currentProject else { return }
-        project.updateCommentaryMarkers(markers)
-        currentProject = project
-        saveProject(project)
-    }
-
-    func updateDemoPackSettings(_ settings: DemoPackSettings) {
-        guard var project = currentProject else { return }
-        project.updateDemoPackSettings(settings)
-        currentProject = project
-        saveProject(project)
-    }
-
-    func updatePublishMetadata(_ metadata: PublishMetadata) {
-        guard var project = currentProject else { return }
-        project.updatePublishMetadata(metadata)
         currentProject = project
         saveProject(project)
     }
@@ -476,11 +411,7 @@ class ProjectState {
 
         registerUndo("Rename Project")
 
-        let oldName = project.name
         project.rename(newName)
-        if project.publishMetadata.title.isEmpty || project.publishMetadata.title == oldName {
-            project.publishMetadata.title = newName
-        }
         currentProject = project
         saveProject(project)
 
@@ -489,7 +420,7 @@ class ProjectState {
             projects[index] = project
         }
 
-        AppLogger.project.info("Renamed project from '\(oldName)' to '\(newName)'")
+        AppLogger.project.info("Renamed project to '\(newName)'")
         ServiceContainer.shared.toastManager.show("Project Renamed")
     }
 
@@ -507,12 +438,7 @@ class ProjectState {
         duplicate.captionStyleName = project.captionStyleName
         duplicate.captionOffset = project.captionOffset
         duplicate.captionFontName = project.captionFontName
-        duplicate.presentationPreset = project.presentationPreset
         duplicate.speakerNotes = project.speakerNotes
-        duplicate.chapterMarkers = project.chapterMarkers
-        duplicate.commentaryMarkers = project.commentaryMarkers
-        duplicate.demoPackSettings = project.demoPackSettings
-        duplicate.publishMetadata = project.publishMetadata
         
         // Reset playback state for the duplicate
         duplicate.currentTime = 0.0

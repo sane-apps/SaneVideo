@@ -48,28 +48,6 @@ extension ExportView {
         }
     }
 
-    func exportStudyGuide() {
-        guard let project = appState.currentProject else { return }
-
-        let desktopURL = FileManager.default.homeDirectoryForCurrentUser
-            .appendingPathComponent("Desktop")
-        let fileName = "\(project.name)_StudyGuide.pdf"
-        let outputURL = desktopURL.appendingPathComponent(fileName)
-
-        let pdfService = ServiceContainer.shared.pdfService
-
-        Task {
-            do {
-                try await pdfService.generateStudyGuide(for: project, outputURL: outputURL)
-                NSWorkspace.shared.activateFileViewerSelecting([outputURL])
-                self.dismiss()
-            } catch {
-                self.exportError = error
-                self.showingError = true
-            }
-        }
-    }
-
     /// Export first clip as GIF using FFmpeg
     func exportAsGIF() {
         guard let project = appState.currentProject,
@@ -170,101 +148,7 @@ extension ExportView {
         }
     }
 
-    /// Uses AIService to generate title and description from transcript
-    func generateAITitleDescription() {
-        guard let project = appState.currentProject else { return }
-
-        // Collect all captions from all clips
-        let transcript = project.timeline.tracks
-            .flatMap { $0.clips }
-            .flatMap { $0.captions }
-            .map { $0.text }
-            .joined(separator: " ")
-
-        guard !transcript.isEmpty else {
-            ServiceContainer.shared.toastManager.show("No transcript available", type: .error)
-            return
-        }
-
-        isGeneratingAI = true
-
-        let aiService = ServiceContainer.shared.aiService
-        let toastManager = ServiceContainer.shared.toastManager
-
-        Task {
-            do {
-                // Use Apple Intelligence for title/description generation (on-device)
-                let content = try await aiService.generateTitleAndDescription(transcript: transcript)
-                self.videoTitle = content.title
-                self.videoDescription = content.description
-                var metadata = project.publishMetadata
-                metadata.title = content.title
-                metadata.description = content.description
-                appState.projectState.updatePublishMetadata(metadata)
-                self.isGeneratingAI = false
-                toastManager.show("AI generated title & description")
-            } catch {
-                self.isGeneratingAI = false
-                self.exportError = error
-                self.showingError = true
-            }
-        }
-    }
-
-    func exportDemoPack() {
-        guard let project = appState.currentProject else {
-            ServiceContainer.shared.toastManager.show("No project to export", type: .error)
-            return
-        }
-
-        let hasClips = project.timeline.tracks.contains { !$0.clips.isEmpty }
-        guard hasClips else {
-            ServiceContainer.shared.toastManager.show("Cannot export empty timeline. Add clips first.", type: .error)
-            return
-        }
-
-        let panel = NSOpenPanel()
-        panel.canChooseDirectories = true
-        panel.canChooseFiles = false
-        panel.canCreateDirectories = true
-        panel.allowsMultipleSelection = false
-        panel.prompt = "Export Demo Pack"
-        panel.message = "Choose the folder where SaneVideo should write the local demo pack."
-        panel.directoryURL = FileManager.default.homeDirectoryForCurrentUser
-            .appendingPathComponent("Desktop", isDirectory: true)
-
-        Task { @MainActor in
-            guard let window = NSApp.keyWindow ?? NSApp.mainWindow else { return }
-            let response = await panel.beginSheetModal(for: window)
-            guard response == .OK, let directoryURL = panel.url else { return }
-
-            isExporting = true
-            exportProgress = 0
-
-            do {
-                let bundleURL = try await ServiceContainer.shared.demoPackExportService.exportDemoPack(
-                    project: project,
-                    settings: exportSettings,
-                    outputDirectory: directoryURL
-                ) { _, progress in
-                    Task { @MainActor in
-                        self.exportProgress = progress
-                    }
-                }
-
-                isExporting = false
-                NSWorkspace.shared.activateFileViewerSelecting([bundleURL])
-                ServiceContainer.shared.toastManager.show("Demo pack exported!", type: .success)
-                dismiss()
-            } catch {
-                isExporting = false
-                exportError = error
-                showingError = true
-            }
-        }
-    }
-
-    func startExport(uploadToYouTube: Bool = false) {
+    func startExport() {
         // CRITICAL FIX: Validate timeline is not empty before export
         guard let project = appState.currentProject else {
             ServiceContainer.shared.toastManager.show("No project to export", type: .error)
@@ -310,12 +194,12 @@ extension ExportView {
 
         // CRITICAL FIX: Start export with validation in Task
         Task {
-            await startExportWithValidation(project: project, outputURL: outputURL, uploadToYouTube: uploadToYouTube)
+            await startExportWithValidation(project: project, outputURL: outputURL)
         }
     }
 
     // CRITICAL FIX: Separate function for export with validation
-    private func startExportWithValidation(project: VideoProject, outputURL: URL, uploadToYouTube: Bool) async {
+    private func startExportWithValidation(project: VideoProject, outputURL: URL) async {
         // Estimate file size: duration (seconds) × bitrate (bits/sec) / 8 = bytes
         let duration = project.timeline.duration.seconds
         let videoBitrate = Double(exportSettings.bitrate) // bits per second
@@ -370,12 +254,8 @@ extension ExportView {
                 self.speedTracker.reset()
                 AppLogger.export.info("Export success: \(outputURL.lastPathComponent)")
 
-                if uploadToYouTube {
-                    await self.performYouTubeUpload(fileURL: outputURL)
-                } else {
-                    NSWorkspace.shared.activateFileViewerSelecting([outputURL])
-                    self.dismiss()
-                }
+                NSWorkspace.shared.activateFileViewerSelecting([outputURL])
+                self.dismiss()
             } catch {
                 self.isExporting = false
                 self.speedTracker.reset()
@@ -394,21 +274,6 @@ extension ExportView {
         }
 
         return fileManager.temporaryDirectory.appendingPathComponent("SaneVideo/Exports", isDirectory: true)
-    }
-
-    func performYouTubeUpload(fileURL: URL) async {
-        do {
-            try await youtubeService.upload(
-                videoURL: fileURL,
-                title: videoTitle.isEmpty ? (appState.currentProject?.name ?? "My Video") : videoTitle,
-                description: videoDescription
-            )
-            // Success alert or notification could be added here
-            dismiss()
-        } catch {
-            exportError = error
-            showingError = true
-        }
     }
 
     // MARK: - Batch Export

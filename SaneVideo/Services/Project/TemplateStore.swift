@@ -104,24 +104,14 @@ actor TemplateStore {
         description: String,
         exportSettings: SaneExportSettings,
         aspectRatio: CGSize,
-        captionStyle: String,
-        presentationPreset: PresentationPreset = .productWalkthrough,
-        speakerNotes: SpeakerNotes = .init(),
-        chapterMarkers: [ChapterMarker] = [],
-        demoPackSettings: DemoPackSettings = .init(),
-        publishMetadata: PublishMetadata = .init()
+        captionStyle: String
     ) async throws -> CustomTemplate {
         let template = CustomTemplate(
             name: name,
             description: description,
             aspectRatio: aspectRatio,
             exportSettings: exportSettings,
-            captionStyle: captionStyle,
-            presentationPreset: presentationPreset,
-            speakerNotes: speakerNotes,
-            chapterMarkers: chapterMarkers,
-            demoPackSettings: demoPackSettings,
-            publishMetadata: publishMetadata
+            captionStyle: captionStyle
         )
 
         try await saveTemplate(template)
@@ -138,12 +128,7 @@ actor TemplateStore {
             color: template.color,
             aspectRatio: template.aspectRatio,
             exportSettings: template.exportSettings,
-            captionStyle: template.captionStyle,
-            presentationPreset: template.presentationPreset,
-            speakerNotes: template.speakerNotes,
-            chapterMarkers: template.chapterMarkers,
-            demoPackSettings: template.demoPackSettings,
-            publishMetadata: template.publishMetadata
+            captionStyle: template.captionStyle
         )
 
         try await saveTemplate(duplicate)

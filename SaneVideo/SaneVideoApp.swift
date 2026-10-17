@@ -6,6 +6,8 @@
 //
 
 import AppKit
+import AVFoundation
+import os
 #if !APP_STORE
     import Sparkle
 #endif
@@ -270,23 +272,14 @@ struct SaneVideoApp: App {
                 .keyboardShortcut("e", modifiers: [.command])
                 .accessibilityIdentifier("menu.file.export_video")
 
-                Button(String(localized: "menu.file.demo_studio", defaultValue: "Demo Studio...")) {
+                Button(String(localized: "menu.file.teleprompter_script", defaultValue: "Teleprompter Script...")) {
                     appState.performProjectCommand {
-                        appState.openDemoStudio()
+                        appState.openTeleprompterScript()
                     }
                 }
                 .disabled(!appState.projectCommandsEnabled)
                 .keyboardShortcut("d", modifiers: [.command, .shift])
-                .accessibilityIdentifier("menu.file.demo_studio")
-
-                Button(String(localized: "menu.file.build_commentary_reel", defaultValue: "Build Commentary Reel")) {
-                    appState.performProjectCommand {
-                        appState.buildCommentaryReel()
-                    }
-                }
-                .disabled(!appState.projectCommandsEnabled)
-                .keyboardShortcut("b", modifiers: [.command, .option])
-                .accessibilityIdentifier("menu.file.build_commentary_reel")
+                .accessibilityIdentifier("menu.file.teleprompter_script")
 
                 Button(String(localized: "menu.view.teleprompter", defaultValue: "Toggle Teleprompter")) {
                     appState.performProjectCommand {
@@ -763,11 +756,13 @@ enum AppLifecyclePolicy {
     static func shouldTerminateAfterLastWindowClosed(
         isRecording: Bool,
         isExporting: Bool,
+        isMainWindowHiddenForRecording: Bool = false,
         isTesting: Bool = false
     ) -> Bool {
         // Screen-share / toggle flags must not keep the app alive. Those flags
-        // can stick true and make close reopen the window forever.
-        !isTesting && !isRecording && !isExporting
+        // can stick true and make close reopen the window forever. The hidden-window
+        // flag is different: restoreMainWindow always clears it.
+        !isTesting && !isRecording && !isExporting && !isMainWindowHiddenForRecording
     }
 }
 
@@ -777,6 +772,7 @@ enum AppLifecyclePolicy {
 class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_: Notification) {
         WelcomeSheetResidue.purge()
+        LegacyDataCleanup.runOnce()
 
         // Initialize global hotkey manager
         #if !APP_STORE
@@ -797,15 +793,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Media age and size do not prove it is disposable. Saved projects may
         // reference enhanced audio and small recordings, so startup preserves them.
 
-        // NOTE: Apple Speech Recognition is used for captions (no model download needed)
-        // Camera is NOT started on app launch for privacy.
-        // It will start automatically when user clicks Record or toggles Camera on.
+        // Camera, microphone and speech models start only when the user asks for them.
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_: NSApplication) -> Bool {
         return AppLifecyclePolicy.shouldTerminateAfterLastWindowClosed(
             isRecording: ServiceContainer.shared.appState.recordingState.isRecording,
             isExporting: ServiceContainer.shared.exportService.isExporting,
+            isMainWindowHiddenForRecording: ServiceContainer.shared.appState.windowManager.isMainWindowHiddenForRecording,
             isTesting: TestEnvironment.isTesting
         )
     }
@@ -824,38 +819,48 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
-        if ServiceContainer.shared.appState.recordingState.isRecording {
-            // If recording, try to stop safely first
-            ServiceContainer.shared.appState.recordingState.stopRecording { _ in
-                // CRITICAL: Await cleanup on MainActor to ensure moov atom is written
-                Task { @MainActor in
-                    ServiceContainer.shared.appState.windowManager.cleanupAllWindows()
-                    ServiceContainer.shared.appState.saveCurrentState()
-                    sender.reply(toApplicationShouldTerminate: true)
-                }
-            }
-            return .terminateLater
-        }
-
-        // RELIABILITY FIX: Check for active exports and cancel gracefully
-        if ServiceContainer.shared.exportService.isExporting {
-            AppLogger.general.warning("App terminating during active export - cancelling export")
-            ServiceContainer.shared.exportService.cancelExport()
-            // Give export a moment to cleanup before terminating
-            Task { @MainActor in
-                try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 second for cleanup
-                ServiceContainer.shared.appState.windowManager.cleanupAllWindows()
-                ServiceContainer.shared.appState.saveCurrentState()
-                sender.reply(toApplicationShouldTerminate: true)
-            }
-            return .terminateLater
-        }
-
-        // CRITICAL FIX: Close all windows before quitting
+        let container = ServiceContainer.shared
         Task { @MainActor in
-            ServiceContainer.shared.appState.windowManager.cleanupAllWindows()
-            ServiceContainer.shared.appState.saveCurrentState()
+            if container.appState.recordingState.isRecording {
+                // Finish the file so its moov atom is written.
+                await withCheckedContinuation { done in
+                    container.appState.recordingState.stopRecording { _ in done.resume() }
+                }
+            } else if container.exportService.isExporting {
+                AppLogger.general.warning("App terminating during active export - cancelling export")
+                container.exportService.cancelExport()
+            }
+            container.appState.windowManager.cleanupAllWindows()
+            container.appState.saveCurrentState()
+            await Self.stopCaptureSessions(
+                [container.cameraService.session, container.audioService.captureSession].compactMap { $0 }
+            )
+            sender.reply(toApplicationShouldTerminate: true)
         }
-        return .terminateNow
+        return .terminateLater
+    }
+
+    /// AVFoundation stops running capture sessions on the main thread during terminate, and the
+    /// system Portrait effect teardown has blocked that for minutes. Stop them off the main thread
+    /// first; if that still hangs after two seconds, the saved state is on disk, so exit.
+    private static func stopCaptureSessions(_ sessions: [AVCaptureSession]) async {
+        let running = sessions.filter(\.isRunning)
+        guard !running.isEmpty else { return }
+        nonisolated(unsafe) let toStop = running
+        let stopped = await withCheckedContinuation { (done: CheckedContinuation<Bool, Never>) in
+            let resumed = OSAllocatedUnfairLock(initialState: false)
+            let finish: @Sendable (Bool) -> Void = { result in
+                if resumed.withLock({ old in defer { old = true }; return !old }) { done.resume(returning: result) }
+            }
+            DispatchQueue.global(qos: .userInitiated).async {
+                toStop.forEach { $0.stopRunning() }
+                finish(true)
+            }
+            DispatchQueue.global().asyncAfter(deadline: .now() + 2) { finish(false) }
+        }
+        if !stopped {
+            AppLogger.general.error("Capture session did not stop within 2s; exiting")
+            exit(0)
+        }
     }
 }

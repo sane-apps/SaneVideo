@@ -99,56 +99,7 @@ protocol PersonSegmentationServiceProtocol: Sendable {
 
 // MARK: - Text Recognition
 
-/// @mockable
-protocol TextRecognitionServiceProtocol: Sendable {
-    /// Recognize text in an image
-    func recognizeText(in image: CIImage, at time: CMTime) async throws -> [RecognizedText]
-
-    /// Scan video for all text occurrences
-    func scanVideoForText(
-        videoURL: URL,
-        sampleInterval: TimeInterval,
-        progressHandler: (@Sendable (Int, Int) -> Void)?
-    ) async throws -> [RecognizedText]
-
-    /// Find sensitive text (emails, phones, etc.) for auto-blur
-    func findSensitiveText(
-        in image: CIImage,
-        types: [TextType],
-        at time: CMTime
-    ) async throws -> [RecognizedText]
-}
-
 // MARK: - Body Pose
-
-/// @mockable
-protocol BodyPoseServiceProtocol: Sendable {
-    /// Detect body poses in an image
-    func detectBodyPoses(in image: CIImage) async throws -> [BodyPose]
-
-    /// Detect hand poses in an image
-    func detectHandPoses(in image: CIImage) async throws -> [HandPose]
-
-    /// Detect gestures in a video and return timestamps
-    func detectGestures(
-        in videoURL: URL,
-        gestures: [BodyGesture],
-        sampleInterval: TimeInterval,
-        progressHandler: (@Sendable (Int, Int) -> Void)?
-    ) async throws -> [(gesture: BodyGesture, time: CMTime)]
-}
 
 // MARK: - Vision Orchestrator
 
-/// @mockable
-protocol VisionOrchestratorProtocol: Sendable {
-    /// Run all requested analysis in a single pass
-    func analyze(
-        videoURL: URL,
-        config: VisionAnalysisConfig,
-        progressHandler: ((Double) -> Void)?
-    ) async throws -> VisionAnalysisResult
-
-    /// Preloads Vision models to reduce latency during first use
-    func warmup()
-}

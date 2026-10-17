@@ -196,4 +196,16 @@ extension VideoClip {
         // Update storage
         removedRanges = mergedRanges.map { CodableTimeRange($0) }
     }
+
+    /// Where a caption plays inside this clip's edited duration (before speed). Uses the first and last
+    /// kept words, because caption edges often sit in a silence that was cut; nil if nothing plays.
+    func effectiveRange(for caption: Caption) -> CMTimeRange? {
+        let firstStart = caption.words?.first?.start ?? caption.startTime.seconds
+        let lastEnd = caption.words?.last?.end ?? caption.endTime.seconds
+        let end = max(firstStart, lastEnd - 0.02)
+        guard let start = effectiveTime(forOriginalTime: CMTime(seconds: firstStart, preferredTimescale: 600)),
+              let finish = effectiveTime(forOriginalTime: CMTime(seconds: end, preferredTimescale: 600)),
+              finish >= start else { return nil }
+        return CMTimeRange(start: start, end: finish)
+    }
 }

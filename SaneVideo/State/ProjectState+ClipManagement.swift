@@ -133,6 +133,19 @@ extension ProjectState {
 
   // MARK: - Splitting
 
+  /// Splits the clip under the playhead. The selected clip wins only when clips on several tracks overlap there.
+  func splitAtPlayhead(_ time: CMTime, preferring selected: VideoClip?) {
+    guard let project = currentProject else { return }
+    let underPlayhead = project.timeline.tracks.flatMap(\.clips).filter {
+      time > $0.startTime && time < $0.startTime + $0.effectiveDuration
+    }
+    guard let clip = underPlayhead.first(where: { $0.id == selected?.id }) ?? underPlayhead.first else {
+      ServiceContainer.shared.toastManager.show("Move the playhead over a clip to split it", type: .info)
+      return
+    }
+    splitClip(clip, atTimelineTime: time)
+  }
+
   func splitClip(_ clip: VideoClip, atTimelineTime globalTime: CMTime, transactionId: UUID? = nil) {
     guard var project = currentProject else { return }
 

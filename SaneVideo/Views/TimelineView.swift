@@ -194,16 +194,6 @@ public struct SaneTimelineView: View {
                 .allowsHitTesting(false)
                 .accessibilityIdentifier("timeline.shortcut.split")
 
-                Button("") {
-                    if let clip = selectedClip {
-                        clipToDelete = clip
-                        showDeleteConfirmation = true
-                    }
-                }
-                .keyboardShortcut(.delete, modifiers: [])
-                .opacity(0)
-                .allowsHitTesting(false)
-                .accessibilityIdentifier("timeline.shortcut.delete")
             }
         }
     }
@@ -253,9 +243,7 @@ public struct SaneTimelineView: View {
     }
 
     private func splitSelectedClip() {
-        guard let clip = selectedClip else { return }
-        let splitTime = appState.playbackState.currentTime
-        appState.projectState.splitClip(clip, atTimelineTime: splitTime)
+        appState.projectState.splitAtPlayhead(appState.playbackState.currentTime, preferring: selectedClip)
     }
 }
 
@@ -276,7 +264,8 @@ enum TimelineZoomCalculator {
             return 1.0
         }
 
-        let renderedDuration = max(60, duration)
+        // A little room after the end so the last clip's trim handle is easy to grab.
+        let renderedDuration = max(5, duration * 1.05)
         let usableWidth = max(120, visibleWidth - 24)
         return clamp(usableWidth / (CGFloat(renderedDuration) * basePixelsPerSecond))
     }

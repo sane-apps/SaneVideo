@@ -365,22 +365,17 @@ struct ClipGestureModifier: ViewModifier {
 
     func body(content: Content) -> some View {
         content
-            // Lower priority than the trim handles' highPriorityGesture; the 5pt minimum avoids accidental triggers during trims.
+            // A plain click selects the clip and moves the playhead there. This was a 5 pt drag gesture,
+            // so a real click never selected anything. Trim handles keep their own high-priority drags.
             .gesture(
-                DragGesture(minimumDistance: 5, coordinateSpace: .local)
+                SpatialTapGesture(coordinateSpace: .local)
                     .onEnded { value in
                         guard !isDraggingLeftHandle && !isDraggingRightHandle else { return }
-
-                        let dragDistance = sqrt(pow(value.translation.width, 2) + pow(value.translation.height, 2))
-                        guard dragDistance < 10 else { return } // If dragged too far, it's not a click
-
-                        let percent = value.startLocation.x / (clipWidth - handleWidth * 2)
-                        let safePercent = max(0, min(1.0, percent))
-                        let timeOffset = clip.effectiveDuration.seconds * Double(safePercent)
+                        let usable = max(1, clipWidth - handleWidth * 2)
+                        let percent = max(0, min(1, (value.location.x - handleWidth) / usable))
+                        let timeOffset = clip.effectiveDuration.seconds * Double(percent)
                         let seekTime = CMTimeAdd(clip.startTime, CMTime(seconds: timeOffset, preferredTimescale: 600))
-
-                        let modifiers = NSEvent.modifierFlags
-                        onSelect?(seekTime, modifiers)
+                        onSelect?(seekTime, NSEvent.modifierFlags)
                     }
             )
     }

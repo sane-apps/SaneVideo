@@ -29,6 +29,15 @@ struct TimelineRegressionTests {
         #expect(zoom > TimelineZoomCalculator.minimumZoom)
     }
 
+    @Test("A short recording fills most of the timeline instead of a fixed minute")
+    func fitZoomFillsWidthForShortClips() {
+        let width: CGFloat = 900
+        let zoom = TimelineZoomCalculator.fitZoom(duration: 15, visibleWidth: width)
+        let renderedWidth = 15 * AppConstants.pixelsPerSecond * zoom
+        #expect(renderedWidth > width * 0.8)
+        #expect(renderedWidth <= width)
+    }
+
     @Test("Fit zoom for a 10-minute recording can go below the old 0.1 clamp")
     func fitZoomCanGoBelowOldClamp() {
         let zoom = TimelineZoomCalculator.fitZoom(duration: 10 * 60, visibleWidth: 900)

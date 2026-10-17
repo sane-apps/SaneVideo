@@ -1,10 +1,3 @@
-//
-//  ThermalManager.swift
-//  SaneVideo
-//
-//  Created by SaneVideo Refactor
-//
-
 import Foundation
 import SwiftUI
 import Observation

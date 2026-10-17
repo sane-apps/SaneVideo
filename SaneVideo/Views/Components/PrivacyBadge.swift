@@ -1,9 +1,4 @@
-//
-//  PrivacyBadge.swift
-//  SaneVideo
-//
-//  Visual indicator showing privacy status (on-device vs optional cloud AI)
-//
+// Visual indicator showing privacy status (on-device vs optional cloud AI)
 
 import SwiftUI
 

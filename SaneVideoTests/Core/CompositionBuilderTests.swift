@@ -1,10 +1,3 @@
-//
-//  CompositionBuilderTests.swift
-//  SaneVideoTests
-//
-//  Created by SaneVideo Test Suite
-//
-
 import Testing
 import AVFoundation
 import CoreMedia

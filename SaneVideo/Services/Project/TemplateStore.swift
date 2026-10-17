@@ -1,10 +1,5 @@
-//
-//  TemplateStore.swift
-//  SaneVideo
-//
-//  Actor for persisting and managing user-created export templates
-//  Storage: ~/Movies/SaneVideo/Templates/*.svtemplate
-//
+// Actor for persisting and managing user-created export templates
+// Storage: ~/Movies/SaneVideo/Templates/*.svtemplate
 
 import Foundation
 

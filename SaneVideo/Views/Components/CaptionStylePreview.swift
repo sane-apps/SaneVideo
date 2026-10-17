@@ -1,9 +1,4 @@
-//
-//  CaptionStylePreview.swift
-//  SaneVideo
-//
-//  Preview thumbnail for caption style selection
-//
+// Preview thumbnail for caption style selection
 
 import SwiftUI
 

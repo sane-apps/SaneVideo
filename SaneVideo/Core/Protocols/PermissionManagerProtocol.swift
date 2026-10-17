@@ -1,9 +1,4 @@
-//
-//  PermissionManagerProtocol.swift
-//  SaneVideo
-//
-//  Protocol for permission management
-//
+// Protocol for permission management
 
 import AVFoundation
 import Combine

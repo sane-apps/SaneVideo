@@ -1,11 +1,6 @@
-//
-//  FaceTrackingService.swift
-//  SaneVideo
-//
-//  Uses Apple's Vision framework for face detection and tracking
-//  Enables auto-framing to keep speakers centered
-//  Auto-improves with each macOS update
-//
+// Uses Apple's Vision framework for face detection and tracking
+// Enables auto-framing to keep speakers centered
+// Auto-improves with each macOS update
 
 import AVFoundation
 import AppKit
@@ -19,7 +14,7 @@ import Vision
 /// Use FaceTrackingServiceProtocolMock for testing.
 actor FaceTrackingService {
 
-  // OPTIMIZATION: Persist VNSequenceRequestHandler for tracking across frames.
+  // Persist VNSequenceRequestHandler for tracking across frames.
   // Creating a new handler per frame loses tracking state and increases overhead.
   // This handler maintains internal state for VNTrackObjectRequest continuity.
   private var sequenceHandler = VNSequenceRequestHandler()
@@ -82,7 +77,7 @@ actor FaceTrackingService {
 
     return results.map { observation in
       let box = observation.boundingBox
-      // CRITICAL: Flip Y from Vision's bottom-left origin to top-left origin
+      // Flip Y from Vision's bottom-left origin to top-left origin
       return CGRect(x: box.minX, y: 1.0 - box.maxY, width: box.width, height: box.height)
     }
   }
@@ -192,7 +187,7 @@ actor FaceTrackingService {
     -> VNFaceObservation? {
     if let previous = previousObservation {
       // Continue tracking existing face using persisted sequence handler
-      // OPTIMIZATION: VNSequenceRequestHandler maintains tracking state across frames
+      // VNSequenceRequestHandler maintains tracking state across frames
       let trackRequest = VNTrackObjectRequest(detectedObjectObservation: previous)
       trackRequest.trackingLevel = .fast
 
@@ -220,7 +215,7 @@ actor FaceTrackingService {
     sampleInterval: TimeInterval = 0.5,
     progressHandler: (@Sendable (Double) -> Void)? = nil
   ) async throws -> [CMTime: CGRect] {
-    // OPTIMIZATION: Reset sequence handler for fresh tracking state
+    // Reset sequence handler for fresh tracking state
     resetSequenceHandler()
 
     let asset = AVURLAsset(url: videoURL)
@@ -246,7 +241,7 @@ actor FaceTrackingService {
         // Track or Detect
         if let observation = try await trackFace(in: ciImage, previousObservation: lastObservation) {
           lastObservation = observation
-          // CRITICAL: Flip Y from Vision's bottom-left origin to top-left origin
+          // Flip Y from Vision's bottom-left origin to top-left origin
           let box = observation.boundingBox
           let rawRect = CGRect(x: box.minX, y: 1.0 - box.maxY, width: box.width, height: box.height)
 

@@ -1,9 +1,4 @@
-//
-//  ProjectState+SmartFeatures.swift
-//  SaneVideo
-//
-//  Consolidated from MagicFix, Analysis, and Transcription
-//
+// Consolidated from MagicFix, Analysis, and Transcription
 
 import AVFoundation
 import Foundation
@@ -50,7 +45,7 @@ extension ProjectState {
 
         AppLogger.project.info("✨ Reset Magic Fix for clip \(clip.id)")
 
-        // CRITICAL FIX: If regenerate is true, automatically run Magic Fix with current options
+        // If regenerate is true, automatically run Magic Fix with current options
         if regenerate {
             // Get the updated clip after reset
             guard let resetClip = getClip(by: clip.id) else {
@@ -132,7 +127,7 @@ extension ProjectState {
             if await MagicFixService.shouldAttemptAudioEnhancement(for: clip, options: options) {
                 try Task.checkCancellation()
                 do {
-                    // CRITICAL FIX: Add timeout and proper error handling for audio enhancement
+                    // Add timeout and proper error handling for audio enhancement
                     try await withTimeout(seconds: 600.0) {
                         try await self.enhanceAudioFirst(for: clip)
                     }
@@ -148,7 +143,7 @@ extension ProjectState {
                 AppLogger.project.info("✨ Magic Fix: Skipping audio enhancement — no audio track")
             }
 
-            // CRITICAL FIX: Verify clip still exists after audio enhancement
+            // Verify clip still exists after audio enhancement
             // Clip might have been deleted during processing
             guard let enhancedClipId = Optional(clip.id),
                   let preAnalysisClip = getClip(by: enhancedClipId)
@@ -174,7 +169,7 @@ extension ProjectState {
             }
             updateTransactionProgress(transactionId, progress: 0.4)
 
-            // CRITICAL FIX: Verify clip still exists before processing cuts
+            // Verify clip still exists before processing cuts
             guard let readyForCutsClip = getClip(by: preAnalysisClip.id) else {
                 AppLogger.project.warning("⚠️ Magic Fix: Clip \(preAnalysisClip.id) no longer exists before cuts processing")
                 return
@@ -192,7 +187,7 @@ extension ProjectState {
                 ServiceContainer.shared.toastManager.show("✨ Magic Fix Completed", type: .info)
                 AppLogger.project.info("✨ Magic Fix: One-click flow finished successfully")
 
-                // CRITICAL FIX (2026-01-01): Force composition reload to apply cuts
+                // Force composition reload to apply cuts
                 // StateChangePipeline only watches timeline.tracks structure changes,
                 // but clip.removedRanges is a property WITHIN a clip. Without this reload,
                 // the old composition stays active without the cuts applied.
@@ -277,13 +272,13 @@ extension ProjectState {
     }
 
     private func enhanceAudioFirst(for clip: VideoClip) async throws {
-        // CRITICAL FIX: Check for cancellation before starting audio enhancement
+        // Check for cancellation before starting audio enhancement
         try Task.checkCancellation()
 
         // Note: processingStatus is updated with progress % in enhanceAudio's callback
         await enhanceAudio(for: clip)
 
-        // CRITICAL FIX: Verify enhancement succeeded by checking if enhancedAudioURL was set
+        // Verify enhancement succeeded by checking if enhancedAudioURL was set
         // enhanceAudio doesn't throw, so we need to check the result
         guard let updatedClip = getClip(by: clip.id),
               updatedClip.enhancedAudioURL != nil else {

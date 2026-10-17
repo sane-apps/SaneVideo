@@ -1,13 +1,8 @@
-//
-//  ExportPipelineIntegrationTests.swift
-//  SaneVideoTests
-//
-//  Core export pipeline integration tests: basic exports, resolution, codecs.
-//  Additional tests split into:
-//  - ExportAudioIntegrationTests.swift
-//  - ExportEffectsIntegrationTests.swift
-//  - ExportEdgeCaseIntegrationTests.swift
-//
+// Core export pipeline integration tests: basic exports, resolution, codecs.
+// Additional tests split into:
+// - ExportAudioIntegrationTests.swift
+// - ExportEffectsIntegrationTests.swift
+// - ExportEdgeCaseIntegrationTests.swift
 
 import AVFoundation
 import CoreMedia

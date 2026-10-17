@@ -1,10 +1,3 @@
-//
-//  AppConstants.swift
-//  SaneVideo
-//
-//  Created by SaneVideo Refactor
-//
-
 import CoreGraphics
 import Foundation
 

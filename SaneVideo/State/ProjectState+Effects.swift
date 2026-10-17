@@ -1,9 +1,4 @@
-//
-//  ProjectState+Effects.swift
-//  SaneVideo
-//
-//  Consolidated from SmartVisuals, VisionEffects, AutoZoom, and Transitions
-//
+// Consolidated from SmartVisuals, VisionEffects, AutoZoom, and Transitions
 
 import AVFoundation
 import CoreImage

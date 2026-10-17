@@ -1,11 +1,5 @@
-//
-//  ThumbnailService.swift
-//  SaneVideo
-//
-//  Created by SaneVideo Refactor
-//  Optimized for Apple Silicon with efficient caching and batch generation
-//  Consolidated: Merged ThumbnailGeneratorService + SmartThumbnailService
-//
+// Optimized for Apple Silicon with efficient caching and batch generation
+// Consolidated: Merged ThumbnailGeneratorService + SmartThumbnailService
 
 @preconcurrency import AVFoundation
 @preconcurrency import Combine

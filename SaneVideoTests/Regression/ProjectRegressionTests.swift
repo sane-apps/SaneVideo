@@ -1,8 +1,3 @@
-//
-//  ProjectRegressionTests.swift
-//  SaneVideoTests
-//
-
 import AVFoundation
 import CoreMedia
 import Foundation

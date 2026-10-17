@@ -1,9 +1,4 @@
-//
-//  VideoTransition.swift
-//  SaneVideo
-//
-//  Transition types for clip-to-clip transitions using CIFilter
-//
+// Transition types for clip-to-clip transitions using CIFilter
 
 import CoreImage
 import CoreMedia

@@ -1,10 +1,3 @@
-//
-//  SmartToolsComponents.swift
-//  SaneVideo
-//
-//  Created by SaneVideo Refactor
-//
-
 import SwiftUI
 
 struct ToolCard<Content: View>: View {

@@ -1,9 +1,4 @@
-//
-//  ProjectStateUtilitiesTests.swift
-//  SaneVideoTests
-//
-//  Tests for ProjectState+Utilities: transactions, cancellation, relinking, text-based editing
-//
+// Tests for ProjectState+Utilities: transactions, cancellation, relinking, text-based editing
 
 import CoreMedia
 import XCTest

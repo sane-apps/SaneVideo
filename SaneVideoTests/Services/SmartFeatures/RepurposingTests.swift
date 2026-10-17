@@ -1,9 +1,4 @@
-//
-//  RepurposingTests.swift
-//  SaneVideoTests
-//
-//  Shorts candidate labels and repurposing settings rules.
-//
+// Shorts candidate labels and repurposing settings rules.
 
 import CoreMedia
 @testable import SaneVideo

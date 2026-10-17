@@ -1,10 +1,5 @@
-//
-//  ChromaKeyKernel.swift
-//  SaneVideo
-//
-//  Shared GPU-accelerated chroma key kernel for green screen removal.
-//  Consolidates duplicate implementations for consistent behavior.
-//
+// Shared GPU-accelerated chroma key kernel for green screen removal.
+// Consolidates duplicate implementations for consistent behavior.
 
 @preconcurrency import CoreImage
 

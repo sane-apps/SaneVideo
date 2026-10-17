@@ -1,10 +1,3 @@
-//
-//  PlaybackState.swift
-//  SaneVideo
-//
-//  Created by SaneVideo Refactor
-//
-
 @preconcurrency import AVFoundation
 import Combine
 import SwiftUI
@@ -60,7 +53,7 @@ class PlaybackState {
         weak var player: AVPlayer?
         var observer: Any?
 
-        // CRITICAL FIX: Hold security-scoped resource access for duration of playback
+        // Hold security-scoped resource access for duration of playback
         // Without this, playback of files from Downloads/external drives may fail
         private var accessedURL: URL?
 
@@ -94,7 +87,7 @@ class PlaybackState {
 
     private var tokenHolder = TokenHolder()
 
-    // CRITICAL FIX: Cancel loading task on deallocation
+    // Cancel loading task on deallocation
     // Task.cancel() is thread-safe, so we can call it from any thread in deinit
     // TokenHolder handles observer cleanup via its own deinit
     deinit {
@@ -112,7 +105,7 @@ class PlaybackState {
         // Cleanup old player (also releases previous security scope)
         unload()
 
-        // CRITICAL FIX: Hold security scope for duration of playback
+        // Hold security scope for duration of playback
         // TokenHolder will release it when we unload or load a new clip
         tokenHolder.startAccessing(clip.url)
 
@@ -123,19 +116,19 @@ class PlaybackState {
     }
 
     // Debounce properties to avoid double-loading
-    // CRITICAL: Track clip IDs, not just count, to detect when clips change
+    // Track clip IDs, not just count, to detect when clips change
     private var lastLoadedProjectID: UUID?
     private var lastLoadedClipsHash: Int = 0
 
-    // CRITICAL FIX: Track loading task for cancellation on rapid reload
+    // Track loading task for cancellation on rapid reload
     // nonisolated(unsafe) required for deinit access from any thread
     @ObservationIgnored nonisolated(unsafe) private var loadingTask: Task<Void, Never>?
 
-    // PERFORMANCE: Deferred loading - store pending project for lazy composition
+    // Deferred loading - store pending project for lazy composition
     private var pendingProject: VideoProject?
     private var isCompositionReady: Bool = false
 
-    // PERFORMANCE: Debounce delay for project switching (ms)
+    // Debounce delay for project switching (ms)
     private let projectSwitchDebounceDelay: UInt64 = 300_000_000 // 300ms
     private let editDebounceDelay: UInt64 = 120_000_000 // 120ms (keeps timeline edits feeling responsive)
 
@@ -187,7 +180,7 @@ class PlaybackState {
         // Cancel any in-progress loading
         loadingTask?.cancel()
 
-        // PERFORMANCE: Adaptive debounce
+        // Adaptive debounce
         // - Timeline edits on the same project should feel responsive (short debounce)
         // - Project switching benefits from a slightly longer debounce to avoid thrash while browsing
         let isSameProject = (lastLoadedProjectID == project.id)
@@ -196,7 +189,7 @@ class PlaybackState {
             return isSameProject ? editDebounceDelay : projectSwitchDebounceDelay
         }()
 
-        // PERFORMANCE: Set duration immediately from timeline (no composition needed)
+        // Set duration immediately from timeline (no composition needed)
         // This makes the UI responsive while composition happens in background
         self.duration = project.timeline.duration
         self.pendingProject = project
@@ -207,7 +200,7 @@ class PlaybackState {
         lastLoadedProjectID = project.id
         lastLoadedClipsHash = currentClipsHash
 
-        // PERFORMANCE: Debounced composition - wait for user to stop clicking
+        // Debounced composition - wait for user to stop clicking
         // If user triggers another load within the debounce window, this task gets cancelled
         loadingTask = Task {
             // Wait for debounce period
@@ -270,7 +263,7 @@ class PlaybackState {
 
     private func setupPlayer(with item: AVPlayerItem, duration: CMTime) {
         let newPlayer = AVPlayer(playerItem: item)
-        // CRITICAL FIX: Ensure player volume is set to 1.0
+        // Ensure player volume is set to 1.0
         // When RealTimeAudioProcessor was active, it set volume = 0.0
         // Now that it's disabled, we must ensure audio plays from composition
         newPlayer.volume = 1.0
@@ -280,7 +273,7 @@ class PlaybackState {
         // Update token holder
         tokenHolder.player = newPlayer
 
-        // CRITICAL FIX (2025-12-31): DISABLED RealTimeAudioProcessor to fix audio/video desync
+        // DISABLED RealTimeAudioProcessor to fix audio/video desync
         // ROOT CAUSE: Dual audio playback - AVPlayer composition has audio tracks AND
         // RealTimeAudioProcessor plays same audio via AVAudioEngine = double audio + desync
         // The Task{} setup was async (not awaited) causing race conditions where:
@@ -288,7 +281,7 @@ class PlaybackState {
         // 2. videoPlayer.volume = 0.0 happens AFTER engine starts
         // 3. No playback rate synchronization between video and audio engine
         //
-        // FIX: Use composition audio only. Effects are applied during export via AudioMix.
+        // Use composition audio only. Effects are applied during export via AudioMix.
         // TODO: Re-enable when proper audio architecture is implemented (single source)
         //
         // Original code (disabled):
@@ -302,10 +295,10 @@ class PlaybackState {
         // }
 
         // Add time observer
-        // PERFORMANCE: Use 0.1s interval (10fps) instead of 0.05s (20fps) for UI updates
+        // Use 0.1s interval (10fps) instead of 0.05s (20fps) for UI updates
         // This reduces update frequency by 50% while maintaining smooth playback feel
         let interval = CMTime(seconds: 0.1, preferredTimescale: 600)
-        // CRITICAL FIX: Must use Task { @MainActor in } for Sendable closure
+        // Must use Task { @MainActor in } for Sendable closure
         let observer = newPlayer.addPeriodicTimeObserver(forInterval: interval, queue: DispatchQueue.main) { [weak self] time in
             guard let self = self else { return }
             // Update via MainActor task to satisfy Sendable closure requirements
@@ -317,7 +310,7 @@ class PlaybackState {
         timeObserver = observer
         tokenHolder.observer = observer
 
-        // CRITICAL FIX (2026-01-01): Add end-of-playback notification observer
+        // Add end-of-playback notification observer
         // Without this, isPlaying stays true and playhead stays at end when video finishes
         playbackEndedObserver = NotificationCenter.default.addObserver(
             forName: AVPlayerItem.didPlayToEndTimeNotification,
@@ -338,7 +331,7 @@ class PlaybackState {
     }
 
     func unload() {
-        // CRITICAL FIX: Cancel loading task before unloading
+        // Cancel loading task before unloading
         loadingTask?.cancel()
         loadingTask = nil
 
@@ -360,7 +353,7 @@ class PlaybackState {
         tokenHolder.player = nil
         isPreparingComposition = false
 
-        // CRITICAL FIX: Release security-scoped resource access
+        // Release security-scoped resource access
         tokenHolder.stopAccessing()
 
         isPlaying = false
@@ -371,7 +364,7 @@ class PlaybackState {
     // MARK: - Controls
 
     func play() {
-        // CRITICAL FIX: Validate timeline is not empty before play
+        // Validate timeline is not empty before play
         guard let project = ServiceContainer.shared.appState.projectState.currentProject else {
             AppLogger.playback.warning("Cannot play: No project loaded")
             ServiceContainer.shared.toastManager.show("No project to play", type: .error)
@@ -385,7 +378,7 @@ class PlaybackState {
             return
         }
 
-        // PERFORMANCE: If composition isn't ready yet, wait for it
+        // If composition isn't ready yet, wait for it
         if !isCompositionReady && pendingProject != nil {
             Task {
                 await ensureCompositionReady()

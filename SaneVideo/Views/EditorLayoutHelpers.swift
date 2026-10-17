@@ -1,10 +1,5 @@
-//
-//  EditorLayoutHelpers.swift
-//  SaneVideo
-//
-//  Extracted from EditorLayoutView.swift to reduce file size
-//  Contains: VideoDisplayMode, GridPattern, CollapseButton, TimelineKeyboardModifier
-//
+// Extracted from EditorLayoutView.swift to reduce file size
+// Contains: VideoDisplayMode, GridPattern, CollapseButton, TimelineKeyboardModifier
 
 import SwiftUI
 

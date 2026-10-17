@@ -1,10 +1,5 @@
-//
-//  ExportEdgeCaseIntegrationTests.swift
-//  SaneVideoTests
-//
-//  Edge case export integration tests: trimming, speed, cancellation, errors.
-//  Split from ExportPipelineIntegrationTests for maintainability.
-//
+// Edge case export integration tests: trimming, speed, cancellation, errors.
+// Split from ExportPipelineIntegrationTests for maintainability.
 
 import AVFoundation
 import CoreMedia

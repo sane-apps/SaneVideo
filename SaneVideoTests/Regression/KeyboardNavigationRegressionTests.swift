@@ -1,10 +1,5 @@
-//
-//  KeyboardNavigationRegressionTests.swift
-//  SaneVideoTests
-//
-//  Behavior behind keyboard shortcuts: I/O in/out points, Shift+Arrow 10-second seek,
-//  and Cmd+D duplicate.
-//
+// Behavior behind keyboard shortcuts: I/O in/out points, Shift+Arrow 10-second seek,
+// and Cmd+D duplicate.
 
 import CoreMedia
 import Foundation

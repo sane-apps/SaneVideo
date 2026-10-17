@@ -1,10 +1,3 @@
-//
-//  AIService.swift
-//  SaneVideo
-//
-//  Created by SaneVideo Refactor
-//
-
 import Combine
 import Foundation
 import Observation
@@ -18,7 +11,7 @@ class AIService {
     private let providerType: AIProvider
     private let engine: AIModelProvider
 
-    // OPTIMIZATION: Timeout for AI operations to prevent UI hangs on large transcripts
+    // Timeout for AI operations to prevent UI hangs on large transcripts
     private static let aiOperationTimeout: TimeInterval = 30.0
 
     init(provider: AIProvider = .appleFoundation) {
@@ -55,7 +48,7 @@ class AIService {
         isGenerating = true
         defer { isGenerating = false }
 
-        // OPTIMIZATION: Wrap with timeout to prevent hangs on large transcripts
+        // Wrap with timeout to prevent hangs on large transcripts
         return try await withTimeout { [engine] in
             try await engine.generateTitleAndDescription(transcript: transcript)
         }
@@ -85,7 +78,7 @@ class AIService {
         \(transcript)
         """
 
-        // OPTIMIZATION: Wrap with timeout to prevent hangs on large transcripts
+        // Wrap with timeout to prevent hangs on large transcripts
         return try await withTimeout { [engine] in
             try await engine.analyzeTranscriptForEdits(prompt: prompt)
         }
@@ -112,7 +105,7 @@ class AIService {
         \(originalTexts)
         """
 
-        // OPTIMIZATION: Wrap with timeout to prevent hangs on large transcripts
+        // Wrap with timeout to prevent hangs on large transcripts
         return try await withTimeout { [engine] in
             try await engine.refineCaptions(captions: captions, prompt: prompt)
         }

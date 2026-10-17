@@ -1,10 +1,3 @@
-//
-//  RecordingEngine.swift
-//  SaneVideo
-//
-//  Created by SaneVideo Refactor
-//
-
 import AVFoundation
 import AppKit
 import Combine
@@ -67,7 +60,7 @@ class RecordingEngine: NSObject {
   @RecordingActor private var pipFrameSyncCounter: Int = 0
   private let pipFrameSyncInterval: Int = 15  // Sync every 15 frames (~0.5s at 30fps)
 
-  // CRITICAL FIX: Track source switch to detect if new source fails silently
+  // Track source switch to detect if new source fails silently
   // nonisolated(unsafe) allows safe cancellation from deinit on any thread
   nonisolated(unsafe) var sourceSwitchTimeoutTask: Task<Void, Never>?
 
@@ -81,7 +74,7 @@ class RecordingEngine: NSObject {
   nonisolated(unsafe) var activeSwitchTask: Task<Void, Never>?
 
   // Preview layer for Screen Recording
-  // CRITICAL FIX: Must NOT use inline initialization - AVSampleBufferDisplayLayer
+  // Must NOT use inline initialization - AVSampleBufferDisplayLayer
   // requires MainActor/main thread. Inline initializers run during allocation
   // before Swift can enforce @MainActor isolation.
   var screenPreviewLayer: AVSampleBufferDisplayLayer!
@@ -246,7 +239,7 @@ class RecordingEngine: NSObject {
 
     timeCoordinator.reset()
 
-    // CRITICAL: Create videoWriter but don't set isRecording until ALL services start successfully
+    // Create videoWriter but don't set isRecording until ALL services start successfully
     // This prevents partial failure states where isRecording=true but no input source
     let renderingService = RenderingService.shared
     self.videoWriter = VideoWriter(renderingService: renderingService, targetSize: targetSize)
@@ -258,7 +251,7 @@ class RecordingEngine: NSObject {
       self.timeCoordinator.driftTracker = self.videoWriter?.driftTracker
     } catch {
       AppLogger.recording.error("Failed to start video writer: \(error)")
-      // CRITICAL: Cleanup on failure
+      // Cleanup on failure
       self.videoWriter = nil
       self.outputURL = nil
       self.timeCoordinator.driftTracker = nil
@@ -268,17 +261,17 @@ class RecordingEngine: NSObject {
       return
     }
 
-    // CRITICAL: Start disk space monitor BEFORE setting isRecording
+    // Start disk space monitor BEFORE setting isRecording
     await MainActor.run { self.diskSpaceMonitor.start() }
 
-    // CRITICAL: Start all services BEFORE setting isRecording=true
+    // Start all services BEFORE setting isRecording=true
     // This ensures we only mark as recording when everything is actually ready
     if initialSource == .camera {
       do {
         try await cameraService.start()
         cameraWasStarted = true
       } catch {
-        // CRITICAL: Cleanup on failure - videoWriter was created but camera failed
+        // Cleanup on failure - videoWriter was created but camera failed
         AppLogger.recording.error("Camera start failed, cleaning up videoWriter")
         await rollbackFailedStart(cameraWasStarted: cameraWasStarted, screenWasStarted: screenWasStarted)
         await MainActor.run {
@@ -303,7 +296,7 @@ class RecordingEngine: NSObject {
         try await self.screenRecorder.start()
         screenWasStarted = true
       } catch {
-        // CRITICAL: Cleanup on failure - videoWriter was created but screen recorder failed
+        // Cleanup on failure - videoWriter was created but screen recorder failed
         AppLogger.recording.error("Screen recorder (or camera) start failed, cleaning up videoWriter")
         await rollbackFailedStart(cameraWasStarted: cameraWasStarted, screenWasStarted: screenWasStarted)
         await MainActor.run {
@@ -332,7 +325,7 @@ class RecordingEngine: NSObject {
       await MainActor.run { self.audioService.stop() }
     }
 
-    // CRITICAL: Only NOW set isRecording=true after ALL services started successfully
+    // Only NOW set isRecording=true after ALL services started successfully
     isRecording = true
     isPaused = false
     isMicrophoneAudioEnabled = includeMicrophoneAudio
@@ -457,11 +450,11 @@ class RecordingEngine: NSObject {
       return mockURL
     }
 
-    // CRITICAL: Cancel any active switch operations
+    // Cancel any active switch operations
     sourceSwitchTimeoutTask?.cancel()
     sourceSwitchTimeoutTask = nil
 
-    // CRITICAL: Clear switch state to prevent hanging
+    // Clear switch state to prevent hanging
     if isSwitching {
       AppLogger.recording.warning("🛑 Stopping recording during active switch. Cancelling switch.")
       pendingSource = nil
@@ -469,10 +462,10 @@ class RecordingEngine: NSObject {
       timeCoordinator.startTimeNeedsRecalibration = false
     }
 
-    // CRITICAL: Stop services first (but don't cleanup until file is saved)
+    // Stop services first (but don't cleanup until file is saved)
     await screenRecorder.stop()
 
-    // CRITICAL: Finish video writer with timeout protection
+    // Finish video writer with timeout protection
     let finalURL: URL?
     if let writer = videoWriter {
       do {
@@ -482,7 +475,7 @@ class RecordingEngine: NSObject {
         }
       } catch {
         AppLogger.recording.error("⚠️ VideoWriter finish() timed out or failed: \(error.localizedDescription)")
-        // CRITICAL: Even if finish() fails, try to get the file
+        // Even if finish() fails, try to get the file
         // The file might still be valid even if finish() didn't complete
         finalURL = outputURL
         AppLogger.recording.warning("Using outputURL as fallback: \(outputURL?.path ?? "nil")")
@@ -491,7 +484,7 @@ class RecordingEngine: NSObject {
       finalURL = nil
     }
 
-    // CRITICAL: Save click tracking only if we have a valid file (for auto-zoom feature)
+    // Save click tracking only if we have a valid file (for auto-zoom feature)
     if let url = finalURL {
       let clickService = await ServiceContainer.shared.clickTrackingService
       _ = try? await clickService.stopTrackingAndSave(to: url)
@@ -499,7 +492,7 @@ class RecordingEngine: NSObject {
       AppLogger.recording.warning("⚠️ No final URL, skipping click tracking save")
     }
 
-    // CRITICAL: Cleanup only after we've attempted to save everything
+    // Cleanup only after we've attempted to save everything
     videoWriter = nil
     outputURL = nil
     isMicrophoneAudioEnabled = false

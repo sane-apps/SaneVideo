@@ -1,10 +1,5 @@
-//
-//  PricingConfiguration.swift
-//  SaneVideo
-//
-//  Pricing and feature configuration system
-//  Supports launch pricing, regular pricing, and feature flags
-//
+// Pricing and feature configuration system
+// Supports launch pricing, regular pricing, and feature flags
 
 import Foundation
 

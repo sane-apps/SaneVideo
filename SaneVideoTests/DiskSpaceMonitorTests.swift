@@ -1,8 +1,3 @@
-//
-//  DiskSpaceMonitorTests.swift
-//  SaneVideoTests
-//
-
 @testable import SaneVideo
 import Testing
 

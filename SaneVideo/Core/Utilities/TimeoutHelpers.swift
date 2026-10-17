@@ -1,9 +1,4 @@
-//
-//  TimeoutHelpers.swift
-//  SaneVideo
-//
-//  Timeout and cancellation utilities for robust async operations
-//
+// Timeout and cancellation utilities for robust async operations
 
 import Foundation
 

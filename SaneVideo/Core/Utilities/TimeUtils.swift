@@ -1,10 +1,3 @@
-//
-//  TimeUtils.swift
-//  SaneVideo
-//
-//  Created by Antigravity
-//
-
 import Foundation
 import CoreMedia
 

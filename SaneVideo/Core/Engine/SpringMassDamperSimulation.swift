@@ -1,13 +1,7 @@
-//
-//  SpringMassDamperSimulation.swift
-//  SaneVideo
-//
-//  Spring-mass-damper physics simulation for natural animation transitions.
-//  Inspired by Cap's zoom interpolation (PR #1504).
-//
-//  Physics: acceleration = (stiffness * (target - position) - damping * velocity) / mass
-//  Integration: Semi-implicit Euler (velocity first, then position)
-//
+// Spring-mass-damper physics simulation for natural animation transitions.
+// Inspired by Cap's zoom interpolation (PR #1504).
+// Physics: acceleration = (stiffness * (target - position) - damping * velocity) / mass
+// Integration: Semi-implicit Euler (velocity first, then position)
 
 import Foundation
 import simd

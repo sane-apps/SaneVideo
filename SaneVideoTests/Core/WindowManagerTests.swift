@@ -1,9 +1,4 @@
-//
-//  WindowManagerTests.swift
-//  SaneVideoTests
-//
-//  Tests for WindowManager - window lifecycle, PiP management, screen sharing
-//
+// Tests for WindowManager - window lifecycle, PiP management, screen sharing
 
 import Testing
 import AppKit

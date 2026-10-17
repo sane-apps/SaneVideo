@@ -1,10 +1,3 @@
-//
-//  ClipTrimHandle.swift
-//  SaneVideo
-//
-//  Created by SaneVideo Refactor
-//
-
 import SwiftUI
 import AppKit
 import CoreMedia
@@ -53,13 +46,13 @@ struct ClipTrimHandle: View {
                         .stroke(Color.accentColor, lineWidth: 1)
                 )
         }
-        // CRITICAL FIX: Offset handle during drag to keep it under cursor
+        // Offset handle during drag to keep it under cursor
         // This prevents the handle from moving away when the clip expands
         .offset(x: isDragging ? trimOffset : 0)
         .contentShape(Rectangle())
         .cursor(NSCursor.resizeLeftRight)
         .onHover { hovering in
-            // CRITICAL FIX: Notify parent when hovering over handle
+            // Notify parent when hovering over handle
             // This prevents clip from scaling when trying to grab handle
             AppLogger.uiLog.debug("🔧 Trim handle hover: isLeft=\(isLeft), hovering=\(hovering)")
             onHoverChange?(hovering)

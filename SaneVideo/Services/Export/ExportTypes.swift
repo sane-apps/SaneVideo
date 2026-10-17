@@ -1,10 +1,3 @@
-//
-//  ExportTypes.swift
-//  SaneVideo
-//
-//  Created by SaneVideo Refactor
-//
-
 import Foundation
 
 enum ExportError: LocalizedError {

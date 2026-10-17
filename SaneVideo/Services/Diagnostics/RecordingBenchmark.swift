@@ -1,17 +1,11 @@
-//
-//  RecordingBenchmark.swift
-//  SaneVideo
-//
-//  Recording quality benchmark with Cap-inspired targets.
-//  Tracks live metrics during recording and grades pass/fail on finalize.
-//
-//  Targets:
-//  - FPS: ±2 of target (e.g., 28-32 for 30fps)
-//  - Jitter: <15ms average inter-frame deviation
-//  - Dropped frames: <2% of total
-//  - A/V sync: <50ms drift
-//  - Startup latency: <500ms to first frame
-//
+// Recording quality benchmark with Cap-inspired targets.
+// Tracks live metrics during recording and grades pass/fail on finalize.
+// Targets:
+// - FPS: ±2 of target (e.g., 28-32 for 30fps)
+// - Jitter: <15ms average inter-frame deviation
+// - Dropped frames: <2% of total
+// - A/V sync: <50ms drift
+// - Startup latency: <500ms to first frame
 
 import CoreMedia
 import Foundation

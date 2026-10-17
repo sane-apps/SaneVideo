@@ -1,9 +1,4 @@
-//
-//  ExportTypesTests.swift
-//  SaneVideoTests
-//
-//  Export error messages and resolution sizes.
-//
+// Export error messages and resolution sizes.
 
 import AVFoundation
 @testable import SaneVideo

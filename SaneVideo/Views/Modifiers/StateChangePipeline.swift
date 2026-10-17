@@ -1,9 +1,4 @@
-//
-//  StateChangePipeline.swift
-//  SaneVideo
-//
-//  Unified state change pipeline to reduce complexity and improve performance
-//
+// Unified state change pipeline to reduce complexity and improve performance
 
 import Combine
 import SwiftUI
@@ -95,7 +90,7 @@ struct UnifiedStateChangeModifier: ViewModifier {
                     appState.playbackState.loadProject(project, forceReload: true)
                 }
             }
-            // CRITICAL FIX: Use onReceive which is properly managed by SwiftUI lifecycle
+            // Use onReceive which is properly managed by SwiftUI lifecycle
             // instead of .task + .sink which can create closures that outlive the view
             .onReceive(coordinator.projectChanges) { change in
                 handleProjectChange(change)
@@ -103,7 +98,7 @@ struct UnifiedStateChangeModifier: ViewModifier {
             .onReceive(coordinator.clipAdded) { project in
                 handleClipAdded(project)
             }
-            // CRITICAL FIX: Auto-select on initial load (onChange doesn't fire for initial value)
+            // Auto-select on initial load (onChange doesn't fire for initial value)
             .task {
                 // Small delay to ensure project is fully loaded
                 try? await Task.sleep(for: .milliseconds(500))
@@ -138,7 +133,7 @@ struct UnifiedStateChangeModifier: ViewModifier {
             if let project = change.project {
                 appState.playbackState.loadProject(project)
                 selectFirstClipIfNeeded(in: project)
-                // PERFORMANCE: Avoid redundant disk writes during rapid timeline edits.
+                // Avoid redundant disk writes during rapid timeline edits.
                 // ProjectState mutation entrypoints are responsible for persistence; this coordinator
                 // exists to keep playback composition in sync, not to persist state on every reload.
             }

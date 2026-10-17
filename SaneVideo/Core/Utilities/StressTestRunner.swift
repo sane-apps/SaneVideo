@@ -1,10 +1,3 @@
-//
-//  StressTestRunner.swift
-//  SaneVideo
-//
-//  Created by SaneVideo Refactor
-//
-
 import AVFoundation
 import Combine
 import Foundation
@@ -89,7 +82,7 @@ class StressTestRunner {
 
     private func testRapidRecordingToggle(appState: AppState) async throws {
         log("--- Test: Rapid Recording Toggle ---")
-        // NOTE: We need to be careful with actual hardware.
+        // We need to be careful with actual hardware.
         // We will simulate the Coordinator calls.
 
         let recordingState = appState.recordingState

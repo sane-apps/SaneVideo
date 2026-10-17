@@ -1,9 +1,4 @@
-//
-//  WaveformServiceProtocol.swift
-//  SaneVideo
-//
-//  Protocol for waveform generation and caching
-//
+// Protocol for waveform generation and caching
 
 import Foundation
 

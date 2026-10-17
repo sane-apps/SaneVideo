@@ -1,10 +1,3 @@
-//
-//  CameraServiceProtocol.swift
-//  SaneVideo
-//
-//  Created by SaneVideo Refactor
-//
-
 import AVFoundation
 @preconcurrency import Combine
 import Foundation

@@ -1,10 +1,3 @@
-//
-//  LogView.swift
-//  SaneVideo
-//
-//  Created by SaneVideo Refactor
-//
-
 import OSLog
 import SwiftUI
 

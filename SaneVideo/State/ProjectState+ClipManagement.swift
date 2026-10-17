@@ -1,10 +1,5 @@
-//
-//  ProjectState+ClipManagement.swift
-//  SaneVideo
-//
-//  Clip editing operations (split, trim, rotate, delete, transform, speed, effects)
-//  Import operations are in ProjectState+Import.swift
-//
+// Clip editing operations (split, trim, rotate, delete, transform, speed, effects)
+// Import operations are in ProjectState+Import.swift
 
 import AppKit
 import AVFoundation
@@ -354,7 +349,7 @@ extension ProjectState {
   // MARK: - Removal
 
   func deleteClip(_ clip: VideoClip, transactionId: UUID? = nil) {
-    // CRITICAL: Log why deletion might be blocked
+    // Log why deletion might be blocked
     if shouldBlockOperation(transactionId: transactionId) {
       AppLogger.project.warning("⚠️ Delete clip blocked: operation in progress (transaction: \(transactionId?.uuidString ?? "none"))")
       ServiceContainer.shared.toastManager.show("Cannot delete: Operation in progress", type: .info)
@@ -497,7 +492,7 @@ extension ProjectState {
 
     if clipFound {
       recalculateStartTimes(in: &timeline)
-      // CRITICAL FIX: Speed changes affect effectiveDuration, so timeline duration must update
+      // Speed changes affect effectiveDuration, so timeline duration must update
       timeline.updateDuration()
       project.timeline = timeline
       currentProject = project

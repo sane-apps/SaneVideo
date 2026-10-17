@@ -1,8 +1,3 @@
-//
-//  SoundAnalysisServiceTests.swift
-//  SaneVideoTests
-//
-
 import AVFoundation
 @testable import SaneVideo
 import Testing

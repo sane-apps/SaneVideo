@@ -1,10 +1,5 @@
-//
-//  QuickAccessOverlay.swift
-//  SaneVideo
-//
-//  Post-recording quick access overlay with instant editing options
-//  Inspired by CleanShot X's instant gratification workflow
-//
+// Post-recording quick access overlay with instant editing options
+// Inspired by CleanShot X's instant gratification workflow
 
 import AppKit
 import AVFoundation
@@ -163,7 +158,7 @@ struct QuickAccessOverlay: View {
         }
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
-            // CRITICAL FIX: Call completion BEFORE onDismiss
+            // Call completion BEFORE onDismiss
             // onDismiss clears quickAccessRecordingURL, so completion (onEdit/onSave/onShare)
             // must run first while the URL is still available
             completion?()

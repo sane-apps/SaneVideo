@@ -1,10 +1,3 @@
-//
-//  LiquidGlassStyle.swift
-//  SaneVideo
-//
-//  Created by SaneVideo Refactor
-//
-
 import SwiftUI
 
 /// A view modifier that applies the macOS Tahoe "Liquid Glass" aesthetic.
@@ -270,7 +263,7 @@ struct VisualEffectView: NSViewRepresentable {
         nsView.state = state
     }
     
-    // CRITICAL FIX: Proper cleanup to prevent use-after-free during autorelease
+    // Proper cleanup to prevent use-after-free during autorelease
     static func dismantleNSView(_ nsView: NSVisualEffectView, coordinator: ()) {
         nsView.state = .inactive
         nsView.removeFromSuperview()

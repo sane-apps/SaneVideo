@@ -1,9 +1,4 @@
-//
-//  ExportPresetPicker.swift
-//  SaneVideo
-//
-//  Dropdown picker for selecting export templates in the export sheet
-//
+// Dropdown picker for selecting export templates in the export sheet
 
 import SwiftUI
 

@@ -1,9 +1,4 @@
-//
-//  AccessibilityModifiers.swift
-//  SaneVideo
-//
-//  Enhanced accessibility support for VoiceOver and keyboard navigation
-//
+// Enhanced accessibility support for VoiceOver and keyboard navigation
 
 import SwiftUI
 

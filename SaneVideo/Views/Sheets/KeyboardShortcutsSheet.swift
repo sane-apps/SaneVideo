@@ -1,10 +1,3 @@
-//
-//  KeyboardShortcutsSheet.swift
-//  SaneVideo
-//
-//  Created by SaneVideo Refactor
-//
-
 import SwiftUI
 
 struct KeyboardShortcutsSheet: View {

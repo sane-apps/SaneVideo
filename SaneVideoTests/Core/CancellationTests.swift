@@ -1,9 +1,4 @@
-//
-//  CancellationTests.swift
-//  SaneVideoTests
-//
-//  Cancelling processing must stop the running task and clear progress state.
-//
+// Cancelling processing must stop the running task and clear progress state.
 
 import Foundation
 @testable import SaneVideo

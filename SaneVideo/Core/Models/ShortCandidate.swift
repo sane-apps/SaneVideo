@@ -1,9 +1,4 @@
-//
-//  ShortCandidate.swift
-//  SaneVideo
-//
-//  Model for short-form video candidates extracted from long-form content
-//
+// Model for short-form video candidates extracted from long-form content
 
 import CoreMedia
 import Foundation

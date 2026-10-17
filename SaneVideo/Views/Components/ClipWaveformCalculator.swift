@@ -1,10 +1,3 @@
-//
-//  ClipWaveformCalculator.swift
-//  SaneVideo
-//
-//  Created by SaneVideo Refactor
-//
-
 import CoreMedia
 import Foundation
 

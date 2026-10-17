@@ -1,9 +1,5 @@
-//
-//  Timeline.swift
-//  SaneVideo
-//
-//  Domain model representing a video timeline with clips
-//  Optimized for Apple Silicon M1+ with value semantics
+// Domain model representing a video timeline with clips
+// Optimized for Apple Silicon M1+ with value semantics
 
 import AVFoundation
 import Foundation

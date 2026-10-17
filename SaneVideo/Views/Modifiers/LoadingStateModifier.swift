@@ -1,9 +1,4 @@
-//
-//  LoadingStateModifier.swift
-//  SaneVideo
-//
-//  Consistent loading state UI patterns
-//
+// Consistent loading state UI patterns
 
 import SwiftUI
 

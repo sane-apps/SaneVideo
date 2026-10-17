@@ -1,8 +1,3 @@
-//
-//  RecordingState.swift
-//  SaneVideo
-//
-
 import AVFoundation
 import Combine
 import SwiftUI
@@ -41,7 +36,7 @@ class RecordingState {
     private var recordingTimer: Timer?
     // nonisolated(unsafe) required for deinit access
     @ObservationIgnored private nonisolated(unsafe) var countdownTask: Task<Void, Never>?
-    // CRITICAL FIX: Track the starting task to prevent race conditions during rapid start/stop
+    // Track the starting task to prevent race conditions during rapid start/stop
     @ObservationIgnored private nonisolated(unsafe) var startingTask: Task<Void, Never>?
     private var recordingEngine: RecordingEngine?
     private var cameraService: CameraServiceProtocol
@@ -74,7 +69,7 @@ class RecordingState {
     var onRecordingStateChanged: ((Bool) -> Void)?
     var onContentSelected: (() -> Void)?
 
-    // CRITICAL FIX: Ensure proper cleanup of timer and tasks
+    // Ensure proper cleanup of timer and tasks
     // Task.cancel() is thread-safe, so we can call it from any thread in deinit
     deinit {
         countdownTask?.cancel()
@@ -95,12 +90,12 @@ class RecordingState {
             }
         }
 
-        // CRITICAL FIX: Wire error handler to stop recording and present errors
+        // Wire error handler to stop recording and present errors
         recordingEngine?.onError = { [weak self] (error: AppError) in
             Task { @MainActor in
                 AppLogger.recording.error("Engine reported error: \(error.localizedDescription)")
 
-                // CRITICAL: Cleanup timer if recording failed to start
+                // Cleanup timer if recording failed to start
                 if let self = self, self.isPreparing || (self.isRecording && self.recordingDuration < 0.5) {
                     // Recording just started or was preparing - cleanup timer
                     self.recordingTimer?.invalidate()
@@ -109,7 +104,7 @@ class RecordingState {
                     self.isRecording = false
                 }
 
-                // CRITICAL FIX: Don't stop recording for source switch timeouts
+                // Don't stop recording for source switch timeouts
                 // The switch will rollback, but recording should continue on the previous source
                 let errorMessage = error.localizedDescription
                 let isSourceSwitchTimeout = errorMessage.contains("Source switch timed out") ||
@@ -307,11 +302,11 @@ class RecordingState {
         isScreenSharing: Bool,
         includeCameraOverlay: Bool
     ) {
-        // CRITICAL FIX: Verify permissions before starting recording
+        // Verify permissions before starting recording
         // This handles cases where permissions were revoked while app was in background
         NSLog("🎬 Permission check: camera=\(permissionManager.cameraStatus), mic=\(permissionManager.microphoneStatus), screen=\(permissionManager.screenRecordingStatus)")
 
-        // CRITICAL FIX: If we're already screen sharing with an active stream,
+        // If we're already screen sharing with an active stream,
         // we KNOW screen recording permission is granted (ScreenCaptureKit wouldn't work without it).
         // CGPreflightScreenCaptureAccess() is unreliable and can return false even when granted.
         // Trust the active stream rather than the flaky preflight check.
@@ -399,7 +394,7 @@ class RecordingState {
 
     private func actuallyStartRecording(isScreenSharing: Bool, includeCameraOverlay: Bool) {
         NSLog("🎬 RecordingState.actuallyStartRecording called! isScreenSharing=\(isScreenSharing)")
-        // CRITICAL: Only check isRecording - we ARE expected to have isPreparing=true here
+        // Only check isRecording - we ARE expected to have isPreparing=true here
         // isPreparing will be set to false below
         guard !isRecording else {
             NSLog("🎬 RecordingState.actuallyStartRecording BAILED: already recording")
@@ -423,7 +418,7 @@ class RecordingState {
         let includeMicrophoneAudio = isMicActive
         isRecording = true // Set optimistically but handle failure
 
-        // CRITICAL: Start engine and only set isRecording if it succeeds
+        // Start engine and only set isRecording if it succeeds
         let recordingEngine = recordingEngine
         startingTask = Task { [weak self, recordingEngine] in
             guard self != nil else { return }
@@ -434,9 +429,9 @@ class RecordingState {
                 includeMicrophoneAudio: includeMicrophoneAudio
             )
 
-            // CRITICAL: Check if engine actually started (isRecording will be set by engine)
+            // Check if engine actually started (isRecording will be set by engine)
             // If start failed, cleanup timer
-            // CRITICAL: Check if engine actually started (isRecording will be set by engine)
+            // Check if engine actually started (isRecording will be set by engine)
             // If start failed, cleanup timer
             await MainActor.run { [weak self] in
                 guard let self = self else { return }
@@ -448,7 +443,7 @@ class RecordingState {
                 ServiceContainer.shared.soundManager.playStartRecording()
                 ServiceContainer.shared.hapticsManager.success()
 
-                // CRITICAL FIX: If a stop was requested during start, execute it now
+                // If a stop was requested during start, execute it now
                 if self.isPendingStop {
                     AppLogger.recording.info("🎬 Initialized stop request detected. Stopping now.")
                     self.isPendingStop = false
@@ -467,19 +462,19 @@ class RecordingState {
         AppLogger.recording.debug(
             "🛑 stopRecording called. isPreparing=\(isPreparing), isRecording=\(isRecording), isStopping=\(isStopping)")
 
-        // CRITICAL FIX: If we are still starting, we must wait or cancel
+        // If we are still starting, we must wait or cancel
         if startingTask != nil {
             AppLogger.recording.warning(
                 "🎬 User hit stop while recording was still starting. Queueing stop... [VERSION_FIXED_V1]")
             isPendingStop = true
 
-            // CRITICAL: Queue the completion handler to be called when the pending stop executes
+            // Queue the completion handler to be called when the pending stop executes
             // We overwrite any previous pending completion - last writer wins
             pendingStopCompletion = completion
             return
         }
 
-        // CRITICAL FIX: Prevent double-stop calls
+        // Prevent double-stop calls
         guard !isStopping else {
             AppLogger.recording.debug("🛑 stopRecording ignored (already stopping)")
             completion(nil) // Call completion even if ignored, to unblock caller
@@ -498,7 +493,7 @@ class RecordingState {
             return
         }
 
-        // CRITICAL FIX: Set stopping flag IMMEDIATELY to prevent concurrent calls
+        // Set stopping flag IMMEDIATELY to prevent concurrent calls
         isStopping = true
 
         // Clear other state flags
@@ -515,13 +510,13 @@ class RecordingState {
         ServiceContainer.shared.soundManager.playStopRecording()
         ServiceContainer.shared.hapticsManager.impact()
 
-        // CRITICAL FIX: Stop engine FIRST, then update state in completion
+        // Stop engine FIRST, then update state in completion
         Task {
             AppLogger.recording.debug("🛑 Calling engine.stopRecording()")
             let url = await recordingEngine?.stopRecording()
             AppLogger.recording.debug("🛑 Engine returned url=\(url?.path ?? "nil")")
 
-            // CRITICAL: Only update state AFTER engine completes
+            // Only update state AFTER engine completes
             await MainActor.run {
                 self.isRecording = false
                 self.isStopping = false
@@ -537,7 +532,7 @@ class RecordingState {
             recordingEngine?.pause()
         } else {
             recordingEngine?.resume()
-            // CRITICAL FIX: Removed unnecessary switchSource call on resume
+            // Removed unnecessary switchSource call on resume
             // Resume should just resume, not switch sources
             // The source should already be correct from when recording started
             // If this was needed for some reason, it should only switch if source is wrong

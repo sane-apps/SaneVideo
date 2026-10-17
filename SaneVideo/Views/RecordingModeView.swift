@@ -1,10 +1,3 @@
-//
-//  RecordingModeView.swift
-//  SaneVideo
-//
-//  Created by SaneVideo Refactor
-//
-
 import AVFoundation
 import SaneUI
 import SwiftUI

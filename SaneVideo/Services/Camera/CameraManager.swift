@@ -1,10 +1,3 @@
-//
-//  CameraManager.swift
-//  SaneVideo
-//
-//  Created by SaneVideo Refactor
-//
-
 @preconcurrency import AVFoundation
 import AppKit
 @preconcurrency import Combine
@@ -37,7 +30,7 @@ final class CameraManager: NSObject, CameraServiceProtocol {
   private let framePublisher = CameraFramePublisher()
   private var cancellables = Set<AnyCancellable>()
 
-  // OPTIMIZATION: Cache device discovery session to avoid recreation on each setupSession call.
+  // Cache device discovery session to avoid recreation on each setupSession call.
   // AVCaptureDevice.DiscoverySession is thread-safe for reads after creation.
   // Using nonisolated(unsafe) allows access from nonisolated setupSession function.
   @ObservationIgnored
@@ -142,7 +135,7 @@ final class CameraManager: NSObject, CameraServiceProtocol {
 
   // MARK: - Frame Publisher
 
-  // CRITICAL: Must be nonisolated to allow access from RecordingEngine's processingQueue.
+  // Must be nonisolated to allow access from RecordingEngine's processingQueue.
   // PassthroughSubject is thread-safe internally.
   nonisolated var sampleBufferSubject: PassthroughSubject<CMSampleBuffer, Never> {
     framePublisher.sampleBufferSubject
@@ -228,7 +221,7 @@ final class CameraManager: NSObject, CameraServiceProtocol {
     }
 
     if let existingSession = session {
-      // FIX (2025-12-31): Reconfigure format if preferences changed since session was created
+      // Reconfigure format if preferences changed since session was created
       // Previously, format was only set on initial session creation, causing FPS mismatch
       let resolution = ServiceContainer.shared.userPreferences.recordingResolution
       let fps = ServiceContainer.shared.userPreferences.recordingFPS
@@ -305,7 +298,7 @@ final class CameraManager: NSObject, CameraServiceProtocol {
 
       AppLogger.camera.info("Session .startRunning() returned. isRunning: \(session.isRunning)")
 
-      // FIX: Use KVO observation instead of Task.sleep for session start verification
+      // Use KVO observation instead of Task.sleep for session start verification
       do {
         try await waitForSessionRunning(session, timeout: 2.0)
         AppLogger.camera.info("✅ Camera session IS running (KVO confirmed)")
@@ -518,7 +511,7 @@ final class CameraManager: NSObject, CameraServiceProtocol {
     AppLogger.camera.info(
       "🎯 Looking for format: \(targetResolution.displayName) @ \(Int(targetFPS))fps")
 
-    // DIAGNOSTIC: Log all available formats to understand what's available
+    // Log all available formats to understand what's available
     AppLogger.camera.info("📷 Camera has \(camera.formats.count) total formats")
     for (index, format) in camera.formats.enumerated() {
       let dims = CMVideoFormatDescriptionGetDimensions(format.formatDescription)
@@ -527,7 +520,7 @@ final class CameraManager: NSObject, CameraServiceProtocol {
       AppLogger.camera.debug("  Format \(index): \(dims.width)x\(dims.height) @ max \(Int(maxFps))fps, portrait=\(isPortrait)")
     }
 
-    // NOTE: isPortraitEffectSupported means format CAN do portrait, not that it's ACTIVE.
+    // IsPortraitEffectSupported means format CAN do portrait, not that it's ACTIVE.
     // Modern Mac cameras have ALL formats supporting portrait effect (it's a software feature).
     // Filtering by isPortraitEffectSupported removes ALL formats on Mac Studio camera.
     // Use all formats - portrait effect overhead is negligible when not actively enabled.
@@ -592,7 +585,7 @@ final class CameraManager: NSObject, CameraServiceProtocol {
           session.sessionPreset = .high
         }
 
-        // FIX (2025-12-31): Even with presets, we MUST set frame duration!
+        // Even with presets, we MUST set frame duration!
         // Without this, camera defaults to low FPS (often 15fps)
         let currentFormat = camera.activeFormat
         if let frameRate = Self.supportedFrameDuration(for: targetFPS, format: currentFormat) {

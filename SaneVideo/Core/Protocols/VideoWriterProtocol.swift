@@ -1,9 +1,4 @@
-//
-//  VideoWriterProtocol.swift
-//  SaneVideo
-//
-//  Protocol for VideoWriter to enable testability
-//
+// Protocol for VideoWriter to enable testability
 
 import AVFoundation
 import CoreMedia

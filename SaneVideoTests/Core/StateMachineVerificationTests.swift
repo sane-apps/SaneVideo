@@ -1,9 +1,4 @@
-//
-//  StateMachineVerificationTests.swift
-//  SaneVideoTests
-//
-//  Screen share / record / stop transitions in AppState and WindowManager.
-//
+// Screen share / record / stop transitions in AppState and WindowManager.
 
 import AVFoundation
 import CoreMedia

@@ -1,9 +1,4 @@
-//
-//  ThumbnailServiceProtocol.swift
-//  SaneVideo
-//
-//  Protocol for thumbnail generation and caching
-//
+// Protocol for thumbnail generation and caching
 
 @preconcurrency import AppKit
 @preconcurrency import AVFoundation

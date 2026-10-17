@@ -1,9 +1,4 @@
-//
-//  PerformanceMetricsService.swift
-//  SaneVideo
-//
-//  Tracks performance metrics for better debugging and user insights
-//
+// Tracks performance metrics for better debugging and user insights
 
 import Foundation
 

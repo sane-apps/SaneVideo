@@ -1,9 +1,4 @@
-//
-//  ZoomInterpolatorTests.swift
-//  SaneVideoTests
-//
-//  Tests for spring-physics zoom with cursor-following viewport
-//
+// Tests for spring-physics zoom with cursor-following viewport
 
 import CoreMedia
 import Testing

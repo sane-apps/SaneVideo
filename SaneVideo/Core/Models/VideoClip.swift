@@ -1,10 +1,5 @@
-//
-//  VideoClip.swift
-//  SaneVideo
-//
-//  Domain model representing a video clip with editing state
-//  Optimized for Apple Silicon M1+ with value semantics and lazy asset loading
-//
+// Domain model representing a video clip with editing state
+// Optimized for Apple Silicon M1+ with value semantics and lazy asset loading
 
 import AVFoundation
 import Foundation
@@ -120,7 +115,7 @@ struct VideoClip: Identifiable, Equatable, Hashable, Codable, Sendable {
   /// Create a copy of this clip with a new ID and optional trim adjustments
   /// Used when splitting clips to ensure all properties are preserved
   func copy(newId: UUID? = nil, trimStart: CMTime? = nil, trimEnd: CMTime? = nil) -> VideoClip {
-    // CRITICAL: Use the full initializer that accepts id
+    // Use the full initializer that accepts id
     var copy = VideoClip(
       id: newId ?? UUID(),
       url: self.url,
@@ -336,13 +331,13 @@ struct VideoClip: Identifiable, Equatable, Hashable, Codable, Sendable {
     case keystrokeDataURL
     case interactionOverlayStyle
     case backgroundEffect
-    // FIX: Add effects to coding keys
+    // Add effects to coding keys
     case effects
     case privacyRegions
     case isVoiceIsolationEnabled
     case isGatingEnabled
     case thumbnailURL
-    // FIX: Add missing keys
+    // Add missing keys
     case opacity
     case enhancedAudioURL
     case keyframeAnimation
@@ -388,7 +383,7 @@ struct VideoClip: Identifiable, Equatable, Hashable, Codable, Sendable {
     backgroundEffect = try container.decodeIfPresent(
       BackgroundEffect.self, forKey: .backgroundEffect)
 
-    // FIX: Decode effects
+    // Decode effects
     effects = try container.decodeIfPresent([VideoEffect].self, forKey: .effects) ?? []
 
     privacyRegions =
@@ -398,7 +393,7 @@ struct VideoClip: Identifiable, Equatable, Hashable, Codable, Sendable {
     isGatingEnabled = try container.decodeIfPresent(Bool.self, forKey: .isGatingEnabled) ?? false
     thumbnailURL = try container.decodeIfPresent(URL.self, forKey: .thumbnailURL)
 
-    // FIX: Decode missing properties
+    // Decode missing properties
     opacity = try container.decodeIfPresent(Double.self, forKey: .opacity) ?? 1.0
     enhancedAudioURL = try container.decodeIfPresent(URL.self, forKey: .enhancedAudioURL)
     keyframeAnimation = try container.decodeIfPresent(
@@ -421,7 +416,7 @@ struct VideoClip: Identifiable, Equatable, Hashable, Codable, Sendable {
     try container.encode(transform, forKey: .transform)
     try container.encodeIfPresent(transition, forKey: .transition)
     try container.encode(overlays, forKey: .overlays)
-    // FIX: Persist effects
+    // Persist effects
     try container.encode(effects, forKey: .effects)
     try container.encodeIfPresent(bookmarkData, forKey: .bookmarkData)
     try container.encode(removedRanges, forKey: .removedRanges)
@@ -436,7 +431,7 @@ struct VideoClip: Identifiable, Equatable, Hashable, Codable, Sendable {
     try container.encode(isGatingEnabled, forKey: .isGatingEnabled)
     try container.encodeIfPresent(thumbnailURL, forKey: .thumbnailURL)
 
-    // FIX: Encode missing properties
+    // Encode missing properties
     try container.encode(opacity, forKey: .opacity)
     try container.encodeIfPresent(enhancedAudioURL, forKey: .enhancedAudioURL)
     try container.encodeIfPresent(keyframeAnimation, forKey: .keyframeAnimation)

@@ -1,7 +1,3 @@
-//
-//  GlobalHotkeyManager.swift
-//  SaneVideo
-//
 #if !APP_STORE
     import AppKit
     import Carbon

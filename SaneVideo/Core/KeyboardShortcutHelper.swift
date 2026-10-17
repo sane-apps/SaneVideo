@@ -1,9 +1,4 @@
-//
-//  KeyboardShortcutHelper.swift
-//  SaneVideo
-//
-//  Helper for displaying keyboard shortcuts in tooltips and help
-//
+// Helper for displaying keyboard shortcuts in tooltips and help
 
 import SwiftUI
 

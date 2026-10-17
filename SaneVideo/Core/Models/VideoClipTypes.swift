@@ -1,10 +1,3 @@
-//
-//  VideoClipTypes.swift
-//  SaneVideo
-//
-//  Created by SaneVideo Refactor
-//
-
 import AVFoundation
 import Foundation
 import SwiftUI

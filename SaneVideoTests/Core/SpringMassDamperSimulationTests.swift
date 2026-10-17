@@ -1,9 +1,4 @@
-//
-//  SpringMassDamperSimulationTests.swift
-//  SaneVideoTests
-//
-//  Tests for spring-mass-damper physics simulation
-//
+// Tests for spring-mass-damper physics simulation
 
 @testable import SaneVideo
 import simd

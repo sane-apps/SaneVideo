@@ -1,10 +1,5 @@
-//
-//  ExportEffectsIntegrationTests.swift
-//  SaneVideoTests
-//
-//  Effects and transitions export integration tests.
-//  Split from ExportPipelineIntegrationTests for maintainability.
-//
+// Effects and transitions export integration tests.
+// Split from ExportPipelineIntegrationTests for maintainability.
 
 import AVFoundation
 import CoreMedia

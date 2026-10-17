@@ -1,9 +1,4 @@
-//
-//  UpdaterService.swift
-//  SaneVideo
-//
-//  Sparkle auto-update integration with Swift 6 strict concurrency
-//
+// Sparkle auto-update integration with Swift 6 strict concurrency
 
 #if !APP_STORE
     import Combine

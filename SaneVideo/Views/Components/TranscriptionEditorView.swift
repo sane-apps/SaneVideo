@@ -1,10 +1,3 @@
-//
-//  TranscriptionEditorView.swift
-//  SaneVideo
-//
-//  Created by SaneVideo Refactor
-//
-
 import SwiftUI
 import CoreMedia
 
@@ -21,7 +14,7 @@ struct TranscriptionEditorView: View {
     @State private var isGeneratingTranscript = false
     @State private var showStylePicker = false
 
-    // CRITICAL FIX (2025-12-31): Get fresh clip from project to ensure we have latest captions
+    // Get fresh clip from project to ensure we have latest captions
     // The binding may point to a stale clip value. When captions are updated via ProjectState,
     // the project is updated but the binding may not refresh until the parent re-renders.
     // This mirrors the pattern used in StylesInspectorView.validatedClip.

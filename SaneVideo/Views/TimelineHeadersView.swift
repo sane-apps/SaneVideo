@@ -1,10 +1,5 @@
-//
-//  TimelineHeadersView.swift
-//  SaneVideo
-//
-//  Fixed left column headers for timeline tracks
-//  Extracted to ensure proper alignment with scrollable track rows
-//
+// Fixed left column headers for timeline tracks
+// Extracted to ensure proper alignment with scrollable track rows
 
 import SwiftUI
 
@@ -16,7 +11,7 @@ struct TimelineHeadersView: View {
 
     private let timelineHeight: CGFloat = AppConstants.timelineHeight
 
-    // CRITICAL: Compute filtered tracks ONCE to ensure headers and rows stay in sync
+    // Compute filtered tracks ONCE to ensure headers and rows stay in sync
     private var tracksWithClips: [Track] {
         appState.projectState.currentProject?.timeline.tracks.filter { !$0.clips.isEmpty } ?? []
     }
@@ -30,7 +25,7 @@ struct TimelineHeadersView: View {
 
             // Headers VStack - MUST match track rows VStack spacing exactly (8px)
             VStack(alignment: .leading, spacing: 8) {
-                // CRITICAL FIX: Use shared filtered array to ensure header/row sync
+                // Use shared filtered array to ensure header/row sync
                 ForEach(tracksWithClips) { track in
                     TrackHeaderView(
                         track: track,
@@ -47,7 +42,7 @@ struct TimelineHeadersView: View {
             .frame(width: 100, alignment: .topLeading)
         }
         .frame(width: 100, alignment: .topLeading)
-        // CRITICAL FIX: Allow hit testing to pass through to scrollable content
+        // Allow hit testing to pass through to scrollable content
         // This ensures trim handles can be grabbed even when near the left edge
         .allowsHitTesting(true) // Headers still need to be clickable, but we'll handle overlap differently
     }

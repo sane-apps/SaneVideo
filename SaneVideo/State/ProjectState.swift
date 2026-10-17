@@ -1,10 +1,3 @@
-//
-//  ProjectState.swift
-//  SaneVideo
-//
-//  Created by SaneVideo Refactor
-//
-
 import AVFoundation
 import Combine
 import Foundation
@@ -69,7 +62,7 @@ class ProjectState {
     /// Current processing task for cancellation support
     @ObservationIgnored nonisolated(unsafe) var currentProcessingTask: Task<Void, Error>?
 
-    // P0 FIX: Cancel current operation
+    // Cancel current operation
     func cancelCurrentOperation() {
         currentProcessingTask?.cancel()
         currentProcessingTask = nil
@@ -93,7 +86,7 @@ class ProjectState {
 
     var undoManager: UndoManager? {
         didSet {
-            // CRITICAL: Disable automatic run-loop grouping so each registerUndo
+            // Disable automatic run-loop grouping so each registerUndo
             // call becomes its own undo step. Without this, multiple operations
             // in the same run loop pass would be grouped into one undo action.
             // We use explicit beginUndoGroup/endUndoGroup when we want grouping.
@@ -113,7 +106,7 @@ class ProjectState {
         guard let project = currentProject else { return }
         guard let undoManager = undoManager else { return }
 
-        // CRITICAL: With groupsByEvent = false, each undo registration must be
+        // With groupsByEvent = false, each undo registration must be
         // wrapped in its own explicit group. This ensures each operation becomes
         // a separate undo step that can be undone individually.
         undoManager.beginUndoGrouping()
@@ -165,12 +158,12 @@ class ProjectState {
             }
         }
 
-        // CRITICAL FIX: Recalculate startTimes after undo/redo to ensure consistency
+        // Recalculate startTimes after undo/redo to ensure consistency
         var timeline = project.timeline
         recalculateStartTimes(in: &timeline)
         timeline.updateDuration()
 
-        // CRITICAL FIX: Validate timeline state after undo/redo
+        // Validate timeline state after undo/redo
         if !validateTimelineState(timeline) {
             AppLogger.project.error("Timeline state invalid after undo/redo, attempting to fix")
             // Attempt to fix by recalculating
@@ -337,7 +330,7 @@ class ProjectState {
         if let index = projects.firstIndex(where: { $0.id == project.id }) {
             projects[index] = project
         }
-        // CRITICAL: Wait for previous save to complete before starting new one
+        // Wait for previous save to complete before starting new one
         // This prevents race conditions where last save might complete after new one
         let previousTask = pendingSaveTask
 
@@ -347,7 +340,7 @@ class ProjectState {
         let shouldDebounce = timeSinceLastSave < 0.1 // 100ms window
 
         pendingSaveTask = Task {
-            // CRITICAL: Wait for previous save to complete (if any)
+            // Wait for previous save to complete (if any)
             // This ensures saves happen in order and prevents data loss
             if let previous = previousTask {
                 _ = await previous.value
@@ -371,7 +364,7 @@ class ProjectState {
                 guard !Task.isCancelled else { return }
                 AppLogger.project.error("❌ Failed to save project: \(error)")
                 await MainActor.run {
-                    // CRITICAL: Show error to user - save failure means potential data loss
+                    // Show error to user - save failure means potential data loss
                     ServiceContainer.shared.errorPresenter.present(AppError.projectSaveFailed(error))
                     ServiceContainer.shared.toastManager.show("⚠️ Failed to save project. Changes may be lost.", type: .error)
                 }
@@ -466,7 +459,7 @@ class ProjectState {
     }
 
     func deleteProject(_ project: VideoProject) {
-        // CRITICAL: Check if project is currently active before deleting
+        // Check if project is currently active before deleting
         // This prevents deleting the project the user is actively working on
         if currentProject?.id == project.id {
             AppLogger.project.warning("⚠️ Attempted to delete currently active project")
@@ -481,7 +474,7 @@ class ProjectState {
                 await MainActor.run {
                     self.projects.removeAll { $0.id == project.id }
 
-                    // CRITICAL: If we deleted the current project, switch to another one
+                    // If we deleted the current project, switch to another one
                     // This is already handled, but ensure it happens before UI updates
                     if self.currentProject?.id == project.id {
                         if let next = self.projects.first {
@@ -607,7 +600,7 @@ class ProjectState {
         if project?.id != currentProject?.id {
             undoManager?.removeAllActions()
         }
-        // CRITICAL FIX: Stop existing security scope session before creating a new one
+        // Stop existing security scope session before creating a new one
         // This prevents security scope leaks when switching projects
         if let existingSession = currentScopeSession {
             existingSession.stop()
@@ -619,7 +612,7 @@ class ProjectState {
             let (hydratedProject, needsSave) = ServiceContainer.shared.projectFileManager.hydrateProject(project)
             currentProject = hydratedProject
 
-            // CRITICAL: Save project if bookmarks were updated during hydration
+            // Save project if bookmarks were updated during hydration
             if needsSave {
                 AppLogger.project.info("Bookmarks updated during hydration, saving project...")
                 saveProject(hydratedProject)

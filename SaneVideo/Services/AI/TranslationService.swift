@@ -1,10 +1,3 @@
-//
-//  TranslationService.swift
-//  SaneVideo
-//
-//  Created by SaneVideo Refactor
-//
-
 import Foundation
 import Translation
 import OSLog

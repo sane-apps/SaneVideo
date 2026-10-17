@@ -124,7 +124,9 @@ class SaneVideoCustomerUIActionSweep
       ['SaneVideo/Views/ExportView.swift', 'export.action.primary'],
       ['SaneVideo/Views/ExportView.swift', 'private func matchSourceFootage()'],
       ['SaneVideo/Core/Utilities/ExportDestination.swift', 'SaneVideo/Exports'],
-      ['SaneVideo/Views/Export/ExportView+Actions.swift', 'try Caption.srt(captions).write(to: srtURL'],
+      ['SaneVideo/Views/Export/ExportView+Actions.swift', 'try project.writeCaptionFile(beside: outputURL)'],
+      ['SaneVideo/Views/Export/ExportView+Actions.swift', 'try tempProject.writeCaptionFile(beside: outputURL)'],
+      ['SaneVideo/Core/Models/VideoProject.swift', 'try Caption.srt(captions).write(to: srtURL'],
       ['SaneVideoTests/Integration/ExportPipelineIntegrationTests.swift', 'func testExportMatchesRequestedResolution'],
       ['SaneVideoTests/Services/Export/ExportOutputTests.swift', 'File name is project name, optional suffix, then timestamp'],
       ['SaneVideoTests/Features/AI/CaptionTests.swift', 'Caption.srt(captions)']

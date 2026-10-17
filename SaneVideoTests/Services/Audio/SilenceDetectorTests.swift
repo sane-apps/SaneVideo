@@ -115,7 +115,7 @@ struct SilenceDetectorTests {
         let removedSeconds = removed.reduce(0) { $0 + $1.duration.seconds }
         #expect(removed.count == 2)
         #expect(removedSeconds > 1.2 && removedSeconds < 2.2)
-        #expect(abs(clip.effectiveDuration.seconds - (5.0 - removedSeconds)) < 0.001)
+        #expect(abs(clip.effectiveDuration.seconds - (5.0 - removedSeconds)) <= 1.0 / 600 + 1e-9) // clip times use a 600 timescale
         for range in removed {
             let insideSilence = Self.silentSpans.contains { span in
                 range.start.seconds >= span.start - 0.01 && range.end.seconds <= span.end + 0.01

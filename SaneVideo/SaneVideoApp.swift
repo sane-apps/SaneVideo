@@ -47,7 +47,7 @@ struct SaneVideoApp: App {
                             (icon: "heart.fill", text: "Donate only if you want to support it"),
                             (icon: "square.stack.3d.up", text: "Local export. No subscription")
                         ],
-                        freeTierTitle: "Free and open source",
+                        freeTierTitle: "Free",
                         freeTierPrice: "All features included",
                         proTierTitleOverride: "Support SaneVideo",
                         proTierPriceOverride: "Donate if it helps you",

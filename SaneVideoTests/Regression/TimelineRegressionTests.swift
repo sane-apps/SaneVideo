@@ -142,6 +142,44 @@ struct TimelineRegressionTests {
         #expect(timeline.tracks[0].clips[1].startTime.seconds == 5.0)
     }
 
+    @Test("A Clean Up cut moves the next clip up so no gap is left", .enabled(if: TimelineRegressionTests.magneticTimelineOn))
+    @MainActor
+    func cleanUpCutClosesGap() {
+        var clip1 = VideoClip(url: videoURL, duration: time(10), startTime: .zero)
+        let clip2 = VideoClip(url: videoURL, duration: time(5), startTime: time(10))
+        clip1.addRemovedRange(CMTimeRange(start: time(2), duration: time(3)))
+        var timeline = Timeline(tracks: [
+            Track(name: "Test Track", type: .video, clips: [clip1, clip2], zIndex: 0)
+        ])
+
+        ProjectState().recalculateStartTimes(in: &timeline)
+
+        #expect(timeline.tracks[0].clips[1].startTime.seconds == 7.0)
+    }
+
+    @Test("Deleting one split piece keeps the recording the other piece still uses")
+    @MainActor
+    func deleteSplitPieceKeepsSharedFile() throws {
+        let fileURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent("shared-\(UUID().uuidString).mov")
+        try Data("take".utf8).write(to: fileURL)
+        defer { try? FileManager.default.removeItem(at: fileURL) }
+        let first = VideoClip(url: fileURL, duration: time(5), startTime: .zero)
+        let second = VideoClip(url: fileURL, duration: time(5), startTime: time(5))
+        let state = ProjectState()
+        state.startNewProject()
+        var project = try #require(state.currentProject)
+        project.timeline.tracks = [Track(name: "Video", type: .video, clips: [first, second], zIndex: 0)]
+        state.currentProject = project
+
+        state.deleteClipFile(first)
+
+        let clips = try #require(state.currentProject?.timeline.tracks.first?.clips)
+        #expect(clips.map(\.id) == [second.id])
+        #expect(clips.first?.isMissing == false)
+        #expect(FileManager.default.fileExists(atPath: fileURL.path))
+    }
+
     @Test("A removed 5-6 s range yields two render segments around it")
     func removedRangeSplitsRenderSegments() {
         var clip = VideoClip(url: videoURL, duration: time(10))

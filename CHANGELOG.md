@@ -12,7 +12,8 @@ A cleaner, faster SaneVideo. Needs macOS 26.
 - New look: one accent color, flat panels, Projects / Clips / Transcript tabs, Record | Edit switch, Export menu.
 - Recording: switch Camera and Screen mid-take; the camera returns in under a second; Option-Command-R and Option-Command-P work from any app while the recorder is open (and SaneVideo no longer takes Shift-Command-S, -P and -H from other apps).
 - Timeline: clicking a clip selects it, Command-B splits at the playhead (also after Clean Up), arrow keys step one frame, Delete is undoable and never trashes a file other clips use, the playhead stays put after edits, later clips close up after Clean Up, and the timeline fits short clips.
-- Exports match your recording, land in Movies/SaneVideo/Exports, and come with a matching .srt caption file. Shorts are named after the project. GIF export no longer needs ffmpeg.
+- Exports match your recording, land in Movies/SaneVideo/Exports, and come with a matching .srt caption file (selected-clip exports too, and each one now starts at the clip's first frame). Shorts are named after the project. GIF export no longer needs ffmpeg.
+- The LICENSE file now says PolyForm Shield 1.0.0, matching the README; it said MIT by mistake.
 - Captions that cross a split or trim edge now keep their visible part. Caption edits can be undone.
 - Removed: Demo Studio, Commentary Reel, the WhisperKit engine, the Spanish-only Translate button, Shorts switches that did nothing, YouTube upload stub, API keys, iCloud sync.
 

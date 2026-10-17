@@ -1,6 +1,6 @@
 # Contributing to SaneVideo
 
-Thanks for helping. SaneVideo is free MIT software.
+Thanks for helping. SaneVideo is free software under the PolyForm Shield license.
 
 ## Quick start
 

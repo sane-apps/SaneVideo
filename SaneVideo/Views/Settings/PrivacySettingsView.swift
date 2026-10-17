@@ -38,7 +38,7 @@ struct PrivacySettingsView: View {
                         Label(String(localized: "settings.privacy.view_license", defaultValue: "View License"), systemImage: "arrow.up.right.square")
                     }
                     .buttonStyle(SaneActionButtonStyle())
-                    .help("Open SaneVideo’s MIT license.")
+                    .help("Open SaneVideo’s PolyForm Shield license.")
                 }
                 .padding(12)
             }

@@ -6,7 +6,7 @@ Philosophy: `~/SaneApps/meta/Brand/NORTH_STAR.md`
 
 ## What Is This
 
-Native macOS video recording and editing app. Local recording, editing, and export. Free MIT app: setup stays, every feature stays unlocked, Buy is Donate.
+Native macOS video recording and editing app. Local recording, editing, and export. Free PolyForm Shield app: setup stays, every feature stays unlocked, Buy is Donate.
 
 ## Source Of Truth
 

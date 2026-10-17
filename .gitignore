@@ -201,3 +201,10 @@ project.yml.bak
 scripts/*.swift
 !scripts/generate_appstore_screenshots.swift
 .claude/worktrees/
+
+# Internal notes and machine receipts (not for the public repo)
+SESSION_HANDOFF.md
+.claude/research.md
+.cursor/
+build-logs/
+.sane/

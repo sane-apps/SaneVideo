@@ -192,6 +192,7 @@ extension ProjectState {
     @MainActor
     func updateCaptions(_ newCaptions: [Caption], for clip: VideoClip) {
         guard let project = currentProject else { return }
+        registerUndo("Edit Captions")
 
         for (trackIndex, track) in project.timeline.tracks.enumerated() {
             if let clipIndex = track.clips.firstIndex(where: { $0.id == clip.id }) {

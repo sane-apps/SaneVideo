@@ -108,7 +108,7 @@ private struct AboutSettingsView: View {
                 )
             ],
             feedbackExtraAttachments: [
-                ("video.badge.waveform", "Recent recording, export, permission, and project state")
+                ("video.badge.waveform", "Permission status and app settings")
             ],
             identitySymbolName: "video.fill",
             identitySymbolColor: .cyan

@@ -1,6 +1,6 @@
 # SaneVideo Architecture
 
-Last updated: 2026-02-02
+Last updated: 2026-10-17
 
 ## Purpose
 
@@ -16,9 +16,9 @@ SaneVideo is a native macOS app for recording, editing, and exporting video. It 
 
 - **Capture**: AVFoundation + ScreenCaptureKit.
 - **Rendering**: Metal/Core Image for real-time effects.
-- **AI features**: On-device frameworks (FoundationModels/Core ML).
+- **Speech (captions, Clean Up)**: Parakeet TDT v3 via FluidAudio on the Neural Engine (default; ~600 MB model downloaded once), or Apple SpeechAnalyzer.
 - **Updates**: Sparkle appcast (configured in Info.plist).
-- **No GitHub DMG**: DMGs are hosted on Cloudflare R2, not in GitHub.
+- **No GitHub binaries**: release ZIPs are hosted on Cloudflare R2, not in GitHub.
 
 ## Architecture Principles
 
@@ -44,12 +44,12 @@ SaneVideo is a native macOS app for recording, editing, and exporting video. It 
 - **Projects**: `~/Movies/SaneVideo/Projects/*.svproj` (fallback to Application Support or temp when unavailable; never Documents).
 - **Recordings**: `~/Movies/SaneVideo/Recordings/`.
 - **Templates**: `~/Movies/SaneVideo/Templates/*.svtemplate`.
-- **Exports**: Defaults to `~/Desktop/` (user configurable).
+- **Exports**: `~/Movies/SaneVideo/Exports/` (sandbox-safe), with a matching `.srt` when captions exist.
 
 ## Key Flows
 
 ### Recording Lifecycle
-1. User starts recording from the app window, menu command, or a supported direct-build hotkey.
+1. User starts recording from the app window, menu command, or the Option-Command-R hot key (held only while the recorder is open).
 2. RecordingEngine configures capture inputs.
 3. Frames/audio are written to a recording file.
 4. Recording stops; output is saved to Recordings.
@@ -118,7 +118,7 @@ stateDiagram-v2
 
 - Camera, Microphone, and Screen Recording are required for capture.
 - Recording, editing, and local export processing are local-first.
-- Network use is scoped to updates, licensing, privacy-safe aggregate app counts, and optional user-configured integrations.
+- Network use is scoped to updates, licensing, anonymous aggregate app counts, and the one-time speech model download.
 - Sparkle update checks contact the configured appcast URL only.
 
 ## Build and Release Truth
@@ -126,7 +126,7 @@ stateDiagram-v2
 - **Single source of truth**: `.saneprocess` in the project root.
 - **Build/test**: `./scripts/SaneMaster.rb verify` (no raw xcodebuild).
 - **Release**: `./scripts/SaneMaster.rb release` (delegates to SaneProcess `release.sh`).
-- **DMGs**: uploaded to Cloudflare R2 (not committed to GitHub).
+- **ZIPs**: uploaded to Cloudflare R2 (not committed to GitHub).
 - **Appcast**: Sparkle feed configured in `SaneVideo/Info.plist`.
 
 ## Testing Strategy

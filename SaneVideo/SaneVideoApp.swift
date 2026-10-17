@@ -772,6 +772,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         LegacyDataCleanup.runOnce()
 
         ServiceContainer.shared.globalHotkeyManager.start()
+        ServiceContainer.shared.appState.updateHotkeys()
 
         // Touch LogManager early so it captures startup logs.
         _ = ServiceContainer.shared.logManager

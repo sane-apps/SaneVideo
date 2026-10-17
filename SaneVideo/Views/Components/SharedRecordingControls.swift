@@ -116,7 +116,7 @@ struct SharedRecordingControls: View {
             message: appState.isRecording
                 ? "Finish the current take and save it into the local project."
                 : "Begin a new local recording with the current camera, screen, mic, and notes setup.",
-            shortcut: "⌘R"
+            shortcut: "⌥⌘R"
         )
         let pauseGuide = RecordingControlGuide(
             title: appState.isPaused ? "Resume recording" : "Pause recording",
@@ -125,14 +125,14 @@ struct SharedRecordingControls: View {
                 : "Temporarily stop the take without closing it."
         )
         let demoGuide = RecordingControlGuide(
-            title: "Demo Studio",
-            message: "Write speaker notes, manage chapters, choose templates, and set local export defaults for this recording."
+            title: "Script",
+            message: "Write the script the teleprompter shows while you record."
         )
         let teleprompterGuide = RecordingControlGuide(
             title: teleprompterVisible ? "Hide teleprompter" : "Show teleprompter",
             message: teleprompterVisible
-                ? "Hide the teleprompter overlay. The overlay is excluded from capture."
-                : "Show the teleprompter overlay using the notes saved in Demo Studio. It stays local and is excluded from capture."
+                ? "Hide the teleprompter."
+                : "Show your script on a teleprompter. It never appears in the recording."
         )
         let deviceGuide = RecordingControlGuide(
             title: "Device menu",

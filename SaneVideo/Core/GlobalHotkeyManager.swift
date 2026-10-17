@@ -2,9 +2,10 @@ import AppKit
 import Carbon
 
 /// System-wide shortcuts that work while the app is hidden during a screen recording.
-/// Option-Command-R starts and stops; Option-Command-P pauses, and is held only while recording so it
-/// never takes the key from other apps the rest of the time. Carbon hot keys need no permission and
-/// work in the App Store sandbox.
+/// Option-Command-R starts and stops and is held only while the recorder is open or a take runs;
+/// Option-Command-P pauses and is held only while recording. The rest of the time other apps keep
+/// those keys (Safari and Xcode use Option-Command-R). Carbon hot keys need no permission and work in
+/// the App Store sandbox.
 @MainActor
 final class GlobalHotkeyManager {
     private enum Hotkey: UInt32 {
@@ -34,11 +35,14 @@ final class GlobalHotkeyManager {
         if status != noErr {
             AppLogger.recording.error("Hot keys: could not install handler (\(status))")
         }
-        register(.record, keyCode: UInt32(kVK_ANSI_R))
     }
 
-    /// Option-Command-P is held only while a recording runs.
-    func setRecording(_ isRecording: Bool) {
+    func update(recorderOpen: Bool, isRecording: Bool) {
+        if recorderOpen || isRecording {
+            register(.record, keyCode: UInt32(kVK_ANSI_R))
+        } else {
+            unregister(.record)
+        }
         if isRecording {
             register(.pause, keyCode: UInt32(kVK_ANSI_P))
         } else {

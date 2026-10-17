@@ -25,37 +25,15 @@ actor SmartFillerDetector {
     func detectFillers(in words: [CaptionWord]) -> [Int] {
         var fillerIndices: [Int] = []
 
-        let fullText = words.map { $0.text }.joined(separator: " ")
-
-        let tagger = NLTagger(tagSchemes: [.lexicalClass, .nameType])
-        tagger.string = fullText
-
-        var wordStartPositions: [String.Index] = []
-
-        var searchStart = fullText.startIndex
-        for word in words {
-            if let range = fullText.range(of: word.text, range: searchStart ..< fullText.endIndex) {
-                wordStartPositions.append(range.lowerBound)
-                searchStart = range.upperBound
-            } else {
-                wordStartPositions.append(fullText.startIndex)
-            }
-        }
-
         for (index, word) in words.enumerated() {
             let cleanWord = word.text.lowercased().trimmingCharacters(in: .punctuationCharacters)
 
             guard !cleanWord.isEmpty else { continue }
 
+            // Clean Up cuts without a review step, so only sounds that are never real words are cut.
+            // "like", "well", "so", "right" and "actually" carry meaning too often to remove blindly.
             if isDefiniteFiller(cleanWord) {
                 fillerIndices.append(index)
-                continue
-            }
-
-            if contextualFillers.contains(cleanWord) {
-                if isFillerInContext(word: cleanWord, at: index, in: words, tagger: tagger, positions: wordStartPositions) {
-                    fillerIndices.append(index)
-                }
             }
         }
 
@@ -129,64 +107,5 @@ actor SmartFillerDetector {
             "hmm", "hm", "mhm", "uh-huh", "mm-hmm"
         ]
         return definiteFillers.contains(word)
-    }
-
-    private func isFillerInContext(word: String, at index: Int, in words: [CaptionWord], tagger: NLTagger, positions: [String.Index]) -> Bool {
-        guard index < positions.count else { return false }
-
-        let position = positions[index]
-
-        let (tag, _) = tagger.tag(at: position, unit: .word, scheme: .lexicalClass)
-
-        if let tag = tag {
-            // Interjections are almost always fillers
-            if tag == .interjection {
-                return true
-            }
-
-            let prevWord = index > 0 ? words[index - 1].text.lowercased() : ""
-            let nextWord = index < words.count - 1 ? words[index + 1].text.lowercased() : ""
-
-            switch word {
-            case "like":
-                // "like" at sentence start or after pause is likely filler
-                if prevWord.isEmpty || prevWord.hasSuffix(".") || prevWord.hasSuffix(",") {
-                    return true
-                }
-                // "like" before a verb or adverb is often filler
-                if tag == .particle {
-                    return true
-                }
-
-            case "right":
-                // "right" at end of phrase is filler ("...right?")
-                if nextWord.isEmpty || nextWord == "so" || nextWord == "and" {
-                    return true
-                }
-
-            case "so":
-                // "so" at sentence start followed by pause
-                if prevWord.isEmpty && (nextWord == "um" || nextWord == "uh" || nextWord.isEmpty) {
-                    return true
-                }
-
-            case "well":
-                // "well" at sentence start is often filler
-                if prevWord.isEmpty || prevWord.hasSuffix(".") {
-                    return true
-                }
-
-            case "actually":
-                // "actually" as discourse marker
-                if tag == .adverb && (prevWord.isEmpty || prevWord.hasSuffix(",")) {
-                    return true
-                }
-
-            default:
-                break
-            }
-        }
-
-        return false
     }
 }

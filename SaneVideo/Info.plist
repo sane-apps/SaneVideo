@@ -21,15 +21,15 @@
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.video</string>
 	<key>NSCameraUsageDescription</key>
-	<string>SaneVideo creates beautiful video content by accessing your camera. Your privacy is our priority—recordings stay on your Mac.</string>
+	<string>SaneVideo uses the camera to record you. Recordings stay on your Mac unless you export or share them.</string>
 	<key>NSCameraReactionEffectsEnabled</key>
 	<false/>
 	<key>NSCameraReactionEffectGesturesEnabledDefault</key>
 	<false/>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>SaneVideo captures crystal-clear audio to make your videos truly shine. Audio is processed locally and never leaves your device.</string>
+	<string>SaneVideo uses the microphone to record your voice. Audio is processed on your Mac.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
-	<string>SaneVideo generates intelligent captions to make your content accessible to everyone. All processing happens on-device for maximum privacy.</string>
+	<string>SaneVideo turns your speech into captions on your Mac.</string>
 	<key>NSScreenCaptureDescription</key>
 	<string>SaneVideo lets you record your screen effortlessly to create tutorials, demos, and professional content right from your Mac.</string>
 	<key>NSScreenCaptureUsageDescription</key>

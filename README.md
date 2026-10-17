@@ -61,10 +61,7 @@ Support: [GitHub Sponsors](https://github.com/sponsors/MrSaneApps) · Contribute
   - Split clips (⌘B), ripple delete, trim handles
   - Visual playhead with grid overlay
 
-- **Real-Time Filters** (120fps Metal-accelerated):
-  - **Natural**: Subtle color correction and sharpening
-  - **Cinematic**: Desaturated look with vignette and blue tones
-  - **Vintage**: Warm sepia with film grain and strong vignette
+- **Framing, Background and Effects**: Crop and zoom, blur or replace the background behind you, and color effects (Noir, Sepia, Vignette and more) in the inspector
 
 - **Clean Up** (one click, on your Mac):
   - **Silence Removal**: Cuts the pauses where nobody talks
@@ -117,8 +114,8 @@ Support: [GitHub Sponsors](https://github.com/sponsors/MrSaneApps) · Contribute
 
 ### Recording
 
-- **Keyboard**: `⌘N` for a new recording, `⌥⌘R` to start and stop from any app
-- **Window**: Click the Record button in the toolbar
+- **Keyboard**: `⌘N` for a new recording; `⌥⌘R` starts and stops from any app while the recorder is open
+- **Window**: Click Record in the recorder bar at the bottom
 
 ### Importing Videos
 
@@ -128,17 +125,14 @@ Support: [GitHub Sponsors](https://github.com/sponsors/MrSaneApps) · Contribute
 
 ### Editing
 
-- Select clips in the Media Library (left sidebar)
-- View in the player (center)
-- Arrange on timeline (bottom)
-- Apply filters with the segmented control
-- Split clips at playhead position (⌘B)
+- Press **Clean Up** in the inspector to cut silences and filler words
+- Trim and split on the timeline (⌘B splits at the playhead); every edit can be undone
+- Browse projects, clips and the transcript in the left sidebar
 
 ### Exporting
 
-- Click Export button
-- Choose destination
-- Wait for progress to complete
+- Click **Export** (⌘E). The preset matches your recording.
+- The file lands in `Movies/SaneVideo/Exports`, with a matching `.srt` when the project has captions.
 
 ---
 
@@ -146,15 +140,16 @@ Support: [GitHub Sponsors](https://github.com/sponsors/MrSaneApps) · Contribute
 
 | Shortcut | Action |
 |----------|--------|
-| `⌥⌘R` | Toggle Recording in direct builds where global hotkey support is available |
+| `⌥⌘R` | Start / stop recording (any app, while the recorder is open) |
+| `⌥⌘P` | Pause / resume (while recording) |
 | `⌘N` | New Recording |
 | `⌘I` | Import Video |
 | `Space` | Play/Pause |
 | `←` | Previous Frame |
 | `→` | Next Frame |
-| `J` | Rewind (hint) |
-| `K` | Pause (hint) |
-| `L` | Fast Forward (hint) |
+| `J` | Play backward |
+| `K` | Pause |
+| `L` | Play forward |
 | `⌘B` | Split Clip at Playhead |
 | `Delete` | Delete Selected Clip |
 
@@ -162,9 +157,9 @@ Support: [GitHub Sponsors](https://github.com/sponsors/MrSaneApps) · Contribute
 
 ## 🏗️ Architecture
 
-See [DEVELOPMENT.md](DEVELOPMENT.md) for full architecture details.
+See [ARCHITECTURE.md](ARCHITECTURE.md).
 
-**Key Technologies**: SwiftUI, AVFoundation, ScreenCaptureKit, Metal, Core Image, Vision, Core ML
+**Key Technologies**: SwiftUI, AVFoundation, ScreenCaptureKit, Core Image, Vision, FluidAudio (Parakeet speech model)
 
 ---
 
@@ -174,10 +169,9 @@ SaneVideo is designed with privacy first:
 
 - **App Sandbox** enabled with minimal permissions
 - **Hardened Runtime** for security
-- **Local Processing**: All video processing happens on your Mac
-- **Local processing**: Recording, editing, and local export happen on your Mac
-- **No project upload by default**: Video files stay local unless you explicitly choose an external workflow
-- **Network is optional and scoped**: Updates, licensing, privacy-safe aggregate app counts, and optional integrations may use the network
+- **Local processing**: Recording, editing, speech recognition and export happen on your Mac
+- **No uploads**: Your recordings never leave your Mac unless you share a file yourself
+- **Network use**: update checks, anonymous aggregate app counts, and a one-time download of the speech model (about 600 MB)
 
 ### Permissions Explained
 
@@ -191,7 +185,7 @@ SaneVideo is designed with privacy first:
 
 - **Projects**: `~/Movies/SaneVideo/Projects/`
 - **Recordings**: `~/Movies/SaneVideo/Recordings/`
-- **Exports**: `~/Desktop/` by default, with an app-storage fallback if Desktop is unavailable
+- **Exports**: `~/Movies/SaneVideo/Exports/` (plus `Shorts/` for vertical clips)
 
 All files remain on your local machine. No cloud storage required.
 
@@ -205,9 +199,7 @@ All files remain on your local machine. No cloud storage required.
 
 - **Build environment**: Requires **macOS + Xcode** (the test runner uses `xcodebuild`). Linux environments can’t run the full verification workflow.
 - **One command workflow**: Use `./scripts/SaneMaster.rb verify` (don’t run raw `xcodebuild`).
-- **Test assets**:
-  - Generate lightweight media fixtures with `./scripts/SaneMaster.rb gen_assets` (requires `ffmpeg`).
-  - Assets live in `Tests/Assets/` (e.g., `test_video.mp4`, `test_silence.mp4`).
+- **Test assets** live in `Tests/Assets/` (e.g., `test_video.mp4`, `test_silence.mp4`).
 
 ## 🎨 Design Philosophy
 
@@ -215,7 +207,7 @@ Built on the three pillars of **Power**, **Love**, and **Sound Mind**:
 
 - **Power** (Agency): Native macOS, on-device processing, no lock-in. You control your tools.
 - **Love** (Service): Solves real problems for real creators. No dark patterns, no extraction.
-- **Sound Mind** (Clarity): Clean interface, 120fps Metal filters, calm experience. Reduces noise.
+- **Sound Mind** (Clarity): Clean interface, one-click Clean Up, calm experience. Reduces noise.
 
 ---
 
@@ -223,9 +215,9 @@ Built on the three pillars of **Power**, **Love**, and **Sound Mind**:
 
 - ✅ Screen + Camera Recording
 - ✅ Timeline Editing
-- ✅ Real-time Filters
-- ✅ HEVC Export
-- [x] Magic Fix (Silence & Filler Removal)
+- ✅ Clean Up (silence and filler-word removal)
+- ✅ Captions, transcript and `.srt` export
+- ✅ Export, Shorts, GIF and thumbnails
 
 ---
 

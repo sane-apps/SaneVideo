@@ -4,7 +4,7 @@ import SaneUI
 extension SaneDiagnosticsService {
     static let shared = SaneDiagnosticsService(
         appName: "SaneVideo",
-        subsystem: "com.sanevideo.app",
+        subsystem: "com.sanevideo.SaneVideo", // must match AppLogger, or reports carry no logs
         githubRepo: "SaneVideo",
         settingsCollector: { await collectSaneVideoSettings() }
     )

@@ -316,7 +316,7 @@ struct MainContentView: View {
                 .pickerStyle(.segmented)
                 .labelStyle(.titleAndIcon)
                 .fixedSize()
-                .help("Switch between recording and editing (⌘M)")
+                .help("Switch between recording and editing")
                 .accessibilityIdentifier(AccessibilityIdentifiers.modeSwitcher)
             }
 

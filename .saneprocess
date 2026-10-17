@@ -153,11 +153,11 @@ appstore:
       description: >-
         SaneVideo records your screen, camera, and microphone, then cleans up the take for you.
 
-        RECORD: Share a screen or window with your camera in a movable bubble, or record the camera alone. Switch between camera and screen mid-take. Pause and resume from anywhere with Option-Command-P; start and stop with Option-Command-R. A teleprompter keeps your script in view without showing up in the video.
+        RECORD: Share a screen or window with your camera in a movable bubble, or record the camera alone. Switch between camera and screen mid-take. While the recorder is open, Option-Command-R starts and stops from any app, and Option-Command-P pauses. A teleprompter keeps your script in view without showing up in the video.
 
-        CLEAN UP: One click cuts the silences and the "um"s and "uh"s, evens out your voice, and smooths each cut. Every cut can be undone.
+        CLEAN UP: One click cuts the silences and the "um"s and "uh"s, evens out your voice, and smooths each cut. Real words are never cut, and every cut can be undone.
 
-        CAPTIONS: Captions and a searchable transcript are made on your Mac. Export subtitles as SRT or VTT, or burn them into the video.
+        CAPTIONS: Captions and a searchable transcript are made on your Mac. Every export comes with a matching SRT caption file for YouTube; VTT and PDF transcripts too.
 
         EXPORT: YouTube-ready files that match your recording, vertical Shorts, GIFs, thumbnails, and a transcript PDF.
 
@@ -171,9 +171,9 @@ appstore:
     The app asks for Camera and Microphone only for recording. Screen & System Audio Recording is used for screen capture through Apple's screen capture picker. Clean Up and captions download a speech model once (about 600 MB, from Hugging Face) and run it on the Mac; no audio or video is sent anywhere.
   review_notes_by_platform:
     macos: >-
-      Fastest review path: launch SaneVideo, grant Camera and Microphone, press Record, speak for a few seconds with a pause, then stop. The recording opens in the editor. Press Clean Up (the first run downloads the speech model, about 600 MB), then Export. The app is free; Donate is optional.
+      Fastest review path: launch SaneVideo, grant Camera and Microphone, press Record, speak for a few seconds with a pause, then stop, and choose Edit Now. Press Clean Up (the first run downloads the speech model, about 600 MB), then Export. The app is free; Donate is optional.
 
-      Screen recording: choose Screen in the recorder bar and pick a screen or window in Apple's picker. Option-Command-R starts and stops recording from any app; Option-Command-P pauses while recording.
+      Screen recording: choose Screen in the recorder bar and pick a screen or window in Apple's picker. While the recorder is open, Option-Command-R starts and stops recording from any app; Option-Command-P pauses while recording.
   accessibility_declarations:
     publish: true
     mac:

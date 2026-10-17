@@ -27,7 +27,7 @@ struct KeyboardShortcutsSheet: View {
 
             ScrollView {
                 VStack(spacing: 24) {
-                    ShortcutSection(title: "Recording (works in any app)", shortcuts: [
+                    ShortcutSection(title: "Recording (any app, while the recorder is open)", shortcuts: [
                         ("Start / Stop Recording", "⌥⌘R"),
                         ("Pause / Resume", "⌥⌘P")
                     ])

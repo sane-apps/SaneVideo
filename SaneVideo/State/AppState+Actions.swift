@@ -23,8 +23,9 @@ extension AppState {
             includeCameraOverlay: cameraEnabled || cameraState.isActive
         )
 
-        // Hide the app while screen sharing so its window is not recorded.
-        if windowManager.isScreenSharing {
+        // Hide the app while screen sharing so its window is not recorded, but only once the start went
+        // ahead: a refused start shows its error in this window.
+        if windowManager.isScreenSharing, recordingState.isPreparing || recordingState.isRecording {
             windowManager.minimizeMainWindow()
         }
     }

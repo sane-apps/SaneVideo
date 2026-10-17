@@ -8,7 +8,6 @@ struct TranscriptionEditorView: View {
 
     @State private var searchText = ""
     @State private var isRefining = false
-    @State private var isTranslating = false
     @State private var isGeneratingTranscript = false
     @State private var showStylePicker = false
 
@@ -55,20 +54,8 @@ struct TranscriptionEditorView: View {
                             .foregroundColor(Theme.Colors.accent)
                     }
                     .buttonStyle(.plain)
-                    .help(String(localized: "transcript.refine.help", defaultValue: "AI Refine Grammar & Punctuation"))
+                    .help(String(localized: "transcript.refine.help", defaultValue: "Fix grammar and punctuation (undo with ⌘Z)"))
                     .disabled(isRefining)
-
-                    if #available(macOS 15.0, *) {
-                        Button {
-                            translateCaptions()
-                        } label: {
-                            Image(systemName: "character.book.closed")
-                                .foregroundColor(Theme.Colors.accent)
-                        }
-                        .buttonStyle(.plain)
-                        .help(String(localized: "transcript.translate.help", defaultValue: "Translate to Spanish (macOS 15+)"))
-                        .disabled(isTranslating)
-                    }
                 }
             }
             .padding(10)
@@ -209,7 +196,7 @@ struct TranscriptionEditorView: View {
 
             appState.projectState.updateCaptions(updatedCaptions, for: clip)
 
-            AppLogger.project.info("📝 Updated caption \(caption.id): '\(newText)'")
+            AppLogger.project.info("📝 Updated caption \(caption.id) (\(newText.count) characters)")
         }
     }
 
@@ -235,35 +222,6 @@ struct TranscriptionEditorView: View {
                 await MainActor.run {
                     isRefining = false
                     ServiceContainer.shared.toastManager.show(error.localizedDescription, type: .error)
-                }
-            }
-        }
-    }
-
-    private func translateCaptions() {
-        guard let clip = currentClip else { return }
-        isTranslating = true
-        Task {
-            if #available(macOS 26.0, *) {
-                do {
-                    var translatedCaptions: [Caption] = []
-                    for caption in clip.captions {
-                        let translatedText = try await ServiceContainer.shared.translationService.translate(caption.text, to: "es") // Default to Spanish for now
-                        var newCaption = caption
-                        newCaption.text = translatedText
-                        translatedCaptions.append(newCaption)
-                    }
-
-                    await MainActor.run {
-                        appState.projectState.updateCaptions(translatedCaptions, for: clip)
-                        isTranslating = false
-                        ServiceContainer.shared.toastManager.show(String(localized: "toast.transcript.translated", defaultValue: "Transcript translated to Spanish!"))
-                    }
-                } catch {
-                    await MainActor.run {
-                        isTranslating = false
-                        ServiceContainer.shared.toastManager.show(error.localizedDescription, type: .error)
-                    }
                 }
             }
         }

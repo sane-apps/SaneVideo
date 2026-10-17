@@ -216,42 +216,6 @@ struct RepurposingSheet: View {
                     .help("Raise for more options; lower for a tighter shortlist.")
                 }
 
-                Divider().overlay(Theme.Colors.divider)
-
-                VStack(alignment: .leading, spacing: 10) {
-                    Label("Analysis", systemImage: "waveform.badge.magnifyingglass")
-                        .saneReadableSectionTitle()
-
-                    Toggle("Detect faces", isOn: $settings.detectFaces)
-                        .help("Biases toward moments where the presenter is visible and engaged.")
-                        .accessibilityIdentifier("repurposing.detect_faces")
-                    Toggle("Detect highlights", isOn: $settings.detectHighlights)
-                        .help("Biases toward energetic or visually important moments.")
-                        .accessibilityIdentifier("repurposing.detect_highlights")
-                    Toggle("Use captions", isOn: $settings.useCaptions)
-                        .help("Uses existing captions to help identify meaningful spoken segments.")
-                        .accessibilityIdentifier("repurposing.use_captions")
-                    Toggle("Avoid silence", isOn: $settings.avoidSilence)
-                        .help("Skips long pauses so the candidates feel tighter.")
-                        .accessibilityIdentifier("repurposing.avoid_silence")
-                }
-
-                Divider().overlay(Theme.Colors.divider)
-
-                VStack(alignment: .leading, spacing: 10) {
-                    Label("Export", systemImage: "square.and.arrow.up")
-                        .saneReadableSectionTitle()
-
-                    Toggle("Add captions", isOn: $settings.addCaptions)
-                        .help("Burns captions into the short exports.")
-                        .accessibilityIdentifier("repurposing.add_captions")
-                    Toggle("Smart crop", isOn: $settings.smartCrop)
-                        .help("Adjusts framing to keep the most important region centered in the crop.")
-                        .accessibilityIdentifier("repurposing.smart_crop")
-                    Toggle("Normalize audio", isOn: $settings.normalizeAudio)
-                        .help("Levels loudness so the exported shorts feel more consistent.")
-                        .accessibilityIdentifier("repurposing.normalize_audio")
-                }
             }
             .padding(14)
             .foregroundStyle(.white)

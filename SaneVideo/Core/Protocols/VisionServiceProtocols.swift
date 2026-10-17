@@ -1,5 +1,3 @@
-// Protocols for Vision services to enable mocking in tests
-
 import AVFoundation
 import AppKit
 import CoreImage
@@ -9,7 +7,6 @@ import Vision
 
 /// @mockable
 protocol FaceTrackingServiceProtocol: Sendable {
-    /// Detect all faces in an image
     /// Returns array of normalized face rectangles (0-1 coordinate space, top-left origin)
     func detectFaces(in image: CIImage) async throws -> [CGRect]
 
@@ -41,7 +38,6 @@ protocol SaliencyServiceProtocol: Sendable {
     /// Detect objects in an image (object-based saliency)
     func detectObjects(in image: CIImage) async throws -> [CGRect]
 
-    /// Calculate smart crop rectangle for a target aspect ratio
     func calculateSmartCrop(
         for image: CIImage,
         targetAspectRatio: CGFloat,
@@ -60,7 +56,6 @@ protocol SaliencyServiceProtocol: Sendable {
 
 /// @mockable
 protocol PersonSegmentationServiceProtocol: Sendable {
-    /// Generate a segmentation mask for persons in the image
     func generateMask(
         for image: CIImage,
         quality: VNGeneratePersonSegmentationRequest.QualityLevel,
@@ -70,21 +65,18 @@ protocol PersonSegmentationServiceProtocol: Sendable {
     /// Clear cached request (call when done processing video)
     func clearCache() async
 
-    /// Apply background blur to image, keeping person sharp
     func applyBackgroundBlur(
         to image: CIImage,
         blurRadius: Float,
         reuseRequest: Bool
     ) async throws -> CIImage
 
-    /// Replace background with a solid color
     func replaceBackground(
         in image: CIImage,
         with color: NSColor,
         reuseRequest: Bool
     ) async throws -> CIImage
 
-    /// Replace background with an image
     func replaceBackground(
         in image: CIImage,
         with backgroundImage: CIImage,

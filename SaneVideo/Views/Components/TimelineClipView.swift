@@ -15,8 +15,6 @@ struct TimelineClipView: View {
     var onRemoveSilence: (() -> Void)?
     var onRemoveFillers: (() -> Void)?
     var onGenerateCaptions: (() -> Void)?
-    // 2025-12-31: Removed onSmartCrop, onAutoFrame, onFindHighlights
-    // These features are accessed via their canonical locations in the inspector
     var onFindGestures: (() -> Void)?
     var onPrivacyBlur: (() -> Void)?
     var onDeleteFile: (() -> Void)?
@@ -31,10 +29,9 @@ struct TimelineClipView: View {
     @State private var leftTrimOffset: CGFloat = 0
     @State private var rightTrimOffset: CGFloat = 0
     @State private var isHovering = false
-    @State private var isHoveringHandle = false // Track if hovering over trim handle
+    @State private var isHoveringHandle = false
     @State private var showingDeleteFileConfirmation = false
 
-    // Track waveform loading task for cancellation
     @State private var waveformLoadTask: Task<Void, Never>?
 
     private let handleWidth: CGFloat = 14
@@ -61,7 +58,6 @@ struct TimelineClipView: View {
 
         return ZStack(alignment: .leading) {
             HStack(spacing: 0) {
-                // LEFT TRIM HANDLE
                 ClipTrimHandle(
                     isLeft: true, clipHeight: clipHeight, pixelsPerSecond: pixelsPerSecond,
                     clip: clip, playheadTime: playheadTime, snapThreshold: snapThreshold,
@@ -70,14 +66,11 @@ struct TimelineClipView: View {
                     onHoverChange: { hovering in isHoveringHandle = hovering }
                 )
 
-                // CLIP CONTENT
-                // Don't use scale effect - it changes layout and pushes handles out of bounds
-                // Use brightness/opacity instead for visual feedback that doesn't affect layout
+                // No scaleEffect: it changes layout and pushes the handles out of bounds; brightness and opacity give feedback instead.
                 clipContent
                     .brightness((isHovering && !isHoveringHandle) ? 0.1 : 0.0)
                     .animation(.smoothUI, value: isHovering)
 
-                // RIGHT TRIM HANDLE
                 ClipTrimHandle(
                     isLeft: false, clipHeight: clipHeight, pixelsPerSecond: pixelsPerSecond,
                     clip: clip, playheadTime: playheadTime, snapThreshold: snapThreshold,
@@ -98,8 +91,7 @@ struct TimelineClipView: View {
         .shadow(color: .black.opacity(0.3), radius: 2, x: 0, y: 1)
         .overlay(RoundedRectangle(cornerRadius: 6).stroke(isSelected ? Color.accentColor : Color.clear, lineWidth: 2))
         .onHover { hovering in
-            // Don't scale if hovering over trim handle
-            // This prevents the clip from expanding when trying to grab the handle
+            // No scaling while hovering a trim handle, so the clip doesn't grow as the user grabs it.
             guard !isHoveringHandle else { return }
             withAnimation(.smoothUI) { isHovering = hovering }
         }
@@ -112,19 +104,15 @@ struct TimelineClipView: View {
             onSelect: onSelect
         ))
         .task {
-            // Load waveform on-demand when view appears
-            // This prevents loading waveforms for off-screen clips
+            // Load the waveform only when the view appears, so off-screen clips skip it.
             waveformLoadTask = Task { @MainActor in
                 await loadWaveform()
             }
-            // Don't await here - let task run in background
-            // The view will update when waveformSamples is set
+            // Not awaited; the view updates when waveformSamples is set.
         }
         .onDisappear {
-            // Cancel waveform load when view disappears (clip off-screen)
             waveformLoadTask?.cancel()
             waveformLoadTask = nil
-            // Also cancel the load in the service
             Task {
                 await ServiceContainer.shared.waveformService.cancelLoad(for: clip)
             }
@@ -159,7 +147,6 @@ struct TimelineClipView: View {
     private var clipContent: some View {
         VStack(spacing: 0) {
             if clip.isMissing {
-                // OFFLINE STATE
                 ZStack {
                     Rectangle()
                         .fill(Color.red.opacity(0.8))
@@ -178,7 +165,6 @@ struct TimelineClipView: View {
                     }
                 }
             } else {
-                // VIDEO TRACK (Top ~55%)
                 ZStack(alignment: .leading) {
                     Rectangle().fill(Color.accentColor.opacity(0.3))
                     thumbnailStrip
@@ -187,7 +173,6 @@ struct TimelineClipView: View {
                 .frame(height: clipHeight * 0.55)
                 .clipped()
 
-                // AUDIO TRACK (Bottom ~45%)
                 ZStack(alignment: .bottom) {
                     Rectangle().fill(Color(white: 0.15))
                     waveformDisplay
@@ -209,19 +194,14 @@ struct TimelineClipView: View {
     // MARK: - Components
 
     private var thumbnailStrip: some View {
-        // ROBUSTNESS: 10-hour video support
-        // We calculate how many thumbnails we need based on width, but we DO NOT load them all.
-        // LazyHStack ensures we only create the Views for visible area.
-        // Each View then triggers its own async load.
+        // Handles 10-hour videos: LazyHStack creates only the visible thumbnail cells, and each loads itself.
         let targetThumbWidth: CGFloat = 80
-        // Ensure at least 1 thumb
         let thumbCount = max(1, Int(clipWidth / targetThumbWidth))
         let singleThumbWidth = clipWidth / CGFloat(thumbCount)
 
         // LazyHStack with explicit frame to prevent layout thrashing
         return LazyHStack(spacing: 0) {
             ForEach(0..<thumbCount, id: \.self) { index in
-                // Calculate time for this specific thumbnail slot
                 let fraction = Double(index) / Double(max(1, thumbCount))
                 let time = CMTime(seconds: clip.effectiveDuration.seconds * fraction, preferredTimescale: 600)
                 let originalTime = clip.originalTime(forEffectiveTime: time)
@@ -300,23 +280,14 @@ struct TimelineClipView: View {
         }
     }
 
-    // 2025-12-31: Removed hover buttons (scissors/trash) from timeline clips
-    // These actions are available via:
-    // - Toolbar below video (scissors, trash icons)
-    // - Context menu (right-click)
-    // - Keyboard shortcuts (⌘B split, ⌫ delete)
-    // Removing them declutters the timeline and follows industry standard (FCP, Premiere)
-
     // MARK: - Data Loading
 
-    // Removed eager loadThumbnails() to prevent OOM on large files
+    // Thumbnails load lazily per cell; eager loading ran out of memory on large files.
 
     private func loadWaveform() async {
-        // Check for cancellation before loading
         guard !Task.isCancelled else { return }
 
         if let samples = await ServiceContainer.shared.waveformService.waveform(for: clip) {
-            // Check cancellation again before updating UI
             guard !Task.isCancelled else { return }
             await MainActor.run { self.waveformSamples = samples }
         }
@@ -327,7 +298,6 @@ struct TimelineClipView: View {
     }
 }
 
-// Extension to set cursor
 extension View {
     func cursor(_ cursor: NSCursor) -> some View {
         self.onHover { inside in
@@ -361,13 +331,11 @@ struct TimelineThumbnailCell: View {
         }
         .clipped()
         .task {
-            // Check cache first, then load
             // Note: ServiceContainer handles internal caching of generated results
             guard image == nil && !isLoading else { return }
             isLoading = true
 
-            // Use detached task with utility priority for thumbnails
-            // This prevents thumbnail loading from blocking UI
+            // Detached at utility priority so thumbnail loading never blocks the UI.
             let thumb = await Task.detached(priority: .utility) {
                 await ServiceContainer.shared.thumbnailService.thumbnail(
                     for: clip,
@@ -386,7 +354,7 @@ struct TimelineThumbnailCell: View {
 
 // MARK: - Gesture Modifier (to help compiler type-check)
 
-/// CRITICAL FIX: Extract gesture logic to separate modifier to help compiler type-check
+/// Gesture logic lives in its own modifier to help the compiler type-check.
 struct ClipGestureModifier: ViewModifier {
     let isDraggingLeftHandle: Bool
     let isDraggingRightHandle: Bool
@@ -397,18 +365,12 @@ struct ClipGestureModifier: ViewModifier {
 
     func body(content: Content) -> some View {
         content
-            // Use gesture priority system to prevent conflicts
-            // Select gesture has lower priority than trim handles (which use highPriorityGesture)
-            // Increase minimumDistance to prevent accidental triggers during trim
+            // Lower priority than the trim handles' highPriorityGesture; the 5pt minimum avoids accidental triggers during trims.
             .gesture(
-                DragGesture(minimumDistance: 5, coordinateSpace: .local) // CRITICAL FIX: Require 5px movement to prevent accidental triggers
+                DragGesture(minimumDistance: 5, coordinateSpace: .local)
                     .onEnded { value in
-                        // Only allow selection if not dragging trim handles
-                        // This prevents gesture conflicts
                         guard !isDraggingLeftHandle && !isDraggingRightHandle else { return }
 
-                        // Check if drag was significant enough to be intentional
-                        // Small movements (< 5px) are likely accidental
                         let dragDistance = sqrt(pow(value.translation.width, 2) + pow(value.translation.height, 2))
                         guard dragDistance < 10 else { return } // If dragged too far, it's not a click
 
@@ -417,7 +379,6 @@ struct ClipGestureModifier: ViewModifier {
                         let timeOffset = clip.effectiveDuration.seconds * Double(safePercent)
                         let seekTime = CMTimeAdd(clip.startTime, CMTime(seconds: timeOffset, preferredTimescale: 600))
 
-                        // Capture current modifier keys for Cmd+Click (toggle) and Shift+Click (range)
                         let modifiers = NSEvent.modifierFlags
                         onSelect?(seekTime, modifiers)
                     }

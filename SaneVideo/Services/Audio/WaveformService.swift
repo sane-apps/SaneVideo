@@ -9,19 +9,16 @@ actor WaveformService: WaveformServiceProtocol {
     // Cache key: ClipID -> URL used to generate cached waveform
     private var cacheURL: [UUID: URL] = [:]
 
-    // In-progress tasks
     private var tasks: [UUID: Task<[Float], Error>] = [:]
     
     // Limit concurrent waveform loads to prevent UI freezes
-    // Use a semaphore-like pattern with a task queue
     private var activeLoads: Set<UUID> = []
-    private let maxConcurrentLoads = 5 // Limit to 5 concurrent waveform generations
+    private let maxConcurrentLoads = 5
 
     func waveform(for clip: VideoClip) async -> [Float]? {
         // Pick the audio URL that matches playback/export (enhanced audio when duration-aligned).
         let selectedURL = await selectAudioURL(for: clip)
 
-        // Check cache first
         if let cached = cache[clip.id], cacheURL[clip.id] == selectedURL {
             return cached
         } else if cache[clip.id] != nil, cacheURL[clip.id] != selectedURL {
@@ -30,29 +27,23 @@ actor WaveformService: WaveformServiceProtocol {
             cacheURL.removeValue(forKey: clip.id)
         }
 
-        // Check if task already exists
         if let existingTask = tasks[clip.id] {
             return try? await existingTask.value
         }
 
-        // Wait for available slot if at capacity
         while activeLoads.count >= maxConcurrentLoads {
-            // Wait a bit before checking again
             try? await Task.sleep(nanoseconds: 50_000_000) // 50ms
-            // Check if task was cancelled
             if Task.isCancelled {
                 return nil
             }
         }
 
-        // Mark as active load BEFORE creating task
-        // This prevents race condition where multiple tasks could be created
+        // Mark the load active before creating the task so concurrent callers cannot start a duplicate.
         activeLoads.insert(clip.id)
 
         let clipId = clip.id
         let task = Task<[Float], Error> {
             let samples = try await generateWaveform(for: clip, audioURL: selectedURL)
-            // Only cache if task wasn't cancelled
             guard !Task.isCancelled else {
                 return []
             }
@@ -61,43 +52,36 @@ actor WaveformService: WaveformServiceProtocol {
 
         tasks[clip.id] = task
         
-        // Handle cancellation and cleanup properly
         do {
             let samples = try await task.value
-            // Cache result and cleanup on success
             cache[clipId] = samples
             cacheURL[clipId] = selectedURL
             tasks.removeValue(forKey: clipId)
             activeLoads.remove(clipId)
             return samples
         } catch is CancellationError {
-            // Task was cancelled, cleanup
             tasks.removeValue(forKey: clipId)
             activeLoads.remove(clipId)
             return nil
         } catch {
-            // Other error, cleanup
             tasks.removeValue(forKey: clipId)
             activeLoads.remove(clipId)
             return nil
         }
     }
     
-    /// CRITICAL FIX: Cancel waveform load for a clip (e.g., when off-screen)
+    /// Cancels the waveform load for a clip, for example when it scrolls off-screen.
     func cancelLoad(for clip: VideoClip) {
         if let task = tasks[clip.id] {
             task.cancel()
             tasks.removeValue(forKey: clip.id)
             activeLoads.remove(clip.id)
-            // Also remove from cache if it was a partial load
-            // (though typically we'd keep partial results, but for cancellation we clear)
         }
     }
 
     private func generateWaveform(for clip: VideoClip, audioURL: URL) async throws -> [Float] {
         let asset = AVURLAsset(url: audioURL)
 
-        // Load tracks and duration
         let tracks = try await asset.loadTracks(withMediaType: .audio)
         guard let track = tracks.first else {
             await MainActor.run {
@@ -125,9 +109,7 @@ actor WaveformService: WaveformServiceProtocol {
 
         var samples: [Float] = []
 
-        // Dynamic downsampling based on clip duration
-        // Target ~2000 samples for visualization (works well for most waveform widths)
-        // This prevents memory explosion and processing delays for 2+ hour clips
+        // Target about 2000 samples: enough for the waveform, and bounded for multi-hour clips.
         let targetSampleCount = 2000
         // Prefer reading sample rate from the track's format description (avoid hardcoded 44.1k assumptions).
         let sampleRate: Double
@@ -140,12 +122,10 @@ actor WaveformService: WaveformServiceProtocol {
         }
         let totalAudioSamples = durationSeconds * sampleRate
 
-        // Calculate how many audio samples to skip per output sample
         // Minimum of 800 for short clips to maintain performance
         let calculatedSkip = max(800, Int(totalAudioSamples / Double(targetSampleCount)))
-        let accumulationWindow = max(10, calculatedSkip / 800) // Scale accumulation window with skip rate
+        let accumulationWindow = max(10, calculatedSkip / 800)
 
-        // Read samples
         while reader.status == .reading {
             guard let sampleBuffer = trackOutput.copyNextSampleBuffer() else { break }
             guard let blockBuffer = CMSampleBufferGetDataBuffer(sampleBuffer) else { continue }
@@ -162,8 +142,7 @@ actor WaveformService: WaveformServiceProtocol {
             }
             guard copyStatus == kCMBlockBufferNoErr else { continue }
 
-            // Downsample: Take max amplitude in chunk
-            // Dynamic rate based on clip length to ensure ~2000 total samples
+            // Downsample: keep the max amplitude in each chunk.
             var maxAmp: Float = 0
             var count = 0
 
@@ -205,7 +184,6 @@ actor WaveformService: WaveformServiceProtocol {
 
     /// Clear the waveform cache (called during memory pressure)
     func clearCache() {
-        // Cancel all in-progress tasks before clearing
         for task in tasks.values {
             task.cancel()
         }

@@ -25,7 +25,6 @@ struct SaneVideoApp: App {
     }
 
     #if !APP_STORE
-        // Sparkle auto-update service (manual check only for launch)
         @State private var updaterService = ServiceContainer.shared.updaterService
     #endif
 
@@ -119,7 +118,6 @@ struct SaneVideoApp: App {
 
         .commands {
             #if !APP_STORE
-                // Sparkle: Check for Updates (after About SaneVideo)
                 CommandGroup(after: .appInfo) {
                     Button(String(localized: "menu.app.check_updates", defaultValue: "Check for Updates...")) {
                         updaterService.checkForUpdates()
@@ -187,10 +185,8 @@ struct SaneVideoApp: App {
                 .keyboardShortcut("i", modifiers: [.command, .option])
                 .accessibilityIdentifier("menu.view.toggle_inspector")
             }
-            // Up/Down Arrow and D key shortcuts are handled via .onKeyPress() in EditorLayoutView
-            // Menu commands with arrow keys don't work (arrows are used for menu navigation)
+            // Arrow and D shortcuts live in EditorLayoutView's .onKeyPress(), because menus use arrow keys for navigation.
 
-            // Edit Menu: Magic Fix Batch Operations
             CommandGroup(after: .undoRedo) {
                 Divider()
 
@@ -773,18 +769,15 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         WelcomeSheetResidue.purge()
         LegacyDataCleanup.runOnce()
 
-        // Initialize global hotkey manager
         #if !APP_STORE
             ServiceContainer.shared.globalHotkeyManager.start()
         #endif
 
-        // Initialize LogManager to capture early logs
+        // Touch LogManager early so it captures startup logs.
         _ = ServiceContainer.shared.logManager
 
-        // Initialize MetricKit crash and performance monitoring
         ServiceContainer.shared.crashReporter.start()
 
-        // Initialize memory pressure handling
         Task { @MainActor in
             _ = ServiceContainer.shared.memoryManager // Initialize to start memory pressure observer
         }

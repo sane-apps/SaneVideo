@@ -18,7 +18,7 @@ struct WaveformView: View {
 
                 for (index, sample) in samples.enumerated() {
                     let x = CGFloat(index) * stepX
-                    let amplitude = CGFloat(sample) * (height / 2) * 0.9 // 90% height scale
+                    let amplitude = CGFloat(sample) * (height / 2) * 0.9
 
                     path.move(to: CGPoint(x: x, y: midY - amplitude))
                     path.addLine(to: CGPoint(x: x, y: midY + amplitude))

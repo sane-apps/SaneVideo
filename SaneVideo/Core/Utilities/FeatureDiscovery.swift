@@ -1,10 +1,7 @@
-// Feature discovery system for first-time users
-
 import Combine
 import Foundation
 import SwiftUI
 
-/// Manages feature discovery tooltips and first-use hints
 @MainActor
 @Observable
 class FeatureDiscovery {
@@ -15,12 +12,10 @@ class FeatureDiscovery {
         loadShownTooltips()
     }
 
-    /// Check if a tooltip should be shown (first time only)
     func shouldShowTooltip(for feature: String) -> Bool {
         !shownTooltips.contains(feature)
     }
 
-    /// Mark a tooltip as shown
     func markTooltipShown(for feature: String) {
         shownTooltips.insert(feature)
         saveShownTooltips()
@@ -46,7 +41,6 @@ class FeatureDiscovery {
     }
 }
 
-/// View modifier for showing contextual tooltips on first use
 struct FeatureTooltip: ViewModifier {
     let feature: String
     let message: String
@@ -69,7 +63,6 @@ struct FeatureTooltip: ViewModifier {
             }
             .onAppear {
                 if discovery.shouldShowTooltip(for: feature) {
-                    // Delay to avoid showing immediately
                     DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
                         withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                             showTooltip = true
@@ -114,7 +107,6 @@ struct TooltipView: View {
 }
 
 extension View {
-    /// Show a tooltip on first use of a feature
     func featureTooltip(_ feature: String, message: String) -> some View {
         modifier(FeatureTooltip(feature: feature, message: message))
     }

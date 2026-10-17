@@ -2,13 +2,11 @@ import AudioToolbox
 import Foundation
 import AppKit
 
-/// Centralized manager for auditory feedback (UX Delight)
 @MainActor
 final class SoundManager {
 
     init() {}
 
-    // System Sound IDs can be found via AudioToolbox research or testing.
     // 1113 = Begin Recording (standard on macOS)
     // 1114 = End Recording
     // 1117 = Modern Beep for Error/Warning
@@ -26,7 +24,6 @@ final class SoundManager {
     }
 
     nonisolated func playError() {
-        // Play system alert sound
         AudioServicesPlaySystemSound(errorSoundID)
     }
 

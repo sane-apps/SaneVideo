@@ -30,13 +30,10 @@ final class CameraManager: NSObject, CameraServiceProtocol {
   private let framePublisher = CameraFramePublisher()
   private var cancellables = Set<AnyCancellable>()
 
-  // Cache device discovery session to avoid recreation on each setupSession call.
-  // AVCaptureDevice.DiscoverySession is thread-safe for reads after creation.
-  // Using nonisolated(unsafe) allows access from nonisolated setupSession function.
+  // Cached for the nonisolated setupSession; DiscoverySession reads are thread-safe after creation.
   @ObservationIgnored
   nonisolated(unsafe) private var _cachedDiscoverySession: AVCaptureDevice.DiscoverySession?
 
-  /// Returns cached discovery session, creating it on first access.
   /// Thread-safe: only written once, then read-only.
   nonisolated private var cachedDiscoverySession: AVCaptureDevice.DiscoverySession {
     if let cached = _cachedDiscoverySession {
@@ -65,7 +62,7 @@ final class CameraManager: NSObject, CameraServiceProtocol {
 
   // MARK: - Available Cameras
 
-  /// Returns list of available cameras. Thread-safe.
+  /// Thread-safe.
   var availableCameras: [AVCaptureDevice] {
     if TestEnvironment.suppressPermissionPrompts && !TestEnvironment.allowsHardwareIntegration {
       return []
@@ -102,7 +99,6 @@ final class CameraManager: NSObject, CameraServiceProtocol {
 
       session.beginConfiguration()
 
-      // Remove current video input
       for input in session.inputs {
         if let deviceInput = input as? AVCaptureDeviceInput,
           deviceInput.device.hasMediaType(.video) {
@@ -110,14 +106,12 @@ final class CameraManager: NSObject, CameraServiceProtocol {
         }
       }
 
-      // Add new input
       do {
         let newInput = try AVCaptureDeviceInput(device: device)
         if session.canAddInput(newInput) {
           session.addInput(newInput)
           await MainActor.run {
             self.currentCameraID = deviceID
-            // Customer Service: Remember their choice
             UserDefaults.standard.set(deviceID, forKey: "lastUsedCameraID")
           }
           AppLogger.camera.info("Switched to camera: \(deviceName)")
@@ -152,7 +146,6 @@ final class CameraManager: NSObject, CameraServiceProtocol {
 
   @MainActor
   private func setupBindings() {
-    // Bind permission status
     ServiceContainer.shared.permissionManager.cameraStatusPublisher
       .receive(on: DispatchQueue.main)
       .map { $0 == .granted }
@@ -161,7 +154,6 @@ final class CameraManager: NSObject, CameraServiceProtocol {
       }
       .store(in: &cancellables)
 
-    // Bind signal detection
     framePublisher.onSignalReceived = { [weak self] in
       Task { @MainActor [weak self] in
         self?.hasVideoSignal = true
@@ -173,14 +165,13 @@ final class CameraManager: NSObject, CameraServiceProtocol {
   // MARK: - Public API
 
   func start() async throws {
-    // 1. Skip in tests to prevent TCC crash
+    // Skip in tests to avoid a TCC crash.
     if TestEnvironment.isTesting {
       AppLogger.camera.info("🧪 CameraManager: Skipping start (Test Environment detected)")
       self.isActive = true
       return
     }
 
-    // 2. Check permission
     ServiceContainer.shared.permissionManager.checkCameraPermission()
     let isAuthorized = ServiceContainer.shared.permissionManager.cameraStatus == .granted
 
@@ -212,7 +203,6 @@ final class CameraManager: NSObject, CameraServiceProtocol {
   }
 
   private func internalStart() async throws {
-    // Guard against starting while stopping
     guard !_isStoppingSession else {
       AppLogger.camera.warning("Camera is stopping, deferring start request")
       try await Task.sleep(nanoseconds: 300_000_000)
@@ -221,8 +211,7 @@ final class CameraManager: NSObject, CameraServiceProtocol {
     }
 
     if let existingSession = session {
-      // Reconfigure format if preferences changed since session was created
-      // Previously, format was only set on initial session creation, causing FPS mismatch
+      // Reconfigure if format preferences changed since the session was created.
       let resolution = ServiceContainer.shared.userPreferences.recordingResolution
       let fps = ServiceContainer.shared.userPreferences.recordingFPS
       AppLogger.camera.info("📷 Existing session found, checking format matches prefs: \(Int(fps))fps @ \(resolution.displayName)")
@@ -254,13 +243,10 @@ final class CameraManager: NSObject, CameraServiceProtocol {
     try await self.startSessionInternal(session)
   }
 
-  /// Wait for AVCaptureSession.isRunning using KVO instead of sleep
-  /// This is more reliable than Task.sleep as it responds immediately when session starts
   private func waitForSessionRunning(_ session: AVCaptureSession, timeout: TimeInterval = 2.0) async throws {
     if session.isRunning { return }
 
-    // Use a simple polling approach with short intervals - more Swift 6 compatible
-    // than KVO which has complex closure/continuation interactions
+    // Polls instead of using KVO; KVO continuations are awkward under Swift 6.
     let startTime = Date()
     let pollInterval: UInt64 = 50_000_000 // 50ms
 
@@ -298,14 +284,12 @@ final class CameraManager: NSObject, CameraServiceProtocol {
 
       AppLogger.camera.info("Session .startRunning() returned. isRunning: \(session.isRunning)")
 
-      // Use KVO observation instead of Task.sleep for session start verification
       do {
         try await waitForSessionRunning(session, timeout: 2.0)
         AppLogger.camera.info("✅ Camera session IS running (KVO confirmed)")
       } catch {
         AppLogger.camera.warning("⚠️ Camera session not running after first attempt, retrying...")
 
-        // Retry once
         await Task.detached(priority: .userInitiated) {
           session.startRunning()
         }.value
@@ -384,7 +368,7 @@ final class CameraManager: NSObject, CameraServiceProtocol {
     }
   }
 
-  // NEW: Recovery API for Watchdog
+  // Recovery entry point for the watchdog.
   func restartSession() {
     AppLogger.camera.warning("Forcing session restart due to watchdog trigger")
     stop()
@@ -443,13 +427,9 @@ final class CameraManager: NSObject, CameraServiceProtocol {
     let session = AVCaptureSession()
     session.beginConfiguration()
 
-    // 0. Stabilization Delay (Workaround for CMIO racing on Tahoe)
-    // Helps avoid "Connection invalid" errors during rapid startup.
+    // Short delay to work around CMIO racing on Tahoe ("Connection invalid" errors on fast startup).
     try? await Task.sleep(nanoseconds: 200_000_000)  // 0.2s
 
-    // 1. Discovery - Use cached discovery session (OPTIMIZATION)
-    // Avoids recreating AVCaptureDevice.DiscoverySession on each setup call.
-    // Discovery is faster on Apple Silicon but caching still reduces overhead.
     let devices = cachedDiscoverySession.devices
     AppLogger.camera.info("Found \(devices.count) camera devices")
 
@@ -476,7 +456,7 @@ final class CameraManager: NSObject, CameraServiceProtocol {
       return nil
     }
 
-    // 2. Video Input (Add BEFORE format selection)
+    // Add the input before choosing a format.
     AppLogger.camera.info("Selected camera: \(camera.localizedName)")
     do {
       let input = try AVCaptureDeviceInput(device: camera)
@@ -501,8 +481,7 @@ final class CameraManager: NSObject, CameraServiceProtocol {
       }
     }
 
-    // 3. Format Selection & Conflict Mitigation
-    // Workaround for Portrait Effects crash on macOS 26.
+    // Workaround for a Portrait Effects crash on macOS 26.
     var bestSafeFormat: AVCaptureDevice.Format?
 
     let targetResolution = resolution
@@ -511,7 +490,6 @@ final class CameraManager: NSObject, CameraServiceProtocol {
     AppLogger.camera.info(
       "🎯 Looking for format: \(targetResolution.displayName) @ \(Int(targetFPS))fps")
 
-    // Log all available formats to understand what's available
     AppLogger.camera.info("📷 Camera has \(camera.formats.count) total formats")
     for (index, format) in camera.formats.enumerated() {
       let dims = CMVideoFormatDescriptionGetDimensions(format.formatDescription)
@@ -520,14 +498,11 @@ final class CameraManager: NSObject, CameraServiceProtocol {
       AppLogger.camera.debug("  Format \(index): \(dims.width)x\(dims.height) @ max \(Int(maxFps))fps, portrait=\(isPortrait)")
     }
 
-    // IsPortraitEffectSupported means format CAN do portrait, not that it's ACTIVE.
-    // Modern Mac cameras have ALL formats supporting portrait effect (it's a software feature).
-    // Filtering by isPortraitEffectSupported removes ALL formats on Mac Studio camera.
-    // Use all formats - portrait effect overhead is negligible when not actively enabled.
+    // Do not filter by isPortraitEffectSupported: every Mac camera format reports it, so filtering removes them all.
     let safeFormats = camera.formats
     AppLogger.camera.info("📷 Using all \(safeFormats.count) camera formats (portrait filter removed)")
 
-    // Sort to find the CLOSEST match to target resolution and FPS
+    // Sort by closeness to the target resolution, then by FPS.
     let sortedSafeFormats = safeFormats.sorted { (f1, f2) -> Bool in
       let dim1 = CMVideoFormatDescriptionGetDimensions(f1.formatDescription)
       let dim2 = CMVideoFormatDescriptionGetDimensions(f2.formatDescription)
@@ -536,17 +511,15 @@ final class CameraManager: NSObject, CameraServiceProtocol {
 
       let targetRes = Int(targetResolution.size.width) * Int(targetResolution.size.height)
 
-      // Calculate delta from target (smaller delta is better)
       let delta1 = abs(res1 - targetRes)
       let delta2 = abs(res2 - targetRes)
 
-      if delta1 != delta2 { return delta1 < delta2 }  // Closer to target resolution wins
+      if delta1 != delta2 { return delta1 < delta2 }
 
       let maxFps1 = f1.videoSupportedFrameRateRanges.map { $0.maxFrameRate }.max() ?? 0
       let maxFps2 = f2.videoSupportedFrameRateRanges.map { $0.maxFrameRate }.max() ?? 0
 
-      // If resolutions are equal closeness, check FPS
-      // We want at least targetFPS
+      // At equal resolution distance, prefer formats that reach targetFPS.
       if maxFps1 >= targetFPS && maxFps2 < targetFPS { return true }
       if maxFps2 >= targetFPS && maxFps1 < targetFPS { return false }
 
@@ -585,8 +558,7 @@ final class CameraManager: NSObject, CameraServiceProtocol {
           session.sessionPreset = .high
         }
 
-        // Even with presets, we MUST set frame duration!
-        // Without this, camera defaults to low FPS (often 15fps)
+        // Always set frame duration; otherwise the camera defaults to a low FPS (often 15).
         let currentFormat = camera.activeFormat
         if let frameRate = Self.supportedFrameDuration(for: targetFPS, format: currentFormat) {
           camera.activeVideoMinFrameDuration = frameRate.duration
@@ -596,11 +568,6 @@ final class CameraManager: NSObject, CameraServiceProtocol {
           AppLogger.camera.warning("⚠️ Preset fallback format has no supported frame-rate ranges; leaving system default FPS")
         }
       }
-
-      // Note: macOS HDR camera support is handled automatically via format selection
-      // (10-bit YUV formats when available). The activeFormat already provides
-      // the highest quality available from the selected camera.
-
     } catch {
       AppLogger.camera.error("Failed to lock device for configuration: \(error)")
       Task { @MainActor in
@@ -608,7 +575,6 @@ final class CameraManager: NSObject, CameraServiceProtocol {
       }
     }
 
-    // 4. Video Output
     let videoOutput = AVCaptureVideoDataOutput()
     videoOutput.videoSettings = [
       kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA
@@ -618,8 +584,6 @@ final class CameraManager: NSObject, CameraServiceProtocol {
 
     if session.canAddOutput(videoOutput) {
       session.addOutput(videoOutput)
-
-      // Stabilization is handled by system or specific formats on macOS
     }
 
     session.commitConfiguration()
@@ -630,8 +594,6 @@ final class CameraManager: NSObject, CameraServiceProtocol {
   // MARK: - Format Reconfiguration
 
   /// Reconfigure camera format if preferences have changed since session was created.
-  /// FIX (2025-12-31): Previously format was only set on initial session creation,
-  /// causing recordings to use wrong FPS (e.g., 15fps instead of 60fps).
   private func reconfigureFormatIfNeeded(
     session: AVCaptureSession,
     resolution: SaneExportSettings.ExportResolution,
@@ -642,7 +604,6 @@ final class CameraManager: NSObject, CameraServiceProtocol {
       return
     }
 
-    // Check if current format already matches desired settings
     let currentFormat = camera.activeFormat
     let currentDims = CMVideoFormatDescriptionGetDimensions(currentFormat.formatDescription)
     let currentMaxFPS = currentFormat.videoSupportedFrameRateRanges.map { $0.maxFrameRate }.max() ?? 0
@@ -655,7 +616,6 @@ final class CameraManager: NSObject, CameraServiceProtocol {
     AppLogger.camera.info("📷 Current format: \(currentDims.width)x\(currentDims.height) @ \(Int(currentFPS))fps (max: \(Int(currentMaxFPS))fps)")
     AppLogger.camera.info("📷 Target format: \(targetWidth)x\(targetHeight) @ \(Int(fps))fps")
 
-    // If already at target, skip reconfiguration
     if currentDims.width == targetWidth && currentDims.height == targetHeight && abs(currentFPS - fps) < 1.0 {
       AppLogger.camera.info("✅ Camera format already matches preferences, skipping reconfiguration")
       return
@@ -663,8 +623,7 @@ final class CameraManager: NSObject, CameraServiceProtocol {
 
     AppLogger.camera.info("🔧 Reconfiguring camera format to match preferences...")
 
-    // Find best matching format (same logic as setupSession)
-    // Use all formats - portrait filter was removing ALL formats on Mac Studio
+    // Same selection logic as setupSession.
     let safeFormats = camera.formats
 
     let sortedFormats = safeFormats.sorted { (f1, f2) -> Bool in

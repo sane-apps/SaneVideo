@@ -3,32 +3,26 @@ import SwiftUI
 struct GlobalSheetModifier: ViewModifier {
     @Environment(AppState.self) var appState
 
-    // Local state for sheets
     @State private var showLogs = false
     @State private var showShortcuts = false
     @State private var showTemplateBrowser = false
     @State private var repurposingClip: VideoClip?
 
-    // Rename Alert State
     @State private var showingRenameAlert = false
     @State private var newProjectName = ""
 
     func body(content: Content) -> some View {
         @Bindable var appState = appState
         return content
-            // 1. File Import
             .sheet(isPresented: $appState.showingImportPicker) {
                 FileImporterView()
             }
-            // 4. Keyboard Shortcuts
             .sheet(isPresented: $showShortcuts) {
                 KeyboardShortcutsSheet()
             }
-            // 5. Template Browser
             .sheet(isPresented: $showTemplateBrowser) {
                 TemplateBrowserSheet()
             }
-            // 6. Repurposing Sheet
             .sheet(item: $repurposingClip) { clip in
                 RepurposingSheet(sourceClip: clip)
                     .onAppear {
@@ -36,7 +30,6 @@ struct GlobalSheetModifier: ViewModifier {
                     }
             }
 
-            // 6. Rename Project Alert
             .alert(String(localized: "global.rename.title", defaultValue: "Rename Project"), isPresented: $showingRenameAlert) {
                 TextField(String(localized: "global.rename.placeholder", defaultValue: "Project Name"), text: $newProjectName)
                     .accessibilityIdentifier("global.rename_field")
@@ -48,7 +41,7 @@ struct GlobalSheetModifier: ViewModifier {
             } message: {
                 Text(String(localized: "global.rename.message", defaultValue: "Enter a new name for this project."))
             }
-            // 7. Hidden Shortcut for Logs
+            // Hidden button that provides the logs shortcut.
             .background {
                 Button("") { appState.performProjectCommand { showLogs = true } }
                     .disabled(!appState.projectCommandsEnabled)
@@ -56,7 +49,6 @@ struct GlobalSheetModifier: ViewModifier {
                     .opacity(0)
                     .accessibilityIdentifier("global.show_logs")
             }
-            // 8. Event Listeners
             .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ShowRenameProjectDialog"))) { _ in
                 appState.performProjectCommand {
                     if let currentName = appState.projectState.currentProject?.name {
@@ -86,17 +78,14 @@ struct GlobalSheetModifier: ViewModifier {
                     }
                 }
             }
-            // 9. Share Project
             .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ShareProject"))) { _ in
                 appState.performProjectCommand {
                     if let project = appState.projectState.currentProject {
                         let url = appState.projectState.getProjectFileURL(project)
-                        // Use standard system share sheet for the project file
                         ServiceContainer.shared.shareLinkService.shareFile(at: url, from: nil)
                     }
                 }
             }
-            // 10. Rename Specific Project (from context menu)
             .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("RenameProject"))) { notification in
                 appState.performProjectCommand {
                     if let projectId = notification.object as? UUID,
@@ -108,7 +97,6 @@ struct GlobalSheetModifier: ViewModifier {
                     }
                 }
             }
-            // 11. Duplicate Specific Project (from context menu)
             .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("DuplicateProject"))) { notification in
                 appState.performProjectCommand {
                     if let projectId = notification.object as? UUID,
@@ -118,7 +106,6 @@ struct GlobalSheetModifier: ViewModifier {
                     }
                 }
             }
-            // 12. Delete Specific Project (from context menu)
             .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("DeleteProject"))) { notification in
                 appState.performProjectCommand {
                     if let projectId = notification.object as? UUID,

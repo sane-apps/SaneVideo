@@ -1,10 +1,7 @@
-// Transition types for clip-to-clip transitions using CIFilter
-
 import CoreImage
 import CoreMedia
 import Foundation
 
-/// Types of transitions available between clips
 enum TransitionType: String, Codable, CaseIterable, Identifiable {
     case none
     case dissolve
@@ -21,7 +18,6 @@ enum TransitionType: String, Codable, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
-    /// Display name for UI
     var displayName: String {
         switch self {
         case .none: return "None"
@@ -39,7 +35,6 @@ enum TransitionType: String, Codable, CaseIterable, Identifiable {
         }
     }
 
-    /// SF Symbol icon for the transition
     var icon: String {
         switch self {
         case .none: return "circle.slash"
@@ -57,7 +52,6 @@ enum TransitionType: String, Codable, CaseIterable, Identifiable {
         }
     }
 
-    /// CIFilter name (if applicable)
     var ciFilterName: String? {
         switch self {
         case .none: return nil
@@ -86,7 +80,6 @@ enum TransitionType: String, Codable, CaseIterable, Identifiable {
     }
 }
 
-/// A transition between two clips
 struct VideoTransition: Identifiable, Codable, Equatable, Sendable {
     var id: UUID = .init()
     var type: TransitionType
@@ -237,7 +230,6 @@ struct VideoTransition: Identifiable, Codable, Equatable, Sendable {
 
         let zoomedSource = source.transformed(by: scaleTransform)
 
-        // Apply opacity
         if let opacityFilter = CIFilter(name: "CIColorMatrix") {
             opacityFilter.setValue(zoomedSource, forKey: kCIInputImageKey)
             opacityFilter.setValue(CIVector(x: 0, y: 0, z: 0, w: CGFloat(opacity)), forKey: "inputAVector")
@@ -257,7 +249,7 @@ struct VideoTransition: Identifiable, Codable, Equatable, Sendable {
     private nonisolated func smoothCut(from source: CIImage, to target: CIImage, progress: CGFloat) -> CIImage? {
         // Subtle scale-up on target to hide jaw/eye jumps
         let extent = target.extent
-        let targetScale = 1.05 // 5% scale up
+        let targetScale = 1.05
         let center = CGPoint(x: extent.midX, y: extent.midY)
         
         let scaleTransform = CGAffineTransform(translationX: center.x, y: center.y)
@@ -266,7 +258,6 @@ struct VideoTransition: Identifiable, Codable, Equatable, Sendable {
         
         let scaledTarget = target.transformed(by: scaleTransform)
         
-        // Dissolve from source to scaledTarget
         return dissolve(from: source, to: scaledTarget, progress: progress)
     }
 }

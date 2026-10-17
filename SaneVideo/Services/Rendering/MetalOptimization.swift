@@ -1,18 +1,13 @@
-// Metal/GPU optimization utilities for M1+ Apple Silicon
-
 import Metal
 import CoreImage
 import Foundation
 
-/// Metal optimization utilities for Apple Silicon
 enum MetalOptimization {
     
-    /// Check if Metal is available and optimized
     static var isMetalAvailable: Bool {
         MTLCreateSystemDefaultDevice() != nil
     }
     
-    /// Check if we're running on Apple Silicon (M1+)
     static var isAppleSilicon: Bool {
         #if arch(arm64)
         return true
@@ -21,7 +16,6 @@ enum MetalOptimization {
         #endif
     }
     
-    /// Get optimal pixel format for current hardware
     static func optimalPixelFormat(for quality: RenderQuality) -> CIFormat {
         guard isAppleSilicon else {
             return .RGBA8 // Fallback for Intel
@@ -37,9 +31,7 @@ enum MetalOptimization {
         }
     }
     
-    /// Get optimal command queue priority
-    /// Note: MTLCommandQueue doesn't have explicit priority API in current macOS
-    /// Priority is managed through CIContext options (priorityRequestLow)
+    /// MTLCommandQueue has no priority API; priority goes through CIContext's priorityRequestLow.
     static func shouldUseLowPriority(for thermalState: ProcessInfo.ThermalState) -> Bool {
         switch thermalState {
         case .nominal, .fair:
@@ -51,15 +43,8 @@ enum MetalOptimization {
         }
     }
     
-    /// Configure Metal device for optimal performance
     static func configureDevice(_ device: MTLDevice) -> MTLDevice {
-        // M1+ specific optimizations
         if isAppleSilicon {
-            // Enable unified memory benefits
-            // Metal automatically uses unified memory on Apple Silicon
-            // No explicit configuration needed, but we can verify
-            
-            // Log device info for debugging
             AppLogger.general.debug("🔧 Metal Device: \(device.name)")
             AppLogger.general.debug("🔧 Unified Memory: \(device.hasUnifiedMemory ? "Yes" : "No")")
             AppLogger.general.debug("🔧 Max Threads Per Threadgroup: \(device.maxThreadsPerThreadgroup.width)")
@@ -68,7 +53,6 @@ enum MetalOptimization {
         return device
     }
     
-    /// Get recommended batch size for processing
     static func recommendedBatchSize(for operation: OperationType) -> Int {
         guard isAppleSilicon else {
             return 1 // Conservative for Intel
@@ -100,10 +84,8 @@ enum MetalOptimization {
     }
 }
 
-/// Extension to RenderingService for Metal optimization
 extension RenderingService {
     
-    /// Optimize Metal device for current system state
     func optimizeForCurrentState() {
         guard mtlDevice != nil else { return }
         
@@ -115,7 +97,6 @@ extension RenderingService {
         }
     }
     
-    /// Get optimal CIContext options for current hardware
     func optimalContextOptions() -> [CIContextOption: Any] {
         guard mtlDevice != nil else {
             return [.useSoftwareRenderer: false]

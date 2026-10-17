@@ -1,5 +1,4 @@
-// Clip editing operations (split, trim, rotate, delete, transform, speed, effects)
-// Import operations are in ProjectState+Import.swift
+// Clip editing: split, trim, rotate, delete, transform, speed, effects. Import lives in ProjectState+Import.swift.
 
 import AppKit
 import AVFoundation
@@ -60,14 +59,13 @@ extension ProjectState {
 
     project.timeline = timeline
 
-    // AUTO-NAME: If this is the first clip and project is still "Untitled Project", rename based on video filename
+    // Rename an "Untitled Project" after the first clip's file name.
     if project.name == "Untitled Project" && timeline.tracks.flatMap({ $0.clips }).count == 1 {
       let videoName = clip.url.deletingPathExtension().lastPathComponent
       // Clean up the name (remove common prefixes like "recording_")
       var cleanName = videoName
         .replacingOccurrences(of: "recording_", with: "")
         .replacingOccurrences(of: "_", with: " ")
-      // Truncate if too long
       if cleanName.count > 40 {
         cleanName = String(cleanName.prefix(40))
       }
@@ -93,11 +91,9 @@ extension ProjectState {
 
   // MARK: - Duplicating
 
-  /// Duplicate a clip and insert it at the specified timeline position
   func duplicateClip(_ clip: VideoClip, atTime insertTime: CMTime) {
     guard var project = currentProject else { return }
 
-    // Create a copy with a new ID using the clip's copy method
     var newClip = clip.copy()
     newClip.startTime = insertTime
 
@@ -105,7 +101,6 @@ extension ProjectState {
 
     registerUndo("Duplicate Clip")
 
-    // Find the first video track or create one
     var targetTrackIndex = timeline.tracks.firstIndex { $0.type == .video }
     if targetTrackIndex == nil {
       let newTrack = Track(name: "", type: .video, zIndex: 0)
@@ -116,7 +111,6 @@ extension ProjectState {
     guard let trackIndex = targetTrackIndex else { return }
     var track = timeline.tracks[trackIndex]
 
-    // Insert the clip
     track.clips.append(newClip)
     timeline.tracks[trackIndex] = track
 
@@ -349,7 +343,6 @@ extension ProjectState {
   // MARK: - Removal
 
   func deleteClip(_ clip: VideoClip, transactionId: UUID? = nil) {
-    // Log why deletion might be blocked
     if shouldBlockOperation(transactionId: transactionId) {
       AppLogger.project.warning("⚠️ Delete clip blocked: operation in progress (transaction: \(transactionId?.uuidString ?? "none"))")
       ServiceContainer.shared.toastManager.show("Cannot delete: Operation in progress", type: .info)

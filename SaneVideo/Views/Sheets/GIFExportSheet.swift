@@ -1,5 +1,3 @@
-// Settings sheet for GIF export with quality/size options
-
 import AppKit
 import AVFoundation
 import SwiftUI
@@ -12,19 +10,17 @@ struct GIFExportSheet: View {
     let projectName: String
     let clipDuration: Double
 
-    // Settings
     @State private var fps: Int = 10
     @State private var width: Int = 480
     @State private var startTime: Double = 0
     @State private var endTime: Double = 0
     @State private var useFullVideo = true
 
-    // State
     @State private var isExporting = false
     @State private var exportProgress: Double = 0
     @State private var estimatedSize: String = "~1-3 MB"
     @State private var errorMessage: String?
-    // SWIFT 6 FIX: Track export task to prevent concurrent exports
+    // Held so a new export cancels the previous one and exports never overlap.
     @State private var exportTask: Task<Void, Never>?
 
     private let fpsOptions = [5, 10, 15, 20, 25]
@@ -245,12 +241,10 @@ struct GIFExportSheet: View {
     }
 
     private func exportGIF() {
-        // SWIFT 6 FIX: Prevent concurrent exports
         guard !isExporting else { return }
         isExporting = true
         errorMessage = nil
 
-        // Cancel any previous export task
         exportTask?.cancel()
         exportTask = Task {
             do {

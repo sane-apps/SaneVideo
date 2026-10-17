@@ -1,5 +1,3 @@
-// Reusable information/result display box with colored background
-
 import SwiftUI
 
 /// A styled box for displaying analysis results, status messages, etc.

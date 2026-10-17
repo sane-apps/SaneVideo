@@ -1,10 +1,6 @@
-// Dependency Injection container for testable, loosely-coupled services
-// Best practice: Use this instead of singletons for non-view services
-
 import AVFoundation
 import Foundation
 
-/// Central registry for application services
 /// Use initializer injection to provide these to classes that need them
 @MainActor
 final class ServiceContainer {
@@ -20,7 +16,6 @@ final class ServiceContainer {
     let projectStore: ProjectStoreProtocol
     let exportService: ExportServiceProtocol
 
-    /// Unified thumbnail service (consolidated from ThumbnailGeneratorService + SmartThumbnailService)
     let thumbnailService: ThumbnailService
     let silenceDetector: SilenceDetector
     var audioService: AudioService
@@ -67,14 +62,12 @@ final class ServiceContainer {
     let faceTrackingService: FaceTrackingService
     let personSegmentationService: PersonSegmentationService
     let saliencyService: SaliencyService
-    // smartThumbnailService consolidated into thumbnailService
     
     // MARK: - Project/Timeline Services
 
     let projectFileManager: ProjectFileManager
     let timelineEngine: TimelineEngine
     let clickTrackingService: ClickTrackingService
-    // timelineThumbnailService consolidated into thumbnailService
     let renderingService: RenderingService
 
     // MARK: - Utility Services
@@ -108,7 +101,6 @@ final class ServiceContainer {
     private init() {
         let startTime = CFAbsoluteTimeGetCurrent()
 
-        // Core Services
         self.cameraService = CameraManager()
         self.projectStore = ProjectStore()
         self.exportService = ExportEngine()
@@ -118,47 +110,38 @@ final class ServiceContainer {
         self.permissionManager = PermissionManager()
         self.audioService = AudioService(permissionManager: self.permissionManager)
         
-        // UI Services
         self.toastManager = ToastManager()
         self.hapticsManager = HapticsManager()
         self.soundManager = SoundManager()
         self.errorPresenter = ErrorPresenter()
         
-        // Export Services
         self.pdfService = PDFGeneratorService()
         self.shareLinkService = ShareLinkService()
         self.updaterService = UpdaterService()
         
-        // Audio/Voice Services
         self.voiceoverService = VoiceoverService()
         self.waveformService = WaveformService()
         self.soundAnalysisService = SoundAnalysisService()
         self.voiceIsolationService = VoiceIsolationService()
         self.realTimeAudioProcessor = RealTimeAudioProcessor()
         
-        // AI/ML Services
         self.aiService = AIService()
         self.transcriptionCoordinator = TranscriptionCoordinator()
         self.smartFillerDetector = SmartFillerDetector()
         self.mlEffectsService = MLEffectsService()
 
         
-        // Project/Timeline Services
         self.projectFileManager = ProjectFileManager()
         self.timelineEngine = TimelineEngine()
         self.clickTrackingService = ClickTrackingService()
-        // timelineThumbnailService now consolidated into thumbnailService
 
         let renderingService = RenderingService.shared
         self.renderingService = renderingService
 
-        // Vision Services (Now using unified context)
         self.faceTrackingService = FaceTrackingService()
         self.personSegmentationService = PersonSegmentationService(ciContext: renderingService.ciContext)
         self.saliencyService = SaliencyService()
-        // smartThumbnailService now consolidated into thumbnailService
         
-        // Utility Services  
         self.logManager = LogManager()
         self.featureDiscovery = FeatureDiscovery()
         self.memoryManager = MemoryManager()
@@ -168,16 +151,13 @@ final class ServiceContainer {
         self.logExportService = LogExportService()
         self.audioEnhancementService = SaneAudioEnhancementService()
         
-        // Diagnostics Services
         self.performanceMetrics = PerformanceMetricsService()
         self.systemHealth = SystemHealthService()
         self.exportSpeedTracker = ExportSpeedTracker()
         self.recordingBenchmark = RecordingBenchmark()
         
-        // Configuration
         self.pricingConfiguration = PricingConfiguration()
         
-        // Log initialization time
         let elapsed = CFAbsoluteTimeGetCurrent() - startTime
         if elapsed > 0.1 {
             AppLogger.general.warning("⚠️ ServiceContainer init took \(String(format: "%.3f", elapsed))s - consider lazy loading")

@@ -38,11 +38,10 @@ class WindowManager {
   /// Windows that should be excluded from screen recordings (Controls, PiP Overlay)
   var excludedWindowIDs: [CGWindowID] {
     var ids: [CGWindowID] = []
-    // Use helper for cleaner validation
     if isWindowValid(pipWindow), let window = pipWindow {
       ids.append(CGWindowID(window.windowNumber))
     }
-    // Note: Controls are now embedded in PiP window, so excluding PiP window ID covers them.
+    // Controls live in the PiP window, so excluding its ID covers them.
     if isWindowValid(floatingControls), let floating = floatingControls {
       ids.append(CGWindowID(floating.windowNumber))
     }
@@ -106,7 +105,7 @@ class WindowManager {
   }
 
   func forceHidePiPForSystemOverlay() {
-    // Hide PiP Camera but SHOW Floating Controls
+    // Hide the PiP camera but show the floating controls.
     hidePiPWindow()
     showFloatingControls()
   }
@@ -121,7 +120,6 @@ class WindowManager {
 
     isTogglingPiP = true
 
-    // Validate window state before operations
     if isWindowValid(pipWindow), let existingWindow = pipWindow, existingWindow.isVisible {
       if let layout = currentPresenterLayout {
         existingWindow.applyLayout(layout)
@@ -132,7 +130,6 @@ class WindowManager {
       return
     }
 
-    // Create new window if needed
     if pipWindow == nil {
       AppLogger.window.info("Creating PiP Window")
       let newWindow = PiPCameraWindow()
@@ -146,15 +143,14 @@ class WindowManager {
       }
     }
 
-    // Capture window reference BEFORE async work to prevent race
+    // Capture the window reference before async work to avoid a race.
     guard let window = pipWindow else {
       isTogglingPiP = false
       return
     }
 
     Task { @MainActor in
-      // NOW show the window (using captured reference)
-      // Re-validate window is still valid after async work
+      // Re-validate the window after the async work.
       guard !window.isReleasedWhenClosed, window.windowNumber > 0 else {
         isTogglingPiP = false
         return
@@ -164,7 +160,7 @@ class WindowManager {
         window.applyLayout(layout)
       }
       window.orderFrontRegardless()
-      window.showResizeHintIfNeeded()  // Show double-click hint on first use
+      window.showResizeHintIfNeeded()
 
       isTogglingPiP = false
       AppLogger.window.info("PiP Window shown (filter updated first)")
@@ -185,7 +181,6 @@ class WindowManager {
 
     AppLogger.window.info("Hiding PiP Window")
 
-    // Check validity BEFORE any operations
     guard isWindowValid(window) else {
       AppLogger.window.warning("PiP window already released, skipping close")
       pipWindow = nil
@@ -193,19 +188,13 @@ class WindowManager {
       return
     }
 
-    // Nil the reference BEFORE calling close()
-    // ARC will deallocate the window when close() completes and no other refs exist
+    // Drop the reference before close() so ARC frees the window once close() finishes.
     pipWindow = nil
 
-    // Do NOT set isReleasedWhenClosed = true here
-    // Setting it causes the window to be released immediately during close(),
-    // which can crash if the window server is still accessing it.
-    // Instead, let ARC handle cleanup naturally.
+    // Leave isReleasedWhenClosed false: releasing during close() can crash while the window server still uses the window.
 
-    // close() is synchronous - handles its own cleanup
     window.close()
 
-    // Reset toggle flag immediately since close() is synchronous
     isTogglingPiP = false
     AppLogger.window.info("PiP Window fully hidden")
 

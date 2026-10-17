@@ -1,12 +1,8 @@
-// VideoToolbox ML-powered video effects using VTFrameProcessor
-// Provides: Super Resolution, Temporal Noise Filter, Frame Rate Conversion
-
 import CoreMedia
 import CoreVideo
 import Foundation
 import VideoToolbox
 
-/// ML effect types available
 enum MLEffectType: String, CaseIterable, Identifiable, Sendable {
     case superResolution = "Super Resolution"
     case denoise = "Noise Reduction"
@@ -33,7 +29,6 @@ enum MLEffectType: String, CaseIterable, Identifiable, Sendable {
         }
     }
 
-    /// Whether this effect is suitable for real-time preview
     var supportsRealTimePreview: Bool {
         switch self {
         case .denoise: return true
@@ -42,7 +37,6 @@ enum MLEffectType: String, CaseIterable, Identifiable, Sendable {
     }
 }
 
-/// Configuration for ML effects
 struct MLEffectConfiguration: Sendable {
     var type: MLEffectType
     var intensity: Float // 0.0 - 1.0
@@ -62,12 +56,10 @@ enum SuperResolutionModelStatus: Sendable {
     case unsupported
 }
 
-/// Actor for ML-powered video effects using VideoToolbox
 /// NOTE: VTFrameProcessor requires macOS 15.4+, some configs require macOS 26+
 actor MLEffectsService {
     // MARK: - Properties
-    // Use Any? to avoid compile-time availability issues with VTFrameProcessor (macOS 15.4+)
-    // and configuration types (macOS 26.0+)
+    // Any? avoids compile-time availability errors for VTFrameProcessor (macOS 15.4+) and its configuration types (macOS 26.0+).
 
     private var superResProcessor: Any?
     private var denoiseProcessor: Any?
@@ -85,7 +77,7 @@ actor MLEffectsService {
 
     // MARK: - Availability Checks
 
-    /// Check if super resolution is supported (requires macOS 26+)
+    /// Requires macOS 26+.
     nonisolated static var isSuperResolutionSupported: Bool {
 #if swift(>=6.2)
         if #available(macOS 26.0, *) {
@@ -95,7 +87,6 @@ actor MLEffectsService {
         return false
     }
 
-    /// Check if temporal noise filter is supported
     nonisolated static var isDenoiseSupported: Bool {
 #if swift(>=6.2)
         if #available(macOS 26.0, *) {
@@ -105,7 +96,6 @@ actor MLEffectsService {
         return false
     }
 
-    /// Check if frame rate conversion is supported
     nonisolated static var isFrameRateConversionSupported: Bool {
         if #available(macOS 15.4, *) {
 #if swift(>=6.2)
@@ -150,7 +140,6 @@ actor MLEffectsService {
         return .unsupported
     }
 
-    /// Download ML models required for super resolution
     @available(macOS 26.0, *)
     func downloadSuperResolutionModel() async throws {
 #if swift(>=6.2)
@@ -183,7 +172,6 @@ actor MLEffectsService {
 
     // MARK: - Session Management
 
-    /// Start a super resolution session
     @available(macOS 26.0, *)
     func startSuperResolutionSession(
         frameWidth: Int,
@@ -220,7 +208,6 @@ actor MLEffectsService {
 #endif
     }
 
-    /// Start a denoise session
     @available(macOS 26.0, *)
     func startDenoiseSession(
         frameWidth: Int,
@@ -251,7 +238,6 @@ actor MLEffectsService {
 #endif
     }
 
-    /// Start a frame rate conversion session
     @available(macOS 15.4, *)
     func startFrameRateSession(
         frameWidth: Int,
@@ -276,7 +262,6 @@ actor MLEffectsService {
         isInitialized = true
     }
 
-    /// End all active sessions
     func endAllSessions() {
         if #available(macOS 15.4, *) {
             if let processor = superResProcessor as? VTFrameProcessor {
@@ -302,7 +287,6 @@ actor MLEffectsService {
 
     // MARK: - Processing
 
-    /// Apply super resolution to a frame
     @available(macOS 26.0, *)
     func applySuperResolution(
         sourceBuffer: CVPixelBuffer,
@@ -350,7 +334,6 @@ actor MLEffectsService {
             }
         }
 
-        // Store for next frame
         previousSourceFrame = sourceFrame
         previousOutputFrame = destinationFrame
 #else
@@ -358,7 +341,6 @@ actor MLEffectsService {
 #endif
     }
 
-    /// Apply temporal noise filter to a frame
     @available(macOS 26.0, *)
     func applyDenoise(
         sourceBuffer: CVPixelBuffer,

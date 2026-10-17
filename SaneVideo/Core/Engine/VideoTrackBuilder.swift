@@ -1,10 +1,8 @@
 import AVFoundation
 import CoreMedia
 
-/// Helper for building video tracks from timeline clips
 enum VideoTrackBuilder {
 
-  /// Result containing composition tracks and metadata for video composition
   struct BuildResult {
 
     let compositionVideoTracks: [AVMutableCompositionTrack]
@@ -25,7 +23,7 @@ enum VideoTrackBuilder {
   ) async throws -> BuildResult {
 
     var abTracks: [(AVMutableCompositionTrack, AVMutableCompositionTrack)] = []
-    var compositionVideoTracks: [AVMutableCompositionTrack] = []  // All created tracks flattened
+    var compositionVideoTracks: [AVMutableCompositionTrack] = []
 
     for track in visualTimelineTracks {
       guard track.type == .video || track.type == .overlay else { continue }
@@ -42,7 +40,6 @@ enum VideoTrackBuilder {
       compositionVideoTracks.append(trackB)
     }
 
-    // Metadata collections for VideoComposition
     var layerInstructions: [AVVideoCompositionLayerInstruction] = []
     var trackEffects: [CMPersistentTrackID: [(CMTimeRange, [VideoEffect])]] = [:]
     var trackKeyframes: [CMPersistentTrackID: [(CMTimeRange, [KeyframeAnimation])]] = [:]
@@ -50,7 +47,6 @@ enum VideoTrackBuilder {
     var trackPrivacyRegions: [CMPersistentTrackID: [(CMTimeRange, [PrivacyRegion])]] = [:]
     var activeTransitions: [TransitionMetadata] = []
 
-    // Iterate Timeline Tracks and Insert Clips
     for (index, timelineTrack) in visualTimelineTracks.enumerated() {
       guard index < abTracks.count else { continue }
       let (trackA, trackB) = abTracks[index]
@@ -65,17 +61,13 @@ enum VideoTrackBuilder {
         else { continue }
         let assetDuration = (try? await asset.load(.duration)) ?? .zero
 
-        // Effective Source Duration (Visual trimming)
         let sourceDuration = CMTimeSubtract(min(clip.trimEnd, assetDuration), clip.trimStart)
         guard sourceDuration > .zero else { continue }
 
-        // Current Target Composition Track
         let currentCompTrack = useTrackA ? trackA : trackB
 
-        // Insertion Time
         let insertStart = clip.startTime
 
-        // Handling Transitions (Overlap)
         var overlapDuration = CMTime.zero
         var transitionType: TransitionType = .none
 
@@ -87,10 +79,8 @@ enum VideoTrackBuilder {
           }
         }
 
-        // Compute Valid Segments (Handle Silence Removal)
         let validSegments = computeValidSegments(clip: clip, sourceDuration: sourceDuration)
 
-        // Insert Video Segments
         var currentInsertStart = insertStart
         var segmentCompTrack = useTrackA ? trackA : trackB
         var populatedTracks: [AVMutableCompositionTrack] = []
@@ -100,7 +90,6 @@ enum VideoTrackBuilder {
           populatedTracks.append(track)
         }
 
-        // Define overlap for smooth cuts (internal to clip)
         // Overlap must be expressed in PLAYED time, and mapped to SOURCE time based on clip speed.
         // This prevents mismatched overlap ranges (and potential A/V sync drift) when speed != 1.0.
         let overlap = TimeUtils.smoothCutOverlap(clipSpeed: clip.speed, overlapPlayedSeconds: 0.15)
@@ -111,11 +100,8 @@ enum VideoTrackBuilder {
           var finalInsertStart = currentInsertStart
           var actualOverlapPlayed = CMTime.zero
 
-          // Logic for internal transitions if enabled
           if clip.useSmoothCutForRemovals && validSegments.count > 1 {
-            // Extend segments to overlap for transition
             if segIndex > 0 {
-              // Start earlier to overlap with previous.
               // Clamp overlap so we never extend before the trimmed start.
               let maxBackwards = CMTimeSubtract(segment.start, clip.trimStart)
               var actualOverlapSource = CMTimeMinimum(overlap.source, maxBackwards)
@@ -147,12 +133,10 @@ enum VideoTrackBuilder {
             targetTrack.scaleTimeRange(scaleRange, toDuration: playDuration)
           }
 
-          // Add Internal Transition Metadata
           if clip.useSmoothCutForRemovals && segIndex > 0 && actualOverlapPlayed > .zero {
             let fromTrackID = (targetTrack === trackA) ? trackB.trackID : trackA.trackID
             let toTrackID = targetTrack.trackID
 
-            // Transition happens during the overlap
             let transitionRange = CMTimeRange(start: finalInsertStart, duration: actualOverlapPlayed)
             activeTransitions.append(
               TransitionMetadata(
@@ -168,7 +152,6 @@ enum VideoTrackBuilder {
             segment.duration, multiplier: 1.0 / clip.speed)
           currentInsertStart = CMTimeAdd(currentInsertStart, originalPlayDuration)
 
-          // Switch tracks for next segment if doing smooth cuts
           if clip.useSmoothCutForRemovals {
             segmentCompTrack = (targetTrack === trackA) ? trackB : trackA
           }
@@ -181,9 +164,6 @@ enum VideoTrackBuilder {
         // Ensure useTrackA is updated based on the LAST track used for this clip
         useTrackA = (segmentCompTrack === trackA)
 
-        // Video Metadata Collection
-
-        // A. Transform
         let transform = try? await TransformCalculator.calculateTransform(
           assetTrack: assetTrack,
           rotation: clip.rotation,
@@ -236,7 +216,6 @@ enum VideoTrackBuilder {
           layerInstructions.append(layerInstruction)
         }
 
-        // B. Effects
         if !clip.effects.isEmpty {
           for instructionTrack in instructionTracks {
             var effects = trackEffects[instructionTrack.trackID] ?? []
@@ -245,7 +224,6 @@ enum VideoTrackBuilder {
           }
         }
 
-        // C. Keyframes
         if let keyframes = clip.keyframeAnimation {
           for instructionTrack in instructionTracks {
             var kfs = trackKeyframes[instructionTrack.trackID] ?? []
@@ -254,7 +232,6 @@ enum VideoTrackBuilder {
           }
         }
 
-        // D. Background Effects (Person Segmentation)
         if let bgEffect = clip.backgroundEffect {
           for instructionTrack in instructionTracks {
             var bgEffects = trackBackgroundEffects[instructionTrack.trackID] ?? []
@@ -263,7 +240,6 @@ enum VideoTrackBuilder {
           }
         }
 
-        // E. Privacy Regions
         if !clip.privacyRegions.isEmpty {
           for instructionTrack in instructionTracks {
             var regions = trackPrivacyRegions[instructionTrack.trackID] ?? []
@@ -273,7 +249,6 @@ enum VideoTrackBuilder {
           }
         }
 
-        // F. Active Transition (Incoming)
         if overlapDuration > .zero {
           let prevTrackID = useTrackA ? trackB.trackID : trackA.trackID
           let currentTrackID = currentCompTrack.trackID
@@ -288,7 +263,6 @@ enum VideoTrackBuilder {
           activeTransitions.append(meta)
         }
 
-        // Toggle A/B for next clip
         useTrackA.toggle()
       }
     }
@@ -329,7 +303,6 @@ enum VideoTrackBuilder {
     return asset
   }
 
-  /// Compute valid segments after removing silence/cut ranges
   static func computeValidSegments(clip: VideoClip, sourceDuration: CMTime) -> [CMTimeRange] {
     var validSegments: [CMTimeRange] = []
     let fullTrimRange = CMTimeRange(start: clip.trimStart, duration: sourceDuration)
@@ -360,7 +333,6 @@ enum VideoTrackBuilder {
         cursor = max(cursor, removalEnd)
       }
 
-      // Tail segment
       if cursor < clip.trimEnd {
         let duration = CMTimeSubtract(clip.trimEnd, cursor)
         if duration.seconds > 0.001 {

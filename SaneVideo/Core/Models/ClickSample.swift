@@ -1,9 +1,7 @@
-// Model for storing mouse click events during recording
-// Used for auto-zoom feature (Screen Studio style)
+// Click events recorded for auto-zoom.
 
 import Foundation
 
-/// Struct to store a single mouse click event
 public struct ClickSample: Codable, Sendable, Equatable {
     public let timestamp: TimeInterval // Relative to recording start
     public let x: Double // Normalized 0-1 (Screen coordinates)

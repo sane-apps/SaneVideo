@@ -24,7 +24,6 @@ struct LUTGenerator {
             let g = Float(y) / Float(dimension - 1)
             let b = Float(z) / Float(dimension - 1)
 
-            // Apply Teal & Orange transformation
             var newR = r
             var newG = g
             var newB = b
@@ -40,7 +39,6 @@ struct LUTGenerator {
               newB = min(1.0, b * 1.05)
             }
 
-            // Contrast boost
             newR = pow(newR, 1.1)
             newG = pow(newG, 1.1)
             newB = pow(newB, 1.1)
@@ -49,7 +47,7 @@ struct LUTGenerator {
             floatPtr[offset] = newR
             floatPtr[offset + 1] = newG
             floatPtr[offset + 2] = newB
-            floatPtr[offset + 3] = 1.0  // Alpha
+            floatPtr[offset + 3] = 1.0
           }
         }
       }

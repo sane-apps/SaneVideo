@@ -1,5 +1,4 @@
 // Fixed left column headers for timeline tracks
-// Extracted to ensure proper alignment with scrollable track rows
 
 import SwiftUI
 
@@ -18,14 +17,13 @@ struct TimelineHeadersView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // Spacer for ruler height alignment - MUST match TimeRulerView height exactly (40px)
+            // Must match the TimeRulerView height (40pt) exactly.
             Color.clear
                 .frame(height: 40)
                 .frame(width: 100)
 
-            // Headers VStack - MUST match track rows VStack spacing exactly (8px)
+            // Spacing must match the track rows VStack (8pt).
             VStack(alignment: .leading, spacing: 8) {
-                // Use shared filtered array to ensure header/row sync
                 ForEach(tracksWithClips) { track in
                     TrackHeaderView(
                         track: track,
@@ -36,14 +34,12 @@ struct TimelineHeadersView: View {
                             appState.projectState.toggleTrackLock(track)
                         }
                     )
-                    .frame(height: timelineHeight, alignment: .top) // CRITICAL: Match track row height exactly
+                    .frame(height: timelineHeight, alignment: .top) // Must match the track row height.
                 }
             }
             .frame(width: 100, alignment: .topLeading)
         }
         .frame(width: 100, alignment: .topLeading)
-        // Allow hit testing to pass through to scrollable content
-        // This ensures trim handles can be grabbed even when near the left edge
-        .allowsHitTesting(true) // Headers still need to be clickable, but we'll handle overlap differently
+        .allowsHitTesting(true) // Headers must stay clickable.
     }
 }

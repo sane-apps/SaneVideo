@@ -1,5 +1,3 @@
-// 2025-12-31: Simplified - Transform/Speed moved to toolbar. Kept: Auto-Zoom, Smart Crop
-
 import AVFoundation
 import SwiftUI
 

@@ -5,7 +5,6 @@ import Metal
 
 /// A service responsible for composing multiple VideoClips into a single playable asset.
 /// Inspired by the "Cabbage" library concept of a timeline composition.
-/// SWIFT 6 FIX: @MainActor for consistent isolation (composePlayerItem already @MainActor)
 @MainActor
 class TimelineEngine {
 
@@ -13,10 +12,7 @@ class TimelineEngine {
     private let transitionDuration = CMTime(seconds: 0.5, preferredTimescale: 600)
 
     /// Composes a project's timeline into a single AVPlayerItem with transitions and overlays.
-    /// - Parameter project: The project containing the timeline to compose.
-    /// - Returns: An AVPlayerItem ready for playback.
     func composePlayerItem(for project: VideoProject) async throws -> AVPlayerItem {
-        // Guard: Empty timeline (no tracks or no clips in tracks)
         let hasClips = project.timeline.tracks.contains { !$0.clips.isEmpty }
 
         guard hasClips else {
@@ -27,8 +23,6 @@ class TimelineEngine {
         let totalClips = project.timeline.tracks.reduce(0) { $0 + $1.clips.count }
         AppLogger.playback.debug("Composing timeline with \(totalClips) clips across \(project.timeline.tracks.count) tracks")
 
-        // 1. Build Composition (New Shared Builder)
-        // CompositionBuilder now handles all track layering and transforms
         let result = try await CompositionBuilder.build(from: project)
 
         let playerItem = AVPlayerItem(asset: result.composition)
@@ -37,7 +31,6 @@ class TimelineEngine {
         }
         playerItem.audioMix = result.audioMix
 
-        // Verify audioMix has parameters
         let audioMix = result.audioMix
         let paramCount = audioMix.inputParameters.count
         NSLog("🔍 TimelineEngine: audioMix has \(paramCount) input parameter(s)")
@@ -47,7 +40,6 @@ class TimelineEngine {
             AppLogger.playback.warning("⚠️ TimelineEngine: audioMix has NO input parameters - audio will be silent!")
         }
 
-        // Verify audio tracks exist in composition
         let audioTracks = result.composition.tracks(withMediaType: .audio)
         let videoTracks = result.composition.tracks(withMediaType: .video)
 
@@ -59,7 +51,6 @@ class TimelineEngine {
             NSLog("⚠️ TimelineEngine: Composition has NO audio tracks - playback will be silent!")
             AppLogger.playback.warning("⚠️ TimelineEngine: Composition has NO audio tracks - playback will be silent!")
 
-            // Check if source clips have audio
             for track in project.timeline.tracks {
                 for clip in track.clips {
                     let asset = AVURLAsset(url: clip.url)

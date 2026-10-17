@@ -1,30 +1,22 @@
-// Monitors external drive mount/unmount events to warn users when media becomes unavailable.
-// Critical for projects with clips stored on external drives.
-
 import AppKit
 import Foundation
 import Observation
 
-/// Monitors volume mount/unmount events to protect user data.
 /// Warns when external drives containing project media are unmounted.
 @MainActor
 @Observable
 final class VolumeMonitor {
-    /// Shared singleton instance.
     static let shared = VolumeMonitor()
 
-    /// Currently mounted volume paths.
     private(set) var mountedVolumes: Set<String> = []
 
     /// URLs of clips that became unavailable due to unmount.
     private(set) var unavailableClipURLs: Set<URL> = []
 
-    /// Whether any project clips are currently unavailable.
     var hasUnavailableClips: Bool {
         !unavailableClipURLs.isEmpty
     }
 
-    /// Callback triggered when volumes change (for external observers).
     var onVolumeChange: ((VolumeChangeEvent) -> Void)?
 
     // MARK: - Volume Change Events
@@ -45,31 +37,25 @@ final class VolumeMonitor {
 
     // MARK: - Public API
 
-    /// Check if a URL is on an external (removable) volume.
     nonisolated func isOnExternalVolume(_ url: URL) -> Bool {
-        // Resolve symlinks and get the actual path
         let resolvedPath = url.resolvingSymlinksInPath().path
 
-        // Check if path starts with /Volumes/ (external drives)
         // Exclude /Volumes/Macintosh HD which is the boot volume
         if resolvedPath.hasPrefix("/Volumes/") {
             let components = resolvedPath.split(separator: "/")
             if components.count >= 2 {
                 let volumeName = String(components[1])
-                // Boot volume is typically "Macintosh HD" but can vary
-                // Check if it's actually removable
+                // The boot volume name varies, so check whether it is removable.
                 return isRemovableVolume(volumeName)
             }
         }
         return false
     }
 
-    /// Check if a specific volume is currently mounted.
     func isVolumeMounted(_ volumePath: String) -> Bool {
         mountedVolumes.contains(volumePath)
     }
 
-    /// Register clip URLs to monitor for availability.
     /// Call this when loading a project to track which clips might become unavailable.
     func registerClipURLs(_ urls: [URL]) {
         for url in urls where isOnExternalVolume(url) {
@@ -80,7 +66,7 @@ final class VolumeMonitor {
         }
     }
 
-    /// Clear all tracked clip URLs (call when closing project).
+    /// Call when closing a project.
     func clearTrackedClips() {
         unavailableClipURLs.removeAll()
     }
@@ -90,7 +76,6 @@ final class VolumeMonitor {
     private func setupMonitoring() {
         let workspace = NSWorkspace.shared
 
-        // Monitor volume mounts
         workspace.notificationCenter.addObserver(
             forName: NSWorkspace.didMountNotification,
             object: nil,
@@ -104,7 +89,6 @@ final class VolumeMonitor {
             }
         }
 
-        // Monitor volume unmounts
         workspace.notificationCenter.addObserver(
             forName: NSWorkspace.didUnmountNotification,
             object: nil,
@@ -138,7 +122,6 @@ final class VolumeMonitor {
         mountedVolumes.insert(path)
         AppLogger.project.info("📀 VolumeMonitor: Volume mounted: \(path)")
 
-        // Check if any unavailable clips are now available
         let restoredClips = unavailableClipURLs.filter { clipURL in
             clipURL.path.hasPrefix(path)
         }
@@ -148,7 +131,6 @@ final class VolumeMonitor {
             AppLogger.project.info("📀 VolumeMonitor: \(restoredClips.count) clips restored")
             onVolumeChange?(.clipsRestored(urls: Array(restoredClips)))
 
-            // Notify user (already on MainActor)
             ServiceContainer.shared.toastManager.show(
                 "External drive reconnected - \(restoredClips.count) clip(s) restored",
                 type: .success
@@ -168,11 +150,6 @@ final class VolumeMonitor {
     private func handleVolumeWillUnmount(path: String, volumeName: String) {
         AppLogger.project.warning("📀 VolumeMonitor: Volume will unmount: \(path)")
 
-        // Check if any tracked project clips will become unavailable
-        // This would require integration with ProjectState to get current clip URLs
-        // For now, log a warning - full integration happens in ProjectState
-
-        // Notify UI that a volume is about to unmount
         ServiceContainer.shared.toastManager.show(
             "External drive '\(volumeName)' is being ejected",
             type: .info

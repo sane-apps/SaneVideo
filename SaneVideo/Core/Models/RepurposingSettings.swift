@@ -1,8 +1,5 @@
-// Settings for long-to-short video repurposing
-
 import Foundation
 
-/// Target duration for short-form clips
 enum ShortDuration: Int, CaseIterable, Identifiable, Codable, Sendable {
     case fifteen = 15
     case thirty = 30
@@ -39,7 +36,6 @@ enum ShortDuration: Int, CaseIterable, Identifiable, Codable, Sendable {
     }
 }
 
-/// Target aspect ratio for short-form clips
 public enum ShortAspectRatio: String, CaseIterable, Identifiable, Codable, Sendable {
     case vertical9x16 = "9:16"
     case square1x1 = "1:1"
@@ -81,7 +77,6 @@ public enum ShortAspectRatio: String, CaseIterable, Identifiable, Codable, Senda
         }
     }
 
-    /// Calculate output dimensions for a given height
     public func dimensions(forHeight height: Int) -> (width: Int, height: Int) {
         let aspectRatio = widthRatio / heightRatio
         let width = Int(CGFloat(height) * aspectRatio)
@@ -90,7 +85,6 @@ public enum ShortAspectRatio: String, CaseIterable, Identifiable, Codable, Senda
     }
 }
 
-/// Target platform presets for short-form content
 enum ShortPlatform: String, CaseIterable, Identifiable, Codable, Sendable {
     case tiktok = "TikTok"
     case instagramReels = "Instagram Reels"
@@ -140,20 +134,17 @@ enum ShortPlatform: String, CaseIterable, Identifiable, Codable, Sendable {
     }
 }
 
-/// Settings for the repurposing analysis and export
 struct RepurposingSettings: Codable, Sendable, Equatable {
     var targetDuration: ShortDuration
     var aspectRatio: ShortAspectRatio
     var platform: ShortPlatform
     var maxShorts: Int  // 1-10
 
-    // Analysis options
     var detectFaces: Bool
     var detectHighlights: Bool
     var useCaptions: Bool
     var avoidSilence: Bool
 
-    // Export options
     var addCaptions: Bool
     var smartCrop: Bool
     var normalizeAudio: Bool
@@ -184,17 +175,14 @@ struct RepurposingSettings: Codable, Sendable, Equatable {
         self.normalizeAudio = normalizeAudio
     }
 
-    /// Apply platform preset settings
     mutating func applyPlatformPreset(_ platform: ShortPlatform) {
         self.platform = platform
         self.targetDuration = platform.recommendedDuration
         self.aspectRatio = platform.recommendedAspectRatio
     }
 
-    /// Default settings for quick access
     static let `default` = RepurposingSettings()
 
-    /// TikTok optimized settings
     static let tiktok = RepurposingSettings(
         targetDuration: .thirty,
         aspectRatio: .vertical9x16,
@@ -202,7 +190,6 @@ struct RepurposingSettings: Codable, Sendable, Equatable {
         maxShorts: 5
     )
 
-    /// YouTube Shorts optimized settings
     static let youtubeShorts = RepurposingSettings(
         targetDuration: .sixty,
         aspectRatio: .vertical9x16,
@@ -210,7 +197,6 @@ struct RepurposingSettings: Codable, Sendable, Equatable {
         maxShorts: 3
     )
 
-    /// Instagram Reels optimized settings
     static let instagramReels = RepurposingSettings(
         targetDuration: .thirty,
         aspectRatio: .vertical9x16,

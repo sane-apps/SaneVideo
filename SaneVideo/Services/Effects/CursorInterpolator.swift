@@ -47,9 +47,7 @@ struct CursorInterpolator: Sendable {
     /// Run the complete interpolation pipeline on raw cursor samples.
     ///
     /// - Parameters:
-    ///   - samples: Raw cursor samples from recording
     ///   - clicks: Click events for context-aware profile switching
-    /// - Returns: Smoothed cursor path ready for zoom interpolation
     func process(samples: [CursorSample], clicks: [ClickSample] = []) -> [CursorSample] {
         guard samples.count >= 2 else { return samples }
 
@@ -75,36 +73,30 @@ struct CursorInterpolator: Sendable {
             let curr = samples[i]
             let next = samples[i + 1]
 
-            // Check if within shake window
             let windowDt = next.timestamp - prev.timestamp
             guard windowDt <= config.shakeWindowDuration else {
                 result.append(curr)
                 continue
             }
 
-            // Vector from prev to curr
             let dx1 = curr.x - prev.x
             let dy1 = curr.y - prev.y
 
-            // Vector from curr to next
             let dx2 = next.x - curr.x
             let dy2 = next.y - curr.y
 
             // Dot product — negative means direction reversal
             let dot = dx1 * dx2 + dy1 * dy2
 
-            // Displacement magnitude
             let displacement = sqrt(dx1 * dx1 + dy1 * dy1)
 
-            // If direction reversed AND displacement is tiny, it's shake
             if dot < 0 && displacement < config.shakeDisplacementThreshold {
-                continue  // Drop this sample
+                continue
             }
 
             result.append(curr)
         }
 
-        // Always keep last sample
         result.append(samples[samples.count - 1])
         return result
     }
@@ -126,7 +118,6 @@ struct CursorInterpolator: Sendable {
             let gap = curr.timestamp - prev.timestamp
 
             if gap > config.maxGapDuration {
-                // Calculate number of interpolation points
                 let targetPoints = Int(gap * config.densifyTargetRate)
                 let pointCount = min(max(targetPoints, config.minDensifyPoints), config.maxDensifyPoints)
 
@@ -174,11 +165,9 @@ struct CursorInterpolator: Sendable {
         for i in 0 ..< samples.count {
             let sample = samples[i]
 
-            // Determine profile based on context
             let profile = selectProfile(for: sample, clicks: sortedClicks)
             spring.profile = profile
 
-            // Calculate dt from previous sample
             let dt: Double
             if i == 0 {
                 dt = 0
@@ -186,7 +175,6 @@ struct CursorInterpolator: Sendable {
                 dt = sample.timestamp - samples[i - 1].timestamp
             }
 
-            // Step spring toward cursor position
             spring.step(toward: .init(sample.x, sample.y), dt: dt)
 
             let smoothed = CursorSample(
@@ -207,17 +195,14 @@ struct CursorInterpolator: Sendable {
     /// Time window (seconds) around a click where `.snappy` profile is used
     private static let clickProximityWindow: TimeInterval = 0.2
 
-    /// Select spring profile based on cursor context
     private func selectProfile(
         for sample: CursorSample,
         clicks: [ClickSample]
     ) -> SpringMassDamperSimulation.Profile {
-        // If button is held, use drag profile
         if sample.isDown {
             return .drag
         }
 
-        // Check proximity to any click
         let isNearClick = clicks.contains { click in
             abs(click.timestamp - sample.timestamp) < Self.clickProximityWindow
         }

@@ -1,25 +1,21 @@
 import SwiftUI
 
-/// Defines the visual style for captions
 struct CaptionStyle: Identifiable, Codable, Equatable, Hashable, Sendable {
     let id: UUID
     let name: String
 
-    // Text Appearance
     var fontName: String
     var fontSize: CGFloat
     var textColor: String // Hex
     var isBold: Bool
     var isItalic: Bool
 
-    // Background / Stroke
     var backgroundColor: String? // Hex, nil = none
     var strokeColor: String? // Hex
     var strokeWidth: CGFloat
     var shadowRadius: CGFloat
     var shadowColor: String?
 
-    // Active Word Highlight (Karaoke)
     var activeTextColor: String? // Hex, defaults to yellow/accent if nil
     var highlightStyle: HighlightStyle = .none
 
@@ -247,7 +243,7 @@ struct CaptionStyle: Identifiable, Codable, Equatable, Hashable, Sendable {
         strokeColor: "#FFFFFF",
         strokeWidth: 1,
         shadowRadius: 0,
-        activeTextColor: "#FFD700", // Gold
+        activeTextColor: "#FFD700",
         highlightStyle: .pop
     )
 

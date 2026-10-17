@@ -1,11 +1,6 @@
-// Unified state change pipeline to reduce complexity and improve performance
-
 import Combine
 import SwiftUI
 
-// Import Combine for AnyCancellable
-
-/// Unified state change coordinator to replace multiple onChange handlers
 @MainActor
 @Observable
 class StateChangeCoordinator {
@@ -61,8 +56,7 @@ class StateChangeCoordinator {
     }
 }
 
-/// ViewModifier that handles unified state changes
-/// CRITICAL FIX: Use onReceive instead of .task + .sink to avoid closure lifecycle issues
+/// Uses onReceive, not .task + .sink, so closures cannot outlive the view.
 struct UnifiedStateChangeModifier: ViewModifier {
     @Environment(AppState.self) var appState
     @State private var coordinator = StateChangeCoordinator()
@@ -85,13 +79,11 @@ struct UnifiedStateChangeModifier: ViewModifier {
             .onReceive(
                 NotificationCenter.default.publisher(for: NSNotification.Name("ProjectEffectsChanged"))
             ) { notification in
-                // INSTANT PREVIEW: Force reload when effects change
+                // Reload right away when effects change so the preview updates instantly.
                 if let project = notification.object as? VideoProject {
                     appState.playbackState.loadProject(project, forceReload: true)
                 }
             }
-            // Use onReceive which is properly managed by SwiftUI lifecycle
-            // instead of .task + .sink which can create closures that outlive the view
             .onReceive(coordinator.projectChanges) { change in
                 handleProjectChange(change)
             }
@@ -120,11 +112,10 @@ struct UnifiedStateChangeModifier: ViewModifier {
             if let project = change.project {
                 appState.playbackState.loadProject(project, forceReload: true)
 
-                // AUTO-SELECT: Select first clip when project loads so Inspector shows content
+                // Select the first clip when a project loads so the Inspector shows content.
                 if let firstClip = project.timeline.tracks.first(where: { !$0.clips.isEmpty })?.clips.first {
                     appState.selectedClipIds = [firstClip.id]
                 } else {
-                    // Clear selection if no clips
                     appState.selectedClipIds = []
                 }
             }
@@ -157,7 +148,6 @@ struct UnifiedStateChangeModifier: ViewModifier {
 }
 
 extension View {
-    /// Applies unified state change handling
     func withUnifiedStateChanges() -> some View {
         modifier(UnifiedStateChangeModifier())
     }

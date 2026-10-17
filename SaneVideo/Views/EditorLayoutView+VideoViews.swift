@@ -1,6 +1,3 @@
-// Extracted from EditorLayoutView.swift to reduce file size
-// Contains: Video preview views and empty state
-
 import AVFoundation
 import CoreMedia
 import SwiftUI
@@ -67,7 +64,6 @@ enum VideoSizeCalculator {
         let videoAspect: CGFloat = 16.0 / 9.0
         let containerAspect = availableSize.width / availableSize.height
 
-        // Video size calculation: fit 16:9 video into available space with minimal padding
         let padding: CGFloat = 16 // Total padding (8 per side)
         let usableWidth = availableSize.width - padding
         let usableHeight = availableSize.height - padding
@@ -102,15 +98,12 @@ struct EditorThumbnailPreviewView: View {
         let videoSize = VideoSizeCalculator.calculateVideoSize(availableSize: availableSize)
 
         ZStack {
-            // Background
             Color.black
 
-            // Show thumbnail from first clip
             if let firstClip = project.timeline.tracks.flatMap({ $0.clips }).first {
                 ThumbnailPreviewImage(clip: firstClip, size: videoSize)
             }
 
-            // Play button overlay
             Button(action: onPlay) {
                 ZStack {
                     Circle()
@@ -143,7 +136,6 @@ struct EditorThumbnailPreviewView: View {
                 }
             }
 
-            // Caption overlay (if applicable)
             if let captionData = captionData {
                 CaptionOverlayView(
                     caption: captionData.0,

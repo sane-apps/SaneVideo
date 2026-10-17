@@ -1,6 +1,3 @@
-// Extracted from TimelineView.swift
-// Contains track rendering, playhead overlay, and drop delegate
-
 import AppKit
 import AVFoundation
 import SwiftUI
@@ -21,7 +18,7 @@ struct TimelineTracksView: View {
 
     @Environment(AppState.self) var appState
 
-    // SWIFT 6 FIX: Track async tasks to prevent fire-and-forget pile-up
+    // Kept so each new run cancels the previous one instead of piling up.
     @State private var captionTask: Task<Void, Never>?
 
     private let timelineHeight: CGFloat = AppConstants.timelineHeight
@@ -37,7 +34,7 @@ struct TimelineTracksView: View {
 
         ZStack(alignment: .topLeading) {
             VStack(alignment: .leading, spacing: 0) {
-                // Ruler - matches left column spacer height (40px)
+                // Ruler height matches the header column spacer (40pt).
                 HStack(spacing: 0) {
                     Rectangle().fill(Color.clear).frame(width: leadingPadding)
                     TimeRulerView(
@@ -51,7 +48,7 @@ struct TimelineTracksView: View {
                 }
                 .frame(height: 40)
 
-                // Track rows - MUST match headers VStack spacing exactly (8px)
+                // Spacing must match the headers VStack (8pt).
                 VStack(alignment: .leading, spacing: 8) {
                     ForEach(tracksWithClips) { track in
                         trackRow(for: track, leadingPadding: leadingPadding)
@@ -71,17 +68,13 @@ struct TimelineTracksView: View {
     }
 
     private func trackRow(for track: Track, leadingPadding: CGFloat) -> some View {
-        // Use LazyHStack with calculated spacers instead of ZStack+Offset
-        // This prevents eager loading of all 500+ clips in a complex project.
-        // We assume clips are sorted by startTime.
+        // LazyHStack with spacers instead of ZStack+offset, so large projects don't load every clip at once.
         let sortedClips = track.clips.sorted { $0.startTime < $1.startTime }
 
         return LazyHStack(alignment: .top, spacing: 0) {
-            // Add leading padding so trim handles aren't blocked by fixed header
             Rectangle().fill(Color.clear).frame(width: leadingPadding)
 
             ForEach(Array(sortedClips.enumerated()), id: \.element.id) { index, clip in
-                // Calculate spacer from previous clip end (or 0)
                 let previousEnd = index == 0 ? CMTime.zero : sortedClips[index - 1].startTime + sortedClips[index - 1].effectiveDuration
                 let gap = max(0, clip.startTime.seconds - previousEnd.seconds)
                 let gapWidth = gap * pixelsPerSecond
@@ -117,13 +110,11 @@ struct TimelineTracksView: View {
                         appState.projectState.removeFillerWords(from: clip)
                     },
                     onGenerateCaptions: {
-                        // SWIFT 6 FIX: Cancel previous task to prevent pile-up
                         captionTask?.cancel()
                         captionTask = Task {
                             _ = try? await appState.projectState.generateCaptions(for: clip)
                         }
                     },
-                    // 2025-12-31: onFindHighlights removed - use AudioSection in inspector
                     onDeleteFile: {
                         // Clear selection BEFORE deletion to prevent stale reference
                         if selectedClip?.id == clip.id {
@@ -166,13 +157,11 @@ struct TimelineTracksView: View {
                     Rectangle().fill(Color.clear).frame(width: remaining * pixelsPerSecond)
                 }
             } else {
-                // Empty track spacer
                let duration = max(60, appState.projectState.currentProject?.timeline.duration.seconds ?? 60)
                Rectangle().fill(Color.clear).frame(width: duration * pixelsPerSecond)
             }
         }
-        // Enable scroll target layout for better LazyHStack performance
-        // and programmatic scroll position targeting (e.g., seek-to-playhead).
+        // Helps LazyHStack performance and lets code scroll to a position, such as the playhead.
         .scrollTargetLayout()
         .frame(height: timelineHeight)
         .background(SaneVideoEditorPanelBackground())
@@ -180,18 +169,15 @@ struct TimelineTracksView: View {
 
     private var playheadOverlay: some View {
         ZStack(alignment: .top) {
-            // Glow effect
             Rectangle()
                 .fill(Color.red.opacity(0.3))
                 .frame(width: 4)
                 .blur(radius: 2)
 
-            // Main line
             Rectangle()
                 .fill(Color.red)
                 .frame(width: 2)
 
-            // Glowing circle
             Circle()
                 .fill(
                     RadialGradient(
@@ -205,7 +191,6 @@ struct TimelineTracksView: View {
                 .blur(radius: 2)
                 .offset(y: 2)
 
-            // Sharp circle
             Circle()
                 .fill(Color.red)
                 .frame(width: 10, height: 10)
@@ -219,8 +204,7 @@ struct TimelineTracksView: View {
         .highPriorityGesture(
             DragGesture(minimumDistance: 0, coordinateSpace: .named("TimelineContent"))
                 .onChanged { value in
-                    // Only allow scrubbing in ruler area (top 30px) to avoid clip/trim handle conflicts
-                    // Clips are below the ruler, so we should never scrub when dragging on clips
+                    // Scrub only in the ruler (top 30pt), never on clips or trim handles.
                     guard value.startLocation.y <= 30 else { return }
 
                     // Account for leading padding when calculating playhead position
@@ -278,19 +262,16 @@ struct TimelineTracksView: View {
             guard let primaryClip = selectedClip,
                   let primaryIndex = sortedClips.firstIndex(where: { $0.id == primaryClip.id }),
                   let clickedIndex = sortedClips.firstIndex(where: { $0.id == clip.id }) else {
-                // No primary selection - just select the clicked clip
                 selectedClip = clip
                 selectedClipIds = [clip.id]
                 return
             }
 
-            // Select all clips between primary and clicked (inclusive)
             let startIndex = min(primaryIndex, clickedIndex)
             let endIndex = max(primaryIndex, clickedIndex)
             for i in startIndex...endIndex {
                 appState.selectedClipIds.insert(sortedClips[i].id)
             }
-            // Keep primary selection, update selectedClipIds binding
             selectedClipIds = appState.selectedClipIds
         } else {
             // Normal click: Replace selection

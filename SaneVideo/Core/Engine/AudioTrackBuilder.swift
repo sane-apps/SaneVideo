@@ -1,7 +1,6 @@
 import AVFoundation
 import CoreMedia
 
-/// Helper for building audio tracks from timeline clips
 enum AudioTrackBuilder {
 
     private struct VolumeRampRequest {
@@ -68,7 +67,6 @@ enum AudioTrackBuilder {
             scheduledRampRangesByTrackID[request.trackID, default: []].append(request.timeRange)
         }
 
-        // A/B Audio Tracks
         let audioTrackA = composition.addMutableTrack(withMediaType: .audio, preferredTrackID: kCMPersistentTrackID_Invalid)
         let audioTrackB = composition.addMutableTrack(withMediaType: .audio, preferredTrackID: kCMPersistentTrackID_Invalid)
 
@@ -85,9 +83,7 @@ enum AudioTrackBuilder {
                 // which causes perceived A/V sync issues and can create overlapping segments on the same track.
                 let targetAudioTrack = useTrackA ? ata : atb
 
-                // AUDIO POLISH: Use enhanced audio if available (but only if duration-aligned).
-                // If the enhanced file's duration differs from the clip's duration, using it can cause
-                // insertTimeRange failures or perceived A/V desync. In that case, fall back to original audio.
+                // Use enhanced audio only when its duration matches the clip; a mismatch breaks insertTimeRange or drifts A/V sync.
                 var selectedAudioURL = clip.enhancedAudioURL ?? clip.url
                 var asset = getAsset(for: selectedAudioURL, cache: &assetCache)
 
@@ -103,36 +99,29 @@ enum AudioTrackBuilder {
                     }
                 }
 
-                // Check for audio
                 guard let assetAudioTrack = try? await asset.load(.tracks).first(where: { $0.mediaType == .audio }) else {
                     AppLogger.timeline.warning("⚠️ AudioTrackBuilder: Clip \(clip.url.lastPathComponent) has no audio track, skipping")
                     continue
                 }
 
-                // Use clip.duration (original video duration) for segment timing,
-                // NOT the enhanced audio file's duration. Enhanced audio may have slightly different duration
-                // due to sample rate conversion (44100Hz AAC output vs original) which causes audio/video desync.
-                // The clip's trimStart/trimEnd are defined relative to the original video, so we must use
-                // the original video's duration to keep audio in sync with video tracks.
+                // Time segments by the original video duration, not the enhanced file's: resampling changes its length slightly, and trims are relative to the video.
                 let sourceDuration = CMTimeSubtract(min(clip.trimEnd, clip.duration), clip.trimStart)
                 guard sourceDuration > .zero else { continue }
 
                 let insertStart = clip.startTime
 
-                // Compute Valid Segments (Copied from Video Logic for Sync)
+                // Same segments as the video so audio stays in sync.
                 let audioValidSegments = VideoTrackBuilder.computeValidSegments(clip: clip, sourceDuration: sourceDuration)
 
                 // Smooth cut overlap (internal to clip) must be expressed in PLAYED time, and mapped to SOURCE time.
                 // This keeps audio and video using the same overlap window, preventing perceived A/V desync at jump cuts.
                 let overlap = TimeUtils.smoothCutOverlap(clipSpeed: clip.speed, overlapPlayedSeconds: 0.15)
 
-                // SEMANTIC GATING: Pre-compute gating metadata ONCE per clip (not per segment)
-                // This prevents wasteful recomputation and ensures consistent timing
+                // Gating data is computed once per clip, not per segment.
                 let gatingSegments: [SoundAnalysisService.GatingSegment]? = clip.isGatingEnabled
                     ? try? await ServiceContainer.shared.soundAnalysisService.generateGatingMetadata(for: selectedAudioURL)
                     : nil
 
-                // Insert Audio Segments
                 var currentAudioInsertStart = insertStart
                 var segmentAudioTrack: AVMutableCompositionTrack = targetAudioTrack
                 var previousSegmentAudioTrack: AVMutableCompositionTrack?
@@ -170,13 +159,10 @@ enum AudioTrackBuilder {
                         segmentAudioTrack.scaleTimeRange(scaleRange, toDuration: playDuration)
                     }
 
-                    // Volume Automation per segment
                     let finalVolume = clip.isMuted ? 0.0 : clip.volume
 
-                    // Log volume values to debug silent audio
                     AppLogger.timeline.info("🔊 AudioTrackBuilder: clip \(clip.url.lastPathComponent) - isMuted=\(clip.isMuted), volume=\(clip.volume), finalVolume=\(finalVolume)")
 
-                    // Find or create params
                     func getOrCreateParams(for track: AVMutableCompositionTrack) -> AVMutableAudioMixInputParameters {
                         if let existing = audioMixParams.first(where: { $0.trackID == track.trackID }) {
                             return existing
@@ -196,7 +182,7 @@ enum AudioTrackBuilder {
                     // - Always fade-in at clip start
                     // - If smooth cuts are enabled, crossfade at each internal cut using the overlap window
                     // - Always fade-out at clip end
-                    let fadeDuration = CMTime(seconds: 0.05, preferredTimescale: 600) // 50ms
+                    let fadeDuration = CMTime(seconds: 0.05, preferredTimescale: 600)
 
                     let isFirstSegment = segIndex == 0
                     let isLastSegment = segIndex == audioValidSegments.count - 1
@@ -206,7 +192,6 @@ enum AudioTrackBuilder {
                         // Crossfade the overlap region: outgoing ramps down while incoming ramps up.
                         let safeOverlap = CMTimeMinimum(actualOverlapPlayed, playDuration)
                         if safeOverlap > .zero {
-                            // Incoming ramp up
                             let rampUpRange = CMTimeRange(start: segmentInsertStart, duration: safeOverlap)
                             setVolumeRampSafely(VolumeRampRequest(
                                 params: currentParams,
@@ -296,11 +281,10 @@ enum AudioTrackBuilder {
                         }
                     }
 
-                    // SEMANTIC GATING: Apply volume drops for non-speech if enabled
-                    // Uses pre-computed gating (outside segment loop) with proper time mapping
+                    // Duck non-speech when gating is on.
                     if let gatingData = gatingSegments {
                         // Use ramps for gating transitions to prevent clicks
-                        let gateRampDuration = CMTime(seconds: 0.03, preferredTimescale: 600) // 30ms gate ramp
+                        let gateRampDuration = CMTime(seconds: 0.03, preferredTimescale: 600)
 
                         for gatingSegment in gatingData where !gatingSegment.shouldOpenGate {
                             // Gating times are in FILE TIME - check if they overlap with this audio segment
@@ -311,13 +295,11 @@ enum AudioTrackBuilder {
                             let audioSegmentStart = finalSegment.start
                             let audioSegmentEnd = finalSegment.end
 
-                            // Skip if gating doesn't overlap with this audio segment
                             guard CMTimeCompare(gatingEnd, audioSegmentStart) > 0,
                                   CMTimeCompare(gatingStart, audioSegmentEnd) < 0 else {
                                 continue
                             }
 
-                            // Clamp gating to audio segment bounds
                             let clampedGatingStart = CMTimeMaximum(gatingStart, audioSegmentStart)
                             let clampedGatingEnd = CMTimeMinimum(gatingEnd, audioSegmentEnd)
 
@@ -332,14 +314,12 @@ enum AudioTrackBuilder {
                             let compositionEnd = CMTimeAdd(segmentInsertStart, scaledOffsetEnd)
                             let gatingDuration = CMTimeSubtract(compositionEnd, compositionStart)
 
-                            // Validate within playback segment
                             let segmentEnd = CMTimeAdd(segmentInsertStart, playDuration)
                             guard CMTimeCompare(compositionStart, segmentEnd) < 0,
                                   CMTimeCompare(gatingDuration, .zero) > 0 else {
                                 continue
                             }
 
-                            // Ramp down at gate close
                             let safeGateRampDuration = CMTimeMinimum(gateRampDuration, gatingDuration)
                             guard CMTimeCompare(safeGateRampDuration, .zero) > 0 else { continue }
 
@@ -355,7 +335,6 @@ enum AudioTrackBuilder {
                                 ))
                             }
 
-                            // Ramp up at gate open
                             if CMTimeCompare(compositionEnd, CMTimeAdd(compositionStart, safeGateRampDuration)) > 0 {
                                 let rampUpStart = CMTimeSubtract(compositionEnd, safeGateRampDuration)
                                 if CMTimeCompare(rampUpStart, CMTimeAdd(compositionStart, safeGateRampDuration)) > 0 {
@@ -425,7 +404,6 @@ enum AudioTrackBuilder {
 
                 try? targetTrack.insertTimeRange(range, of: assetTrack, at: clip.startTime)
 
-                // Speed
                 let playDuration = CMTimeMultiplyByFloat64(sourceDuration, multiplier: 1.0 / clip.speed)
                 if clip.speed != 1.0 {
                     let scaleRange = CMTimeRange(start: clip.startTime, duration: sourceDuration)
@@ -435,8 +413,7 @@ enum AudioTrackBuilder {
                 // Volume with fade ramps to prevent clicks
                 let finalVolume = clip.isMuted ? 0.0 : clip.volume
 
-                // Add fade ramps at clip boundaries with validation
-                let fadeDuration = CMTime(seconds: 0.05, preferredTimescale: 600) // 50ms fade
+                let fadeDuration = CMTime(seconds: 0.05, preferredTimescale: 600)
 
                 // Validate time range before calling setVolumeRamp to prevent crashes
                 let safeFadeDuration = CMTimeMinimum(fadeDuration, playDuration)
@@ -449,30 +426,26 @@ enum AudioTrackBuilder {
                 let fadeInRange = CMTimeRange(start: clip.startTime, duration: safeFadeDuration)
                 trackParams.setVolumeRamp(fromStartVolume: 0.0, toEndVolume: finalVolume, timeRange: fadeInRange)
 
-                // Set steady volume after fade-in
                 let afterFadeIn = CMTimeAdd(clip.startTime, safeFadeDuration)
                 trackParams.setVolume(finalVolume, at: afterFadeIn)
 
-                // Add fade-out at clip end
-                // Apply fade-out for any clip > 2x fadeDuration (was 3x, caused clicks on 0.05-0.15s clips)
+                // Fade out any clip longer than twice the fade; a 3x limit caused clicks on 0.05-0.15 s clips.
                 let clipEnd = CMTimeAdd(clip.startTime, playDuration)
                 if CMTimeCompare(playDuration, CMTimeMultiply(safeFadeDuration, multiplier: 2)) > 0 {
                     // Calculate proportional fade-out duration for short clips
                     let availableForFadeOut = CMTimeSubtract(playDuration, safeFadeDuration)
                     let actualFadeOutDuration = CMTimeMinimum(safeFadeDuration, availableForFadeOut)
                     let fadeOutStart = CMTimeSubtract(clipEnd, actualFadeOutDuration)
-                    // Validate fade-out range doesn't overlap with fade-in
                     if CMTimeCompare(fadeOutStart, CMTimeAdd(clip.startTime, safeFadeDuration)) > 0 {
                         let fadeOutRange = CMTimeRange(start: fadeOutStart, duration: actualFadeOutDuration)
                         trackParams.setVolumeRamp(fromStartVolume: finalVolume, toEndVolume: 0.0, timeRange: fadeOutRange)
                     }
                 }
 
-                // SEMANTIC GATING with smooth ramps and proper time mapping
                 if clip.isGatingEnabled {
                     let gatingSegments = try? await ServiceContainer.shared.soundAnalysisService.generateGatingMetadata(for: clip.url)
                     if let segments = gatingSegments {
-                        let gateRampDuration = CMTime(seconds: 0.03, preferredTimescale: 600) // 30ms gate ramp
+                        let gateRampDuration = CMTime(seconds: 0.03, preferredTimescale: 600)
                         let clipEnd = CMTimeAdd(clip.startTime, playDuration)
 
                         for gatingSegment in segments where !gatingSegment.shouldOpenGate {
@@ -480,13 +453,11 @@ enum AudioTrackBuilder {
                             let gatingStart = gatingSegment.timeRange.start
                             let gatingEnd = gatingSegment.timeRange.end
 
-                            // Skip gating outside the trimmed region
                             guard CMTimeCompare(gatingEnd, clip.trimStart) > 0,
                                   CMTimeCompare(gatingStart, clip.trimEnd) < 0 else {
                                 continue
                             }
 
-                            // Clamp gating to trim bounds
                             let clampedGatingStart = CMTimeMaximum(gatingStart, clip.trimStart)
                             let clampedGatingEnd = CMTimeMinimum(gatingEnd, clip.trimEnd)
 
@@ -500,13 +471,11 @@ enum AudioTrackBuilder {
                             let compositionEnd = CMTimeAdd(clip.startTime, scaledOffsetEnd)
                             let gatingDuration = CMTimeSubtract(compositionEnd, compositionStart)
 
-                            // Validate within clip bounds
                             guard CMTimeCompare(compositionStart, clipEnd) < 0,
                                   CMTimeCompare(gatingDuration, .zero) > 0 else {
                                 continue
                             }
 
-                            // Ramp down at gate close
                             let safeGateRampDuration = CMTimeMinimum(gateRampDuration, gatingDuration)
                             guard CMTimeCompare(safeGateRampDuration, .zero) > 0 else { continue }
 
@@ -515,10 +484,8 @@ enum AudioTrackBuilder {
                                 trackParams.setVolumeRamp(fromStartVolume: finalVolume, toEndVolume: 0.0, timeRange: rampDownRange)
                             }
 
-                            // Ramp up at gate open
                             if CMTimeCompare(compositionEnd, CMTimeAdd(compositionStart, safeGateRampDuration)) > 0 {
                                 let rampUpStart = CMTimeSubtract(compositionEnd, safeGateRampDuration)
-                                // Ensure ramp doesn't overlap with ramp down
                                 if CMTimeCompare(rampUpStart, CMTimeAdd(compositionStart, safeGateRampDuration)) > 0 {
                                     let rampUpRange = CMTimeRange(start: rampUpStart, duration: safeGateRampDuration)
                                     trackParams.setVolumeRamp(fromStartVolume: 0.0, toEndVolume: finalVolume, timeRange: rampUpRange)

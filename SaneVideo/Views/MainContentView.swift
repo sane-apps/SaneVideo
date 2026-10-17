@@ -15,7 +15,6 @@ struct MainContentView: View {
     @State private var showTranscriptSheet = false
     @State private var showLogs = false
     @State private var isDraggingFile = false
-    // Note: selectedClipIds moved to AppState for global access
 
     private var isTesting: Bool {
         ProcessInfo.processInfo.arguments.contains("-uitesting")
@@ -37,7 +36,6 @@ struct MainContentView: View {
                         .padding(16)
                 }
                 .overlay {
-                    // Quick Access Overlay (post-recording)
                     if appState.showQuickAccessOverlay,
                        let url = appState.quickAccessRecordingURL {
                         QuickAccessOverlay(
@@ -56,10 +54,9 @@ struct MainContentView: View {
                                 appState.dismissQuickAccessOverlay()
                             }
                         )
-                        .zIndex(1000) // Ensure it's on top
+                        .zIndex(1000)
                     }
                 }
-                // Global Keyboard Shortcuts
                 .background {
                     Button("") {
                         appState.performProjectCommand { showLogs.toggle() }
@@ -69,13 +66,11 @@ struct MainContentView: View {
                     .opacity(0)
                 }
                 .onAppear {
-                    // Connect SwiftUI's UndoManager to ProjectState
                     appState.projectState.undoManager = undoManager
                 }
                 .onChange(of: undoManager) { _, newValue in
                     appState.projectState.undoManager = newValue
                 }
-                // State Synchronization
                 .onChange(of: appState.recentlyAddedClip) {
                     if let clip = appState.recentlyAddedClip {
                         selectedClip = clip
@@ -85,7 +80,6 @@ struct MainContentView: View {
                 .onChange(of: appState.selectedClipIds) { _, newIds in
                     if let firstId = newIds.first,
                        let project = appState.projectState.currentProject {
-                        // Find the clip with this ID in the project
                         let clip = project.timeline.tracks
                             .flatMap(\.clips)
                             .first { $0.id == firstId }
@@ -96,7 +90,6 @@ struct MainContentView: View {
                         selectedClip = nil
                     }
                 }
-                // OPTIMIZED: Unified state change pipeline (replaces multiple onChange handlers)
                 .withUnifiedStateChanges()
                 .sheet(item: $errorPresenter.activeError) { error in
                     ErrorDisplayView(
@@ -106,16 +99,15 @@ struct MainContentView: View {
                             ? nil
                             : {
                                 errorPresenter.dismiss()
-                                // Retry logic would be implemented per error type
+                                // Retry only dismisses for now; no error type has its own retry yet.
                             }
                     )
                     .frame(width: 500, height: 400)
                 }
-                // Refactored Modifiers
                 .withFileDropHandling(isTargeted: $isDraggingFile)
                 .withGlobalSheets()
                 .withToastOverlay()
-                // Consolidated Sheets for UI Test Reliability
+                // Sheets are attached here together to keep UI tests reliable.
                 .sheet(isPresented: $appState.showTeleprompterScriptSheet) {
                     TeleprompterScriptSheet()
                 }
@@ -128,7 +120,6 @@ struct MainContentView: View {
                 .sheet(isPresented: $showLogs) {
                     LogView()
                 }
-                // Menu command handlers for export features
                 .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ExportAsGIF"))) { _ in
                     appState.performProjectCommand {
                         showGIFSheet = true
@@ -264,7 +255,6 @@ struct MainContentView: View {
         .toolbar {
             ToolbarItem(placement: .navigation) {
                 HStack(spacing: 12) {
-                    // 1. Branding
                     HStack(spacing: 0) {
                         Text("SANE")
                             .font(.system(size: 15, weight: .bold))
@@ -275,7 +265,6 @@ struct MainContentView: View {
                     }
                     .foregroundStyle(.primary)
 
-                    // 2. Project Name (Moved from Center)
                     if appState.appMode == .editing {
                         Divider().frame(height: 16)
 
@@ -304,7 +293,6 @@ struct MainContentView: View {
             }
 
             ToolbarItem(placement: .principal) {
-                // Center is now dedicated to the main Mode Switcher
                 Button(
                     action: {
                         withAnimation(.smoothUI) {
@@ -321,10 +309,9 @@ struct MainContentView: View {
                     }
                 )
                 .buttonStyle(.borderedProminent)
-                // Removed explicit tint - .borderedProminent uses system accent color automatically
                 .controlSize(.regular)
                 .hoverScale(1.05)
-                .pressScale() // Enhanced press animation
+                .pressScale()
                 .simultaneousGesture(
                     TapGesture().onEnded {
                         ServiceContainer.shared.hapticsManager.impact()
@@ -376,7 +363,6 @@ struct MainContentView: View {
                         }
                     )
                     .buttonStyle(.borderedProminent)
-                    // .borderedProminent uses system accent automatically
                     .hoverScale(1.05)
                     .disabled(!appState.projectCommandsEnabled || (appState.currentProject?.timeline.tracks.allSatisfy(\.clips.isEmpty) ?? true))
                     .help((appState.currentProject?.timeline.tracks.allSatisfy(\.clips.isEmpty) ?? true) ? "Add clips to timeline first" : "Export (Cmd+E)")

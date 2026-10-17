@@ -11,46 +11,36 @@ extension VideoClip {
         var currentOriginal = trimStart
         var remainingEffective = effectiveTime.seconds
 
-        // Sort removals by start time
         let sortedRemovals = removedRanges
             .map { $0.timeRange }
             .sorted { $0.start < $1.start }
 
         for removal in sortedRemovals {
-            // Check if removal is relevant (starts after current pos)
             let removalStart = max(removal.start, currentOriginal)
 
-            // If no gap between current and removal
             if removalStart <= currentOriginal {
-                // We are inside/at removal, jump to end
                 currentOriginal = max(currentOriginal, removal.end)
                 continue
             }
 
-            // Distance to next removal
             let distance = removalStart.seconds - currentOriginal.seconds
 
             if remainingEffective < distance {
-                // Target is in this valid segment
                 return CMTime(seconds: currentOriginal.seconds + remainingEffective, preferredTimescale: 600)
             }
 
-            // Consume this valid segment
             remainingEffective -= distance
             currentOriginal = removal.end
         }
 
-        // After all removals, add remaining
         return CMTime(seconds: currentOriginal.seconds + remainingEffective, preferredTimescale: 600)
     }
 
     /// Maps a time in the original asset (source time) to the "effective" (played) time.
     /// Returns nil if the time is inside a removed range.
     func effectiveTime(forOriginalTime originalTime: CMTime) -> CMTime? {
-        // 1. Check bounds
         if originalTime < trimStart || originalTime > trimEnd { return nil }
 
-        // 2. Sort removals
         let sortedRemovals = removedRanges
             .map { $0.timeRange }
             .sorted { $0.start < $1.start }
@@ -61,35 +51,27 @@ extension VideoClip {
         let target = originalTime
 
         for removal in sortedRemovals {
-            // Overlapping removals handling similar to validSegments calculation
-            if removal.end <= currentCursor { continue } // Already passed
+            if removal.end <= currentCursor { continue }
 
-            // Overlap check
             let start = max(removal.start, currentCursor)
 
-            // If target is BEFORE this removal starts
             if target < start {
-                // It's in the valid segment
                 let diff = target.seconds - currentCursor.seconds
                 return CMTime(seconds: effectiveDurationAccumulator + diff, preferredTimescale: 600)
             }
 
-            // If target is INSIDE this removal
             if target < removal.end {
-                return nil // Inside removed range
+                return nil
             }
 
-            // Add valid duration before this removal to accumulator
             let validDuration = start.seconds - currentCursor.seconds
             if validDuration > 0 {
                 effectiveDurationAccumulator += validDuration
             }
 
-            // Jump cursor
             currentCursor = max(currentCursor, removal.end)
         }
 
-        // Final segment
         if target >= currentCursor {
             let diff = target.seconds - currentCursor.seconds
             return CMTime(seconds: effectiveDurationAccumulator + diff, preferredTimescale: 600)
@@ -101,7 +83,6 @@ extension VideoClip {
     // MARK: - Computed Properties
 
     /// Effective duration after trimming, removing internal ranges, and applying speed
-    /// CRITICAL FIX: Speed affects played duration (2x speed = half duration)
     var effectiveDuration: CMTime {
         let safeEnd = min(trimEnd, duration)
         let safeStart = min(trimStart, safeEnd)
@@ -111,19 +92,14 @@ extension VideoClip {
         let trimRange = CMTimeRange(start: safeStart, duration: totalDuration)
 
         for range in removedRanges {
-            // Convert CodableTimeRange to CMTimeRange
             let removalRange = range.timeRange
 
-            // Interaction: Only subtract the part that is INSIDE the current trim
             let intersection = CMTimeRangeGetIntersection(trimRange, otherRange: removalRange)
             if !intersection.isEmpty {
                 totalDuration = CMTimeSubtract(totalDuration, intersection.duration)
             }
         }
 
-        // Apply speed scaling to get actual played duration
-        // speed > 1.0 = faster playback = shorter duration
-        // speed < 1.0 = slower playback = longer duration
         guard speed > 0 else { return totalDuration }
         let scaledSeconds = totalDuration.seconds / speed
         return CMTime(seconds: scaledSeconds, preferredTimescale: totalDuration.timescale)
@@ -142,7 +118,6 @@ extension VideoClip {
     
     // MARK: - Mutations
     
-    /// Set trim range with validation
     mutating func setTrimRange(start: CMTime, end: CMTime) {
         let validStart = max(.zero, min(start, duration))
         let validEnd = max(validStart, min(end, duration))
@@ -150,7 +125,6 @@ extension VideoClip {
         trimEnd = validEnd
     }
 
-    /// Reset trim to full duration
     mutating func resetTrim() {
         trimStart = .zero
         trimEnd = duration
@@ -162,10 +136,8 @@ extension VideoClip {
         var newRanges = removedRanges.map { $0.timeRange }
         newRanges.append(range)
 
-        // Sort by start time
         newRanges.sort { $0.start < $1.start }
 
-        // Coalesce overlaps
         var mergedRanges: [CMTimeRange] = []
         if let first = newRanges.first {
             var currentRange = first
@@ -178,7 +150,6 @@ extension VideoClip {
                     let newEnd = max(currentRange.end, nextRange.end)
                     currentRange = CMTimeRange(start: currentRange.start, end: newEnd)
                 } else {
-                    // No overlap - push current and start new
                     mergedRanges.append(currentRange)
                     currentRange = nextRange
                 }
@@ -186,7 +157,6 @@ extension VideoClip {
             mergedRanges.append(currentRange)
         }
 
-        // Update storage
         removedRanges = mergedRanges.map { CodableTimeRange($0) }
     }
 

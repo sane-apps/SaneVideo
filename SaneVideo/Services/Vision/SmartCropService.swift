@@ -5,7 +5,6 @@ import AVFoundation
 import CoreMedia
 import Foundation
 
-/// Service for generating smart crop keyframes for export
 actor SmartCropService {
 
     // MARK: - Dependencies
@@ -25,7 +24,6 @@ actor SmartCropService {
 
     // MARK: - Public API
 
-    /// Result of smart crop analysis for a video
     struct SmartCropResult: Sendable {
         /// Per-time crop suggestions (sampled at interval)
         let keyframes: [CMTime: SuggestedCrop]
@@ -33,23 +31,18 @@ actor SmartCropService {
         /// Overall suggested crop (weighted average)
         let defaultCrop: SuggestedCrop
 
-        /// Duration of analyzed video
         let duration: CMTime
     }
 
-    /// Analyze a video for smart crop keyframes
     /// - Parameters:
-    ///   - sourceURL: URL of the video to analyze
     ///   - settings: Smart crop settings (mode, smoothing)
     ///   - progressHandler: Progress callback (0.0 - 1.0)
-    /// - Returns: SmartCropResult with keyframes and default crop
     func analyzeVideo(
         sourceURL: URL,
         settings: SmartCropSettings,
         progressHandler: (@Sendable (Double) -> Void)? = nil
     ) async throws -> SmartCropResult {
         guard settings.enabled else {
-            // Return default center crop if not enabled
             let asset = AVURLAsset(url: sourceURL)
             let duration = try await asset.load(.duration)
             return SmartCropResult(
@@ -97,16 +90,13 @@ actor SmartCropService {
                 progressHandler: { progressHandler?(0.5 + $0 * 0.5) }
             )
 
-            // Merge: use face data when available, fallback to saliency
             for (time, saliencyCrop) in saliencyKeyframes {
                 keyframes[time] = faceKeyframes[time] ?? saliencyCrop
             }
         }
 
-        // Apply smoothing to keyframes
         let smoothedKeyframes = applySmoothing(to: keyframes, factor: settings.smoothing)
 
-        // Calculate default crop (weighted average of all keyframes)
         let defaultCrop = calculateDefaultCrop(from: smoothedKeyframes)
 
         AppLogger.export.info("📐 SmartCrop: Generated \(smoothedKeyframes.count) keyframes")
@@ -134,7 +124,6 @@ actor SmartCropService {
         var keyframes: [CMTime: SuggestedCrop] = [:]
 
         for (time, faceRect) in faceData {
-            // Convert face rect to crop suggestion
             // Face rect is normalized 0-1, center X/Y
             let centerX = faceRect.midX
             let centerY = faceRect.midY
@@ -165,11 +154,9 @@ actor SmartCropService {
         var keyframes: [CMTime: SuggestedCrop] = [:]
 
         for (time, result) in saliencyData {
-            // Use saliency attention point for center
             let center = result.attentionPoint
             let rect = result.attentionRect
 
-            // Zoom based on saliency region size
             let regionSize = max(rect.width, rect.height)
             let zoom = min(1.3, max(1.0, 0.4 / regionSize))
 
@@ -189,7 +176,6 @@ actor SmartCropService {
             return keyframes
         }
 
-        // Sort keyframes by time
         let sortedTimes = keyframes.keys.sorted { $0 < $1 }
         var smoothed: [CMTime: SuggestedCrop] = [:]
 
@@ -199,7 +185,6 @@ actor SmartCropService {
             guard let crop = keyframes[time] else { continue }
 
             if let prev = previousCrop {
-                // EMA smoothing
                 let alpha = 1.0 - factor
                 let smoothedCrop = SuggestedCrop(
                     centerX: alpha * crop.centerX + factor * prev.centerX,

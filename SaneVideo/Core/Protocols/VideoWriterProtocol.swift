@@ -1,5 +1,3 @@
-// Protocol for VideoWriter to enable testability
-
 import AVFoundation
 import CoreMedia
 import Foundation

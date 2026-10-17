@@ -19,17 +19,7 @@ struct CaptionListEditor: View {
                                     isActive: isCaptionActive(caption, in: clip),
                                     style: project.captionStyle,
                                     onSeek: {
-                                        // Seek to absolute time
-                                        // Caption time is relative to clip start (untrimmed asset time??)
-                                        // Let's defer to the logic we found in CaptionEditorView check
-                                        // Actually, most reliable seek:
-                                        // 1. Calculate effective offset of caption in clip
-                                        // 2. Add to clip.startTime
-                                        
-                                        // Assuming caption.startTime is relative to ASSET start (0)
-                                        // And clip has trimStart.
-                                        // Effective Time = caption.startTime - clip.trimStart
-                                        // Timeline Time = clip.startTime + Effective Time
+                                        // caption.startTime is asset time: timeline time = clip.startTime + (caption.startTime - clip.trimStart).
                                         
                                         let effectiveDuration = CMTimeSubtract(caption.startTime, clip.trimStart)
                                         let seekTime = CMTimeAdd(clip.startTime, effectiveDuration)
@@ -48,7 +38,6 @@ struct CaptionListEditor: View {
             }
             .frame(maxHeight: 300) // Limit height so it doesn't take over the inspector
             .onChange(of: appState.playbackState.currentTime) {
-                // Auto-scroll to active caption
                 if let activeId = findActiveCaptionId(project: project, time: appState.playbackState.currentTime) {
                     withAnimation {
                         proxy.scrollTo(activeId, anchor: .center)
@@ -97,7 +86,6 @@ struct CaptionListEditor: View {
     }
 }
 
-// Helpers for Binding unwrapping
 extension Binding where Value == VideoProject? {
     var bound: Binding<VideoProject> {
         Binding<VideoProject>(

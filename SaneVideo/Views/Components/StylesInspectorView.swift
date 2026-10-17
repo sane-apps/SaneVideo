@@ -1,15 +1,10 @@
-// 2025-12-31: Simplified inspector layout
-// - Captions moved to Transcript tab (left sidebar)
-// - Sections: Magic Fix, Focus & Framing, Background, Effects, Audio Analysis, Clip Info
-// - Fresh start each launch (all collapsed, no persistence)
-
 import SwiftUI
 
 struct StylesInspectorView: View {
     @Environment(AppState.self) var appState
     @Binding var selectedClip: VideoClip?
 
-    // UX: All sections collapsed by default, fresh start each launch (no @AppStorage)
+    // All sections start collapsed on each launch, so no @AppStorage.
     @State private var showMagicFix = false
     @State private var showReframe = false
     @State private var showBackground = false
@@ -20,7 +15,6 @@ struct StylesInspectorView: View {
     // Track if operation is in progress to prevent mode switching
     @State private var isOperationInProgress = false
 
-    // Validate clip exists in current project
     private var validatedClip: VideoClip? {
         guard let project = appState.projectState.currentProject else {
             return nil
@@ -49,14 +43,12 @@ struct StylesInspectorView: View {
         @Bindable var projectState = appState.projectState
 
         VStack(spacing: 0) {
-            // Clean header without mode toggle - unified experience
             HStack {
                 InspectorHeader()
                 Spacer()
             }
             .padding(.trailing, 16)
 
-            // Validate clip exists before rendering
             if let clip = validatedClip {
                 ScrollView {
                     LazyVStack(spacing: Theme.Dimensions.spacingMD) {

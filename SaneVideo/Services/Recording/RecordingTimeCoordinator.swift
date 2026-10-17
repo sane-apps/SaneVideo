@@ -22,10 +22,8 @@ class RecordingTimeCoordinator: @unchecked Sendable {
 
     // MARK: - Drift Correction
 
-    /// Optional drift tracker for A/V sync correction
     var driftTracker: DriftTracker?
 
-    // Thread-safe accessors
     var startTime: CMTime {
         get { lock.withLock { _startTime } }
         set { lock.withLock { _startTime = newValue } }
@@ -134,9 +132,7 @@ class RecordingTimeCoordinator: @unchecked Sendable {
         lock.withLock {
             var isFirstSample = false
 
-            // Handle first sample OR source switch recalibration
             if _startTime == .zero {
-                // First sample ever - set the baseline
                 _startTime = samplePresentationTime
                 _startTimeNeedsRecalibration = false
                 _pendingTimeOffset = nil
@@ -164,7 +160,6 @@ class RecordingTimeCoordinator: @unchecked Sendable {
                 presentationTime = CMTimeSubtract(presentationTime, offsetToApply)
             }
 
-            // Apply drift correction if tracker is active
             if let driftTracker {
                 let correction = driftTracker.calculateCorrection()
                 if abs(correction) > 0.001 {

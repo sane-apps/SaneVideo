@@ -1,5 +1,3 @@
-// Refactored logic for ExportView.
-
 import AppKit
 import AVFoundation
 import SwiftUI
@@ -108,7 +106,6 @@ extension ExportView {
 
         Task {
             do {
-                // Convert to VoiceoverService captions
                 let voiceoverCaptions = captions.map {
                     Caption(text: $0.text, startTime: $0.startTime, endTime: $0.endTime)
                 }
@@ -131,7 +128,6 @@ extension ExportView {
     }
 
     func startExport() {
-        // Validate timeline is not empty before export
         guard let project = appState.currentProject else {
             ServiceContainer.shared.toastManager.show("No project to export", type: .error)
             return
@@ -145,13 +141,11 @@ extension ExportView {
 
         let outputURL = ExportDestination.url(for: project.name, ext: exportSettings.fileExtension)
 
-        // Start export with validation in Task
         Task {
             await startExportWithValidation(project: project, outputURL: outputURL)
         }
     }
 
-    // Separate function for export with validation
     private func startExportWithValidation(project: VideoProject, outputURL: URL) async {
         // Estimate file size: duration (seconds) × bitrate (bits/sec) / 8 = bytes
         let duration = project.timeline.duration.seconds
@@ -162,9 +156,7 @@ extension ExportView {
         // Add 20% overhead for container, metadata, etc.
         let requiredSpace = Int64(Double(estimatedBytes) * 1.2)
 
-        // Check disk space before export
         do {
-            // Check available space on output volume
             let outputVolume = outputURL.deletingLastPathComponent()
             let values = try outputVolume.resourceValues(forKeys: [.volumeAvailableCapacityForImportantUsageKey])
             if let available = values.volumeAvailableCapacityForImportantUsage {
@@ -183,7 +175,6 @@ extension ExportView {
         isExporting = true
         exportProgress = 0
 
-        // Initialize speed tracking with estimated file size
         estimatedTotalBytes = requiredSpace
         speedTracker.startTracking(totalBytes: estimatedTotalBytes)
 
@@ -196,7 +187,6 @@ extension ExportView {
                     progressHandler: { progress in
                         Task { @MainActor in
                             self.exportProgress = progress
-                            // Update speed tracker with estimated bytes processed
                             let bytesProcessed = Int64(Double(self.estimatedTotalBytes) * progress)
                             self.speedTracker.update(bytesProcessed: bytesProcessed, totalBytes: self.estimatedTotalBytes)
                         }
@@ -249,24 +239,19 @@ extension ExportView {
                     let fileName = "\(projectName)_\(clip.url.deletingPathExtension().lastPathComponent)_\(timestamp).\(ext)"
                     let outputURL = exportFolder.appendingPathComponent(fileName)
 
-                    // Remove existing file if needed
                     try? FileManager.default.removeItem(at: outputURL)
 
-                    // Create a temporary project with just this clip
                     var tempProject = VideoProject()
                     tempProject.name = "\(projectName)_\(clip.url.deletingPathExtension().lastPathComponent)"
 
-                    // Add clip to first track
                     let track = Track(name: "Export Track", type: .video, clips: [clip], zIndex: 0)
                     tempProject.timeline.tracks.append(track)
 
-                    // Export using async (Swift 6 compliant)
                     _ = try await engine.export(
                         project: tempProject,
                         settings: settings,
                         outputURL: outputURL,
                         progressHandler: { clipProgress in
-                            // Update overall progress: (index + clipProgress) / total
                             let overallProgress = (Double(index) + clipProgress) / Double(totalClips)
                             Task { @MainActor in
                                 self.exportProgress = overallProgress
@@ -276,20 +261,17 @@ extension ExportView {
                 },
                 progressHandler: { completed, total in
                     Task { @MainActor in
-                        // Overall progress based on completed items
                         self.exportProgress = Double(completed) / Double(total)
                     }
                 }
             )
 
-            // Update UI on main actor
             isExporting = false
             exportProgress = 1.0
 
             let successCount = results.filter { $0.success }.count
             let failedCount = results.filter { !$0.success }.count
 
-            // Collect exported URLs from successful results
             var exportedURLs: [URL] = []
             for (index, result) in results.enumerated() where result.success {
                 let fileName = "\(projectName)_\(clips[index].url.deletingPathExtension().lastPathComponent)_\(timestamp).\(ext)"
@@ -298,7 +280,6 @@ extension ExportView {
             }
 
             if successCount > 0 {
-                // Show exported files in Finder
                 NSWorkspace.shared.activateFileViewerSelecting(exportedURLs)
 
                 if failedCount > 0 {
@@ -323,7 +304,6 @@ extension ExportView {
             return
         }
 
-        // Export to temp file first
         let tempDir = FileManager.default.temporaryDirectory
         let ext = exportSettings.fileExtension
         let fileName = "\(project.name)_\(Int(Date().timeIntervalSince1970)).\(ext)"

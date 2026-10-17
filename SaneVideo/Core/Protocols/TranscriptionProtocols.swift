@@ -1,6 +1,3 @@
-// Additional protocols for transcription services to enable testability
-// Note: AppleSpeechService and WhisperKitService already conform to TranscriptionServiceProtocol
-
 import AVFoundation
 import Combine
 import Foundation

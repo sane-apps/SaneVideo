@@ -1,6 +1,3 @@
-// Extracted from TimelineView.swift
-// Contains track header and add track button
-
 import AppKit
 import SwiftUI
 
@@ -13,7 +10,6 @@ struct TrackHeaderView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            // Track Name & Type Icon
             HStack(spacing: 6) {
                 Image(systemName: trackIcon)
                     .font(.system(size: 12, weight: .medium))
@@ -28,9 +24,7 @@ struct TrackHeaderView: View {
                 }
             }
 
-            // Controls - Better spacing and sizing
             HStack(spacing: 10) {
-                // Mute Button
                 Button(action: onMuteToggle) {
                     Image(systemName: track.isMuted ? "speaker.slash.fill" : "speaker.wave.2.fill")
                         .font(.system(size: 12, weight: .medium))
@@ -42,7 +36,6 @@ struct TrackHeaderView: View {
                 .help(track.isMuted ? String(localized: "track.help.unmute", defaultValue: "Unmute Track") : String(localized: "track.help.mute", defaultValue: "Mute Track"))
                 .accessibilityIdentifier("track_header.mute_button")
 
-                // Lock Button
                 Button(action: onLockToggle) {
                     Image(systemName: track.isLocked ? "lock.fill" : "lock.open")
                         .font(.system(size: 12, weight: .medium))
@@ -56,15 +49,13 @@ struct TrackHeaderView: View {
             }
             .padding(.top, 2)
 
-            // Spacer to push content to top and fill height
             Spacer(minLength: 0)
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 8)
         .frame(width: 100, alignment: .topLeading)
         .frame(height: AppConstants.timelineHeight, alignment: .top)
-        // Ensure perfect vertical alignment with track rows
-        // Both header and track row use same height (120px) and VStack spacing (8px)
+        // Header and track row share the same height (120pt) and VStack spacing (8pt) to stay aligned.
         .background(
             RoundedRectangle(cornerRadius: 4)
                 .fill(Theme.Colors.editorPanelElevated)

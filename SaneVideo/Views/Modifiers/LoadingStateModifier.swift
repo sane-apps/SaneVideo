@@ -1,8 +1,5 @@
-// Consistent loading state UI patterns
-
 import SwiftUI
 
-/// Standardized loading indicator
 struct LoadingIndicator: View {
     let message: String?
     let progress: Double?
@@ -15,7 +12,6 @@ struct LoadingIndicator: View {
     var body: some View {
         VStack(spacing: 12) {
             if let progress = progress {
-                // Progress bar style
                 VStack(spacing: 8) {
                     if let message = message {
                         Text(message)
@@ -44,7 +40,6 @@ struct LoadingIndicator: View {
                 .padding(.horizontal, 16)
                 .padding(.vertical, 12)
             } else {
-                // Spinner style
                 VStack(spacing: 8) {
                     ProgressView()
                         .scaleEffect(0.8)
@@ -65,7 +60,6 @@ struct LoadingIndicator: View {
     }
 }
 
-/// ViewModifier for adding loading overlay
 struct LoadingOverlayModifier: ViewModifier {
     let isLoading: Bool
     let message: String?
@@ -83,7 +77,6 @@ struct LoadingOverlayModifier: ViewModifier {
     }
 }
 
-/// ViewModifier for inline loading state
 struct InlineLoadingModifier: ViewModifier {
     let isLoading: Bool
     let message: String?

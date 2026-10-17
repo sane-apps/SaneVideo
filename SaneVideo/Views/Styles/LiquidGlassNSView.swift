@@ -1,6 +1,3 @@
-// NSView wrapper for Liquid Glass effect in AppKit windows (PiP, Floating Controls).
-// Matches the SwiftUI LiquidGlassModifier for visual consistency across the app.
-
 import AppKit
 
 /// An NSView that applies the macOS Tahoe "Liquid Glass" aesthetic for AppKit windows.
@@ -28,16 +25,13 @@ final class LiquidGlassNSView: NSView {
         self.intensity = intensity
         self.cornerRadius = cornerRadius
 
-        // Create visual effect view
         visualEffectView = NSVisualEffectView()
         visualEffectView.material = .hudWindow
         visualEffectView.state = .active
         visualEffectView.blendingMode = .withinWindow
 
-        // Create edge lighting layer
         edgeLayer = CAGradientLayer()
 
-        // Inner glow only for premium
         innerGlowLayer = intensity == .premium ? CAGradientLayer() : nil
 
         super.init(frame: .zero)
@@ -57,7 +51,6 @@ final class LiquidGlassNSView: NSView {
         layer?.cornerRadius = cornerRadius
         layer?.masksToBounds = true
 
-        // Add visual effect view as base
         visualEffectView.translatesAutoresizingMaskIntoConstraints = false
         addSubview(visualEffectView)
 
@@ -72,15 +65,12 @@ final class LiquidGlassNSView: NSView {
         visualEffectView.layer?.cornerRadius = cornerRadius
         visualEffectView.layer?.masksToBounds = true
 
-        // Configure edge layer
         configureEdgeLayer()
 
-        // Configure inner glow for premium
         if let innerGlow = innerGlowLayer {
             configureInnerGlowLayer(innerGlow)
         }
 
-        // Add shadow
         configureShadow()
     }
 
@@ -92,7 +82,6 @@ final class LiquidGlassNSView: NSView {
         edgeLayer.cornerRadius = cornerRadius
         edgeLayer.masksToBounds = true
 
-        // Create border mask
         let borderWidth = edgeWidth
         let maskLayer = CAShapeLayer()
         maskLayer.fillColor = nil
@@ -114,7 +103,6 @@ final class LiquidGlassNSView: NSView {
         glowLayer.cornerRadius = cornerRadius
         glowLayer.masksToBounds = true
 
-        // Inner border mask
         let maskLayer = CAShapeLayer()
         maskLayer.fillColor = nil
         maskLayer.strokeColor = NSColor.white.cgColor
@@ -143,7 +131,6 @@ final class LiquidGlassNSView: NSView {
         edgeLayer.frame = bounds
         innerGlowLayer?.frame = bounds
 
-        // Update border mask paths
         updateBorderMask(for: edgeLayer, inset: 0)
         if let innerGlow = innerGlowLayer {
             updateBorderMask(for: innerGlow, inset: 1)

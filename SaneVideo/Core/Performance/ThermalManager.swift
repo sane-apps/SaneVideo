@@ -2,7 +2,6 @@ import Foundation
 import SwiftUI
 import Observation
 
-/// Performance levels based on thermal state.
 enum PerformanceLevel: String, CaseIterable, Sendable {
     case high        // Thermal state: nominal
     case balanced    // Thermal state: fair
@@ -10,22 +9,17 @@ enum PerformanceLevel: String, CaseIterable, Sendable {
     case emergency   // Thermal state: critical
 }
 
-/// Manages and monitors the system's thermal state to optimize application performance.
 @MainActor
 @Observable
 final class ThermalManager {
-    /// Shared singleton instance.
     static let shared = ThermalManager()
     
-    /// The current raw thermal state of the system observed for UI.
     private(set) var thermalState: ProcessInfo.ThermalState = .nominal
     
-    /// The suggested performance level based on current thermal conditions.
     var performanceLevel: PerformanceLevel {
         Self.performanceLevel(for: thermalState)
     }
     
-    /// Whether the system is currently under heavy thermal pressure.
     var isThermalPressureHigh: Bool {
         Self.isThermalPressureHigh(for: thermalState)
     }

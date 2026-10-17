@@ -2,8 +2,7 @@ import AVFoundation
 import Combine
 import SwiftUI
 
-/// Manages persistent user preferences using UserDefaults
-/// SWIFT 6 FIX: @MainActor required for UI-driving state (SwiftUI views read preferences)
+/// MainActor because SwiftUI views read these preferences.
 @MainActor
 @Observable
 class UserPreferences {
@@ -60,7 +59,7 @@ class UserPreferences {
   @ObservationIgnored @AppStorage(CameraPreviewMirroring.appStorageKey) private var _mirrorCameraPreview:
     Bool = CameraPreviewMirroring.defaultIsMirrored
 
-  // Helper to get typed AVVideoCodecType (since AppStorage doesn't support it directly)
+  // AppStorage cannot store AVVideoCodecType directly.
   var defaultAVCodec: AVVideoCodecType {
     get { AVVideoCodecType(rawValue: defaultCodec) }
     set { defaultCodec = newValue.rawValue }

@@ -18,7 +18,6 @@ struct ExportView: View {
     @State var estimatedTotalBytes: Int64 = 0
 
 
-    // Services
     let exportEngine = ServiceContainer.shared.exportService
 
     // MARK: - Computed Properties
@@ -41,7 +40,6 @@ struct ExportView: View {
             .contains { !$0.captions.isEmpty }
     }
     
-    // Check if timeline is empty
     private var isTimelineEmpty: Bool {
         guard let project = appState.currentProject else { return true }
         return project.timeline.tracks.allSatisfy { $0.clips.isEmpty }
@@ -156,7 +154,7 @@ struct ExportView: View {
                     dismiss()
                 }
                 .buttonStyle(SaneSheetButtonStyle(kind: .secondary, isEnabled: true))
-                .accessibilityIdentifier(AccessibilityIdentifiers.cancelExportButton) // Changed from "CloseExportButton" to "CancelExportButton"
+                .accessibilityIdentifier(AccessibilityIdentifiers.cancelExportButton)
                 .keyboardShortcut(.cancelAction)
                 .controlSize(.regular)
             }
@@ -196,22 +194,16 @@ struct ExportView: View {
     func estimateFileSize() -> String {
         guard let project = appState.currentProject else { return "0 MB" }
 
-        // Use bitrate to estimate
         // Bitrate is in bits per second
         let duration = project.timeline.duration.seconds
         guard duration > 0 else { return "0 MB" }
 
-        // Audio bitrate (approx 192kbps)
         let audioBitrate = 192_000.0
         let videoBitrate = Double(exportSettings.bitrate)
         let totalBitrate = videoBitrate + audioBitrate
 
-        // Additional overhead for container (approx 1-2%)
+        // About 2% container overhead.
         let bitrateRef = totalBitrate * 1.02
-
-        // Size (bits) = bitrate * duration
-        // Size (bytes) = size / 8
-        // Size (MB) = size / (1024*1024)
 
         let sizeMB = (bitrateRef * duration) / 8.0 / 1024.0 / 1024.0
         return String(format: "%.1f MB", sizeMB)

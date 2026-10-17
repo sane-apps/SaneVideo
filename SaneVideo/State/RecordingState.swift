@@ -22,9 +22,9 @@ class RecordingState {
 
     var isPaused = false
     var isPreparing = false // True during countdown (camera on, not yet recording)
-    private var isStopping = false // CRITICAL FIX: Prevent double-stop calls
-    @MainActor private var isPendingStop = false // CRITICAL FIX: Handle stop during initialization
-    private var pendingStopCompletion: ((URL?) -> Void)? // CRITICAL FIX: Hold completion for pending stops
+    private var isStopping = false // Prevents double-stop calls
+    @MainActor private var isPendingStop = false // Handles a stop that arrives during start
+    private var pendingStopCompletion: ((URL?) -> Void)? // Completion for a pending stop
     var isMicActive = true
     var isPresenterOverlayActive = false
     var recordingDuration: TimeInterval = 0
@@ -42,7 +42,7 @@ class RecordingState {
     private var cameraService: CameraServiceProtocol
     private let permissionManager: PermissionManagerProtocol
     private var injectedAudioService: AudioService?
-    private var injectedScreenRecorder: ScreenRecorder? // Stored for injection
+    private var injectedScreenRecorder: ScreenRecorder?
     private var cancellables = Set<AnyCancellable>()
 
     // MARK: - Initialization
@@ -59,7 +59,6 @@ class RecordingState {
         injectedScreenRecorder = screenRecorder
         setupRecordingEngine()
 
-        // VERIFICATION LOG: Confirm this code is running
         AppLogger.recording.info("✅ RecordingState initialized [VERSION_FIXED_V1]")
     }
 
@@ -69,7 +68,6 @@ class RecordingState {
     var onRecordingStateChanged: ((Bool) -> Void)?
     var onContentSelected: (() -> Void)?
 
-    // Ensure proper cleanup of timer and tasks
     // Task.cancel() is thread-safe, so we can call it from any thread in deinit
     deinit {
         countdownTask?.cancel()
@@ -80,45 +78,38 @@ class RecordingState {
         recordingEngine = RecordingEngine(
             cameraService: cameraService,
             audioService: injectedAudioService ?? ServiceContainer.shared.audioService,
-            screenRecorder: injectedScreenRecorder // Use injected instance if available
+            screenRecorder: injectedScreenRecorder
         )
 
-        // Listen for external screen recording stops
         recordingEngine?.onScreenRecordingStoppedExternally = { [weak self] in
             Task { @MainActor in
                 self?.onRequestScreenShareStop?()
             }
         }
 
-        // Wire error handler to stop recording and present errors
         recordingEngine?.onError = { [weak self] (error: AppError) in
             Task { @MainActor in
                 AppLogger.recording.error("Engine reported error: \(error.localizedDescription)")
 
                 // Cleanup timer if recording failed to start
                 if let self = self, self.isPreparing || (self.isRecording && self.recordingDuration < 0.5) {
-                    // Recording just started or was preparing - cleanup timer
                     self.recordingTimer?.invalidate()
                     self.recordingTimer = nil
                     self.isPreparing = false
                     self.isRecording = false
                 }
 
-                // Don't stop recording for source switch timeouts
-                // The switch will rollback, but recording should continue on the previous source
+                // Source switch timeouts roll back to the previous source, so keep recording.
                 let errorMessage = error.localizedDescription
                 let isSourceSwitchTimeout = errorMessage.contains("Source switch timed out") ||
                     errorMessage.contains("switch timed out")
 
                 if !isSourceSwitchTimeout {
-                    // Stop recording for all other errors
                     self?.stopRecording { _ in }
                 } else {
-                    // For source switch timeouts, just show error but keep recording
                     AppLogger.recording.warning("Source switch timeout - continuing recording on previous source")
                 }
 
-                // Switch directly on the strongly-typed AppError
                 switch error {
                 case .cameraPermissionPromptShown:
                     ServiceContainer.shared.hapticsManager.warning()
@@ -158,7 +149,6 @@ class RecordingState {
             }
         }
 
-        // Listen for Presenter Overlay changes
         recordingEngine?.onPresenterOverlayChanged = { [weak self] (isActive: Bool) in
             Task { @MainActor [weak self] in
                 AppLogger.recording.info("State: Presenter Overlay changed to \(isActive)")
@@ -167,7 +157,6 @@ class RecordingState {
             }
         }
 
-        // Listen for content selection (user picked something in picker)
         recordingEngine?.onContentSelected = { [weak self] in
             Task { @MainActor [weak self] in
                 AppLogger.recording.info("State: Content selected in picker")
@@ -199,8 +188,7 @@ class RecordingState {
             return
         }
 
-        // Re-check live permission state before deciding whether to prompt inline.
-        // This avoids stale .notDetermined statuses after app relaunch or TCC refresh.
+        // Re-check live permission state; statuses can be stale .notDetermined after relaunch or a TCC refresh.
         permissionManager.checkCameraPermission()
         permissionManager.checkMicrophonePermission()
         if isScreenSharing {
@@ -302,14 +290,10 @@ class RecordingState {
         isScreenSharing: Bool,
         includeCameraOverlay: Bool
     ) {
-        // Verify permissions before starting recording
-        // This handles cases where permissions were revoked while app was in background
+        // Re-check permissions; they may have been revoked while the app was in the background.
         NSLog("🎬 Permission check: camera=\(permissionManager.cameraStatus), mic=\(permissionManager.microphoneStatus), screen=\(permissionManager.screenRecordingStatus)")
 
-        // If we're already screen sharing with an active stream,
-        // we KNOW screen recording permission is granted (ScreenCaptureKit wouldn't work without it).
-        // CGPreflightScreenCaptureAccess() is unreliable and can return false even when granted.
-        // Trust the active stream rather than the flaky preflight check.
+        // An active ScreenCaptureKit stream proves screen permission; CGPreflightScreenCaptureAccess() can return false even when granted.
         let hasActiveScreenStream = recordingEngine?.screenRecorder.activeStream != nil
         let shouldSkipScreenPermissionCheck = isScreenSharing && hasActiveScreenStream
         let requiresCamera = !isScreenSharing || includeCameraOverlay
@@ -394,8 +378,7 @@ class RecordingState {
 
     private func actuallyStartRecording(isScreenSharing: Bool, includeCameraOverlay: Bool) {
         NSLog("🎬 RecordingState.actuallyStartRecording called! isScreenSharing=\(isScreenSharing)")
-        // Only check isRecording - we ARE expected to have isPreparing=true here
-        // isPreparing will be set to false below
+        // isPreparing is expected to be true here; only isRecording matters.
         guard !isRecording else {
             NSLog("🎬 RecordingState.actuallyStartRecording BAILED: already recording")
             AppLogger.recording.warning("actuallyStartRecording called but already recording")
@@ -418,7 +401,6 @@ class RecordingState {
         let includeMicrophoneAudio = isMicActive
         isRecording = true // Set optimistically but handle failure
 
-        // Start engine and only set isRecording if it succeeds
         let recordingEngine = recordingEngine
         startingTask = Task { [weak self, recordingEngine] in
             guard self != nil else { return }
@@ -429,21 +411,15 @@ class RecordingState {
                 includeMicrophoneAudio: includeMicrophoneAudio
             )
 
-            // Check if engine actually started (isRecording will be set by engine)
-            // If start failed, cleanup timer
-            // Check if engine actually started (isRecording will be set by engine)
-            // If start failed, cleanup timer
+            // The engine sets isRecording; if start failed, clean up the timer.
             await MainActor.run { [weak self] in
                 guard let self = self else { return }
 
-                // Always clear the task when done
                 self.startingTask = nil
 
-                // Start success feedback
                 ServiceContainer.shared.soundManager.playStartRecording()
                 ServiceContainer.shared.hapticsManager.success()
 
-                // If a stop was requested during start, execute it now
                 if self.isPendingStop {
                     AppLogger.recording.info("🎬 Initialized stop request detected. Stopping now.")
                     self.isPendingStop = false
@@ -462,19 +438,16 @@ class RecordingState {
         AppLogger.recording.debug(
             "🛑 stopRecording called. isPreparing=\(isPreparing), isRecording=\(isRecording), isStopping=\(isStopping)")
 
-        // If we are still starting, we must wait or cancel
         if startingTask != nil {
             AppLogger.recording.warning(
                 "🎬 User hit stop while recording was still starting. Queueing stop... [VERSION_FIXED_V1]")
             isPendingStop = true
 
-            // Queue the completion handler to be called when the pending stop executes
-            // We overwrite any previous pending completion - last writer wins
+            // Last writer wins: a newer pending completion replaces the old one.
             pendingStopCompletion = completion
             return
         }
 
-        // Prevent double-stop calls
         guard !isStopping else {
             AppLogger.recording.debug("🛑 stopRecording ignored (already stopping)")
             completion(nil) // Call completion even if ignored, to unblock caller
@@ -493,30 +466,26 @@ class RecordingState {
             return
         }
 
-        // Set stopping flag IMMEDIATELY to prevent concurrent calls
+        // Set at once to block concurrent calls.
         isStopping = true
 
-        // Clear other state flags
         isPreparing = false
         isPaused = false
 
-        // Stop timer immediately (we don't want duration to keep counting)
         recordingTimer?.invalidate()
         recordingTimer = nil
         countdownTask?.cancel()
         countdownTask = nil
 
-        // Play feedback immediately
         ServiceContainer.shared.soundManager.playStopRecording()
         ServiceContainer.shared.hapticsManager.impact()
 
-        // Stop engine FIRST, then update state in completion
+        // Stop the engine first, then update state when it finishes.
         Task {
             AppLogger.recording.debug("🛑 Calling engine.stopRecording()")
             let url = await recordingEngine?.stopRecording()
             AppLogger.recording.debug("🛑 Engine returned url=\(url?.path ?? "nil")")
 
-            // Only update state AFTER engine completes
             await MainActor.run {
                 self.isRecording = false
                 self.isStopping = false
@@ -532,11 +501,6 @@ class RecordingState {
             recordingEngine?.pause()
         } else {
             recordingEngine?.resume()
-            // Removed unnecessary switchSource call on resume
-            // Resume should just resume, not switch sources
-            // The source should already be correct from when recording started
-            // If this was needed for some reason, it should only switch if source is wrong
-            // For now, removing it as it seems like a bug
         }
     }
 

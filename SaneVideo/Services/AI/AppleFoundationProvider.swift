@@ -8,7 +8,6 @@ struct AppleFoundationProvider: AIModelProvider {
     func generateTitleAndDescription(transcript: String) async throws -> AIGeneratedContent {
         #if canImport(FoundationModels)
         if #available(macOS 26.0, *) {
-            // Primary: Use Apple Foundation Models (macOS 26.0+)
             AppLogger.general.info("Using Apple Foundation Models for local processing")
 
             let session = LanguageModelSession()
@@ -34,8 +33,6 @@ struct AppleFoundationProvider: AIModelProvider {
         }
         #endif
 
-        // Fallback: Fast, performant text extraction (no performance degradation)
-        // This is instant and doesn't block - acceptable graceful degradation
         AppLogger.general.info("Using fast text extraction fallback for title/description")
 
         let sentences = transcript.components(separatedBy: ". ")
@@ -51,7 +48,6 @@ struct AppleFoundationProvider: AIModelProvider {
     func analyzeTranscriptForEdits(prompt: String) async throws -> MagicFixAnalysis {
         #if canImport(FoundationModels)
         if #available(macOS 26.0, *) {
-            // Primary: Use Apple Foundation Models for intelligent analysis
             let session = LanguageModelSession()
             let response = try await session.respond(to: prompt)
             guard let data = response.content.data(using: String.Encoding.utf8) else { throw AIError.invalidResponse }
@@ -59,8 +55,6 @@ struct AppleFoundationProvider: AIModelProvider {
         }
         #endif
 
-        // Fallback: Return empty analysis - Magic Fix uses SmartFillerDetector (on-device) instead
-        // This is fast and doesn't block - the app remains fully functional
         AppLogger.general.info("Using on-device SmartFillerDetector for transcript analysis (fallback)")
         return MagicFixAnalysis(segments: [])
     }
@@ -68,12 +62,10 @@ struct AppleFoundationProvider: AIModelProvider {
     func refineCaptions(captions: [Caption], prompt: String) async throws -> [Caption] {
         #if canImport(FoundationModels)
         if #available(macOS 26.0, *) {
-            // Primary: Use Apple Foundation Models for intelligent refinement
             let session = LanguageModelSession()
             let response = try await session.respond(to: prompt)
             guard let data = response.content.data(using: String.Encoding.utf8) else { throw AIError.invalidResponse }
 
-            // Parse refined captions from JSON response
             let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] ?? [:]
             guard let refinedList = json["refined"] as? [[String: String]] else { throw AIError.invalidResponse }
 
@@ -90,8 +82,6 @@ struct AppleFoundationProvider: AIModelProvider {
         }
         #endif
 
-        // Fallback: Fast, performant text formatting (instant, no performance degradation)
-        // Simple capitalization and punctuation - keeps app fully functional
         AppLogger.general.info("Using fast text formatting fallback for caption refinement")
 
         return captions.map { caption in
@@ -101,7 +91,6 @@ struct AppleFoundationProvider: AIModelProvider {
                 let rest = String(caption.text.dropFirst())
                 var text = firstChar + rest
 
-                // Add period if missing
                 if !text.hasSuffix(".") && !text.hasSuffix("!") && !text.hasSuffix("?") {
                     text += "."
                 }

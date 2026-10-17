@@ -1,5 +1,3 @@
-// Protocol for ScreenRecorder to enable testability
-
 @preconcurrency import Combine
 import CoreMedia
 import Foundation

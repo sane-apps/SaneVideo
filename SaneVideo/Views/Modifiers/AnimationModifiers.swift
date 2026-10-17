@@ -1,11 +1,8 @@
-// Consistent animation patterns for smooth, polished UI
-
 import SwiftUI
 
 // MARK: - Standard Animation Presets
 
 extension Animation {
-    /// Smooth, subtle animation for UI interactions
     static let smoothUI = Animation.smooth(duration: 0.25, extraBounce: 0)
     
     /// Quick, snappy animation for button presses
@@ -42,7 +39,6 @@ extension AnyTransition {
 
 // MARK: - ViewModifiers for Common Animations
 
-/// Smooth appearance animation
 struct SmoothAppearModifier: ViewModifier {
     @State private var isVisible = false
     
@@ -58,7 +54,6 @@ struct SmoothAppearModifier: ViewModifier {
     }
 }
 
-/// Hover scale effect
 struct HoverScaleModifier: ViewModifier {
     @State private var isHovered = false
     let scale: CGFloat
@@ -77,7 +72,6 @@ struct HoverScaleModifier: ViewModifier {
     }
 }
 
-/// Press scale effect
 struct PressScaleModifier: ViewModifier {
     @State private var isPressed = false
     
@@ -97,7 +91,6 @@ struct PressScaleModifier: ViewModifier {
     }
 }
 
-/// Smooth value change animation
 struct AnimatedValueModifier<T: Equatable>: ViewModifier {
     let value: T
     @State private var animatedValue: T
@@ -118,17 +111,14 @@ struct AnimatedValueModifier<T: Equatable>: ViewModifier {
 }
 
 extension View {
-    /// Smooth appear animation
     func smoothAppear() -> some View {
         modifier(SmoothAppearModifier())
     }
     
-    /// Hover scale effect
     func hoverScale(_ scale: CGFloat = 1.05) -> some View {
         modifier(HoverScaleModifier(scale: scale))
     }
     
-    /// Press scale effect
     func pressScale() -> some View {
         modifier(PressScaleModifier())
     }

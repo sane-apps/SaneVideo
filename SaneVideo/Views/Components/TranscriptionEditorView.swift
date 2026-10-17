@@ -1,9 +1,7 @@
 import SwiftUI
 import CoreMedia
 
-/// Unified Captions Hub (2025-12-31)
-/// PRIMARY location for caption editing, styling, and generation.
-/// Combines transcription editing with style controls.
+/// Main place to edit, style and generate captions.
 struct TranscriptionEditorView: View {
     @Environment(AppState.self) var appState
     @Binding var selectedClip: VideoClip?
@@ -14,16 +12,12 @@ struct TranscriptionEditorView: View {
     @State private var isGeneratingTranscript = false
     @State private var showStylePicker = false
 
-    // Get fresh clip from project to ensure we have latest captions
-    // The binding may point to a stale clip value. When captions are updated via ProjectState,
-    // the project is updated but the binding may not refresh until the parent re-renders.
-    // This mirrors the pattern used in StylesInspectorView.validatedClip.
+    // Read the clip fresh from the project: the binding can hold a stale value until the parent re-renders.
     private var currentClip: VideoClip? {
         guard let clip = selectedClip,
               let project = appState.projectState.currentProject else {
             return nil
         }
-        // Get fresh clip from project by ID
         for track in project.timeline.tracks {
             if let freshClip = track.clips.first(where: { $0.id == clip.id }) {
                 return freshClip
@@ -47,7 +41,6 @@ struct TranscriptionEditorView: View {
 
             Divider()
 
-            // Search & Tools Bar
             HStack {
                 Image(systemName: "magnifyingglass")
                     .foregroundColor(Color.stone)
@@ -214,7 +207,6 @@ struct TranscriptionEditorView: View {
             updatedCaption.text = newText
             updatedCaptions[index] = updatedCaption
 
-            // Apply changes to project
             appState.projectState.updateCaptions(updatedCaptions, for: clip)
 
             AppLogger.project.info("📝 Updated caption \(caption.id): '\(newText)'")
@@ -281,7 +273,6 @@ struct TranscriptionEditorView: View {
 
     private var stylePickerBar: some View {
         VStack(spacing: 0) {
-            // Compact header with expand/collapse
             HStack {
                 Label("Caption Style", systemImage: "textformat")
                     .font(.system(size: 12, weight: .medium))
@@ -289,7 +280,6 @@ struct TranscriptionEditorView: View {
 
                 Spacer()
 
-                // Current style indicator
                 if let project = appState.projectState.currentProject {
                     Text(project.captionStyle.name)
                         .font(.system(size: 11, weight: .semibold))
@@ -317,7 +307,6 @@ struct TranscriptionEditorView: View {
                 }
             }
 
-            // Expandable style grid
             if showStylePicker {
                 styleGrid
                     .transition(.opacity.combined(with: .move(edge: .top)))
@@ -328,7 +317,6 @@ struct TranscriptionEditorView: View {
     private var styleGrid: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
-                // Show first 8 popular styles for quick access
                 ForEach(Array(CaptionStyle.allPresets.prefix(8))) { style in
                     let isSelected = appState.projectState.currentProject?.captionStyle.name == style.name
 
@@ -382,13 +370,11 @@ struct CaptionEditorRow: View {
     
     var body: some View {
         HStack(alignment: .top, spacing: 10) {
-            // Timestamp
             Text(formatTime(caption.startTime))
                 .font(.system(.caption2, design: .monospaced))
                 .foregroundColor(isCurrent ? .accentColor : Color.stone)
                 .frame(width: 45, alignment: .leading)
             
-            // Editable Text
             TextEditor(text: $text)
                 .font(.system(size: 13))
                 .frame(minHeight: 20)
@@ -405,7 +391,6 @@ struct CaptionEditorRow: View {
                     onTextChange(newValue)
                 }
             
-            // Actions
             if isCurrent {
                 Button(action: onDelete) {
                     Image(systemName: "scissors")

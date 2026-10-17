@@ -2,10 +2,6 @@ import SwiftUI
 import AppKit
 
 /// Context menu for TimelineClipView
-/// 2025-12-31: Simplified to remove duplicates. Use canonical locations instead:
-/// - Smart Crop → VideoSection in inspector
-/// - Auto-Framing → VideoSection in inspector
-/// - Find Highlights → AudioSection in inspector
 struct ClipContextMenu: View {
     let clip: VideoClip
 
@@ -48,7 +44,6 @@ struct ClipContextMenu: View {
             .accessibilityIdentifier("clip.menu.remove_fillers")
 
             // MARK: - Vision Analysis (unique features only)
-            // Smart Crop & Auto-Framing moved to VideoSection inspector
             Menu {
                 Button(action: {
                     onFindGestures?()

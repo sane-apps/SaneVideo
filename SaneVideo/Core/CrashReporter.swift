@@ -1,12 +1,7 @@
-// Native crash reporting using Apple's MetricKit framework.
-// Collects crash logs, hang reports, and performance diagnostics.
-
 import Foundation
 import MetricKit
 
-/// Centralized crash and diagnostic reporting using MetricKit.
-/// MetricKit provides system-level insights including crashes, hangs, CPU usage,
-/// memory consumption, and disk writes from users who opt-in to diagnostics.
+/// MetricKit only delivers reports from users who opt in to sharing diagnostics.
 @MainActor
 @Observable
 final class CrashReporter: NSObject {
@@ -18,7 +13,6 @@ final class CrashReporter: NSObject {
         super.init()
     }
 
-    /// Start receiving MetricKit diagnostic payloads.
     func start() {
         MXMetricManager.shared.add(self)
         AppLogger.general.info("📊 CrashReporter: MetricKit subscription activated")

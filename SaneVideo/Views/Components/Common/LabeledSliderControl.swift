@@ -1,5 +1,3 @@
-// Reusable slider control with label, value display, and range hints
-
 import SwiftUI
 
 /// A slider with header label, current value display, and optional range hints

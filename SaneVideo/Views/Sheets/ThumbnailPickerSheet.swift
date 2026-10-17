@@ -1,5 +1,3 @@
-// Full thumbnail creation studio using extracted helpers.
-
 import AppKit
 import AVFoundation
 import SwiftUI
@@ -12,7 +10,6 @@ struct ThumbnailPickerSheet: View {
     let projectName: String
     let onSelect: (NSImage) -> Void
 
-    // Frame selection
     @State private var candidates: [ThumbnailCandidate] = []
     @State private var selectedIndex: Int = 0
     @State private var isLoading = true
@@ -21,7 +18,6 @@ struct ThumbnailPickerSheet: View {
     @State private var customImage: NSImage?
     @State private var showCustomScrubber = false
 
-    // Styling
     @State private var selectedStyle: ThumbnailStyle = .original
     @State private var saturation: Double = 1.0
     @State private var brightness: Double = 0.0

@@ -1,5 +1,3 @@
-// Consolidated from RecordingEngine+Setup.swift and RecordingEngine+Switching.swift
-
 import AVFoundation
 import AppKit
 import Combine
@@ -36,7 +34,6 @@ extension RecordingEngine {
     let center = NSWorkspace.shared.notificationCenter
     center.addObserver(
       self, selector: #selector(handleSleep), name: NSWorkspace.willSleepNotification, object: nil)
-    // Note: handleWake was removed as it was empty - system wakes automatically resume
   }
 
   @MainActor
@@ -274,20 +271,17 @@ extension RecordingEngine {
         return
       }
 
-      // Cancel any previous timeout task before starting new one
-      // This prevents race conditions where old timeout corrupts new switch state
+      // Cancel the previous timeout so it cannot corrupt the new switch state.
       sourceSwitchTimeoutTask?.cancel()
       sourceSwitchTimeoutTask = nil
 
-      // Increased camera timeout from 10s to 30s
-      // Camera can take time to start, especially if permissions dialog appears
+      // Camera start can be slow, especially if a permission dialog appears.
       let timeoutDuration: UInt64 = (source == .screen) ? 120_000_000_000 : 30_000_000_000
 
       sourceSwitchTimeoutTask = Task { @RecordingActor [weak self] in
         try? await Task.sleep(nanoseconds: timeoutDuration)
         guard let self = self else { return }
 
-        // Check if this task was cancelled (e.g., by a new switch starting)
         guard !Task.isCancelled else { return }
 
         if self.isSwitching, self.pendingSource == source {
@@ -402,10 +396,7 @@ extension RecordingEngine {
       await screenRecorder.stop()
       AppLogger.recording.info("Screen recorder stopped, camera transition complete")
 
-      // Always complete switch immediately after stopping screen recorder
-      // The camera should already be running (it was started for PiP overlay)
-      // Don't wait for first frame - this causes unnecessary timeouts
-      // The processSample flow will handle recalibration naturally
+      // Complete the switch now: the camera is already running for PiP, and processSample recalibrates on the next frame.
       if pendingSource == newSource {
         AppLogger.recording.info("Completing camera switch immediately (cameraWasActive: \(cameraWasActive))")
         currentSource = newSource

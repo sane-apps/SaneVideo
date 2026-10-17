@@ -1,6 +1,3 @@
-// Text-based editing view - Descript-style transcript editing
-// Displays transcript alongside timeline with word-level precision
-
 import AVFoundation
 import SwiftUI
 
@@ -14,7 +11,6 @@ struct TranscriptTimelineView: View {
     
     let clip: VideoClip
     
-    // Computed transcript from captions
     private var transcript: String {
         clip.captions
             .sorted { $0.startTime.seconds < $1.startTime.seconds }
@@ -22,16 +18,13 @@ struct TranscriptTimelineView: View {
             .joined(separator: " ")
     }
     
-    // Word-level segments with timestamps
     // Uses word-level timestamps from captions if available, otherwise estimates
     private var wordSegments: [WordSegment] {
         var segments: [WordSegment] = []
         var currentOffset = 0
         
         for caption in clip.captions.sorted(by: { $0.startTime.seconds < $1.startTime.seconds }) {
-            // Check if we have word-level timestamps
             if let words = caption.words, !words.isEmpty {
-                // Use precise word-level timestamps
                 for word in words {
                     let startTime = CMTime(seconds: word.start, preferredTimescale: 600)
                     let endTime = CMTime(seconds: word.end, preferredTimescale: 600)
@@ -78,13 +71,11 @@ struct TranscriptTimelineView: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // Header
             HStack {
                 Label("Transcript Editor", systemImage: "text.bubble")
                     .font(.headline)
                 Spacer()
                 Button {
-                    // Toggle word-level vs sentence-level view
                 } label: {
                     Text("Word Level")
                         .font(.caption)
@@ -95,7 +86,6 @@ struct TranscriptTimelineView: View {
             
             Divider()
             
-            // Transcript Text View
             ScrollView {
                 VStack(alignment: .leading, spacing: 4) {
                     ForEach(sentenceSegments, id: \.id) { sentence in
@@ -125,7 +115,6 @@ struct TranscriptTimelineView: View {
             
             Divider()
             
-            // Timeline sync indicator
             HStack {
                 Text("Synced with timeline")
                     .font(.caption)
@@ -151,7 +140,6 @@ struct TranscriptTimelineView: View {
         var sentenceStart: CMTime?
         var sentenceWords: [WordSegment] = []
         
-        // Use NaturalLanguage framework for better sentence detection
         let wordSegs = wordSegments
         
         for (index, wordSeg) in wordSegs.enumerated() {
@@ -162,7 +150,6 @@ struct TranscriptTimelineView: View {
             currentSentence += (currentSentence.isEmpty ? "" : " ") + wordSeg.text
             sentenceWords.append(wordSeg)
             
-            // Check for sentence boundaries (period, exclamation, question mark)
             let text = wordSeg.text
             let isSentenceEnd = text.hasSuffix(".") || text.hasSuffix("!") || text.hasSuffix("?")
             
@@ -185,7 +172,6 @@ struct TranscriptTimelineView: View {
             }
         }
         
-        // Add any remaining text as final sentence
         if !currentSentence.isEmpty, let start = sentenceStart {
             sentences.append(SentenceSegment(
                 id: UUID(),
@@ -208,9 +194,7 @@ struct TranscriptTimelineView: View {
     private func selectTextRange(_ range: NSRange) {
         selectedTextRange = range
         
-        // Use ProjectState helper to map text range to time range
         if let timeRange = appState.projectState.textRangeToTimeRange(range, in: clip) {
-            // Select the clip and seek to the start of the selected range
             appState.selectedClipIds = [clip.id]
             let timelineTime = CMTimeAdd(clip.startTime, timeRange.start)
             appState.playbackState.seek(to: timelineTime)
@@ -267,13 +251,11 @@ struct TranscriptSentenceView: View {
     
     var body: some View {
         HStack(alignment: .top, spacing: 8) {
-            // Timestamp
             Text(formatTime(sentence.startTime))
                 .font(.caption2.monospaced())
                 .foregroundColor(isActive ? .accentColor : Color.stone)
                 .frame(width: 50, alignment: .leading)
             
-            // Sentence text with word-level highlighting
             HStack(spacing: 4) {
                 ForEach(Array(wordSegments.enumerated()), id: \.element.id) { index, segment in
                     WordView(
@@ -283,13 +265,11 @@ struct TranscriptSentenceView: View {
                         isSelected: selectedWordIndices.contains(index),
                         onClick: { 
                             onWordClick(segment)
-                            // Toggle selection
                             if selectedWordIndices.contains(index) {
                                 selectedWordIndices.remove(index)
                             } else {
                                 selectedWordIndices.insert(index)
                             }
-                            // Update text selection range
                             if !selectedWordIndices.isEmpty {
                                 let sortedIndices = selectedWordIndices.sorted()
                                 let firstIndex = sortedIndices.first!
@@ -305,7 +285,6 @@ struct TranscriptSentenceView: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             
-            // Delete button
             if isHovered {
                 Button(action: onDelete) {
                     Image(systemName: "trash")

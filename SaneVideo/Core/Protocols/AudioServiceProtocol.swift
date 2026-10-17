@@ -1,5 +1,3 @@
-// Protocol for AudioService to enable testability
-
 import AVFoundation
 @preconcurrency import Combine
 import CoreMedia

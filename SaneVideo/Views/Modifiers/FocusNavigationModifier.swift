@@ -1,11 +1,9 @@
-// Provides keyboard navigation support with custom focus styling
-// to replace the removed .focusable() modifiers (which caused yellow focus rings)
+// Keyboard focus with custom styling, replacing .focusable(), which drew yellow focus rings.
 
 import SwiftUI
 
 // MARK: - Focus Style Configuration
 
-/// Configuration for custom focus styling
 struct FocusStyle {
     var borderColor: Color = .accentColor
     var borderWidth: CGFloat = 2
@@ -136,7 +134,6 @@ extension View {
         modifier(FocusableItemModifier(style: style, onActivate: onActivate))
     }
 
-    /// Adds arrow key navigation for lists
     func listNavigation<Item: Identifiable>(
         items: [Item],
         selectedId: Binding<Item.ID?>,
@@ -145,7 +142,6 @@ extension View {
         modifier(ListNavigationModifier(items: items, selectedId: selectedId, onSelect: onSelect))
     }
 
-    /// Adds standard sheet keyboard navigation
     func sheetNavigation(onCancel: (() -> Void)? = nil, onConfirm: (() -> Void)? = nil) -> some View {
         modifier(SheetNavigationModifier(onCancel: onCancel, onConfirm: onConfirm))
     }

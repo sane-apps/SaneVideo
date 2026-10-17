@@ -1,5 +1,3 @@
-// Service for batch exporting short-form video clips
-
 @preconcurrency import AVFoundation
 import CoreMedia
 import Foundation
@@ -22,7 +20,6 @@ actor BatchExportService {
         let session: AVAssetExportSession
     }
 
-    /// Export context for single short (reduces parameter count)
     private struct ExportContext {
         let outputDirectory: URL
         let index: Int
@@ -30,13 +27,8 @@ actor BatchExportService {
 
     // MARK: - Public API
 
-    /// Export multiple short candidates from a source video
     /// - Parameters:
-    ///   - candidates: The short candidates to export
-    ///   - sourceURL: URL of the source video
-    ///   - settings: Repurposing settings including aspect ratio
     ///   - progressHandler: Called with overall progress (0.0 - 1.0)
-    /// - Returns: Array of exported file URLs
     func exportShorts(
         _ candidates: [ShortCandidate],
         from sourceURL: URL,
@@ -54,7 +46,6 @@ actor BatchExportService {
         isExporting = true
         defer { isExporting = false }
 
-        // Create output directory
         let outputDir = try createOutputDirectory()
 
         var exportedURLs: [URL] = []
@@ -120,10 +111,8 @@ actor BatchExportService {
     ) async throws -> URL {
         let asset = AVURLAsset(url: sourceURL)
 
-        // Create composition for trimming
         let composition = AVMutableComposition()
 
-        // Load tracks
         let videoTracks = try await asset.loadTracks(withMediaType: .video)
         let audioTracks = try await asset.loadTracks(withMediaType: .audio)
 
@@ -131,7 +120,6 @@ actor BatchExportService {
             throw BatchExportError.noVideoTrack
         }
 
-        // Add video track
         guard let compositionVideoTrack = composition.addMutableTrack(
             withMediaType: .video,
             preferredTrackID: kCMPersistentTrackID_Invalid
@@ -145,7 +133,6 @@ actor BatchExportService {
             at: .zero
         )
 
-        // Add audio track if present
         if let sourceAudioTrack = audioTracks.first {
             if let compositionAudioTrack = composition.addMutableTrack(
                 withMediaType: .audio,
@@ -159,7 +146,6 @@ actor BatchExportService {
             }
         }
 
-        // Create video composition for aspect ratio transformation
         let videoComposition = try await createVideoComposition(
             for: composition,
             sourceTrack: sourceVideoTrack,
@@ -167,15 +153,12 @@ actor BatchExportService {
             crop: candidate.suggestedCrop
         )
 
-        // Generate output filename
         let timestamp = DateFormatter.shortExportFormatter.string(from: Date())
         let filename = "Short_\(context.index)_\(timestamp).mp4"
         let outputURL = context.outputDirectory.appendingPathComponent(filename)
 
-        // Remove existing file if present
         try? FileManager.default.removeItem(at: outputURL)
 
-        // Export
         guard let exportSession = AVAssetExportSession(
             asset: composition,
             presetName: AVAssetExportPresetHighestQuality
@@ -216,33 +199,27 @@ actor BatchExportService {
         settings: RepurposingSettings,
         crop: SuggestedCrop
     ) async throws -> AVMutableVideoComposition {
-        // Get source dimensions
         let naturalSize = try await sourceTrack.load(.naturalSize)
         let preferredTransform = try await sourceTrack.load(.preferredTransform)
 
-        // Calculate actual size after transform
         var sourceWidth = naturalSize.width
         var sourceHeight = naturalSize.height
 
-        // Check if video is rotated
         let isRotated = abs(preferredTransform.a) < 0.1 && abs(preferredTransform.d) < 0.1
         if isRotated {
             swap(&sourceWidth, &sourceHeight)
         }
 
-        // Calculate output dimensions based on aspect ratio
         var renderWidth: CGFloat
         var renderHeight: CGFloat
 
         if settings.aspectRatio == .vertical9x16 {
-            // For vertical video, use 1080x1920
             renderWidth = 1080
             renderHeight = 1920
         } else if settings.aspectRatio == .square1x1 {
             renderWidth = 1080
             renderHeight = 1080
         } else {
-            // 4:5 portrait
             renderWidth = 1080
             renderHeight = 1350
         }
@@ -251,21 +228,18 @@ actor BatchExportService {
         videoComposition.renderSize = CGSize(width: renderWidth, height: renderHeight)
         videoComposition.frameDuration = CMTime(value: 1, timescale: 30)
 
-        // Create instruction
         let instruction = AVMutableVideoCompositionInstruction()
         instruction.timeRange = CMTimeRange(
             start: .zero,
             duration: composition.duration
         )
 
-        // Create layer instruction with transform
         guard let compositionTrack = composition.tracks(withMediaType: .video).first else {
             throw BatchExportError.compositionFailed
         }
 
         let layerInstruction = AVMutableVideoCompositionLayerInstruction(assetTrack: compositionTrack)
 
-        // Calculate transform for cropping and scaling
         let transform = calculateCropTransform(
             sourceSize: CGSize(width: sourceWidth, height: sourceHeight),
             renderSize: CGSize(width: renderWidth, height: renderHeight),
@@ -305,11 +279,9 @@ actor BatchExportService {
             cropWidth = sourceSize.height * targetAspect
         }
 
-        // Apply smart crop center offset
         let centerOffsetX = (crop.centerX - 0.5) * sourceSize.width
         let centerOffsetY = (crop.centerY - 0.5) * sourceSize.height
 
-        // Calculate translation to center the crop region
         let translateX = -(sourceSize.width - cropWidth) / 2 - centerOffsetX
         let translateY = -(sourceSize.height - cropHeight) / 2 - centerOffsetY
 
@@ -319,10 +291,8 @@ actor BatchExportService {
         // Apply source transform first (for rotation)
         transform = sourceTransform
 
-        // Translate
         transform = transform.translatedBy(x: translateX * scale, y: translateY * scale)
 
-        // Scale
         transform = transform.scaledBy(x: scale * crop.scale, y: scale * crop.scale)
 
         return transform

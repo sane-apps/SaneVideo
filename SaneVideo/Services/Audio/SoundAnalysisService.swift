@@ -2,14 +2,12 @@ import AVFoundation
 import Combine
 import SoundAnalysis
 
-/// Service responsible for real-time audio analysis (sentiment, transcription)
 @Observable
 class SoundAnalysisService: @unchecked Sendable, SoundAnalysisServiceProtocol {
 
   // MARK: - Publishers
   var resultsStream = PassthroughSubject<AudioClassification, Never>()
 
-  // Callback for real-time sound detection
   var onSoundDetected: ((AudioClassification) -> Void)?
 
   // MARK: - Private State
@@ -35,13 +33,11 @@ class SoundAnalysisService: @unchecked Sendable, SoundAnalysisServiceProtocol {
   func startRealTimeAnalysis(format: AVAudioFormat) {
     AppLogger.audio.info("SoundAnalysis: Real-time analysis started with format: \(format)")
 
-    // All access to streamAnalyzer/currentFormat must be on analysisQueue
-    // to prevent data races with processBuffer
+    // All streamAnalyzer/currentFormat access stays on analysisQueue to avoid races with processBuffer.
     analysisQueue.sync { [self] in
       self.currentFormat = format
       self.streamAnalyzer = SNAudioStreamAnalyzer(format: format)
 
-      // Wire up the request
       do {
         let request = try SNClassifySoundRequest(classifierIdentifier: .version1)
         request.windowDuration = CMTime(seconds: 1.5, preferredTimescale: 48000)
@@ -62,7 +58,6 @@ class SoundAnalysisService: @unchecked Sendable, SoundAnalysisServiceProtocol {
 
   func stopRealTimeAnalysis() {
     AppLogger.audio.info("SoundAnalysis: Real-time analysis stopped")
-    // Synchronize with analysisQueue to prevent races
     analysisQueue.sync { [self] in
       self.streamAnalyzer = nil
       self.currentFormat = nil
@@ -72,17 +67,11 @@ class SoundAnalysisService: @unchecked Sendable, SoundAnalysisServiceProtocol {
   // MARK: - Internal Processing
 
   private func processBuffer(_ buffer: CMSampleBuffer) {
-    // 2. Check for format change or initialization
-    // Note: If format changes, we likely need to restart streamAnalyzer,
-    // but startRealTimeAnalysis is called by engine with specific format.
-    // If it drifts, we might need to handle it.
     if streamAnalyzer == nil {
-      // If called before start, we ignore or auto-start?
-      // Engine calls start first.
+      // Ignore buffers that arrive before start.
       return
     }
 
-    // 3. Convert CMSampleBuffer to AVAudioPCMBuffer
     if let pcmBuffer = AVAudioPCMBuffer(sampleBuffer: buffer) {
       if let analyzer = streamAnalyzer {
         analyzer.analyze(pcmBuffer, atAudioFramePosition: -1)
@@ -90,10 +79,7 @@ class SoundAnalysisService: @unchecked Sendable, SoundAnalysisServiceProtocol {
     }
   }
 
-  // ... (createPCMBuffer, areFormatsCompatible, reinitializeAnalyzer - kept but reInit needs to re-add request!)
-
-  // Re-implementation of reinitializeAnalyzer to support request persistence would be needed
-  // if format changes. For now, we assume format constant from Microphone.
+  // Assumes the microphone format stays constant.
 
   private func areFormatsCompatible(_ newFormat: AVAudioFormat, _ currentFormat: AVAudioFormat?)
     -> Bool {
@@ -108,7 +94,7 @@ class SoundAnalysisService: @unchecked Sendable, SoundAnalysisServiceProtocol {
     streamAnalyzer = SNAudioStreamAnalyzer(format: format)
     currentFormat = format
 
-    // Re-add request !
+    // Re-add the request to the new analyzer.
     do {
       let request = try SNClassifySoundRequest(classifierIdentifier: .version1)
       let observer = RealTimeResultsObserver { [weak self] classification in
@@ -132,22 +118,18 @@ class SoundAnalysisService: @unchecked Sendable, SoundAnalysisServiceProtocol {
   func generateGatingMetadata(for url: URL) async throws -> [GatingSegment] {
     AppLogger.audio.info("SoundAnalysis: Generating gating metadata for \(url.lastPathComponent)")
 
-    // 1. Setup Analyzer
     let analyzer = try SNAudioFileAnalyzer(url: url)
     let request = try SNClassifySoundRequest(classifierIdentifier: .version1)
 
     let resultsObserver = GatingResultsObserver()
     try analyzer.add(request, withObserver: resultsObserver)
 
-    // 2. Perform Analysis
     _ = await analyzer.analyze()
 
-    // 3. Process Results
     let classifications = resultsObserver.results
     var segments: [GatingSegment] = []
 
-    // Convert raw classifications to gating segments
-    // We open the gate if 'speech' is the top classification with high enough confidence
+    // Open the gate when speech is the top classification with enough confidence.
     for result in classifications {
       let isSpeech = result.classifications.first { $0.identifier == "speech" }
       let confidence = isSpeech?.confidence ?? 0.0
@@ -206,7 +188,6 @@ private class RealTimeResultsObserver: NSObject, SNResultsObserving {
       let top = classificationResult.classifications.first
     else { return }
 
-    // Basic mapping
     let labelString = top.identifier
     let label = AudioLabel(rawValue: labelString) ?? .unknown
 

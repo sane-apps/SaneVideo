@@ -2,7 +2,6 @@ import AVFoundation
 import Foundation
 
 /// Centralized service for handling File IO, Bookmark Resolution, and Asset Loading
-/// Replaces ad-hoc IO in VideoClip and ProjectState
 final class ProjectFileManager: Sendable, ProjectFileManagerProtocol {
     init() {}
 
@@ -10,7 +9,6 @@ final class ProjectFileManager: Sendable, ProjectFileManagerProtocol {
 
     /// Load a video clip from a URL, handling security scope and async duration loading
     func loadClip(from url: URL) async throws -> VideoClip {
-        // 1. Access security scoped resource if needed
         let isAccessing = url.startAccessingSecurityScopedResource()
         defer {
             if isAccessing {
@@ -18,8 +16,7 @@ final class ProjectFileManager: Sendable, ProjectFileManagerProtocol {
             }
         }
 
-        // 2. Load duration with RETRY mechanism
-        // The file might be busy being written to disk by the screen recorder
+        // Retry: the screen recorder may still be writing the file.
         var duration: CMTime = .zero
         var lastError: Error?
 
@@ -30,10 +27,8 @@ final class ProjectFileManager: Sendable, ProjectFileManagerProtocol {
                 let asset = AVURLAsset(url: url, options: options)
                 duration = try await asset.load(.duration)
 
-                // If we get here, it worked
                 lastError = nil
 
-                // 3. Log metadata
                 await logVideoMetadata(asset: asset, filename: url.lastPathComponent)
                 break
             } catch {
@@ -48,15 +43,11 @@ final class ProjectFileManager: Sendable, ProjectFileManagerProtocol {
             throw error
         }
 
-        // Validate duration is valid before creating clip
         guard duration.seconds > 0 else {
             throw AppError.recordingEngineError("Invalid video duration: \(duration.seconds)s")
         }
 
-        // 4. Create Bookmark (Off Main Thread)
-        // Use a local capture to avoid actor isolation issues
         let bookmarkData = try? await Task.detached(priority: .utility) {
-            // Create bookmark directly - not MainActor isolated
             try url.bookmarkData(
                 options: .withSecurityScope,
                 includingResourceValuesForKeys: nil,
@@ -64,7 +55,6 @@ final class ProjectFileManager: Sendable, ProjectFileManagerProtocol {
             )
         }.value
 
-        // 5. Create Clip
         return VideoClip(
             url: url,
             duration: duration,
@@ -86,15 +76,13 @@ final class ProjectFileManager: Sendable, ProjectFileManagerProtocol {
             let frameRate = try await videoTrack.load(.nominalFrameRate)
             let transform = try await videoTrack.load(.preferredTransform)
 
-            // Calculate actual dimensions (accounting for rotation)
+            // Swap dimensions for rotated video.
             let isRotated = transform.b != 0 || transform.c != 0
             let width = isRotated ? naturalSize.height : naturalSize.width
             let height = isRotated ? naturalSize.width : naturalSize.height
 
-            // Determine quality tier
             let qualityTier = detectQualityTier(width: width, height: height)
 
-            // Get codec info (format description)
             var codecName = "Unknown"
             if let formatDescriptions = try? await videoTrack.load(.formatDescriptions),
                let formatDesc = formatDescriptions.first
@@ -103,11 +91,9 @@ final class ProjectFileManager: Sendable, ProjectFileManagerProtocol {
                 codecName = fourCCToString(fourCC)
             }
 
-            // Get file size
             let fileSize = getFileSize(url: asset.url)
             let fileSizeStr = ByteCountFormatter.string(fromByteCount: fileSize, countStyle: .file)
 
-            // Log comprehensive info
             AppLogger.project.info("""
             📹 Video Imported: \(filename)
                Resolution: \(Int(width))×\(Int(height)) (\(qualityTier.name))
@@ -117,7 +103,6 @@ final class ProjectFileManager: Sendable, ProjectFileManagerProtocol {
                Est. Memory: \(qualityTier.estimatedMemoryMB)MB per frame buffer
             """)
 
-            // Show toast for high-res videos (user awareness)
             if qualityTier.isHighRes {
                 await MainActor.run {
                     ServiceContainer.shared.toastManager.show("📹 \(qualityTier.name) video (\(Int(width))×\(Int(height)))")
@@ -179,8 +164,6 @@ final class ProjectFileManager: Sendable, ProjectFileManagerProtocol {
 
     // MARK: - Bookmarks
 
-    /// Creates a security-scoped bookmark for a URL
-    /// Note: This is nonisolated and can be called from any context
     nonisolated func createBookmark(for url: URL) throws -> Data {
         try url.bookmarkData(
             options: .withSecurityScope,
@@ -219,7 +202,7 @@ final class ProjectFileManager: Sendable, ProjectFileManagerProtocol {
     func hydrateProject(_ project: VideoProject) -> (VideoProject, Bool) {
         var updatedProject = project
         var updatedTracks: [Track] = []
-        var needsSave = false // Track if any bookmarks were updated
+        var needsSave = false
 
         for var track in project.timeline.tracks {
             var updatedClips: [VideoClip] = []
@@ -230,23 +213,19 @@ final class ProjectFileManager: Sendable, ProjectFileManagerProtocol {
                         let (resolvedURL, isStale) = try resolveBookmark(data: bookmarkData)
 
                         if isStale {
-                            // Update bookmark if stale
                             if let newBookmark = try? createBookmark(for: resolvedURL) {
                                 clip.bookmarkData = newBookmark
-                                needsSave = true // Mark that project needs saving
+                                needsSave = true
                                 AppLogger.project.info("Updated stale bookmark for \(clip.url.lastPathComponent)")
                             }
                         }
 
-                        // Check if file moved
                         if clip.url != resolvedURL {
                             AppLogger.project.info("Resolved moved file: \(clip.url.lastPathComponent) -> \(resolvedURL.lastPathComponent)")
-                            // Update URL
                             clip.url = resolvedURL
                         }
 
-                        // Check existence (TOCTOU race possible, but we'll re-check when accessing)
-                        // Note: File might be deleted between check and use, but we handle that in playback
+                        // Possible race between this check and use; playback handles a file deleted in between.
                         if !FileManager.default.fileExists(atPath: resolvedURL.path) {
                             AppLogger.project.warning("⚠️ File missing: \(resolvedURL.lastPathComponent)")
                             clip.isMissing = true
@@ -254,8 +233,6 @@ final class ProjectFileManager: Sendable, ProjectFileManagerProtocol {
                             clip.isMissing = false
                         }
 
-                        // Validate clip properties on load
-                        // Fix invalid properties automatically (synchronous validation)
                         if clip.duration.seconds <= 0 {
                             AppLogger.project.warning("⚠️ Clip has invalid duration (\(clip.duration.seconds)s), marking as missing")
                             clip.isMissing = true
@@ -287,8 +264,7 @@ final class ProjectFileManager: Sendable, ProjectFileManagerProtocol {
                             needsSave = true
                         }
 
-                        // Validate enhancedAudioURL (temp file may have been cleaned up)
-                        // If enhanced audio file is missing, clear the URL so playback falls back to original
+                        // The enhanced audio temp file may have been cleaned up; clear the URL so playback falls back to the original.
                         if let enhancedURL = clip.enhancedAudioURL {
                             if !FileManager.default.fileExists(atPath: enhancedURL.path) {
                                 AppLogger.project.warning("⚠️ Enhanced audio missing: \(enhancedURL.lastPathComponent), reverting to original audio")
@@ -302,7 +278,6 @@ final class ProjectFileManager: Sendable, ProjectFileManagerProtocol {
                     } catch {
                         AppLogger.project.warning("Failed to resolve bookmark for \(clip.url.lastPathComponent): \(error)")
 
-                        // Mark as missing if we can't resolve
                         clip.isMissing = true
                         updatedClips.append(clip)
                     }
@@ -354,7 +329,6 @@ final class ProjectFileManager: Sendable, ProjectFileManagerProtocol {
         }
     }
 
-    /// Enters security scope for all media in a project
     func enterSecurityScope(for project: VideoProject) -> SecurityScopeSession {
         var urls: Set<URL> = []
         for track in project.timeline.tracks {

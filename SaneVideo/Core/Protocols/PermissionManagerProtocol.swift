@@ -1,5 +1,3 @@
-// Protocol for permission management
-
 import AVFoundation
 import Combine
 import Foundation

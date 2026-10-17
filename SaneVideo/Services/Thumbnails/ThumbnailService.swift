@@ -1,6 +1,3 @@
-// Optimized for Apple Silicon with efficient caching and batch generation
-// Consolidated: Merged ThumbnailGeneratorService + SmartThumbnailService
-
 @preconcurrency import AVFoundation
 @preconcurrency import Combine
 @preconcurrency import AppKit
@@ -36,51 +33,42 @@ enum ThumbnailScoringStrategy: Sendable {
 }
 
 /// Service responsible for generating and caching video thumbnails
-/// Optimized for scrolling performance on M1+
-/// Consolidated: Handles both on-demand timeline thumbnails and "best" thumbnail generation
 actor ThumbnailService: ThumbnailServiceProtocol {
 
     // MARK: - Caching
 
-    /// Memory cache for thumbnails
-    /// Limit set to ~100MB to avoid memory pressure
+    /// Capped at about 100 MB to avoid memory pressure.
     private let cache = NSCache<NSString, NSImage>()
 
-    /// FIXED: Cache image generators to avoid creating new AVURLAsset for every thumbnail
+    /// Cached generators avoid creating an AVURLAsset per thumbnail.
     /// Key: clip URL path, Value: (generator, lastAccessTime)
     private var generatorCache: [String: (generator: UncheckedBox<AVAssetImageGenerator>, lastAccess: Date)] = [:]
     private let maxGeneratorCacheSize = 10
 
     init() {
-        // Configure cache limits
         cache.countLimit = 500
         cache.totalCostLimit = 100 * 1024 * 1024 // 100MB
     }
 
-    /// Get or create an image generator for a clip URL
     private func getGenerator(for url: URL) -> AVAssetImageGenerator {
         let key = url.path
 
-        // Check cache
         if var entry = generatorCache[key] {
             entry.lastAccess = Date()
             generatorCache[key] = entry
             return entry.generator.value
         }
 
-        // Create new generator
         let asset = AVURLAsset(url: url)
         let generator = AVAssetImageGenerator(asset: asset)
         generator.appliesPreferredTrackTransform = true
         
-        // QUALITY: Use zero tolerance for exact frame extraction (highest quality)
+        // Zero tolerance for exact frames.
         generator.requestedTimeToleranceBefore = .zero
         generator.requestedTimeToleranceAfter = .zero
 
-        // Cache it (Wrap in UncheckedBox)
         generatorCache[key] = (generator: UncheckedBox(generator), lastAccess: Date())
 
-        // Evict old entries if cache is too large
         if generatorCache.count > maxGeneratorCacheSize {
             let oldest = generatorCache.min { $0.value.lastAccess < $1.value.lastAccess }
             if let oldestKey = oldest?.key {
@@ -98,20 +86,16 @@ actor ThumbnailService: ThumbnailServiceProtocol {
     func thumbnail(for clip: VideoClip, time: CMTime, size: CGSize) async -> UncheckedBox<NSImage>? {
         let key = cacheKey(for: clip, time: time, size: size)
 
-        // Check cache first
         if let cached = cache.object(forKey: key as NSString) {
             return UncheckedBox(cached)
         }
 
-        // Generate if not cached
         return await generateThumbnail(for: clip, time: time, size: size, key: key)
     }
 
     // MARK: - Internal Generation
 
     private func generateThumbnail(for clip: VideoClip, time: CMTime, size: CGSize, key: String) async -> UncheckedBox<NSImage>? {
-        // Check if file exists (runs on actor, off main thread)
-        // 0. Security Scope Access
         let isAccessing = clip.url.startAccessingSecurityScopedResource()
         defer {
             if isAccessing {
@@ -129,26 +113,19 @@ actor ThumbnailService: ThumbnailServiceProtocol {
             return nil
         }
 
-        // FIXED: Use cached generator instead of creating new AVURLAsset each time
         let generator = getGenerator(for: clip.url)
         
-        // QUALITY: Set maximum size (generator maintains aspect ratio)
-        // Use higher resolution for better quality on retina displays
+        // maximumSize keeps the aspect ratio.
         generator.maximumSize = size
 
         do {
-            // Use modern async API
-            // Use UncheckedBox to silence Sendability warning for generator
             let boxedGenerator = UncheckedBox(generator)
             let (cgImage, _) = try await boxedGenerator.value.image(at: time)
 
-            // Fix: Do NOT force the requested size. Use the actual generated size to maintain aspect ratio.
-            // The generator respects maximumSize but maintains aspect ratio.
-            // We just wrap that resulting bitmap in an NSImage.
+            // Use the generated size, not the requested one, to keep the aspect ratio.
             let actualSize = CGSize(width: CGFloat(cgImage.width), height: CGFloat(cgImage.height))
             let image = NSImage(cgImage: cgImage, size: actualSize)
 
-            // Cache the result
             cache.setObject(image, forKey: key as NSString, cost: cgImage.bytesPerRow * cgImage.height)
 
             return UncheckedBox(image)
@@ -173,9 +150,7 @@ actor ThumbnailService: ThumbnailServiceProtocol {
 
     /// Generates the "best" thumbnail from the video by analyzing frames with the specified strategy.
     /// - Parameters:
-    ///   - url: The video file URL
     ///   - strategy: Scoring strategy to use (defaults to .aesthetic)
-    /// - Returns: The best-scored NSImage
     func generateBestThumbnail(for url: URL, strategy: ThumbnailScoringStrategy = .aesthetic) async throws -> UncheckedBox<NSImage> {
         try await withSecurityScopedAccess(to: url) {
             try await generateBestThumbnailWithAccess(for: url, strategy: strategy)
@@ -191,13 +166,10 @@ actor ThumbnailService: ThumbnailServiceProtocol {
             throw ThumbnailError.assetLoadingFailed
         }
 
-        // Sample positions based on strategy
         let times: [CMTime] = switch strategy {
         case .fast:
-            // Just middle frame
             [CMTime(seconds: durationSeconds * 0.5, preferredTimescale: 600)]
         case .aesthetic:
-            // 5 samples across video: 10%, 30%, 50%, 70%, 90%
             [0.1, 0.3, 0.5, 0.7, 0.9].map { CMTime(seconds: durationSeconds * $0, preferredTimescale: 600) }
         case .faceQuality:
             // 10 samples from first 30% (faces are usually at start)
@@ -348,7 +320,6 @@ actor ThumbnailService: ThumbnailServiceProtocol {
         return observation.overallScore
     }
 
-    /// Score based on face capture quality
     private func scoreFaceQuality(_ cgImage: CGImage) async throws -> Float {
         let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
         let faceRequest = VNDetectFaceCaptureQualityRequest()
@@ -356,8 +327,7 @@ actor ThumbnailService: ThumbnailServiceProtocol {
         try handler.perform([faceRequest])
 
         if let faceObservations = faceRequest.results, !faceObservations.isEmpty {
-            // Note: faceCaptureQuality is still the best API for face quality scoring on macOS 26.2
-            // If a replacement API becomes available, update per legacy migration guidelines
+            // faceCaptureQuality is still the best face-quality API as of macOS 26.2.
             let maxQuality = faceObservations.compactMap { $0.faceCaptureQuality }.max() ?? 0.1
             let maxFaceArea = faceObservations.map { $0.boundingBox.width * $0.boundingBox.height }.max() ?? 0.0
             return (maxQuality * 0.7) + (Float(maxFaceArea) * 0.3) + 1.0

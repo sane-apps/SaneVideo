@@ -2,13 +2,10 @@ import Foundation
 
 // MARK: - Smart Crop Settings
 
-/// Settings for AI-powered smart cropping during export
 /// Uses face detection and/or saliency analysis to keep subjects in frame
 public struct SmartCropSettings: Codable, Sendable, Equatable {
-    /// Enable smart cropping
     public var enabled: Bool = false
 
-    /// What to track for cropping
     public var trackingMode: TrackingMode = .face
 
     /// Keyframe smoothing factor (0.0-1.0, higher = smoother but less responsive)
@@ -20,7 +17,6 @@ public struct SmartCropSettings: Codable, Sendable, Equatable {
         self.smoothing = smoothing
     }
 
-    /// Tracking mode options
     public enum TrackingMode: String, Codable, Sendable, CaseIterable {
         case face       // Track faces (best for talking head videos)
         case saliency   // Track visual interest (best for action/product videos)

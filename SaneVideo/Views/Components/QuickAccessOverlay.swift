@@ -1,5 +1,4 @@
 // Post-recording quick access overlay with instant editing options
-// Inspired by CleanShot X's instant gratification workflow
 
 import AppKit
 import AVFoundation
@@ -21,16 +20,13 @@ struct QuickAccessOverlay: View {
 
     var body: some View {
         ZStack {
-            // Backdrop
             Color.black.opacity(0.4)
                 .ignoresSafeArea()
                 .onTapGesture {
                     dismissWithAnimation()
                 }
 
-            // Main Overlay Card
             VStack(spacing: 24) {
-                // Header
                 VStack(spacing: 8) {
                     Image(systemName: "checkmark.circle.fill")
                         .font(.system(size: 48))
@@ -47,7 +43,6 @@ struct QuickAccessOverlay: View {
                 }
                 .padding(.top, 32)
 
-                // Thumbnail Preview
                 if let thumbnail = thumbnail {
                     Image(nsImage: thumbnail)
                         .resizable()
@@ -62,9 +57,7 @@ struct QuickAccessOverlay: View {
                         .smoothAppear()
                 }
 
-                // Action Buttons
                 HStack(spacing: 16) {
-                    // Edit Now (Primary)
                     QuickAccessButton(
                         icon: "scissors",
                         title: "Edit Now",
@@ -79,7 +72,6 @@ struct QuickAccessOverlay: View {
                     }
                     .accessibilityIdentifier("quick_access.edit")
 
-                    // Save for Later
                     QuickAccessButton(
                         icon: "square.and.arrow.down",
                         title: "Save",
@@ -94,7 +86,6 @@ struct QuickAccessOverlay: View {
                     }
                     .accessibilityIdentifier("quick_access.save")
 
-                    // Share
                     QuickAccessButton(
                         icon: "square.and.arrow.up",
                         title: "Share",
@@ -114,12 +105,10 @@ struct QuickAccessOverlay: View {
             }
             .frame(width: 480)
             .background {
-                // Enhanced Liquid Glass
                 ZStack {
                     VisualEffectView(material: .hudWindow, blendingMode: .withinWindow)
                         .opacity(0.95)
 
-                    // Premium edge lighting
                     RoundedRectangle(cornerRadius: 24)
                         .stroke(
                             LinearGradient(
@@ -145,7 +134,6 @@ struct QuickAccessOverlay: View {
             .accessibilityIdentifier("quick_access.overlay")
         }
         .onAppear {
-            // Animate in
             withAnimation(.gentleSpring.delay(0.1)) {
                 isVisible = true
             }
@@ -158,9 +146,7 @@ struct QuickAccessOverlay: View {
         }
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
-            // Call completion BEFORE onDismiss
-            // onDismiss clears quickAccessRecordingURL, so completion (onEdit/onSave/onShare)
-            // must run first while the URL is still available
+            // Run completion before onDismiss, which clears quickAccessRecordingURL that onEdit/onSave/onShare need.
             completion?()
             onDismiss()
         }

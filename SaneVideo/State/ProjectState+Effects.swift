@@ -1,5 +1,3 @@
-// Consolidated from SmartVisuals, VisionEffects, AutoZoom, and Transitions
-
 import AVFoundation
 import CoreImage
 import Foundation
@@ -305,7 +303,7 @@ extension ProjectState {
 
 extension ProjectState {
 
-    /// Apply keyframes to clip and save (consolidated helper)
+    /// Apply keyframes to the clip and save.
     private func applyKeyframesToClip(
         _ keyframes: KeyframeAnimation, clip: VideoClip, undoName: String
     ) {
@@ -324,7 +322,7 @@ extension ProjectState {
 
                 var mutableTrack = track
                 mutableTrack.clips[index].keyframeAnimation = keyframes
-                mutableTrack.clips[index].transform = .identity  // Reset static transform
+                mutableTrack.clips[index].transform = .identity
                 timeline.tracks[trackIndex] = mutableTrack
                 break
             }

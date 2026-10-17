@@ -64,8 +64,7 @@ class AppState {
 
     // MARK: - Recording Settings
 
-    /// User's intent for camera state - setting this automatically starts/stops camera
-    /// Use cameraState.isActive to check if camera is actually running
+    /// User intent: setting it starts or stops the camera. Read cameraState.isActive to see whether it is running.
     var cameraEnabled = false {
         didSet {
             guard cameraEnabled != oldValue else { return }
@@ -90,8 +89,6 @@ class AppState {
         }
     }
 
-    // microphoneEnabled removed - use isMicActive proxy (delegates to RecordingState.isMicActive)
-
     // MARK: - Error Handling
 
     // Delegated to ServiceContainer.shared.errorPresenter
@@ -111,11 +108,11 @@ class AppState {
 
     // MARK: - Timeline Selection (for multi-select and batch operations)
 
-    var selectedClipIds: Set<UUID> = [] // Multi-select support for batch operations
+    var selectedClipIds: Set<UUID> = []
 
     // MARK: - Project Selection (for multi-select in project browser)
 
-    var selectedProjectIds: Set<UUID> = [] // Multi-select support for bulk project operations
+    var selectedProjectIds: Set<UUID> = []
 
     private var cancellables = Set<AnyCancellable>()
 
@@ -159,7 +156,6 @@ class AppState {
             NSLog("🧪 AppState: Test Environment Detected")
         }
 
-        // Bootstrap if needed
         if TestEnvironment.shouldOpenEditor {
             NSLog("🧪 AppState: Calling bootstrapEditorForTesting()...")
             Task {
@@ -205,15 +201,14 @@ class AppState {
         } else {
             let testAssetURL = TestEnvironment.mockAssetURL
 
-            // Create Project IMMEDATELY so UI exists
+            // Create the project first so the editor UI exists.
             projectState.startNewProject()
 
-            // Wait for file locally (idempotent setup)
             if !FileManager.default.fileExists(atPath: testAssetURL.path) {
                 AppLogger.general.error("❌ AppState: Test asset NOT FOUND at \(testAssetURL.path)")
                 NSLog("❌ AppState: Test asset NOT FOUND at \(testAssetURL.path)")
             } else {
-                // Use STANDARD import logic to ensure everything (tracks, duration) is valid
+                // Use the normal import path so tracks and duration are valid.
                 AppLogger.general.info("🧪 Importing test asset: \(testAssetURL.path)")
                 NSLog("🧪 Importing test asset: \(testAssetURL.path)")
                 await projectState.addVideoToTimeline(url: testAssetURL)
@@ -222,12 +217,11 @@ class AppState {
 
         await applyAutomationTranscriptCorrectionsIfNeeded()
 
-        // Switch Mode
         await MainActor.run {
             self.switchToEditing()
             self.windowManager.restoreMainWindow()
 
-            // Explicitly select the newly added clip to reveal inspector tools
+            // Select the new clip so the inspector tools show.
             if let firstClip = self.projectState.currentProject?.timeline.tracks.first?.clips.first {
                 self.selectedClipIds = [firstClip.id]
                 AppLogger.general.info("🧪 Explicitly selected clip: \(firstClip.id)")
@@ -240,8 +234,8 @@ class AppState {
             NSLog("🧪 Switched to Editing Mode and restored window. Project: \(projectName)")
         }
 
-        // Final settle delay for UI layout
-        try? await Task.sleep(nanoseconds: 1_000_000_000) // 1 second
+        // Let the UI layout settle.
+        try? await Task.sleep(nanoseconds: 1_000_000_000)
         applyAutomationRailStateIfNeeded()
         await runAutomationExportIfNeeded()
         NSLog("🧪 AppState: Bootstrap complete and settled.")
@@ -301,23 +295,14 @@ class AppState {
         }
     }
 
-    // REMOVED: generateTestVideo and createTestPixelBuffer to avoid AVAssetWriter hangs
-
     private func setupStateCoordination() {
-        // 1. Listen for External Screen Stop Requests
         recordingState.onRequestScreenShareStop = { [weak self] in
-            // Only toggle if currently sharing
             if self?.windowManager.isScreenSharing == true {
                 self?.toggleScreenShare()
             }
         }
 
-        // 2. Coordinate dependencies using Async tasks or direct triggers
-        // Note: View rendering is now automatic due to @Observable.
-        // Action-based coordination (PiP updates) is mostly handled in the action methods themselves.
-
-        // We still need to react to isPresenterOverlayActive which changes via engine callback
-        // This is set in RecordingState but we need side effects in AppState (WindowManager)
+        // isPresenterOverlayActive changes via an engine callback, and WindowManager has to react to it.
         recordingState.onPresenterOverlayChanged = { [weak self] isActive in
             guard let self else { return }
 
@@ -333,7 +318,6 @@ class AppState {
             }
         }
 
-        // 3. Listen for Recording State changes (Automatic PiP Update)
         recordingState.onRecordingStateChanged = { [weak self] _ in
             guard let self else { return }
             Task { @MainActor in
@@ -344,8 +328,7 @@ class AppState {
             }
         }
 
-        // 4. Listen for Content Selection (Show PiP after picker selection)
-        // This prevents PiP from appearing in the picker's window list
+        // Show PiP only after picker selection so it stays out of the picker's window list.
         recordingState.onContentSelected = { [weak self] in
             guard let self else { return }
             NSLog("🖥️ Content selected - NOW showing PiP window")
@@ -354,8 +337,7 @@ class AppState {
                 isRecording: recordingState.isRecording
             )
 
-            // If already recording, switch source to screen
-            // Without this, currentSource stays .camera and screen frames are filtered out
+            // Switch the source to screen if already recording; otherwise currentSource stays .camera and screen frames are dropped.
             if recordingState.isRecording {
                 NSLog("🖥️ Already recording - switching source to screen")
                 recordingState.switchSource(.screen)
@@ -412,12 +394,7 @@ class AppState {
     }
 
     private func setupErrorHandling() {
-        // Error handling is configured in RecordingState.setupRecordingEngine()
-        // That handler intelligently filters permission prompts (shows toast instead of alert)
-        // and only forwards actual errors to ErrorPresenter.
-        //
-        // Previously this method overwrote that handler, causing duplicate/incorrect alerts.
-        // Now we rely on RecordingState's nuanced error handling.
+        // RecordingState.setupRecordingEngine() owns the error handler, which turns permission prompts into toasts. Do not replace it here.
     }
 
     // MARK: - Proxy Properties (Backward Compatibility / Convenience)
@@ -446,7 +423,6 @@ class AppState {
         recordingState.recordingDuration
     }
 
-    /// Access to AudioService for microphone selection
     var audioService: AudioService {
         ServiceContainer.shared.audioService
     }

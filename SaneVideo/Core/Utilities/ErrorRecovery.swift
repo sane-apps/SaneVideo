@@ -1,8 +1,5 @@
-// Error recovery and retry mechanisms for robust operations
-
 import Foundation
 
-/// Error recovery strategies
 enum RecoveryStrategy {
     case retry(maxAttempts: Int, delay: TimeInterval)
     case fallback(operation: @Sendable () async throws -> Void)
@@ -10,7 +7,6 @@ enum RecoveryStrategy {
     case fail
 }
 
-/// Result of a recovery attempt
 enum RecoveryResult {
     case success
     case retry
@@ -19,9 +15,7 @@ enum RecoveryResult {
 }
 
 /// Determines if an error is recoverable (transient vs permanent)
-/// CRITICAL FIX: Be more conservative - only retry truly transient errors
 func isRecoverableError(_ error: Error) -> Bool {
-    // Cancellation is not recoverable
     if error is CancellationError {
         return false
     }
@@ -38,7 +32,6 @@ func isRecoverableError(_ error: Error) -> Bool {
         }
     }
     
-    // Cocoa errors (file system errors)
     if let cocoaError = error as? CocoaError {
         switch cocoaError.code {
         case .fileReadNoPermission, .fileWriteNoPermission:
@@ -54,20 +47,16 @@ func isRecoverableError(_ error: Error) -> Bool {
         }
     }
     
-    // Timeout errors are recoverable
     if error is TimeoutError {
         return true
     }
     
-    // NSError with specific domains
     if let nsError = error as NSError? {
-        // File system errors are usually permanent
         if nsError.domain == NSPOSIXErrorDomain {
             // POSIX errors like ENOENT, EACCES are permanent
             return false
         }
         
-        // AppError - check if it's a recoverable type
         // Most app errors are permanent (invalid format, missing files, etc.)
         return false
     }
@@ -78,18 +67,16 @@ func isRecoverableError(_ error: Error) -> Bool {
 }
 
 /// Retries an operation with exponential backoff
-/// CRITICAL FIX: Cap maximum delay and check for cancellation
 func retryOperation<T: Sendable>(
     maxAttempts: Int = 3,
     initialDelay: TimeInterval = 1.0,
-    maxDelay: TimeInterval = 5.0, // CRITICAL FIX: Cap maximum delay
+    maxDelay: TimeInterval = 5.0,
     operation: @escaping @Sendable () async throws -> T
 ) async throws -> T {
     var lastError: Error?
     var delay = initialDelay
     
     for attempt in 1...maxAttempts {
-        // Check for cancellation before each attempt
         try Task.checkCancellation()
         
         do {
@@ -97,18 +84,15 @@ func retryOperation<T: Sendable>(
         } catch {
             lastError = error
             
-            // Don't retry if error is not recoverable
             guard isRecoverableError(error) else {
                 AppLogger.general.info("Operation failed with non-recoverable error: \(error.localizedDescription)")
                 throw error
             }
             
-            // Don't retry on last attempt
             guard attempt < maxAttempts else {
                 break
             }
             
-            // Cap exponential backoff to prevent long delays
             let cappedDelay = min(delay, maxDelay)
             
             // Log as info (not warning) since retry is expected for transient errors
@@ -117,7 +101,6 @@ func retryOperation<T: Sendable>(
             // Check for cancellation during sleep
             try await Task.sleep(nanoseconds: UInt64(cappedDelay * 1_000_000_000))
             
-            // Exponential backoff (capped)
             delay = min(delay * 2.0, maxDelay)
         }
     }
@@ -125,7 +108,6 @@ func retryOperation<T: Sendable>(
     throw lastError ?? NSError(domain: "ErrorRecovery", code: -1, userInfo: [NSLocalizedDescriptionKey: "Operation failed after \(maxAttempts) attempts"])
 }
 
-/// Executes an operation with automatic recovery
 func executeWithRecovery<T: Sendable>(
     strategy: RecoveryStrategy,
     operation: @escaping @Sendable () async throws -> T,
@@ -141,9 +123,8 @@ func executeWithRecovery<T: Sendable>(
         } catch {
             AppLogger.general.warning("⚠️ Primary operation failed, using fallback: \(error.localizedDescription)")
             // Fallback doesn't return value, just executes
-            // Execute fallback and re-throw original error
             try await fallbackOp()
-            throw error // Re-throw original error after fallback
+            throw error
         }
         
     case .skip:

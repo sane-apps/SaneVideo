@@ -1,9 +1,6 @@
-// Phase 3: Video effects using CIFilter
-
 import CoreImage
 import Foundation
 
-/// Effect categories for organized display
 enum EffectCategory: String, CaseIterable {
   case magic
   case looks
@@ -23,13 +20,10 @@ enum EffectCategory: String, CaseIterable {
   }
 }
 
-/// Types of video effects available - using Apple's CIFilter
 enum VideoEffectType: String, Codable, CaseIterable, Identifiable {
-  // Magic (AI-powered auto)
-  case autoEnhance  // Apple's auto-adjustment
-  case autoWhiteBalance  // Auto color correction
+  case autoEnhance
+  case autoWhiteBalance
 
-  // Looks (one-tap Apple photo effects)
   case noir
   case chrome
   case fade
@@ -38,7 +32,6 @@ enum VideoEffectType: String, Codable, CaseIterable, Identifiable {
   case tonal
   case sepia
 
-  // Adjustments
   case brightness
   case contrast
   case saturation
@@ -48,7 +41,6 @@ enum VideoEffectType: String, Codable, CaseIterable, Identifiable {
   case sharpen
   case warmth
 
-  // Stylize
   case vignette
   case bloom
   case comic
@@ -58,24 +50,21 @@ enum VideoEffectType: String, Codable, CaseIterable, Identifiable {
   case pointillize
   case hexagonalPixellate
 
-  // Blur
   case blur
   case motionBlur
   case zoomBlur
   case bokeh
   case backgroundBlur  // AI-powered using Vision framework
 
-  // Color Grading
   case colorInvert
   case posterize
   case falseColor
   case thermal
-  case lut  // Professional LUT Support
+  case lut
   case chromaKey  // Green/Blue screen removal
 
   var id: String { rawValue }
 
-  /// Category for grouping in UI
   nonisolated var category: EffectCategory {
     switch self {
     case .autoEnhance, .autoWhiteBalance:
@@ -93,7 +82,6 @@ enum VideoEffectType: String, Codable, CaseIterable, Identifiable {
     }
   }
 
-  /// Display name for UI
   nonisolated var displayName: String {
     switch self {
     case .autoEnhance: return String(localized: "effect.type.enhance", defaultValue: "Enhance")
@@ -140,7 +128,6 @@ enum VideoEffectType: String, Codable, CaseIterable, Identifiable {
     }
   }
 
-  /// SF Symbol icon for the effect
   nonisolated var icon: String {
     switch self {
     case .autoEnhance: return "wand.and.stars"
@@ -182,7 +169,6 @@ enum VideoEffectType: String, Codable, CaseIterable, Identifiable {
     }
   }
 
-  /// CIFilter name for this effect type
   nonisolated var ciFilterName: String {
     switch self {
     case .autoEnhance: return "AutoAdjust"  // Special - uses CIImage.autoAdjustmentFilters()
@@ -235,7 +221,6 @@ enum VideoEffectType: String, Codable, CaseIterable, Identifiable {
     }
   }
 
-  /// Default intensity for this effect
   nonisolated var defaultIntensity: Float {
     switch self {
     case .autoEnhance, .autoWhiteBalance: return 1.0
@@ -271,7 +256,6 @@ enum VideoEffectType: String, Codable, CaseIterable, Identifiable {
     }
   }
 
-  /// Intensity range for this effect
   nonisolated var intensityRange: ClosedRange<Float> {
     switch self {
     case .autoEnhance, .autoWhiteBalance: return 0.0...1.0
@@ -306,14 +290,11 @@ enum VideoEffectType: String, Codable, CaseIterable, Identifiable {
   }
 }
 
-/// A video effect with configurable intensity
 struct VideoEffect: Identifiable, Codable, Equatable, Sendable {
   var id: UUID = .init()
   var type: VideoEffectType
   var intensity: Float
   var color: String?  // Hex color, e.g. "#00FF00" for Green Screen
-
-  // GPU-based Chroma Key Kernel - uses shared ChromaKeyKernel for consistency
 
   nonisolated init(type: VideoEffectType, intensity: Float? = nil, color: String? = nil) {
     self.type = type
@@ -321,10 +302,8 @@ struct VideoEffect: Identifiable, Codable, Equatable, Sendable {
     self.color = color
   }
 
-  /// Create a CIFilter configured for this effect
   /// nonisolated since VideoEffect is Sendable and this method only uses local data
   nonisolated func createFilter() -> CIFilter? {
-    // Special effects handled differently or via Kernels
     switch type {
     case .autoEnhance, .autoWhiteBalance, .backgroundBlur, .chromaKey:
       return nil
@@ -386,8 +365,7 @@ struct VideoEffect: Identifiable, Codable, Equatable, Sendable {
       filter.setValue(CIColor(red: 0.1, green: 0.1, blue: 0.5), forKey: "inputColor0")
       filter.setValue(CIColor(red: 1.0, green: 0.9, blue: 0.2), forKey: "inputColor1")
     case .lut:
-      // Professional LUT Presets (Teal & Orange / Cinematic / Vintage)
-      // For MVP, we use a calculated 3D color cube (dim=16) - Cached for performance
+      // A computed 16-cube LUT, cached so it is not rebuilt every frame.
       let dimension = 16
       let data = LUTGenerator.cachedTealOrange
       filter.setValue(data, forKey: "inputCubeData")
@@ -396,16 +374,13 @@ struct VideoEffect: Identifiable, Codable, Equatable, Sendable {
       // Photo effects are binary - no intensity parameters needed
       break
     case .autoEnhance, .autoWhiteBalance, .backgroundBlur, .chromaKey:
-      // Already handled above
       break
     }
 
     return filter
   }
 
-  /// Apply effect to an image
   nonisolated func apply(to image: CIImage) -> CIImage? {
-    // Handle Kernel-based effects
     if type == .chromaKey {
       let keyColor = color != nil ? CIColor(string: color!) : CIColor.green
       let targetColor = SIMD3(Float(keyColor.red), Float(keyColor.green), Float(keyColor.blue))
@@ -416,7 +391,6 @@ struct VideoEffect: Identifiable, Codable, Equatable, Sendable {
       )
     }
 
-    // Handle Standard Filters
     guard let filter = createFilter() else { return nil }
 
     filter.setValue(image, forKey: kCIInputImageKey)

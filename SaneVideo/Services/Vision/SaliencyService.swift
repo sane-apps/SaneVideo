@@ -1,6 +1,3 @@
-// Apple Vision framework for attention/saliency detection
-// Finds the "interesting" parts of each frame for smart cropping
-
 import AVFoundation
 import CoreImage
 import Foundation
@@ -18,27 +15,23 @@ struct SaliencyResult: Sendable {
 /// Note: Does not conform to SaliencyServiceProtocol due to Swift 6 actor isolation rules.
 actor SaliencyService {
 
-    // SMOOTHING: EMA filter state for temporal smoothing of saliency
-    // Reduces jitter in attention point tracking between frames
+    // EMA smoothing state; reduces attention-point jitter between frames.
     private var smoothingAlpha: CGFloat = 0.3
     private var smoothedPoint: CGPoint?
     private var smoothedRect: CGRect?
 
     init() {}
 
-    /// Configure the smoothing factor for saliency tracking.
     /// - Parameter alpha: 0.0-1.0, lower = smoother but more latency, higher = more responsive
     func setSmoothing(alpha: CGFloat) {
         smoothingAlpha = max(0.05, min(1.0, alpha))
     }
 
-    /// Reset smoothing state for fresh analysis
     func resetSmoothing() {
         smoothedPoint = nil
         smoothedRect = nil
     }
 
-    /// Apply EMA smoothing to attention point
     private func smoothPoint(_ newPoint: CGPoint) -> CGPoint {
         guard let previous = smoothedPoint else {
             smoothedPoint = newPoint
@@ -53,7 +46,6 @@ actor SaliencyService {
         return smoothed
     }
 
-    /// Apply EMA smoothing to attention rect
     private func smoothAttentionRect(_ newRect: CGRect) -> CGRect {
         guard let previous = smoothedRect else {
             smoothedRect = newRect
@@ -70,7 +62,6 @@ actor SaliencyService {
         return smoothed
     }
 
-    /// Detect the most attention-grabbing region in an image
     /// Uses Apple's attention-based saliency model
     func detectAttention(in image: CIImage) async throws -> SaliencyResult {
         let request = VNGenerateAttentionBasedSaliencyImageRequest()
@@ -101,7 +92,6 @@ actor SaliencyService {
             )
         }
 
-        // Fallback to center
         return SaliencyResult(
             attentionPoint: CGPoint(x: 0.5, y: 0.5),
             attentionRect: CGRect(x: 0.25, y: 0.25, width: 0.5, height: 0.5),
@@ -134,7 +124,6 @@ actor SaliencyService {
         }
     }
 
-    /// Calculate smart crop rectangle for a target aspect ratio
     /// Keeps the attention point in frame
     func calculateSmartCrop(
         for image: CIImage,
@@ -160,14 +149,12 @@ actor SaliencyService {
             cropWidth = cropHeight * targetAspectRatio
         }
 
-        // Center crop on attention point
         let attentionX = saliency.attentionPoint.x * imageWidth
         let attentionY = saliency.attentionPoint.y * imageHeight
 
         var cropX = attentionX - cropWidth / 2
         var cropY = attentionY - cropHeight / 2
 
-        // Clamp to image bounds
         cropX = max(0, min(imageWidth - cropWidth, cropX))
         cropY = max(0, min(imageHeight - cropHeight, cropY))
 
@@ -176,7 +163,6 @@ actor SaliencyService {
 
     /// Analyze video and return keyframe saliency data for auto-reframe
     /// - Parameters:
-    ///   - videoURL: URL of video to analyze
     ///   - sampleInterval: Seconds between frame samples
     ///   - progressHandler: Optional callback with (currentFrame, totalFrames)
     func analyzeVideoForReframe(
@@ -184,7 +170,6 @@ actor SaliencyService {
         sampleInterval: TimeInterval = 1.0,
         progressHandler: (@Sendable (Int, Int) -> Void)? = nil
     ) async throws -> [CMTime: SaliencyResult] {
-        // Reset smoothing for fresh analysis
         resetSmoothing()
 
         let asset = AVURLAsset(url: videoURL)
@@ -215,7 +200,6 @@ actor SaliencyService {
                 let ciImage = CIImage(cgImage: cgImage)
                 let rawSaliency = try await detectAttention(in: ciImage)
 
-                // SMOOTHING: Apply EMA filter to reduce jitter between frames
                 let smoothedAttentionPoint = smoothPoint(rawSaliency.attentionPoint)
                 let smoothedAttentionRect = smoothAttentionRect(rawSaliency.attentionRect)
 
@@ -228,8 +212,7 @@ actor SaliencyService {
 
                 results[currentTime] = smoothedSaliency
             } catch {
-                // Track skipped frames instead of silently ignoring
-                // Reset smoothing on errors to prevent stale data
+                // Skip the frame and reset smoothing so stale data does not carry over.
                 resetSmoothing()
                 skippedFrames += 1
             }
@@ -237,7 +220,6 @@ actor SaliencyService {
             currentTime = currentTime + CMTime(seconds: sampleInterval, preferredTimescale: 600)
         }
 
-        // Log summary if frames were skipped
         if skippedFrames > 0 {
             let skipped = skippedFrames
             await MainActor.run {

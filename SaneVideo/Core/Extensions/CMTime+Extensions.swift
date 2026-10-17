@@ -1,10 +1,8 @@
-// CMTime convenience extensions
-
 import AVFoundation
 import Foundation
 
 extension CMTime {
-    /// Create CMTime from seconds with standard timescale (retained for convenience)
+    /// Uses the 600 timescale shared by clip times.
     init(seconds: Double) {
         self.init(seconds: seconds, preferredTimescale: 600)
     }
@@ -14,7 +12,6 @@ extension CMTime {
         abs(self.seconds - other.seconds) <= toleranceSeconds
     }
 
-    /// Clamps this time between `min` and `max`.
     func clamped(min: CMTime, max: CMTime) -> CMTime {
         Swift.max(min, Swift.min(self, max))
     }

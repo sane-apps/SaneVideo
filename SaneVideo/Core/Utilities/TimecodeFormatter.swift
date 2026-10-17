@@ -1,21 +1,14 @@
-// Utility for formatting time values for display
-
 import AVFoundation
 import Foundation
 
-/// Formats time values for consistent display across the app
 enum TimecodeFormatter {
     /// Format CMTime as timecode string (HH:MM:SS)
-    /// - Parameter time: CMTime to format
-    /// - Returns: Formatted string like "00:12:34"
     static func format(_ time: CMTime) -> String {
         let seconds = time.seconds
         return format(seconds)
     }
 
     /// Format TimeInterval as timecode string (HH:MM:SS)
-    /// - Parameter interval: TimeInterval to format
-    /// - Returns: Formatted string like "00:12:34"
     static func format(_ interval: TimeInterval) -> String {
         guard interval.isFinite, !interval.isNaN else {
             return "00:00:00"
@@ -30,16 +23,12 @@ enum TimecodeFormatter {
     }
 
     /// Format CMTime as short timecode (MM:SS) for durations under 1 hour
-    /// - Parameter time: CMTime to format
-    /// - Returns: Formatted string like "12:34"
     static func formatShort(_ time: CMTime) -> String {
         let seconds = time.seconds
         return formatShort(seconds)
     }
 
     /// Format TimeInterval as short timecode (MM:SS)
-    /// - Parameter interval: TimeInterval to format
-    /// - Returns: Formatted string like "12:34"
     static func formatShort(_ interval: TimeInterval) -> String {
         guard interval.isFinite, !interval.isNaN else {
             return "00:00"

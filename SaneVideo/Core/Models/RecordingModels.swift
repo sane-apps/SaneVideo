@@ -1,12 +1,8 @@
-// Enums and value types for recording and export
-
 import AVFoundation
 import Foundation
 
 // MARK: - Recording Source
 
-/// Recording source for video capture
-/// Sendable for safe cross-actor usage
 enum RecordingSource: Sendable, Equatable {
     case camera
     case screen
@@ -21,12 +17,8 @@ enum RecordingSource: Sendable, Equatable {
     }
 }
 
-// VideoFilter removed
-// RecordingMode removed - use AppState.appMode instead
-
 // MARK: - Export Settings
 
-/// Settings for video export
 public struct SaneExportSettings: Codable, Sendable {
     var codec: AVVideoCodecType = .hevc
     var resolution: ExportResolution = .uhd4K
@@ -37,7 +29,6 @@ public struct SaneExportSettings: Codable, Sendable {
     /// Used by vertical platform presets (TikTok, Reels, Shorts)
     var aspectRatio: ShortAspectRatio?
 
-    /// Smart crop settings for AI-powered reframing
     /// When enabled, uses face/saliency tracking to keep subjects in frame
     var smartCrop: SmartCropSettings = .init()
 
@@ -104,7 +95,6 @@ public struct SaneExportSettings: Codable, Sendable {
     /// For square (1:1), uses height for both dimensions
     var renderSize: CGSize {
         guard let aspect = aspectRatio else {
-            // No aspect ratio override - use standard resolution size
             return resolution.size
         }
 
@@ -116,16 +106,13 @@ public struct SaneExportSettings: Codable, Sendable {
             // For 4K (3840×2160): → 2160×3840
             return CGSize(width: baseHeight, height: baseHeight * (16.0 / 9.0))
         case .square1x1:
-            // Square: use height for both
             return CGSize(width: baseHeight, height: baseHeight)
         case .portrait4x5:
-            // Portrait: width = height × (4/5)
             let width = baseHeight * (4.0 / 5.0)
             return CGSize(width: width, height: baseHeight)
         }
     }
 
-    /// File extension for export based on codec
     /// HEVC with Alpha requires MOV container; others use MP4
     var fileExtension: String {
         codec == .hevcWithAlpha ? "mov" : "mp4"

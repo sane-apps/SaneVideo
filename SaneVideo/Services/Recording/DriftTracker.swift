@@ -24,10 +24,8 @@ final class DriftTracker: @unchecked Sendable {
 
     private let lock = NSLock()
 
-    // Wall clock reference
     private var _wallClockStart: TimeInterval?
 
-    // Latest presentation timestamps from each track
     private var _lastVideoPTS: CMTime = .invalid
     private var _lastAudioPTS: CMTime = .invalid
 
@@ -35,15 +33,12 @@ final class DriftTracker: @unchecked Sendable {
     private var _lastVideoWallTime: TimeInterval = 0
     private var _lastAudioWallTime: TimeInterval = 0
 
-    // Drift history for diagnostics
     private var _driftHistory: [DriftMeasurement] = []
 
-    // Accumulated correction offset
     private var _correctionOffset: TimeInterval = 0
 
     // MARK: - Types
 
-    /// A single drift measurement for diagnostics
     struct DriftMeasurement: Sendable {
         let timestamp: TimeInterval       // Wall clock time
         let videoPTS: TimeInterval        // Video presentation time
@@ -54,7 +49,6 @@ final class DriftTracker: @unchecked Sendable {
 
     // MARK: - Recording
 
-    /// Record a video frame's presentation timestamp
     func recordVideoTimestamp(_ pts: CMTime) {
         let wallTime = CACurrentMediaTime()
         lock.withLock {
@@ -66,7 +60,6 @@ final class DriftTracker: @unchecked Sendable {
         }
     }
 
-    /// Record an audio sample's presentation timestamp
     func recordAudioTimestamp(_ pts: CMTime) {
         let wallTime = CACurrentMediaTime()
         lock.withLock {
@@ -88,8 +81,6 @@ final class DriftTracker: @unchecked Sendable {
         lock.withLock {
             guard _lastVideoPTS.isValid && _lastAudioPTS.isValid else { return 0 }
 
-            // Measure drift: difference between video and audio stream times
-            // relative to wall clock progression
             let videoPTSSeconds = _lastVideoPTS.seconds
             let audioPTSSeconds = _lastAudioPTS.seconds
 
@@ -98,7 +89,6 @@ final class DriftTracker: @unchecked Sendable {
             let wallTimeDiff = _lastVideoWallTime - _lastAudioWallTime
             let drift = (videoPTSSeconds - audioPTSSeconds) - wallTimeDiff
 
-            // Record measurement
             let measurement = DriftMeasurement(
                 timestamp: _lastVideoWallTime - (_wallClockStart ?? 0),
                 videoPTS: videoPTSSeconds,
@@ -113,10 +103,8 @@ final class DriftTracker: @unchecked Sendable {
                 _driftHistory.removeFirst(_driftHistory.count - 300)
             }
 
-            // Only correct if drift exceeds threshold
             guard abs(drift) > Self.driftThreshold else { return _correctionOffset }
 
-            // Gradual correction: move toward zero drift, max 10ms per step
             let correctionStep: TimeInterval
             if drift > 0 {
                 correctionStep = min(drift - Self.driftThreshold, Self.maxCorrectionPerStep)
@@ -138,12 +126,10 @@ final class DriftTracker: @unchecked Sendable {
         }
     }
 
-    /// Get drift measurement history for diagnostics
     func getDriftHistory() -> [DriftMeasurement] {
         lock.withLock { _driftHistory }
     }
 
-    /// Reset all state
     func reset() {
         lock.withLock {
             _wallClockStart = nil

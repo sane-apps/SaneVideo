@@ -1,7 +1,6 @@
 import Foundation
 import OSLog
 
-/// Service to export application logs from the system store to a text file.
 final class LogExportService: Sendable {
     
     private let subsystem = "com.sanevideo.SaneVideo"
@@ -9,10 +8,9 @@ final class LogExportService: Sendable {
     public init() {}
     
     /// Exports the last 15 minutes of logs to a temporary file.
-    /// - Returns: The URL of the generated log file.
     func exportRecentLogs() throws -> URL {
         let store = try OSLogStore(scope: .currentProcessIdentifier)
-        let position = store.position(timeIntervalSinceLatestBoot: -900) // Last 15 minutes
+        let position = store.position(timeIntervalSinceLatestBoot: -900)
         
         let entries = try store.getEntries(at: position)
             .compactMap { $0 as? OSLogEntryLog }
@@ -32,8 +30,7 @@ final class LogExportService: Sendable {
         
         let fileName = "SaneVideo_Export.log"
 
-        // Save to ~/Library/Logs/SaneVideo/ (standard log location, no entitlement needed)
-        // External tools like Claude Code can read from this location easily.
+        // ~/Library/Logs/SaneVideo/ needs no entitlement.
         guard let libraryDir = FileManager.default.urls(for: .libraryDirectory, in: .userDomainMask).first else {
             throw NSError(domain: "LogExportService", code: -1, userInfo: [NSLocalizedDescriptionKey: "Library directory not found"])
         }

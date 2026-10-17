@@ -1,9 +1,6 @@
-// Centralized memory pressure handling for Apple Silicon optimization
-
 import Combine
 import Foundation
 
-/// Manages memory pressure and cache clearing across the app
 @MainActor
 @Observable
 final class MemoryManager {
@@ -18,14 +15,13 @@ final class MemoryManager {
     // MARK: - Memory Pressure Handling
 
     private func setupMemoryPressureObserver() {
-        // Observe memory pressure warnings
         let source = DispatchSource.makeMemoryPressureSource(eventMask: .all, queue: .main)
 
         source.setEventHandler { [weak self] in
             guard let self = self else { return }
             let event = source.data // Use .data instead of .mask for current event
 
-            // Handle ONLY ONE level - prioritize critical
+            // Handle only the most severe level.
             if event.contains(.critical) {
                 self.handleMemoryCritical()
             } else if event.contains(.warning) {
@@ -51,38 +47,28 @@ final class MemoryManager {
         AppLogger.general.error("MemoryManager: CRITICAL memory pressure - aggressive cache clearing")
         clearCaches(aggressive: true)
 
-        // Show user notification
         ServiceContainer.shared.toastManager.show("⚠️ Low memory - cleared caches", type: .error)
     }
 
     // MARK: - Cache Clearing
 
-    /// Clear all caches in the app
-    /// - Parameter aggressive: If true, clears more aggressively
     func clearCaches(aggressive: Bool = false) {
         Task {
-            // Clear thumbnail cache (always)
             await ServiceContainer.shared.thumbnailService.clearCache()
 
-            // Clear waveform cache on ANY memory pressure
             // Waveforms are easily regeneratable and can consume significant memory on long timelines
             await ServiceContainer.shared.waveformService.clearCache()
 
-            // Clear AI/Vision caches
             await ServiceContainer.shared.personSegmentationService.clearCache()
 
-            // Reset FaceTrackingService sequence handler to prevent memory bloat
             // VNSequenceRequestHandler can accumulate state over many frames
             await ServiceContainer.shared.faceTrackingService.resetSequenceHandler()
 
-            // Clear Rendering caches (Core Image/Metal)
             RenderingService.shared.ciContext.clearCaches()
 
-            // Clear Network caches
             URLCache.shared.removeAllCachedResponses()
 
             if aggressive {
-                // Additional aggressive cleanup if needed in the future
             }
 
             AppLogger.general.info("MemoryManager: Caches cleared (aggressive: \(aggressive))")

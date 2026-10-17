@@ -4,7 +4,6 @@ import Foundation
 
 // MARK: - Metadata Structs
 
-/// Metadata needed to render a transition between two tracks
 struct TransitionMetadata: Sendable {
   let timeRange: CMTimeRange
   let fromTrackID: CMPersistentTrackID
@@ -12,7 +11,6 @@ struct TransitionMetadata: Sendable {
   let type: TransitionType
 }
 
-/// Metadata for a text overlay (Caption or Overlay)
 struct TextLayerItem: Sendable {
   let id: UUID
   let text: String
@@ -22,7 +20,6 @@ struct TextLayerItem: Sendable {
   var rotation: Double = 0.0
   var scale: CGFloat = 1.0
 
-  // Styling (from CaptionStyle)
   let style: CaptionStyle?
 
   // Word-level timing for karaoke highlighting
@@ -88,47 +85,38 @@ struct InteractionLayerItem: Sendable {
 
 // MARK: - Instruction Class
 
-/// Custom Instruction that carries effect metadata
 class SaneVideoCompositionInstruction: NSObject, AVVideoCompositionInstructionProtocol,
   @unchecked Sendable {
   // MARK: - AVVideoCompositionInstructionProtocol
 
   var timeRange: CMTimeRange
   var enablePostProcessing: Bool = true
-  var containsTweening: Bool = true  // Tweeing allowed for transitions
-  var requiredSourceTrackIDs: [NSValue]?  // IDs of tracks used in this instruction
+  var containsTweening: Bool = true
+  var requiredSourceTrackIDs: [NSValue]?
   var passthroughTrackID: CMPersistentTrackID = kCMPersistentTrackID_Invalid
 
   // MARK: - Custom Metadata
 
-  /// Track ID -> List of (TimeRange, Effects)
   let trackEffects: [CMPersistentTrackID: [(CMTimeRange, [VideoEffect])]]
 
-  /// Track ID -> List of (TimeRange, [KeyframeAnimation])
   let trackKeyframes: [CMPersistentTrackID: [(CMTimeRange, [KeyframeAnimation])]]
 
-  /// Track ID -> List of (TimeRange, [BackgroundEffect]) for person segmentation
   let trackBackgroundEffects: [CMPersistentTrackID: [(CMTimeRange, [BackgroundEffect])]]
 
-  /// Track ID -> List of (TimeRange, [PrivacyRegion]) for privacy blur
   let trackPrivacyRegions: [CMPersistentTrackID: [(CMTimeRange, [PrivacyRegion])]]
 
-  /// Active Transitions in this instruction
   let activeTransitions: [TransitionMetadata]
 
-  /// Active Text Layers (Captions + Overlays) for this instruction time range
   let textLayers: [TextLayerItem]
 
   /// Active interaction overlays (click rings, cursor spotlight, keystroke pills)
   let interactionLayers: [InteractionLayerItem]
 
-  /// Vision service for background effects (optional)
   let visionService: PersonSegmentationService?
 
   /// Main Layer Instructions (for transforms/opacity)
   let layerInstructions: [AVVideoCompositionLayerInstruction]
 
-  /// Smart crop keyframes for AI-powered reframing (from SmartCropService)
   /// Maps composition time -> crop suggestion (center X/Y, scale)
   let smartCropKeyframes: [CMTime: SuggestedCrop]?
 
@@ -155,7 +143,6 @@ class SaneVideoCompositionInstruction: NSObject, AVVideoCompositionInstructionPr
     self.visionService = visionService
     self.smartCropKeyframes = smartCropKeyframes
 
-    // Extract required track IDs from layer instructions
     requiredSourceTrackIDs = layerInstructions.map { NSNumber(value: $0.trackID) }
   }
 }

@@ -5,7 +5,6 @@ import CoreMedia
 import SwiftUI
 import UniformTypeIdentifiers
 
-/// Format options for transcript export
 enum TranscriptFormat: String, CaseIterable, Identifiable {
     case pdf = "transcript.format.pdf"
     case srt = "transcript.format.srt"
@@ -49,7 +48,6 @@ enum TranscriptFormat: String, CaseIterable, Identifiable {
     }
 }
 
-/// Sheet for configuring transcript export
 struct TranscriptExportSheet: View {
     @Environment(\.dismiss) private var dismiss
 

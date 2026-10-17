@@ -1,5 +1,3 @@
-// Dropdown picker for selecting export templates in the export sheet
-
 import SwiftUI
 
 /// Picker for selecting export templates (built-in or custom)
@@ -15,7 +13,6 @@ struct ExportPresetPicker: View {
 
     var body: some View {
         HStack(spacing: 8) {
-            // Templates button
             Button {
                 showTemplateBrowser = true
             } label: {
@@ -27,7 +24,6 @@ struct ExportPresetPicker: View {
             .buttonStyle(.bordered)
             .accessibilityIdentifier("export.templates.browse")
 
-            // Quick template picker (if custom templates exist)
             if !customTemplates.isEmpty {
                 Menu {
                     Section(String(localized: "export.templates.recent", defaultValue: "Recent Templates")) {
@@ -59,7 +55,6 @@ struct ExportPresetPicker: View {
                 .accessibilityIdentifier("export.templates.quick_menu")
             }
 
-            // Current template indicator
             if let template = selectedCustomTemplate {
                 HStack(spacing: 4) {
                     Image(systemName: template.icon)

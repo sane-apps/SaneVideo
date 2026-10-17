@@ -1,9 +1,6 @@
-// Keyframe animation system for animating clip properties over time
-
 import CoreMedia
 import Foundation
 
-/// Properties that can be animated via keyframes
 enum AnimatableProperty: String, Codable, CaseIterable, Sendable {
     case positionX
     case positionY
@@ -43,7 +40,6 @@ enum AnimatableProperty: String, Codable, CaseIterable, Sendable {
     }
 }
 
-/// Easing functions for keyframe interpolation
 enum EasingType: String, Codable, CaseIterable, Sendable {
     case linear
     case easeIn
@@ -86,11 +82,10 @@ enum EasingType: String, Codable, CaseIterable, Sendable {
     }
 }
 
-/// A single keyframe point
 struct Keyframe: Identifiable, Codable, Equatable, Sendable {
     var id: UUID = .init()
     var time: CMTime // Time relative to clip start
-    var value: Double // Value at this keyframe
+    var value: Double
     var easing: EasingType // Easing to NEXT keyframe
 
     init(time: CMTime, value: Double, easing: EasingType = .easeInOut) {
@@ -123,7 +118,6 @@ struct Keyframe: Identifiable, Codable, Equatable, Sendable {
     }
 }
 
-/// A track of keyframes for a specific property
 struct KeyframeTrack: Identifiable, Codable, Equatable, Sendable {
     var id: UUID = .init()
     var property: AnimatableProperty
@@ -134,32 +128,26 @@ struct KeyframeTrack: Identifiable, Codable, Equatable, Sendable {
         self.keyframes = keyframes
     }
 
-    /// Get interpolated value at given time
     func value(at time: CMTime) -> Double {
-        // Sort keyframes by time
         let sorted = keyframes.sorted { $0.time < $1.time }
 
         guard !sorted.isEmpty else {
             return property.defaultValue
         }
 
-        // Before first keyframe
         if time <= sorted[0].time {
             return sorted[0].value
         }
 
-        // After last keyframe
         if time >= sorted[sorted.count - 1].time {
             return sorted[sorted.count - 1].value
         }
 
-        // Find surrounding keyframes
         for i in 0 ..< sorted.count - 1 {
             let k1 = sorted[i]
             let k2 = sorted[i + 1]
 
             if time >= k1.time && time <= k2.time {
-                // Interpolate between k1 and k2
                 let totalDuration = k2.time.seconds - k1.time.seconds
                 guard totalDuration > 0 else { return k1.value }
 
@@ -174,9 +162,7 @@ struct KeyframeTrack: Identifiable, Codable, Equatable, Sendable {
         return property.defaultValue
     }
 
-    /// Add or update a keyframe at the given time
     mutating func setKeyframe(at time: CMTime, value: Double, easing: EasingType = .easeInOut) {
-        // Check if keyframe exists at this time (within small tolerance)
         if let index = keyframes.firstIndex(where: { abs($0.time.seconds - time.seconds) < 0.01 }) {
             keyframes[index].value = value
             keyframes[index].easing = easing
@@ -186,13 +172,11 @@ struct KeyframeTrack: Identifiable, Codable, Equatable, Sendable {
         }
     }
 
-    /// Remove keyframe at given time
     mutating func removeKeyframe(at time: CMTime) {
         keyframes.removeAll { abs($0.time.seconds - time.seconds) < 0.01 }
     }
 }
 
-/// Container for all keyframe tracks on a clip
 struct KeyframeAnimation: Codable, Equatable, Sendable {
     var tracks: [KeyframeTrack]
 
@@ -200,7 +184,6 @@ struct KeyframeAnimation: Codable, Equatable, Sendable {
         self.tracks = tracks
     }
 
-    /// Get or create track for a property
     mutating func track(for property: AnimatableProperty) -> KeyframeTrack {
         if let existing = tracks.first(where: { $0.property == property }) {
             return existing
@@ -210,7 +193,6 @@ struct KeyframeAnimation: Codable, Equatable, Sendable {
         return newTrack
     }
 
-    /// Get value for a property at a given time
     func value(for property: AnimatableProperty, at time: CMTime) -> Double {
         if let track = tracks.first(where: { $0.property == property }) {
             return track.value(at: time)
@@ -218,7 +200,6 @@ struct KeyframeAnimation: Codable, Equatable, Sendable {
         return property.defaultValue
     }
 
-    /// Set a keyframe for a property
     mutating func setKeyframe(property: AnimatableProperty, at time: CMTime, value: Double, easing: EasingType = .easeInOut) {
         if let index = tracks.firstIndex(where: { $0.property == property }) {
             tracks[index].setKeyframe(at: time, value: value, easing: easing)
@@ -229,12 +210,10 @@ struct KeyframeAnimation: Codable, Equatable, Sendable {
         }
     }
 
-    /// Check if animation has any keyframes
     var isEmpty: Bool {
         tracks.allSatisfy { $0.keyframes.isEmpty }
     }
 
-    /// Access track for property
     subscript(_ property: AnimatableProperty) -> KeyframeTrack? {
         get {
             tracks.first(where: { $0.property == property })

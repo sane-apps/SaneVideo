@@ -7,7 +7,6 @@ import AVFoundation
 struct CompactProjectBrowserView: View {
     @Environment(AppState.self) var appState
 
-    // Multi-select state
     @State private var selectedIds: Set<UUID> = []
     @State private var anchorId: UUID?  // For Shift+Arrow/Click range selection
     @State private var lastSelectedId: UUID?  // Track last selected for keyboard nav
@@ -88,7 +87,6 @@ struct CompactProjectBrowserView: View {
         }
         .focusable()
         .focusEffectDisabled()
-        // Basic arrow keys
         .onKeyPress(.upArrow) { moveSingle(direction: -1); return .handled }
         .onKeyPress(.downArrow) { moveSingle(direction: 1); return .handled }
         .onKeyPress(.return) { openFirstSelected(); return .handled }
@@ -97,13 +95,10 @@ struct CompactProjectBrowserView: View {
         // Hidden buttons for modifier shortcuts
         .background {
             Group {
-                // Shift+Up - extend selection up
                 Button("") { extendSelection(direction: -1) }
                     .keyboardShortcut(.upArrow, modifiers: [.shift])
-                // Shift+Down - extend selection down
                 Button("") { extendSelection(direction: 1) }
                     .keyboardShortcut(.downArrow, modifiers: [.shift])
-                // Cmd+A - select all
                 Button("") { selectAll() }
                     .keyboardShortcut("a", modifiers: [.command])
             }
@@ -185,7 +180,6 @@ struct CompactProjectBrowserView: View {
     private func extendSelection(direction: Int) {
         guard !projects.isEmpty else { return }
 
-        // Set anchor if not set
         if anchorId == nil {
             anchorId = lastSelectedId ?? projects.first?.id
         }
@@ -202,7 +196,6 @@ struct CompactProjectBrowserView: View {
         let newId = projects[newIndex].id
         lastSelectedId = newId
 
-        // Select range from anchor to new position
         if let anchor = anchorId {
             selectRange(from: anchor, to: newId)
         }
@@ -276,7 +269,6 @@ struct CompactProjectRow: View {
 
     var body: some View {
         HStack(spacing: 10) {
-            // Thumbnail
             ZStack {
                 if let thumbnail = thumbnail {
                     Image(nsImage: thumbnail)
@@ -293,7 +285,6 @@ struct CompactProjectRow: View {
             .frame(width: 50, height: 32)
             .clipShape(RoundedRectangle(cornerRadius: 6))
 
-            // Info
             VStack(alignment: .leading, spacing: 2) {
                 Text(project.name)
                     .font(.system(size: 13, weight: isCurrent ? .semibold : .regular))
@@ -327,7 +318,6 @@ struct CompactProjectRow: View {
         }
         .contentShape(Rectangle())
         .onTapGesture {
-            // Detect modifiers from current event
             let modifiers = NSEvent.modifierFlags
             var eventModifiers: EventModifiers = []
             if modifiers.contains(.shift) { eventModifiers.insert(.shift) }
@@ -341,7 +331,6 @@ struct CompactProjectRow: View {
         )
         .contextMenu {
             if isMultiSelect {
-                // Multi-select context menu
                 Text("\(selectedCount) projects selected")
                     .font(.caption)
 
@@ -367,7 +356,6 @@ struct CompactProjectRow: View {
                     Label("Delete \(selectedCount) Projects", systemImage: "trash")
                 }
             } else {
-                // Single item context menu
                 Button {
                     onSelect()
                 } label: {

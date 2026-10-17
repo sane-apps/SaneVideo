@@ -36,7 +36,6 @@ struct FileDropModifier: ViewModifier {
         Task { @MainActor in
             AppLogger.uiLog.info("File dropped: \(url.lastPathComponent)")
 
-            // Check if valid video file
             if let type = UTType(filenameExtension: url.pathExtension), type.conforms(to: .movie) {
                 AppLogger.uiLog.info("Valid video file, importing...")
                 await appState.projectState.addVideoToTimeline(url: url)

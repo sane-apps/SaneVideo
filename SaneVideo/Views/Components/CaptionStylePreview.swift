@@ -1,5 +1,3 @@
-// Preview thumbnail for caption style selection
-
 import SwiftUI
 
 /// Preview thumbnail showing how a caption style looks
@@ -8,14 +6,11 @@ struct CaptionStylePreview: View {
 
     var body: some View {
         VStack(spacing: 6) {
-            // Larger preview with sample text
             ZStack {
-                // Background
                 RoundedRectangle(cornerRadius: 6)
                     .fill(Color.stone.opacity(0.1))
                     .frame(width: 80, height: 50)
 
-                // Sample caption text
                 Text("Hello")
                     .font(.custom(style.fontName, size: 12))
                     .fontWeight(style.isBold ? .bold : .regular)

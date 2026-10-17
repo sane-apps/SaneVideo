@@ -1,17 +1,9 @@
 // Recording quality benchmark with Cap-inspired targets.
-// Tracks live metrics during recording and grades pass/fail on finalize.
-// Targets:
-// - FPS: ±2 of target (e.g., 28-32 for 30fps)
-// - Jitter: <15ms average inter-frame deviation
-// - Dropped frames: <2% of total
-// - A/V sync: <50ms drift
-// - Startup latency: <500ms to first frame
 
 import CoreMedia
 import Foundation
 import QuartzCore
 
-/// Recording quality benchmark with live metrics and pass/fail grading
 @Observable
 @MainActor
 final class RecordingBenchmark {
@@ -60,7 +52,6 @@ final class RecordingBenchmark {
     private(set) var liveMetrics = LiveMetrics()
     let targets: Targets
 
-    // Internal tracking (nonisolated access via sendable wrapper)
     private var frameTimestamps: [Double] = []
     private var startWallTime: Double?
     private var firstFrameWallTime: Double?
@@ -71,7 +62,6 @@ final class RecordingBenchmark {
 
     // MARK: - Recording Events
 
-    /// Call when recording starts
     func recordingDidStart() {
         startWallTime = CACurrentMediaTime()
         frameTimestamps = []
@@ -79,7 +69,6 @@ final class RecordingBenchmark {
         liveMetrics = LiveMetrics()
     }
 
-    /// Call for each video frame written
     func frameWritten(presentationTime: CMTime, targetFPS: Double) {
         let now = CACurrentMediaTime()
 
@@ -101,7 +90,6 @@ final class RecordingBenchmark {
         liveMetrics.targetFPS = targetFPS
         liveMetrics.totalFrames += 1
 
-        // Calculate current FPS from window
         if frameTimestamps.count >= 2 {
             let first = frameTimestamps.first!
             let last = frameTimestamps.last!
@@ -123,7 +111,6 @@ final class RecordingBenchmark {
         }
     }
 
-    /// Call when a frame is dropped
     func frameDropped() {
         liveMetrics.droppedFrames += 1
         if liveMetrics.totalFrames > 0 {
@@ -131,39 +118,32 @@ final class RecordingBenchmark {
         }
     }
 
-    /// Update A/V drift measurement
     func updateAVDrift(_ driftSeconds: TimeInterval) {
         liveMetrics.avDriftMs = abs(driftSeconds) * 1000.0
     }
 
     // MARK: - Finalization
 
-    /// Finalize benchmark and produce pass/fail result
     func finalize() -> BenchmarkResult {
         var failures: [String] = []
 
-        // Check FPS
         let fpsOff = abs(liveMetrics.actualFPS - liveMetrics.targetFPS)
         if fpsOff > targets.fpsTolerance {
             failures.append("FPS: \(String(format: "%.1f", liveMetrics.actualFPS)) (target \(String(format: "%.0f", liveMetrics.targetFPS))±\(String(format: "%.0f", targets.fpsTolerance)))")
         }
 
-        // Check jitter
         if liveMetrics.averageJitterMs > targets.maxJitterMs {
             failures.append("Jitter: \(String(format: "%.1f", liveMetrics.averageJitterMs))ms (max \(String(format: "%.0f", targets.maxJitterMs))ms)")
         }
 
-        // Check dropped frames
         if liveMetrics.droppedPercent > targets.maxDroppedPercent {
             failures.append("Drops: \(String(format: "%.1f", liveMetrics.droppedPercent))% (max \(String(format: "%.1f", targets.maxDroppedPercent))%)")
         }
 
-        // Check A/V sync
         if liveMetrics.avDriftMs > targets.maxAVSyncMs {
             failures.append("A/V sync: \(String(format: "%.1f", liveMetrics.avDriftMs))ms (max \(String(format: "%.0f", targets.maxAVSyncMs))ms)")
         }
 
-        // Check startup latency
         if liveMetrics.startupLatencyMs > targets.maxStartupLatencyMs {
             failures.append("Startup: \(String(format: "%.0f", liveMetrics.startupLatencyMs))ms (max \(String(format: "%.0f", targets.maxStartupLatencyMs))ms)")
         }

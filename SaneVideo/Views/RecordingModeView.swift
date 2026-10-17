@@ -7,9 +7,7 @@ struct RecordingModeView: View {
 
     var body: some View {
         GeometryReader { geo in
-            // Dynamic Size Calculations - uses unified IconCircleButton.Size system
             let buttonScale = min(max(geo.size.width / 1000, 0.6), 1.2)
-            // Use .medium as base (52pt) and scale from there
             let scaledButtonSize: CGFloat = IconCircleButton.Size.medium.diameter * buttonScale
             let wantsCameraPreview = RecordingCameraPreviewPolicy.wantsCameraPreview(
                 isScreenSharing: appState.isScreenSharing,
@@ -17,7 +15,6 @@ struct RecordingModeView: View {
             )
 
             ZStack {
-                // 1. Main Preview Area (Full Screen)
                 ZStack {
                     SaneVideoAmbientBackground()
                     LinearGradient(
@@ -48,7 +45,6 @@ struct RecordingModeView: View {
                             .frame(maxWidth: 520)
                     }
                 } else {
-                    // Camera Preview
                     if appState.cameraState.shouldMountLivePreview, let session = appState.cameraState.session {
                         ZStack {
                             CameraPreviewView(
@@ -79,7 +75,6 @@ struct RecordingModeView: View {
                             }
                         }
                     } else if wantsCameraPreview {
-                        // Camera Loading State
                         VStack(spacing: 16) {
                             ProgressView().scaleEffect(1.5)
                             Text("Camera Loading...")
@@ -87,7 +82,6 @@ struct RecordingModeView: View {
                                 .foregroundColor(.white)
                         }
                     } else {
-                        // Camera Off State
                         VStack(spacing: 20) {
                             Image(systemName: "video.slash")
                                 .font(.system(size: 80 * buttonScale))
@@ -106,7 +100,6 @@ struct RecordingModeView: View {
                     }
                 }
 
-                // bottom gradients
                 VStack {
                     Spacer()
                     LinearGradient(
@@ -118,7 +111,6 @@ struct RecordingModeView: View {
                     .allowsHitTesting(false)
                 }
 
-                // REC Timer Badge - Top Left (out of the way)
                 if appState.isRecording {
                     VStack {
                         HStack {
@@ -134,20 +126,18 @@ struct RecordingModeView: View {
                     }
                 }
 
-                // 2. Bottom Control Bar (no timer - moved to top)
                 VStack {
                     Spacer()
                     SharedRecordingControls(
                         showDevicePickers: true,
-                        showGalleryTarget: false, // Gallery button removed - not needed here
-                        showTimer: false, // Timer moved to top-left
+                        showGalleryTarget: false,
+                        showTimer: false,
                         useGlassBackground: false,
                         buttonSize: .custom(scaledButtonSize)
                     )
                     .padding(.bottom, Theme.Dimensions.spacingXXL * buttonScale)
                 }
 
-                // Countdown Overlay
                 if appState.recordingState.countdownValue > 0 {
                     ZStack {
                         Color.black.opacity(0.4).ignoresSafeArea()

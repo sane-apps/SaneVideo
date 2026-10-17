@@ -1,8 +1,5 @@
-// Enhanced accessibility support for VoiceOver and keyboard navigation
-
 import SwiftUI
 
-/// ViewModifier that adds comprehensive accessibility support
 struct EnhancedAccessibilityModifier: ViewModifier {
     let label: String
     let hint: String?
@@ -36,7 +33,6 @@ struct EnhancedAccessibilityModifier: ViewModifier {
     }
 }
 
-/// ViewModifier for keyboard navigation hints
 struct KeyboardNavigationModifier: ViewModifier {
     let shortcut: String?
     
@@ -48,7 +44,6 @@ struct KeyboardNavigationModifier: ViewModifier {
     }
 }
 
-/// Helper extension for conditional modifiers
 extension View {
     @ViewBuilder
     func modifyIf<Content: View>(
@@ -64,7 +59,6 @@ extension View {
 }
 
 extension View {
-    /// Enhanced accessibility with comprehensive VoiceOver support
     func enhancedAccessibility(
         label: String,
         hint: String? = nil,
@@ -79,7 +73,6 @@ extension View {
         ))
     }
     
-    /// Adds keyboard shortcut hint to accessibility
     func keyboardShortcutHint(_ shortcut: String) -> some View {
         modifier(KeyboardNavigationModifier(shortcut: shortcut))
     }

@@ -5,7 +5,6 @@ struct KeyboardShortcutsSheet: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // Header
             HStack {
                 Text("Keyboard Shortcuts")
                     .saneReadableSectionTitle()
@@ -26,7 +25,6 @@ struct KeyboardShortcutsSheet: View {
 
             Divider()
 
-            // Content
             ScrollView {
                 VStack(spacing: 24) {
                     InformationBox(

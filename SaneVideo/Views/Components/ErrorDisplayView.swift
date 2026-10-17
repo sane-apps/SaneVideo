@@ -1,5 +1,3 @@
-// User-friendly error display with recovery suggestions
-
 import SwiftUI
 
 /// User-friendly error display with recovery actions
@@ -48,7 +46,6 @@ struct ErrorDisplayView: View {
                 .buttonStyle(.plain)
             }
 
-            // Recovery suggestions
             if let suggestions = recoverySuggestions, !suggestions.isEmpty {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Try this:")
@@ -70,7 +67,6 @@ struct ErrorDisplayView: View {
                 .padding(.leading, 32)
             }
 
-            // Action buttons
             HStack {
                 if isPermissionError {
                     Button("Open System Settings") {
@@ -107,7 +103,6 @@ struct ErrorDisplayView: View {
             }
             .padding(.top, 8)
 
-            // Technical details (collapsible)
             if showingDetails {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Technical Details:")
@@ -202,5 +197,3 @@ struct ErrorDisplayView: View {
         }
     }
 }
-
-// ErrorDisplayView uses AppError extensions defined in AppError.swift

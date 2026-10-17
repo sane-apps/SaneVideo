@@ -180,7 +180,7 @@ struct SmartToolsSection: View {
         VStack(alignment: .leading, spacing: Theme.Dimensions.spacingXS) {
           InspectorToggle(
             title: "Enhance Speech",
-            subtitle: "EQ boost & noise reduction",
+            subtitle: "Clearer, more even voice",
             isOn: Binding(
               get: { options.enhanceAudio },
               set: { [clip] newValue in
@@ -195,15 +195,9 @@ struct SmartToolsSection: View {
             color: .blue,
             identifier: "Toggle_EnhanceSpeech"
           )
-          .help("Vocal presence EQ and noise reduction. Voice isolation is applied during playback only.")
+          .help("Makes speech clearer and evens out the volume. For the cleanest voice, turn on Voice Isolation in the microphone menu before recording.")
 
-          // Limitation note: Voice isolation is real-time only (AUSoundIsolation limitation)
-          if options.enhanceAudio {
-            Text("Voice isolation applies during playback only")
-              .font(.system(size: Theme.Typography.fontSizeXS))
-              .foregroundStyle(.white.opacity(0.9))
-              .padding(.leading, 42)
-          }
+
         }
 
         // 5. Smooth Cuts

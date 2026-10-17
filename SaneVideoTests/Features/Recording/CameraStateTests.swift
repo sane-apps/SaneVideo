@@ -191,6 +191,25 @@ struct CameraStateTests {
         #expect(ended, "Warmup should end on its own")
     }
 
+    @Test("Preview shows within a second of the first frame, not after the long fallback timer")
+    func previewWarmupEndsSoonAfterFirstFrame() async throws {
+        let mock = CameraServiceProtocolMock(isActive: true)
+        let cameraState = CameraState(
+            cameraService: mock,
+            previewWarmupNanoseconds: 60_000_000_000
+        )
+        let session = AVCaptureSession()
+
+        mock.session = session
+        mock.sessionPublisherSubject.send(session)
+        let started = await waitUntil(timeout: .milliseconds(400)) { cameraState.isPreviewWarmingUp }
+        #expect(started)
+
+        mock.hasVideoSignalSubject.send(true)
+        let ended = await waitUntil(timeout: .seconds(1)) { !cameraState.isPreviewWarmingUp }
+        #expect(ended, "The first frame should end the warm-up in about 0.3 s")
+    }
+
     @Test("Signal and error publishers update camera preview state")
     func signalAndErrorPublishersUpdateCameraPreviewState() async throws {
         let mock = CameraServiceProtocolMock(session: AVCaptureSession())

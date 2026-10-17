@@ -117,24 +117,6 @@ struct TimelineKeyboardModifier: ViewModifier {
                 }
                 return .handled
             }
-            // Left Arrow: Shift = 10s back, plain = one frame back.
-            .onKeyPress(.leftArrow, phases: .down) { press in
-                if press.modifiers.contains(.shift) {
-                    appState.playbackState.seekBackward10Seconds()
-                } else {
-                    appState.playbackState.stepBackward()
-                }
-                return .handled
-            }
-            // Right Arrow: Shift = 10s forward, plain = one frame forward.
-            .onKeyPress(.rightArrow, phases: .down) { press in
-                if press.modifiers.contains(.shift) {
-                    appState.playbackState.seekForward10Seconds()
-                } else {
-                    appState.playbackState.stepForward()
-                }
-                return .handled
-            }
             .onKeyPress(KeyEquivalent("a"), phases: .down) { press in
                 if press.modifiers.contains(.command) {
                     onSelectAll()

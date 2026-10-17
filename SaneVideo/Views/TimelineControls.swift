@@ -270,8 +270,8 @@ struct TimelineControls: View {
             ToolButton(icon: "scissors", isSelected: false, id: "SplitClipButton") {
                 onSplit()
             }
-            .disabled(selectedClip == nil || projectState.isProcessing)
-            .help("Split clip (⌘B)")
+            .disabled(projectState.isProcessing)
+            .help("Split the clip under the playhead (⌘B)")
             .accessibilityLabel("Split clip at playhead")
 
             ToolButton(icon: "trash", isSelected: false, id: "DeleteClipButton") {

@@ -198,8 +198,11 @@ class PlaybackState {
                 guard !Task.isCancelled else { return }
 
                 await MainActor.run {
+                    // An edit rebuilds the player; keep the playhead where the person left it.
+                    let keepTime = isSameProject ? self.currentTime : .zero
                     self.unload()
                     self.setupPlayer(with: playerItem, duration: project.timeline.duration)
+                    self.restorePlayhead(keepTime)
                     self.isCompositionReady = true
                     self.isPreparingComposition = false
                     self.pendingProject = nil
@@ -227,8 +230,10 @@ class PlaybackState {
             let playerItem = try await ServiceContainer.shared.timelineEngine.composePlayerItem(for: project)
 
             await MainActor.run {
+                let keepTime = self.currentTime
                 self.unload()
                 self.setupPlayer(with: playerItem, duration: project.timeline.duration)
+                self.restorePlayhead(keepTime)
                 self.isCompositionReady = true
                 self.isPreparingComposition = false
                 self.pendingProject = nil
@@ -237,6 +242,13 @@ class PlaybackState {
             isPreparingComposition = false
             AppLogger.playback.error("Failed to compose for play: \(error)")
         }
+    }
+
+    private func restorePlayhead(_ time: CMTime) {
+        guard time.isValid, time > .zero, duration.isValid, duration > .zero else { return }
+        let target = CMTimeMinimum(time, duration)
+        player?.seek(to: target, toleranceBefore: .zero, toleranceAfter: .zero)
+        currentTime = target
     }
 
     private func setupPlayer(with item: AVPlayerItem, duration: CMTime) {

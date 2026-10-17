@@ -283,6 +283,12 @@ final class CameraManager: NSObject, CameraServiceProtocol {
       }.value
 
       AppLogger.camera.info("Session .startRunning() returned. isRunning: \(session.isRunning)")
+      // macOS camera effects (set per app in Control Center) run inside this process and cost CPU; log them once per start.
+      if let device = (session.inputs.first as? AVCaptureDeviceInput)?.device {
+        AppLogger.camera.info(
+          "Camera effects: portrait \(device.isPortraitEffectActive), studioLight \(device.isStudioLightActive), centerStage \(device.isCenterStageActive), gestures \(AVCaptureDevice.reactionEffectGesturesEnabled)"
+        )
+      }
 
       do {
         try await waitForSessionRunning(session, timeout: 2.0)

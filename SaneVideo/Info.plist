@@ -24,6 +24,8 @@
 	<string>SaneVideo creates beautiful video content by accessing your camera. Your privacy is our priority—recordings stay on your Mac.</string>
 	<key>NSCameraReactionEffectsEnabled</key>
 	<false/>
+	<key>NSCameraReactionEffectGesturesEnabledDefault</key>
+	<false/>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>SaneVideo captures crystal-clear audio to make your videos truly shine. Audio is processed locally and never leaves your device.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>

@@ -21,6 +21,6 @@ Do not add a paywall. Donate stays optional.
 
 ## Requirements
 
-- Xcode 16+
-- macOS 15 to build
+- Xcode 26+
+- macOS 26 to build
 - [XcodeGen](https://github.com/yonaskolb/XcodeGen)

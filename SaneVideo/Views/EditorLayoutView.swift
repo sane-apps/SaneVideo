@@ -353,10 +353,13 @@ struct EditorLayoutView: View {
     private func installArrowKeys() {
         guard arrowKeyMonitor == nil else { return }
         let playback = appState.playbackState
-        arrowKeyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+        // Only the editor's own window: sheets and Settings are separate windows that need their arrows.
+        let editorWindow = NSApp.mainWindow ?? NSApp.keyWindow
+        arrowKeyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak editorWindow] event in
             guard event.keyCode == 123 || event.keyCode == 124,
                   event.modifierFlags.intersection([.command, .option, .control]).isEmpty,
-                  event.window?.attachedSheet == nil,
+                  let window = event.window, window === editorWindow,
+                  window.attachedSheet == nil,
                   !(event.window?.firstResponder is NSText) else { return event }
             let forward = event.keyCode == 124
             let tenSeconds = event.modifierFlags.contains(.shift)

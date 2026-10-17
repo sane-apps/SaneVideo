@@ -22,14 +22,14 @@ SaneVideo is designed with privacy as a core principle. This document explains h
 
 ### Limited Network Uses
 - **Updates** - Sparkle checks whether a newer app build exists
-- **Licensing** - License status may be checked when you activate or validate Pro
+- **Licensing** - A license from an older paid version may be checked when you activate it
 - **Aggregate app counts** - SaneApps may receive privacy-safe aggregate counts that are not project content
 - **Speech model download** - The first time you make captions or run Clean Up, SaneVideo downloads the Parakeet speech model (about 600 MB) from Hugging Face once. Your audio never leaves your Mac; the model runs locally. Apple's on-device engine (Settings > Privacy) needs no download.
 
 ## Permissions Used
 
 ### File System Access
-- **Application Support** - To store preferences
+- **App container** - Preferences and the speech model live in `~/Library/Containers/com.sanevideo.app`
 - **User-selected files** - Only files you explicitly open
 - **Movies** - To save projects, recordings, and exports (Movies/SaneVideo)
 
@@ -53,9 +53,9 @@ When enabled, SaneVideo checks for updates via Sparkle framework:
 ## Your Rights
 
 You have full control:
-- View all stored data in Application Support folder
-- Disable all optional features
-- Uninstall completely with no traces
+- See everything SaneVideo stores: the app container above and `~/Movies/SaneVideo`
+- Turn off optional features
+- Remove all of it with the steps below
 
 ## Complete Uninstall
 
@@ -67,9 +67,11 @@ trash /Applications/SaneVideo.app
 # Remove preferences
 defaults delete com.sanevideo.app
 
-# Move application data to Trash
-trash ~/Library/Application\ Support/SaneVideo
-trash ~/Library/Caches/com.sanevideo.app
+# Move app data and the speech model (about 600 MB) to Trash
+trash ~/Library/Containers/com.sanevideo.app
+
+# Your recordings, projects and exports (only if you no longer want them)
+trash ~/Movies/SaneVideo
 ```
 
 ## Contact

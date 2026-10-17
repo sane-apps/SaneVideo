@@ -1498,7 +1498,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "Drop a video here or record to see the magic."
+            "value" : "Drop a video here, or press Record to start."
           }
         }
       }

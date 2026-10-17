@@ -44,6 +44,7 @@ class AppState {
 
     var appMode: AppMode = .recording {
         didSet {
+            updateHotkeys()
             // Every way into the editor releases the camera and mic, unless a recording is running.
             if appMode == .recording, oldValue == .editing {
                 restoreCameraIfWanted()
@@ -181,6 +182,12 @@ class AppState {
     }
 
     /// Whether the person last left the camera on in the recorder. Defaults to on.
+    func updateHotkeys() {
+        ServiceContainer.shared.globalHotkeyManager.update(
+            recorderOpen: appMode == .recording, isRecording: recordingState.isRecording
+        )
+    }
+
     static let cameraWantedKey = "RecorderCameraOn"
 
     /// Opening the recorder turns the camera back on, unless the person turned it off last time.
@@ -339,7 +346,7 @@ class AppState {
         recordingState.onRecordingStateChanged = { [weak self] _ in
             guard let self else { return }
             Task { @MainActor in
-                ServiceContainer.shared.globalHotkeyManager.setRecording(self.recordingState.isRecording)
+                self.updateHotkeys()
                 self.windowManager.updatePiPState(
                     isCameraActive: self.cameraState.isActive,
                     isRecording: self.recordingState.isRecording

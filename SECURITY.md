@@ -31,14 +31,14 @@ SaneVideo is a **video recording and editing application** that:
 
 1. **Requires Camera, Microphone, and Screen Recording permissions**
 2. **Stores projects locally** on your Mac
-3. **Keeps project media local by default** — network use is limited to updates, licensing, privacy-safe aggregate app counts, and optional integrations you configure (see PRIVACY.md)
+3. **Keeps project media local by default** — network use is limited to updates, licensing, anonymous aggregate app counts, and a one-time speech model download (see PRIVACY.md)
 4. **Uses Hardened Runtime** for macOS security compliance
 
 ### Data Handling
 
 - All video/audio data stays on your device
 - Project media is not uploaded by default
-- Optional licensing, update, aggregate app-count, and integration requests do not include your project media
+- Licensing, update, aggregate app-count, and model-download requests never include your project media
 - Project files are stored in user-accessible locations
 
 ---
@@ -50,6 +50,6 @@ SaneVideo keeps project media local by default:
 - No external crash reporting
 - No project-media upload by default
 - No account required for local recording, editing, or export
-- Limited network requests may be used for updates, licensing, privacy-safe aggregate app counts, and optional integrations you configure
+- Limited network requests may be used for updates, licensing, anonymous aggregate app counts, and the one-time speech model download
 
 See [PRIVACY.md](PRIVACY.md) for the full privacy details.

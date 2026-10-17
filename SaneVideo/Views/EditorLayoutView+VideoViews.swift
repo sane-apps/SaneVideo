@@ -10,15 +10,15 @@ struct EditorEmptyStateView: View {
 
     var body: some View {
         VStack(spacing: 32) {
-            Image(systemName: "wand.and.stars")
+            Image(systemName: "video.badge.plus")
                 .font(.system(size: 64))
                 .foregroundStyle(Color.stone)
 
             VStack(spacing: 12) {
-                Text("Let's Make Some Magic")
+                Text("Record or Drop a Video")
                     .font(.system(size: 28, weight: .bold))
 
-                Text(String(localized: "editor.empty.subtitle", defaultValue: "Drop a video here or record to see the magic."))
+                Text(String(localized: "editor.empty.subtitle", defaultValue: "Drop a video here, or press Record to start."))
                     .font(.system(size: 15))
                     .foregroundColor(Color.stone)
                     .multilineTextAlignment(.center)

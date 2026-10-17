@@ -22,192 +22,178 @@ class SaneVideoCustomerUIActionSweep
   SANEMASTER = File.join(PROJECT_ROOT, 'scripts', 'SaneMaster.rb')
 
   SOURCE_GUARDS = {
-    'app-shell-menus-and-welcome' => [
+    'app-shell-menus-and-shortcuts' => [
       ['SaneVideo/SaneVideoApp.swift', 'WelcomeGateView('],
+      ['SaneVideo/SaneVideoApp.swift', 'No trial and no paywall'],
       ['SaneVideo/SaneVideoApp.swift', 'menu.file.new_recording'],
-      ['SaneVideo/SaneVideoApp.swift', 'menu.file.import_video'],
       ['SaneVideo/SaneVideoApp.swift', 'menu.help.shortcuts'],
-      ['SaneVideoTests/Features/Recording/TeleprompterActionTests.swift', 'New Recording returns to recording mode']
+      ['SaneVideo/Views/Sheets/KeyboardShortcutsSheet.swift', 'Recording (any app, while the recorder is open)'],
+      ['SaneVideoTests/Features/Recording/TeleprompterActionTests.swift', 'New Recording returns to recording mode and creates a fresh project'],
+      ['SaneVideoTests/Integration/AppIntegrationTests.swift', 'Welcome and license windows hug their content instead of the editor frame']
     ],
-    'recording-controls-safe-surfaces' => [
-      ['SaneVideo/Views/Components/SharedRecordingControls.swift', 'AccessibilityIdentifiers.micToggle'],
-      ['SaneVideo/Views/Components/SharedRecordingControls.swift', 'AccessibilityIdentifiers.screenShareToggle'],
-      ['SaneVideo/Views/Components/UnifiedRecordButton.swift', 'appState.startRecording()'],
-      ['SaneVideo/State/AppState+Actions.swift', 'func toggleRecording()'],
-      ['SaneVideo/Views/RecordingModeView.swift', 'Turn On Camera'],
-      ['SaneVideoTests/Features/Recording/RecordingStateTests.swift', 'Start recording behavior'],
-      ['SaneVideoTests/RecordingEngineTests.swift', 'Test mode generates mock file URL']
+    'recording-controls-and-hotkeys' => [
+      ['SaneVideo/Views/Components/SharedRecordingControls.swift', 'Label("Screen", systemImage: "display")'],
+      ['SaneVideo/Views/Components/SharedRecordingControls.swift', 'recording.cameraToggle'],
+      ['SaneVideo/Views/Components/SharedRecordingControls.swift', 'AccessibilityIdentifiers.pauseRecordingButton'],
+      ['SaneVideo/Core/GlobalHotkeyManager.swift', 'func update(recorderOpen: Bool, isRecording: Bool)'],
+      ['SaneVideo/State/AppState.swift', 'globalHotkeyManager.update('],
+      ['SaneVideoTests/RecordingEngineTests.swift', 'Pause sets isPaused and resume clears it'],
+      ['SaneVideoTests/RecordingEngineTests.swift', 'Switch source completes in both directions without leaving a timeout task armed']
     ],
     'camera-mic-screen-permission-surfaces' => [
       ['SaneVideo/Views/Components/SharedRecordingControls.swift', 'permissionWarning'],
       ['SaneVideo/Views/Components/SharedRecordingControls.swift', 'openScreenRecordingSettings'],
       ['SaneVideo/Views/Components/ErrorDisplayView.swift', 'Open System Settings'],
-      ['SaneVideo/State/RecordingState.swift', 'openScreenRecordingSettings'],
-      ['SaneVideoTests/Core/PermissionManagerTests.swift', 'PermissionManager'],
-      ['SaneVideoTests/Features/Recording/RecordingStateTests.swift', 'Promptable permissions resolve before countdown starts']
+      ['SaneVideo/SaneVideoApp.swift', 'Enable Screen Recording'],
+      ['SaneVideoTests/Features/Recording/RecordingStateTests.swift', 'Denied microphone does not block recording: it records without sound and opens no settings'],
+      ['SaneVideoTests/Features/Recording/RecordingStateTests.swift', 'Denied camera opens camera settings'],
+      ['SaneVideoTests/Core/PermissionManagerTests.swift', 'Promptable permissions allow first-use camera and mic requests']
     ],
-    'project-import-library-selection' => [
-      ['SaneVideo/Views/FileImporterView.swift', 'fileImporter'],
-      ['SaneVideo/Views/Components/LibraryView.swift', 'showingAudioImporter'],
-      ['SaneVideo/Views/Components/LibraryView.swift', 'confirmationDialog'],
+    'recording-complete-handoff' => [
+      ['SaneVideo/Views/Components/QuickAccessOverlay.swift', 'Text("Recording Complete")'],
+      ['SaneVideo/Views/Components/QuickAccessOverlay.swift', 'quick_access.edit'],
+      ['SaneVideo/Views/Components/QuickAccessOverlay.swift', 'quick_access.share'],
+      ['SaneVideo/State/AppState+Actions.swift', 'func handleQuickAccessEdit()'],
+      ['SaneVideo/State/AppState+Actions.swift', 'transcriptionCoordinator.warmUp()'],
+      ['SaneVideoTests/Features/Recording/TeleprompterActionTests.swift', 'Import appends to a restored project; New Recording isolates the next clip'],
+      ['SaneVideoTests/VideoWriterIntegrationTests.swift', 'Concurrent finish calls return the same finished file']
+    ],
+    'project-library-and-import' => [
+      ['SaneVideo/Views/SidebarView.swift', 'Text("Projects").tag(2)'],
+      ['SaneVideo/Views/Components/CompactProjectBrowserView.swift', '.help("New Project")'],
+      ['SaneVideo/Views/FileImporterView.swift', 'import.drop_zone'],
       ['SaneVideo/State/AppState+Actions.swift', 'func importVideo()'],
-      ['SaneVideoTests/Features/Project/ProjectSelectionTests.swift', 'Can select multiple projects'],
-      ['SaneVideoTests/Features/Recording/TeleprompterActionTests.swift', 'Importing a video from AppState switches into editing mode']
+      ['SaneVideoTests/Features/Recording/TeleprompterActionTests.swift', 'Importing a video from AppState switches into editing mode'],
+      ['SaneVideoTests/Features/Project/ProjectSelectionTests.swift', 'Deleting the open project switches to another project'],
+      ['SaneVideoTests/Integration/ProjectIntegrityTests.swift', 'Save then load preserves every project, track and clip field']
     ],
     'editor-playback-and-view-controls' => [
       ['SaneVideo/Views/TimelineControls.swift', 'player.toggle_play_pause'],
       ['SaneVideo/Views/TimelineControls.swift', 'player.speed'],
-      ['SaneVideo/Views/TimelineView.swift', 'timeline.shortcut.zoom_in'],
-      ['SaneVideo/SaneVideoApp.swift', 'menu.view.toggle_sidebar'],
-      ['SaneVideoTests/Core/PlaybackStateTests.swift', 'PlaybackState'],
-      ['SaneVideoTests/Regression/KeyboardNavigationRegressionTests.swift', 'Keyboard']
+      ['SaneVideo/Views/EditorLayoutView.swift', 'NSEvent.addLocalMonitorForEvents(matching: .keyDown)'],
+      ['SaneVideo/Views/TimelineView.swift', 'timeline.shortcut.fit'],
+      ['SaneVideo/SaneVideoApp.swift', 'menu.view.toggle_inspector'],
+      ['SaneVideoTests/Core/PlaybackStateTests.swift', 'Seek without a player still moves the playhead'],
+      ['SaneVideoTests/Regression/TimelineRegressionTests.swift', 'Fit zoom for a 7:47 recording fits the visible width']
     ],
-    'timeline-editing-and-destructive-confirmations' => [
-      ['SaneVideo/Views/TimelineControls.swift', 'SplitClipButton'],
-      ['SaneVideo/Views/TimelineControls.swift', 'DeleteClipButton'],
-      ['SaneVideo/Views/TimelineView.swift', 'timeline.alert.delete.disk'],
-      ['SaneVideo/Views/TrackHeaderView.swift', 'onMuteToggle'],
-      ['SaneVideoTests/Features/Editing/ProjectEditingTests.swift', 'testSplitClip'],
-      ['SaneVideoTests/ProjectStateUndoRedoTests.swift', 'Basic undo restores previous state']
+    'timeline-editing-split-delete-undo' => [
+      ['SaneVideo/Views/TimelineView.swift', 'timeline.shortcut.split'],
+      ['SaneVideo/State/ProjectState+ClipManagement.swift', 'func splitAtPlayhead('],
+      ['SaneVideo/Views/EditorLayoutView.swift', 'shortcut.delete_clip'],
+      ['SaneVideo/Views/TimelineControls.swift', 'Undo brings it back; the file stays.'],
+      ['SaneVideoTests/TimelineUndoRedoTests.swift', 'Split at 4 s: undo restores the single clip, redo splits again'],
+      ['SaneVideoTests/TimelineUndoRedoTests.swift', 'Delete: undo puts the clip back in place, redo removes it again'],
+      ['SaneVideoTests/Regression/TimelineRegressionTests.swift', 'Splitting a trimmed clip divides its source range at the playhead']
     ],
-    'clip-context-menu-safe-actions' => [
+    'clip-context-menu-actions' => [
       ['SaneVideo/Views/Components/ClipContextMenu.swift', 'clip.menu.split'],
-      ['SaneVideo/Views/Components/ClipContextMenu.swift', 'clip.menu.delete_disk'],
       ['SaneVideo/Views/Components/ClipContextMenu.swift', 'clip.menu.relink'],
-      ['SaneVideo/Views/Components/TimelineClipView.swift', 'Delete Forever'],
-      ['SaneVideoTests/Features/Editing/VideoClipTests.swift', 'VideoEffect persistence'],
-      ['SaneVideoTests/Features/Editing/ProjectStateEffectsTests.swift', 'testSetClipTransitionDissolve']
+      ['SaneVideo/Views/Components/ClipContextMenu.swift', 'clip.menu.delete_disk'],
+      ['SaneVideo/Views/Components/TimelineClipView.swift', 'timeline.clip.delete_file.confirm'],
+      ['SaneVideoTests/Features/Editing/ProjectStateEffectsTests.swift', 'func testSetClipTransitionDissolve'],
+      ['SaneVideoTests/Regression/ProjectRegressionTests.swift', 'Relinking a clip refreshes its duration and clamps trimEnd to the new file']
     ],
-    'inspector-video-smart-actions' => [
+    'clean-up-silence-fillers' => [
+      ['SaneVideo/Views/Components/StylesInspectorView.swift', 'title: "Clean Up"'],
+      ['SaneVideo/Views/Components/SmartToolsSection.swift', 'identifier: "Toggle_RemoveSilence"'],
+      ['SaneVideo/Views/Components/SmartToolsSection.swift', 'identifier: "Toggle_RemoveFillers"'],
+      ['SaneVideo/Views/Components/SmartToolsSection.swift', 'identifier: "Toggle_SmoothCuts"'],
+      ['SaneVideoTests/Services/Audio/SilenceDetectorTests.swift', 'Magic Fix cuts only silent time, and the clip shrinks by exactly what was cut'],
+      ['SaneVideoTests/SmartFillerDetectorTests.swift', 'Detects multiple definite fillers'],
+      ['SaneVideoTests/MagicFixServiceTests.swift', 'summary lists the selected steps in a fixed order']
+    ],
+    'inspector-framing-background-effects-audio' => [
+      ['SaneVideo/Views/Components/StylesInspectorView.swift', 'title: "Framing"'],
       ['SaneVideo/Views/Components/VideoSection.swift', 'video.apply_auto_zoom'],
-      ['SaneVideo/Views/Components/VideoSection.swift', 'video.apply_smart_crop'],
-      ['SaneVideo/Views/Components/BackgroundEffectsView.swift', 'fileImporter'],
-      ['SaneVideo/Views/Components/EffectsPickerView.swift', 'onRemove'],
-      ['SaneVideoTests/Services/Effects/ZoomInterpolatorTests.swift', 'Single click produces zoom animation'],
-      ['SaneVideoTests/Features/Editing/ProjectStateEffectsTests.swift', 'testApplyAutoZoomUsesCursorSidecarWhenAvailable']
-    ],
-    'inspector-audio-sync-repair' => [
-      ['SaneVideo/Views/Components/AudioSection.swift', 'audio.action.repair_sync'],
-      ['SaneVideo/Views/Components/AudioSection.swift', 'Repair Mode'],
-      ['SaneVideo/Views/Components/AudioSection.swift', 'Reveal in Finder'],
-      ['SaneVideo/Views/Components/AudioSection.swift', 'replaceClipInProject'],
-      ['SaneVideoTests/BatchExportServiceTests.swift', 'Sync repair whole-track shift builds delayed audio filter'],
-      ['SaneVideoTests/Integration/AudioProcessingIntegrationTests.swift', 'Audio']
+      ['SaneVideo/Views/Components/BackgroundEffectsView.swift', 'background.toggle'],
+      ['SaneVideo/Views/Components/AudioSection.swift', 'audio.action.find_highlights.title'],
+      ['SaneVideoTests/Features/Editing/ProjectStateEffectsTests.swift', 'func testRemoveVideoEffect'],
+      ['SaneVideoTests/Features/Editing/ProjectStateEffectsTests.swift', 'func testApplyAutoZoomUsesCursorSidecarWhenAvailable'],
+      ['SaneVideoTests/Regression/SmartCropExportRegressionTests.swift', 'Disabled smart crop returns the centered default crop and no keyframes']
     ],
     'captions-transcript-voiceover' => [
-      ['SaneVideo/Views/Components/TranscriptionEditorView.swift', 'onDelete'],
-      ['SaneVideo/Views/Components/TranscriptTimelineView.swift', 'onDelete'],
-      ['SaneVideo/Views/Sheets/TranscriptExportSheet.swift', 'selectedFormat'],
-      ['SaneVideo/Views/Sheets/VoiceoverSettingsSheet.swift', 'onGenerate'],
-      ['SaneVideoTests/Features/AI/CaptionTests.swift', 'Caption'],
-      ['SaneVideoTests/Features/Editing/VideoClipTests.swift', 'Voiceover save panel prefers key window']
+      ['SaneVideo/Views/SidebarView.swift', 'Text("Transcript").tag(1)'],
+      ['SaneVideo/Views/Sheets/TranscriptExportSheet.swift', 'case vtt = "transcript.format.vtt"'],
+      ['SaneVideo/Views/Sheets/VoiceoverSettingsSheet.swift', 'voiceover.preview.play'],
+      ['SaneVideo/SaneVideoApp.swift', 'menu.file.export_transcript'],
+      ['SaneVideoTests/Features/AI/CaptionTests.swift', 'SRT file numbers captions and writes hour, minute, second and millisecond times'],
+      ['SaneVideoTests/Features/AI/CaptionPipelineTests.swift', 'A line is split before it would pass 42 characters'],
+      ['SaneVideoTests/Features/Editing/VideoClipTests.swift', 'Voiceover save panel prefers key window, then main window']
     ],
-    'export-local-presets-and-demo-pack' => [
+    'export-presets-and-caption-file' => [
       ['SaneVideo/Views/ExportView.swift', 'export.action.primary'],
-      ['SaneVideo/Views/ExportView.swift', 'Export Demo Pack'],
-      ['SaneVideo/Views/Export/ExportConfigurationView.swift', 'export.preset.youtube4k'],
-      ['SaneVideo/Views/Export/MLEffectsExportSection.swift', 'Download'],
-      ['SaneVideoTests/Features/Export/ExportPresetIntegrationTests.swift', 'testExportPresetApplication'],
-      ['SaneVideoTests/Services/Export/DemoPackExportServiceTests.swift', 'testExportDemoPackWritesExpectedArtifacts']
+      ['SaneVideo/Views/ExportView.swift', 'private func matchSourceFootage()'],
+      ['SaneVideo/Core/Utilities/ExportDestination.swift', 'SaneVideo/Exports'],
+      ['SaneVideo/Views/Export/ExportView+Actions.swift', 'try Caption.srt(captions).write(to: srtURL'],
+      ['SaneVideoTests/Integration/ExportPipelineIntegrationTests.swift', 'func testExportMatchesRequestedResolution'],
+      ['SaneVideoTests/Services/Export/ExportOutputTests.swift', 'File name is project name, optional suffix, then timestamp'],
+      ['SaneVideoTests/Features/AI/CaptionTests.swift', 'Caption.srt(captions)']
     ],
-    'youtube-upload-safe-surface' => [
-      ['SaneVideo/Views/ExportView.swift', 'export.action.toggle_youtube'],
-      ['SaneVideo/Views/Export/ExportYouTubeSection.swift', 'export.youtube.unavailable'],
-      ['SaneVideo/Views/Settings/APIKeysSettingsView.swift', 'settings.youtube.save'],
-      ['SaneVideo/Services/Export/YouTubeService.swift', 'uploadFeatureEnabled = false'],
-      ['SaneVideoTests/Services/Export/YouTubeServiceTests.swift', 'Upload throws featureUnavailable while direct upload is disabled'],
-      ['SaneVideoTests/Services/Security/KeychainServiceTests.swift', 'hasYouTubeCredentials checks both client ID and secret']
-    ],
-    'ffmpeg-export-fixture-surface' => [
-      ['SaneVideo/Views/Sheets/GIFExportSheet.swift', 'GIF'],
-      ['SaneVideo/Views/Components/AudioSection.swift', 'SyncRepairSheet'],
-      ['SaneVideo/Core/DI/ServiceContainer.swift', 'FFmpegService'],
-      ['SaneVideoTests/BatchExportServiceTests.swift', 'Sync repair trim mode copies streams to primary audio duration'],
-      ['Tests/Assets/test_video.mp4', nil],
-      ['Tests/Assets/test_silence.mp4', nil]
-    ],
-    'demo-studio-commentary-teleprompter' => [
-      ['SaneVideo/Views/Sheets/DemoStudioSheet.swift', 'Generate Draft From Transcript'],
-      ['SaneVideo/Views/Sheets/DemoStudioSheet.swift', 'Build Commentary Reel'],
-      ['SaneVideo/Windows/TeleprompterWindow.swift', 'Teleprompter'],
-      ['SaneVideo/SaneVideoApp.swift', 'menu.file.demo_studio'],
-      ['SaneVideoTests/Features/Recording/TeleprompterActionTests.swift', 'Teleprompter without notes shows toast'],
-      ['SaneVideoTests/Features/Editing/ProjectEditingTests.swift', 'testBuildCommentaryReelPreservesConfiguredCueOrderAndFormatsOverlays']
-    ],
-    'thumbnail-gif-share-external-surfaces' => [
-      ['SaneVideo/Views/Sheets/ThumbnailPickerSheet.swift', 'thumbnail.action.copy'],
+    'shorts-gif-thumbnail' => [
+      ['SaneVideo/Views/Sheets/RepurposingSheet.swift', 'repurposing.export'],
+      ['SaneVideo/Services/Export/BatchExportService.swift', 'suffix: "Short \\(context.index)"'],
+      ['SaneVideo/Views/Sheets/GIFExportSheet.swift', 'gif.header.title'],
       ['SaneVideo/Views/Sheets/ThumbnailPickerSheet.swift', 'thumbnail.action.save_png'],
-      ['SaneVideo/Views/Sheets/GIFExportSheet.swift', 'Export'],
-      ['SaneVideo/SaneVideoApp.swift', 'menu.file.share'],
-      ['SaneVideo/Views/Components/ClipContextMenu.swift', 'activateFileViewerSelecting'],
-      ['SaneVideoTests/Features/AI/SmartThumbnailServiceTests.swift', 'Thumbnail']
+      ['SaneVideoTests/BatchExportServiceTests.swift', 'A 1 s candidate exports as a vertical 1080x1920 clip'],
+      ['SaneVideoTests/Services/Export/ExportOutputTests.swift', 'Exports fps x duration frames at the requested width, looping forever'],
+      ['SaneVideoTests/Services/SmartFeatures/RepurposingTests.swift', 'Applying the YouTube Shorts preset sets platform, 60 s duration and 9:16']
     ],
-    'settings-tabs-and-update-actions' => [
+    'teleprompter-script' => [
+      ['SaneVideo/Views/Sheets/TeleprompterScriptSheet.swift', 'Text("Teleprompter Script")'],
+      ['SaneVideo/Windows/TeleprompterWindow.swift', 'sharingType = .none'],
+      ['SaneVideo/SaneVideoApp.swift', 'menu.file.teleprompter_script'],
+      ['SaneVideo/SaneVideoApp.swift', 'menu.view.teleprompter'],
+      ['SaneVideoTests/Features/Recording/TeleprompterActionTests.swift', 'Teleprompter with an empty script opens the script sheet instead of showing']
+    ],
+    'settings-tabs-and-updates' => [
       ['SaneVideo/Views/SettingsView.swift', 'settings.tab.general'],
-      ['SaneVideo/Views/SettingsView.swift', 'settings.tab.export'],
-      ['SaneVideo/Views/SettingsView.swift', 'Check Now'],
-      ['SaneVideo/Views/SettingsView.swift', 'settings.run_stress_tests'],
-      ['SaneVideoTests/Services/Update/UpdaterServiceTests.swift', 'Updater'],
-      ['SaneVideoTests/Regression/PlatformPresetRegressionTests.swift', 'Export']
+      ['SaneVideo/Views/SettingsView.swift', 'Button("Check Now")'],
+      ['SaneVideo/Views/SettingsView.swift', 'name: "FluidAudio"'],
+      ['SaneVideo/Views/Components/TranscriptionEnginePicker.swift', 'settings.transcription_engine_picker'],
+      ['SaneVideoTests/Services/Update/UpdaterServiceTests.swift', 'UpdaterService accepts valid appcast feeds'],
+      ['SaneVideoTests/Services/Update/UpdaterServiceTests.swift', 'UpdaterService rejects non-appcast responses']
     ],
-    'api-keys-keychain-safe-surfaces' => [
-      ['SaneVideo/Views/Settings/APIKeysSettingsView.swift', 'settings.youtube.client_id'],
-      ['SaneVideo/Views/Settings/APIKeysSettingsView.swift', 'settings.youtube.toggle_secret'],
-      ['SaneVideo/Views/Settings/APIKeysSettingsView.swift', 'settings.keys.clear_all_confirm'],
-      ['SaneVideo/Views/Settings/APIKeysSettingsView.swift', 'clearYouTubeCredentials()'],
-      ['SaneVideoTests/Services/Security/KeychainServiceTests.swift', 'isYouTubeAuthenticated checks credentials and refresh token']
-    ],
-    'icloud-sync-safe-surface' => [
-      ['SaneVideo/Views/Settings/iCloudSyncSettingsView.swift', 'settings.sync.enable_toggle'],
-      ['SaneVideo/Views/Settings/iCloudSyncSettingsView.swift', 'settings.sync.sync_now'],
-      ['SaneVideo/Services/Project/SyncManager.swift', 'isICloudAvailable'],
-      ['SaneVideoTests/SyncManagerTests.swift', 'iCloudNotAvailable has description'],
-      ['SaneVideoTests/Services/Project/iCloudSyncTests.swift', 'iCloud']
-    ],
-    'project-templates-and-browser' => [
-      ['SaneVideo/Views/Sheets/TemplateBrowserSheet.swift', 'Save Template'],
-      ['SaneVideo/Views/Sheets/TemplateBrowserSheet.swift', 'templates.action.delete'],
-      ['SaneVideo/Core/Models/ProjectTemplate.swift', 'YouTube'],
-      ['SaneVideo/Core/Models/CustomTemplate.swift', 'DemoPackSettings'],
-      ['SaneVideoTests/Features/Project/ProjectTemplateTests.swift', 'testAllTemplatesExist'],
-      ['SaneVideoTests/Features/Project/TemplateIntegrationTests.swift', 'testStartProjectWithYouTubeTemplate']
+    'export-templates-browser' => [
+      ['SaneVideo/Views/Export/ExportPresetPicker.swift', 'export.templates.browse'],
+      ['SaneVideo/Views/Sheets/TemplateBrowserSheet.swift', 'Button("Save Current Settings")'],
+      ['SaneVideo/Views/Sheets/TemplateBrowserSheet.swift', 'Button("Delete", role: .destructive)'],
+      ['SaneVideoTests/Services/Project/TemplateStoreTests.swift', 'A saved template loads back from disk with its settings in a new store'],
+      ['SaneVideoTests/Services/Project/TemplateStoreTests.swift', 'Saving with an existing id overwrites the template instead of adding one'],
+      ['SaneVideoTests/Services/Project/TemplateStoreTests.swift', 'Deleting a template removes it from disk']
     ]
   }.freeze
 
   BLOCKED_COMPLETION_NOTES = {
-    'recording-controls-safe-surfaces' => 'Safe first surface and isolated test proof only; live camera/mic/screen recording requires a separate Mini TCC runtime pass.',
+    'recording-controls-and-hotkeys' => 'The sweep does not start camera, microphone, or screen capture; live recording and hot-key proof comes from a separate Mini runtime pass with permissions granted.',
     'camera-mic-screen-permission-surfaces' => 'No live TCC prompts were accepted during this sweep.',
-    'timeline-editing-and-destructive-confirmations' => 'Disk deletion is represented by confirmation/source proof only; no customer file was deleted.',
-    'clip-context-menu-safe-actions' => 'Finder reveal, relink, and delete-from-disk are safe-first surfaces only unless fixture-run separately.',
-    'inspector-audio-sync-repair' => 'FFmpeg repair completion is covered only by isolated fixture tests; no customer media was mutated.',
-    'youtube-upload-safe-surface' => 'Direct YouTube upload is intentionally unavailable in this build; the pass covers disabled upload UI, credentials safety, and featureUnavailable tests.',
-    'ffmpeg-export-fixture-surface' => 'FFmpeg operations are fixture-scoped only.',
-    'thumbnail-gif-share-external-surfaces' => 'External share/Finder handoff is first-surface proof only.',
-    'api-keys-keychain-safe-surfaces' => 'No Keychain prompt flood or live credential mutation was performed by the sweep.',
-    'icloud-sync-safe-surface' => 'No real iCloud propagation is claimed; unavailable/disabled/safe settings surfaces are covered.'
+    'recording-complete-handoff' => 'The overlay needs a finished live recording; the sweep uses the captured screenshot plus source and test guards and does not make a new recording.',
+    'timeline-editing-split-delete-undo' => 'Delete from Disk stays behind a confirmation dialog; no customer file was moved to the Trash during this sweep.',
+    'clip-context-menu-actions' => 'Show in Finder, Relink, and Delete from Disk are first-surface proof only; no customer file was moved or relinked during this sweep.',
+    'clean-up-silence-fillers' => 'Remove Fillers and Generate Captions need the on-device speech model (about 600 MB on first use); the sweep relies on fixture tests and does not download the model.',
+    'captions-transcript-voiceover' => 'Transcript export and voiceover save panels are first-surface proof only; no file was written to a customer folder.',
+    'export-presets-and-caption-file' => 'The share-link button hands the exported file to the macOS share sheet; that hand-off is first-surface proof only.',
+    'shorts-gif-thumbnail' => 'Thumbnail copy and save panels are first-surface proof only.',
+    'settings-tabs-and-updates' => 'Check Now is first-surface proof only; the sweep does not download or install an update.'
   }.freeze
 
-  # Prefer recent single-instance visual-audit shots, then older runtime-evidence.
+  # Clean single-instance Mini captures for the 1.1 surfaces, one per action.
   SCREENSHOT_BY_ACTION = {
-    'app-shell-menus-and-welcome' => 'outputs/visual-audit-sheet-readability-2026-09-08/50-main-clean.png',
-    'recording-controls-safe-surfaces' => 'outputs/visual-audit-sheet-readability-2026-09-08/30-after-launch.png',
-    'camera-mic-screen-permission-surfaces' => 'outputs/customer-ui/runtime-evidence/camera-mic-screen-permission-surfaces/screenshot-20260711T191845239420Z.png',
-    'project-import-library-selection' => 'outputs/visual-audit-sheet-readability-2026-09-08/21-relaunch.png',
-    'editor-playback-and-view-controls' => 'outputs/visual-audit-sheet-readability-2026-09-08/05-desktop-current.png',
-    'timeline-editing-and-destructive-confirmations' => 'outputs/visual-audit-sheet-readability-2026-09-08/12-after-shortcut.png',
-    'clip-context-menu-safe-actions' => 'outputs/visual-audit-sheet-readability-2026-09-08/13-option-cmd-r.png',
-    'inspector-video-smart-actions' => 'outputs/visual-audit-sheet-readability-2026-09-08/42-after-demo-cancel.png',
-    'inspector-audio-sync-repair' => 'outputs/visual-audit-sheet-readability-2026-09-08/38-after-escape.png',
-    'captions-transcript-voiceover' => 'outputs/visual-audit-sheet-readability-2026-09-08/55-transcript.png',
-    'export-local-presets-and-demo-pack' => 'outputs/visual-audit-sheet-readability-2026-09-08/52-export.png',
-    'youtube-upload-safe-surface' => 'outputs/visual-audit-sheet-readability-2026-09-08/33-export.png',
-    'ffmpeg-export-fixture-surface' => 'outputs/visual-audit-sheet-readability-2026-09-08/54-gif.png',
-    'demo-studio-commentary-teleprompter' => 'outputs/visual-audit-sheet-readability-2026-09-08/53-demo.png',
-    'thumbnail-gif-share-external-surfaces' => 'outputs/visual-audit-sheet-readability-2026-09-08/19-gif.png',
-    'settings-tabs-and-update-actions' => 'outputs/visual-audit-sheet-readability-2026-09-08/39-after-cancel.png',
-    'api-keys-keychain-safe-surfaces' => 'outputs/customer-ui/runtime-evidence/api-keys-keychain-safe-surfaces/screenshot-20260711T192512441837Z.png',
-    'icloud-sync-safe-surface' => 'outputs/customer-ui/runtime-evidence/icloud-sync-safe-surface/screenshot-20260711T192700128682Z.png',
-    'project-templates-and-browser' => 'outputs/visual-audit-sheet-readability-2026-09-08/51-create-shorts.png'
+    'app-shell-menus-and-shortcuts' => 'outputs/customer-ui/shots-20261017/app-shell-menus-and-shortcuts.png',
+    'recording-controls-and-hotkeys' => 'outputs/customer-ui/shots-20261017/recording-controls-and-hotkeys.png',
+    'camera-mic-screen-permission-surfaces' => 'outputs/customer-ui/shots-20261017/camera-mic-screen-permission-surfaces.png',
+    'recording-complete-handoff' => 'outputs/customer-ui/shots-20261017/recording-complete-handoff.png',
+    'project-library-and-import' => 'outputs/customer-ui/shots-20261017/project-library-and-import.png',
+    'editor-playback-and-view-controls' => 'outputs/customer-ui/shots-20261017/editor-playback-and-view-controls.png',
+    'timeline-editing-split-delete-undo' => 'outputs/customer-ui/shots-20261017/timeline-editing-split-delete-undo.png',
+    'clip-context-menu-actions' => 'outputs/customer-ui/shots-20261017/clip-context-menu-actions.png',
+    'clean-up-silence-fillers' => 'outputs/customer-ui/shots-20261017/clean-up-silence-fillers.png',
+    'inspector-framing-background-effects-audio' => 'outputs/customer-ui/shots-20261017/inspector-framing-background-effects-audio.png',
+    'captions-transcript-voiceover' => 'outputs/customer-ui/shots-20261017/captions-transcript-voiceover.png',
+    'export-presets-and-caption-file' => 'outputs/customer-ui/shots-20261017/export-presets-and-caption-file.png',
+    'shorts-gif-thumbnail' => 'outputs/customer-ui/shots-20261017/shorts-gif-thumbnail.png',
+    'teleprompter-script' => 'outputs/customer-ui/shots-20261017/teleprompter-script.png',
+    'settings-tabs-and-updates' => 'outputs/customer-ui/shots-20261017/settings-tabs-and-updates.png',
+    'export-templates-browser' => 'outputs/customer-ui/shots-20261017/export-templates-browser.png'
   }.freeze
 
   def initialize

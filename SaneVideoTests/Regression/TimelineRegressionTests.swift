@@ -71,6 +71,53 @@ struct TimelineRegressionTests {
         #expect(right.trimEnd.seconds == 10.0)
     }
 
+    @Test("After Clean Up cuts 1-3 s, splitting at 2 s on the timeline cuts the file at 4 s")
+    @MainActor
+    func splitAfterCleanUpMapsThroughCuts() throws {
+        var clip = VideoClip(url: videoURL, duration: time(10), startTime: .zero)
+        clip.addRemovedRange(CMTimeRange(start: time(1), duration: time(2)))
+        let state = ProjectState()
+        state.startNewProject()
+        var project = try #require(state.currentProject)
+        project.timeline.tracks = [Track(name: "Video", type: .video, clips: [clip], zIndex: 0)]
+        state.currentProject = project
+
+        state.splitClip(clip, atTimelineTime: time(2))
+
+        let clips = try #require(state.currentProject?.timeline.tracks.first?.clips)
+        #expect(clips.count == 2)
+        #expect(clips.first?.trimEnd.seconds == 4.0)
+        #expect(clips.last?.trimStart.seconds == 4.0)
+        #expect(clips.last?.startTime.seconds == 2.0)
+    }
+
+    @Test("A caption crossing the trim end keeps its visible part in the timeline captions (.srt)")
+    func captionCrossingTrimIsClamped() {
+        var clip = VideoClip(url: videoURL, duration: time(10), startTime: .zero)
+        clip.trimEnd = time(5)
+        clip.captions = [Caption(text: "across the cut", startTime: time(4), endTime: time(6))]
+        var project = VideoProject(name: "T")
+        project.timeline.tracks = [Track(name: "Video", type: .video, clips: [clip], zIndex: 0)]
+
+        let caption = project.timelineCaptions.first
+        #expect(caption?.startTime.seconds == 4.0)
+        #expect((caption?.endTime.seconds ?? 0) <= 5.0)
+        #expect((caption?.endTime.seconds ?? 0) > 4.9)
+    }
+
+    @Test("A caption that starts inside a Clean Up cut starts where the cut ends")
+    func captionStartingInCutIsKept() {
+        var clip = VideoClip(url: videoURL, duration: time(10), startTime: .zero)
+        clip.addRemovedRange(CMTimeRange(start: time(1), duration: time(2)))
+        clip.captions = [Caption(text: "hello there", startTime: time(2), endTime: time(5))]
+        var project = VideoProject(name: "T")
+        project.timeline.tracks = [Track(name: "Video", type: .video, clips: [clip], zIndex: 0)]
+
+        let caption = project.timelineCaptions.first
+        #expect(caption?.startTime.seconds == 1.0)
+        #expect(abs((caption?.endTime.seconds ?? 0) - 2.98) < 0.01)
+    }
+
     @Test("Removing 2-4 s shortens the clip and shifts later effective times")
     func captionTimeMappingWithRemovals() {
         var clip = VideoClip(url: videoURL, duration: time(10))

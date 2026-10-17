@@ -2,25 +2,33 @@
 version: 1
 app: SaneVideo
 actions:
-- id: app-shell-menus-and-welcome
-  title: App shell menus, onboarding, and shared utility entry points are represented
+- id: app-shell-menus-and-shortcuts
+  title: App shell menus, welcome screen, and Keyboard Shortcuts sheet match the shipped
+    app
   surfaces:
   - Main SaneVideo window
-  - WelcomeGateView onboarding sheet
-  - macOS command menus
+  - WelcomeGateView first-run screen
+  - macOS menu bar commands
+  - KeyboardShortcutsSheet
   steps:
-  - Open the shipped app shell.
-  - Verify welcome, update, new recording, import, save, rename, help, and keyboard
-    shortcut commands are present.
-  - Verify menu commands route through AppState or NotificationCenter instead of dead
-    controls.
+  - Open the shipped app and pass the first-run welcome screen.
+  - Open the File, Edit, View, and Help menus and check that New Recording, Show Projects,
+    Import Video, Save Project, Rename Project, Export Video, Export as GIF, Create
+    Shorts, Make Thumbnail, Teleprompter Script, Share, Clean Up, and Keyboard Shortcuts
+    are present.
+  - Choose Help > Keyboard Shortcuts and read the Recording, Project, Playback, Editing,
+    and Selection sections.
   assertions:
-  - The first-run welcome surface names the shipped Basic and Pro feature families.
-  - Menu commands expose the same customer workflows as the visible UI.
-  - Help and shortcut commands open a safe local surface.
+  - The welcome screen says every feature is included, with no trial or paywall, and
+    offers an optional donation.
+  - Menu commands route through AppState or NotificationCenter to the same workflows
+    as the visible UI.
+  - The Keyboard Shortcuts sheet lists Option-Command-R and Option-Command-P as the
+    only keys that work in any app, and only while the recorder is open.
   evidence:
-  - Source guard for SaneVideoApp command groups and WelcomeGateView configuration.
-  - Existing tests covering new recording and import mode transitions.
+  - Source guard for SaneVideoApp command groups, the WelcomeGateView configuration,
+    and KeyboardShortcutsSheet.
+  - Tests covering New Recording and window sizing for the welcome screen.
   required_proof_level: full_runtime_completion
   required_evidence_types:
   - mini_runtime
@@ -31,218 +39,61 @@ actions:
   - duplicate_or_stale_menu_item
   - menu_entry_missing
   - shortcut_focus_or_dispatch
-  - hardware_or_tcc_runtime
-  - permission_recovery_dead_end
-  - install_update_packaging
-  - data_loss_or_unexpected_mutation
-  - persistence_or_relaunch_reset
-  - layout_visual_regression
   - pro_basic_gate_drift
-  - state_count_drift
   - docs_promise_drift
+  - layout_visual_regression
   - activation_noop
   functional_state:
     description: Seeded video project with representative media clips, audio, captions,
       timeline edits, export destinations, and safe permission states.
     setup_steps:
-    - Load Tests/Assets media into an isolated project before editor/export/AI tests.
+    - Load Tests/Assets media into an isolated project before editor, export, and
+      caption tests.
     - Use permission fixtures for camera, microphone, and screen capture states unless
       hardware verification is explicitly running.
     fixture_paths:
     - Tests/Assets/
   user_inputs:
-  - Open the shipped app shell.
-  - Verify welcome, update, new recording, import, save, rename, help, and keyboard
-    shortcut commands are present.
-  - Verify menu commands route through AppState or NotificationCenter instead of dead
-    controls.
+  - Open the shipped app and pass the first-run welcome screen.
+  - Open the File, Edit, View, and Help menus and check that New Recording, Show Projects,
+    Import Video, Save Project, Rename Project, Export Video, Export as GIF, Create
+    Shorts, Make Thumbnail, Teleprompter Script, Share, Clean Up, and Keyboard Shortcuts
+    are present.
+  - Choose Help > Keyboard Shortcuts and read the Recording, Project, Playback, Editing,
+    and Selection sections.
   expected_outputs:
-  - The first-run welcome surface names the shipped Basic and Pro feature families.
-  - Menu commands expose the same customer workflows as the visible UI.
-  - Help and shortcut commands open a safe local surface.
-- id: recording-controls-safe-surfaces
-  title: Recording controls expose safe first surfaces without starting hardware capture
+  - The welcome screen says every feature is included, with no trial or paywall, and
+    offers an optional donation.
+  - Menu commands route through AppState or NotificationCenter to the same workflows
+    as the visible UI.
+  - The Keyboard Shortcuts sheet lists Option-Command-R and Option-Command-P as the
+    only keys that work in any app, and only while the recorder is open.
+- id: recording-controls-and-hotkeys
+  title: Recorder bar controls and the two global hot keys drive the shared recording
+    state
   surfaces:
   - RecordingModeView
-  - SharedRecordingControls
-  - Floating and PiP recording controls
+  - SharedRecordingControls recorder bar
+  - UnifiedRecordButton
+  - GlobalHotkeyManager
   steps:
-  - Verify microphone, screen share, record, pause, Demo Studio, teleprompter, and
-    device menu controls are present.
-  - Verify controls call AppState shared action paths.
-  - Do not mark a real recording completed unless an isolated test fixture proves
-    it.
+  - Check the recorder bar shows the Camera|Screen picker, microphone toggle, camera
+    toggle, record button, and pause button.
+  - Check Option-Command-R is held only while the recorder is open or a take runs,
+    to start and stop recording, and Option-Command-P is held only while recording,
+    to pause and resume.
+  - Check the Camera|Screen picker can switch sources during a take without leaving
+    a timeout task armed.
   assertions:
-  - Recording controls are visible and wired to the shared state model.
-  - The safe surface can be tested without starting camera, microphone, or screen
-    capture.
-  - Runtime hardware capture remains a release blocker unless separately verified
-    on the Mini with permissions.
+  - Recorder controls call the shared AppState and RecordingState action paths.
+  - Global hot keys use Option-Command only and are released when the recorder is
+    closed, so other apps keep those keys the rest of the time.
+  - Pause and resume, and switching between camera and screen, keep one continuous
+    recording.
   evidence:
-  - Source guard for SharedRecordingControls, UnifiedRecordButton, RecordingModeView,
-    and AppState action paths.
-  - RecordingState, RecordingEngine, and state-machine tests for safe no-hardware
-    behavior.
-  required_proof_level: full_runtime_completion
-  required_evidence_types:
-  - mini_runtime
-  - screenshot
-  - fixture
-  - log
-  historical_failure_classes:
-  - duplicate_or_stale_menu_item
-  - menu_entry_missing
-  - hardware_or_tcc_runtime
-  - permission_recovery_dead_end
-  - persistence_or_relaunch_reset
-  - pro_basic_gate_drift
-  - state_count_drift
-  - docs_promise_drift
-  - activation_noop
-  functional_state:
-    description: Seeded video project with representative media clips, audio, captions,
-      timeline edits, export destinations, and safe permission states.
-    setup_steps:
-    - Load Tests/Assets media into an isolated project before editor/export/AI tests.
-    - Use permission fixtures for camera, microphone, and screen capture states unless
-      hardware verification is explicitly running.
-    fixture_paths:
-    - Tests/Assets/
-  user_inputs:
-  - Verify microphone, screen share, record, pause, Demo Studio, teleprompter, and
-    device menu controls are present.
-  - Verify controls call AppState shared action paths.
-  - Do not mark a real recording completed unless an isolated test fixture proves
-    it.
-  expected_outputs:
-  - Recording controls are visible and wired to the shared state model.
-  - The safe surface can be tested without starting camera, microphone, or screen
-    capture.
-  - Runtime hardware capture remains a release blocker unless separately verified
-    on the Mini with permissions.
-- id: camera-mic-screen-permission-surfaces
-  title: Camera, microphone, and screen permission fallbacks are represented safely
-  surfaces:
-  - Recording permission hints
-  - ErrorDisplayView
-  - PermissionManager
-  - Recording settings
-  steps:
-  - Verify denied camera, microphone, and screen recording states have user-facing
-    recovery controls.
-  - Verify Screen Recording opens the correct System Settings destination.
-  - Do not request live TCC prompts during the sweep.
-  assertions:
-  - Permission recovery UI is present for camera, microphone, and screen capture.
-  - Permission preflight tests cover safe state transitions.
-  - Real TCC prompt acceptance is not claimed by this source/test sweep.
-  evidence:
-  - Source guard for permission warning buttons and System Settings actions.
-  - PermissionManager, RecordingState, ScreenRecorder, and camera state tests.
-  required_proof_level: full_runtime_completion
-  required_evidence_types:
-  - mini_runtime
-  - screenshot
-  - fixture
-  - log
-  historical_failure_classes:
-  - hardware_or_tcc_runtime
-  - permission_recovery_dead_end
-  - data_loss_or_unexpected_mutation
-  - persistence_or_relaunch_reset
-  - layout_visual_regression
-  - pro_basic_gate_drift
-  - activation_noop
-  functional_state:
-    description: Seeded video project with representative media clips, audio, captions,
-      timeline edits, export destinations, and safe permission states.
-    setup_steps:
-    - Load Tests/Assets media into an isolated project before editor/export/AI tests.
-    - Use permission fixtures for camera, microphone, and screen capture states unless
-      hardware verification is explicitly running.
-    fixture_paths:
-    - Tests/Assets/
-  user_inputs:
-  - Verify denied camera, microphone, and screen recording states have user-facing
-    recovery controls.
-  - Verify Screen Recording opens the correct System Settings destination.
-  - Do not request live TCC prompts during the sweep.
-  expected_outputs:
-  - Permission recovery UI is present for camera, microphone, and screen capture.
-  - Permission preflight tests cover safe state transitions.
-  - Real TCC prompt acceptance is not claimed by this source/test sweep.
-- id: project-import-library-selection
-  title: Project import, local library, and project selection actions are wired
-  surfaces:
-  - FileImporterView
-  - LibraryView
-  - CompactProjectBrowserView
-  - ProjectState import actions
-  steps:
-  - Verify import video and import audio surfaces open local file importers.
-  - Verify library rows expose Show in Finder and delete confirmation surfaces.
-  - Verify project selection supports multi-select and safe deletion paths.
-  assertions:
-  - Import is local-first and uses security-scoped file importer URLs.
-  - Project and library destructive actions require confirmation.
-  - Project selection state is covered by tests.
-  evidence:
-  - Source guard for fileImporter, importVideo, audio importer, selection, and delete
-    confirmation code.
-  - Project selection, project store, backup recovery, and import tests.
-  required_proof_level: full_runtime_completion
-  required_evidence_types:
-  - mini_runtime
-  - screenshot
-  - fixture
-  - log
-  historical_failure_classes:
-  - context_menu_extension_missing
-  - data_loss_or_unexpected_mutation
-  - persistence_or_relaunch_reset
-  - layout_visual_regression
-  - pro_basic_gate_drift
-  - external_integration_stub
-  - state_count_drift
-  - docs_promise_drift
-  - activation_noop
-  functional_state:
-    description: Seeded video project with representative media clips, audio, captions,
-      timeline edits, export destinations, and safe permission states.
-    setup_steps:
-    - Load Tests/Assets media into an isolated project before editor/export/AI tests.
-    - Use permission fixtures for camera, microphone, and screen capture states unless
-      hardware verification is explicitly running.
-    fixture_paths:
-    - Tests/Assets/
-  user_inputs:
-  - Verify import video and import audio surfaces open local file importers.
-  - Verify library rows expose Show in Finder and delete confirmation surfaces.
-  - Verify project selection supports multi-select and safe deletion paths.
-  expected_outputs:
-  - Import is local-first and uses security-scoped file importer URLs.
-  - Project and library destructive actions require confirmation.
-  - Project selection state is covered by tests.
-- id: editor-playback-and-view-controls
-  title: Editor playback, zoom, display mode, and panel controls are live
-  surfaces:
-  - EditorLayoutView
-  - TimelineControls
-  - PlayerControlBar
-  - MainContentView toolbar
-  steps:
-  - Verify play, pause, step, speed, mute, volume, zoom, snap, magnetic timeline,
-    display mode, sidebar, and inspector controls.
-  - Verify shortcuts are represented for common playback and view actions.
-  - Verify controls mutate PlaybackState, AppStorage, or NotificationCenter state.
-  assertions:
-  - Editor controls are not dead decorative UI.
-  - Playback state and shortcut surfaces are covered by tests where feasible.
-  - View toggles route through named notifications or state.
-  evidence:
-  - Source guard for TimelineControls, TimelineView shortcuts, MainContentView toolbar,
-    and playback state.
-  - Playback, keyboard navigation, and timeline regression tests.
+  - Source guard for SharedRecordingControls, UnifiedRecordButton, GlobalHotkeyManager,
+    and the AppState hot-key wiring.
+  - RecordingEngine tests for pause, resume, and source switching without hardware.
   required_proof_level: full_runtime_completion
   required_evidence_types:
   - mini_runtime
@@ -251,199 +102,329 @@ actions:
   - log
   historical_failure_classes:
   - shortcut_focus_or_dispatch
-  - data_loss_or_unexpected_mutation
-  - persistence_or_relaunch_reset
-  - layout_visual_regression
+  - hardware_or_tcc_runtime
   - state_count_drift
-  - activation_noop
-  functional_state:
-    description: Seeded video project with representative media clips, audio, captions,
-      timeline edits, export destinations, and safe permission states.
-    setup_steps:
-    - Load Tests/Assets media into an isolated project before editor/export/AI tests.
-    - Use permission fixtures for camera, microphone, and screen capture states unless
-      hardware verification is explicitly running.
-    fixture_paths:
-    - Tests/Assets/
-  user_inputs:
-  - Verify play, pause, step, speed, mute, volume, zoom, snap, magnetic timeline,
-    display mode, sidebar, and inspector controls.
-  - Verify shortcuts are represented for common playback and view actions.
-  - Verify controls mutate PlaybackState, AppStorage, or NotificationCenter state.
-  expected_outputs:
-  - Editor controls are not dead decorative UI.
-  - Playback state and shortcut surfaces are covered by tests where feasible.
-  - View toggles route through named notifications or state.
-- id: timeline-editing-and-destructive-confirmations
-  title: Timeline editing and destructive clip actions require safe confirmation
-  surfaces:
-  - Timeline toolbar
-  - Timeline tracks
-  - Delete confirmation dialog
-  - Undo/redo controls
-  steps:
-  - Verify split, rotate, delete, remove from project, delete from disk, undo, redo,
-    track mute, and track lock controls.
-  - Verify disk deletion has a distinct destructive confirmation.
-  - Do not delete a real customer file during the sweep.
-  assertions:
-  - Editing controls call ProjectState or UndoManager paths.
-  - Disk deletion is explicitly destructive and separated from remove-from-project.
-  - Tests cover split, trim, deletion, undo, redo, and project persistence.
-  evidence:
-  - Source guard for TimelineControls, TimelineView, TrackHeaderView, and ProjectState
-    clip management.
-  - Editing, undo/redo, and project backup tests.
-  required_proof_level: full_runtime_completion
-  required_evidence_types:
-  - mini_runtime
-  - screenshot
-  - fixture
-  historical_failure_classes:
-  - data_loss_or_unexpected_mutation
-  - persistence_or_relaunch_reset
-  - pro_basic_gate_drift
-  - activation_noop
-  functional_state:
-    description: Seeded video project with representative media clips, audio, captions,
-      timeline edits, export destinations, and safe permission states.
-    setup_steps:
-    - Load Tests/Assets media into an isolated project before editor/export/AI tests.
-    - Use permission fixtures for camera, microphone, and screen capture states unless
-      hardware verification is explicitly running.
-    fixture_paths:
-    - Tests/Assets/
-  user_inputs:
-  - Verify split, rotate, delete, remove from project, delete from disk, undo, redo,
-    track mute, and track lock controls.
-  - Verify disk deletion has a distinct destructive confirmation.
-  - Do not delete a real customer file during the sweep.
-  expected_outputs:
-  - Editing controls call ProjectState or UndoManager paths.
-  - Disk deletion is explicitly destructive and separated from remove-from-project.
-  - Tests cover split, trim, deletion, undo, redo, and project persistence.
-- id: clip-context-menu-safe-actions
-  title: Clip context menu exposes safe edit, analysis, relink, and destructive surfaces
-  surfaces:
-  - Timeline clip context menu
-  - Clip delete-file confirmation
-  steps:
-  - Verify split, delete, remove silence, remove fillers, vision analysis, generate
-    captions, transition, Show in Finder, relink, and delete-from-disk items.
-  - Verify destructive disk deletion opens confirmation before action.
-  - Do not perform external Finder reveal or disk deletion in the sweep.
-  assertions:
-  - Every context-menu item has a callback hook or safe system surface.
-  - Destructive delete-from-disk is not marked completed without isolated fixture
-    proof.
-  - Transition and cleanup actions have source/test coverage.
-  evidence:
-  - Source guard for ClipContextMenu and TimelineClipView confirmation.
-  - Clip, effects, caption, and audio cleanup tests.
-  required_proof_level: full_runtime_completion
-  required_evidence_types:
-  - mini_runtime
-  - screenshot
-  - fixture
-  - log
-  historical_failure_classes:
-  - context_menu_extension_missing
-  - duplicate_or_stale_menu_item
-  - menu_entry_missing
-  - data_loss_or_unexpected_mutation
-  - layout_visual_regression
-  - pro_basic_gate_drift
-  - external_integration_stub
-  - activation_noop
-  functional_state:
-    description: Seeded video project with representative media clips, audio, captions,
-      timeline edits, export destinations, and safe permission states.
-    setup_steps:
-    - Load Tests/Assets media into an isolated project before editor/export/AI tests.
-    - Use permission fixtures for camera, microphone, and screen capture states unless
-      hardware verification is explicitly running.
-    fixture_paths:
-    - Tests/Assets/
-  user_inputs:
-  - Verify split, delete, remove silence, remove fillers, vision analysis, generate
-    captions, transition, Show in Finder, relink, and delete-from-disk items.
-  - Verify destructive disk deletion opens confirmation before action.
-  - Do not perform external Finder reveal or disk deletion in the sweep.
-  expected_outputs:
-  - Every context-menu item has a callback hook or safe system surface.
-  - Destructive delete-from-disk is not marked completed without isolated fixture
-    proof.
-  - Transition and cleanup actions have source/test coverage.
-- id: inspector-video-smart-actions
-  title: Inspector video smart actions have safe surfaces and fixture tests
-  surfaces:
-  - VideoSection
-  - BackgroundEffectsView
-  - EffectsPickerView
-  - StylesInspectorView
-  steps:
-  - Verify Auto-Zoom, Smart Crop, aspect ratio, background, effects, transitions,
-    and overlay styling controls are present.
-  - Verify Auto-Zoom requires recorded click data instead of running on unsupported
-    clips.
-  - Verify smart crop and effects have service/model tests.
-  assertions:
-  - Smart video actions are gated on available local clip data.
-  - Fixture tests cover auto-zoom and effect state changes.
-  - No external service is needed for these safe surfaces.
-  evidence:
-  - Source guard for VideoSection, BackgroundEffectsView, EffectsPickerView, and project
-    effects code.
-  - Zoom interpolator, cursor interpolator, smart crop, and effects tests.
-  required_proof_level: fixture_completion
-  required_evidence_types:
-  - fixture
-  - state_receipt
-  historical_failure_classes:
-  - persistence_or_relaunch_reset
-  - pro_basic_gate_drift
-  - external_integration_stub
   - docs_promise_drift
   - activation_noop
   functional_state:
     description: Seeded video project with representative media clips, audio, captions,
       timeline edits, export destinations, and safe permission states.
     setup_steps:
-    - Load Tests/Assets media into an isolated project before editor/export/AI tests.
+    - Load Tests/Assets media into an isolated project before editor, export, and
+      caption tests.
     - Use permission fixtures for camera, microphone, and screen capture states unless
       hardware verification is explicitly running.
     fixture_paths:
     - Tests/Assets/
   user_inputs:
-  - Verify Auto-Zoom, Smart Crop, aspect ratio, background, effects, transitions,
-    and overlay styling controls are present.
-  - Verify Auto-Zoom requires recorded click data instead of running on unsupported
-    clips.
-  - Verify smart crop and effects have service/model tests.
+  - Check the recorder bar shows the Camera|Screen picker, microphone toggle, camera
+    toggle, record button, and pause button.
+  - Check Option-Command-R is held only while the recorder is open or a take runs,
+    to start and stop recording, and Option-Command-P is held only while recording,
+    to pause and resume.
+  - Check the Camera|Screen picker can switch sources during a take without leaving
+    a timeout task armed.
   expected_outputs:
-  - Smart video actions are gated on available local clip data.
-  - Fixture tests cover auto-zoom and effect state changes.
-  - No external service is needed for these safe surfaces.
-- id: inspector-audio-sync-repair
-  title: Inspector audio analysis and sync repair expose safe fixture-backed actions
+  - Recorder controls call the shared AppState and RecordingState action paths.
+  - Global hot keys use Option-Command only and are released when the recorder is
+    closed, so other apps keep those keys the rest of the time.
+  - Pause and resume, and switching between camera and screen, keep one continuous
+    recording.
+- id: camera-mic-screen-permission-surfaces
+  title: Camera, microphone, and screen recording permission states have a working
+    way out
   surfaces:
-  - AudioSection
-  - SyncRepairSheet
-  - Batch export repair paths
+  - WelcomeGateView Set Up Recording section
+  - SharedRecordingControls permission warning
+  - ErrorDisplayView recovery actions
   steps:
-  - Verify Repair Sync, Find Highlights, Analyze Audio, repair modes, marker/offset/tempo
-    controls, replace toggle, Reveal in Finder, and repair action.
-  - Verify FFmpeg-backed repair is only marked safe when isolated fixtures exist.
-  - Do not mutate customer media during the sweep.
+  - Open the welcome Set Up Recording section and check the Enable Screen Recording
+    action.
+  - With a permission missing, check the recorder bar shows a warning that opens the
+    matching System Settings pane.
+  - Check that a denied microphone records without sound instead of blocking the take.
   assertions:
-  - Audio repair surfaces are reachable without immediately running destructive media
-    operations.
-  - FFmpeg repair/export behavior has isolated test fixture coverage.
-  - External Finder reveal is represented as a safe first surface only.
+  - Each missing permission names the problem and offers Open System Settings.
+  - Denied camera opens camera settings; denied microphone records silently and opens
+    no settings.
+  - First-use camera and microphone requests are allowed to prompt.
   evidence:
-  - Source guard for AudioSection, SyncRepairSheet, and BatchExportService repair
-    tests.
-  - Audio processing, sound analysis, and FFmpeg fixture tests.
+  - Source guard for the permission warning, settings links, and welcome permission
+    configuration.
+  - RecordingState and PermissionManager tests for promptable and denied permissions.
+  required_proof_level: full_runtime_completion
+  required_evidence_types:
+  - mini_runtime
+  - screenshot
+  - fixture
+  - log
+  historical_failure_classes:
+  - hardware_or_tcc_runtime
+  - permission_recovery_dead_end
+  - layout_visual_regression
+  - docs_promise_drift
+  functional_state:
+    description: Seeded video project with representative media clips, audio, captions,
+      timeline edits, export destinations, and safe permission states.
+    setup_steps:
+    - Load Tests/Assets media into an isolated project before editor, export, and
+      caption tests.
+    - Use permission fixtures for camera, microphone, and screen capture states unless
+      hardware verification is explicitly running.
+    fixture_paths:
+    - Tests/Assets/
+  user_inputs:
+  - Open the welcome Set Up Recording section and check the Enable Screen Recording
+    action.
+  - With a permission missing, check the recorder bar shows a warning that opens the
+    matching System Settings pane.
+  - Check that a denied microphone records without sound instead of blocking the take.
+  expected_outputs:
+  - Each missing permission names the problem and offers Open System Settings.
+  - Denied camera opens camera settings; denied microphone records silently and opens
+    no settings.
+  - First-use camera and microphone requests are allowed to prompt.
+- id: recording-complete-handoff
+  title: Recording Complete overlay hands the new take to the editor, the project
+    list, or export
+  surfaces:
+  - QuickAccessOverlay (Recording Complete)
+  - MainContentView overlay
+  - AppState quick access actions
+  steps:
+  - Finish a recording and check the Recording Complete overlay shows a thumbnail
+    with Edit Now, Save, and Share.
+  - Choose Edit Now and check the editor opens on the new project after the import
+    finishes.
+  - Choose Save and check the take stays in Projects; choose Share and check the Export
+    sheet opens.
+  assertions:
+  - Every finished recording becomes its own project before the user picks an option.
+  - Edit Now and Share wait for the import, so they never open an empty editor.
+  - The speech model warm-up starts after the recording, not before it.
+  evidence:
+  - Source guard for QuickAccessOverlay and the AppState handoff actions.
+  - Tests for project isolation of a new recording and for writer finish behavior.
+  required_proof_level: full_runtime_completion
+  required_evidence_types:
+  - mini_runtime
+  - screenshot
+  - fixture
+  - log
+  historical_failure_classes:
+  - data_loss_or_unexpected_mutation
+  - persistence_or_relaunch_reset
+  - activation_noop
+  - layout_visual_regression
+  functional_state:
+    description: Seeded video project with representative media clips, audio, captions,
+      timeline edits, export destinations, and safe permission states.
+    setup_steps:
+    - Load Tests/Assets media into an isolated project before editor, export, and
+      caption tests.
+    - Use permission fixtures for camera, microphone, and screen capture states unless
+      hardware verification is explicitly running.
+    fixture_paths:
+    - Tests/Assets/
+  user_inputs:
+  - Finish a recording and check the Recording Complete overlay shows a thumbnail
+    with Edit Now, Save, and Share.
+  - Choose Edit Now and check the editor opens on the new project after the import
+    finishes.
+  - Choose Save and check the take stays in Projects; choose Share and check the Export
+    sheet opens.
+  expected_outputs:
+  - Every finished recording becomes its own project before the user picks an option.
+  - Edit Now and Share wait for the import, so they never open an empty editor.
+  - The speech model warm-up starts after the recording, not before it.
+- id: project-library-and-import
+  title: Sidebar Projects tab lists, opens, and manages projects, and Import adds
+    video
+  surfaces:
+  - SidebarView Projects tab
+  - CompactProjectBrowserView
+  - FileImporterView
+  - LibraryView Clips tab
+  steps:
+  - Open the sidebar Projects tab and check the project list, New Project button,
+    and project context menu (Open, Rename, Duplicate, Show in Finder, Delete).
+  - Choose File > Import Video and check the importer opens and the imported clip
+    lands in the editor.
+  - Select several projects and check the multi-select actions.
+  assertions:
+  - Importing a video switches the app into editing mode with the clip on the timeline.
+  - Deleting the open project switches to another project instead of leaving an empty
+    editor.
+  - Projects saved to disk load back with every field intact.
+  evidence:
+  - Source guard for the sidebar tabs, project browser, importer, and AppState import
+    path.
+  - Project selection, import, and integrity tests.
+  required_proof_level: full_runtime_completion
+  required_evidence_types:
+  - mini_runtime
+  - screenshot
+  - fixture
+  - log
+  historical_failure_classes:
+  - data_loss_or_unexpected_mutation
+  - persistence_or_relaunch_reset
+  - state_count_drift
+  - menu_entry_missing
+  - activation_noop
+  functional_state:
+    description: Seeded video project with representative media clips, audio, captions,
+      timeline edits, export destinations, and safe permission states.
+    setup_steps:
+    - Load Tests/Assets media into an isolated project before editor, export, and
+      caption tests.
+    - Use permission fixtures for camera, microphone, and screen capture states unless
+      hardware verification is explicitly running.
+    fixture_paths:
+    - Tests/Assets/
+  user_inputs:
+  - Open the sidebar Projects tab and check the project list, New Project button,
+    and project context menu (Open, Rename, Duplicate, Show in Finder, Delete).
+  - Choose File > Import Video and check the importer opens and the imported clip
+    lands in the editor.
+  - Select several projects and check the multi-select actions.
+  expected_outputs:
+  - Importing a video switches the app into editing mode with the clip on the timeline.
+  - Deleting the open project switches to another project instead of leaving an empty
+    editor.
+  - Projects saved to disk load back with every field intact.
+- id: editor-playback-and-view-controls
+  title: Editor playback, arrow keys, zoom, and sidebar or inspector toggles work
+  surfaces:
+  - EditorLayoutView
+  - TimelineControls player bar
+  - TimelineView zoom shortcuts
+  - View menu
+  steps:
+  - Open a project in the editor and use play/pause, step back, step forward, speed,
+    and volume.
+  - Use the arrow keys, J/K/L, Home/End, and timeline zoom in, zoom out, and fit.
+  - Toggle the sidebar and inspector from the View menu.
+  assertions:
+  - Playback controls act on the loaded project and ignore input when no player is
+    loaded.
+  - Seeking moves the playhead even before a player exists, and fit zoom fits the
+    recording to the visible width.
+  - Sidebar and inspector toggles change only the layout.
+  evidence:
+  - Source guard for player controls, the arrow-key monitor, zoom shortcuts, and View
+    menu commands.
+  - PlaybackState and timeline fit-zoom tests.
+  required_proof_level: full_runtime_completion
+  required_evidence_types:
+  - mini_runtime
+  - screenshot
+  - fixture
+  - log
+  historical_failure_classes:
+  - shortcut_focus_or_dispatch
+  - layout_visual_regression
+  - menu_entry_missing
+  - activation_noop
+  functional_state:
+    description: Seeded video project with representative media clips, audio, captions,
+      timeline edits, export destinations, and safe permission states.
+    setup_steps:
+    - Load Tests/Assets media into an isolated project before editor, export, and
+      caption tests.
+    - Use permission fixtures for camera, microphone, and screen capture states unless
+      hardware verification is explicitly running.
+    fixture_paths:
+    - Tests/Assets/
+  user_inputs:
+  - Open a project in the editor and use play/pause, step back, step forward, speed,
+    and volume.
+  - Use the arrow keys, J/K/L, Home/End, and timeline zoom in, zoom out, and fit.
+  - Toggle the sidebar and inspector from the View menu.
+  expected_outputs:
+  - Playback controls act on the loaded project and ignore input when no player is
+    loaded.
+  - Seeking moves the playhead even before a player exists, and fit zoom fits the
+    recording to the visible width.
+  - Sidebar and inspector toggles change only the layout.
+- id: timeline-editing-split-delete-undo
+  title: Split at playhead, Delete, and undo edit the timeline without touching files
+    on disk
+  surfaces:
+  - TimelineView
+  - TimelineControls split and delete buttons
+  - EditorLayoutView Delete key
+  - Edit menu Undo and Redo
+  steps:
+  - Press Command-B to split the clip at the playhead, then undo and redo.
+  - Select a clip and press Delete, then undo to put it back.
+  - Press the trash button on the timeline toolbar and check it removes the clip from
+    the timeline only, and Undo brings it back.
+  assertions:
+  - Split at playhead divides the clip source range at the playhead and is one undo
+    step.
+  - The Delete key removes the clip from the project only and is undoable; it never
+    deletes the file.
+  - Deleting a source file is a separate Delete from Disk command that always asks
+    for confirmation first.
+  evidence:
+  - Source guard for the split shortcut, Delete key binding, toolbar trash button,
+    and splitAtPlayhead.
+  - Timeline undo/redo and split regression tests.
+  required_proof_level: full_runtime_completion
+  required_evidence_types:
+  - mini_runtime
+  - screenshot
+  - fixture
+  - log
+  historical_failure_classes:
+  - data_loss_or_unexpected_mutation
+  - shortcut_focus_or_dispatch
+  - state_count_drift
+  - activation_noop
+  functional_state:
+    description: Seeded video project with representative media clips, audio, captions,
+      timeline edits, export destinations, and safe permission states.
+    setup_steps:
+    - Load Tests/Assets media into an isolated project before editor, export, and
+      caption tests.
+    - Use permission fixtures for camera, microphone, and screen capture states unless
+      hardware verification is explicitly running.
+    fixture_paths:
+    - Tests/Assets/
+  user_inputs:
+  - Press Command-B to split the clip at the playhead, then undo and redo.
+  - Select a clip and press Delete, then undo to put it back.
+  - Press the trash button on the timeline toolbar and check it removes the clip from
+    the timeline only, and Undo brings it back.
+  expected_outputs:
+  - Split at playhead divides the clip source range at the playhead and is one undo
+    step.
+  - The Delete key removes the clip from the project only and is undoable; it never
+    deletes the file.
+  - Deleting a source file is a separate Delete from Disk command that always asks
+    for confirmation first.
+- id: clip-context-menu-actions
+  title: Timeline clip context menu actions reach real project operations
+  surfaces:
+  - ClipContextMenu
+  - TimelineClipView
+  - Delete File confirmation alert
+  steps:
+  - Right-click a timeline clip and check Split Clip, Delete, Remove Silence, Remove
+    Filler Words, Generate Captions, Show in Finder, Relink Clip, Add Transition,
+    and Delete from Disk.
+  - Add and remove a transition from the menu.
+  - Choose Delete from Disk and check the Delete File alert offers Cancel and Delete
+    Forever, then cancel.
+  assertions:
+  - Each menu item calls the shared ProjectState operation for that clip.
+  - Relinking a clip refreshes its duration and clamps the trim to the new file.
+  - Delete from Disk needs a second confirmation before the file moves to the Trash.
+  evidence:
+  - Source guard for ClipContextMenu identifiers and the TimelineClipView delete-file
+    alert.
+  - Transition and relink tests.
   required_proof_level: full_runtime_completion
   required_evidence_types:
   - mini_runtime
@@ -453,58 +434,158 @@ actions:
   historical_failure_classes:
   - context_menu_extension_missing
   - data_loss_or_unexpected_mutation
-  - external_integration_stub
-  - state_count_drift
+  - menu_entry_missing
   - activation_noop
   functional_state:
     description: Seeded video project with representative media clips, audio, captions,
       timeline edits, export destinations, and safe permission states.
     setup_steps:
-    - Load Tests/Assets media into an isolated project before editor/export/AI tests.
+    - Load Tests/Assets media into an isolated project before editor, export, and
+      caption tests.
     - Use permission fixtures for camera, microphone, and screen capture states unless
       hardware verification is explicitly running.
     fixture_paths:
     - Tests/Assets/
   user_inputs:
-  - Verify Repair Sync, Find Highlights, Analyze Audio, repair modes, marker/offset/tempo
-    controls, replace toggle, Reveal in Finder, and repair action.
-  - Verify FFmpeg-backed repair is only marked safe when isolated fixtures exist.
-  - Do not mutate customer media during the sweep.
+  - Right-click a timeline clip and check Split Clip, Delete, Remove Silence, Remove
+    Filler Words, Generate Captions, Show in Finder, Relink Clip, Add Transition,
+    and Delete from Disk.
+  - Add and remove a transition from the menu.
+  - Choose Delete from Disk and check the Delete File alert offers Cancel and Delete
+    Forever, then cancel.
   expected_outputs:
-  - Audio repair surfaces are reachable without immediately running destructive media
-    operations.
-  - FFmpeg repair/export behavior has isolated test fixture coverage.
-  - External Finder reveal is represented as a safe first surface only.
-- id: captions-transcript-voiceover
-  title: Captions, transcript editing/export, and voiceover surfaces are represented
+  - Each menu item calls the shared ProjectState operation for that clip.
+  - Relinking a clip refreshes its duration and clamps the trim to the new file.
+  - Delete from Disk needs a second confirmation before the file moves to the Trash.
+- id: clean-up-silence-fillers
+  title: Inspector Clean Up cuts silence and filler words with the chosen options
   surfaces:
-  - Captions inspector section
+  - StylesInspectorView Clean Up section
+  - SmartToolsSection
+  - Edit menu Clean Up commands
+  steps:
+  - Select a clip and open the inspector Clean Up section.
+  - Check the Remove Silence, Remove Fillers, Generate Captions, Enhance Speech, and
+    Smooth Cuts toggles.
+  - Press Clean Up and check the clip shrinks by exactly the cut time and the change
+    is one undo step.
+  assertions:
+  - Remove Silence cuts only silent time.
+  - Remove Fillers cuts definite filler words found in the transcript.
+  - Clean Up runs only the selected steps, in a fixed order, and can be cancelled.
+  evidence:
+  - Source guard for the Clean Up section toggles and the Clean Up button.
+  - Silence detector, filler detector, and Clean Up service tests on fixture audio.
+  required_proof_level: full_runtime_completion
+  required_evidence_types:
+  - mini_runtime
+  - screenshot
+  - fixture
+  - log
+  historical_failure_classes:
+  - data_loss_or_unexpected_mutation
+  - state_count_drift
+  - docs_promise_drift
+  - activation_noop
+  functional_state:
+    description: Seeded video project with representative media clips, audio, captions,
+      timeline edits, export destinations, and safe permission states.
+    setup_steps:
+    - Load Tests/Assets media into an isolated project before editor, export, and
+      caption tests.
+    - Use permission fixtures for camera, microphone, and screen capture states unless
+      hardware verification is explicitly running.
+    fixture_paths:
+    - Tests/Assets/
+  user_inputs:
+  - Select a clip and open the inspector Clean Up section.
+  - Check the Remove Silence, Remove Fillers, Generate Captions, Enhance Speech, and
+    Smooth Cuts toggles.
+  - Press Clean Up and check the clip shrinks by exactly the cut time and the change
+    is one undo step.
+  expected_outputs:
+  - Remove Silence cuts only silent time.
+  - Remove Fillers cuts definite filler words found in the transcript.
+  - Clean Up runs only the selected steps, in a fixed order, and can be cancelled.
+- id: inspector-framing-background-effects-audio
+  title: Inspector Framing, Background, Effects, and Audio sections change the selected
+    clip
+  surfaces:
+  - StylesInspectorView
+  - VideoSection (Framing)
+  - BackgroundEffectsView
+  - EffectsPickerView
+  - AudioSection
+  steps:
+  - Select a clip and open the Framing section; check auto zoom, aspect ratio, and
+    smart crop.
+  - Open Background and Effects; turn a background on, apply an effect, change its
+    intensity, and remove it.
+  - Open Audio and check Find Highlights and Analyze Audio.
+  assertions:
+  - Framing, background, and effect changes apply to the selected clip only.
+  - Removing an effect leaves the clip without it.
+  - Auto zoom uses recorded cursor clicks when they exist.
+  evidence:
+  - Source guard for inspector section titles and control identifiers.
+  - Effects, auto zoom, and smart crop tests.
+  required_proof_level: full_runtime_completion
+  required_evidence_types:
+  - mini_runtime
+  - screenshot
+  - fixture
+  - log
+  historical_failure_classes:
+  - state_count_drift
+  - layout_visual_regression
+  - activation_noop
+  functional_state:
+    description: Seeded video project with representative media clips, audio, captions,
+      timeline edits, export destinations, and safe permission states.
+    setup_steps:
+    - Load Tests/Assets media into an isolated project before editor, export, and
+      caption tests.
+    - Use permission fixtures for camera, microphone, and screen capture states unless
+      hardware verification is explicitly running.
+    fixture_paths:
+    - Tests/Assets/
+  user_inputs:
+  - Select a clip and open the Framing section; check auto zoom, aspect ratio, and
+    smart crop.
+  - Open Background and Effects; turn a background on, apply an effect, change its
+    intensity, and remove it.
+  - Open Audio and check Find Highlights and Analyze Audio.
+  expected_outputs:
+  - Framing, background, and effect changes apply to the selected clip only.
+  - Removing an effect leaves the clip without it.
+  - Auto zoom uses recorded cursor clicks when they exist.
+- id: captions-transcript-voiceover
+  title: Transcript tab edits captions, exports transcripts, and generates a voiceover
+  surfaces:
+  - SidebarView Transcript tab
   - TranscriptionEditorView
   - TranscriptExportSheet
   - VoiceoverSettingsSheet
   steps:
-  - Verify generate captions, edit transcript rows, delete caption rows, export transcript
-    PDF, and generate voiceover surfaces.
-  - Verify transcript and voiceover workflows use local project/caption data first.
-  - Do not claim cloud or external voice generation unless a fixture proves it.
+  - Open the sidebar Transcript tab on a clip with captions; edit and delete a caption
+    line.
+  - Open Export Transcript and check the PDF, SRT, WebVTT, and plain text formats.
+  - Open Generate Voiceover, pick a voice, preview it, and stop the preview.
   assertions:
-  - Caption and transcript controls are wired to project state or local export helpers.
-  - Voiceover save panel has safe window-selection tests.
-  - Transcript export has model or document proof.
+  - Caption edits and offsets are undoable.
+  - SRT output numbers captions and writes hour, minute, second, and millisecond times.
+  - Captions are built from word timings with line length and duration limits.
   evidence:
-  - Source guard for caption, transcript, and voiceover sheets.
-  - Caption, transcription, transcript export, and voiceover save-panel tests.
+  - Source guard for the Transcript tab, transcript formats, and voiceover sheet.
+  - Caption pipeline, SRT, and voiceover save-panel tests.
   required_proof_level: full_runtime_completion
   required_evidence_types:
   - mini_runtime
   - screenshot
   - fixture
+  - log
   historical_failure_classes:
   - data_loss_or_unexpected_mutation
-  - persistence_or_relaunch_reset
-  - layout_visual_regression
-  - pro_basic_gate_drift
-  - external_integration_stub
   - state_count_drift
   - docs_promise_drift
   - activation_noop
@@ -512,138 +593,46 @@ actions:
     description: Seeded video project with representative media clips, audio, captions,
       timeline edits, export destinations, and safe permission states.
     setup_steps:
-    - Load Tests/Assets media into an isolated project before editor/export/AI tests.
+    - Load Tests/Assets media into an isolated project before editor, export, and
+      caption tests.
     - Use permission fixtures for camera, microphone, and screen capture states unless
       hardware verification is explicitly running.
     fixture_paths:
     - Tests/Assets/
   user_inputs:
-  - Verify generate captions, edit transcript rows, delete caption rows, export transcript
-    PDF, and generate voiceover surfaces.
-  - Verify transcript and voiceover workflows use local project/caption data first.
-  - Do not claim cloud or external voice generation unless a fixture proves it.
+  - Open the sidebar Transcript tab on a clip with captions; edit and delete a caption
+    line.
+  - Open Export Transcript and check the PDF, SRT, WebVTT, and plain text formats.
+  - Open Generate Voiceover, pick a voice, preview it, and stop the preview.
   expected_outputs:
-  - Caption and transcript controls are wired to project state or local export helpers.
-  - Voiceover save panel has safe window-selection tests.
-  - Transcript export has model or document proof.
-- id: export-local-presets-and-demo-pack
-  title: Local export, presets, batch export, ML effects, and Demo Pack actions are
-    covered
+  - Caption edits and offsets are undoable.
+  - SRT output numbers captions and writes hour, minute, second, and millisecond times.
+  - Captions are built from word timings with line length and duration limits.
+- id: export-presets-and-caption-file
+  title: Export sheet starts from a preset that matches the footage and writes an
+    .srt beside the video
   surfaces:
   - ExportView
   - ExportConfigurationView
   - ExportPresetPicker
-  - MLEffectsExportSection
-  - Demo Studio export options
+  - ExportDestination (Movies/SaneVideo/Exports)
   steps:
-  - Verify Export File, Batch Export, Share Link, More Options, Demo Pack, thumbnail,
-    study guide, GIF, voiceover, presets, quality, format, and ML effects controls.
-  - Verify local export is the default path.
-  - Verify export operations rely on isolated fixtures for completion proof.
+  - Open the Export sheet and check the preset picker starts at the YouTube preset
+    that fits the main clip.
+  - Export a fixture project and check the file lands in Movies/SaneVideo/Exports
+    named after the project with a timestamp.
+  - With captions on the timeline, check a matching .srt file is written beside the
+    video.
   assertions:
-  - Export UI exposes local-first output before optional third-party upload.
-  - Presets and export settings are tested.
-  - Demo Pack writes expected artifacts in fixture tests.
+  - Exported resolution, codec, and frame rate match the chosen settings.
+  - Export names follow project name, optional suffix, then timestamp, and a taken
+    name gets a number.
+  - Captions are not burned in; the .srt beside the export uses the edited timeline
+    times.
   evidence:
-  - Source guard for export sheets and export action code.
-  - Export engine, preset, compositor, Demo Pack, batch export, and ML effects tests.
-  required_proof_level: full_runtime_completion
-  required_evidence_types:
-  - mini_runtime
-  - screenshot
-  - fixture
-  historical_failure_classes:
-  - data_loss_or_unexpected_mutation
-  - persistence_or_relaunch_reset
-  - pro_basic_gate_drift
-  - external_integration_stub
-  - docs_promise_drift
-  - activation_noop
-  functional_state:
-    description: Seeded video project with representative media clips, audio, captions,
-      timeline edits, export destinations, and safe permission states.
-    setup_steps:
-    - Load Tests/Assets media into an isolated project before editor/export/AI tests.
-    - Use permission fixtures for camera, microphone, and screen capture states unless
-      hardware verification is explicitly running.
-    fixture_paths:
-    - Tests/Assets/
-  user_inputs:
-  - Verify Export File, Batch Export, Share Link, More Options, Demo Pack, thumbnail,
-    study guide, GIF, voiceover, presets, quality, format, and ML effects controls.
-  - Verify local export is the default path.
-  - Verify export operations rely on isolated fixtures for completion proof.
-  expected_outputs:
-  - Export UI exposes local-first output before optional third-party upload.
-  - Presets and export settings are tested.
-  - Demo Pack writes expected artifacts in fixture tests.
-- id: youtube-upload-safe-surface
-  title: YouTube upload is represented as unavailable until direct upload is verified
-  surfaces:
-  - Export YouTube section
-  - API Keys settings
-  - YouTubeService
-  - KeychainService
-  steps:
-  - Verify the YouTube toggle is disabled while direct upload is unavailable.
-  - Verify the export surface explains that users should export a local file and upload manually.
-  - Verify credential saving is disabled until direct upload has OAuth and upload completion proof.
-  assertions:
-  - Local export remains first.
-  - Direct YouTube upload is not presented as available.
-  - Real third-party upload remains blocked until OAuth and upload completion are separately verified.
-  evidence:
-  - Source guard for ExportYouTubeSection, APIKeysSettingsView, YouTubeService, and
-    Keychain tests.
-  - YouTube service tests cover the featureUnavailable state; no live upload is claimed.
-  required_proof_level: full_runtime_completion
-  required_evidence_types:
-  - mini_runtime
-  - screenshot
-  - fixture
-  historical_failure_classes:
-  - data_loss_or_unexpected_mutation
-  - persistence_or_relaunch_reset
-  - pro_basic_gate_drift
-  - external_integration_stub
-  - state_count_drift
-  - activation_noop
-  functional_state:
-    description: Seeded video project with representative media clips, audio, captions,
-      timeline edits, export destinations, and safe permission states.
-    setup_steps:
-    - Load Tests/Assets media into an isolated project before editor/export/AI tests.
-    - Use permission fixtures for camera, microphone, and screen capture states unless
-      hardware verification is explicitly running.
-    fixture_paths:
-    - Tests/Assets/
-  user_inputs:
-  - Verify the YouTube toggle is disabled while direct upload is unavailable.
-  - Verify the export surface explains that users should export a local file and upload manually.
-  - Verify credential saving is disabled until direct upload has OAuth and upload completion proof.
-  expected_outputs:
-  - Local export remains first.
-  - Direct YouTube upload is not presented as available.
-  - Real third-party upload remains blocked until OAuth and upload completion are separately verified.
-- id: ffmpeg-export-fixture-surface
-  title: FFmpeg-backed media operations are represented through isolated fixture proof
-  surfaces:
-  - GIF export
-  - Sync repair
-  - Batch export repair
-  - FFmpeg service
-  steps:
-  - Verify FFmpeg-dependent actions have buttons or menu routes.
-  - Verify test fixtures exercise FFmpeg command construction or output behavior.
-  - Do not mutate customer media in the sweep.
-  assertions:
-  - FFmpeg workflows are not marked fully complete from source presence alone.
-  - Fixture tests prove the isolated repair/export path.
-  - Customer files are not used as destructive proof.
-  evidence:
-  - Source guard for GIFExportSheet, AudioSection repair actions, and FFmpeg service
-    references.
-  - BatchExportService and export integration tests using local fixtures.
+  - Source guard for the export action, footage-matched preset, export folder, and
+    .srt writer.
+  - Export pipeline, file naming, and SRT tests.
   required_proof_level: full_runtime_completion
   required_evidence_types:
   - mini_runtime
@@ -651,105 +640,53 @@ actions:
   - fixture
   - log
   historical_failure_classes:
-  - duplicate_or_stale_menu_item
-  - menu_entry_missing
-  - data_loss_or_unexpected_mutation
-  - pro_basic_gate_drift
-  - activation_noop
-  functional_state:
-    description: Seeded video project with representative media clips, audio, captions,
-      timeline edits, export destinations, and safe permission states.
-    setup_steps:
-    - Load Tests/Assets media into an isolated project before editor/export/AI tests.
-    - Use permission fixtures for camera, microphone, and screen capture states unless
-      hardware verification is explicitly running.
-    fixture_paths:
-    - Tests/Assets/
-  user_inputs:
-  - Verify FFmpeg-dependent actions have buttons or menu routes.
-  - Verify test fixtures exercise FFmpeg command construction or output behavior.
-  - Do not mutate customer media in the sweep.
-  expected_outputs:
-  - FFmpeg workflows are not marked fully complete from source presence alone.
-  - Fixture tests prove the isolated repair/export path.
-  - Customer files are not used as destructive proof.
-- id: demo-studio-commentary-teleprompter
-  title: Demo Studio, commentary reel, workflow pack, and teleprompter actions are
-    wired
-  surfaces:
-  - DemoStudioSheet
-  - TeleprompterWindow
-  - SaneVideoApp menu commands
-  - Recording controls
-  steps:
-  - Verify Demo Studio opens from recording controls and menus.
-  - Verify speaker notes, preset defaults, workflow pack, commentary draft, cue editing,
-    build commentary reel, and teleprompter show/hide controls.
-  - Verify commentary reel can be built through fixture-backed tests.
-  assertions:
-  - Demo Studio actions update project state.
-  - Teleprompter actions do not start camera or microphone automatically.
-  - Commentary reel behavior has tests.
-  evidence:
-  - Source guard for DemoStudioSheet, TeleprompterWindow, AppState actions, and menu
-    commands.
-  - Teleprompter action and commentary reel tests.
-  required_proof_level: full_runtime_completion
-  required_evidence_types:
-  - mini_runtime
-  - screenshot
-  - fixture
-  - log
-  historical_failure_classes:
-  - duplicate_or_stale_menu_item
-  - menu_entry_missing
-  - hardware_or_tcc_runtime
-  - install_update_packaging
   - data_loss_or_unexpected_mutation
   - persistence_or_relaunch_reset
-  - layout_visual_regression
-  - pro_basic_gate_drift
   - docs_promise_drift
+  - external_integration_stub
   - activation_noop
   functional_state:
     description: Seeded video project with representative media clips, audio, captions,
       timeline edits, export destinations, and safe permission states.
     setup_steps:
-    - Load Tests/Assets media into an isolated project before editor/export/AI tests.
+    - Load Tests/Assets media into an isolated project before editor, export, and
+      caption tests.
     - Use permission fixtures for camera, microphone, and screen capture states unless
       hardware verification is explicitly running.
     fixture_paths:
     - Tests/Assets/
   user_inputs:
-  - Verify Demo Studio opens from recording controls and menus.
-  - Verify speaker notes, preset defaults, workflow pack, commentary draft, cue editing,
-    build commentary reel, and teleprompter show/hide controls.
-  - Verify commentary reel can be built through fixture-backed tests.
+  - Open the Export sheet and check the preset picker starts at the YouTube preset
+    that fits the main clip.
+  - Export a fixture project and check the file lands in Movies/SaneVideo/Exports
+    named after the project with a timestamp.
+  - With captions on the timeline, check a matching .srt file is written beside the
+    video.
   expected_outputs:
-  - Demo Studio actions update project state.
-  - Teleprompter actions do not start camera or microphone automatically.
-  - Commentary reel behavior has tests.
-- id: thumbnail-gif-share-external-surfaces
-  title: Thumbnail, GIF, share, Finder, and external app surfaces are safe-first only
+  - Exported resolution, codec, and frame rate match the chosen settings.
+  - Export names follow project name, optional suffix, then timestamp, and a taken
+    name gets a number.
+  - Captions are not burned in; the .srt beside the export uses the edited timeline
+    times.
+- id: shorts-gif-thumbnail
+  title: Create Shorts, Export as GIF, and Thumbnail Studio produce local files
   surfaces:
-  - ThumbnailPickerSheet
+  - RepurposingSheet (Create Shorts)
   - GIFExportSheet
-  - Share commands
-  - Finder reveal commands
+  - ThumbnailPickerSheet (Thumbnail Studio)
   steps:
-  - Verify thumbnail reset, copy, save PNG, save JPEG, GIF export, share, and Finder
-    reveal controls.
-  - Verify external opens are represented as first surfaces and not treated as completed
-    external workflows.
-  - Use only fixture or source proof for export completion.
+  - Open Create Shorts, pick a platform, duration, aspect, and count, analyze, and
+    export.
+  - Open Export as GIF, pick a preset and range, and export.
+  - Open Make Thumbnail, pick a frame and style, and check Save Thumbnail, Copy to
+    Clipboard, and Save as PNG or JPEG.
   assertions:
-  - External app handoff is explicit and user initiated.
-  - Thumbnail and GIF surfaces are reachable from menus or export options.
-  - No external destination is modified during the sweep.
+  - Shorts use the chosen aspect ratio and are named "<Project> Short N <timestamp>.mp4".
+  - GIFs are written natively at the requested width and frame rate and loop forever.
+  - Thumbnail actions work on a frame from the current project.
   evidence:
-  - Source guard for ThumbnailPickerSheet, GIFExportSheet, share notifications, and
-    Finder reveal controls.
-  - Thumbnail, GIF/export model, and clip fixture tests where available.
+  - Source guard for the shorts, GIF, and thumbnail sheets and the shorts file naming.
+  - Batch export, repurposing preset, and GIF export tests.
   required_proof_level: full_runtime_completion
   required_evidence_types:
   - mini_runtime
@@ -757,59 +694,102 @@ actions:
   - fixture
   - log
   historical_failure_classes:
-  - context_menu_extension_missing
-  - duplicate_or_stale_menu_item
-  - menu_entry_missing
   - data_loss_or_unexpected_mutation
-  - pro_basic_gate_drift
-  - external_integration_stub
+  - layout_visual_regression
   - docs_promise_drift
   - activation_noop
   functional_state:
     description: Seeded video project with representative media clips, audio, captions,
       timeline edits, export destinations, and safe permission states.
     setup_steps:
-    - Load Tests/Assets media into an isolated project before editor/export/AI tests.
+    - Load Tests/Assets media into an isolated project before editor, export, and
+      caption tests.
     - Use permission fixtures for camera, microphone, and screen capture states unless
       hardware verification is explicitly running.
     fixture_paths:
     - Tests/Assets/
   user_inputs:
-  - Verify thumbnail reset, copy, save PNG, save JPEG, GIF export, share, and Finder
-    reveal controls.
-  - Verify external opens are represented as first surfaces and not treated as completed
-    external workflows.
-  - Use only fixture or source proof for export completion.
+  - Open Create Shorts, pick a platform, duration, aspect, and count, analyze, and
+    export.
+  - Open Export as GIF, pick a preset and range, and export.
+  - Open Make Thumbnail, pick a frame and style, and check Save Thumbnail, Copy to
+    Clipboard, and Save as PNG or JPEG.
   expected_outputs:
-  - External app handoff is explicit and user initiated.
-  - Thumbnail and GIF surfaces are reachable from menus or export options.
-  - No external destination is modified during the sweep.
-- id: settings-tabs-and-update-actions
-  title: Settings tabs, update checks, cache clear, and stress-test controls are represented
+  - Shorts use the chosen aspect ratio and are named "<Project> Short N <timestamp>.mp4".
+  - GIFs are written natively at the requested width and frame rate and loop forever.
+  - Thumbnail actions work on a frame from the current project.
+- id: teleprompter-script
+  title: Teleprompter script sheet and window work and stay out of screen recordings
+  surfaces:
+  - TeleprompterScriptSheet
+  - TeleprompterWindow
+  - File menu Teleprompter commands
+  steps:
+  - Choose File > Teleprompter Script, type a script, and set text size and scroll
+    speed.
+  - Choose Toggle Teleprompter and check the window shows the script.
+  - With an empty script, choose Toggle Teleprompter and check the script sheet opens
+    instead.
+  assertions:
+  - An empty script opens the script sheet instead of an empty teleprompter.
+  - The teleprompter window is excluded from screen capture.
+  - Teleprompter menu commands route through AppState.
+  evidence:
+  - Source guard for the teleprompter sheet, window sharing type, and menu commands.
+  - Teleprompter action test.
+  required_proof_level: full_runtime_completion
+  required_evidence_types:
+  - mini_runtime
+  - screenshot
+  - fixture
+  - log
+  historical_failure_classes:
+  - hardware_or_tcc_runtime
+  - menu_entry_missing
+  - layout_visual_regression
+  - activation_noop
+  functional_state:
+    description: Seeded video project with representative media clips, audio, captions,
+      timeline edits, export destinations, and safe permission states.
+    setup_steps:
+    - Load Tests/Assets media into an isolated project before editor, export, and
+      caption tests.
+    - Use permission fixtures for camera, microphone, and screen capture states unless
+      hardware verification is explicitly running.
+    fixture_paths:
+    - Tests/Assets/
+  user_inputs:
+  - Choose File > Teleprompter Script, type a script, and set text size and scroll
+    speed.
+  - Choose Toggle Teleprompter and check the window shows the script.
+  - With an empty script, choose Toggle Teleprompter and check the script sheet opens
+    instead.
+  expected_outputs:
+  - An empty script opens the script sheet instead of an empty teleprompter.
+  - The teleprompter window is excluded from screen capture.
+  - Teleprompter menu commands route through AppState.
+- id: settings-tabs-and-updates
+  title: Settings tabs, speech engine picker, updates, and About licenses are reachable
   surfaces:
   - SettingsView
-  - General settings
-  - Export settings
-  - Recording settings
-  - Privacy settings
-  - Debug settings
+  - PrivacySettingsView speech engine picker
+  - General tab Software Updates
+  - About tab licenses
   steps:
-  - Verify General, Recording, Export, Privacy & AI, API Keys, iCloud Sync, License,
-    and About pages; Debug appears only in Debug builds.
-  - Verify clear cache, update auto-check, update frequency, Check Now, and Run Stress
-    Tests controls.
-  - Do not mark real update availability or stress-test completion without separate
-    runtime proof.
+  - Open Settings and visit General, Recording, Export, Privacy & AI, License, and
+    About.
+  - On Privacy & AI, check the Speech engine picker offers Parakeet and Apple speech.
+  - On General, check Software Updates (direct-download build only); on About, check
+    the FluidAudio and Parakeet license entries.
   assertions:
-  - Settings pages use the shared sidebar and scroll without clipping at normal and minimum window sizes.
-  - Privacy & AI owns caption-model guidance; General contains appearance, preview cache, and updates.
-  - Disabled upload and sync pages give export directions without requesting credentials or folder access.
-  - Update and stress-test actions have safe first surfaces.
-  - Customer settings persist through UserPreferences where applicable.
+  - Every tab opens its own page.
+  - The speech engine choice is saved in user preferences.
+  - Update checks accept only a valid appcast feed; App Store builds have no Sparkle
+    updater.
   evidence:
-  - Source guard for SettingsView and sub-tabs.
-  - UserPreferences, updater, recording settings, export settings, and stress runner
-    tests where available.
+  - Source guard for settings tabs, the speech engine picker, Check Now, and About
+    licenses.
+  - Updater service tests.
   required_proof_level: full_runtime_completion
   required_evidence_types:
   - mini_runtime
@@ -817,187 +797,76 @@ actions:
   - fixture
   - log
   historical_failure_classes:
-  - hardware_or_tcc_runtime
-  - permission_recovery_dead_end
   - install_update_packaging
-  - data_loss_or_unexpected_mutation
   - persistence_or_relaunch_reset
-  - layout_visual_regression
   - pro_basic_gate_drift
-  - external_integration_stub
   - docs_promise_drift
-  - activation_noop
-  functional_state:
-    description: Seeded video project with representative media clips, audio, captions,
-      timeline edits, export destinations, and safe permission states.
-    setup_steps:
-    - Load Tests/Assets media into an isolated project before editor/export/AI tests.
-    - Use permission fixtures for camera, microphone, and screen capture states unless
-      hardware verification is explicitly running.
-    fixture_paths:
-    - Tests/Assets/
-  user_inputs:
-  - Verify General, Recording, Export, Privacy & AI, API Keys, iCloud Sync, License,
-    and About pages; Debug appears only in Debug builds.
-  - Verify clear cache, update auto-check, update frequency, Check Now, and Run Stress
-    Tests controls.
-  - Do not mark real update availability or stress-test completion without separate
-    runtime proof.
-  expected_outputs:
-  - Settings pages use the shared sidebar and scroll without clipping at normal and minimum window sizes.
-  - Privacy & AI owns caption-model guidance; General contains appearance, preview cache, and updates.
-  - Disabled upload and sync pages give export directions without requesting credentials or folder access.
-  - Update and stress-test actions have safe first surfaces.
-  - Customer settings persist through UserPreferences where applicable.
-- id: api-keys-keychain-safe-surfaces
-  title: API key and Keychain actions require explicit safe surfaces
-  surfaces:
-  - APIKeysSettingsView
-  - KeychainService
-  steps:
-  - Verify the disabled-upload explanation and File > Export Video direction.
-  - Verify Clear All API Keys opens a cancellable confirmation using fixture credentials only.
-  - Credential entry, reveal, and save controls appear only in an upload-enabled build.
-  - Verify Keychain operations are tested without prompting users during the sweep.
-  - Do not trigger real Keychain prompt floods.
-  assertions:
-  - Credentials are optional and user initiated.
-  - Destructive key clearing requires confirmation where broad.
-  - Keychain tests cover credential presence logic.
-  evidence:
-  - Source guard for API key fields, save, clear, and confirmation controls.
-  - KeychainService tests for YouTube credential and authentication state.
-  required_proof_level: full_runtime_completion
-  required_evidence_types:
-  - mini_runtime
-  - screenshot
-  - fixture
-  historical_failure_classes:
-  - data_loss_or_unexpected_mutation
-  - persistence_or_relaunch_reset
-  - pro_basic_gate_drift
-  - external_integration_stub
-  - activation_noop
-  functional_state:
-    description: Seeded video project with representative media clips, audio, captions,
-      timeline edits, export destinations, and safe permission states.
-    setup_steps:
-    - Load Tests/Assets media into an isolated project before editor/export/AI tests.
-    - Use permission fixtures for camera, microphone, and screen capture states unless
-      hardware verification is explicitly running.
-    fixture_paths:
-    - Tests/Assets/
-  user_inputs:
-  - Verify the disabled-upload explanation and File > Export Video direction.
-  - Verify Clear All API Keys opens a cancellable confirmation using fixture credentials only.
-  - Credential entry, reveal, and save controls appear only in an upload-enabled build.
-  - Verify Keychain operations are tested without prompting users during the sweep.
-  - Do not trigger real Keychain prompt floods.
-  expected_outputs:
-  - Credentials are optional and user initiated.
-  - Destructive key clearing requires confirmation where broad.
-  - Keychain tests cover credential presence logic.
-- id: icloud-sync-safe-surface
-  title: iCloud sync is represented as an optional safe surface only
-  surfaces:
-  - iCloudSyncSettingsView
-  - SyncManager
-  - Cloud project rows
-  steps:
-  - Verify the disabled iCloud toggle and manual export direction.
-  - Confirm no iCloud account or Documents-folder access is requested by this disabled page.
-  - Verify unavailable iCloud state is surfaced without pretending sync completed.
-  - Do not mark real iCloud upload/download complete unless fixture or account proof
-    exists.
-  assertions:
-  - iCloud sync is optional and disabled when unavailable.
-  - Sync manager tests cover disabled/unavailable behavior.
-  - Real cross-device iCloud propagation remains blocked unless separately verified.
-  evidence:
-  - Source guard for iCloudSyncSettingsView and SyncManager.
-  - SyncManager and iCloud sync tests for availability and disabled-state behavior.
-  required_proof_level: full_runtime_completion
-  required_evidence_types:
-  - mini_runtime
-  - screenshot
-  - fixture
-  - log
-  historical_failure_classes:
-  - install_update_packaging
-  - data_loss_or_unexpected_mutation
-  - persistence_or_relaunch_reset
   - layout_visual_regression
-  - pro_basic_gate_drift
-  - external_integration_stub
-  - state_count_drift
-  - activation_noop
   functional_state:
     description: Seeded video project with representative media clips, audio, captions,
       timeline edits, export destinations, and safe permission states.
     setup_steps:
-    - Load Tests/Assets media into an isolated project before editor/export/AI tests.
+    - Load Tests/Assets media into an isolated project before editor, export, and
+      caption tests.
     - Use permission fixtures for camera, microphone, and screen capture states unless
       hardware verification is explicitly running.
     fixture_paths:
     - Tests/Assets/
   user_inputs:
-  - Verify the disabled iCloud toggle and manual export direction.
-  - Confirm no iCloud account or Documents-folder access is requested by this disabled page.
-  - Verify unavailable iCloud state is surfaced without pretending sync completed.
-  - Do not mark real iCloud upload/download complete unless fixture or account proof
-    exists.
+  - Open Settings and visit General, Recording, Export, Privacy & AI, License, and
+    About.
+  - On Privacy & AI, check the Speech engine picker offers Parakeet and Apple speech.
+  - On General, check Software Updates (direct-download build only); on About, check
+    the FluidAudio and Parakeet license entries.
   expected_outputs:
-  - iCloud sync is optional and disabled when unavailable.
-  - Sync manager tests cover disabled/unavailable behavior.
-  - Real cross-device iCloud propagation remains blocked unless separately verified.
-- id: project-templates-and-browser
-  title: Project templates and template browser actions are represented
+  - Every tab opens its own page.
+  - The speech engine choice is saved in user preferences.
+  - Update checks accept only a valid appcast feed; App Store builds have no Sparkle
+    updater.
+- id: export-templates-browser
+  title: Export Templates browser saves, applies, renames, and deletes saved export
+    settings
   surfaces:
+  - ExportPresetPicker Templates button
   - TemplateBrowserSheet
-  - ProjectTemplate models
-  - ExportPresetPicker template access
-  - Compact project browser
+  - TemplateStore
   steps:
-  - Verify built-in templates, custom template creation, save, cancel, select, and
-    delete confirmation controls.
-  - Verify template selection applies export and demo defaults.
-  - Verify destructive template deletion asks for confirmation.
+  - In the Export sheet, press Templates to open the Export Templates browser.
+  - Name and save the current settings, then apply the saved template.
+  - Rename and delete a template from its context menu.
   assertions:
-  - Template actions are not detached from project state.
-  - Built-in template data is covered by tests.
-  - Custom template persistence has source or test proof.
+  - A saved template loads back from disk with its settings.
+  - Saving with an existing id overwrites instead of adding a duplicate.
+  - Deleting a template removes it from disk.
   evidence:
-  - Source guard for TemplateBrowserSheet, ProjectTemplate, CustomTemplate, and TemplateStore.
-  - Project template and template integration tests.
+  - Source guard for the Templates button and TemplateBrowserSheet actions.
+  - TemplateStore tests.
   required_proof_level: full_runtime_completion
   required_evidence_types:
   - mini_runtime
   - screenshot
   - fixture
+  - log
   historical_failure_classes:
-  - data_loss_or_unexpected_mutation
   - persistence_or_relaunch_reset
-  - layout_visual_regression
-  - pro_basic_gate_drift
-  - external_integration_stub
+  - data_loss_or_unexpected_mutation
   - state_count_drift
-  - docs_promise_drift
   - activation_noop
   functional_state:
     description: Seeded video project with representative media clips, audio, captions,
       timeline edits, export destinations, and safe permission states.
     setup_steps:
-    - Load Tests/Assets media into an isolated project before editor/export/AI tests.
+    - Load Tests/Assets media into an isolated project before editor, export, and
+      caption tests.
     - Use permission fixtures for camera, microphone, and screen capture states unless
       hardware verification is explicitly running.
     fixture_paths:
     - Tests/Assets/
   user_inputs:
-  - Verify built-in templates, custom template creation, save, cancel, select, and
-    delete confirmation controls.
-  - Verify template selection applies export and demo defaults.
-  - Verify destructive template deletion asks for confirmation.
+  - In the Export sheet, press Templates to open the Export Templates browser.
+  - Name and save the current settings, then apply the saved template.
+  - Rename and delete a template from its context menu.
   expected_outputs:
-  - Template actions are not detached from project state.
-  - Built-in template data is covered by tests.
-  - Custom template persistence has source or test proof.
+  - A saved template loads back from disk with its settings.
+  - Saving with an existing id overwrites instead of adding a duplicate.
+  - Deleting a template removes it from disk.

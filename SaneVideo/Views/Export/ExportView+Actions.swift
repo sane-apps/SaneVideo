@@ -231,8 +231,11 @@ extension ExportView {
         let clips = selectedClips
         guard !clips.isEmpty else { return }
 
-        let exportFolder = ExportDestination.folder
         let projectName = appState.currentProject?.name ?? "Untitled"
+        // Same naming as single exports: "/" and ":" cleaned, never overwriting an existing file.
+        let outputURLs = clips.indices.map {
+            ExportDestination.url(for: projectName, suffix: "Clip \($0 + 1)", ext: exportSettings.fileExtension)
+        }
 
         // Capture settings before async context (Swift 6 compliance)
         let settings = exportSettings
@@ -243,18 +246,13 @@ extension ExportView {
 
         Task {
             let totalClips = clips.count
-            let timestamp = Int(Date().timeIntervalSince1970)
 
             // Use BatchCoordinator for parallel export (I/O bound, so use 2 workers)
-            let ext = settings.fileExtension
             let results = await BatchCoordinator.execute(
                 items: clips,
                 config: .ioBound, // 2 concurrent workers for I/O-bound operations
                 operation: { clip, index in
-                    let fileName = "\(projectName)_\(clip.url.deletingPathExtension().lastPathComponent)_\(timestamp).\(ext)"
-                    let outputURL = exportFolder.appendingPathComponent(fileName)
-
-                    try? FileManager.default.removeItem(at: outputURL)
+                    let outputURL = outputURLs[index]
 
                     var tempProject = VideoProject()
                     tempProject.name = "\(projectName)_\(clip.url.deletingPathExtension().lastPathComponent)"
@@ -289,9 +287,7 @@ extension ExportView {
 
             var exportedURLs: [URL] = []
             for (index, result) in results.enumerated() where result.success {
-                let fileName = "\(projectName)_\(clips[index].url.deletingPathExtension().lastPathComponent)_\(timestamp).\(ext)"
-                let outputURL = exportFolder.appendingPathComponent(fileName)
-                exportedURLs.append(outputURL)
+                exportedURLs.append(outputURLs[index])
             }
 
             if successCount > 0 {
@@ -319,10 +315,9 @@ extension ExportView {
             return
         }
 
-        let tempDir = FileManager.default.temporaryDirectory
-        let ext = exportSettings.fileExtension
-        let fileName = "\(project.name)_\(Int(Date().timeIntervalSince1970)).\(ext)"
-        let outputURL = tempDir.appendingPathComponent(fileName)
+        let outputURL = ExportDestination.url(
+            for: project.name, ext: exportSettings.fileExtension, in: FileManager.default.temporaryDirectory
+        )
 
         isExporting = true
         exportProgress = 0

@@ -83,7 +83,7 @@ private struct TeleprompterOverlayView: View {
                         ZStack(alignment: .top) {
                             Color.clear
 
-                            Text(notes.hasContent ? notes.text : "Add speaker notes in Demo Studio to use the teleprompter.")
+                            Text(notes.hasContent ? notes.text : "Write your script with the Script button to use the teleprompter.")
                                 .font(.system(size: notes.fontSize, weight: .semibold, design: .rounded))
                                 .foregroundColor(.white)
                                 .multilineTextAlignment(.leading)

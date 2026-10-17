@@ -164,8 +164,9 @@ extension ProjectState {
       return
     }
 
+    // Timeline time skips Clean Up's cuts and is scaled by speed; map it back to the source file.
     let localOffset = CMTimeSubtract(globalTime, clip.startTime)
-    let splitAssetTime = CMTimeAdd(clip.trimStart, localOffset)
+    let splitAssetTime = clip.originalTime(forEffectiveTime: CMTimeMultiplyByFloat64(localOffset, multiplier: clip.speed))
 
     guard splitAssetTime > clip.trimStart, splitAssetTime < clip.trimEnd else {
       AppLogger.project.warning("Calculated split time \(splitAssetTime.seconds)s invalid for clip bounds")
@@ -412,6 +413,13 @@ extension ProjectState {
 
   func deleteClipFile(_ clip: VideoClip) {
     guard var project = currentProject else { return }
+    // Split pieces share one recording file; trashing it would break every other piece.
+    let othersUseFile = project.timeline.tracks.flatMap(\.clips).contains { $0.id != clip.id && $0.url == clip.url }
+    if othersUseFile {
+      deleteClip(clip)
+      ServiceContainer.shared.toastManager.show("Removed the clip. The file was kept: other clips still use it.", type: .info)
+      return
+    }
     var timeline = project.timeline
 
     for (trackIndex, track) in timeline.tracks.enumerated() {

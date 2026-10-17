@@ -165,10 +165,23 @@ extension VideoClip {
     func effectiveRange(for caption: Caption) -> CMTimeRange? {
         let firstStart = caption.words?.first?.start ?? caption.startTime.seconds
         let lastEnd = caption.words?.last?.end ?? caption.endTime.seconds
-        let end = max(firstStart, lastEnd - 0.02)
-        guard let start = effectiveTime(forOriginalTime: CMTime(seconds: firstStart, preferredTimescale: 600)),
-              let finish = effectiveTime(forOriginalTime: CMTime(seconds: end, preferredTimescale: 600)),
-              finish >= start else { return nil }
+        // Keep the part that plays: a caption crossing a split, a trim or a cut used to vanish entirely.
+        let startSeconds = max(firstStart, trimStart.seconds)
+        let endSeconds = min(max(firstStart, lastEnd - 0.02), trimEnd.seconds)
+        guard startSeconds < endSeconds,
+              let start = effectiveTime(forOriginalTime: playedTime(startSeconds, forward: true)),
+              let finish = effectiveTime(forOriginalTime: playedTime(endSeconds, forward: false)),
+              finish > start else { return nil }
         return CMTimeRange(start: start, end: finish)
+    }
+
+    /// Moves a time that falls inside a cut to the nearest edge that plays.
+    private func playedTime(_ seconds: Double, forward: Bool) -> CMTime {
+        for removal in removedRanges.map(\.timeRange)
+        where seconds >= removal.start.seconds && seconds < removal.end.seconds {
+            let edge = forward ? removal.end.seconds : max(trimStart.seconds, removal.start.seconds - 0.001)
+            return CMTime(seconds: edge, preferredTimescale: 600)
+        }
+        return CMTime(seconds: seconds, preferredTimescale: 600)
     }
 }

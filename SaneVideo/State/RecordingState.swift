@@ -269,8 +269,18 @@ class RecordingState {
         includeCameraOverlay: Bool
     ) {
         AppLogger.recording.error("❌ Cannot start recording: Missing required permissions")
-        ServiceContainer.shared.toastManager.show("Missing required permissions. Please check Settings.", type: .error)
         let requiresMicrophone = isMicActive
+        let missing = if isScreenSharing && permissionManager.screenRecordingStatus != .granted {
+            "Screen Recording"
+        } else if (!isScreenSharing || includeCameraOverlay) && permissionManager.cameraStatus != .granted {
+            "Camera"
+        } else {
+            "Microphone"
+        }
+        ServiceContainer.shared.toastManager.show(
+            "SaneVideo needs \(missing) access. Turn it on in System Settings > Privacy & Security.",
+            type: .error
+        )
 
         if isScreenSharing && permissionManager.screenRecordingStatus != .granted {
             permissionManager.openScreenRecordingSettings()

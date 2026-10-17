@@ -311,8 +311,8 @@ struct SmartFillerDetectorTests {
 
     @Suite("Contextual Fillers")
     struct ContextualFillerTests {
-        @Test("'like' at sentence start is filler")
-        func likeAtStartIsFiller() async {
+        @Test("'like' at sentence start is kept: Clean Up only cuts um/uh-type sounds")
+        func likeAtStartIsKept() async {
             // Arrange
             let detector = SmartFillerDetector()
             let words = [
@@ -325,12 +325,11 @@ struct SmartFillerDetectorTests {
             // Act
             let fillers = await detector.detectFillers(in: words)
 
-            // Assert - "like" at start should be detected
-            #expect(fillers.contains(0))
+            #expect(fillers.isEmpty)
         }
 
-        @Test("'well' at sentence start is filler")
-        func wellAtStartIsFiller() async {
+        @Test("'well' at sentence start is kept")
+        func wellAtStartIsKept() async {
             // Arrange
             let detector = SmartFillerDetector()
             let words = [
@@ -342,8 +341,20 @@ struct SmartFillerDetectorTests {
             // Act
             let fillers = await detector.detectFillers(in: words)
 
-            // Assert
-            #expect(fillers.contains(0))
+            #expect(fillers.isEmpty)
+        }
+
+        @Test("'right and' and 'actually' are kept; only the um in the sentence is cut")
+        func realWordsAreKept() async {
+            let detector = SmartFillerDetector()
+            let text = "turn right and, actually, um, it works"
+            var words: [CaptionWord] = []
+            var time = 0.0
+            for word in text.split(separator: " ") {
+                words.append(CaptionWord(text: String(word), start: time, end: time + 0.3, probability: 0.9))
+                time += 0.3
+            }
+            #expect(await detector.detectFillers(in: words) == [4])
         }
     }
 }

@@ -25,7 +25,6 @@ struct TimelineControls: View {
     @State private var volume: Float = 1.0
     @State private var isMuted: Bool = false
 
-    @State private var showDeleteConfirmation = false
 
     var body: some View {
         HStack(spacing: 0) {
@@ -275,23 +274,12 @@ struct TimelineControls: View {
             .accessibilityLabel("Split clip at playhead")
 
             ToolButton(icon: "trash", isSelected: false, id: "DeleteClipButton") {
-                if selectedClip != nil {
-                    showDeleteConfirmation = true
+                if let selectedClip {
+                    projectState.deleteClip(selectedClip)
                 }
             }
             .disabled(selectedClip == nil || projectState.isProcessing)
-            .help("Delete (⌫)")
-            .confirmationDialog("Delete Clip?", isPresented: $showDeleteConfirmation, presenting: selectedClip) { clip in
-                Button("Remove from Project", role: .destructive) {
-                    projectState.deleteClip(clip)
-                }
-                Button("Move to Trash", role: .destructive) {
-                    projectState.deleteClipFile(clip)
-                }
-                Button("Cancel", role: .cancel) {}
-            } message: { clip in
-                Text("Remove '\(clip.url.lastPathComponent)' from project or move file to Trash?")
-            }
+            .help("Remove the clip from the timeline (⌫). Undo brings it back; the file stays.")
         }
     }
 

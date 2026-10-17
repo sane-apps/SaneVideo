@@ -173,21 +173,16 @@ enum MagicFixService {
         
         // Fallback for clips with captions but NO word-level timestamps (rare with Apple Speech)
         if fillerRanges.isEmpty && !clip.captions.isEmpty && words.isEmpty {
-            let fillerWords: Set<String> = [
-                "um", "uh", "uhh", "umm", "hmm", "like", "you know",
-                "basically", "literally", "actually", "so", "well"
-            ]
-            
+            // Without word times only a whole caption can be cut, so cut it only when every word is a filler.
+            let fillerWords: Set<String> = ["um", "uh", "uhh", "umm", "er", "ah", "hmm"]
+
             for caption in clip.captions {
-                let cleanedText = caption.text.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
-                let sentenceWords = cleanedText.components(separatedBy: .whitespacesAndNewlines)
+                let sentenceWords = caption.text.lowercased()
+                    .components(separatedBy: .whitespacesAndNewlines)
                     .map { $0.trimmingCharacters(in: .punctuationCharacters) }
                     .filter { !$0.isEmpty }
-                
-                for word in sentenceWords where fillerWords.contains(word) {
-                    let range = CMTimeRange(start: caption.startTime, end: caption.endTime)
-                    fillerRanges.append(range)
-                    break
+                if !sentenceWords.isEmpty, sentenceWords.allSatisfy(fillerWords.contains) {
+                    fillerRanges.append(CMTimeRange(start: caption.startTime, end: caption.endTime))
                 }
             }
         }

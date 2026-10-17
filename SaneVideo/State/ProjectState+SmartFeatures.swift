@@ -35,6 +35,9 @@ extension ProjectState {
         updatedClip.isGatingEnabled = false
 
         project.timeline.tracks[trackIndex].clips[clipIndex] = updatedClip
+        // The clip got longer again: move later clips so they don't overlap it.
+        recalculateStartTimes(in: &project.timeline)
+        project.timeline.updateDuration()
         currentProject = project
         saveProject(project)
 
@@ -137,6 +140,7 @@ extension ProjectState {
                 return
             }
 
+            var speechSkipped = false
             if (options.generateCaptions || options.removeFillers)
                 && preAnalysisClip.captions.isEmpty {
                 try Task.checkCancellation()
@@ -148,6 +152,7 @@ extension ProjectState {
                 } catch is CancellationError {
                     throw CancellationError()
                 } catch {
+                    speechSkipped = true
                     AppLogger.project.warning(
                         "Magic Fix: Caption generation failed: \(error.localizedDescription)")
                 }
@@ -168,7 +173,16 @@ extension ProjectState {
 
                 updateTransactionProgress(transactionId, progress: 1.0)
                 processingStatus = "Clean Up done"
-                ServiceContainer.shared.toastManager.show("Clean Up done", type: .info)
+                if speechSkipped {
+                    // Said plainly so the user knows why the "um"s are still there.
+                    ServiceContainer.shared.toastManager.show(
+                        "Silences cut, but filler words and captions were skipped: the speech model didn't load. "
+                            + "The first run needs internet to download it (about 600 MB). Run Clean Up again.",
+                        type: .error
+                    )
+                } else {
+                    ServiceContainer.shared.toastManager.show("Clean Up done", type: .info)
+                }
                 AppLogger.project.info("✨ Magic Fix: One-click flow finished successfully")
 
                 // Reload the composition: StateChangePipeline watches only track structure, not clip.removedRanges, so the cuts would not show.
@@ -237,6 +251,9 @@ extension ProjectState {
                     project.timeline.tracks[index].clips[clipIndex].removedRanges = codableRemovals
                     project.timeline.tracks[index].clips[clipIndex].useSmoothCutForRemovals =
                         options.smoothJumpCuts
+                    // The clip got shorter: move later clips up so no gap is left.
+                    self.recalculateStartTimes(in: &project.timeline)
+                    project.timeline.updateDuration()
 
                     self.currentProject = project
                     self.saveProject(project)

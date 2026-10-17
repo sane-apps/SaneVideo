@@ -93,6 +93,7 @@
 		2125BAB4EF323CE693B4E0B2 /* ThumbnailPreviewImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2634608569F5CD543D4DFA02 /* ThumbnailPreviewImage.swift */; };
 		219D095E77817187C71F6C23 /* ParakeetService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77B07D183C238A98880AED65 /* ParakeetService.swift */; };
 		21DF1B825ECF2B19FE98D3F2 /* LogManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C2A76E45D52E82FF06B958A /* LogManager.swift */; };
+		224C98547EEB9A30C804F794 /* GIFExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC3320BC8C0CF5295027945A /* GIFExporter.swift */; };
 		22C1A78D0356849552DBC064 /* AppIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E3F122E724F667B3C66D328 /* AppIntegrationTests.swift */; };
 		22F98AA50C1F6BD2D81FA053 /* SoundManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1597AB1A6E8B13786944E1D9 /* SoundManager.swift */; };
 		23608A389D4BE01579B87D33 /* VideoWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D4F3B3EA01F07342A037521 /* VideoWriter.swift */; };
@@ -186,6 +187,7 @@
 		42AF7854657290380F7677F1 /* TranscriptionCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6EA62505F07D849AC754019 /* TranscriptionCoordinator.swift */; };
 		44F279B41C003AD95E6A2393 /* Timeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = 405467BE16EC967505153B95 /* Timeline.swift */; };
 		453900808F2143FEAA909D54 /* LoadingStateModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = FECB30CD6B23E716BDE282B8 /* LoadingStateModifier.swift */; };
+		468DB0FC35744EDBB5EFFA4D /* ExportDestination.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDB7718BDA2062EF21B9E055 /* ExportDestination.swift */; };
 		472FEC6D9ADEE975E6FD3181 /* ProjectStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F149928C7B46C2BC7DF9073E /* ProjectStoreTests.swift */; };
 		475D6E7F042930A73FF6B6A5 /* PermissionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B08BACC044466CA990D9208 /* PermissionManager.swift */; };
 		47709C70CE00A6E81F1506BF /* RepurposingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC3ACA2C5A3F21450CF380D8 /* RepurposingTests.swift */; };
@@ -293,7 +295,6 @@
 		6F0E642EA9B456EB09367F16 /* ProjectTemplateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A0AFBE47D79ECC695F88A91 /* ProjectTemplateTests.swift */; };
 		6F98C2B00609048A9CC38311 /* TemplateStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6299CB90275D2D5913FE2304 /* TemplateStoreTests.swift */; };
 		6FF5DC7397CED58733FB172D /* SaneAudioEnhancementService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C20CD4449178A6006F4EA43A /* SaneAudioEnhancementService.swift */; };
-		7084FD30CB729D0CCDA8E619 /* FFmpegService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F59EABDE2F28741309976F6C /* FFmpegService.swift */; };
 		70E361313AB3791A81DFD69B /* TranslationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6E6DE2B9407C20D6426B897 /* TranslationService.swift */; };
 		71528C2375D28F09273ADDAE /* CMTime+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1001397396AC5C9D9A24EAE5 /* CMTime+Extensions.swift */; };
 		7152C0028E86591FE9159835 /* SessionAuditRegressionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A489FAB3BB10FCC9B1A7210 /* SessionAuditRegressionTests.swift */; };
@@ -486,7 +487,7 @@
 		BB4B97357CDEB81232A45DF0 /* MainContentView+Export.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7489F1751D38A8D26192F517 /* MainContentView+Export.swift */; };
 		BBA53C2D4EDC56A216B97AE3 /* CompactProjectBrowserView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E8EB169C373BEA719A0482F /* CompactProjectBrowserView.swift */; };
 		BBE31E52193AD7ABC8C83BDA /* DiskSpaceMonitorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB04E867B90364460B8D4B52 /* DiskSpaceMonitorTests.swift */; };
-		BC2CB329C9711111E7799DCF /* FFmpegService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F59EABDE2F28741309976F6C /* FFmpegService.swift */; };
+		BBE3EADEA94B8A63CD9325E4 /* ExportDestination.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDB7718BDA2062EF21B9E055 /* ExportDestination.swift */; };
 		BC8EF7AFF3314FD0390D548D /* LabeledSliderControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1906594AEB0E34C35AC29837 /* LabeledSliderControl.swift */; };
 		BCE4144C1255D076E488242C /* StateChangePipeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B962D11F86A94D932866A67 /* StateChangePipeline.swift */; };
 		BD1B9734D854749F348E393C /* TranscriptionError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54F9EA59DE76685114B98673 /* TranscriptionError.swift */; };
@@ -512,6 +513,7 @@
 		C59EFD08556D779F442BA77C /* VideoTrackBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9C7884405BFC376E990F166 /* VideoTrackBuilder.swift */; };
 		C6B24BF688A93FF226FB148D /* AIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 320D50EB6C70DB9427AD7BDA /* AIService.swift */; };
 		C71963DDCD438C5D189DFB9A /* MagicFixServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BEA7C24015596285C2119F20 /* MagicFixServiceTests.swift */; };
+		C74A184BF022DEA8B5C0A0C2 /* GIFExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC3320BC8C0CF5295027945A /* GIFExporter.swift */; };
 		C7B4C95D59C18AA097A8174B /* WindowManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B94BAAB53283E754C8D3CA0 /* WindowManagerTests.swift */; };
 		C7C26921B973D5ECB73C1B0B /* EditorLayoutHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2402863D821CF5E2A0F6A393 /* EditorLayoutHelpers.swift */; };
 		C7DD0848F0A5B74FAF1D85E7 /* CameraServiceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = A892D790EF63E0ACC37151C0 /* CameraServiceProtocol.swift */; };
@@ -1027,6 +1029,7 @@
 		EA79DA8C3F68E63776DAAC7D /* test_silence.mp4 */ = {isa = PBXFileReference; path = test_silence.mp4; sourceTree = "<group>"; };
 		EB0C397547335A1E52F31041 /* ChromaKeyKernel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChromaKeyKernel.swift; sourceTree = "<group>"; };
 		EB1D59507B0A099ED5925BBF /* CaptionPreviewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptionPreviewTests.swift; sourceTree = "<group>"; };
+		EC3320BC8C0CF5295027945A /* GIFExporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GIFExporter.swift; sourceTree = "<group>"; };
 		EE40E8E5CDDE0749BECD9AAD /* TemplateStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TemplateStore.swift; sourceTree = "<group>"; };
 		EEC40D7C101C579494726DC0 /* PlaybackUXRegressionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaybackUXRegressionTests.swift; sourceTree = "<group>"; };
 		EEF55C3966A3B7D211C3B65B /* AppLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLogger.swift; sourceTree = "<group>"; };
@@ -1045,7 +1048,6 @@
 		F44A43588066E0BE2E8E6DE4 /* LiquidGlassStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiquidGlassStyle.swift; sourceTree = "<group>"; };
 		F4B9483E7AF0EC2C00A77424 /* PerformanceMetricsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PerformanceMetricsService.swift; sourceTree = "<group>"; };
 		F58C82332EBB5D433BB6491A /* ExportAudioIntegrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportAudioIntegrationTests.swift; sourceTree = "<group>"; };
-		F59EABDE2F28741309976F6C /* FFmpegService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FFmpegService.swift; sourceTree = "<group>"; };
 		F6ED98018998ECF108F47FE6 /* SmartThumbnailServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmartThumbnailServiceTests.swift; sourceTree = "<group>"; };
 		F78323D41C6D9B08FA7C5565 /* CaptionStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptionStyle.swift; sourceTree = "<group>"; };
 		F87490B6CFECD51D1B257086 /* ReleaseReadinessRegressionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReleaseReadinessRegressionTests.swift; sourceTree = "<group>"; };
@@ -1058,6 +1060,7 @@
 		FB0CE27E052E9F8B06D0E814 /* PrivacySettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrivacySettingsView.swift; sourceTree = "<group>"; };
 		FB62CE34AA404CA0A6FBA407 /* MagicFixRegressionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MagicFixRegressionTests.swift; sourceTree = "<group>"; };
 		FC42F8D9F43D26E0A1CE6A9F /* AudioResampler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioResampler.swift; sourceTree = "<group>"; };
+		FDB7718BDA2062EF21B9E055 /* ExportDestination.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportDestination.swift; sourceTree = "<group>"; };
 		FDD2F77B7A0557D3B4EEC6A9 /* PermissionManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionManagerTests.swift; sourceTree = "<group>"; };
 		FECB30CD6B23E716BDE282B8 /* LoadingStateModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoadingStateModifier.swift; sourceTree = "<group>"; };
 		FFE0D9A872D31E7A8C8AD5F1 /* AppleSpeechService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleSpeechService.swift; sourceTree = "<group>"; };
@@ -1101,6 +1104,7 @@
 			children = (
 				6CAC962563DC7B410B6A9917 /* ErrorPresenter.swift */,
 				3E1A8BE7244EF6E968EA8DED /* ErrorRecovery.swift */,
+				FDB7718BDA2062EF21B9E055 /* ExportDestination.swift */,
 				2EF07ED01E18E49B731F3AB9 /* FeatureDiscovery.swift */,
 				CE92A6218CDAE771E8590723 /* LegacyDataCleanup.swift */,
 				C4C3133221D1F4C8352C90D2 /* LogExportService.swift */,
@@ -1388,7 +1392,7 @@
 				A3D2099532ECEF7D01E92197 /* ExportProgressTracker.swift */,
 				A9C967D8F83DFB0507DB81AB /* ExportSpeedTracker.swift */,
 				25144BAC817F687731812980 /* ExportTypes.swift */,
-				F59EABDE2F28741309976F6C /* FFmpegService.swift */,
+				EC3320BC8C0CF5295027945A /* GIFExporter.swift */,
 				ADF9CBF42509F141E56EE63E /* PDFGeneratorService.swift */,
 				8319698DDD91CE82B13F281B /* ShareLinkService.swift */,
 				96913416BAECD9FE920415A8 /* ThumbnailFrameLoader.swift */,
@@ -2442,6 +2446,7 @@
 				81717D6FA6B695DE93F87E42 /* ErrorRecovery.swift in Sources */,
 				7892330373552CC8A97207AF /* ExportCompositor.swift in Sources */,
 				FC5CA476D98069ADEBC732B3 /* ExportConfigurationView.swift in Sources */,
+				BBE3EADEA94B8A63CD9325E4 /* ExportDestination.swift in Sources */,
 				18638DC7F2759CDB24CB7093 /* ExportEngine.swift in Sources */,
 				681619437EE34614EB88D9F6 /* ExportPresetPicker.swift in Sources */,
 				8DCBFC25D2DA6124F032AF7E /* ExportProgressTracker.swift in Sources */,
@@ -2451,7 +2456,6 @@
 				C2632AF8A10C2AD431AB2A0C /* ExportUIModels.swift in Sources */,
 				6A383C7E1B6319D7B85AE142 /* ExportView+Actions.swift in Sources */,
 				B3D184D5B35D795EAD54A1FE /* ExportView.swift in Sources */,
-				7084FD30CB729D0CCDA8E619 /* FFmpegService.swift in Sources */,
 				77E95547A02F91823F89BCBF /* FaceTrackingService.swift in Sources */,
 				D25F8FD4B0D06AE543B0B706 /* FeatureDiscovery.swift in Sources */,
 				B1F26AFD9ECA6F859BF06613 /* FileDropModifier.swift in Sources */,
@@ -2459,6 +2463,7 @@
 				9F9AE490FEDA546571F4CAD9 /* FloatingControlsWindow.swift in Sources */,
 				F0E0308D202298678516C32B /* FocusNavigationModifier.swift in Sources */,
 				AA4AA7F03CE318247AD7D619 /* GIFExportSheet.swift in Sources */,
+				224C98547EEB9A30C804F794 /* GIFExporter.swift in Sources */,
 				CE0CE49A717CF0CAAF020B37 /* GlobalHotkeyManager.swift in Sources */,
 				39AE0D733DBF2FBA50588142 /* GlobalSheetModifier.swift in Sources */,
 				9DB23D37442BB0130811A917 /* HapticsManager.swift in Sources */,
@@ -2703,6 +2708,7 @@
 				3BB3E39DD4146D739337136C /* ErrorRecovery.swift in Sources */,
 				1075A0BB796108749BDFA48D /* ExportCompositor.swift in Sources */,
 				BE0C037B12B9989DB9FB444B /* ExportConfigurationView.swift in Sources */,
+				468DB0FC35744EDBB5EFFA4D /* ExportDestination.swift in Sources */,
 				CA3FEBAB9E18496ED20280B4 /* ExportEngine.swift in Sources */,
 				C2A3274D2295CD4EE5D2C85D /* ExportPresetPicker.swift in Sources */,
 				A97A2D66884C8C5289EC0E9F /* ExportProgressTracker.swift in Sources */,
@@ -2712,7 +2718,6 @@
 				CD9E740DB1CCB40358A2977D /* ExportUIModels.swift in Sources */,
 				950A294A001E4D5531CB6045 /* ExportView+Actions.swift in Sources */,
 				EB815BDD6321B9D0DB06D628 /* ExportView.swift in Sources */,
-				BC2CB329C9711111E7799DCF /* FFmpegService.swift in Sources */,
 				E00444F7E37B83E3C43BF2D5 /* FaceTrackingService.swift in Sources */,
 				D239AD30F274740422FACCE7 /* FeatureDiscovery.swift in Sources */,
 				630543D14037680CCCF3B070 /* FileDropModifier.swift in Sources */,
@@ -2720,6 +2725,7 @@
 				D9A9622261642F09F8F6CF97 /* FloatingControlsWindow.swift in Sources */,
 				AA48F68EC0B68FF5867439B9 /* FocusNavigationModifier.swift in Sources */,
 				0F9EA6BC416E1B56D2722659 /* GIFExportSheet.swift in Sources */,
+				C74A184BF022DEA8B5C0A0C2 /* GIFExporter.swift in Sources */,
 				DA6749D9E6FB81FE57CA935B /* GlobalHotkeyManager.swift in Sources */,
 				27931A3C0644F9F839BA9425 /* GlobalSheetModifier.swift in Sources */,
 				CB4BC066A5170DC51B53967E /* HapticsManager.swift in Sources */,

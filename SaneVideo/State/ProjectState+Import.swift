@@ -29,21 +29,7 @@ extension ProjectState {
         NSLog("Attempting to import video: \(url.lastPathComponent)")
         AppLogger.project.info("Attempting to import video: \(url.lastPathComponent)")
 
-        let nativeExtensions = ["mp4", "mov", "m4v"]
-        let ext = url.pathExtension.lowercased()
-        var targetURL = url
-
-        if !nativeExtensions.contains(ext) {
-            AppLogger.project.info("Non-native format detected (\(ext)). Requesting optimization...")
-            if let optimizedURL = await optimizeMedia(url: url) {
-                targetURL = optimizedURL
-            } else {
-                AppLogger.project.error("Optimization failed for \(ext) format")
-                await MainActor.run {
-                    ServiceContainer.shared.toastManager.show("Failed to optimize \(ext) file. Format may not be supported.", type: .error)
-                }
-            }
-        }
+        let targetURL = url
 
         do {
             var clip: VideoClip!
@@ -55,14 +41,6 @@ extension ProjectState {
                     break
                 } catch {
                     lastError = error
-
-                    if attempt == 1, (error as NSError).domain == AVFoundationErrorDomain {
-                        AppLogger.project.warning("Native load failed. Attempting emergency optimization...")
-                        if let optimizedURL = await optimizeMedia(url: targetURL) {
-                            targetURL = optimizedURL
-                            continue
-                        }
-                    }
 
                     AppLogger.project.warning("Attempt \(attempt) to load clip failed: \(error.localizedDescription)")
                     if attempt < 5 {
@@ -99,39 +77,8 @@ extension ProjectState {
             }
         } catch {
             AppLogger.project.error("Failed to load video clip: \(error)")
-            let message = (error as NSError).domain == AVFoundationErrorDomain ? "Video format not supported or file damaged." : error.localizedDescription
+            let message = (error as NSError).domain == AVFoundationErrorDomain ? "This video format isn't supported or the file is damaged. Convert it to MP4 or MOV first." : error.localizedDescription
             ServiceContainer.shared.toastManager.show("Import failed: \(message)", type: .error)
-        }
-    }
-
-    func optimizeMedia(url: URL) async -> URL? {
-        let ffmpeg = ServiceContainer.shared.ffmpegService
-        guard await ffmpeg.isAvailable else {
-            AppLogger.project.error("FFmpeg not available for optimization.")
-            return nil
-        }
-
-        let optimizedDir = FileManager.default.currentDirectoryPath + "/Media/Optimized"
-        let timestamp = Int(Date().timeIntervalSince1970)
-        let outputURL = URL(fileURLWithPath: optimizedDir).appendingPathComponent("optimized_\(timestamp)_\(url.deletingPathExtension().lastPathComponent).mp4")
-
-        await MainActor.run {
-            self.isProcessing = true
-            ServiceContainer.shared.toastManager.show("Optimizing Media for Editor...")
-        }
-
-        defer {
-            Task { @MainActor in self.isProcessing = false }
-        }
-
-        do {
-            AppLogger.project.info("Transcoding \(url.lastPathComponent) to \(outputURL.lastPathComponent)...")
-            try await ffmpeg.convert(inputURL: url, outputURL: outputURL, codec: .h264, preset: .fast)
-            AppLogger.project.info("Optimization complete: \(outputURL.lastPathComponent)")
-            return outputURL
-        } catch {
-            AppLogger.project.error("Optimization failed: \(error.localizedDescription)")
-            return nil
         }
     }
 

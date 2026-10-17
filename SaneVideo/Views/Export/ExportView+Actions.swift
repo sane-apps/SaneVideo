@@ -18,10 +18,7 @@ extension ExportView {
               let firstTrack = project.timeline.tracks.first,
               let firstClip = firstTrack.clips.first else { return }
 
-        let desktopURL = FileManager.default.homeDirectoryForCurrentUser
-            .appendingPathComponent("Desktop")
-        let fileName = "\(project.name)_Thumbnail.jpg"
-        let outputURL = desktopURL.appendingPathComponent(fileName)
+        let outputURL = ExportDestination.url(for: project.name, suffix: "Thumbnail", ext: "jpg")
 
         // Capture services before Task (Swift 6 safety)
         let thumbnailService = ServiceContainer.shared.thumbnailService
@@ -48,7 +45,7 @@ extension ExportView {
         }
     }
 
-    /// Export first clip as GIF using FFmpeg
+    /// Export the first 10 seconds of the first clip as a GIF
     func exportAsGIF() {
         guard let project = appState.currentProject,
               let firstTrack = project.timeline.tracks.first,
@@ -58,26 +55,22 @@ extension ExportView {
             return
         }
 
-        let desktopURL = FileManager.default.homeDirectoryForCurrentUser
-            .appendingPathComponent("Desktop")
-        let fileName = "\(project.name)_\(Int(Date().timeIntervalSince1970)).gif"
-        let outputURL = desktopURL.appendingPathComponent(fileName)
+        let outputURL = ExportDestination.url(for: project.name, ext: "gif")
 
         isExporting = true
         exportProgress = 0.1
 
-        let ffmpegService = ServiceContainer.shared.ffmpegService
         let toastManager = ServiceContainer.shared.toastManager
 
         Task {
             do {
-                try await ffmpegService.exportAsGIF(
+                try await GIFExporter.export(
                     inputURL: firstClip.url,
                     outputURL: outputURL,
                     fps: 10,
                     width: 480,
                     startTime: firstClip.trimStart.seconds,
-                    duration: min(firstClip.effectiveDuration.seconds, 10.0) // Max 10s for GIF
+                    duration: min(firstClip.effectiveDuration.seconds, 10.0)
                 ) { @Sendable progress in
                     Task { @MainActor in
                         self.exportProgress = progress
@@ -113,10 +106,7 @@ extension ExportView {
             return
         }
 
-        let desktopURL = FileManager.default.homeDirectoryForCurrentUser
-            .appendingPathComponent("Desktop")
-        let fileName = "\(project.name)_Voiceover_\(Int(Date().timeIntervalSince1970)).m4a"
-        let outputURL = desktopURL.appendingPathComponent(fileName)
+        let outputURL = ExportDestination.url(for: project.name, suffix: "Voiceover", ext: "m4a")
 
         isExporting = true
         exportProgress = 0.1
@@ -161,36 +151,7 @@ extension ExportView {
             return
         }
 
-        let desktopURL = FileManager.default.homeDirectoryForCurrentUser
-            .appendingPathComponent("Desktop")
-
-        // CRITICAL FIX: Validate output directory exists and is writable
-        // File extension based on codec (HEVC with Alpha requires MOV)
-        let ext = exportSettings.fileExtension
-        var isDirectory: ObjCBool = false
-        var outputURL: URL
-        if !FileManager.default.fileExists(atPath: desktopURL.path, isDirectory: &isDirectory) || !isDirectory.boolValue {
-            ServiceContainer.shared.toastManager.show("Desktop folder not found. Exporting to app storage instead.", type: .info)
-            let documentsURL = Self.fallbackExportDirectory()
-            let fileName = "\(project.name)_\(Int(Date().timeIntervalSince1970)).\(ext)"
-            outputURL = documentsURL.appendingPathComponent(fileName)
-        } else if !FileManager.default.isWritableFile(atPath: desktopURL.path) {
-            ServiceContainer.shared.toastManager.show("Desktop is not writable. Exporting to app storage instead.", type: .info)
-            let documentsURL = Self.fallbackExportDirectory()
-            let fileName = "\(project.name)_\(Int(Date().timeIntervalSince1970)).\(ext)"
-            outputURL = documentsURL.appendingPathComponent(fileName)
-        } else {
-            let fileName = "\(project.name)_\(Int(Date().timeIntervalSince1970)).\(ext)"
-            outputURL = desktopURL.appendingPathComponent(fileName)
-        }
-
-        try? FileManager.default.createDirectory(
-            at: outputURL.deletingLastPathComponent(),
-            withIntermediateDirectories: true
-        )
-
-        // Remove existing file if needed
-        try? FileManager.default.removeItem(at: outputURL)
+        let outputURL = ExportDestination.url(for: project.name, ext: exportSettings.fileExtension)
 
         // CRITICAL FIX: Start export with validation in Task
         Task {
@@ -266,16 +227,6 @@ extension ExportView {
         }
     }
 
-    static func fallbackExportDirectory(fileManager: FileManager = .default) -> URL {
-        if let supportURL = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first {
-            return supportURL
-                .appendingPathComponent("SaneVideo", isDirectory: true)
-                .appendingPathComponent("Exports", isDirectory: true)
-        }
-
-        return fileManager.temporaryDirectory.appendingPathComponent("SaneVideo/Exports", isDirectory: true)
-    }
-
     // MARK: - Batch Export
 
     /// Exports multiple selected clips individually (parallelized via BatchCoordinator)
@@ -283,8 +234,7 @@ extension ExportView {
         let clips = selectedClips
         guard !clips.isEmpty else { return }
 
-        let desktopURL = FileManager.default.homeDirectoryForCurrentUser
-            .appendingPathComponent("Desktop")
+        let exportFolder = ExportDestination.folder
         let projectName = appState.currentProject?.name ?? "Untitled"
 
         // Capture settings before async context (Swift 6 compliance)
@@ -305,7 +255,7 @@ extension ExportView {
                 config: .ioBound, // 2 concurrent workers for I/O-bound operations
                 operation: { clip, index in
                     let fileName = "\(projectName)_\(clip.url.deletingPathExtension().lastPathComponent)_\(timestamp).\(ext)"
-                    let outputURL = desktopURL.appendingPathComponent(fileName)
+                    let outputURL = exportFolder.appendingPathComponent(fileName)
 
                     // Remove existing file if needed
                     try? FileManager.default.removeItem(at: outputURL)
@@ -351,7 +301,7 @@ extension ExportView {
             var exportedURLs: [URL] = []
             for (index, result) in results.enumerated() where result.success {
                 let fileName = "\(projectName)_\(clips[index].url.deletingPathExtension().lastPathComponent)_\(timestamp).\(ext)"
-                let outputURL = desktopURL.appendingPathComponent(fileName)
+                let outputURL = exportFolder.appendingPathComponent(fileName)
                 exportedURLs.append(outputURL)
             }
 

@@ -13,7 +13,7 @@ import UniformTypeIdentifiers
 // MARK: - Export Menu Functions
 
 extension MainContentView {
-  /// Export as animated GIF using FFmpeg
+  /// Export as animated GIF
   func exportAsGIF() {
     guard let project = appState.projectState.currentProject,
       let clip = project.timeline.tracks.first?.clips.first
@@ -29,25 +29,14 @@ extension MainContentView {
 
     Task {
       do {
-        let outputURL = FileManager.default.temporaryDirectory
-          .appendingPathComponent("\(project.name)_clip.gif")
-
-        try await ServiceContainer.shared.ffmpegService.exportAsGIF(
-          inputURL: clip.url, outputURL: outputURL)
-
-        // Show save panel
+        let outputURL = ExportDestination.url(for: project.name, ext: "gif")
+        try await GIFExporter.export(
+          inputURL: clip.url, outputURL: outputURL,
+          startTime: clip.trimStart.seconds, duration: min(clip.effectiveDuration.seconds, 10))
         await MainActor.run {
-          let savePanel = NSSavePanel()
-          savePanel.allowedContentTypes = [.gif]
-          savePanel.nameFieldStringValue = "\(project.name).gif"
-
-          savePanel.begin { response in
-            if response == .OK, let url = savePanel.url {
-              try? FileManager.default.copyItem(at: outputURL, to: url)
-              ServiceContainer.shared.toastManager.show(
-                String(localized: "toast.gif_saved", defaultValue: "GIF saved!"))
-            }
-          }
+          NSWorkspace.shared.activateFileViewerSelecting([outputURL])
+          ServiceContainer.shared.toastManager.show(
+            String(localized: "toast.gif_saved", defaultValue: "GIF saved!"))
         }
       } catch {
         await MainActor.run {
@@ -84,16 +73,14 @@ extension MainContentView {
 
     Task {
       do {
-        let desktopURL = FileManager.default.urls(for: .desktopDirectory, in: .userDomainMask)
-          .first!
-        let outputURL = desktopURL.appendingPathComponent("\(project.name)_Transcript.pdf")
+        let outputURL = ExportDestination.url(for: project.name, suffix: "Transcript", ext: "pdf")
 
         try await ServiceContainer.shared.pdfService.generateStudyGuide(
           for: project, outputURL: outputURL)
 
         await MainActor.run {
           ServiceContainer.shared.toastManager.show(
-            String(localized: "toast.pdf_saved", defaultValue: "PDF saved to Desktop!"))
+            String(localized: "toast.pdf_saved", defaultValue: "PDF saved to Movies > SaneVideo > Exports"))
           NSWorkspace.shared.open(outputURL)
         }
       } catch {
@@ -169,9 +156,7 @@ extension MainContentView {
 
     Task {
       do {
-        let desktopURL = FileManager.default.urls(for: .desktopDirectory, in: .userDomainMask)
-          .first!
-        let outputURL = desktopURL.appendingPathComponent("\(project.name)_Voiceover.m4a")
+        let outputURL = ExportDestination.url(for: project.name, suffix: "Voiceover", ext: "m4a")
 
         try await ServiceContainer.shared.voiceoverService.generateVoiceoverFromCaptions(
           captions, outputURL: outputURL)
@@ -180,7 +165,7 @@ extension MainContentView {
           ServiceContainer.shared.toastManager.show(
             String(
               localized: "toast.voiceover_saved_desktop",
-              defaultValue: "✅ Voiceover saved to Desktop!"))
+              defaultValue: "Voiceover saved to Movies > SaneVideo > Exports"))
           NSWorkspace.shared.open(outputURL)
         }
       } catch {

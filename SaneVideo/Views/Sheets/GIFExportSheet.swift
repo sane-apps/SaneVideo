@@ -271,26 +271,14 @@ struct GIFExportSheet: View {
                     return
                 }
 
-                let ffmpeg = ServiceContainer.shared.ffmpegService
-                guard await ffmpeg.isAvailable else {
-                    await MainActor.run {
-                        errorMessage = String(
-                            localized: "gif.error.ffmpeg_missing",
-                            defaultValue: "FFmpeg not installed. Run: brew install ffmpeg"
-                        )
-                        isExporting = false
-                    }
-                    return
-                }
+                let start = useFullVideo ? 0 : startTime
+                let duration = useFullVideo ? clipDuration : (endTime - startTime)
 
-                let start = useFullVideo ? nil : startTime
-                let duration = useFullVideo ? nil : (endTime - startTime)
-
-                try await ffmpeg.exportAsGIF(
+                try await GIFExporter.export(
                     inputURL: videoURL,
                     outputURL: url,
-                    fps: fps,
-                    width: width,
+                    fps: Double(fps),
+                    width: CGFloat(width),
                     startTime: start,
                     duration: duration
                 )

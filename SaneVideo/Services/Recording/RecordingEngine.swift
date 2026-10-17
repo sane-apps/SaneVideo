@@ -457,6 +457,19 @@ class RecordingEngine: NSObject {
       finalURL = nil
     }
 
+    // A camera that stops sending frames leaves a sound-only file; say so instead of saving it silently.
+    if let url = finalURL,
+       let videoTracks = try? await AVURLAsset(url: url).loadTracks(withMediaType: .video),
+       videoTracks.isEmpty {
+      AppLogger.recording.error("Recording has no video track: the camera or screen sent no frames")
+      await MainActor.run {
+        ServiceContainer.shared.toastManager.show(
+          "This take has sound but no picture: the camera sent no video. Unplug and reconnect the camera, then record again.",
+          type: .error
+        )
+      }
+    }
+
     if let url = finalURL {
       let clickService = await ServiceContainer.shared.clickTrackingService
       _ = try? await clickService.stopTrackingAndSave(to: url)

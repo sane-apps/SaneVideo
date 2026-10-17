@@ -55,7 +55,7 @@ struct AudioProcessingIntegrationTests {
 
         let exported = try await ExportEngine().export(
             project: project,
-            settings: SaneExportSettings(),
+            settings: SaneExportSettings(resolution: .hd1080),
             outputURL: outputURL
         ) { _ in }
 

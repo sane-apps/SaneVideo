@@ -213,3 +213,6 @@ build-logs/
 !Tests/Assets/*.mp4
 !Tests/Assets/*.mov
 !Tests/Assets/*.MOV
+
+# Stock clips copied in only while taking App Store screenshots
+Tests/Assets/store-*.mp4

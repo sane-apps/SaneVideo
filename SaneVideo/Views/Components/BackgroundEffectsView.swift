@@ -288,7 +288,7 @@ struct BackgroundEffectsView: View {
           }
           .buttonStyle(.bordered)
           .controlSize(.small)
-          .tint(Int(blurRadius) == preset.0 ? .accentColor : nil)
+          .tint(Int(blurRadius) == preset.0 ? Theme.Colors.accent : nil)
           .accessibilityIdentifier("background.blur_preset.\(preset.0)")
         }
       }
@@ -476,12 +476,12 @@ private struct EffectTypeButton: View {
       }
       .frame(maxWidth: .infinity)
       .padding(.vertical, 8)
-      .background(isSelected ? Color.accentColor.opacity(0.2) : Color.stone.opacity(0.1))
-      .foregroundColor(isSelected ? .accentColor : Color.stone)
+      .background(isSelected ? Theme.Colors.accent.opacity(0.2) : Color.stone.opacity(0.1))
+      .foregroundColor(isSelected ? Theme.Colors.accent : Color.stone)
       .cornerRadius(6)
       .overlay(
         RoundedRectangle(cornerRadius: 6)
-          .stroke(isSelected ? Color.accentColor : Color.clear, lineWidth: 1)
+          .stroke(isSelected ? Theme.Colors.accent : Color.clear, lineWidth: 1)
       )
     }
     .buttonStyle(.plain)

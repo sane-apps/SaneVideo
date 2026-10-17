@@ -54,7 +54,7 @@ struct CompactProjectBrowserView: View {
         if selectedIds.count > 1 {
             Text("(\(selectedIds.count) selected)")
                 .font(.caption)
-                .foregroundColor(.accentColor)
+                .foregroundColor(Theme.Colors.accent)
         } else {
             Text("(\(projects.count))")
                 .font(.caption)
@@ -276,7 +276,7 @@ struct CompactProjectRow: View {
                         .aspectRatio(contentMode: .fill)
                 } else {
                     RoundedRectangle(cornerRadius: 6)
-                        .fill(Color.accentColor.opacity(0.2))
+                        .fill(Theme.Colors.accent.opacity(0.2))
                     Image(systemName: firstClip == nil ? "film.stack" : "photo")
                         .font(.system(size: 16))
                         .foregroundColor(Color.stone)
@@ -288,7 +288,7 @@ struct CompactProjectRow: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(project.name)
                     .font(.system(size: 13, weight: isCurrent ? .semibold : .regular))
-                    .foregroundColor(isCurrent ? .accentColor : .primary)
+                    .foregroundColor(isCurrent ? Theme.Colors.accent : .primary)
                     .lineLimit(1)
 
                 Text("\(project.clipCount) clip\(project.clipCount == 1 ? "" : "s")")
@@ -300,7 +300,7 @@ struct CompactProjectRow: View {
 
             if isCurrent {
                 Image(systemName: "checkmark.circle.fill")
-                    .foregroundColor(.accentColor)
+                    .foregroundColor(Theme.Colors.accent)
                     .font(.system(size: 14))
             }
         }
@@ -308,12 +308,12 @@ struct CompactProjectRow: View {
         .padding(.vertical, 8)
         .background {
             RoundedRectangle(cornerRadius: 8)
-                .fill(isSelected ? Color.accentColor.opacity(0.2) : (isCurrent ? Color.accentColor.opacity(0.1) : Color.clear))
+                .fill(isSelected ? Theme.Colors.accent.opacity(0.2) : (isCurrent ? Theme.Colors.accent.opacity(0.1) : Color.clear))
         }
         .overlay {
             if isSelected {
                 RoundedRectangle(cornerRadius: 8)
-                    .stroke(Color.accentColor, lineWidth: 2)
+                    .stroke(Theme.Colors.accent, lineWidth: 2)
             }
         }
         .contentShape(Rectangle())

@@ -53,15 +53,7 @@ struct SidebarView: View {
             .frame(width: 64)
             .padding(.vertical, 16)
             .background(
-                LinearGradient(
-                    colors: [
-                        Color.deepNavy.opacity(0.92),
-                        Color.navy.opacity(0.88),
-                        Theme.Colors.accentDeep.opacity(0.55)
-                    ],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
+                Theme.Colors.editorPanel
             )
 
             Divider()

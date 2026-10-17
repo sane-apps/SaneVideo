@@ -71,9 +71,9 @@ struct CaptionRow: View {
         .cornerRadius(Theme.Dimensions.cornerRadius)
         .overlay(
             RoundedRectangle(cornerRadius: Theme.Dimensions.cornerRadius)
-                .stroke(isFocused ? Color.accentColor : (isActive ? Color.accentColor.opacity(0.5) : Color.clear), lineWidth: isFocused ? 2 : (isActive ? 1 : 0))
+                .stroke(isFocused ? Theme.Colors.accent : (isActive ? Theme.Colors.accent.opacity(0.5) : Color.clear), lineWidth: isFocused ? 2 : (isActive ? 1 : 0))
         )
-        .shadow(color: isFocused ? Color.accentColor.opacity(0.2) : .clear, radius: 8, x: 0, y: 4)
+        .shadow(color: isFocused ? Theme.Colors.accent.opacity(0.2) : .clear, radius: 8, x: 0, y: 4)
         .padding(.horizontal, 8)
         .contentShape(Rectangle())
         .animation(.smoothUI, value: isFocused)

@@ -74,6 +74,8 @@ struct SaneVideoApp: App {
             }
             .background(MainWindowOpenRegistrar())
             .background(MainWindowCaptureView())
+            // One brand accent everywhere, instead of the Mac's own accent color mixing in.
+            .tint(Theme.Colors.accent)
             .onAppear {
                 licenseService.checkCachedLicense()
                 NSLog("🚀 SaneVideoApp: main window onAppear")

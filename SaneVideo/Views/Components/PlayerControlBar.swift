@@ -27,7 +27,7 @@ struct PlayerControlBar: View {
                 Button(action: { playbackState.stepBackward() }, label: {
                     Image(systemName: "backward.frame.fill")
                         .font(.system(size: 14))
-                        .foregroundColor(.accentColor)
+                        .foregroundColor(Theme.Colors.accent)
                 })
                 .buttonStyle(.plain)
                 .hoverScale(1.15)
@@ -41,9 +41,9 @@ struct PlayerControlBar: View {
                     label: {
                         Image(systemName: playbackState.isPlaying ? "pause.fill" : "play.fill")
                             .font(.system(size: 20))
-                            .foregroundColor(.accentColor)
+                            .foregroundColor(Theme.Colors.accent)
                             .frame(width: 36, height: 36)
-                            .background(Color.accentColor.opacity(0.15), in: Circle())
+                            .background(Theme.Colors.accent.opacity(0.15), in: Circle())
                     }
                 )
                 .buttonStyle(.plain)
@@ -59,7 +59,7 @@ struct PlayerControlBar: View {
                 Button(action: { playbackState.stepForward() }, label: {
                     Image(systemName: "forward.frame.fill")
                         .font(.system(size: 14))
-                        .foregroundColor(.accentColor)
+                        .foregroundColor(Theme.Colors.accent)
                 })
                 .buttonStyle(.plain)
                 .hoverScale(1.15)
@@ -79,9 +79,9 @@ struct PlayerControlBar: View {
                     }, label: {
                         Image(systemName: "arrow.triangle.2.circlepath")
                             .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(.accentColor)
+                            .foregroundColor(Theme.Colors.accent)
                             .frame(width: 28, height: 24)
-                            .background(Color.accentColor.opacity(0.1))
+                            .background(Theme.Colors.accent.opacity(0.1))
                             .cornerRadius(4)
                     })
                     .buttonStyle(.plain)
@@ -106,12 +106,12 @@ struct PlayerControlBar: View {
                         }, label: {
                             Image(systemName: mode.icon)
                                 .font(.system(size: 12, weight: .medium))
-                                .foregroundColor(displayMode == mode ? .white : .accentColor)
+                                .foregroundColor(displayMode == mode ? .white : Theme.Colors.accent)
                                 .frame(width: 28, height: 24)
                                 .background(
                                     displayMode == mode
-                                        ? Color.accentColor
-                                        : Color.accentColor.opacity(0.1)
+                                        ? Theme.Colors.accent
+                                        : Theme.Colors.accent.opacity(0.1)
                                 )
                                 .cornerRadius(4)
                         })

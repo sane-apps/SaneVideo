@@ -37,7 +37,7 @@ struct EnhancedMagicOverlayView: View {
                 HStack {
                     Image(systemName: overlayIcon)
                         .font(.title2)
-                        .foregroundColor(.accentColor)
+                        .foregroundColor(Theme.Colors.accent)
                         .symbolEffect(.pulse, options: .repeating)
                     
                     VStack(alignment: .leading, spacing: 4) {

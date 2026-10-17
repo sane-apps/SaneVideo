@@ -45,7 +45,7 @@ struct ShortCandidateCard: View {
 
                 if isSelected {
                     Rectangle()
-                        .fill(Color.accentColor.opacity(0.3))
+                        .fill(Theme.Colors.accent.opacity(0.3))
                     Image(systemName: "checkmark.circle.fill")
                         .font(.title)
                         .foregroundStyle(.white)

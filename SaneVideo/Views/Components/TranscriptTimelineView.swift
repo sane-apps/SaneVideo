@@ -123,7 +123,7 @@ struct TranscriptTimelineView: View {
                 if let selectedRange = selectedTextRange {
                     Text("Selected: \(selectedRange.length) characters")
                         .font(.caption)
-                        .foregroundColor(.accentColor)
+                        .foregroundColor(Theme.Colors.accent)
                 }
             }
             .padding()
@@ -253,7 +253,7 @@ struct TranscriptSentenceView: View {
         HStack(alignment: .top, spacing: 8) {
             Text(formatTime(sentence.startTime))
                 .font(.caption2.monospaced())
-                .foregroundColor(isActive ? .accentColor : Color.stone)
+                .foregroundColor(isActive ? Theme.Colors.accent : Color.stone)
                 .frame(width: 50, alignment: .leading)
             
             HStack(spacing: 4) {
@@ -296,7 +296,7 @@ struct TranscriptSentenceView: View {
         }
         .padding(.vertical, 4)
         .padding(.horizontal, 8)
-        .background(isActive ? Color.accentColor.opacity(0.1) : Color.clear)
+        .background(isActive ? Theme.Colors.accent.opacity(0.1) : Color.clear)
         .cornerRadius(4)
         .onHover { hovering in
             isHovered = hovering
@@ -330,14 +330,14 @@ struct WordView: View {
     var body: some View {
         Text(segment.text)
             .font(.system(size: 13))
-            .foregroundColor(isSelected ? .white : (isActive ? .accentColor : .primary))
+            .foregroundColor(isSelected ? .white : (isActive ? Theme.Colors.accent : .primary))
             .underline(isActive || isSelected)
             .background(
                 Group {
                     if isSelected {
-                        Color.accentColor
+                        Theme.Colors.accent
                     } else if isHovered {
-                        Color.accentColor.opacity(0.2)
+                        Theme.Colors.accent.opacity(0.2)
                     } else {
                         Color.clear
                     }

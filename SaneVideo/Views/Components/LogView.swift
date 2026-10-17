@@ -37,7 +37,7 @@ struct LogView: View {
                 .buttonStyle(.plain)
                 .padding(.horizontal, 8)
                 .padding(.vertical, 4)
-                .background(Color.accentColor)
+                .background(Theme.Colors.accent)
                 .cornerRadius(6)
                 .accessibilityIdentifier("logs.action.copy_all")
                 

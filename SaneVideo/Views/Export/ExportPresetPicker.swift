@@ -65,7 +65,7 @@ struct ExportPresetPicker: View {
                 }
                 .padding(.horizontal, 8)
                 .padding(.vertical, 6)
-                .background(Color.accentColor.opacity(0.14))
+                .background(Theme.Colors.accent.opacity(0.14))
                 .cornerRadius(4)
             }
         }
@@ -113,7 +113,7 @@ struct TemplateQuickApplyButton: View {
             .cornerRadius(6)
             .overlay(
                 RoundedRectangle(cornerRadius: 6)
-                    .stroke(isSelected ? Color.accentColor : Color.stone.opacity(0.2), lineWidth: 1)
+                    .stroke(isSelected ? Theme.Colors.accent : Color.stone.opacity(0.2), lineWidth: 1)
             )
         }
         .buttonStyle(.plain)

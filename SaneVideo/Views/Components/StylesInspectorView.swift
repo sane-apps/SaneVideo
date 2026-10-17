@@ -115,9 +115,8 @@ struct StylesInspectorView: View {
             ZStack {
                 LinearGradient(
                     colors: [
-                        Color(nsColor: .controlBackgroundColor),
-                        Theme.Colors.ambientDeep.opacity(0.70),
-                        Theme.Colors.ambientMid.opacity(0.34)
+                        Theme.Colors.editorPanel,
+                        Theme.Colors.editorPanel
                     ],
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing

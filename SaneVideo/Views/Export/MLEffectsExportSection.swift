@@ -46,7 +46,7 @@ struct MLEffectsExportSection: View {
                 Toggle(isOn: $mlEffects.superResolutionEnabled) {
                     HStack {
                         Image(systemName: "arrow.up.left.and.arrow.down.right")
-                            .foregroundStyle(Color.accentColor)
+                            .foregroundStyle(Theme.Colors.accent)
                         VStack(alignment: .leading, spacing: 2) {
                             Text(String(localized: "export.ml.superres", defaultValue: "Super Resolution"))
                                 .saneReadableBodyStrong()
@@ -79,7 +79,7 @@ struct MLEffectsExportSection: View {
                 Toggle(isOn: $mlEffects.denoiseEnabled) {
                     HStack {
                         Image(systemName: "sparkles")
-                            .foregroundStyle(Color.accentColor)
+                            .foregroundStyle(Theme.Colors.accent)
                         VStack(alignment: .leading, spacing: 2) {
                             Text(String(localized: "export.ml.denoise", defaultValue: "Noise Reduction"))
                                 .saneReadableBodyStrong()
@@ -112,7 +112,7 @@ struct MLEffectsExportSection: View {
                 Toggle(isOn: $mlEffects.frameInterpolationEnabled) {
                     HStack {
                         Image(systemName: "film.stack")
-                            .foregroundStyle(Color.accentColor)
+                            .foregroundStyle(Theme.Colors.accent)
                         VStack(alignment: .leading, spacing: 2) {
                             Text(String(localized: "export.ml.interpolation", defaultValue: "Frame Interpolation"))
                                 .saneReadableBodyStrong()

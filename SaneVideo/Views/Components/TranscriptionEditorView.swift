@@ -52,7 +52,7 @@ struct TranscriptionEditorView: View {
                         refineCaptions()
                     } label: {
                         Image(systemName: "sparkles")
-                            .foregroundColor(.accentColor)
+                            .foregroundColor(Theme.Colors.accent)
                     }
                     .buttonStyle(.plain)
                     .help(String(localized: "transcript.refine.help", defaultValue: "AI Refine Grammar & Punctuation"))
@@ -63,7 +63,7 @@ struct TranscriptionEditorView: View {
                             translateCaptions()
                         } label: {
                             Image(systemName: "character.book.closed")
-                                .foregroundColor(.accentColor)
+                                .foregroundColor(Theme.Colors.accent)
                         }
                         .buttonStyle(.plain)
                         .help(String(localized: "transcript.translate.help", defaultValue: "Translate to Spanish (macOS 15+)"))
@@ -283,7 +283,7 @@ struct TranscriptionEditorView: View {
                 if let project = appState.projectState.currentProject {
                     Text(project.captionStyle.name)
                         .font(.system(size: 11, weight: .semibold))
-                        .foregroundColor(.accentColor)
+                        .foregroundColor(Theme.Colors.accent)
                 }
 
                 Button {
@@ -329,15 +329,15 @@ struct TranscriptionEditorView: View {
 
                             Text(style.name)
                                 .font(.system(size: 9, weight: isSelected ? .bold : .regular))
-                                .foregroundColor(isSelected ? .accentColor : Color.stone)
+                                .foregroundColor(isSelected ? Theme.Colors.accent : Color.stone)
                                 .lineLimit(1)
                         }
                         .padding(4)
-                        .background(isSelected ? Color.accentColor.opacity(0.15) : Color.clear)
+                        .background(isSelected ? Theme.Colors.accent.opacity(0.15) : Color.clear)
                         .cornerRadius(6)
                         .overlay(
                             RoundedRectangle(cornerRadius: 6)
-                                .stroke(isSelected ? Color.accentColor : Color.clear, lineWidth: 1.5)
+                                .stroke(isSelected ? Theme.Colors.accent : Color.clear, lineWidth: 1.5)
                         )
                     }
                     .buttonStyle(.plain)
@@ -372,7 +372,7 @@ struct CaptionEditorRow: View {
         HStack(alignment: .top, spacing: 10) {
             Text(formatTime(caption.startTime))
                 .font(.system(.caption2, design: .monospaced))
-                .foregroundColor(isCurrent ? .accentColor : Color.stone)
+                .foregroundColor(isCurrent ? Theme.Colors.accent : Color.stone)
                 .frame(width: 45, alignment: .leading)
             
             TextEditor(text: $text)
@@ -402,7 +402,7 @@ struct CaptionEditorRow: View {
             }
         }
         .padding(6)
-        .background(isCurrent ? Color.accentColor.opacity(0.1) : Color.clear)
+        .background(isCurrent ? Theme.Colors.accent.opacity(0.1) : Color.clear)
         .cornerRadius(6)
         .onTapGesture {
             onSelect()

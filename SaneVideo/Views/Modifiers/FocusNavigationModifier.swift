@@ -5,7 +5,7 @@ import SwiftUI
 // MARK: - Focus Style Configuration
 
 struct FocusStyle {
-    var borderColor: Color = .accentColor
+    var borderColor: Color = Theme.Colors.accent
     var borderWidth: CGFloat = 2
     var cornerRadius: CGFloat = 6
     var backgroundColor: Color = .clear
@@ -13,8 +13,8 @@ struct FocusStyle {
 
     static let `default` = FocusStyle()
     static let subtle = FocusStyle(borderColor: Color.stone.opacity(0.5), borderWidth: 1)
-    static let button = FocusStyle(borderColor: .accentColor, borderWidth: 2, scale: 1.02)
-    static let listRow = FocusStyle(borderColor: .accentColor.opacity(0.6), borderWidth: 1, backgroundColor: .accentColor.opacity(0.1))
+    static let button = FocusStyle(borderColor: Theme.Colors.accent, borderWidth: 2, scale: 1.02)
+    static let listRow = FocusStyle(borderColor: Theme.Colors.accent.opacity(0.6), borderWidth: 1, backgroundColor: Theme.Colors.accent.opacity(0.1))
 }
 
 // MARK: - Focusable Item Modifier

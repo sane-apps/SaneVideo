@@ -221,7 +221,7 @@ struct ImportButtonGroup: View {
             Label("Video", systemImage: "film.badge.plus")
         })
         .buttonStyle(.bordered)
-        .tint(.accentColor)
+        .tint(Theme.Colors.accent)
         .help("Import Video (Cmd+I)")
     }
 
@@ -230,7 +230,7 @@ struct ImportButtonGroup: View {
             Label("Audio", systemImage: "waveform.badge.plus")
         })
         .buttonStyle(.bordered)
-        .tint(.accentColor)
+        .tint(Theme.Colors.accent)
         .help("Import Audio File")
     }
 }

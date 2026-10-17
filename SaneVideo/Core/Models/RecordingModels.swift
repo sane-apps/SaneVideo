@@ -134,3 +134,16 @@ public struct SaneExportSettings: Codable, Sendable {
         codec == .hevcWithAlpha ? "mov" : "mp4"
     }
 }
+
+extension SaneExportSettings {
+    /// YouTube settings that match a source: 4K only for 4K footage (no upscaling), and the source's own frame
+    /// rate up to 60 so a 60 fps screen recording stays smooth.
+    static func youTube(matchingWidth width: CGFloat, height: CGFloat, fps: Float) -> (ExportPreset, SaneExportSettings) {
+        let frameRate = min(max(fps.rounded(), 24), 60)
+        if max(width, height) >= 3200 {
+            return (.youtube4K, SaneExportSettings(codec: .hevc, resolution: .uhd4K, bitrate: 20_000_000, frameRate: frameRate))
+        }
+        let bitrate = frameRate > 30 ? 12_000_000 : 8_000_000
+        return (.youtube1080, SaneExportSettings(codec: .h264, resolution: .hd1080, bitrate: bitrate, frameRate: frameRate))
+    }
+}

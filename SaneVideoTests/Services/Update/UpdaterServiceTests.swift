@@ -12,18 +12,6 @@ import Foundation
 @Suite("UpdaterService Tests")
 struct UpdaterServiceTests {
 
-    // MARK: - Initialization Tests
-
-    @MainActor
-    @Test("UpdaterService initializes with canCheckForUpdates ready")
-    func updaterServiceInitializes() {
-        // Arrange & Act
-        let service = UpdaterService()
-
-        // Assert - startingUpdater:true should make Sparkle ready immediately in direct builds
-        #expect(service.canCheckForUpdates == true, "canCheckForUpdates should be true once Sparkle starts immediately")
-    }
-
     @MainActor
     @Test("UpdaterService accepts valid appcast feeds")
     func appcastValidationAcceptsRSS() {

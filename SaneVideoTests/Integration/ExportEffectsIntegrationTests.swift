@@ -54,28 +54,6 @@ final class ExportEffectsIntegrationTests: XCTestCase {
         return TestEnvironment.mockAssetURL
     }
 
-    @MainActor
-    private func createProjectWithClip() async throws -> (VideoProject, VideoClip) {
-        let asset = AVURLAsset(url: testAssetURL)
-        let duration = try await asset.load(.duration)
-
-        let clip = VideoClip(
-            url: testAssetURL,
-            duration: duration,
-            startTime: .zero
-        )
-
-        projectState.startNewProject()
-        projectState.addTrack(type: .video, name: "Video Track 1")
-        projectState.addClip(clip)
-
-        guard let project = projectState.currentProject else {
-            throw TestError.projectNotCreated
-        }
-
-        return (project, clip)
-    }
-
     private func verifyExportedFile(at url: URL) async throws -> AVAsset {
         XCTAssertTrue(FileManager.default.fileExists(atPath: url.path))
         let fileSize = try FileManager.default.attributesOfItem(atPath: url.path)[.size] as? Int ?? 0
@@ -143,62 +121,6 @@ final class ExportEffectsIntegrationTests: XCTestCase {
         return totalDifference / Double(lhs.count) / 255.0
     }
 
-    // MARK: - Single Effect Tests
-
-    @MainActor
-    func testExportWithEffectAppliesEffect() async throws {
-        guard FileManager.default.fileExists(atPath: testAssetURL.path) else {
-            throw XCTSkip("Test asset not available")
-        }
-
-        let (_, clip) = try await createProjectWithClip()
-
-        let effect = VideoEffect(type: .noir)
-        projectState.applyEffect(to: clip, effect: effect)
-
-        guard let projectWithEffect = projectState.currentProject else {
-            throw TestError.projectNotCreated
-        }
-
-        let outputURL = try await exportEngine.export(
-            project: projectWithEffect,
-            settings: SaneExportSettings(),
-            outputURL: tempOutputURL
-        ) { _ in }
-
-        let exportedAsset = try await verifyExportedFile(at: outputURL)
-        let isPlayable = try await exportedAsset.load(.isPlayable)
-        XCTAssertTrue(isPlayable, "Export with effect should produce playable file")
-    }
-
-    @MainActor
-    func testExportWithMultipleEffects() async throws {
-        guard FileManager.default.fileExists(atPath: testAssetURL.path) else {
-            throw XCTSkip("Test asset not available")
-        }
-
-        let (_, clip) = try await createProjectWithClip()
-
-        projectState.applyEffect(to: clip, effect: VideoEffect(type: .autoEnhance))
-        if let updatedClip = projectState.getClip(by: clip.id) {
-            projectState.applyEffect(to: updatedClip, effect: VideoEffect(type: .vignette))
-        }
-
-        guard let project = projectState.currentProject else {
-            throw TestError.projectNotCreated
-        }
-
-        let outputURL = try await exportEngine.export(
-            project: project,
-            settings: SaneExportSettings(),
-            outputURL: tempOutputURL
-        ) { _ in }
-
-        let exportedAsset = try await verifyExportedFile(at: outputURL)
-        let isPlayable = try await exportedAsset.load(.isPlayable)
-        XCTAssertTrue(isPlayable, "Export with multiple effects should produce playable file")
-    }
-
     // MARK: - Transition Tests
 
     @MainActor
@@ -241,77 +163,72 @@ final class ExportEffectsIntegrationTests: XCTestCase {
         ) { _ in }
 
         let exportedAsset = try await verifyExportedFile(at: outputURL)
-        let isPlayable = try await exportedAsset.load(.isPlayable)
-        XCTAssertTrue(isPlayable, "Export with transition should produce playable file")
+        let exportedDuration = try await exportedAsset.load(.duration)
+        // Both halves must render: longer than one clip, no longer than the source.
+        XCTAssertGreaterThan(exportedDuration.seconds, duration.seconds / 2 + 0.1)
+        XCTAssertLessThanOrEqual(exportedDuration.seconds, duration.seconds + 0.1)
     }
 
     // MARK: - Effect Verification (Pixel Data)
 
+    /// Exports the first two seconds of the comparison asset with the given effects applied
+    /// and returns a 32x32 RGBA thumbnail of the frame at 0.5 s.
     @MainActor
-    func testEffectModifiesPixelData() async throws {
+    private func exportedFrame(assetURL: URL, effects: [VideoEffectType]) async throws -> [UInt8] {
+        let asset = AVURLAsset(url: assetURL)
+        let duration = try await asset.load(.duration)
+        var clip = VideoClip(url: assetURL, duration: duration, startTime: .zero)
+        clip.trimEnd = CMTime(seconds: min(duration.seconds, 2.0), preferredTimescale: 600)
+
+        projectState.startNewProject()
+        projectState.addTrack(type: .video, name: "Video Track 1")
+        projectState.addClip(clip)
+        for effectType in effects {
+            guard let current = projectState.getClip(by: clip.id) else {
+                throw TestError.projectNotCreated
+            }
+            projectState.applyEffect(to: current, effect: VideoEffect(type: effectType))
+        }
+
+        guard let project = projectState.currentProject else {
+            throw TestError.projectNotCreated
+        }
+
+        let url = FileManager.default.temporaryDirectory
+            .appendingPathComponent("effect_\(UUID().uuidString).mp4")
+        defer { try? FileManager.default.removeItem(at: url) }
+
+        _ = try await exportEngine.export(
+            project: project,
+            settings: SaneExportSettings(),
+            outputURL: url
+        ) { _ in }
+
+        let comparisonTime = CMTime(seconds: 0.5, preferredTimescale: 600)
+        return try pixelBufferForFrame(at: comparisonTime, assetURL: url)
+    }
+
+    /// Covers both a single effect (noir) and a stacked pair (auto-enhance + vignette):
+    /// each must change rendered pixels compared with the same clip exported without effects.
+    @MainActor
+    func testEffectsModifyPixelData() async throws {
         let comparisonAssetURL = effectComparisonAssetURL()
         guard FileManager.default.fileExists(atPath: comparisonAssetURL.path) else {
             throw XCTSkip("Test asset not available")
         }
 
-        let asset = AVURLAsset(url: comparisonAssetURL)
-        let duration = try await asset.load(.duration)
-        let trimmedDuration = min(duration.seconds, 2.0)
-        let trimEnd = CMTime(seconds: trimmedDuration, preferredTimescale: 600)
+        let plain = try await exportedFrame(assetURL: comparisonAssetURL, effects: [])
+        let cases: [[VideoEffectType]] = [[.noir], [.autoEnhance, .vignette]]
 
-        var clip = VideoClip(url: comparisonAssetURL, duration: duration, startTime: .zero)
-        clip.trimEnd = trimEnd
-
-        // Export without effect
-        projectState.startNewProject()
-        projectState.addTrack(type: .video, name: "Video Track 1")
-        projectState.addClip(clip)
-
-        guard let projectWithout = projectState.currentProject else {
-            throw TestError.projectNotCreated
+        for effects in cases {
+            let withEffects = try await exportedFrame(assetURL: comparisonAssetURL, effects: effects)
+            let difference = meanAbsolutePixelDifference(plain, withEffects)
+            XCTAssertGreaterThan(
+                difference,
+                0.01,
+                "Effects \(effects.map(\.rawValue)) should measurably change rendered pixels. Normalized diff: \(difference)"
+            )
         }
-
-        let tempWithout = tempOutputURL.deletingLastPathComponent()
-            .appendingPathComponent("no_effect_\(UUID().uuidString).mp4")
-        defer { try? FileManager.default.removeItem(at: tempWithout) }
-
-        _ = try await exportEngine.export(
-            project: projectWithout,
-            settings: SaneExportSettings(),
-            outputURL: tempWithout
-        ) { _ in }
-
-        // Export with noir effect
-        projectState.startNewProject()
-        projectState.addTrack(type: .video, name: "Video Track 1")
-        let clip2 = VideoClip(url: testAssetURL, duration: duration, startTime: .zero)
-        projectState.addClip(clip2)
-        projectState.applyEffect(to: clip2, effect: VideoEffect(type: .noir))
-
-        guard let projectWith = projectState.currentProject else {
-            throw TestError.projectNotCreated
-        }
-
-        let tempWith = tempOutputURL.deletingLastPathComponent()
-            .appendingPathComponent("with_effect_\(UUID().uuidString).mp4")
-        defer { try? FileManager.default.removeItem(at: tempWith) }
-
-        _ = try await exportEngine.export(
-            project: projectWith,
-            settings: SaneExportSettings(),
-            outputURL: tempWith
-        ) { _ in }
-
-        let comparisonTime = CMTime(seconds: min(0.5, max(trimmedDuration / 2, 0.1)), preferredTimescale: 600)
-        let withoutPixels = try pixelBufferForFrame(at: comparisonTime, assetURL: tempWithout)
-        let withPixels = try pixelBufferForFrame(at: comparisonTime, assetURL: tempWith)
-        let normalizedDifference = meanAbsolutePixelDifference(withoutPixels, withPixels)
-
-        XCTAssertGreaterThan(
-            normalizedDifference,
-            0.01,
-            "Effect should measurably change rendered frame pixels. Normalized diff: \(normalizedDifference)"
-        )
     }
 
     // MARK: - Error Type

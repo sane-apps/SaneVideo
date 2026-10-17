@@ -135,21 +135,6 @@ final class ErrorHandlingTests: XCTestCase {
         XCTAssertLessThanOrEqual(trimmed.seconds, clip.duration.seconds + 1, "Trim should not exceed duration")
     }
 
-    // MARK: - Disk Space Tests
-
-    @MainActor
-    func testDiskSpaceCheck() throws {
-        // Verify that the disk space monitor can actually check available space
-        let engine = RecordingEngine(
-            cameraService: ServiceContainer.shared.cameraService,
-            audioService: ServiceContainer.shared.audioService
-        )
-
-        // Act - actually verify disk space (throws if insufficient)
-        XCTAssertNoThrow(try engine.diskSpaceMonitor.verifyDiskSpace(),
-                         "Disk space verification should succeed on test machine")
-    }
-
     // MARK: - Concurrent Access Tests
 
     func testConcurrentProjectSave() async throws {

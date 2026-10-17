@@ -6,12 +6,10 @@
 //
 
 import CoreMedia
+@testable import SaneVideo
 import XCTest
 
-@testable import SaneVideo
-
 final class ProjectStateEffectsTests: XCTestCase {
-
     var projectState: ProjectState!
 
     @MainActor
@@ -41,7 +39,8 @@ final class ProjectStateEffectsTests: XCTestCase {
         )
 
         guard var project = projectState.currentProject,
-              !project.timeline.tracks.isEmpty else {
+              !project.timeline.tracks.isEmpty
+        else {
             return nil
         }
 
@@ -57,7 +56,8 @@ final class ProjectStateEffectsTests: XCTestCase {
     private func replaceClip(_ clip: VideoClip) {
         guard var project = projectState.currentProject,
               !project.timeline.tracks.isEmpty,
-              let clipIndex = project.timeline.tracks[0].clips.firstIndex(where: { $0.id == clip.id }) else {
+              let clipIndex = project.timeline.tracks[0].clips.firstIndex(where: { $0.id == clip.id })
+        else {
             return
         }
 
@@ -65,7 +65,7 @@ final class ProjectStateEffectsTests: XCTestCase {
         projectState.currentProject = project
     }
 
-    private func writeJSON<T: Encodable>(_ value: T, to url: URL) throws {
+    private func writeJSON(_ value: some Encodable, to url: URL) throws {
         try JSONEncoder().encode(value).write(to: url)
     }
 
@@ -78,40 +78,12 @@ final class ProjectStateEffectsTests: XCTestCase {
             return
         }
 
-        // Default is no transition
         XCTAssertNil(clip.transition)
 
-        projectState.setClipTransition(clipId: clip.id, transitionType: .dissolve)
-
-        let updatedClip = projectState.getClip(by: clip.id)
-        XCTAssertNotNil(updatedClip?.transition, "Transition should be set")
-        XCTAssertEqual(updatedClip?.transition?.type, .dissolve)
-    }
-
-    @MainActor
-    func testSetClipTransitionFadeToBlack() {
-        guard let clip = addTestClip() else {
-            XCTFail("Failed to add test clip")
-            return
+        for type: TransitionType in [.dissolve, .fadeToBlack, .wipeRight] {
+            projectState.setClipTransition(clipId: clip.id, transitionType: type)
+            XCTAssertEqual(projectState.getClip(by: clip.id)?.transition?.type, type, "\(type)")
         }
-
-        projectState.setClipTransition(clipId: clip.id, transitionType: .fadeToBlack)
-
-        let updatedClip = projectState.getClip(by: clip.id)
-        XCTAssertEqual(updatedClip?.transition?.type, .fadeToBlack)
-    }
-
-    @MainActor
-    func testSetClipTransitionWipeRight() {
-        guard let clip = addTestClip() else {
-            XCTFail("Failed to add test clip")
-            return
-        }
-
-        projectState.setClipTransition(clipId: clip.id, transitionType: .wipeRight)
-
-        let updatedClip = projectState.getClip(by: clip.id)
-        XCTAssertEqual(updatedClip?.transition?.type, .wipeRight)
     }
 
     @MainActor
@@ -270,7 +242,8 @@ final class ProjectStateEffectsTests: XCTestCase {
         // Update clip with keyframes
         guard var project = projectState.currentProject,
               let trackIndex = project.timeline.tracks.firstIndex(where: { $0.clips.contains(where: { $0.id == clip.id }) }),
-              let clipIndex = project.timeline.tracks[trackIndex].clips.firstIndex(where: { $0.id == clip.id }) else {
+              let clipIndex = project.timeline.tracks[trackIndex].clips.firstIndex(where: { $0.id == clip.id })
+        else {
             XCTFail("Could not find clip")
             return
         }

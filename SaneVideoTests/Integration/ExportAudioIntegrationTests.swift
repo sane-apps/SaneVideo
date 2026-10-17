@@ -45,12 +45,10 @@ final class ExportAudioIntegrationTests: XCTestCase {
 
     // MARK: - Helpers
 
+    /// test_video.mp4 carries an audible tone; test_silence.mp4 is silent and would make
+    /// every amplitude check pass vacuously.
     private func getTestAssetURL() -> URL {
-        let silenceAsset = TestEnvironment.testAsset(named: "test_silence.mp4")
-        if FileManager.default.fileExists(atPath: silenceAsset.path) {
-            return silenceAsset
-        }
-        return TestEnvironment.mockAssetURL
+        TestEnvironment.mockAssetURL
     }
 
     @MainActor
@@ -116,31 +114,7 @@ final class ExportAudioIntegrationTests: XCTestCase {
     }
 
     @MainActor
-    func testExportWithVolumeChange() async throws {
-        guard FileManager.default.fileExists(atPath: testAssetURL.path) else {
-            throw XCTSkip("Test asset not available")
-        }
-
-        let (_, clip) = try await createProjectWithClip()
-        projectState.updateClipVolume(clipId: clip.id, volume: 0.5)
-
-        guard let project = projectState.currentProject else {
-            throw TestError.projectNotCreated
-        }
-
-        let outputURL = try await exportEngine.export(
-            project: project,
-            settings: SaneExportSettings(),
-            outputURL: tempOutputURL
-        ) { _ in }
-
-        let exportedAsset = try await verifyExportedFile(at: outputURL)
-        let isPlayable = try await exportedAsset.load(.isPlayable)
-        XCTAssertTrue(isPlayable, "Export with volume change should produce playable file")
-    }
-
-    @MainActor
-    func testExportWithMutedClip() async throws {
+    func testZeroVolumeClipExportsSilentAudio() async throws {
         guard FileManager.default.fileExists(atPath: testAssetURL.path) else {
             throw XCTSkip("Test asset not available")
         }
@@ -158,9 +132,9 @@ final class ExportAudioIntegrationTests: XCTestCase {
             outputURL: tempOutputURL
         ) { _ in }
 
-        let exportedAsset = try await verifyExportedFile(at: outputURL)
-        let isPlayable = try await exportedAsset.load(.isPlayable)
-        XCTAssertTrue(isPlayable, "Export with muted clip should produce playable file")
+        _ = try await verifyExportedFile(at: outputURL)
+        let peak = try await measurePeakAmplitude(at: outputURL)
+        XCTAssertLessThan(peak, 0.01, "A clip at volume 0 must export silent audio, peak was \(peak)")
     }
 
     // MARK: - Volume Amplitude Verification
@@ -226,13 +200,12 @@ final class ExportAudioIntegrationTests: XCTestCase {
         let fullAmp = try await measurePeakAmplitude(at: tempFull)
         let reducedAmp = try await measurePeakAmplitude(at: tempReduced)
 
-        if fullAmp > 0.01 {
-            XCTAssertLessThan(
-                reducedAmp,
-                fullAmp * 0.75,
-                "25% volume should reduce amplitude. Full: \(fullAmp), Reduced: \(reducedAmp)"
-            )
-        }
+        XCTAssertGreaterThan(fullAmp, 0.01, "Fixture must have audible audio for this test to mean anything")
+        XCTAssertLessThan(
+            reducedAmp,
+            fullAmp * 0.75,
+            "25% volume should reduce amplitude. Full: \(fullAmp), Reduced: \(reducedAmp)"
+        )
     }
 
     private func measurePeakAmplitude(at url: URL) async throws -> Float {

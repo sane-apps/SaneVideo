@@ -250,7 +250,7 @@ class PiPCameraWindow: NSPanel {
         guard let contentView else { return }
 
         // Add Liquid Glass background for consistent Tahoe styling
-        let glassView = LiquidGlassNSView(intensity: .premium, cornerRadius: 12)
+        let glassView = LiquidGlassNSView(intensity: .premium, cornerRadius: PresenterOverlayLayout.cornerRadius)
         glassView.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(glassView)
 
@@ -423,7 +423,7 @@ class PiPCameraWindow: NSPanel {
 
         let newLayer = AVCaptureVideoPreviewLayer(session: session)
         newLayer.frame = containerView.bounds
-        newLayer.cornerRadius = 12
+        newLayer.cornerRadius = PresenterOverlayLayout.cornerRadius
         newLayer.masksToBounds = true
         newLayer.videoGravity = .resizeAspectFill
 

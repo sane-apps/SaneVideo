@@ -8,6 +8,7 @@
 import AVFoundation
 import CoreGraphics
 import CoreImage
+import CoreImage.CIFilterBuiltins
 import CoreMedia
 
 // DIAGNOSTIC: Frame rate tracking helper
@@ -373,14 +374,13 @@ final class VideoWriter: VideoWriterProtocol {
                     let screenRelativeX = pipFrame.origin.x - screenFrame.origin.x
                     let recordingX = screenRelativeX * scaleX
 
-                    let cocoaY = pipFrame.origin.y - screenFrame.origin.y
-                    let topRelativeY = screenFrame.height - cocoaY - pipHeight
-                    let recordingY = topRelativeY * scaleY
+                    // Window frames and Core Image both measure y from the bottom.
+                    let recordingY = (pipFrame.origin.y - screenFrame.origin.y) * scaleY
 
                     let recordingPipWidth = pipWidth * scaleX
                     let recordingPipHeight = pipHeight * scaleY
 
-                    let positionedCamera = aspectFill(
+                    let positionedCamera = bubble(
                         image: cameraImage,
                         sourceSize: CGSize(width: cameraWidth, height: cameraHeight),
                         targetRect: CGRect(
@@ -388,7 +388,8 @@ final class VideoWriter: VideoWriterProtocol {
                             y: recordingY,
                             width: recordingPipWidth,
                             height: recordingPipHeight
-                        )
+                        ),
+                        cornerRadius: PresenterOverlayLayout.cornerRadius * scaleX
                     )
 
                     finalImage = positionedCamera.composited(over: scaledImage)
@@ -397,13 +398,14 @@ final class VideoWriter: VideoWriterProtocol {
                     let pipWidth = targetSize.width * 0.2
                     let pipHeight = pipWidth / 1.5
                     let pipX = targetSize.width - pipWidth - 20
-                    let positionedCamera = aspectFill(
+                    let positionedCamera = bubble(
                         image: cameraImage,
                         sourceSize: CGSize(
                             width: CGFloat(CVPixelBufferGetWidth(cameraBuffer)),
                             height: CGFloat(CVPixelBufferGetHeight(cameraBuffer))
                         ),
-                        targetRect: CGRect(x: pipX, y: 20, width: pipWidth, height: pipHeight)
+                        targetRect: CGRect(x: pipX, y: 20, width: pipWidth, height: pipHeight),
+                        cornerRadius: PresenterOverlayLayout.cornerRadius
                     )
                     finalImage = positionedCamera.composited(over: scaledImage)
                 }
@@ -454,6 +456,20 @@ final class VideoWriter: VideoWriterProtocol {
             lastWrittenMicTime = pts
         }
         return appended
+    }
+
+    /// The camera filled into `targetRect`, cropped to it, with rounded corners like the on-screen bubble.
+    private func bubble(image: CIImage, sourceSize: CGSize, targetRect: CGRect, cornerRadius: CGFloat) -> CIImage {
+        let filled = aspectFill(image: image, sourceSize: sourceSize, targetRect: targetRect).cropped(to: targetRect)
+        let mask = CIFilter.roundedRectangleGenerator()
+        mask.extent = targetRect
+        mask.radius = Float(cornerRadius)
+        mask.color = .white
+        let blend = CIFilter.blendWithMask()
+        blend.inputImage = filled
+        blend.backgroundImage = CIImage.empty()
+        blend.maskImage = mask.outputImage
+        return blend.outputImage ?? filled
     }
 
     private func aspectFill(image: CIImage, sourceSize: CGSize, targetRect: CGRect) -> CIImage {

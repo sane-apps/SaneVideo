@@ -1,6 +1,6 @@
 product: SaneVideo
 audience: Mac creators who need private recording, editing, and export without a subscription.
-offer: Local-first video workflow with Basic recording/editing/export and an optional Pro unlock.
+offer: Free local-first video workflow (record, Clean Up, captions, export) with no in-app purchase.
 primary_proof: Clean Mac screenshots that show varied real footage in populated timeline/editor states without desktop clutter, debug stamps, blank previews, repeated sample subjects, or disabled-feature messaging.
 source_rule: Use actual SaneVideo app screenshots only. Fill the editor preview/timeline with stock or fixture video, capture the real app at meaningful timestamps/states, and crop only to remove debug stamps or desktop clutter. Do not create fake UI, color bars, browser mockups, synthetic controls, generated product composites, or feature claims without matching real captures for App Store or launch proof.
 generator: scripts/generate_appstore_screenshots.swift

@@ -5,7 +5,11 @@ enum OpenSourceRelease {
     /// The Donate destination on the direct download; nil in the App Store build.
     @MainActor
     static var donationURL: URL? {
-        SaneDirectSupportCopy.current?.destinationURL
+        // App Store screenshots are taken from the direct build; this hides Donate for that capture.
+        if ProcessInfo.processInfo.environment["SANEVIDEO_STORE_SCREENSHOTS"] == "1" {
+            return nil
+        }
+        return SaneDirectSupportCopy.current?.destinationURL
     }
 
     @MainActor

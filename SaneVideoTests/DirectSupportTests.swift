@@ -16,4 +16,13 @@ struct DirectSupportTests {
         #expect(OpenSourceRelease.donationURL?.absoluteString == "https://github.com/sponsors/MrSaneApps")
         #expect(OpenSourceRelease.welcomeSupportFeatures.contains { $0.text.contains("Donate") })
     }
+
+    @Test("App Store screenshot mode hides Donate in the direct build")
+    func storeScreenshotModeHidesDonate() {
+        OpenSourceRelease.activate()
+        setenv("SANEVIDEO_STORE_SCREENSHOTS", "1", 1)
+        defer { unsetenv("SANEVIDEO_STORE_SCREENSHOTS") }
+
+        #expect(OpenSourceRelease.donationURL == nil)
+    }
 }

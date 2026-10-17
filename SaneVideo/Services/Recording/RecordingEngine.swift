@@ -207,7 +207,8 @@ class RecordingEngine: NSObject {
       return
     }
 
-    let filename = "Recording_\(Date().timeIntervalSince1970).mp4"
+    let stamp = ExportDestination.timestamp()
+    let filename = "Recording \(stamp).mp4"
     guard let moviesDir = FileManager.default.urls(for: .moviesDirectory, in: .userDomainMask).first
     else {
       AppLogger.recording.error("Cannot find Movies directory")

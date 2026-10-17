@@ -184,8 +184,10 @@ class ExportEngine: ExportServiceProtocol {
         }
 
         // 3. Setup Writer (atomic: write to temp file, rename on success)
-        let tempURL = outputURL.deletingLastPathComponent()
-            .appendingPathComponent(".\(UUID().uuidString).\(outputURL.pathExtension)")
+        // Write in the temp folder, then move into place, so partial files and AVFoundation's own
+        // scratch files never appear in the user's Exports folder.
+        let tempURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent("\(UUID().uuidString).\(outputURL.pathExtension)")
 
         if FileManager.default.fileExists(atPath: tempURL.path) {
             try FileManager.default.removeItem(at: tempURL)

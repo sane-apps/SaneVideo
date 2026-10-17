@@ -41,7 +41,6 @@ final class ServiceContainer {
     // MARK: - Export Services
     
     let pdfService: PDFGeneratorService
-    let ffmpegService: FFmpegService
     let shareLinkService: ShareLinkService
     let updaterService: UpdaterService
     
@@ -132,7 +131,6 @@ final class ServiceContainer {
         
         // Export Services
         self.pdfService = PDFGeneratorService()
-        self.ffmpegService = FFmpegService()
         self.shareLinkService = ShareLinkService()
         self.updaterService = UpdaterService()
         

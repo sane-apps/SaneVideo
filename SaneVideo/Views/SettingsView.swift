@@ -96,7 +96,16 @@ private struct AboutSettingsView: View {
             licenses: [
                 SaneAboutLicenseCatalog.saneUI,
                 SaneAboutLicenseCatalog.sparkle,
-                SaneAboutLicenseCatalog.whisperKit
+                SaneAboutView.LicenseEntry(
+                    name: "FluidAudio",
+                    url: "https://github.com/FluidInference/FluidAudio",
+                    text: "Apache License 2.0"
+                ),
+                SaneAboutView.LicenseEntry(
+                    name: "Parakeet TDT 0.6B v3 (NVIDIA), optional speech model",
+                    url: "https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3",
+                    text: "CC BY 4.0"
+                )
             ],
             feedbackExtraAttachments: [
                 ("video.badge.waveform", "Recent recording, export, permission, and project state")

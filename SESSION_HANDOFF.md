@@ -1,3 +1,21 @@
+## 2026-10-17 00:20 ET — Redesign shipped to main (not pushed); cleanup awaiting owner OK
+
+- Owner said "continue" after the mockup: taken as the go. Commits 1e2f9bc..a4c17de: neutral dark theme, one
+  accent; flat inspector with Clean Up first; sidebar tabs (Projects by date / Clips / Transcript) replace the icon
+  rail; toolbar Record|Edit switch + Export menu (Shorts, Thumbnail, Voiceover); recorder bar with Camera|Screen
+  switch, labeled buttons, camera toggle, devices inline; shared panels are fills, no borders/shadows.
+- Behavior: camera turns back on when the recorder opens and after each take unless turned off (UserDefaults
+  RecorderCameraOn); Parakeet warms up after each recording (first Clean Up 48 s -> 0.7 s, shared load task).
+- Verify: 476/476 pass (receipt 9273a08436372447b953e8164dc9cfa0). Screens: outputs/audit-20261016/shots/4xx
+  (private QA, includes owner camera; not for public use). Visual verdict: flat, readable, no overlap.
+- Cleanup of test files (owner asked) was blocked by the auto-mode classifier; awaiting owner OK. Candidates:
+  this session's 10 projects (createdAt >= 2026-10-16 20:50) + their recordings/exports, 139 Short_1_*.mp4
+  and ~620 *-backup.sanevideoproject from old nightly tests, empty Templates/, .sb-* temp files, old
+  outputs/verify (1.1 GB) and runtime-logs (387 MB), worktree agent-a628349d0b2758175 + its DerivedData (1.2 GB).
+  Older Jul-Sep recordings (327 MB) and projects German / IMG 6091 / test video / Recording 1783801928 left alone.
+- SaneVideo is quit (for cleanup). Next: cleanup, docs (THIRD_PARTY_NOTICES, README/privacy for cuts + macOS 26),
+  release 1.1.0.
+
 ## 2026-10-16 21:05 ET — Full audit + first-principles simplification (ACTIVE LEDGER)
 
 Owner asks: audit every feature live (EMEET C960 camera+mic on the Mini), keep/kill features on evidence, prune

@@ -32,22 +32,24 @@ protocol TranscriptionServiceProtocol: Actor {
 /// Transcription engine selection (WhisperKit-only for macOS 15+)
 /// Legacy enum preserved for backwards compatibility with saved preferences
 enum TranscriptionEngine: String, CaseIterable, Identifiable, Codable {
-    case whisperKit = "WhisperKit"
+    case parakeet = "Parakeet"
+    case apple = "Apple"
 
     var id: String { rawValue }
 
     var displayName: String {
-        "WhisperKit"
+        switch self {
+        case .apple: "Apple (built in)"
+        case .parakeet: "Parakeet"
+        }
     }
 
     var description: String {
-        "Create captions and transcripts on your Mac. Requires a model download before first use."
+        switch self {
+        case .apple: "Uses the speech model built into macOS, so nothing downloads. It leaves out \"um\" and \"uh\", so Remove Fillers needs Parakeet."
+        case .parakeet: "Recommended. Most accurate in our tests and hears \"um\" and \"uh\", so Remove Fillers works. Downloads about 600 MB once; 25 European languages."
+        }
     }
 
-    var icon: String {
-        "brain.head.profile"
-    }
-
-    /// Default engine - WhisperKit only
-    static let `default` = TranscriptionEngine.whisperKit
+    static let `default` = TranscriptionEngine.parakeet
 }

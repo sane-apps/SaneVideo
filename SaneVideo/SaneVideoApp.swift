@@ -145,6 +145,12 @@ struct SaneVideoApp: App {
                 .disabled(!appState.projectCommandsEnabled)
                 .keyboardShortcut("n", modifiers: [.command])
                 .accessibilityIdentifier("menu.file.new_recording")
+
+                // No key equivalent: the global Option-Command-R hotkey already toggles recording.
+                Button(appState.recordingState.isRecording ? "Stop Recording (⌥⌘R)" : "Start Recording (⌥⌘R)") {
+                    appState.toggleRecording()
+                }
+                .accessibilityIdentifier("menu.file.toggle_recording")
             }
 
             CommandGroup(after: .importExport) {

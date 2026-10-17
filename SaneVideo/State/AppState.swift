@@ -476,11 +476,6 @@ class AppState {
     // MARK: - Mode Switching
 
     func switchToRecording() {
-        // DEBUG: Log the switch for diagnostic visibility
-        let trace = Thread.callStackSymbols.suffix(10).joined(separator: "\n")
-        AppLogger.general.info("🔄 AppState: Switching to RECORDING mode. Stack: \(trace)")
-
-        // CRITICAL: Switch mode IMMEDIATELY for responsive UI
         appMode = .recording
     }
 
@@ -488,10 +483,10 @@ class AppState {
         // CRITICAL: Switch mode IMMEDIATELY for responsive UI
         appMode = .editing
 
-        // Camera cleanup happens AFTER mode switch
-        // cameraEnabled setter automatically stops camera
+        // A recording can start the camera without cameraEnabled, so stop it directly.
         if !recordingState.isRecording {
             cameraEnabled = false
+            cameraState.stopCamera()
             audioService.stop()
         }
     }

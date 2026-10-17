@@ -62,7 +62,6 @@ class ScreenRecorder: NSObject, ScreenRecorderProtocol, SCContentSharingPickerOb
 
   /// Output URL for direct recording
   private var currentOutputURL: URL?
-  private var suppressDynamicFilterUpdates = false
 
   /// Callback triggered when the stream stops (e.g. user cancelled via system UI)
   var onStop: ((Error?) -> Void)?
@@ -98,27 +97,10 @@ class ScreenRecorder: NSObject, ScreenRecorderProtocol, SCContentSharingPickerOb
 
   override init() {
     super.init()
-    setupDisplayObserver()
   }
 
   deinit {
     NotificationCenter.default.removeObserver(self)
-  }
-
-  private func setupDisplayObserver() {
-    NotificationCenter.default.addObserver(
-      self,
-      selector: #selector(handleDisplayChange),
-      name: NSApplication.didChangeScreenParametersNotification,
-      object: nil
-    )
-  }
-
-  @objc private func handleDisplayChange() {
-    AppLogger.recording.info("🖥️ Display parameters changed - refreshing screen filter")
-    Task {
-      await updateContentFilter()
-    }
   }
 
   nonisolated func publishScreenSample(_ sampleBuffer: CMSampleBuffer) {
@@ -298,7 +280,6 @@ class ScreenRecorder: NSObject, ScreenRecorderProtocol, SCContentSharingPickerOb
     // 3. Clear references after stop completes
     activeStream = nil
     recordingOutput = nil
-    suppressDynamicFilterUpdates = false
 
     // TAHOE FIX: Do NOT deactivate picker or remove observer here.
     // Keeping picker.isActive = true preserves the selection persistence in the system UI.
@@ -325,109 +306,10 @@ class ScreenRecorder: NSObject, ScreenRecorderProtocol, SCContentSharingPickerOb
 
   // MARK: - Filter Updates
 
-  /// Update the current content filter to include/exclude new windows (like PiP)
-  func updateContentFilter() async {
-    guard let stream = activeStream, let base = baseFilter else { return }
-
-    // Only rebuild if it's a display style capture. Window captures don't need app-wide exclusions.
-    guard base.style == .display else {
-      AppLogger.recording.info("ℹ️ Skipping filter rebuild for non-display style (\(base.style))")
-      return
-    }
-
-    guard !suppressDynamicFilterUpdates else {
-      AppLogger.recording.info("ℹ️ Skipping dynamic filter update after previous ScreenCaptureKit access denial")
-      return
-    }
-
-    AppLogger.recording.info("🔄 Refreshing screen content filter...")
-    let newFilter = await rebuildFilter(from: base)
-
-    do {
-      try await stream.updateContentFilter(newFilter)
-      AppLogger.recording.info("✅ Screen content filter updated successfully")
-    } catch {
-      if Self.shouldSuppressDynamicFilterUpdates(for: error) {
-        suppressDynamicFilterUpdates = true
-        AppLogger.recording.warning(
-          "⚠️ Disabling dynamic filter updates for this share session after ScreenCaptureKit denied the update path")
-      }
-      AppLogger.recording.error("Failed to update content filter: \(error.localizedDescription)")
-    }
-  }
-
-  static func shouldSuppressDynamicFilterUpdates(for error: Error) -> Bool {
-    let nsError = error as NSError
-    if nsError.domain == "com.apple.ScreenCaptureKit.SCStreamErrorDomain", nsError.code == -3801 {
-      return true
-    }
-
-    let description = nsError.localizedDescription.lowercased()
-    return description.contains("declined tcc")
-      || description.contains("application, window, display capture")
-  }
-
   // MARK: - Private Methods
-
-  /// Rebuild filter to include our app's overlay windows (PiP, Controls)
-  private func rebuildFilter(from base: SCContentFilter) async -> SCContentFilter {
-    // Only apply complex display-level exclusion logic to display style captures
-    guard base.style == .display else {
-      return base
-    }
-
-    // Check user preference for app exclusion
-    // If user wants to record the app (exclude = false), we return the base filter unmodified
-    // (which includes everything on the display)
-    if !ServiceContainer.shared.userPreferences.excludeAppFromRecording {
-      AppLogger.recording.info("🎥 App inclusion enabled. NOT applying exclusion filter.")
-      return base
-    }
-
-    // TAHOE FIX: Use currentProcess to reliably find our own windows without full screen recording TCC
-    do {
-      let shareableContent = try await SCShareableContent.currentProcess
-
-      // Identify the display for the filter
-      // In macOS 15.2+, use includedDisplays. For older macOS, use displays.first
-      let display: SCDisplay?
-      if #available(macOS 15.2, *) {
-        display = base.includedDisplays.first ?? shareableContent.displays.first
-      } else {
-        display = shareableContent.displays.first
-      }
-
-      guard let display = display else {
-        AppLogger.recording.warning("⚠️ No display found for filter rebuild")
-        return base
-      }
-
-      // Find ALL our app's windows
-      _ = shareableContent.windows
-
-      // LOG ALL WINDOWS FOR DEBUGGING
-      // CRITICAL FIX: To avoid "Double Camera" effect, we must NOT include the PiP window
-      // in the screen capture stream. The VideoWriter composites the camera overlay manually.
-      // By returning a filter that excludes the application, we automatically exclude the PiP window.
-
-      // We purposefully do NOT filter for "pip" windows to add them back in.
-
-      return SCContentFilter(
-        display: display,
-        excludingApplications: shareableContent.applications,  // Exclude ALL app windows (Main + PiP)
-        exceptingWindows: [] // Do not except any windows -> PiP remains excluded
-      )
-    } catch {
-      AppLogger.recording.warning("⚠️ Filter rebuild failed: \(error.localizedDescription)")
-    }
-
-    // Return original if modification fails
-    return base
-  }
 
   /// Handle user's content selection and start the stream
   func handleContentSelected(filter: SCContentFilter) async {
-    suppressDynamicFilterUpdates = false
 
     // TAHOE OPTIMIZATION: If we already have an active stream, just update its filter.
     // This is much faster and completely flicker-free.
@@ -435,13 +317,10 @@ class ScreenRecorder: NSObject, ScreenRecorderProtocol, SCContentSharingPickerOb
       AppLogger.recording.info("🔄 Updating existing stream with new content selection...")
       self.baseFilter = filter
       self.baseFilterTimestamp = Date()
-      let effectiveFilter = await rebuildFilter(from: filter)
       do {
-        try await stream.updateContentFilter(effectiveFilter)
+        try await stream.updateContentFilter(filter)
         AppLogger.recording.info("✅ Existing stream filter updated successfully")
 
-        // NOTE: We don't call updateContentFilter() here anymore.
-        // Let the WindowManager trigger it after a delay to ensure PiP visibility.
         return
       } catch {
         AppLogger.recording.warning(
@@ -502,7 +381,6 @@ class ScreenRecorder: NSObject, ScreenRecorderProtocol, SCContentSharingPickerOb
       // SCStreamErrorDomain -3801 ("user declined TCC") even after permission is granted.
       let newStream = SCStream(filter: filter, configuration: config, delegate: self)
 
-      // NOTE: We removed the deferred updateContentFilter() task from here.
       // WindowManager.swift now handles this 150ms after the PiP appears,
       // which completely eliminates the startup flicker.
 

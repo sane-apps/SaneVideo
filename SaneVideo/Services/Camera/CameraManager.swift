@@ -210,8 +210,10 @@ final class CameraManager: NSObject, CameraServiceProtocol {
       return
     }
 
-    // 3. Proceed with session start
-    hasVideoSignal = false
+    // A running session keeps delivering frames and won't signal again, so keep its flag.
+    if session?.isRunning != true {
+      hasVideoSignal = false
+    }
     lastError = nil
     try await self.internalStart()
   }

@@ -39,9 +39,6 @@ struct RecordingSettingsView: View {
             }
 
             CompactSection("Screen Recording", icon: "display", iconColor: .cyan) {
-                CompactToggle(label: "Hide SaneVideo", isOn: $prefs.excludeAppFromRecording)
-                    .help("Exclude SaneVideo windows from screen recordings.")
-                    .accessibilityIdentifier("settings.recording.exclude_app")
                 HelperText(
                     text: "Screen resolution follows the screen or window you select.",
                     icon: "viewfinder"

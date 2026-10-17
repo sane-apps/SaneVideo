@@ -159,15 +159,7 @@ class WindowManager {
       return
     }
 
-    // CRITICAL FIX: Update filter BEFORE showing window
-    // This ensures the PiP is excluded from recording before it becomes visible
     Task { @MainActor in
-      // Update filter first
-      await updateRecorderFilter()
-
-      // Small delay to ensure filter is applied
-      try? await Task.sleep(nanoseconds: 50_000_000) // 50ms
-
       // NOW show the window (using captured reference)
       // Re-validate window is still valid after async work
       guard !window.isReleasedWhenClosed, window.windowNumber > 0 else {
@@ -224,10 +216,6 @@ class WindowManager {
     isTogglingPiP = false
     AppLogger.window.info("PiP Window fully hidden")
 
-    // Update filter
-    Task { @MainActor in
-      await updateRecorderFilter()
-    }
 
   }
 
@@ -252,8 +240,6 @@ class WindowManager {
     isTeleprompterVisible = true
 
     Task { @MainActor in
-      await updateRecorderFilter()
-      try? await Task.sleep(nanoseconds: 50_000_000)
 
       guard isWindowValid(window) else { return }
       window.orderFrontRegardless()
@@ -270,9 +256,6 @@ class WindowManager {
     teleprompterWindow = nil
     window.close()
 
-    Task { @MainActor in
-      await updateRecorderFilter()
-    }
   }
 
   // MARK: - App Window Management
@@ -387,11 +370,4 @@ class WindowManager {
 
   // MARK: - Filter Helpers
 
-  private func updateRecorderFilter() async {
-    // CRITICAL FIX: Removed 150ms delay - caller now handles timing
-    // The delay was causing PiP to briefly appear in recordings
-    if let engine = ServiceContainer.shared.appState.recordingState.engine {
-      await engine.screenRecorder.updateContentFilter()
-    }
-  }
 }

@@ -338,16 +338,6 @@ class RecordingEngine: NSObject {
     isMicrophoneAudioEnabled = includeMicrophoneAudio
     currentSource = initialSource
 
-    // Start Real-time Sound Analysis
-    // RELIABILITY FIX: Guard against nil format instead of force unwrap
-    if let format = AVAudioFormat(standardFormatWithSampleRate: 44100, channels: 1) {
-      soundAnalysisService.startRealTimeAnalysis(format: format)
-    } else {
-      AppLogger.recording.warning("Failed to create audio format for sound analysis - feature disabled")
-    }
-    await MainActor.run {
-      self.setupSoundAnalysisMonitoring()
-    }
 
     if initialSource == .screen {
       // Start click tracking for auto-zoom feature
@@ -481,7 +471,6 @@ class RecordingEngine: NSObject {
 
     // CRITICAL: Stop services first (but don't cleanup until file is saved)
     await screenRecorder.stop()
-    soundAnalysisService.stopRealTimeAnalysis()
 
     // CRITICAL: Finish video writer with timeout protection
     let finalURL: URL?
@@ -702,7 +691,6 @@ class RecordingEngine: NSObject {
         if didWrite {
           timeCoordinator.recordWrittenPresentationTime(bufferToWrite.presentationTimeStamp)
           timeCoordinator.driftTracker?.recordAudioTimestamp(bufferToWrite.presentationTimeStamp)
-          soundAnalysisService.analyze(sampleBuffer: sampleBuffer)
         }
       }
     }

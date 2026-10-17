@@ -166,7 +166,7 @@ appstore:
       whats_new: "A cleaner, faster SaneVideo. One-click Clean Up cuts silences and filler words. A new speech engine finds the um's and uh's and makes captions on your Mac. Switch between camera and screen mid-take. The camera returns in under a second. Timeline fixes: clicks select, split cuts at the playhead, arrow keys step one frame, and Delete is undoable."
       marketing_url: "https://sanevideo.com"
   review_notes: >-
-    The app is free. Donate is optional. No account, sign-in, API key, credentials, or payment is required to launch or review. No in-app purchase.
+    The app is free, with every feature included and no in-app purchase. No account, sign-in, API key, credentials, or payment is required to launch or review.
 
     The app asks for Camera and Microphone only for recording. Screen & System Audio Recording is used for screen capture through Apple's screen capture picker. Clean Up and captions download a speech model once (about 600 MB, from Hugging Face) and run it on the Mac; no audio or video is sent anywhere.
   review_notes_by_platform:

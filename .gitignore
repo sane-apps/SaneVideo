@@ -208,3 +208,8 @@ SESSION_HANDOFF.md
 .cursor/
 build-logs/
 .sane/
+
+# Generated test-pattern clips the test target bundles (no real footage)
+!Tests/Assets/*.mp4
+!Tests/Assets/*.mov
+!Tests/Assets/*.MOV

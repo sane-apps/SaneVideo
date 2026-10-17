@@ -188,11 +188,18 @@ struct MainContentView: View {
                             videoURL: firstClip.url,
                             projectName: project.name,
                             onSelect: { image in
+                                // Save a file for YouTube and keep it on the clipboard too.
                                 NSPasteboard.general.clearContents()
                                 NSPasteboard.general.writeObjects([image])
-                                ServiceContainer.shared.toastManager.show(
-                                    String(localized: "toast.thumbnail_copied", defaultValue: "✅ Thumbnail copied!")
-                                )
+                                let url = ExportDestination.url(for: project.name, suffix: "Thumbnail", ext: "jpg")
+                                if let tiff = image.tiffRepresentation,
+                                   let jpeg = NSBitmapImageRep(data: tiff)?.representation(using: .jpeg, properties: [.compressionFactor: 0.9]),
+                                   (try? jpeg.write(to: url)) != nil {
+                                    NSWorkspace.shared.activateFileViewerSelecting([url])
+                                    ServiceContainer.shared.toastManager.show("Thumbnail saved to Exports and copied")
+                                } else {
+                                    ServiceContainer.shared.toastManager.show("Thumbnail copied to the clipboard")
+                                }
                             }
                         )
                         .onAppear {

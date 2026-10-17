@@ -111,6 +111,7 @@ final class ExportEdgeCaseIntegrationTests: XCTestCase {
 
         var settings = SaneExportSettings()
         settings.frameRate = 30.0
+        settings.resolution = .hd1080
 
         let outputURL = try await exportEngine.export(
             project: project,
@@ -307,6 +308,7 @@ final class ExportEdgeCaseIntegrationTests: XCTestCase {
         let (project, _) = try await createProjectWithClip()
         var settings = SaneExportSettings()
         settings.frameRate = 30.0
+        settings.resolution = .hd1080
 
         let outputURL = try await exportEngine.export(
             project: project,

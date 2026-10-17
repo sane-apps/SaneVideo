@@ -5,6 +5,7 @@
 // - ExportEdgeCaseIntegrationTests.swift
 
 import AVFoundation
+import Metal
 import CoreMedia
 import XCTest
 
@@ -107,6 +108,10 @@ final class ExportPipelineIntegrationTests: XCTestCase {
             throw XCTSkip("Test asset not available at \(testAssetURL.path)")
         }
 
+        // The default is 4K. Hosted CI Macs have a virtual GPU that runs out of memory at 4K.
+        if MTLCreateSystemDefaultDevice()?.name.contains("Paravirtual") == true {
+            throw XCTSkip("4K export needs a real GPU; this Mac has a virtual one")
+        }
         let (project, _) = try await createProjectWithClip()
         let settings = SaneExportSettings()
 
@@ -196,6 +201,7 @@ final class ExportPipelineIntegrationTests: XCTestCase {
         for (codec, expectedSubtype) in cases {
             var settings = SaneExportSettings()
             settings.codec = codec
+            settings.resolution = .hd1080
             let (exportedAsset, _) = try await export(project, settings: settings)
 
             guard let track = try await exportedAsset.loadTracks(withMediaType: .video).first,

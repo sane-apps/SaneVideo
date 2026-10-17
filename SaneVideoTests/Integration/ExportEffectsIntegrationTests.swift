@@ -153,7 +153,7 @@ final class ExportEffectsIntegrationTests: XCTestCase {
 
         let outputURL = try await exportEngine.export(
             project: project,
-            settings: SaneExportSettings(),
+            settings: SaneExportSettings(resolution: .hd1080),
             outputURL: tempOutputURL
         ) { _ in }
 
@@ -195,7 +195,7 @@ final class ExportEffectsIntegrationTests: XCTestCase {
 
         _ = try await exportEngine.export(
             project: project,
-            settings: SaneExportSettings(),
+            settings: SaneExportSettings(resolution: .hd1080),
             outputURL: url
         ) { _ in }
 

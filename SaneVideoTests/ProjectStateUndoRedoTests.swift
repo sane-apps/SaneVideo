@@ -1,9 +1,4 @@
-//
-//  ProjectStateUndoRedoTests.swift
-//  SaneVideoTests
-//
-//  Comprehensive tests for ProjectState undo/redo functionality
-//
+// Comprehensive tests for ProjectState undo/redo functionality
 
 import Testing
 import Foundation

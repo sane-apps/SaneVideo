@@ -1,10 +1,3 @@
-//
-//  PlayerControlBar.swift
-//  SaneVideo
-//
-//  Created by SaneVideo Refactor
-//
-
 import AppKit
 import AVFoundation
 import SwiftUI
@@ -85,7 +78,7 @@ struct PlayerControlBar: View {
 
             // Right: Quick actions + Video display mode picker
             HStack(spacing: 12) {
-                // CRITICAL FIX: Add common video editing controls (rotate, speed, volume)
+                // Add common video editing controls (rotate, speed, volume)
                 // Rotate button (most common action)
                 if let clip = selectedClip, !clip.isMissing {
                     Button(action: {
@@ -169,7 +162,7 @@ struct PlayerControlBar: View {
             nsView.blendingMode = blendingMode
         }
 
-        // CRITICAL FIX: Proper cleanup to prevent use-after-free during autorelease
+        // Proper cleanup to prevent use-after-free during autorelease
         static func dismantleNSView(_ nsView: NSVisualEffectView, coordinator _: ()) {
             nsView.state = .inactive
             nsView.removeFromSuperview()

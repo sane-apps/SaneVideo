@@ -1,10 +1,3 @@
-//
-//  TooltipModifier.swift
-//  SaneVideo
-//
-//  Created by SaneVideo Refactor
-//
-
 import SwiftUI
 
 struct TooltipData {

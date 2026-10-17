@@ -1,10 +1,3 @@
-//
-//  SoundAnalysisService.swift
-//  SaneVideo
-//
-//  Created by SaneVideo Refactor
-//
-
 import AVFoundation
 import Combine
 import SoundAnalysis
@@ -42,7 +35,7 @@ class SoundAnalysisService: @unchecked Sendable, SoundAnalysisServiceProtocol {
   func startRealTimeAnalysis(format: AVAudioFormat) {
     AppLogger.audio.info("SoundAnalysis: Real-time analysis started with format: \(format)")
 
-    // CRITICAL FIX: All access to streamAnalyzer/currentFormat must be on analysisQueue
+    // All access to streamAnalyzer/currentFormat must be on analysisQueue
     // to prevent data races with processBuffer
     analysisQueue.sync { [self] in
       self.currentFormat = format
@@ -69,7 +62,7 @@ class SoundAnalysisService: @unchecked Sendable, SoundAnalysisServiceProtocol {
 
   func stopRealTimeAnalysis() {
     AppLogger.audio.info("SoundAnalysis: Real-time analysis stopped")
-    // CRITICAL FIX: Synchronize with analysisQueue to prevent races
+    // Synchronize with analysisQueue to prevent races
     analysisQueue.sync { [self] in
       self.streamAnalyzer = nil
       self.currentFormat = nil

@@ -1,10 +1,5 @@
-//
-//  StressAndEdgeCaseTests.swift
-//  SaneVideoTests
-//
-//  Large timelines and unusual inputs: the timeline must keep exact counts and
-//  contiguous clip placement. No wall-clock assertions.
-//
+// Large timelines and unusual inputs: the timeline must keep exact counts and
+// contiguous clip placement. No wall-clock assertions.
 
 import AVFoundation
 import CoreMedia

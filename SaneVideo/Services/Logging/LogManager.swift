@@ -1,10 +1,3 @@
-//
-//  LogManager.swift
-//  SaneVideo
-//
-//  Created by SaneVideo Refactor
-//
-
 import Combine
 import Foundation
 import OSLog

@@ -1,10 +1,5 @@
-//
-//  TranscriptTimelineView.swift
-//  SaneVideo
-//
-//  Text-based editing view - Descript-style transcript editing
-//  Displays transcript alongside timeline with word-level precision
-//
+// Text-based editing view - Descript-style transcript editing
+// Displays transcript alongside timeline with word-level precision
 
 import AVFoundation
 import SwiftUI
@@ -54,7 +49,7 @@ struct TranscriptTimelineView: View {
                 }
             } else {
                 // Fallback: estimate word timestamps from caption duration
-                // CRITICAL FIX: Use displayText to strip Whisper tokens
+                // Use displayText to strip Whisper tokens
                 let words = caption.displayText.split(separator: " ")
                 guard !words.isEmpty else { continue }
                 

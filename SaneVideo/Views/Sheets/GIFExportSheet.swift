@@ -1,9 +1,4 @@
-//
-//  GIFExportSheet.swift
-//  SaneVideo
-//
-//  Settings sheet for GIF export with quality/size options
-//
+// Settings sheet for GIF export with quality/size options
 
 import AppKit
 import AVFoundation

@@ -1,10 +1,3 @@
-//
-//  AppState+Actions.swift
-//  SaneVideo
-//
-//  Created by Antigravity
-//
-
 import AVFoundation
 import Foundation
 import SwiftUI
@@ -39,7 +32,7 @@ extension AppState {
     func stopRecording() {
         NSLog("🛑 AppState.stopRecording called. appMode=\(appMode), isRecording=\(recordingState.isRecording)")
 
-        // CRITICAL FIX: Allow stop even if mode changed - user might be stuck
+        // Allow stop even if mode changed - user might be stuck
         // Only check if actually recording
         guard recordingState.isRecording else {
             NSLog("🛑 AppState: stopRecording ignored (not recording)")
@@ -55,7 +48,7 @@ extension AppState {
 
             // ALWAYS close PiP and return to app
             Task { @MainActor in
-                // CRITICAL FIX: Update state flags FIRST to prevent race conditions during UI updates
+                // Update state flags FIRST to prevent race conditions during UI updates
                 let wasScreenSharing = self.windowManager.isScreenSharing
 
                 if wasScreenSharing {
@@ -118,7 +111,7 @@ extension AppState {
             // Bring app to foreground
             self.windowManager.restoreMainWindow()
 
-            // CRITICAL: UX Delight - Audible feedback on success (as requested)
+            // UX Delight - Audible feedback on success (as requested)
             ServiceContainer.shared.soundManager.playSuccess()
         }
         // Every recording becomes a project right away, whatever the user picks next.
@@ -198,7 +191,7 @@ extension AppState {
     func toggleScreenShare() {
         NSLog("🖥️ toggleScreenShare() called. Current isScreenSharing=\(windowManager.isScreenSharing)")
 
-        // CRITICAL FIX: Prevent concurrent execution to avoid race conditions
+        // Prevent concurrent execution to avoid race conditions
         // This is especially important when ending screen sharing to prevent double-cleanup
         guard !windowManager.isTogglingScreenShare else {
             NSLog("🖥️ toggleScreenShare: Already toggling, ignoring")
@@ -207,7 +200,7 @@ extension AppState {
         }
 
         windowManager.isTogglingScreenShare = true
-        // NOTE: Do NOT use defer here - flag is reset inside Task completion to prevent race conditions
+        // Do NOT use defer here - flag is reset inside Task completion to prevent race conditions
 
         let wasScreenSharing = windowManager.isScreenSharing
         NSLog("🖥️ toggleScreenShare: wasScreenSharing=\(wasScreenSharing)")
@@ -215,10 +208,10 @@ extension AppState {
         if wasScreenSharing {
             // Logic for STOPPING screen share
 
-            // CRITICAL FIX: If recording, switch to camera FIRST before stopping screen share
+            // If recording, switch to camera FIRST before stopping screen share
             // This ensures recording continues seamlessly
             if recordingState.isRecording {
-                // CRITICAL: Switch source to camera - completes instantly via fast path
+                // Switch source to camera - completes instantly via fast path
                 let newSource: RecordingSource = .camera
                 AppLogger.recording.info("🔄 AppState: Switching from screen to camera recording")
                 recordingState.switchSource(newSource)
@@ -274,7 +267,7 @@ extension AppState {
                     NSLog("🖥️ Step 6: Restoring main window...")
                     windowManager.restoreMainWindow()
 
-                    // CRITICAL: Always reset toggle flag
+                    // Always reset toggle flag
                     windowManager.isTogglingScreenShare = false
                     NSLog("🖥️ toggleScreenShare: ✅ Sequence complete")
                 }
@@ -291,7 +284,7 @@ extension AppState {
             // Update state for new mode
             windowManager.isScreenSharing = true
 
-            // CRITICAL FIX: Do NOT show PiP here - it will appear in the picker!
+            // Do NOT show PiP here - it will appear in the picker!
             // PiP is shown via onContentSelected callback AFTER user selects content
             NSLog("🖥️ toggleScreenShare: Deferring PiP display until after content selection")
 

@@ -1,9 +1,4 @@
-//
-//  ExportCompositor.swift
-//  SaneVideo
-//
-//  Created by SaneVideo Refactor
-//  Optimized for Apple Silicon M1+ with Metal-backed rendering
+// Optimized for Apple Silicon M1+ with Metal-backed rendering
 
 import AVFoundation
 import CoreImage

@@ -1,10 +1,3 @@
-//
-//  ToastManager.swift
-//  SaneVideo
-//
-//  Created by SaneVideo Refactor
-//
-
 import Combine
 import Foundation
 import SwiftUI
@@ -18,7 +11,7 @@ class ToastManager {
     }
     var toastMessage: String?
 
-    // CRITICAL FIX: Queue system for rapid successive toasts
+    // Queue system for rapid successive toasts
     private var messageQueue: [String] = []
     private var isShowingToast = false
 

@@ -1,10 +1,3 @@
-//
-//  ThumbnailUIModels.swift
-//  SaneVideo
-//
-//  Created by SaneVideo Refactor
-//
-
 @preconcurrency import AppKit
 @preconcurrency import AVFoundation
 import SwiftUI

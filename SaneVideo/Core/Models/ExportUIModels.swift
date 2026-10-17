@@ -1,10 +1,3 @@
-//
-//  ExportUIModels.swift
-//  SaneVideo
-//
-//  Created by SaneVideo Refactor
-//
-
 import Foundation
 
 // MARK: - Smart Crop Settings

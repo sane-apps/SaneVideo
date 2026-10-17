@@ -1,9 +1,4 @@
-//
-//  RepurposingSettings.swift
-//  SaneVideo
-//
-//  Settings for long-to-short video repurposing
-//
+// Settings for long-to-short video repurposing
 
 import Foundation
 

@@ -1,10 +1,3 @@
-//
-//  WaveformService.swift
-//  SaneVideo
-//
-//  Created by SaneVideo Refactor
-//
-
 @preconcurrency import AVFoundation
 import CoreMedia
 import SwiftUI
@@ -19,7 +12,7 @@ actor WaveformService: WaveformServiceProtocol {
     // In-progress tasks
     private var tasks: [UUID: Task<[Float], Error>] = [:]
     
-    // CRITICAL FIX: Limit concurrent waveform loads to prevent UI freezes
+    // Limit concurrent waveform loads to prevent UI freezes
     // Use a semaphore-like pattern with a task queue
     private var activeLoads: Set<UUID> = []
     private let maxConcurrentLoads = 5 // Limit to 5 concurrent waveform generations
@@ -28,7 +21,7 @@ actor WaveformService: WaveformServiceProtocol {
         // Pick the audio URL that matches playback/export (enhanced audio when duration-aligned).
         let selectedURL = await selectAudioURL(for: clip)
 
-        // CRITICAL FIX: Check cache first
+        // Check cache first
         if let cached = cache[clip.id], cacheURL[clip.id] == selectedURL {
             return cached
         } else if cache[clip.id] != nil, cacheURL[clip.id] != selectedURL {
@@ -37,12 +30,12 @@ actor WaveformService: WaveformServiceProtocol {
             cacheURL.removeValue(forKey: clip.id)
         }
 
-        // CRITICAL FIX: Check if task already exists
+        // Check if task already exists
         if let existingTask = tasks[clip.id] {
             return try? await existingTask.value
         }
 
-        // CRITICAL FIX: Wait for available slot if at capacity
+        // Wait for available slot if at capacity
         while activeLoads.count >= maxConcurrentLoads {
             // Wait a bit before checking again
             try? await Task.sleep(nanoseconds: 50_000_000) // 50ms
@@ -52,14 +45,14 @@ actor WaveformService: WaveformServiceProtocol {
             }
         }
 
-        // CRITICAL FIX: Mark as active load BEFORE creating task
+        // Mark as active load BEFORE creating task
         // This prevents race condition where multiple tasks could be created
         activeLoads.insert(clip.id)
 
         let clipId = clip.id
         let task = Task<[Float], Error> {
             let samples = try await generateWaveform(for: clip, audioURL: selectedURL)
-            // CRITICAL FIX: Only cache if task wasn't cancelled
+            // Only cache if task wasn't cancelled
             guard !Task.isCancelled else {
                 return []
             }
@@ -68,10 +61,10 @@ actor WaveformService: WaveformServiceProtocol {
 
         tasks[clip.id] = task
         
-        // CRITICAL FIX: Handle cancellation and cleanup properly
+        // Handle cancellation and cleanup properly
         do {
             let samples = try await task.value
-            // CRITICAL FIX: Cache result and cleanup on success
+            // Cache result and cleanup on success
             cache[clipId] = samples
             cacheURL[clipId] = selectedURL
             tasks.removeValue(forKey: clipId)
@@ -96,7 +89,7 @@ actor WaveformService: WaveformServiceProtocol {
             task.cancel()
             tasks.removeValue(forKey: clip.id)
             activeLoads.remove(clip.id)
-            // CRITICAL FIX: Also remove from cache if it was a partial load
+            // Also remove from cache if it was a partial load
             // (though typically we'd keep partial results, but for cancellation we clear)
         }
     }
@@ -132,7 +125,7 @@ actor WaveformService: WaveformServiceProtocol {
 
         var samples: [Float] = []
 
-        // CRITICAL FIX: Dynamic downsampling based on clip duration
+        // Dynamic downsampling based on clip duration
         // Target ~2000 samples for visualization (works well for most waveform widths)
         // This prevents memory explosion and processing delays for 2+ hour clips
         let targetSampleCount = 2000
@@ -212,7 +205,7 @@ actor WaveformService: WaveformServiceProtocol {
 
     /// Clear the waveform cache (called during memory pressure)
     func clearCache() {
-        // CRITICAL FIX: Cancel all in-progress tasks before clearing
+        // Cancel all in-progress tasks before clearing
         for task in tasks.values {
             task.cancel()
         }

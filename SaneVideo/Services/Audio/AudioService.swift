@@ -1,10 +1,3 @@
-//
-//  AudioService.swift
-//  SaneVideo
-//
-//  Created by SaneVideo Refactor
-//
-
 @preconcurrency import AVFoundation
 import Accelerate
 @preconcurrency import Combine
@@ -354,7 +347,7 @@ extension AudioService: AVCaptureAudioDataOutputSampleBufferDelegate {
   ) {
     sampleBufferSubjectBox.send(sampleBuffer)
 
-    // PERFORMANCE: Throttle audio levels to ~15fps for UI
+    // Throttle audio levels to ~15fps for UI
     let now = ContinuousClock().now
 
     // We can't access lastAudioLevelUpdateTime directly as it's @MainActor

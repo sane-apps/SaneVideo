@@ -1,17 +1,10 @@
-//
-//  AccessibilityIdentifiers.swift
-//  SaneVideo
-//
-//  Centralized registry of all accessibility identifiers.
-//  This ensures compile-time safety and prevents tests from referencing
-//  non-existent UI elements.
-//
-//  Usage in UI:
-//    .accessibilityIdentifier(AccessibilityIdentifiers.recordButton)
-//
-//  Usage in Tests:
-//    app.buttons[AccessibilityIdentifiers.recordButton]
-//
+// Centralized registry of all accessibility identifiers.
+// This ensures compile-time safety and prevents tests from referencing
+// non-existent UI elements.
+// Usage in UI:
+// .accessibilityIdentifier(AccessibilityIdentifiers.recordButton)
+// Usage in Tests:
+// app.buttons[AccessibilityIdentifiers.recordButton]
 
 import Foundation
 

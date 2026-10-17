@@ -1,15 +1,9 @@
-//
-//  DriftTracker.swift
-//  SaneVideo
-//
-//  Detects and gradually corrects A/V drift between video and audio streams.
-//  Inspired by Cap's drift correction (PRs #1478, #1475).
-//
-//  Strategy:
-//  - Tracks wall clock vs presentation time for video and audio
-//  - When drift exceeds threshold (50ms), applies gradual correction
-//  - Maximum correction per step: 10ms (prevents visible jumps)
-//
+// Detects and gradually corrects A/V drift between video and audio streams.
+// Inspired by Cap's drift correction (PRs #1478, #1475).
+// Strategy:
+// - Tracks wall clock vs presentation time for video and audio
+// - When drift exceeds threshold (50ms), applies gradual correction
+// - Maximum correction per step: 10ms (prevents visible jumps)
 
 import CoreMedia
 import Foundation

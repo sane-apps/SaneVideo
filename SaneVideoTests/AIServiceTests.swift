@@ -1,8 +1,3 @@
-//
-//  AIServiceTests.swift
-//  SaneVideoTests
-//
-
 import Foundation
 @testable import SaneVideo
 import Testing

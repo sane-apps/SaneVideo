@@ -1,10 +1,5 @@
-//
-//  LiquidGlassNSView.swift
-//  SaneVideo
-//
-//  NSView wrapper for Liquid Glass effect in AppKit windows (PiP, Floating Controls).
-//  Matches the SwiftUI LiquidGlassModifier for visual consistency across the app.
-//
+// NSView wrapper for Liquid Glass effect in AppKit windows (PiP, Floating Controls).
+// Matches the SwiftUI LiquidGlassModifier for visual consistency across the app.
 
 import AppKit
 

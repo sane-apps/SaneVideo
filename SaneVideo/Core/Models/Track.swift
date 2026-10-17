@@ -1,10 +1,3 @@
-//
-//  Track.swift
-//  SaneVideo
-//
-//  Created by SaneVideo Refactor
-//
-
 import Foundation
 
 /// Represents a single timeline track (layer)

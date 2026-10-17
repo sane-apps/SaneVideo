@@ -1,9 +1,4 @@
-//
-//  VisionServicesTests.swift
-//  SaneVideoTests
-//
-//  Face tilt feeds smart crop.
-//
+// Face tilt feeds smart crop.
 
 import CoreGraphics
 @testable import SaneVideo

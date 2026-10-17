@@ -1,10 +1,3 @@
-//
-//  VideoEffectGenerators.swift
-//  SaneVideo
-//
-//  Created by SaneVideo Refactor
-//
-
 import CoreImage
 import Foundation
 

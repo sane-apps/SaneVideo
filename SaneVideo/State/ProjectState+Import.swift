@@ -1,9 +1,4 @@
-//
-//  ProjectState+Import.swift
-//  SaneVideo
-//
-//  Media import operations extracted from ClipManagement
-//
+// Media import operations extracted from ClipManagement
 
 import AVFoundation
 import CoreMedia

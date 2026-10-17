@@ -1,10 +1,3 @@
-//
-//  PermissionManager.swift
-//  SaneVideo
-//
-//  Created by SaneVideo Refactor
-//
-
 import AVFoundation
 import Combine
 import CoreGraphics
@@ -45,7 +38,7 @@ class PermissionManager: PermissionManagerProtocol {
         }
     }
 
-    // CRITICAL FIX: Track if screen recording permission was ever requested
+    // Track if screen recording permission was ever requested
     // This helps distinguish .notDetermined from .denied
     @ObservationIgnored private var screenRecordingWasRequested = false
 
@@ -158,7 +151,7 @@ class PermissionManager: PermissionManagerProtocol {
             return
         }
 
-        // CRITICAL FIX: CGPreflightScreenCaptureAccess() is unreliable - it can return false
+        // CGPreflightScreenCaptureAccess() is unreliable - it can return false
         // even when permission IS granted (until app restart after grant).
         // Check multiple signals to determine actual permission status:
 
@@ -184,13 +177,13 @@ class PermissionManager: PermissionManagerProtocol {
             return
         }
 
-        // CRITICAL FIX: Don't re-request if already granted
+        // Don't re-request if already granted
         if screenRecordingStatus == .granted {
             AppLogger.general.info("📺 Screen recording permission already granted, skipping request")
             return
         }
 
-        // CRITICAL FIX: Persist that we've requested permission (survives app restart)
+        // Persist that we've requested permission (survives app restart)
         UserDefaults.standard.set(true, forKey: "screenRecordingWasRequested")
 
         AppLogger.general.info("📺 Requesting screen recording permission...")
@@ -248,7 +241,7 @@ class PermissionManager: PermissionManagerProtocol {
     // MARK: - Helpers
 
     private func mapAVStatus(_ status: AVAuthorizationStatus) -> PermissionStatus {
-        // CRITICAL FIX: Exhaustive switch to handle all cases
+        // Exhaustive switch to handle all cases
         switch status {
         case .authorized: return .granted
         case .denied: return .denied
@@ -286,7 +279,7 @@ class PermissionManager: PermissionManagerProtocol {
     func setupLifecycleObserver() {
         if TestEnvironment.isTesting { return }
 
-        // CRITICAL FIX: Re-check permissions when app becomes active
+        // Re-check permissions when app becomes active
         // This handles cases where user revokes permissions in System Settings
         NotificationCenter.default.addObserver(
             forName: NSApplication.didBecomeActiveNotification, object: nil, queue: .main

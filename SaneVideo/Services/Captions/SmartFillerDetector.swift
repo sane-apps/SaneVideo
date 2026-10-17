@@ -1,10 +1,5 @@
-//
-//  SmartFillerDetector.swift
-//  SaneVideo
-//
-//  Uses Apple's NaturalLanguage framework for intelligent filler word detection
-//  Auto-improves with each macOS update as Apple enhances NL models
-//
+// Uses Apple's NaturalLanguage framework for intelligent filler word detection
+// Auto-improves with each macOS update as Apple enhances NL models
 
 import Foundation
 import NaturalLanguage

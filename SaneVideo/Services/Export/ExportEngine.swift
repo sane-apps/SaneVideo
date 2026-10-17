@@ -1,10 +1,3 @@
-//
-//  ExportEngine.swift
-//  SaneVideo
-//
-//  Created by SaneVideo Refactor
-//
-
 import AVFoundation
 import Combine
 import CoreMedia
@@ -135,7 +128,7 @@ class ExportEngine: ExportServiceProtocol {
         // 2. Setup Reader
         let reader = try AVAssetReader(asset: composition)
 
-        // CRITICAL: Guard against empty video tracks - crashes with "videoTracks count >= 1" assertion
+        // Guard against empty video tracks - crashes with "videoTracks count >= 1" assertion
         let videoTracks = composition.tracks(withMediaType: .video)
         guard !videoTracks.isEmpty else {
             throw ExportError.invalidProject("Project has no video clips to export")
@@ -197,7 +190,7 @@ class ExportEngine: ExportServiceProtocol {
         // MP4 doesn't properly support alpha channels
         let fileType: AVFileType = settings.codec == .hevcWithAlpha ? .mov : .mp4
         let writer = try AVAssetWriter(outputURL: tempURL, fileType: fileType)
-        // CRITICAL: Move moov atom to start of file for web streaming fast-start
+        // Move moov atom to start of file for web streaming fast-start
         // Without this, the entire file must download before playback begins
         writer.shouldOptimizeForNetworkUse = true
 
@@ -314,7 +307,7 @@ class ExportEngine: ExportServiceProtocol {
 
             var shouldContinue = true
             while videoInput.isReadyForMoreMediaData, shouldContinue {
-                // RELIABILITY FIX: autoreleasepool prevents memory buildup during long exports (8K, 2+ hours)
+                // Autoreleasepool prevents memory buildup during long exports (8K, 2+ hours)
                 autoreleasepool {
                     if sessionState?.isCancelled == true {
                         videoInput.markAsFinished()
@@ -399,7 +392,7 @@ class ExportEngine: ExportServiceProtocol {
         // We use a safe continuation to bridge the dispatch group wrap
         return try await withCheckedThrowingContinuation { continuation in
             nonisolated(unsafe) let finalizeExport: @Sendable () -> Void = {
-                // CRITICAL FIX: Use uncheckedWriter/uncheckedReader directly to avoid
+                // Use uncheckedWriter/uncheckedReader directly to avoid
                 // capturing non-Sendable AVAssetWriter/AVAssetReader in @Sendable closures
 
                 if let error = progressState.exportError {
@@ -414,7 +407,7 @@ class ExportEngine: ExportServiceProtocol {
                     return
                 }
 
-                // CRITICAL FIX: Add timeout to finishWriting to prevent indefinite hangs
+                // Add timeout to finishWriting to prevent indefinite hangs
                 // Use nonisolated(unsafe) to safely share state across closures on same queue
                 nonisolated(unsafe) var finishCompleted = false
                 nonisolated(unsafe) var timeoutWorkItem: DispatchWorkItem?

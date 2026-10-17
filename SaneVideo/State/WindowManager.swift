@@ -1,10 +1,3 @@
-//
-//  WindowManager.swift
-//  SaneVideo
-//
-//  Created by SaneVideo Refactor
-//
-
 import AppKit
 import Combine
 import Foundation
@@ -22,7 +15,7 @@ class WindowManager {
   /// The app hid its own main window for a recording; closing it was not the user's choice.
   private(set) var isMainWindowHiddenForRecording = false
 
-  // CRITICAL FIX: Flag to prevent concurrent PiP show/hide operations
+  // Flag to prevent concurrent PiP show/hide operations
   private var isTogglingPiP = false
 
   // MARK: - Internal Properties
@@ -128,7 +121,7 @@ class WindowManager {
 
     isTogglingPiP = true
 
-    // CRITICAL FIX: Validate window state before operations
+    // Validate window state before operations
     if isWindowValid(pipWindow), let existingWindow = pipWindow, existingWindow.isVisible {
       if let layout = currentPresenterLayout {
         existingWindow.applyLayout(layout)
@@ -153,7 +146,7 @@ class WindowManager {
       }
     }
 
-    // CRITICAL FIX: Capture window reference BEFORE async work to prevent race
+    // Capture window reference BEFORE async work to prevent race
     guard let window = pipWindow else {
       isTogglingPiP = false
       return
@@ -192,7 +185,7 @@ class WindowManager {
 
     AppLogger.window.info("Hiding PiP Window")
 
-    // CRITICAL FIX: Check validity BEFORE any operations
+    // Check validity BEFORE any operations
     guard isWindowValid(window) else {
       AppLogger.window.warning("PiP window already released, skipping close")
       pipWindow = nil
@@ -204,7 +197,7 @@ class WindowManager {
     // ARC will deallocate the window when close() completes and no other refs exist
     pipWindow = nil
 
-    // CRITICAL FIX: Do NOT set isReleasedWhenClosed = true here
+    // Do NOT set isReleasedWhenClosed = true here
     // Setting it causes the window to be released immediately during close(),
     // which can crash if the window server is still accessing it.
     // Instead, let ARC handle cleanup naturally.

@@ -1,8 +1,3 @@
-//
-//  AIProviders.swift
-//  SaneVideo
-//
-
 import Foundation
 
 enum AIProvider {

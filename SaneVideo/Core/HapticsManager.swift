@@ -1,9 +1,4 @@
-//
-//  HapticsManager.swift
-//  SaneVideo
-//
-//  Centralized haptic feedback for macOS trackpad
-//
+// Centralized haptic feedback for macOS trackpad
 
 import AppKit
 

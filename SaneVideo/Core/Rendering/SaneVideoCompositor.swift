@@ -1,11 +1,6 @@
-//
-//  SaneVideoCompositor.swift
-//  SaneVideo
-//
-//  Custom video compositor implementing AVVideoCompositing.
-//  Enables application of Core Image filters (VideoEffect) and Transitions during playback
-//  Refactored to use helper renderers.
-//
+// Custom video compositor implementing AVVideoCompositing.
+// Enables application of Core Image filters (VideoEffect) and Transitions during playback
+// Refactored to use helper renderers.
 
 import AppKit
 @preconcurrency import AVFoundation
@@ -56,13 +51,13 @@ final class SaneVideoCompositor: NSObject, AVVideoCompositing {
     }
 
     private func render(_ request: AVAsynchronousVideoCompositionRequest) async {
-        // CRITICAL FIX: Ensure request is always finished, even on error
+        // Ensure request is always finished, even on error
         // Use defer to guarantee finish() is called on all paths
         var outputPixelBuffer: CVPixelBuffer?
         var renderError: Error?
 
         defer {
-            // CRITICAL FIX: Always finish the request, even if error occurred
+            // Always finish the request, even if error occurred
             if let error = renderError {
                 request.finish(with: error)
             } else if let buffer = outputPixelBuffer {

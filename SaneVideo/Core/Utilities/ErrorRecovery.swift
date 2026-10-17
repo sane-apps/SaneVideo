@@ -1,9 +1,4 @@
-//
-//  ErrorRecovery.swift
-//  SaneVideo
-//
-//  Error recovery and retry mechanisms for robust operations
-//
+// Error recovery and retry mechanisms for robust operations
 
 import Foundation
 
@@ -77,7 +72,7 @@ func isRecoverableError(_ error: Error) -> Bool {
         return false
     }
     
-    // CRITICAL FIX: Default to non-recoverable (conservative approach)
+    // Default to non-recoverable (conservative approach)
     // Only retry errors we explicitly know are transient
     return false
 }
@@ -94,7 +89,7 @@ func retryOperation<T: Sendable>(
     var delay = initialDelay
     
     for attempt in 1...maxAttempts {
-        // CRITICAL FIX: Check for cancellation before each attempt
+        // Check for cancellation before each attempt
         try Task.checkCancellation()
         
         do {
@@ -113,13 +108,13 @@ func retryOperation<T: Sendable>(
                 break
             }
             
-            // CRITICAL FIX: Cap exponential backoff to prevent long delays
+            // Cap exponential backoff to prevent long delays
             let cappedDelay = min(delay, maxDelay)
             
-            // CRITICAL FIX: Log as info (not warning) since retry is expected for transient errors
+            // Log as info (not warning) since retry is expected for transient errors
             AppLogger.general.info("⚠️ Operation failed (attempt \(attempt)/\(maxAttempts)), retrying in \(String(format: "%.1f", cappedDelay))s: \(error.localizedDescription)")
             
-            // CRITICAL FIX: Check for cancellation during sleep
+            // Check for cancellation during sleep
             try await Task.sleep(nanoseconds: UInt64(cappedDelay * 1_000_000_000))
             
             // Exponential backoff (capped)
@@ -145,7 +140,7 @@ func executeWithRecovery<T: Sendable>(
             return try await operation()
         } catch {
             AppLogger.general.warning("⚠️ Primary operation failed, using fallback: \(error.localizedDescription)")
-            // CRITICAL FIX: Fallback doesn't return value, just executes
+            // Fallback doesn't return value, just executes
             // Execute fallback and re-throw original error
             try await fallbackOp()
             throw error // Re-throw original error after fallback

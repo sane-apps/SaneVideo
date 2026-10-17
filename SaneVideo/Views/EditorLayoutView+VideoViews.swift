@@ -1,10 +1,5 @@
-//
-//  EditorLayoutView+VideoViews.swift
-//  SaneVideo
-//
-//  Extracted from EditorLayoutView.swift to reduce file size
-//  Contains: Video preview views and empty state
-//
+// Extracted from EditorLayoutView.swift to reduce file size
+// Contains: Video preview views and empty state
 
 import AVFoundation
 import CoreMedia

@@ -1,10 +1,5 @@
-//
-//  BatchCoordinator.swift
-//  SaneVideo
-//
-//  Service for coordinating parallel batch operations
-//  Provides consistent concurrency limits, progress tracking, and error handling
-//
+// Service for coordinating parallel batch operations
+// Provides consistent concurrency limits, progress tracking, and error handling
 
 import Foundation
 

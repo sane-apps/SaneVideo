@@ -1,10 +1,4 @@
-//
-//  AdvancedVideoPlayer.swift
-//  SaneVideo
-//
-//  Created by SaneVideo Refactor
-//  Optimized for Apple Silicon with AVPlayerView
-//
+// Optimized for Apple Silicon with AVPlayerView
 
 import AVKit
 import SwiftUI
@@ -36,7 +30,7 @@ struct AdvancedVideoPlayer: NSViewRepresentable {
         }
     }
 
-    // CRITICAL FIX: Disconnect player when view is torn down to prevent use-after-free
+    // Disconnect player when view is torn down to prevent use-after-free
     // The AVPlayerView can outlive the AVPlayer, causing crashes during autorelease
     static func dismantleNSView(_ nsView: AVPlayerView, coordinator: ()) {
         nsView.player = nil

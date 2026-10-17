@@ -1,17 +1,10 @@
-//
-//  VideoWriter.swift
-//  SaneVideo
-//
-//  Created by SaneVideo Refactor
-//
-
 import AVFoundation
 import CoreGraphics
 import CoreImage
 import CoreImage.CIFilterBuiltins
 import CoreMedia
 
-// DIAGNOSTIC: Frame rate tracking helper
+// Frame rate tracking helper
 private class FrameRateTracker {
     private let targetFPS: Double
     private var frameTimes: [CMTime] = []
@@ -76,7 +69,7 @@ final class VideoWriter: VideoWriterProtocol {
 
     private let srgbColorSpace = CGColorSpaceCreateDeviceRGB()
 
-    // CRITICAL FIX (2025-12-31): Monotonic timestamp tracking to prevent error -16364
+    // Monotonic timestamp tracking to prevent error -16364
     // When presenter overlay toggles during screen recording, timestamps can go backwards
     // causing AVAssetWriter to fail. We track the last written time and reject out-of-order frames.
     private var lastWrittenVideoTime: CMTime = .invalid
@@ -85,7 +78,7 @@ final class VideoWriter: VideoWriterProtocol {
     private var droppedFrameCount: Int = 0
     private let maxDroppedFramesBeforeWarning = 30  // Log warning if we drop too many
 
-    // DIAGNOSTIC: Frame rate tracking
+    // Frame rate tracking
     private var frameRateTracker: FrameRateTracker?
     private var notReadyForDataCount: Int = 0
     private var totalFramesReceived: Int = 0
@@ -150,7 +143,7 @@ final class VideoWriter: VideoWriterProtocol {
         )
 
         // Video Settings
-        // CRITICAL FIX: Add frame rate to video settings to prevent AVAssetWriter from defaulting to low rate
+        // Add frame rate to video settings to prevent AVAssetWriter from defaulting to low rate
         var videoSettings: [String: Any] = [
             AVVideoCodecKey: AVVideoCodecType.h264,
             AVVideoWidthKey: targetSize.width,
@@ -187,7 +180,7 @@ final class VideoWriter: VideoWriterProtocol {
         vInput.expectsMediaDataInRealTime = true
         videoInput = vInput
 
-        // DIAGNOSTIC: Initialize frame rate tracker and drift tracker
+        // Initialize frame rate tracker and drift tracker
         frameRateTracker = FrameRateTracker(targetFPS: targetFrameRate)
         driftTracker = DriftTracker()
 
@@ -290,7 +283,7 @@ final class VideoWriter: VideoWriterProtocol {
             return false
         }
 
-        // CRITICAL FIX (2025-12-31): Monotonic timestamp enforcement to prevent error -16364
+        // Monotonic timestamp enforcement to prevent error -16364
         // Presenter overlay on macOS 14+ can cause timestamp discontinuities
         if lastWrittenVideoTime.isValid {
             if presentationTime <= lastWrittenVideoTime {
@@ -303,7 +296,7 @@ final class VideoWriter: VideoWriterProtocol {
             }
         }
 
-        // CRITICAL FIX: Auto-start session if needed.
+        // Auto-start session if needed.
         // This ensures the MOOV atom is written correctly even if explicit startSession call was missed.
         if !sessionStarted {
             startSession(at: presentationTime)
@@ -423,7 +416,7 @@ final class VideoWriter: VideoWriterProtocol {
                     // A/V drift tracking
                     driftTracker?.recordVideoTimestamp(presentationTime)
 
-                    // DIAGNOSTIC: Track frame rate
+                    // Track frame rate
                     frameRateTracker?.recordFrame(at: presentationTime)
                     if totalFramesWritten % 60 == 0 {  // Log every 60 frames (~2 seconds at 30fps)
                         if let actualFPS = frameRateTracker?.currentFPS {
@@ -445,7 +438,7 @@ final class VideoWriter: VideoWriterProtocol {
     func writeMicAudio(sampleBuffer: CMSampleBuffer) -> Bool {
         guard let input = micInput, input.isReadyForMoreMediaData else { return false }
 
-        // CRITICAL FIX (2025-12-31): Monotonic timestamp enforcement for audio
+        // Monotonic timestamp enforcement for audio
         let pts = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
         if lastWrittenMicTime.isValid && pts <= lastWrittenMicTime {
             return false  // Skip out-of-order audio sample
@@ -490,7 +483,7 @@ final class VideoWriter: VideoWriterProtocol {
     func writeSystemAudio(sampleBuffer: CMSampleBuffer) -> Bool {
         guard let input = systemAudioInput, input.isReadyForMoreMediaData else { return false }
 
-        // CRITICAL FIX (2025-12-31): Monotonic timestamp enforcement for audio
+        // Monotonic timestamp enforcement for audio
         let pts = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
         if lastWrittenSystemAudioTime.isValid && pts <= lastWrittenSystemAudioTime {
             return false  // Skip out-of-order audio sample
@@ -561,7 +554,7 @@ final class VideoWriter: VideoWriterProtocol {
             systemAudioInput?.markAsFinished()
 
             if let writer = assetWriter, writer.status == .writing {
-                // CRITICAL FIX: Use continuation-based timeout to prevent hanging
+                // Use continuation-based timeout to prevent hanging
                 // AVAssetWriter.finishWriting is callback-based, we wrap it with timeout
                 let timeoutSeconds = Self.finishWritingTimeout
                 let uncheckedWriter = UncheckedAssetWriter(writer: writer)
@@ -614,12 +607,12 @@ final class VideoWriter: VideoWriterProtocol {
         pixelBufferAdaptor = nil
         sessionStarted = false
 
-        // CRITICAL FIX (2025-12-31): Reset timestamp tracking
+        // Reset timestamp tracking
         lastWrittenVideoTime = .invalid
         lastWrittenMicTime = .invalid
         lastWrittenSystemAudioTime = .invalid
 
-        // DIAGNOSTIC: Log final statistics before cleanup
+        // Log final statistics before cleanup
         if droppedFrameCount > 0 {
             AppLogger.recording.info("VideoWriter: Total dropped frames due to timestamp regression: \(droppedFrameCount)")
         }
@@ -639,13 +632,13 @@ final class VideoWriter: VideoWriterProtocol {
         driftTracker?.reset()
         driftTracker = nil
 
-        // CRITICAL FIX: Clear the latest camera frame to free high-resolution pixel buffer
+        // Clear the latest camera frame to free high-resolution pixel buffer
         cameraFrameLock.lock()
         latestCameraFrame = nil
         cameraFrameLock.unlock()
     }
 
-    // CRITICAL FIX: Cancel finishing task on deallocation
+    // Cancel finishing task on deallocation
     // Note: For @RecordingActor, we can't access isolated properties in deinit
     // The task will be cancelled when the actor is deallocated
     // We rely on proper cleanup in finishWriting() method

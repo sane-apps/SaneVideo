@@ -1,10 +1,3 @@
-//
-//  ClipContextMenu.swift
-//  SaneVideo
-//
-//  Created by SaneVideo Refactor
-//
-
 import SwiftUI
 import AppKit
 

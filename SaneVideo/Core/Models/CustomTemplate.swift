@@ -1,9 +1,4 @@
-//
-//  CustomTemplate.swift
-//  SaneVideo
-//
-//  User-created export templates for saving and reusing settings
-//
+// User-created export templates for saving and reusing settings
 
 import AVFoundation
 import Foundation

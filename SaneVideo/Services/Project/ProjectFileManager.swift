@@ -1,10 +1,3 @@
-//
-//  ProjectFileManager.swift
-//  SaneVideo
-//
-//  Created by SaneVideo Refactor
-//
-
 import AVFoundation
 import Foundation
 
@@ -55,7 +48,7 @@ final class ProjectFileManager: Sendable, ProjectFileManagerProtocol {
             throw error
         }
 
-        // CRITICAL FIX: Validate duration is valid before creating clip
+        // Validate duration is valid before creating clip
         guard duration.seconds > 0 else {
             throw AppError.recordingEngineError("Invalid video duration: \(duration.seconds)s")
         }
@@ -237,7 +230,7 @@ final class ProjectFileManager: Sendable, ProjectFileManagerProtocol {
                         let (resolvedURL, isStale) = try resolveBookmark(data: bookmarkData)
 
                         if isStale {
-                            // CRITICAL: Update bookmark if stale
+                            // Update bookmark if stale
                             if let newBookmark = try? createBookmark(for: resolvedURL) {
                                 clip.bookmarkData = newBookmark
                                 needsSave = true // Mark that project needs saving
@@ -252,7 +245,7 @@ final class ProjectFileManager: Sendable, ProjectFileManagerProtocol {
                             clip.url = resolvedURL
                         }
 
-                        // CRITICAL: Check existence (TOCTOU race possible, but we'll re-check when accessing)
+                        // Check existence (TOCTOU race possible, but we'll re-check when accessing)
                         // Note: File might be deleted between check and use, but we handle that in playback
                         if !FileManager.default.fileExists(atPath: resolvedURL.path) {
                             AppLogger.project.warning("⚠️ File missing: \(resolvedURL.lastPathComponent)")
@@ -261,7 +254,7 @@ final class ProjectFileManager: Sendable, ProjectFileManagerProtocol {
                             clip.isMissing = false
                         }
 
-                        // CRITICAL FIX: Validate clip properties on load
+                        // Validate clip properties on load
                         // Fix invalid properties automatically (synchronous validation)
                         if clip.duration.seconds <= 0 {
                             AppLogger.project.warning("⚠️ Clip has invalid duration (\(clip.duration.seconds)s), marking as missing")
@@ -294,7 +287,7 @@ final class ProjectFileManager: Sendable, ProjectFileManagerProtocol {
                             needsSave = true
                         }
 
-                        // CRITICAL FIX: Validate enhancedAudioURL (temp file may have been cleaned up)
+                        // Validate enhancedAudioURL (temp file may have been cleaned up)
                         // If enhanced audio file is missing, clear the URL so playback falls back to original
                         if let enhancedURL = clip.enhancedAudioURL {
                             if !FileManager.default.fileExists(atPath: enhancedURL.path) {

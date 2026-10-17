@@ -1,9 +1,4 @@
-//
-//  MemoryManager.swift
-//  SaneVideo
-//
-//  Centralized memory pressure handling for Apple Silicon optimization
-//
+// Centralized memory pressure handling for Apple Silicon optimization
 
 import Combine
 import Foundation
@@ -69,14 +64,14 @@ final class MemoryManager {
             // Clear thumbnail cache (always)
             await ServiceContainer.shared.thumbnailService.clearCache()
 
-            // OPTIMIZATION: Clear waveform cache on ANY memory pressure
+            // Clear waveform cache on ANY memory pressure
             // Waveforms are easily regeneratable and can consume significant memory on long timelines
             await ServiceContainer.shared.waveformService.clearCache()
 
             // Clear AI/Vision caches
             await ServiceContainer.shared.personSegmentationService.clearCache()
 
-            // OPTIMIZATION: Reset FaceTrackingService sequence handler to prevent memory bloat
+            // Reset FaceTrackingService sequence handler to prevent memory bloat
             // VNSequenceRequestHandler can accumulate state over many frames
             await ServiceContainer.shared.faceTrackingService.resetSequenceHandler()
 

@@ -1,10 +1,5 @@
-//
-//  TrackHeaderView.swift
-//  SaneVideo
-//
-//  Extracted from TimelineView.swift
-//  Contains track header and add track button
-//
+// Extracted from TimelineView.swift
+// Contains track header and add track button
 
 import AppKit
 import SwiftUI
@@ -61,14 +56,14 @@ struct TrackHeaderView: View {
             }
             .padding(.top, 2)
 
-            // CRITICAL FIX: Spacer to push content to top and fill height
+            // Spacer to push content to top and fill height
             Spacer(minLength: 0)
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 8)
         .frame(width: 100, alignment: .topLeading)
         .frame(height: AppConstants.timelineHeight, alignment: .top)
-        // CRITICAL FIX: Ensure perfect vertical alignment with track rows
+        // Ensure perfect vertical alignment with track rows
         // Both header and track row use same height (120px) and VStack spacing (8px)
         .background(
             RoundedRectangle(cornerRadius: 4)

@@ -1,10 +1,5 @@
-//
-//  MLEffectsServiceTests.swift
-//  SaneVideoTests
-//
-//  ML effect configuration rules: intensity clamping and the "any effect on" switch
-//  the export path uses to decide whether to run the ML pipeline.
-//
+// ML effect configuration rules: intensity clamping and the "any effect on" switch
+// the export path uses to decide whether to run the ML pipeline.
 
 @testable import SaneVideo
 import Testing

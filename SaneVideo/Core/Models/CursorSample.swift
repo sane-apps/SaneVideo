@@ -1,10 +1,5 @@
-//
-//  CursorSample.swift
-//  SaneVideo
-//
-//  Model for continuous cursor position tracking during recording.
-//  Extends click-only tracking with full mouse movement data.
-//
+// Model for continuous cursor position tracking during recording.
+// Extends click-only tracking with full mouse movement data.
 
 import Foundation
 

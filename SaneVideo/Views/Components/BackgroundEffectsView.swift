@@ -1,10 +1,5 @@
-//
-//  BackgroundEffectsView.swift
-//  SaneVideo
-//
-//  Background effects using Apple Vision person segmentation
-//  Blur, solid color, or image background replacement
-//
+// Background effects using Apple Vision person segmentation
+// Blur, solid color, or image background replacement
 
 import AppKit
 import SwiftUI
@@ -41,7 +36,7 @@ struct BackgroundEffectsView: View {
   
   var body: some View {
     VStack(alignment: .leading, spacing: 10) {
-      // CRITICAL FIX: Show warning if clip is missing
+      // Show warning if clip is missing
       if clip.isMissing {
         HStack(spacing: 6) {
           Image(systemName: "exclamationmark.triangle.fill")
@@ -99,7 +94,7 @@ struct BackgroundEffectsView: View {
       }
 
       if selectedEffect != nil {
-        // P1 FIX: 2x2 grid layout for effect type buttons
+        // 2x2 grid layout for effect type buttons
         VStack(spacing: 6) {
           HStack(spacing: 6) {
             EffectTypeButton(
@@ -189,7 +184,7 @@ struct BackgroundEffectsView: View {
         saveEffect()
       }
     }
-    // CRITICAL FIX: Sync state when clip changes externally
+    // Sync state when clip changes externally
     .onChange(of: clip.backgroundEffect) { _, newEffect in
       if selectedEffect != newEffect {
         selectedEffect = newEffect
@@ -458,7 +453,7 @@ struct BackgroundEffectsView: View {
   }
 
   private func saveEffect() {
-    // CRITICAL FIX: Validate clip before saving effect
+    // Validate clip before saving effect
     guard !clip.isMissing else {
       ServiceContainer.shared.toastManager.show(
         "Cannot save background effect: Clip file is missing. Use 'Locate File' in Clip Info to relink the file.",

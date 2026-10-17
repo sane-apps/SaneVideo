@@ -1,10 +1,3 @@
-//
-//  ExportView.swift
-//  SaneVideo
-//
-//  Created by SaneVideo Refactor
-//
-
 import AVFoundation
 import SwiftUI
 
@@ -48,7 +41,7 @@ struct ExportView: View {
             .contains { !$0.captions.isEmpty }
     }
     
-    // CRITICAL FIX: Check if timeline is empty
+    // Check if timeline is empty
     private var isTimelineEmpty: Bool {
         guard let project = appState.currentProject else { return true }
         return project.timeline.tracks.allSatisfy { $0.clips.isEmpty }

@@ -1,9 +1,4 @@
-//
-//  EnhancedMagicOverlayView.swift
-//  SaneVideo
-//
-//  Enhanced Magic Fix progress overlay with cancellation and better feedback
-//
+// Enhanced Magic Fix progress overlay with cancellation and better feedback
 
 import SwiftUI
 

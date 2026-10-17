@@ -1,9 +1,3 @@
-//
-//  PiPCameraWindow.swift
-//  SaneVideo
-//
-//
-
 import AppKit
 import AVFoundation
 import Combine
@@ -14,7 +8,7 @@ class PiPCameraWindow: NSPanel {
     private var previewLayer: AVCaptureVideoPreviewLayer?
     private var cancellables = Set<AnyCancellable>()
 
-    // CRITICAL FIX: Embed controls directly in PiPCameraWindow to prevent detachment.
+    // Embed controls directly in PiPCameraWindow to prevent detachment.
     private var controlsHostingView: NSHostingView<AnyView>?
 
     // MARK: - Size Presets (user-friendly defaults based on industry research)
@@ -55,7 +49,7 @@ class PiPCameraWindow: NSPanel {
     override var canBecomeKey: Bool { true }
     override var canBecomeMain: Bool { false }
 
-    // CRITICAL FIX: Handle screen configuration changes
+    // Handle screen configuration changes
     @objc private func screenConfigurationChanged() {
         // Re-snap to corner if window is visible and valid
         guard isVisible,
@@ -68,10 +62,10 @@ class PiPCameraWindow: NSPanel {
     }
 
     deinit {
-        // NOTE: Do NOT call AppLogger here - it creates Tasks which is unsafe in deinit
-        // CRITICAL FIX: Remove observer on deallocation
+        // Do NOT call AppLogger here - it creates Tasks which is unsafe in deinit
+        // Remove observer on deallocation
         NotificationCenter.default.removeObserver(self)
-        // CRITICAL FIX: Cleanup should happen in close(), but as safety net:
+        // Cleanup should happen in close(), but as safety net:
         // Note: Can't access MainActor properties in nonisolated deinit
         // Rely on close() being called properly
     }
@@ -107,7 +101,7 @@ class PiPCameraWindow: NSPanel {
         isReleasedWhenClosed = false
         title = "SaneVideo PiP"
 
-        // CRITICAL FIX: Observe screen configuration changes
+        // Observe screen configuration changes
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(screenConfigurationChanged),
@@ -132,7 +126,7 @@ class PiPCameraWindow: NSPanel {
         // This ensures controls scale appropriately as user resizes PiP
         currentButtonSize = IconCircleButton.Size.forPiPWidth(frame.width)
 
-        // UX FIX: Wrap controls with countdown overlay so PiP users see the countdown too
+        // Wrap controls with countdown overlay so PiP users see the countdown too
         let controlsWithCountdown = PiPControlsWithCountdown(buttonSize: currentButtonSize)
             .environment(ServiceContainer.shared.appState)
 
@@ -220,7 +214,7 @@ class PiPCameraWindow: NSPanel {
     }
 
     private func setupWindow() {
-        // CRITICAL FIX: Use floating level for PiP overlay
+        // Use floating level for PiP overlay
         // The key fix is sharingType = .none which hides from picker AND capture
         // Combined with our new flow: PiP is only shown AFTER picker selection,
         // so it won't be in the picker's window list anyway
@@ -235,7 +229,7 @@ class PiPCameraWindow: NSPanel {
         isMovableByWindowBackground = true
         collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
 
-        // CRITICAL FIX: Prevent PiP from appearing in screen share picker
+        // Prevent PiP from appearing in screen share picker
         // We use .none so the window cannot be captured at all
         // The camera is composited separately by VideoWriter
         self.sharingType = .none
@@ -261,7 +255,7 @@ class PiPCameraWindow: NSPanel {
             glassView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor)
         ])
 
-        // CRITICAL FIX: Add resize handle to contentView directly, NOT visualEffect
+        // Add resize handle to contentView directly, NOT visualEffect
         // This ensures it can be layered on top of the video preview
         let resizeHandle = ResizeHandleView(window: self)
         resizeHandle.translatesAutoresizingMaskIntoConstraints = false
@@ -383,7 +377,7 @@ class PiPCameraWindow: NSPanel {
     }
 
     private func updatePreview(with session: AVCaptureSession?) {
-        // CRITICAL: Must run on main thread for AVFoundation layer operations
+        // Must run on main thread for AVFoundation layer operations
         guard Thread.isMainThread else {
             DispatchQueue.main.async { [weak self] in
                 self?.updatePreview(with: session)
@@ -396,7 +390,7 @@ class PiPCameraWindow: NSPanel {
             return
         }
 
-        // CRITICAL FIX: Remove existing layer with proper cleanup
+        // Remove existing layer with proper cleanup
         // Disconnect session BEFORE removing to prevent use-after-free
         previewLayer?.session = nil
         previewLayer?.removeFromSuperlayer()
@@ -444,7 +438,7 @@ class PiPCameraWindow: NSPanel {
              contentView.addSubview(containerView)
         }
 
-        // CRITICAL FIX: Use z-ordering without removing/re-adding views
+        // Use z-ordering without removing/re-adding views
         // Removing views breaks constraints and causes use-after-free crashes
         // Instead, use sortSubviews to reorder the z-index
         contentView.sortSubviews({ (view1, view2, _) -> ComparisonResult in
@@ -467,7 +461,7 @@ class PiPCameraWindow: NSPanel {
         previewView = containerView
         previewLayer = newLayer
 
-        // CRITICAL FIX: Configure connection after layer is fully set up
+        // Configure connection after layer is fully set up
         // Defer to next run loop to allow AVFoundation internal setup
         DispatchQueue.main.async { [weak self] in
             guard let self = self,
@@ -475,7 +469,7 @@ class PiPCameraWindow: NSPanel {
                   self.previewLayer?.session === session else { return }
 
             // Configure connection properties
-            // CRITICAL: Must disable automaticallyAdjustsVideoMirroring BEFORE setting isVideoMirrored
+            // Must disable automaticallyAdjustsVideoMirroring BEFORE setting isVideoMirrored
             if connection.isVideoMirroringSupported {
                 connection.automaticallyAdjustsVideoMirroring = false
                 connection.isVideoMirrored = UserDefaults.standard.bool(forKey: CameraPreviewMirroring.appStorageKey)
@@ -485,7 +479,7 @@ class PiPCameraWindow: NSPanel {
     }
 
     override func close() {
-        // CRITICAL FIX: Prevent _NSWindowTransformAnimation crash
+        // Prevent _NSWindowTransformAnimation crash
         // The crash occurs because NSWindow animations are still running when dealloc happens.
         // Solution: Disable animations, cleanup synchronously, then close synchronously.
 
@@ -519,7 +513,7 @@ class PiPCameraWindow: NSPanel {
         orderOut(nil)
 
         // 6. Close synchronously - animations are disabled so this should be safe
-        // CRITICAL: Do NOT use asyncAfter - it causes race conditions with isReleasedWhenClosed
+        // Do NOT use asyncAfter - it causes race conditions with isReleasedWhenClosed
         super.close()
     }
 
@@ -571,7 +565,7 @@ class PiPCameraWindow: NSPanel {
     }
 
     func snapToCorner(_ corner: ScreenCorner) {
-        // CRITICAL FIX: Validate screen exists and window is valid
+        // Validate screen exists and window is valid
         guard let screen = NSScreen.main,
               windowNumber > 0,
               !isReleasedWhenClosed else {

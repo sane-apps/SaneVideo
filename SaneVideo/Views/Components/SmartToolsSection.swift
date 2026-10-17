@@ -1,10 +1,3 @@
-//
-//  SmartToolsSection.swift
-//  SaneVideo
-//
-//  Created by SaneVideo Refactor
-//
-
 import AVFoundation
 import SwiftUI
 
@@ -23,7 +16,7 @@ struct SmartToolsSection: View {
   // Since options are in ProjectState, let's bind to them.
 
   var body: some View {
-    // CRITICAL FIX: Remove nested ScrollView - parent StylesInspectorView already has ScrollView
+    // Remove nested ScrollView - parent StylesInspectorView already has ScrollView
     // Nested ScrollViews cause scrolling conflicts and performance issues
     VStack(alignment: .leading, spacing: Theme.Dimensions.spacingMD) {
       // MARK: - Header & Presets
@@ -37,7 +30,7 @@ struct SmartToolsSection: View {
       // Global Action Button
       magicButton
 
-      // CRITICAL FIX: Reset/Regenerate button when Magic Fix has been applied
+      // Reset/Regenerate button when Magic Fix has been applied
       if appState.projectState.hasMagicFixResults(for: clip) {
         resetMagicFixButton
       }
@@ -47,7 +40,7 @@ struct SmartToolsSection: View {
 
   private var headerView: some View {
     // COMPACT: Single row with title and presets menu
-    // NOTE: PrivacyBadge moved to InspectorHeader (always visible)
+    // PrivacyBadge moved to InspectorHeader (always visible)
     HStack(alignment: .center) {
       Text("Magic Fix")
         .font(.system(size: Theme.Typography.fontSizeLG, weight: .bold))
@@ -218,14 +211,14 @@ struct SmartToolsSection: View {
   private var magicButton: some View {
     Group {
       if appState.projectState.isProcessing {
-        // P0 FIX: Enhanced progress indicator with cancel button
+        // Enhanced progress indicator with cancel button
         VStack(spacing: 12) {
           LoadingIndicator(
             message: appState.projectState.processingStatus,
             progress: appState.projectState.processingProgress
           )
 
-          // P0 FIX: Cancel button
+          // Cancel button
           Button {
             appState.projectState.cancelCurrentOperation()
           } label: {
@@ -238,9 +231,9 @@ struct SmartToolsSection: View {
         }
         .transition(.smoothScale)
       } else {
-        // P1 FIX: Enhanced button with better visual hierarchy
+        // Enhanced button with better visual hierarchy
         Button {
-          // CRITICAL FIX: Validate clip before operation
+          // Validate clip before operation
           guard !clip.isMissing else {
             ServiceContainer.shared.toastManager.show(
               "Cannot apply Magic Fix: Clip file is missing. Use 'Locate File' in Clip Info to relink the file.",
@@ -263,7 +256,7 @@ struct SmartToolsSection: View {
                 .font(.system(size: Theme.Typography.fontSizeLG, weight: .bold))
             }
 
-            // UX FIX: Show what will be applied with better typography
+            // Show what will be applied with better typography
             if !options.isEmpty {
               Text(options.summary)
                 .font(.system(size: Theme.Typography.fontSizeXS, weight: .medium))
@@ -322,7 +315,7 @@ struct SmartToolsSection: View {
       Button {
         ServiceContainer.shared.hapticsManager.impact()
         Task {
-          // CRITICAL FIX: Reset clears old results AND regenerates with current toggle settings
+          // Reset clears old results AND regenerates with current toggle settings
           await appState.projectState.resetMagicFix(for: clip, regenerate: true)
         }
       } label: {

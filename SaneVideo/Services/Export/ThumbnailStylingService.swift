@@ -1,10 +1,3 @@
-//
-//  ThumbnailStylingService.swift
-//  SaneVideo
-//
-//  Created by SaneVideo Refactor
-//
-
 import AppKit
 import CoreImage
 import Foundation

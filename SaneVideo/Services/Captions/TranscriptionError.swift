@@ -1,9 +1,4 @@
-//
-//  TranscriptionError.swift
-//  SaneVideo
-//
-//  Shared error types for transcription services
-//
+// Shared error types for transcription services
 
 import Foundation
 

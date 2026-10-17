@@ -1,10 +1,5 @@
-//
-//  AudioProcessingIntegrationTests.swift
-//  SaneVideoTests
-//
-//  Audio features run against the real fixture clip (Tests/Assets/test_video.mp4, 5 s with a tone).
-//  Silence detection on real audio lives in SilenceDetectorTests.
-//
+// Audio features run against the real fixture clip (Tests/Assets/test_video.mp4, 5 s with a tone).
+// Silence detection on real audio lives in SilenceDetectorTests.
 
 import AVFoundation
 import CoreMedia

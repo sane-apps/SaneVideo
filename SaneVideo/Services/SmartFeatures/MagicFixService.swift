@@ -1,10 +1,3 @@
-//
-//  MagicFixService.swift
-//  SaneVideo
-//
-//  Created by SaneVideo Refactor
-//
-
 import AVFoundation
 import Combine
 import Foundation
@@ -76,7 +69,7 @@ enum MagicFixService {
                 rangesToRemove.append(contentsOf: fillerRanges)
             }
             
-            // NOTE: We use on-device NaturalLanguage framework for filler detection (SmartFillerDetector)
+            // We use on-device NaturalLanguage framework for filler detection (SmartFillerDetector)
             // Cloud AI analysis is optional and only used if explicitly enabled via API keys
             // The primary Magic Fix uses 100% on-device Apple APIs:
             // - SpeechAnalyzer for transcription

@@ -1,9 +1,4 @@
-//
-//  ProjectState+Audio.swift
-//  SaneVideo
-//
-//  Consolidated from ProjectState+Audio.swift and ProjectState+AudioServices.swift
-//
+// Consolidated from ProjectState+Audio.swift and ProjectState+AudioServices.swift
 
 import AVFoundation
 import CoreMedia
@@ -256,7 +251,7 @@ extension ProjectState {
         }) == true else { return }
 
         if clip.captions.isEmpty {
-            // NOTE: generateCaptions handles its own status updates
+            // GenerateCaptions handles its own status updates
             Task {
                 do {
                     _ = try await generateCaptions(for: clip)

@@ -1,9 +1,4 @@
-//
-//  RenderingService.swift
-//  SaneVideo
-//
-//  Centralized rendering context to ensure stability with System VFX/Reactions.
-//
+// Centralized rendering context to ensure stability with System VFX/Reactions.
 
 import AVFoundation
 import CoreImage

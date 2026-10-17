@@ -1,10 +1,5 @@
-//
-//  SilenceDetectorTests.swift
-//  SaneVideoTests
-//
-//  Silence detection on real audio: a generated tone/silence WAV with known gaps,
-//  plus the fixture clips (fully silent, constant tone, no audio track).
-//
+// Silence detection on real audio: a generated tone/silence WAV with known gaps,
+// plus the fixture clips (fully silent, constant tone, no audio track).
 
 import AVFoundation
 import CoreMedia

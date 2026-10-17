@@ -1,10 +1,5 @@
-//
-//  CameraConcurrencyRegressionTests.swift
-//  SaneVideoTests
-//
-//  Camera preview mirroring preference: fresh installs show an un-mirrored preview,
-//  and the user's choice persists under the key the preview reads.
-//
+// Camera preview mirroring preference: fresh installs show an un-mirrored preview,
+// and the user's choice persists under the key the preview reads.
 
 import Foundation
 @testable import SaneVideo

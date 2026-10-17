@@ -1,10 +1,3 @@
-//
-//  CaptionRow.swift
-//  SaneVideo
-//
-//  Created by SaneVideo Refactor
-//
-
 import AVFoundation
 import SwiftUI
 
@@ -48,7 +41,7 @@ struct CaptionRow: View {
                     .accessibilityIdentifier("caption.text_field")
                     .onChange(of: isFocused) { _, newValue in
                         showPreview = newValue
-                        // CRITICAL FIX: Clean Whisper tokens when user finishes editing
+                        // Clean Whisper tokens when user finishes editing
                         // This ensures any stray tokens are stripped on blur
                         if !newValue {
                             let cleaned = Caption.cleanText(caption.text)
@@ -70,7 +63,7 @@ struct CaptionRow: View {
             }
             
             // Live preview when editing
-            // CRITICAL FIX: Use displayText to strip Whisper tokens for preview
+            // Use displayText to strip Whisper tokens for preview
             if showPreview && !caption.displayText.isEmpty {
                 CaptionPreview(text: caption.displayText, style: style)
                     .transition(AnyTransition.opacity.combined(with: AnyTransition.scale(scale: 0.95)))

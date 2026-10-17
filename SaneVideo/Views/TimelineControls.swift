@@ -1,10 +1,5 @@
-//
-//  TimelineControls.swift
-//  SaneVideo
-//
-//  Unified toolbar with playback, editing, and timeline controls
-//  Consolidates PlayerControlBar and TimelineControls into one bar
-//
+// Unified toolbar with playback, editing, and timeline controls
+// Consolidates PlayerControlBar and TimelineControls into one bar
 
 import AVFoundation
 import SwiftUI

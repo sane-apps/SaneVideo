@@ -1,10 +1,5 @@
-//
-//  VoiceoverSettingsSheet.swift
-//  SaneVideo
-//
-//  Settings sheet for voiceover generation
-//  Exposes voice selection, speed, and pitch controls
-//
+// Settings sheet for voiceover generation
+// Exposes voice selection, speed, and pitch controls
 
 import AppKit
 import CoreMedia

@@ -1,11 +1,6 @@
-//
-//  PersonSegmentationService.swift
-//  SaneVideo
-//
-//  Uses Apple's Vision framework for person segmentation
-//  Enables background blur/replacement effects
-//  Auto-improves with each macOS update
-//
+// Uses Apple's Vision framework for person segmentation
+// Enables background blur/replacement effects
+// Auto-improves with each macOS update
 
 import AppKit
 import CoreImage

@@ -1,9 +1,4 @@
-//
-//  ExportView+Actions.swift
-//  SaneVideo
-//
-//  Refactored logic for ExportView.
-//
+// Refactored logic for ExportView.
 
 import AppKit
 import AVFoundation
@@ -136,7 +131,7 @@ extension ExportView {
     }
 
     func startExport() {
-        // CRITICAL FIX: Validate timeline is not empty before export
+        // Validate timeline is not empty before export
         guard let project = appState.currentProject else {
             ServiceContainer.shared.toastManager.show("No project to export", type: .error)
             return
@@ -150,13 +145,13 @@ extension ExportView {
 
         let outputURL = ExportDestination.url(for: project.name, ext: exportSettings.fileExtension)
 
-        // CRITICAL FIX: Start export with validation in Task
+        // Start export with validation in Task
         Task {
             await startExportWithValidation(project: project, outputURL: outputURL)
         }
     }
 
-    // CRITICAL FIX: Separate function for export with validation
+    // Separate function for export with validation
     private func startExportWithValidation(project: VideoProject, outputURL: URL) async {
         // Estimate file size: duration (seconds) × bitrate (bits/sec) / 8 = bytes
         let duration = project.timeline.duration.seconds
@@ -167,7 +162,7 @@ extension ExportView {
         // Add 20% overhead for container, metadata, etc.
         let requiredSpace = Int64(Double(estimatedBytes) * 1.2)
 
-        // CRITICAL FIX: Check disk space before export
+        // Check disk space before export
         do {
             // Check available space on output volume
             let outputVolume = outputURL.deletingLastPathComponent()

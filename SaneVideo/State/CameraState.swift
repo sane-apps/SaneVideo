@@ -1,10 +1,3 @@
-//
-//  CameraState.swift
-//  SaneVideo
-//
-//  Created by SaneVideo Refactor
-//
-
 import AVFoundation
 import Combine
 import Foundation
@@ -103,7 +96,7 @@ class CameraState {
         self.currentHasVideoSignal = self.cameraService.hasVideoSignal
         self.currentLastError = self.cameraService.lastError
         setupObserver()
-        // NOTE: Camera discovery is deferred until refreshCameras() is called
+        // Camera discovery is deferred until refreshCameras() is called
         // This prevents CMIO daemon activation on app launch
     }
 

@@ -1,9 +1,4 @@
-//
-//  SystemHealthService.swift
-//  SaneVideo
-//
-//  Monitors system health and provides proactive warnings
-//
+// Monitors system health and provides proactive warnings
 
 import Foundation
 

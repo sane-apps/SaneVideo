@@ -1,9 +1,4 @@
-//
-//  WaveformServiceTests.swift
-//  SaneVideoTests
-//
-//  Unit tests for WaveformService waveform generation.
-//
+// Unit tests for WaveformService waveform generation.
 
 import AVFoundation
 import XCTest

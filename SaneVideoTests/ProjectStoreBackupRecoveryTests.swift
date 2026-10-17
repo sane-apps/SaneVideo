@@ -1,9 +1,4 @@
-//
-//  ProjectStoreBackupRecoveryTests.swift
-//  SaneVideoTests
-//
-//  Comprehensive tests for ProjectStore backup and recovery functionality
-//
+// Comprehensive tests for ProjectStore backup and recovery functionality
 
 import Foundation
 @testable import SaneVideo
@@ -120,7 +115,7 @@ struct ProjectStoreBackupRecoveryTests {
         // Assert - project should be loaded
         #expect(loadedProjects.contains(where: { $0.id == project.id }))
 
-        // CRITICAL: Verify corrupted file was replaced with backup data
+        // Verify corrupted file was replaced with backup data
         // This prevents repeated warnings on every app launch
         let mainFileData = try Data(contentsOf: fileURL)
         let decoded = try JSONDecoder().decode(VideoProject.self, from: mainFileData)

@@ -1,9 +1,4 @@
-//
-//  RealTimeAudioProcessorProtocol.swift
-//  SaneVideo
-//
-//  Protocol for real-time audio processing during playback
-//
+// Protocol for real-time audio processing during playback
 
 import AVFoundation
 import Foundation

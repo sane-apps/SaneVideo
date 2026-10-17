@@ -1,16 +1,10 @@
-//
-//  ZoomInterpolator.swift
-//  SaneVideo
-//
-//  Spring-physics zoom transitions with cursor-following viewport.
-//  Replaces linear easing with natural spring motion inspired by Cap's PR #1504.
-//
-//  Flow:
-//  1. Click → spring zoom from 1.0 to zoomScale
-//  2. During hold → viewport spring-follows cursor within safe zone
-//  3. Zoom out → spring back to 1.0, viewport returns to center
-//  4. All keyframes pre-baked at clip frame rate
-//
+// Spring-physics zoom transitions with cursor-following viewport.
+// Replaces linear easing with natural spring motion inspired by Cap's PR #1504.
+// Flow:
+// 1. Click → spring zoom from 1.0 to zoomScale
+// 2. During hold → viewport spring-follows cursor within safe zone
+// 3. Zoom out → spring back to 1.0, viewport returns to center
+// 4. All keyframes pre-baked at clip frame rate
 
 import CoreMedia
 import Foundation

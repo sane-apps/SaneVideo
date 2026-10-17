@@ -1,10 +1,3 @@
-//
-//  SaneAudioEnhancementService.swift
-//  SaneVideo
-//
-//  Created by SaneVideo Refactor
-//
-
 import AVFoundation
 import Foundation
 
@@ -84,7 +77,7 @@ final class SaneAudioEnhancementService {
         // 1. Setup paths
         let fileManager = FileManager.default
         let folder = fileManager.temporaryDirectory.appendingPathComponent("EnhancedAudio", isDirectory: true)
-        // CRITICAL FIX: Properly handle directory creation errors
+        // Properly handle directory creation errors
         do {
             try fileManager.createDirectory(at: folder, withIntermediateDirectories: true)
         } catch {
@@ -95,7 +88,7 @@ final class SaneAudioEnhancementService {
         let filename = sourceURL.deletingPathExtension().lastPathComponent + "_enhanced_\(UUID().uuidString).m4a"
         let outputURL = folder.appendingPathComponent(filename)
 
-        // CRITICAL FIX: Check for cancellation before starting heavy work
+        // Check for cancellation before starting heavy work
         if Task.isCancelled {
             throw CancellationError()
         }
@@ -133,7 +126,7 @@ final class SaneAudioEnhancementService {
         engine.attach(eq)
 
         // B. Voice Isolation - SKIP for offline rendering
-        // CRITICAL FIX (2025-12-31): AUSoundIsolation does NOT support offline/manual rendering mode.
+        // AUSoundIsolation does NOT support offline/manual rendering mode.
         // It's designed for real-time audio processing only. Using it in offline mode causes
         // scheduleSegment() to hang indefinitely on macOS 15+.
         // Voice isolation is applied during real-time playback, not during export.
@@ -158,7 +151,7 @@ final class SaneAudioEnhancementService {
         // 5. Connect Nodes
         // Player -> EQ -> [VoiceIsolation if available] -> Dynamics -> MainMixer
 
-        // CRITICAL FIX: Check for cancellation before loading file
+        // Check for cancellation before loading file
         if Task.isCancelled {
             throw CancellationError()
         }
@@ -179,7 +172,7 @@ final class SaneAudioEnhancementService {
         try engine.enableManualRenderingMode(.offline, format: file.processingFormat, maximumFrameCount: maxFrames)
         AppLogger.recording.debug("🎙️ AudioEnhancement: Manual rendering mode enabled")
 
-        // CRITICAL FIX: For manual rendering mode, we need to start the engine FIRST
+        // For manual rendering mode, we need to start the engine FIRST
         // Then schedule the file segment (not the whole file) for offline rendering
         // scheduleFile can hang in manual rendering mode if called before engine.start()
         AppLogger.recording.debug("🎙️ AudioEnhancement: Starting engine for manual rendering...")
@@ -192,12 +185,12 @@ final class SaneAudioEnhancementService {
             throw error
         }
 
-        // CRITICAL: Verify file is valid before scheduling
+        // Verify file is valid before scheduling
         guard file.length > 0 else {
             throw EnhancementError.processingFailed("Audio file has zero length")
         }
 
-        // CRITICAL FIX (2025-12-31): Use completion-handler version for offline rendering
+        // Use completion-handler version for offline rendering
         // The async version (await scheduleSegment) waits for playback completion, which never
         // happens in manual rendering mode, causing an infinite hang.
         // Use completionHandler: nil to schedule immediately without waiting.
@@ -205,7 +198,7 @@ final class SaneAudioEnhancementService {
         player.scheduleSegment(file, startingFrame: 0, frameCount: AVAudioFrameCount(file.length), at: nil, completionHandler: nil)
         AppLogger.recording.debug("🎙️ AudioEnhancement: Audio segment scheduled")
 
-        // CRITICAL FIX: Use defer to ensure engine is ALWAYS stopped and cleaned up
+        // Use defer to ensure engine is ALWAYS stopped and cleaned up
         // This ensures cleanup happens even if render loop throws an error
         defer {
             AppLogger.recording.debug("🎙️ AudioEnhancement: Cleaning up engine...")

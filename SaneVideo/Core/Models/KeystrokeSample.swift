@@ -1,9 +1,4 @@
-//
-//  KeystrokeSample.swift
-//  SaneVideo
-//
-//  Captures keyboard shortcuts and navigation keys locally for demo overlays.
-//
+// Captures keyboard shortcuts and navigation keys locally for demo overlays.
 
 import Foundation
 

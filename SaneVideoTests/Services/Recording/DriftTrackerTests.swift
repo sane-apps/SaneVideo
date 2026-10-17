@@ -1,9 +1,4 @@
-//
-//  DriftTrackerTests.swift
-//  SaneVideoTests
-//
-//  Tests for A/V drift detection and correction
-//
+// Tests for A/V drift detection and correction
 
 import CoreMedia
 import Testing

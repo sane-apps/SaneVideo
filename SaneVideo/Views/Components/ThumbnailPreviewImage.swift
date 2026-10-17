@@ -1,10 +1,5 @@
-//
-//  ThumbnailPreviewImage.swift
-//  SaneVideo
-//
-//  PERFORMANCE: Static thumbnail for instant project switching
-//  Shows a thumbnail instead of AVPlayer until playback starts
-//
+// PERFORMANCE: Static thumbnail for instant project switching
+// Shows a thumbnail instead of AVPlayer until playback starts
 
 import AVFoundation
 import SwiftUI
@@ -59,7 +54,7 @@ struct ThumbnailPreviewImage: View {
     private func loadThumbnail() async {
         isLoading = true
 
-        // PERFORMANCE: Use wide tolerances for fast iFrame lookup
+        // Use wide tolerances for fast iFrame lookup
         // This lets AVAssetImageGenerator pick the nearest keyframe
         let generator = AVAssetImageGenerator(asset: AVURLAsset(url: clip.url))
         generator.appliesPreferredTrackTransform = true

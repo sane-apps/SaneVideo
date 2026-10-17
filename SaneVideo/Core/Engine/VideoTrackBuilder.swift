@@ -1,10 +1,3 @@
-//
-//  VideoTrackBuilder.swift
-//  SaneVideo
-//
-//  Created by SaneVideo Refactor
-//
-
 import AVFoundation
 import CoreMedia
 
@@ -108,7 +101,7 @@ enum VideoTrackBuilder {
         }
 
         // Define overlap for smooth cuts (internal to clip)
-        // NOTE: Overlap must be expressed in PLAYED time, and mapped to SOURCE time based on clip speed.
+        // Overlap must be expressed in PLAYED time, and mapped to SOURCE time based on clip speed.
         // This prevents mismatched overlap ranges (and potential A/V sync drift) when speed != 1.0.
         let overlap = TimeUtils.smoothCutOverlap(clipSpeed: clip.speed, overlapPlayedSeconds: 0.15)
 

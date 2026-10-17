@@ -1,9 +1,4 @@
-//
-//  CameraManagerTests.swift
-//  SaneVideoTests
-//
-//  Under test/automation, the real CameraManager must not touch camera hardware.
-//
+// Under test/automation, the real CameraManager must not touch camera hardware.
 
 @testable import SaneVideo
 import Testing

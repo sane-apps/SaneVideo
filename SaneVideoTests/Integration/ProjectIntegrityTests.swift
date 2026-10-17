@@ -1,10 +1,5 @@
-//
-//  ProjectIntegrityTests.swift
-//  SaneVideoTests
-//
-//  Verifies that every persisted project field survives a ProjectStore save/load cycle,
-//  and that basic timeline clip operations change the clip count.
-//
+// Verifies that every persisted project field survives a ProjectStore save/load cycle,
+// and that basic timeline clip operations change the clip count.
 
 import AVFoundation
 import CoreMedia

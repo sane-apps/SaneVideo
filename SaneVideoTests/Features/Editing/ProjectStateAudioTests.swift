@@ -1,9 +1,4 @@
-//
-//  ProjectStateAudioTests.swift
-//  SaneVideoTests
-//
-//  Tests for ProjectState+Audio: volume, voice isolation, gating, silence/filler removal
-//
+// Tests for ProjectState+Audio: volume, voice isolation, gating, silence/filler removal
 
 import AVFoundation
 import CoreMedia

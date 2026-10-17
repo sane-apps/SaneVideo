@@ -1,9 +1,4 @@
-//
-//  AudioServiceProtocol.swift
-//  SaneVideo
-//
-//  Protocol for AudioService to enable testability
-//
+// Protocol for AudioService to enable testability
 
 import AVFoundation
 @preconcurrency import Combine

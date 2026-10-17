@@ -1,9 +1,4 @@
-//
-//  ProjectSelectionTests.swift
-//  SaneVideoTests
-//
-//  Bulk project deletion from the project list.
-//
+// Bulk project deletion from the project list.
 
 import Foundation
 @testable import SaneVideo

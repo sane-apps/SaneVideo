@@ -1,10 +1,5 @@
-//
-//  AutomationRailStateTests.swift
-//  SaneVideoTests
-//
-//  Proves the four left-rail editor states (Transcript, Thumbnail, Voiceover, Shorts)
-//  can be activated programmatically by automation runs.
-//
+// Proves the four left-rail editor states (Transcript, Thumbnail, Voiceover, Shorts)
+// can be activated programmatically by automation runs.
 
 import Foundation
 @testable import SaneVideo

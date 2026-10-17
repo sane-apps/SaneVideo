@@ -1,10 +1,5 @@
-//
-//  MagicFixRegressionTests.swift
-//  SaneVideoTests
-//
-//  Regressions from the 2025-12-28 Magic Fix audit: cancellation, bad input, clip deletion mid-run,
-//  smooth-cut timing and enhanced-audio drift.
-//
+// Regressions from the 2025-12-28 Magic Fix audit: cancellation, bad input, clip deletion mid-run,
+// smooth-cut timing and enhanced-audio drift.
 
 import AVFoundation
 import CoreMedia

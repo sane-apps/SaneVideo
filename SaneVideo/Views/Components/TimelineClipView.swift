@@ -1,10 +1,3 @@
-//
-//  TimelineClipView.swift
-//  SaneVideo
-//
-//  Created by SaneVideo Refactor
-//
-
 import AVFoundation
 import CoreMedia
 import SwiftUI
@@ -41,7 +34,7 @@ struct TimelineClipView: View {
     @State private var isHoveringHandle = false // Track if hovering over trim handle
     @State private var showingDeleteFileConfirmation = false
 
-    // CRITICAL FIX: Track waveform loading task for cancellation
+    // Track waveform loading task for cancellation
     @State private var waveformLoadTask: Task<Void, Never>?
 
     private let handleWidth: CGFloat = 14
@@ -63,7 +56,7 @@ struct TimelineClipView: View {
     }
 
     var body: some View {
-        // CRITICAL FIX: Break up complex expression to help compiler type-check
+        // Break up complex expression to help compiler type-check
         let frameWidth = max(0, clipWidth + (isDraggingRightHandle ? rightTrimOffset : 0) - (isDraggingLeftHandle ? leftTrimOffset : 0))
 
         return ZStack(alignment: .leading) {
@@ -78,7 +71,7 @@ struct TimelineClipView: View {
                 )
 
                 // CLIP CONTENT
-                // CRITICAL FIX: Don't use scale effect - it changes layout and pushes handles out of bounds
+                // Don't use scale effect - it changes layout and pushes handles out of bounds
                 // Use brightness/opacity instead for visual feedback that doesn't affect layout
                 clipContent
                     .brightness((isHovering && !isHoveringHandle) ? 0.1 : 0.0)
@@ -97,7 +90,7 @@ struct TimelineClipView: View {
         .frame(width: frameWidth, height: clipHeight)
         .accessibilityIdentifier(AccessibilityIdentifiers.timelineClip)
         .accessibilityLabel(clip.url.lastPathComponent)
-        // CRITICAL FIX: Only offset entire clip for left handle drag
+        // Only offset entire clip for left handle drag
         // Right handle stays in place via its own offset
         .offset(x: isDraggingLeftHandle ? leftTrimOffset : 0)
         .background(isSelected ? Color.accentColor : Color.stone.opacity(0.3))
@@ -105,7 +98,7 @@ struct TimelineClipView: View {
         .shadow(color: .black.opacity(0.3), radius: 2, x: 0, y: 1)
         .overlay(RoundedRectangle(cornerRadius: 6).stroke(isSelected ? Color.accentColor : Color.clear, lineWidth: 2))
         .onHover { hovering in
-            // CRITICAL FIX: Don't scale if hovering over trim handle
+            // Don't scale if hovering over trim handle
             // This prevents the clip from expanding when trying to grab the handle
             guard !isHoveringHandle else { return }
             withAnimation(.smoothUI) { isHovering = hovering }
@@ -119,16 +112,16 @@ struct TimelineClipView: View {
             onSelect: onSelect
         ))
         .task {
-            // CRITICAL FIX: Load waveform on-demand when view appears
+            // Load waveform on-demand when view appears
             // This prevents loading waveforms for off-screen clips
             waveformLoadTask = Task { @MainActor in
                 await loadWaveform()
             }
-            // CRITICAL FIX: Don't await here - let task run in background
+            // Don't await here - let task run in background
             // The view will update when waveformSamples is set
         }
         .onDisappear {
-            // CRITICAL FIX: Cancel waveform load when view disappears (clip off-screen)
+            // Cancel waveform load when view disappears (clip off-screen)
             waveformLoadTask?.cancel()
             waveformLoadTask = nil
             // Also cancel the load in the service
@@ -225,7 +218,7 @@ struct TimelineClipView: View {
         let thumbCount = max(1, Int(clipWidth / targetThumbWidth))
         let singleThumbWidth = clipWidth / CGFloat(thumbCount)
 
-        // PERFORMANCE: LazyHStack with explicit frame to prevent layout thrashing
+        // LazyHStack with explicit frame to prevent layout thrashing
         return LazyHStack(spacing: 0) {
             ForEach(0..<thumbCount, id: \.self) { index in
                 // Calculate time for this specific thumbnail slot
@@ -319,11 +312,11 @@ struct TimelineClipView: View {
     // Removed eager loadThumbnails() to prevent OOM on large files
 
     private func loadWaveform() async {
-        // CRITICAL FIX: Check for cancellation before loading
+        // Check for cancellation before loading
         guard !Task.isCancelled else { return }
 
         if let samples = await ServiceContainer.shared.waveformService.waveform(for: clip) {
-            // CRITICAL FIX: Check cancellation again before updating UI
+            // Check cancellation again before updating UI
             guard !Task.isCancelled else { return }
             await MainActor.run { self.waveformSamples = samples }
         }
@@ -368,12 +361,12 @@ struct TimelineThumbnailCell: View {
         }
         .clipped()
         .task {
-            // PERFORMANCE: Check cache first, then load
+            // Check cache first, then load
             // Note: ServiceContainer handles internal caching of generated results
             guard image == nil && !isLoading else { return }
             isLoading = true
 
-            // PERFORMANCE: Use detached task with utility priority for thumbnails
+            // Use detached task with utility priority for thumbnails
             // This prevents thumbnail loading from blocking UI
             let thumb = await Task.detached(priority: .utility) {
                 await ServiceContainer.shared.thumbnailService.thumbnail(
@@ -404,17 +397,17 @@ struct ClipGestureModifier: ViewModifier {
 
     func body(content: Content) -> some View {
         content
-            // CRITICAL FIX: Use gesture priority system to prevent conflicts
+            // Use gesture priority system to prevent conflicts
             // Select gesture has lower priority than trim handles (which use highPriorityGesture)
             // Increase minimumDistance to prevent accidental triggers during trim
             .gesture(
                 DragGesture(minimumDistance: 5, coordinateSpace: .local) // CRITICAL FIX: Require 5px movement to prevent accidental triggers
                     .onEnded { value in
-                        // CRITICAL FIX: Only allow selection if not dragging trim handles
+                        // Only allow selection if not dragging trim handles
                         // This prevents gesture conflicts
                         guard !isDraggingLeftHandle && !isDraggingRightHandle else { return }
 
-                        // CRITICAL FIX: Check if drag was significant enough to be intentional
+                        // Check if drag was significant enough to be intentional
                         // Small movements (< 5px) are likely accidental
                         let dragDistance = sqrt(pow(value.translation.width, 2) + pow(value.translation.height, 2))
                         guard dragDistance < 10 else { return } // If dragged too far, it's not a click

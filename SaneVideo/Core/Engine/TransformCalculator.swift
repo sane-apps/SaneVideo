@@ -1,10 +1,3 @@
-//
-//  TransformCalculator.swift
-//  SaneVideo
-//
-//  Created by SaneVideo Refactor
-//
-
 import AVFoundation
 import CoreMedia
 

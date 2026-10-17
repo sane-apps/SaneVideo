@@ -1,10 +1,5 @@
-//
-//  ClickTrackingService.swift
-//  SaneVideo
-//
-//  Tracks mouse clicks and continuous cursor movement during recording.
-//  Click data powers auto-zoom; cursor data enables spring-smoothed viewport following.
-//
+// Tracks mouse clicks and continuous cursor movement during recording.
+// Click data powers auto-zoom; cursor data enables spring-smoothed viewport following.
 
 import AppKit
 import CoreGraphics

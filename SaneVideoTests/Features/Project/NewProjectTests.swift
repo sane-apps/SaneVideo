@@ -1,9 +1,4 @@
-//
-//  NewProjectTests.swift
-//  SaneVideoTests
-//
-//  Starting a new project: naming, ordering and saving to the store.
-//
+// Starting a new project: naming, ordering and saving to the store.
 
 import Foundation
 @testable import SaneVideo

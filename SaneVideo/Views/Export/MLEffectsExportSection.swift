@@ -1,10 +1,5 @@
-//
-//  MLEffectsExportSection.swift
-//  SaneVideo
-//
-//  ML Effects toggle section for export configuration
-//  These effects use VideoToolbox VTFrameProcessor for high-quality processing
-//
+// ML Effects toggle section for export configuration
+// These effects use VideoToolbox VTFrameProcessor for high-quality processing
 
 import SwiftUI
 

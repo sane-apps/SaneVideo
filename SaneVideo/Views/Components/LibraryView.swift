@@ -1,9 +1,4 @@
-//
-//  LibraryView.swift
-//  SaneVideo
-//
-//  Library view for importing and managing clips in the sidebar
-//
+// Library view for importing and managing clips in the sidebar
 
 import SwiftUI
 import UniformTypeIdentifiers
@@ -42,7 +37,7 @@ struct LibraryView: View {
     }
 
     private var importHeader: some View {
-        // NOTE: Processing progress is shown in the Inspector panel (Magic Fix section)
+        // Processing progress is shown in the Inspector panel (Magic Fix section)
         // where the user initiates operations - single source of truth for progress
         HStack(spacing: 8) {
             ImportButtonGroup()

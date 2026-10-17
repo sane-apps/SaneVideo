@@ -1,10 +1,5 @@
-//
-//  FocusNavigationModifier.swift
-//  SaneVideo
-//
-//  Provides keyboard navigation support with custom focus styling
-//  to replace the removed .focusable() modifiers (which caused yellow focus rings)
-//
+// Provides keyboard navigation support with custom focus styling
+// to replace the removed .focusable() modifiers (which caused yellow focus rings)
 
 import SwiftUI
 

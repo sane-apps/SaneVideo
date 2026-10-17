@@ -1,9 +1,4 @@
-//
-//  ProjectFileManagerProtocol.swift
-//  SaneVideo
-//
-//  Protocol for project file management operations
-//
+// Protocol for project file management operations
 
 import AVFoundation
 import Foundation

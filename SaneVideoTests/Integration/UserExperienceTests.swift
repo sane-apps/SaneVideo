@@ -1,10 +1,5 @@
-//
-//  UserExperienceTests.swift
-//  SaneVideoTests
-//
-//  Error copy that carries the underlying cause, and Magic Fix cancellation resetting
-//  the processing state the overlay reads.
-//
+// Error copy that carries the underlying cause, and Magic Fix cancellation resetting
+// the processing state the overlay reads.
 
 import AVFoundation
 import Foundation

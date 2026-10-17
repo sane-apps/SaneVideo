@@ -1,10 +1,5 @@
-//
-//  ServiceContainer.swift
-//  SaneVideo
-//
-//  Dependency Injection container for testable, loosely-coupled services
-//  Best practice: Use this instead of singletons for non-view services
-//
+// Dependency Injection container for testable, loosely-coupled services
+// Best practice: Use this instead of singletons for non-view services
 
 import AVFoundation
 import Foundation

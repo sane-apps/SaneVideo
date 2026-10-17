@@ -1,9 +1,4 @@
-//
-//  PermissionManagerTests.swift
-//  SaneVideoTests
-//
-//  Tests for PermissionManager - permission checking, requesting, status tracking
-//
+// Tests for PermissionManager - permission checking, requesting, status tracking
 
 import AVFoundation
 @testable import SaneVideo

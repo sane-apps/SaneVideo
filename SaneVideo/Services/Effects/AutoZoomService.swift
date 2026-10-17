@@ -1,10 +1,5 @@
-//
-//  AutoZoomService.swift
-//  SaneVideo
-//
-//  Generates automatic zoom keyframes from mouse click events
-//  Screen Studio style: zooms in on click locations with smooth camera movement
-//
+// Generates automatic zoom keyframes from mouse click events
+// Screen Studio style: zooms in on click locations with smooth camera movement
 
 import AVFoundation
 import CoreMedia

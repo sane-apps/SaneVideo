@@ -1,10 +1,5 @@
-//
-//  AudioServiceTests.swift
-//  SaneVideoTests
-//
-//  The real AudioService must hand every subscriber the same publishers, or the
-//  recorder and the level meter end up listening to different subjects.
-//
+// The real AudioService must hand every subscriber the same publishers, or the
+// recorder and the level meter end up listening to different subjects.
 
 import Combine
 @testable import SaneVideo

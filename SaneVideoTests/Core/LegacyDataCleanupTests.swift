@@ -1,10 +1,5 @@
-//
-//  LegacyDataCleanupTests.swift
-//  SaneVideoTests
-//
-//  One-time removal of data from removed features, against a temp Application Support folder and a
-//  throwaway UserDefaults suite. (It also deletes the app's old API-key keychain item, as the app does.)
-//
+// One-time removal of data from removed features, against a temp Application Support folder and a
+// throwaway UserDefaults suite. (It also deletes the app's old API-key keychain item, as the app does.)
 
 import Foundation
 @testable import SaneVideo

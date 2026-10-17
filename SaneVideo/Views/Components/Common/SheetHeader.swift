@@ -1,9 +1,4 @@
-//
-//  SheetHeader.swift
-//  SaneVideo
-//
-//  Reusable header component for modal sheets
-//
+// Reusable header component for modal sheets
 
 import SwiftUI
 

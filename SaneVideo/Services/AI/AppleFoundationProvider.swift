@@ -1,8 +1,3 @@
-//
-//  AppleFoundationProvider.swift
-//  SaneVideo
-//
-
 import Foundation
 
 #if canImport(FoundationModels)

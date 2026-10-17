@@ -1,9 +1,4 @@
-//
-//  BatchExportServiceTests.swift
-//  SaneVideoTests
-//
-//  Shorts export, written to a temp folder (never ~/Movies/SaneVideo/Shorts).
-//
+// Shorts export, written to a temp folder (never ~/Movies/SaneVideo/Shorts).
 
 import AVFoundation
 import CoreMedia

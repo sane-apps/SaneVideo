@@ -1,10 +1,5 @@
-//
-//  TemplateStoreTests.swift
-//  SaneVideoTests
-//
-//  Saved export templates persist to disk and come back in a fresh store.
-//  Every store uses its own temp directory, never ~/Movies.
-//
+// Saved export templates persist to disk and come back in a fresh store.
+// Every store uses its own temp directory, never ~/Movies.
 
 import AVFoundation
 import Foundation

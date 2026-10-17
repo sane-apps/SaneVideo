@@ -1,9 +1,4 @@
-//
-//  UpdaterServiceTests.swift
-//  SaneVideoTests
-//
-//  Tests for UpdaterService - Sparkle auto-update integration
-//
+// Tests for UpdaterService - Sparkle auto-update integration
 
 import Testing
 import Foundation

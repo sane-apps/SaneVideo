@@ -1,8 +1,4 @@
-//
-//  ProjectStoreProtocol.swift
-//  SaneVideo
-//
-//  Protocol for project persistence abstraction
+// Protocol for project persistence abstraction
 
 import Foundation
 

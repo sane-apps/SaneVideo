@@ -1,10 +1,5 @@
-//
-//  CaptionExportRegressionTests.swift
-//  SaneVideoTests
-//
-//  Caption burn-in inputs: word time ranges for karaoke highlighting, and the
-//  hex colors caption styles are stored as.
-//
+// Caption burn-in inputs: word time ranges for karaoke highlighting, and the
+// hex colors caption styles are stored as.
 
 import AppKit
 import CoreMedia

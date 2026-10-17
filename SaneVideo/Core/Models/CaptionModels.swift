@@ -1,10 +1,3 @@
-//
-//  CaptionModels.swift
-//  SaneVideo
-//
-//  Created by SaneVideo Refactor
-//
-
 import CoreMedia
 import Foundation
 import SwiftUI
@@ -36,7 +29,7 @@ public struct Caption: Identifiable, Codable, Equatable, Sendable {
     public static func cleanText(_ input: String) -> String {
         var cleanedText = input.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
 
-        // CRITICAL: Remove Whisper special tokens first
+        // Remove Whisper special tokens first
         // These are control tokens like <|startoftranscript|>, <|en|>, <|endoftranscript|>, etc.
         let specialTokenPatterns = [
             #"<\|[^|>]+\|>"#,  // Matches <|anything|> - all special tokens

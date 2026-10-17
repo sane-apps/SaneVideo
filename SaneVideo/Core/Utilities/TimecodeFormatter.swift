@@ -1,8 +1,4 @@
-//
-//  TimecodeFormatter.swift
-//  SaneVideo
-//
-//  Utility for formatting time values for display
+// Utility for formatting time values for display
 
 import AVFoundation
 import Foundation

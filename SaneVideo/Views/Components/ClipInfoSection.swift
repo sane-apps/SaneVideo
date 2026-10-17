@@ -1,9 +1,4 @@
-//
-//  ClipInfoSection.swift
-//  SaneVideo
-//
-//  Displays basic clip metadata (name, duration, resolution)
-//
+// Displays basic clip metadata (name, duration, resolution)
 
 import AVFoundation
 import SwiftUI
@@ -30,17 +25,17 @@ struct ClipInfoSection: View {
             InfoRow(label: "Duration", value: String(format: "%.2fs", clip.duration.seconds))
             InfoRow(label: "Resolution", value: resolution)
             
-            // P0 FIX: Show file path (truncated if long)
+            // Show file path (truncated if long)
             if let filePath = filePathDisplay {
                 InfoRow(label: "Location", value: filePath)
             }
             
-            // P0 FIX: Show file size
+            // Show file size
             if let fileSize = fileSizeDisplay {
                 InfoRow(label: "Size", value: fileSize)
             }
             
-            // P0 FIX: Missing file recovery
+            // Missing file recovery
             if clip.isMissing {
                 VStack(alignment: .leading, spacing: 8) {
                     HStack {
@@ -80,7 +75,7 @@ struct ClipInfoSection: View {
         }
     }
     
-    // P0 FIX: File path display (truncated)
+    // File path display (truncated)
     private var filePathDisplay: String? {
         let path = clip.url.path
         if path.count > 50 {
@@ -92,7 +87,7 @@ struct ClipInfoSection: View {
         return path
     }
     
-    // P0 FIX: File size display
+    // File size display
     @State private var fileSizeDisplay: String?
     
     private func loadFileInfo() async {
@@ -117,7 +112,7 @@ struct ClipInfoSection: View {
         }
     }
     
-    // P0 FIX: Locate missing file
+    // Locate missing file
     private func locateMissingFile() {
         let panel = NSOpenPanel()
         panel.allowsMultipleSelection = false
@@ -129,7 +124,7 @@ struct ClipInfoSection: View {
         
         panel.begin { [clip] response in
             if response == .OK, let newURL = panel.url {
-                // P0 FIX: Validate file exists and is readable
+                // Validate file exists and is readable
                 guard FileManager.default.fileExists(atPath: newURL.path) else {
                     Task { @MainActor in
                         ServiceContainer.shared.toastManager.show(
@@ -140,7 +135,7 @@ struct ClipInfoSection: View {
                     return
                 }
                 
-                // P0 FIX: Update clip URL in ProjectState
+                // Update clip URL in ProjectState
                 Task { @MainActor in
                     // Relink clip to new file location
                     appState.projectState.relinkClip(clip, to: newURL)
@@ -156,7 +151,7 @@ struct ClipInfoSection: View {
     }
 
     private func loadResolution() async {
-        // CRITICAL FIX: Add timeout and error handling
+        // Add timeout and error handling
         await withTaskGroup(of: Void.self) { group in
             group.addTask {
                 // Timeout after 5 seconds
@@ -170,7 +165,7 @@ struct ClipInfoSection: View {
             
             group.addTask {
                 let asset = AVURLAsset(url: clip.url)
-                // CRITICAL FIX: Check if file exists first
+                // Check if file exists first
                 guard FileManager.default.fileExists(atPath: clip.url.path) else {
                     await MainActor.run {
                         resolution = "File Missing"

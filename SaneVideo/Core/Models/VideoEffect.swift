@@ -1,10 +1,4 @@
-//
-//  VideoEffect.swift
-//  SaneVideo
-//
-//  Created by SaneVideo Refactor
-//  Phase 3: Video effects using CIFilter
-//
+// Phase 3: Video effects using CIFilter
 
 import CoreImage
 import Foundation

@@ -1,10 +1,3 @@
-//
-//  ExportServiceProtocol.swift
-//  SaneVideo
-//
-//  Created by SaneVideo Refactor
-//
-
 import Foundation
 
 /// @mockable

@@ -1,9 +1,4 @@
-//
-//  TeleprompterWindow.swift
-//  SaneVideo
-//
-//  A floating, excluded-from-capture teleprompter window for local-only demos.
-//
+// A floating, excluded-from-capture teleprompter window for local-only demos.
 
 import AppKit
 import SwiftUI

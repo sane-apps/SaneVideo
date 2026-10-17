@@ -1,10 +1,3 @@
-//
-//  VoiceIsolationService.swift
-//  SaneVideo
-//
-//  Created by SaneVideo Refactor
-//
-
 @preconcurrency import AVFoundation
 import Combine
 import OSLog

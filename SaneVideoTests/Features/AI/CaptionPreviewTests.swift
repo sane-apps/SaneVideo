@@ -1,9 +1,4 @@
-//
-//  CaptionPreviewTests.swift
-//  SaneVideoTests
-//
-//  Every caption preset must be drawable: a font, a positive size and a text color.
-//
+// Every caption preset must be drawable: a font, a positive size and a text color.
 
 @testable import SaneVideo
 import Testing

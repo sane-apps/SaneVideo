@@ -1,10 +1,5 @@
-//
-//  VolumeMonitor.swift
-//  SaneVideo
-//
-//  Monitors external drive mount/unmount events to warn users when media becomes unavailable.
-//  Critical for projects with clips stored on external drives.
-//
+// Monitors external drive mount/unmount events to warn users when media becomes unavailable.
+// Critical for projects with clips stored on external drives.
 
 import AppKit
 import Foundation

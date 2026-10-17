@@ -1,10 +1,5 @@
-//
-//  SmartCropService.swift
-//  SaneVideo
-//
-//  Combines face tracking and saliency analysis to generate smart crop keyframes
-//  for vertical/square export from horizontal source video.
-//
+// Combines face tracking and saliency analysis to generate smart crop keyframes
+// for vertical/square export from horizontal source video.
 
 import AVFoundation
 import CoreMedia

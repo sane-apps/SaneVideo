@@ -1,10 +1,3 @@
-//
-//  GlobalSheetModifier.swift
-//  SaneVideo
-//
-//  Created by SaneVideo Refactor
-//
-
 import SwiftUI
 
 struct GlobalSheetModifier: ViewModifier {

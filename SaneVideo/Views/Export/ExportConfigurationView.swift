@@ -1,10 +1,5 @@
-//
-//  ExportConfigurationView.swift
-//  SaneVideo
-//
-//  Extracted from ExportView.swift
-//  Contains export preset buttons and manual settings (Resolution, Frame Rate, etc.)
-//
+// Extracted from ExportView.swift
+// Contains export preset buttons and manual settings (Resolution, Frame Rate, etc.)
 
 import AVFoundation
 import SwiftUI

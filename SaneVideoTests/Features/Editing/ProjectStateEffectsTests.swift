@@ -1,9 +1,4 @@
-//
-//  ProjectStateEffectsTests.swift
-//  SaneVideoTests
-//
-//  Tests for ProjectState+Effects: transitions, effects application
-//
+// Tests for ProjectState+Effects: transitions, effects application
 
 import CoreMedia
 @testable import SaneVideo

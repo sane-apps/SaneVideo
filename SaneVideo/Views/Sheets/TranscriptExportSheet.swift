@@ -1,9 +1,4 @@
-//
-//  TranscriptExportSheet.swift
-//  SaneVideo
-//
-//  Export captions as PDF transcript, SRT, VTT, or plain text
-//
+// Export captions as PDF transcript, SRT, VTT, or plain text
 
 import AppKit
 import CoreMedia

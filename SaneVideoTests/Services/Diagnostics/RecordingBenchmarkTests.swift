@@ -1,9 +1,4 @@
-//
-//  RecordingBenchmarkTests.swift
-//  SaneVideoTests
-//
-//  Tests for recording quality benchmark metrics and grading
-//
+// Tests for recording quality benchmark metrics and grading
 
 import CoreMedia
 import Testing

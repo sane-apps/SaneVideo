@@ -1,10 +1,3 @@
-//
-//  AppState.swift
-//  SaneVideo
-//
-//  Created by SaneVideo Refactor
-//
-
 import AVFoundation
 import Combine
 import SwiftUI
@@ -361,7 +354,7 @@ class AppState {
                 isRecording: recordingState.isRecording
             )
 
-            // CRITICAL FIX: If already recording, switch source to screen
+            // If already recording, switch source to screen
             // Without this, currentSource stays .camera and screen frames are filtered out
             if recordingState.isRecording {
                 NSLog("🖥️ Already recording - switching source to screen")
@@ -419,7 +412,7 @@ class AppState {
     }
 
     private func setupErrorHandling() {
-        // NOTE: Error handling is configured in RecordingState.setupRecordingEngine()
+        // Error handling is configured in RecordingState.setupRecordingEngine()
         // That handler intelligently filters permission prompts (shows toast instead of alert)
         // and only forwards actual errors to ErrorPresenter.
         //

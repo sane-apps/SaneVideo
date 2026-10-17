@@ -1,12 +1,7 @@
-//
-//  AppLogger.swift
-//  SaneVideo
-//
-//  Centralized logging with os.Logger
-//
-//  NOTE: macOS Unified Logging filters debug/info logs by default.
-//  To see logs: Run from Xcode, use `log stream`, or enable file logging.
-//  File logging is enabled in DEBUG builds and writes to ~/Library/Logs/SaneVideo/
+// Centralized logging with os.Logger
+// NOTE: macOS Unified Logging filters debug/info logs by default.
+// To see logs: Run from Xcode, use `log stream`, or enable file logging.
+// File logging is enabled in DEBUG builds and writes to ~/Library/Logs/SaneVideo/
 
 import Foundation
 import OSLog
@@ -21,7 +16,7 @@ struct SaneLogger: Sendable {
         self.category = category
     }
 
-    // CRITICAL FIX: Don't create Tasks in logging methods.
+    // Don't create Tasks in logging methods.
     // Tasks can outlive objects and cause use-after-free crashes.
     // File logging is the primary mechanism; onLog callback is deprecated.
 

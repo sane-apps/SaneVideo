@@ -1,10 +1,3 @@
-//
-//  TimelineEmptyStateView.swift
-//  SaneVideo
-//
-//  Created by SaneVideo Refactor
-//
-
 import SwiftUI
 
 struct TimelineEmptyStateView: View {

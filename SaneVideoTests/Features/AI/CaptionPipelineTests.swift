@@ -1,11 +1,6 @@
-//
-//  CaptionPipelineTests.swift
-//  SaneVideoTests
-//
-//  The engine-independent parts of captioning: grouping timed words into lines (CaptionBuilder),
-//  reading word times out of SpeechAnalyzer results (AppleSpeechService.words), and pulling the
-//  audio out of a clip (AudioExtractor). No speech model runs here.
-//
+// The engine-independent parts of captioning: grouping timed words into lines (CaptionBuilder),
+// reading word times out of SpeechAnalyzer results (AppleSpeechService.words), and pulling the
+// audio out of a clip (AudioExtractor). No speech model runs here.
 
 import AVFoundation
 import CoreMedia

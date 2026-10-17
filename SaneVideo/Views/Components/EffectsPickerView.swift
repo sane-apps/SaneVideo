@@ -1,10 +1,4 @@
-//
-//  EffectsPickerView.swift
-//  SaneVideo
-//
-//  Created by SaneVideo Refactor
-//  Redesigned: Direct effect tiles using Apple's CIFilter effects
-//
+// Redesigned: Direct effect tiles using Apple's CIFilter effects
 
 import CoreMedia
 import SwiftUI
@@ -30,7 +24,7 @@ struct EffectsPickerView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            // UX FIX: Removed duplicate Auto-Grade button
+            // Removed duplicate Auto-Grade button
             // This feature is already accessible in Smart Tools as "Auto Color"
             // Having it in two places was confusing users
 
@@ -78,8 +72,8 @@ struct EffectsPickerView: View {
                 }
             }
 
-            // UX FIX: Effect tiles with live previews showing what each filter does
-            // CRITICAL: Increased spacing and added contentShape to fix click target issues
+            // Effect tiles with live previews showing what each filter does
+            // Increased spacing and added contentShape to fix click target issues
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 70), spacing: 12)], spacing: 12) {
                 ForEach(effectsForCategory) { effectType in
                     EffectTile(
@@ -97,13 +91,13 @@ struct EffectsPickerView: View {
             // Load a preview thumbnail for effect previews
             await loadPreviewThumbnail()
         }
-        // CRITICAL FIX: Also reload thumbnail when clip URL changes (file relinked)
+        // Also reload thumbnail when clip URL changes (file relinked)
         .onChange(of: clip.url) { _, _ in
             Task {
                 await loadPreviewThumbnail()
             }
         }
-        // CRITICAL FIX: Sync effects when clip changes externally
+        // Sync effects when clip changes externally
         .onChange(of: clip.effects) { _, newEffects in
             // Only update if significantly different to avoid unnecessary re-renders
             if effects.count != newEffects.count ||
@@ -111,7 +105,7 @@ struct EffectsPickerView: View {
                 self.effects = newEffects
             }
         }
-        // CRITICAL FIX: Validate clip exists before operations
+        // Validate clip exists before operations
         .onChange(of: clip.id) { _, _ in
             // Clip changed, sync effects
             self.effects = clip.effects
@@ -121,7 +115,7 @@ struct EffectsPickerView: View {
     // MARK: - Actions
 
     private func toggleEffect(_ type: VideoEffectType) {
-        // CRITICAL FIX: Validate clip before toggling effect
+        // Validate clip before toggling effect
         guard !clip.isMissing else {
             ServiceContainer.shared.toastManager.show(
                 "Cannot apply effect: Clip file is missing. Use 'Locate File' in Clip Info to relink the file.",
@@ -156,7 +150,7 @@ struct EffectsPickerView: View {
     }
 
     private func saveEffects() {
-        // CRITICAL FIX: Validate clip before saving effects
+        // Validate clip before saving effects
         guard !clip.isMissing else {
             ServiceContainer.shared.toastManager.show(
                 "Cannot save effects: Clip file is missing. Use 'Locate File' in Clip Info to relink the file.",
@@ -170,14 +164,14 @@ struct EffectsPickerView: View {
     /// Load a preview thumbnail from the clip for effect previews
     private func loadPreviewThumbnail() async {
         guard !clip.isMissing else {
-            // CRITICAL FIX: Clear thumbnail if clip is missing
+            // Clear thumbnail if clip is missing
             await MainActor.run {
                 self.previewThumbnail = nil
             }
             return
         }
 
-        // CRITICAL FIX: Use original time mapping to get correct frame from source file
+        // Use original time mapping to get correct frame from source file
         // Use middle of effective duration, then map to original time
         let effectiveMidTime = CMTime(seconds: clip.effectiveDuration.seconds * 0.5, preferredTimescale: 600)
         let originalTime = clip.originalTime(forEffectiveTime: effectiveMidTime) ?? clip.trimStart
@@ -193,7 +187,7 @@ struct EffectsPickerView: View {
                 self.previewThumbnail = thumbnail.value
             }
         } else {
-            // CRITICAL FIX: Log failure for debugging
+            // Log failure for debugging
             AppLogger.general.warning("Failed to load preview thumbnail for effect tiles (clip: \(clip.id))")
         }
     }
@@ -208,7 +202,7 @@ struct EffectTile: View {
     let onTap: () -> Void
     var previewImage: NSImage?  // Optional preview frame from clip
 
-    // P1 FIX: State for hover preview
+    // State for hover preview
     @State private var isHovering = false
     @State private var filteredPreview: NSImage?
 
@@ -216,7 +210,7 @@ struct EffectTile: View {
         Button(action: onTap, label: {
             VStack(spacing: 4) {
                 ZStack {
-                    // UX FIX: Show actual effect preview if we have a sample frame
+                    // Show actual effect preview if we have a sample frame
                     if let preview = filteredPreview ?? previewImage {
                         Image(nsImage: preview)
                             .resizable()
@@ -268,7 +262,7 @@ struct EffectTile: View {
             }
         })
         .buttonStyle(.plain)
-        // FIX: Removed .hoverScale(1.1), .pressScale(), and .shadow()
+        // Removed .hoverScale(1.1), .pressScale(), and .shadow()
         // These were causing visual clutter (double yellow box) and click target issues
         .animation(.smoothUI, value: isActive)
         .help(isActive ?

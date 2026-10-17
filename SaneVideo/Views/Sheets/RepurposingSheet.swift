@@ -1,10 +1,5 @@
-//
-//  RepurposingSheet.swift
-//  SaneVideo
-//
-//  UI for long-to-short video repurposing
-//  Allows users to configure settings and select candidates for export
-//
+// UI for long-to-short video repurposing
+// Allows users to configure settings and select candidates for export
 
 import AVFoundation
 import SwiftUI

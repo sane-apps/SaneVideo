@@ -1,10 +1,3 @@
-//
-//  PDFGeneratorService.swift
-//  SaneVideo
-//
-//  Created by SaneVideo Refactor
-//
-
 import Combine
 import CoreMedia
 import Foundation

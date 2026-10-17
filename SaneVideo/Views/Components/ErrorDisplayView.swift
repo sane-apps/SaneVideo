@@ -1,9 +1,4 @@
-//
-//  ErrorDisplayView.swift
-//  SaneVideo
-//
-//  User-friendly error display with recovery suggestions
-//
+// User-friendly error display with recovery suggestions
 
 import SwiftUI
 

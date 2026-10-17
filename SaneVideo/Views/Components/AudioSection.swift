@@ -1,9 +1,4 @@
-//
-//  AudioSection.swift
-//  SaneVideo
-//
-//  2025-12-31: Simplified - Volume moved to toolbar. Kept: Smart Audio Tools
-//
+// 2025-12-31: Simplified - Volume moved to toolbar. Kept: Smart Audio Tools
 
 import AppKit
 import CoreMedia

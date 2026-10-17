@@ -1,9 +1,4 @@
-//
-//  VideoWriterIntegrationTests.swift
-//  SaneVideoTests
-//
-//  The real VideoWriter fed synthetic frames and PCM audio, then the file read back with AVFoundation.
-//
+// The real VideoWriter fed synthetic frames and PCM audio, then the file read back with AVFoundation.
 
 import AVFoundation
 import CoreMedia

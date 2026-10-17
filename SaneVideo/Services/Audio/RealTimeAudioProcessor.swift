@@ -1,11 +1,6 @@
-//
-//  RealTimeAudioProcessor.swift
-//  SaneVideo
-//
-//  Real-time audio processing for instant effect preview during playback
-//  Uses AVAudioEngine to process audio in real-time, just like Apple Photos
-//  Allows instant toggling of all audio effects without pre-rendering
-//
+// Real-time audio processing for instant effect preview during playback
+// Uses AVAudioEngine to process audio in real-time, just like Apple Photos
+// Allows instant toggling of all audio effects without pre-rendering
 
 import AVFoundation
 import Foundation
@@ -75,7 +70,7 @@ final class RealTimeAudioProcessor: RealTimeAudioProcessorProtocol {
         
         self.engine = newEngine
         
-        // CRITICAL FIX: Use defer to ensure engine is stopped on error
+        // Use defer to ensure engine is stopped on error
         do {
             // Start engine
             try newEngine.start()
@@ -83,7 +78,7 @@ final class RealTimeAudioProcessor: RealTimeAudioProcessorProtocol {
             // Mute AVPlayer audio (we'll play through engine instead)
             videoPlayer.volume = 0.0
 
-            // CRITICAL FIX (2025-12-31): Use completionHandler:nil instead of await
+            // Use completionHandler:nil instead of await
             // The async version waits for PLAYBACK COMPLETION, not scheduling
             newPlayerNode.scheduleFile(file, at: nil, completionHandler: nil)
 
@@ -92,7 +87,7 @@ final class RealTimeAudioProcessor: RealTimeAudioProcessorProtocol {
             
             AppLogger.audio.info("Real-time audio processor setup complete for clip \(clip.id)")
         } catch {
-            // CRITICAL FIX: Stop engine on error to prevent resource leak
+            // Stop engine on error to prevent resource leak
             newEngine.stop()
             throw error
         }
@@ -112,7 +107,7 @@ final class RealTimeAudioProcessor: RealTimeAudioProcessorProtocol {
         // Schedule from current video position
         let remainingFrames = max(0, AVAudioFrameCount(audioFile.length - framePosition))
         if remainingFrames > 0 {
-            // CRITICAL FIX (2025-12-31): Use completionHandler:nil instead of await
+            // Use completionHandler:nil instead of await
             // The async version waits for PLAYBACK COMPLETION, not scheduling completion
             // This was causing audio to be delayed until the previous segment finished
             playerNode.scheduleSegment(audioFile, startingFrame: framePosition, frameCount: remainingFrames, at: nil, completionHandler: nil)
@@ -144,10 +139,10 @@ final class RealTimeAudioProcessor: RealTimeAudioProcessorProtocol {
         // Calculate frame position
         let sampleRate = audioFile.processingFormat.sampleRate
         let framePosition = AVAudioFramePosition(time.seconds * sampleRate)
-        // FIX: max() BEFORE converting to UInt32 to prevent negative-to-unsigned crash
+        // Max() BEFORE converting to UInt32 to prevent negative-to-unsigned crash
         let remainingFrames = AVAudioFrameCount(max(0, audioFile.length - framePosition))
 
-        // CRITICAL FIX (2025-12-31): Use completionHandler:nil instead of await
+        // Use completionHandler:nil instead of await
         // The async version waits for PLAYBACK COMPLETION, causing audio desync
         playerNode.scheduleSegment(audioFile, startingFrame: framePosition, frameCount: remainingFrames, at: nil, completionHandler: nil)
 
@@ -183,7 +178,7 @@ final class RealTimeAudioProcessor: RealTimeAudioProcessorProtocol {
     
     /// Stop and cleanup
     func cleanup() {
-        // CRITICAL FIX: Detach nodes before stopping engine to prevent memory leaks
+        // Detach nodes before stopping engine to prevent memory leaks
         if let engine = engine {
             // Detach all nodes before stopping
             if let playerNode = playerNode {

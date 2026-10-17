@@ -1,10 +1,3 @@
-//
-//  MagicProgressOverlay.swift
-//  SaneVideo
-//
-//  Created by SaneVideo Refactor
-//
-
 import SwiftUI
 
 struct MagicProgressOverlay: View {

@@ -1,7 +1,4 @@
-//  RecordingModels.swift
-//  SaneVideo
-//
-//  Enums and value types for recording and export
+// Enums and value types for recording and export
 
 import AVFoundation
 import Foundation

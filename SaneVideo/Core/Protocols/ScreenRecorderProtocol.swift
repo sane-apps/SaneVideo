@@ -1,9 +1,4 @@
-//
-//  ScreenRecorderProtocol.swift
-//  SaneVideo
-//
-//  Protocol for ScreenRecorder to enable testability
-//
+// Protocol for ScreenRecorder to enable testability
 
 @preconcurrency import Combine
 import CoreMedia

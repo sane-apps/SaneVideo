@@ -1,10 +1,3 @@
-//
-//  CompositionBuilder.swift
-//  SaneVideo
-//
-//  Created by SaneVideo Refactor
-//
-
 import AVFoundation
 import CoreMedia
 
@@ -26,7 +19,7 @@ enum CompositionBuilder {
     static func build(from project: VideoProject, renderSize: CGSize = CGSize(width: 1920, height: 1080)) async throws -> CompositionResult {
         let timeline = project.timeline
 
-        // CRITICAL: Early validation for empty timeline to prevent Signal 10 crash
+        // Early validation for empty timeline to prevent Signal 10 crash
         // AVAssetReaderVideoCompositionOutput crashes with "[videoTracks count] >= 1" assertion
         // We must check if there are any enabled video tracks with content
         let hasVideoContent = timeline.tracks.contains { track in
@@ -34,7 +27,7 @@ enum CompositionBuilder {
         }
 
         guard hasVideoContent else {
-            // CRITICAL FIX: Throw specific error rather than letting it crash later
+            // Throw specific error rather than letting it crash later
             throw AppError.compositionFailed(NSError(
                 domain: "CompositionBuilder",
                 code: -1,
@@ -44,7 +37,7 @@ enum CompositionBuilder {
 
         let composition = AVMutableComposition()
 
-        // CRITICAL FIX: Validate all source files exist before composition
+        // Validate all source files exist before composition
         var missingFiles: [String] = []
         for track in timeline.tracks {
             for clip in track.clips {
@@ -126,7 +119,7 @@ enum CompositionBuilder {
 
         // 4c. Apply audio limiter to prevent clipping when tracks are mixed
         // This uses MTAudioProcessingTap to apply soft-knee limiting
-        // FIX (2025-12-31): BYPASS limiter for now - MTAudioProcessingTap may cause silent audio
+        // BYPASS limiter for now - MTAudioProcessingTap may cause silent audio
         // The tap may not be compatible with AVPlayer playback (works for export only)
         // TODO: Investigate if limiter should only be applied during export, not playback
         let limitedAudioMix = audioMix  // AudioLimiter.applyLimiter(to: audioMix)

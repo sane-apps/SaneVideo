@@ -1,10 +1,3 @@
-//
-//  ProjectEditingTests.swift
-//  SaneVideoTests
-//
-//  Created by SaneVideo Test Suite
-//
-
 import XCTest
 import AVFoundation
 @testable import SaneVideo

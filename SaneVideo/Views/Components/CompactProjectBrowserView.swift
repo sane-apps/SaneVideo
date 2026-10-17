@@ -1,10 +1,5 @@
-//
-//  CompactProjectBrowserView.swift
-//  SaneVideo
-//
-//  Project browser for sidebar - shows all projects inline
-//  Supports multi-select: Shift+Click/Arrow for range, Cmd+Click to toggle, Cmd+A for all
-//
+// Project browser for sidebar - shows all projects inline
+// Supports multi-select: Shift+Click/Arrow for range, Cmd+Click to toggle, Cmd+A for all
 
 import SwiftUI
 import AVFoundation

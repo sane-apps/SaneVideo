@@ -15,6 +15,7 @@ struct SidebarView: View {
             }
             .pickerStyle(.segmented)
             .labelsHidden()
+            .controlSize(.regular)
             .frame(maxWidth: .infinity)
             .padding(.horizontal, 12)
             .padding(.vertical, 10)

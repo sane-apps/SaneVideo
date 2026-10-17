@@ -18,7 +18,7 @@ struct EditorLayoutView: View {
     @State private var captionTask: Task<Void, Never>?
     @State private var audioCleanTask: Task<Void, Never>?
 
-    private let sidebarExpandedWidth: CGFloat = 260
+    private let sidebarExpandedWidth: CGFloat = 290
     private let inspectorExpandedWidth: CGFloat = 320
     private let collapsedWidth: CGFloat = 20 // Collapsed width for sidebar toggle button
 
@@ -290,6 +290,8 @@ struct EditorLayoutView: View {
         ZStack(alignment: .trailing) {
             if !isSidebarCollapsed {
                 SidebarView(selectedClip: $selectedClip)
+                    .frame(width: sidebarExpandedWidth, alignment: .leading)
+                    .clipped()
                     .transition(.opacity)
             }
 

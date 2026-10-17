@@ -121,6 +121,10 @@ extension AppState {
             // CRITICAL: UX Delight - Audible feedback on success (as requested)
             ServiceContainer.shared.soundManager.playSuccess()
         }
+        // Every recording becomes a project right away, whatever the user picks next.
+        recordingImportTask = Task { @MainActor in
+            await self.addRecordingAsProject(url: url)
+        }
     }
 
     /// Generate a thumbnail for the quick access overlay
@@ -148,41 +152,24 @@ extension AppState {
 
     /// Handle Quick Access Overlay actions
     func handleQuickAccessEdit() {
-        guard let url = quickAccessRecordingURL else {
-            NSLog("📹 handleQuickAccessEdit: No URL available!")
-            return
-        }
-
-        NSLog("📹 handleQuickAccessEdit: file = \(url.lastPathComponent)")
         showQuickAccessOverlay = false
-
         Task { @MainActor in
-            NSLog("📹 Quick Access: Edit Now selected for \(url.lastPathComponent)")
-
-            // Show loading feedback
-            ServiceContainer.shared.toastManager.show("📹 Importing recording...")
-
-            await self.prepareQuickAccessRecordingForTimeline(url: url)
-
-            ServiceContainer.shared.toastManager.show("✅ Ready to edit!")
+            await recordingImportTask?.value
+            switchToEditing()
         }
     }
 
     func handleQuickAccessSave() {
         showQuickAccessOverlay = false
-        // Just dismiss - video is already saved
-        ServiceContainer.shared.toastManager.show("✅ Recording saved!")
+        ServiceContainer.shared.toastManager.show("Saved to Projects")
     }
 
     func handleQuickAccessShare() {
-        guard let url = quickAccessRecordingURL else { return }
-
         showQuickAccessOverlay = false
-
         Task { @MainActor in
-            ServiceContainer.shared.toastManager.show("📦 Preparing export...")
-            await self.prepareQuickAccessRecordingForTimeline(url: url)
-            self.showExportSheet = true
+            await recordingImportTask?.value
+            switchToEditing()
+            showExportSheet = true
         }
     }
 
@@ -192,23 +179,12 @@ extension AppState {
         quickAccessThumbnail = nil
     }
 
-    private func prepareQuickAccessRecordingForTimeline(url: URL) async {
-        // Create project FIRST, then switch mode. This prevents EditorLayoutView from
-        // rendering with nil project state while the just-recorded file imports.
-        projectState.startNewProject()
-
-        try? await Task.sleep(nanoseconds: 100_000_000)
-
-        switchToEditing()
-
-        // Wait briefly for AVAssetWriter finalization and file-system visibility.
-        try? await Task.sleep(nanoseconds: 400_000_000)
-
+    private func addRecordingAsProject(url: URL) async {
+        projectState.startNewProject(named: url.deletingPathExtension().lastPathComponent)
+        // Give AVAssetWriter's final rename a moment to become visible.
+        try? await Task.sleep(for: .milliseconds(400))
         await projectState.addVideoToTimeline(url: url)
-
-        if let firstClip = projectState.currentProject?.timeline.tracks
-            .flatMap(\.clips)
-            .first {
+        if let firstClip = projectState.currentProject?.timeline.tracks.flatMap(\.clips).first {
             selectedClipIds = [firstClip.id]
         }
     }

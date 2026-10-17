@@ -41,16 +41,11 @@ struct SaneVideoApp: App {
                             (icon: "wand.and.rays", text: "Use the complete local video workflow"),
                             (icon: "bolt", text: "Use every export preset, template, and polish tool")
                         ],
-                        proFeatures: [
-                            (icon: "checkmark.seal", text: "Every recording and edit tool is included"),
-                            (icon: "lock.open", text: "No trial and no paywall"),
-                            (icon: "heart.fill", text: "Donate only if you want to support it"),
-                            (icon: "square.stack.3d.up", text: "Local export. No subscription")
-                        ],
+                        proFeatures: OpenSourceRelease.welcomeSupportFeatures,
                         freeTierTitle: "Free",
                         freeTierPrice: "All features included",
-                        proTierTitleOverride: "Support SaneVideo",
-                        proTierPriceOverride: "Donate if it helps you",
+                        proTierTitleOverride: OpenSourceRelease.welcomeSupportTitle,
+                        proTierPriceOverride: OpenSourceRelease.welcomeSupportPrice,
                         permissionConfig: welcomePermissionConfig,
                         licenseService: licenseService,
                         donationURL: OpenSourceRelease.donationURL,

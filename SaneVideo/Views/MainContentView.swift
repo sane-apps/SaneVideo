@@ -32,9 +32,9 @@ struct MainContentView: View {
                     MagicOverlayView()
                 }
                 .overlay(alignment: .bottomTrailing) {
-                    // The editor shows Donate in its sidebar footer; the recorder keeps the corner button.
-                    if appState.appMode == .recording {
-                        SaneStickyDonateButton(url: OpenSourceRelease.donationURL)
+                    // The editor shows the support link in its sidebar footer; the recorder keeps the corner button.
+                    if appState.appMode == .recording, OpenSourceRelease.donationURL != nil {
+                        SaneStickyDonateButton()
                             .padding(16)
                     }
                 }

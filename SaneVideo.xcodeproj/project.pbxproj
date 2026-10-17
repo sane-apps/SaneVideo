@@ -101,6 +101,7 @@
 		241772586B6DAA1ABCD35F19 /* ProjectState+Effects.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BD7F5BAD891B3C2198B2D10 /* ProjectState+Effects.swift */; };
 		24473590945F6860D69A4B2C /* CompositionBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97B878485B43B311DA351F79 /* CompositionBuilder.swift */; };
 		25B9FC19CE17BA59AC2FF256 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 62841C516E8BCB9FA8035B4E /* AppState.swift */; };
+		271D0C284B72DFB740A3AC8F /* DirectDistributionSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96A377A68EED840C425CDC86 /* DirectDistributionSupport.swift */; };
 		271F2E671B9C153864261C09 /* ExportOutputTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A3B31EE25CB89EC1D3B124B /* ExportOutputTests.swift */; };
 		27931A3C0644F9F839BA9425 /* GlobalSheetModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = DEA963FF610EC2437BAB0E0E /* GlobalSheetModifier.swift */; };
 		27D82CD2177AE7C897C39257 /* CursorInterpolator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B02ACB0EFE863E439B24601 /* CursorInterpolator.swift */; };
@@ -533,6 +534,7 @@
 		D3A378E5718B373CF1660142 /* TimecodeFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13934913CEFB333E88815F90 /* TimecodeFormatter.swift */; };
 		D40A7F6CEC621C827CC81D1A /* LegacyDataCleanup.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE92A6218CDAE771E8590723 /* LegacyDataCleanup.swift */; };
 		D4FDC36414F33A1560DF9949 /* AudioTrackBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = D26089F8A0F2424F8FCBE5BE /* AudioTrackBuilder.swift */; };
+		D4FE6EE4CCD1CAB7DA228FCF /* DirectDistributionSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96A377A68EED840C425CDC86 /* DirectDistributionSupport.swift */; };
 		D50379469B562E434AA149B3 /* DriftTrackerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0715EBA61269CC29B99BA9B /* DriftTrackerTests.swift */; };
 		D56757A260359E3B7D3E8A81 /* TimeUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E4FD7CE2E3EDA3BA7D1994D /* TimeUtils.swift */; };
 		D595DF0664685C6378342BA8 /* ClickSample.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF15A95555A4203486D4EC0C /* ClickSample.swift */; };
@@ -858,6 +860,7 @@
 		9352A9C7BF1FBBF07710977D /* ProjectStateEffectsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectStateEffectsTests.swift; sourceTree = "<group>"; };
 		93C707E92DDEBDCC2F2318EE /* MLEffectsExportSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MLEffectsExportSection.swift; sourceTree = "<group>"; };
 		96913416BAECD9FE920415A8 /* ThumbnailFrameLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThumbnailFrameLoader.swift; sourceTree = "<group>"; };
+		96A377A68EED840C425CDC86 /* DirectDistributionSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DirectDistributionSupport.swift; sourceTree = "<group>"; };
 		97B878485B43B311DA351F79 /* CompositionBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompositionBuilder.swift; sourceTree = "<group>"; };
 		99C193BFE78940D13ECD85F5 /* Track.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Track.swift; sourceTree = "<group>"; };
 		9B16F001F88892B925347418 /* RealTimeAudioProcessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RealTimeAudioProcessor.swift; sourceTree = "<group>"; };
@@ -1309,6 +1312,7 @@
 				05C91E697A485D15E34D4078 /* ControlsKit.swift */,
 				E52F5808D87DC54B5CAD5590 /* CrashReporter.swift */,
 				CC7D07B3313D1684B12846E3 /* DesignSystem.swift */,
+				96A377A68EED840C425CDC86 /* DirectDistributionSupport.swift */,
 				7FFED499B0C58F7E40E93FF0 /* GlobalHotkeyManager.swift */,
 				432F8F1A2304768337B8CEA9 /* HapticsManager.swift */,
 				B23833037EFA870933C1856B /* KeyboardShortcutHelper.swift */,
@@ -2281,6 +2285,7 @@
 				A8005129453389352ABB3AA8 /* CursorSample.swift in Sources */,
 				56F0EBBD01E65A88E9BDC5E6 /* CustomTemplate.swift in Sources */,
 				68D630F8C2C87F8D5D3B3058 /* DesignSystem.swift in Sources */,
+				D4FE6EE4CCD1CAB7DA228FCF /* DirectDistributionSupport.swift in Sources */,
 				0D3D858C029173AA6C9B0940 /* DiskSpaceMonitor.swift in Sources */,
 				F59946A0F68EB8FE30636C11 /* DriftTracker.swift in Sources */,
 				C7C26921B973D5ECB73C1B0B /* EditorLayoutHelpers.swift in Sources */,
@@ -2543,6 +2548,7 @@
 				0A48FF66EAC7924B1E62BBEB /* CursorSample.swift in Sources */,
 				3ED00D6C0F03F7A76244398F /* CustomTemplate.swift in Sources */,
 				A0555A2E66B0776CC0923024 /* DesignSystem.swift in Sources */,
+				271D0C284B72DFB740A3AC8F /* DirectDistributionSupport.swift in Sources */,
 				4AE7E59EC612DB1E069134F8 /* DiskSpaceMonitor.swift in Sources */,
 				39247BD2B6A934E0BFAFAB12 /* DriftTracker.swift in Sources */,
 				EEA5B4A40EDCF4A911B34D01 /* EditorLayoutHelpers.swift in Sources */,
@@ -2941,7 +2947,6 @@
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = "CI_SILENCE_GL_DEPRECATION=1";
 				INFOPLIST_FILE = "SaneVideo/Info-AppStore.plist";
-				INFOPLIST_KEY_AppStoreProductID = com.sanevideo.app.pro.access.v2;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -3283,7 +3288,7 @@
 			repositoryURL = "https://github.com/sane-apps/SaneUI.git";
 			requirement = {
 				kind = revision;
-				revision = cd766fdb5f7b75e03ba69a38fca330a4554f00b1;
+				revision = 48c1ded1b77a58dc129d844ee1dd4753c2386285;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */

@@ -3,7 +3,12 @@ import SaneUI
 import SwiftUI
 
 private enum VideoSettingsTab: String, SaneSettingsTab {
-    case general, recording, export, privacy, license, about
+    case general, recording, export, privacy
+    // The App Store build is free with no purchase, so it has no License tab.
+    #if !APP_STORE
+        case license
+    #endif
+    case about
     #if DEBUG
         case debug
     #endif
@@ -14,7 +19,9 @@ private enum VideoSettingsTab: String, SaneSettingsTab {
         case .recording: "Recording"
         case .export: String(localized: "settings.tab.export", defaultValue: "Export")
         case .privacy: String(localized: "settings.tab.privacy", defaultValue: "Privacy & AI")
-        case .license: "License"
+        #if !APP_STORE
+            case .license: "License"
+        #endif
         case .about: "About"
         #if DEBUG
             case .debug: String(localized: "settings.tab.debug", defaultValue: "Debug")
@@ -28,7 +35,9 @@ private enum VideoSettingsTab: String, SaneSettingsTab {
         case .recording: "record.circle"
         case .export: "square.and.arrow.up"
         case .privacy: "lock.shield"
-        case .license: "checkmark.seal.fill"
+        #if !APP_STORE
+            case .license: "checkmark.seal.fill"
+        #endif
         case .about: "info.circle"
         #if DEBUG
             case .debug: "ladybug"
@@ -42,7 +51,9 @@ private enum VideoSettingsTab: String, SaneSettingsTab {
         case .recording: .red
         case .export: .cyan
         case .privacy: .green
-        case .license: .mint
+        #if !APP_STORE
+            case .license: .mint
+        #endif
         case .about: .cyan
         #if DEBUG
             case .debug: .purple
@@ -69,14 +80,16 @@ struct SettingsView: View {
             case .recording: RecordingSettingsView()
             case .export: ExportSettingsView()
             case .privacy: PrivacySettingsView()
-            case .license:
-                SaneSettingsPage {
-                    LicenseSettingsView(
-                        licenseService: licenseService,
-                        style: .panel,
-                        donationURL: OpenSourceRelease.donationURL
-                    )
-                }
+            #if !APP_STORE
+                case .license:
+                    SaneSettingsPage {
+                        LicenseSettingsView(
+                            licenseService: licenseService,
+                            style: .panel,
+                            donationURL: OpenSourceRelease.donationURL
+                        )
+                    }
+            #endif
             case .about: AboutSettingsView()
             #if DEBUG
                 case .debug: DebugSettingsView()

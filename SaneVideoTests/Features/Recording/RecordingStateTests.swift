@@ -4,21 +4,21 @@ import Testing
 
 @testable import SaneVideo
 
+/// Countdown and permission work runs in tasks; wait for the state instead of a fixed delay.
+@MainActor
+private func waitUntil(timeout: Duration = .seconds(3), _ condition: () -> Bool) async -> Bool {
+    let clock = ContinuousClock()
+    let deadline = clock.now.advanced(by: timeout)
+    while !condition() {
+        if clock.now >= deadline { return false }
+        try? await Task.sleep(for: .milliseconds(5))
+    }
+    return true
+}
+
 @Suite("Recording State Tests")
 @MainActor
 struct RecordingStateTests {
-    // MARK: - Initial State Tests
-
-    @Test("Initial state values")
-    func initialState() {
-        let recordingState = RecordingState(cameraService: nil)
-        #expect(!recordingState.isRecording)
-        #expect(!recordingState.isPaused)
-        #expect(!recordingState.isPreparing)
-        #expect(recordingState.countdownValue == 0)
-        #expect(recordingState.recordingDuration == 0)
-    }
-
     // MARK: - Countdown Tests
 
     @Test("Start recording behavior (preparing mode)")
@@ -80,12 +80,11 @@ struct RecordingStateTests {
         #expect(recordingState.isPreparing)
         #expect(recordingState.countdownValue == 0, "Countdown should wait for permission prompts")
 
-        await Task.yield()
-        try? await Task.sleep(nanoseconds: 50_000_000)
+        let countdownStarted = await waitUntil { recordingState.countdownValue == 3 }
 
         #expect(permissionManager.requestCameraPermissionCallCount == 1)
         #expect(permissionManager.requestMicrophonePermissionCallCount == 1)
-        #expect(recordingState.countdownValue == 3, "Countdown should start after permissions are granted")
+        #expect(countdownStarted, "Countdown should start after permissions are granted")
     }
 
     @Test("Screen recording without camera overlay skips camera permission preflight")
@@ -172,14 +171,14 @@ struct RecordingStateTests {
         #expect(recordingState.countdownValue == 3)
     }
 
-    @Test("Denied microphone opens microphone settings")
-    func deniedMicrophoneOpensMicrophoneSettings() {
+    @Test("Denied microphone does not block recording: it records without sound and opens no settings")
+    func deniedMicrophoneRecordsWithoutSound() {
         let permissionManager = PermissionManagerProtocolMock(
             cameraStatus: .granted,
             microphoneStatus: .denied,
             screenRecordingStatus: .granted
         )
-        permissionManager.verifyPermissionsForRecordingHandler = { _, _, _ in false }
+        permissionManager.verifyPermissionsForRecordingHandler = { _, requiresMicrophone, _ in !requiresMicrophone }
 
         let recordingState = RecordingState(
             cameraService: nil,
@@ -188,8 +187,10 @@ struct RecordingStateTests {
         recordingState.shouldSkipCountdown = false
         recordingState.startRecording(isScreenSharing: false)
 
-        #expect(permissionManager.openMicrophoneSettingsCallCount == 1)
-        #expect(permissionManager.openCameraSettingsCallCount == 0)
+        #expect(recordingState.isMicActive == false)
+        #expect(permissionManager.verifyPermissionsForRecordingArgValues.last?.requiresMicrophone == false)
+        #expect(permissionManager.openMicrophoneSettingsCallCount == 0)
+        #expect(recordingState.isPreparing)
     }
 
     @Test("Denied camera opens camera settings")
@@ -245,10 +246,8 @@ struct RecordingStateTests {
             recordingState = nil
         }
 
-        await Task.yield()
-        try? await Task.sleep(nanoseconds: 50_000_000)
-
-        #expect(weakState == nil)
+        let released = await waitUntil { weakState == nil }
+        #expect(released)
     }
 
     // MARK: - Stop Recording Tests

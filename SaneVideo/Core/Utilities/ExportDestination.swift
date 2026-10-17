@@ -12,8 +12,13 @@ enum ExportDestination {
     }
 
     /// "Project Name 2026-10-16 at 21.43.mp4", with " 2", " 3"... if the name is taken.
-    static func url(for name: String, suffix: String? = nil, ext: String) -> URL {
-        let stamp = timestamp()
+    /// `directory` and `date` exist so tests can use a temp folder and a fixed clock.
+    static func url(
+        for name: String, suffix: String? = nil, ext: String,
+        in directory: URL? = nil, date: Date = Date()
+    ) -> URL {
+        let folder = directory ?? Self.folder
+        let stamp = timestamp(date)
         let safeName = name.replacingOccurrences(of: "/", with: "-").replacingOccurrences(of: ":", with: "-")
         let base = [safeName, suffix, stamp].compactMap { $0 }.joined(separator: " ")
         var candidate = folder.appendingPathComponent("\(base).\(ext)")

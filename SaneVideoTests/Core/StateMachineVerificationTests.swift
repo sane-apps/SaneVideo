@@ -2,265 +2,157 @@
 //  StateMachineVerificationTests.swift
 //  SaneVideoTests
 //
-//  Created by SaneVideo Refactor
+//  Screen share / record / stop transitions in AppState and WindowManager.
 //
 
 import AVFoundation
-import Combine
 import CoreMedia
+@testable import SaneVideo
 import XCTest
 
-@testable import SaneVideo
+/// Waits for a main-actor condition instead of sleeping a fixed time.
+@MainActor
+private func waitUntil(
+    timeout: Duration = .seconds(3),
+    _ condition: () -> Bool
+) async -> Bool {
+    let clock = ContinuousClock()
+    let deadline = clock.now.advanced(by: timeout)
+    while !condition() {
+        if clock.now >= deadline {
+            return false
+        }
+        await Task.yield()
+        try? await Task.sleep(for: .milliseconds(10))
+    }
+    return true
+}
 
 @MainActor
 final class StateMachineVerificationTests: XCTestCase {
+    var appState: AppState!
+    var mockCameraService: CameraServiceProtocolMock!
+    var mockScreenRecorder: MockScreenRecorder!
 
-  var appState: AppState!
-  var windowManager: WindowManager!
-  var recordingState: RecordingState!
-  var mockCameraService: CameraServiceProtocolMock!
-  var mockScreenRecorder: MockScreenRecorder!
-  var cancellables: Set<AnyCancellable>!
+    override func setUp() async throws {
+        mockCameraService = CameraServiceProtocolMock()
+        mockCameraService.startHandler = {}
+        mockCameraService.stopHandler = {}
 
-  override func setUp() async throws {
-    // 1. Setup Mocks
-    mockCameraService = CameraServiceProtocolMock()
-    mockCameraService.startHandler = {}  // No-op
-    mockCameraService.stopHandler = {}
+        let mockAudioService = MockAudioService(
+            permissionManager: ServiceContainer.shared.permissionManager
+        )
+        mockScreenRecorder = MockScreenRecorder()
 
-    let mockAudioService = MockAudioService(
-      permissionManager: ServiceContainer.shared.permissionManager)
-    mockScreenRecorder = MockScreenRecorder()
-
-    // 2. Inject Mocks into RecordingState
-    recordingState = RecordingState(
-      cameraService: mockCameraService,
-      audioService: mockAudioService,
-      screenRecorder: mockScreenRecorder
-    )
-
-    // 3. Inject RecordingState into AppState
-    appState = AppState(recordingState: recordingState)
-    windowManager = appState.windowManager
-    // recordingState is already set above
-
-    cancellables = []
-  }
-
-  override func tearDown() {
-    // Report test end
-    reportTestEnd(success: true)
-
-    // CRITICAL FIX: Ensure screen recorder is properly cleaned up before deallocating AppState
-    // This prevents crashes from accessing deallocated picker
-    // In test environment, teardown is a no-op, so this is safe to call synchronously
-    if let screenRecorder = appState?.recordingState.engine?.screenRecorder {
-      screenRecorder.teardown()
+        let recordingState = RecordingState(
+            cameraService: mockCameraService,
+            audioService: mockAudioService,
+            screenRecorder: mockScreenRecorder
+        )
+        appState = AppState(recordingState: recordingState)
     }
 
-    // CRITICAL FIX: Cancel all tasks to prevent hanging
-    // This prevents tests from spawning multiple app instances
-    cancellables?.removeAll()
-
-    // CRITICAL FIX: Clean up AppState to prevent multiple instances
-    appState = nil
-    mockScreenRecorder = nil
-    cancellables = nil
-
-    // CRITICAL FIX: Small delay to allow cleanup to complete
-    // This prevents race conditions that cause multiple app instances
-    Thread.sleep(forTimeInterval: 0.1)
-  }
-
-  // MARK: - Scenario 1: Screen Share -> Record -> Stop
-
-  func testStartRecordingDoesNotAutoEnableCameraDuringPermissionPreflight() {
-    appState.cameraEnabled = false
-    appState.startRecording()
-
-    XCTAssertFalse(
-      appState.cameraEnabled,
-      "Recording start should let RecordingState handle camera permission preflight instead of force-starting camera"
-    )
-  }
-
-  func testScreenShareToggleDoesNotAutoEnableCamera() {
-    appState.cameraEnabled = false
-
-    appState.toggleScreenShare()
-
-    XCTAssertTrue(appState.isScreenSharing, "Screen sharing should enter picker mode")
-    XCTAssertFalse(
-      appState.cameraEnabled,
-      "Screen sharing should stay screen-only until the user explicitly enables camera"
-    )
-  }
-
-  func testScreenShareToggleStartsScreenRecorderFlow() async throws {
-    XCTAssertEqual(mockScreenRecorder.startCallCount, 0)
-
-    appState.toggleScreenShare()
-    try? await Task.sleep(nanoseconds: 250_000_000)
-
-    XCTAssertEqual(mockScreenRecorder.startCallCount, 1, "Starting screen share should delegate to ScreenRecorder.start()")
-  }
-
-  func testScreenShareRecordingFlow() async throws {
-    // Permission bypass implemented via MockScreenRecorder
-    print("🧪 Testing: Screen Share -> Record -> Stop")
-
-    // 1. Initial State
-    XCTAssertFalse(appState.isScreenSharing)
-    XCTAssertFalse(appState.isRecording)
-
-    // 2. Start Screen Share
-    appState.toggleScreenShare()
-    XCTAssertTrue(appState.isScreenSharing, "Should be screen sharing")
-    XCTAssertFalse(appState.cameraEnabled, "Screen sharing should not silently enable camera")
-    XCTAssertTrue(appState.windowManager.isPiPVisible, "PiP should be visible by default")
-
-    // Verify Window Logic (Mocked or checked via state)
-    // We can't actually check NSWindow visibility in Unit Test easily without a host app,
-    // but we can check the *intent* in WindowMgr
-
-    // 3. Start Recording
-    appState.startRecording()
-
-    // In TestEnvironment.isUITesting, it skips countdown and starts immediately
-    if TestEnvironment.isUITesting {
-      XCTAssertTrue(appState.recordingState.isRecording)
-      XCTAssertFalse(appState.isPreparing)
-    } else {
-      XCTAssertTrue(appState.isPreparing, "Should be counting down")
+    override func tearDown() {
+        reportTestEnd(success: true)
+        // In the test environment teardown is a no-op, so calling it synchronously is safe.
+        appState?.recordingState.engine?.screenRecorder.teardown()
+        appState = nil
+        mockScreenRecorder = nil
     }
 
-    // 4. Force state to Recording (if not already there)
-    // We can't assume private access, but we can wait or just test logic pre-recording.
-    // Let's assume recording starts.
+    func testStartRecordingDoesNotAutoEnableCameraDuringPermissionPreflight() {
+        appState.cameraEnabled = false
+        appState.startRecording()
 
-    // 5. STOP Recording
-    // appState.stopRecording() calls async cleanup
-    let expectation = XCTestExpectation(description: "Recording Stopped")
+        XCTAssertFalse(
+            appState.cameraEnabled,
+            "Recording start should let RecordingState handle camera permission preflight instead of force-starting camera"
+        )
+    }
 
-    appState.recordingState.isRecording = true  // Cheat to skip countdown for test speed
-    appState.recordingState.isPreparing = false
+    func testScreenShareToggleDoesNotAutoEnableCamera() {
+        appState.cameraEnabled = false
 
-    appState.stopRecording()
+        appState.toggleScreenShare()
 
-    // Verify "Immediate" State changes
-    // stopRecording is async for file saving, but UI state updates should be orchestrated.
+        XCTAssertTrue(appState.isScreenSharing, "Screen sharing should enter picker mode")
+        XCTAssertFalse(
+            appState.cameraEnabled,
+            "Screen sharing should stay screen-only until the user explicitly enables camera"
+        )
+    }
 
-    // WAIT for completion
-    // In AppState, stopRecording calls Task { ... handleRecordingFinished ... }
-    // We need to wait a bit.
-    try? await Task.sleep(nanoseconds: 500_000_000)  // 0.5s
+    func testScreenShareToggleStartsScreenRecorderFlow() async {
+        XCTAssertEqual(mockScreenRecorder.startCallCount, 0)
 
-    // 6. Verify Restoration
-    // CRITICAL: WindowManager state check
-    XCTAssertFalse(appState.isScreenSharing, "Should exit screen share after recording")
-    XCTAssertFalse(
-      appState.windowManager.isScreenSharing, "WindowManager should know screen share ended")
+        appState.toggleScreenShare()
 
-    // PiP Logic:
-    // "updatePiPState(isCameraActive: false, isRecording: false)" -> Hides PiP
-    // We can check `isPiPVisible` state property?
-    // Note: isPiPVisible remains `true` (user preference) but `shouldShowPiP` logic depends on context.
-    // However, we can check if the WindowManager *believes* it should show.
-    // Ideally we'd check pipWindow == nil, but that's internal.
+        let started = await waitUntil { self.mockScreenRecorder.startCallCount == 1 }
+        XCTAssertTrue(started, "Starting screen share should delegate to ScreenRecorder.start()")
+    }
 
-    // We relies on `isScreenSharing` being false to ensure PiP hides.
-    XCTAssertFalse(appState.isScreenSharing)
+    func testScreenShareRecordingFlow() async {
+        XCTAssertFalse(appState.isScreenSharing)
+        XCTAssertFalse(appState.isRecording)
 
-    expectation.fulfill()
-    await fulfillment(of: [expectation], timeout: 1.0)
-  }
+        appState.toggleScreenShare()
+        XCTAssertTrue(appState.isScreenSharing, "Should be screen sharing")
+        XCTAssertFalse(appState.cameraEnabled, "Screen sharing should not silently enable camera")
+        XCTAssertTrue(appState.windowManager.isPiPVisible, "PiP should be visible by default")
 
-  // MARK: - Scenario 3: Screen Share -> Stop Share (No Recording)
-  // CRITICAL REGRESSION TEST: This test verifies the screen sharing exit crash is fixed
-  // Previously skipped due to crash - now fixed with proper stream cleanup sequence
+        appState.startRecording()
+        if TestEnvironment.isUITesting {
+            XCTAssertTrue(appState.recordingState.isRecording)
+            XCTAssertFalse(appState.isPreparing)
+        } else {
+            XCTAssertTrue(appState.isPreparing, "Should be counting down")
+        }
 
-  @MainActor
-  func testScreenShareStopOnlyFlow() async throws {
-    // Permission bypass implemented via MockScreenRecorder
-    print("🧪 Testing: Screen Share -> Stop Share (Regression test for crash fix)")
+        // Skip the countdown so stop runs against a live recording state.
+        appState.recordingState.isRecording = true
+        appState.recordingState.isPreparing = false
 
-    // 1. Start Share
-    appState.toggleScreenShare()
+        appState.stopRecording()
 
-    // CRITICAL: Wait for async operations to complete
-    // Give enough time for window creation, picker presentation, and state updates
-    try? await Task.sleep(nanoseconds: 500_000_000)  // 500ms
+        let exited = await waitUntil {
+            !self.appState.isScreenSharing && !self.appState.windowManager.isScreenSharing
+        }
+        XCTAssertTrue(exited, "Stopping a screen recording should exit screen share in AppState and WindowManager")
+    }
 
-    XCTAssertTrue(appState.isScreenSharing, "Should be screen sharing after toggle")
+    // Regression: stopping screen share used to crash while the picker was torn down.
+    func testScreenShareStopOnlyFlow() async {
+        appState.toggleScreenShare()
+        // A toggle is ignored while the previous one is still finishing, so wait for that too.
+        let sharing = await waitUntil {
+            self.appState.isScreenSharing && !self.appState.windowManager.isTogglingScreenShare
+        }
+        XCTAssertTrue(sharing, "Should be screen sharing after toggle")
 
-    // 2. Stop Share - THIS IS WHERE THE CRASH WAS HAPPENING
-    // The fix ensures stream is stopped before picker deactivation
-    appState.toggleScreenShare()
+        appState.toggleScreenShare()
 
-    // CRITICAL: Wait for proper cleanup sequence to complete
-    // The fix includes: stop stream (100ms) -> deactivate picker -> cleanup windows (100ms) -> restore
-    // Total should be ~300ms, but we wait longer to be safe
-    try? await Task.sleep(nanoseconds: 800_000_000)  // 800ms for complete cleanup
+        let stopped = await waitUntil {
+            !self.appState.isScreenSharing && !self.appState.windowManager.isScreenSharing
+        }
+        XCTAssertTrue(stopped, "Second toggle should end screen share in AppState and WindowManager")
+    }
 
-    // 3. Verify state - this should NOT crash
-    XCTAssertFalse(appState.isScreenSharing, "Should not be screen sharing after second toggle")
-    XCTAssertFalse(
-      appState.windowManager.isScreenSharing, "WindowManager should reflect screen share is off")
+    func testScreenPickerCancelResetsScreenShareState() async {
+        XCTAssertFalse(appState.isScreenSharing)
 
-    // 4. CRITICAL FIX: Ensure all async tasks complete before test ends
-    // This prevents the test from hanging and spawning multiple app instances
-    try? await Task.sleep(nanoseconds: 200_000_000)  // 200ms final cleanup
+        appState.toggleScreenShare()
+        let started = await waitUntil { self.mockScreenRecorder.startCallCount == 1 }
+        XCTAssertTrue(started)
+        XCTAssertTrue(appState.isScreenSharing, "Starting screen share should enter picker mode")
 
-    // 5. Verify no crash occurred - if we get here, the test passed
-    print("✅ Screen share exit completed without crash")
-  }
+        mockScreenRecorder.simulatePickerCancellation()
 
-  func testScreenPickerCancelResetsScreenShareState() async throws {
-    XCTAssertFalse(appState.isScreenSharing)
-
-    appState.toggleScreenShare()
-
-    try? await Task.sleep(nanoseconds: 250_000_000)
-    XCTAssertTrue(appState.isScreenSharing, "Starting screen share should enter picker mode")
-
-    mockScreenRecorder.simulatePickerCancellation()
-
-    try? await Task.sleep(nanoseconds: 500_000_000)
-
-    XCTAssertFalse(appState.isScreenSharing, "Cancelling the picker should unwind screen-share mode")
-    XCTAssertFalse(
-      appState.windowManager.isScreenSharing,
-      "WindowManager should return to non-screen-sharing state after picker cancel"
-    )
-  }
-
-  // MARK: - Crash Regression (Zombie Window Logic)
-
-  func testZombieWindowFixLogic() async throws {
-    // Permission bypass implemented via MockScreenRecorder
-    // This tests the WindowManager code path specifically
-
-    // 1. Show PiP
-    appState.windowManager.isPiPVisible = true
-    appState.windowManager.isScreenSharing = true
-    appState.windowManager.updatePiPState(isCameraActive: true, isRecording: false)
-
-    // CRITICAL FIX: Wait for window creation
-    try? await Task.sleep(nanoseconds: 100_000_000)  // 100ms
-
-    // 2. Hide PiP
-    appState.windowManager.updatePiPState(isCameraActive: false, isRecording: false)
-
-    // CRITICAL FIX: Wait for window cleanup to complete
-    try? await Task.sleep(nanoseconds: 200_000_000)  // 200ms
-
-    // The fix was in the *implementation* of hidePiPWindow.
-    // We can't easily assert the window memory state here without internals,
-    // but verifying it doesn't crash on execution is a good smoke test.
-    XCTAssertTrue(true, "Did not crash calling updatePiPState")
-  }
+        let reset = await waitUntil {
+            !self.appState.isScreenSharing && !self.appState.windowManager.isScreenSharing
+        }
+        XCTAssertTrue(reset, "Cancelling the picker should unwind screen-share mode in AppState and WindowManager")
+    }
 }
-
 // Mock Audio Service
 class MockAudioService: AudioService {
   override func start() {

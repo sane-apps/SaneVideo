@@ -15,9 +15,11 @@ actor TemplateStore {
     private var templates: [CustomTemplate] = []
     private var isLoaded = false
 
-    private var templatesDirectory: URL {
-        let moviesDir = FileManager.default.urls(for: .moviesDirectory, in: .userDomainMask).first!
-        return moviesDir
+    private let templatesDirectory: URL
+
+    /// - Parameter directory: Where templates live. Defaults to ~/Movies/SaneVideo/Templates; tests pass a temp folder.
+    init(directory: URL? = nil) {
+        templatesDirectory = directory ?? FileManager.default.urls(for: .moviesDirectory, in: .userDomainMask).first!
             .appendingPathComponent("SaneVideo")
             .appendingPathComponent("Templates")
     }

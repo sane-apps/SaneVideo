@@ -2,248 +2,148 @@
 //  VideoWriterIntegrationTests.swift
 //  SaneVideoTests
 //
-//  Integration tests for VideoWriter - tests the real implementation
+//  The real VideoWriter fed synthetic frames and PCM audio, then the file read back with AVFoundation.
 //
 
-import Testing
 import AVFoundation
 import CoreMedia
+import Foundation
 @testable import SaneVideo
+import Testing
 
-@Suite("VideoWriter Integration Tests")
+@Suite("VideoWriter Integration")
+@RecordingActor
 struct VideoWriterIntegrationTests {
+    private static let size = CGSize(width: 320, height: 240)
+    private static let fps: Int32 = 30
 
-    // MARK: - Initialization Tests
-
-    @Test("Initial isWriting is false")
-    func initialIsWritingFalse() async throws {
-        // Arrange & Act
-        let writer = await VideoWriter()
-
-        // Assert
-        let isWriting = await writer.isWriting
-        #expect(isWriting == false)
+    /// Retries a write while the real-time input is briefly not ready. Returns whether it was appended.
+    private static func appendWhenReady(_ write: () -> Bool) async throws -> Bool {
+        for _ in 0 ..< 2000 {
+            if write() {
+                return true
+            }
+            try await Task.sleep(for: .milliseconds(1))
+        }
+        return false
     }
 
-    @Test("Initial error is nil")
-    func initialErrorNil() async throws {
-        // Arrange & Act
-        let writer = await VideoWriter()
+    /// Writes `frameCount` frames at 30 fps plus matching 48 kHz stereo tone, then finishes.
+    private static func writeClip(frameCount: Int, to url: URL) async throws -> (URL?, framesWritten: Int) {
+        let writer = VideoWriter(targetSize: size)
+        try writer.start(outputURL: url, targetFrameRate: Double(fps))
+        writer.startSession(at: .zero)
 
-        // Assert
-        let error = await writer.error
-        #expect(error == nil)
+        let audioChunk = 1024
+        var audioFrame = 0
+        var framesWritten = 0
+        for index in 0 ..< frameCount {
+            let time = CMTime(value: CMTimeValue(index), timescale: fps)
+            let pixels = try TestMedia.pixelBuffer(width: Int(size.width), height: Int(size.height), gray: UInt8(60 + index * 4))
+            let sample = try TestMedia.videoSampleBuffer(pixels, at: time, frameDuration: CMTime(value: 1, timescale: fps))
+            if try await appendWhenReady({ writer.writeVideo(sampleBuffer: sample, presentationTime: time, source: .camera) }) {
+                framesWritten += 1
+            }
+
+            let audioEnd = Int(Double(index + 1) / Double(fps) * 48000)
+            while audioFrame < audioEnd {
+                let pcm = try TestMedia.pcmSampleBuffer(frames: audioChunk, startFrame: audioFrame)
+                _ = try await appendWhenReady { writer.writeMicAudio(sampleBuffer: pcm) }
+                audioFrame += audioChunk
+            }
+        }
+        return await (writer.finish(), framesWritten)
     }
 
-    @Test("Initial isReadyForData is false")
-    func initialIsReadyForDataFalse() async throws {
-        // Arrange & Act
-        let writer = await VideoWriter()
+    @Test("Frames and audio written by VideoWriter make a playable 1 s, 320x240 file tagged Rec. 709")
+    func writesPlayableTaggedFile() async throws {
+        let directory = try TestMedia.makeTempDirectory("VideoWriter")
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let url = directory.appendingPathComponent("out.mp4")
 
-        // Assert
-        let isReady = await writer.isReadyForData
-        #expect(isReady == false)
+        let (result, framesWritten) = try await Self.writeClip(frameCount: 30, to: url)
+
+        #expect(result == url)
+        #expect(framesWritten == 30)
+        let asset = AVURLAsset(url: url)
+        #expect(try await asset.load(.isPlayable))
+        let duration = try await asset.load(.duration).seconds
+        #expect(duration > 0.9 && duration < 1.1)
+
+        let video = try #require(try await asset.loadTracks(withMediaType: .video).first)
+        #expect(try await video.load(.naturalSize) == Self.size)
+        let format = try #require(try await video.load(.formatDescriptions).first)
+        func tag(_ key: CFString) -> String? {
+            CMFormatDescriptionGetExtension(format, extensionKey: key) as? String
+        }
+        #expect(tag(kCMFormatDescriptionExtension_ColorPrimaries) == kCMFormatDescriptionColorPrimaries_ITU_R_709_2 as String)
+        #expect(tag(kCMFormatDescriptionExtension_TransferFunction) == kCMFormatDescriptionTransferFunction_ITU_R_709_2 as String)
+        #expect(tag(kCMFormatDescriptionExtension_YCbCrMatrix) == kCMFormatDescriptionYCbCrMatrix_ITU_R_709_2 as String)
+
+        var audioDurations: [Double] = []
+        for track in try await asset.loadTracks(withMediaType: .audio) {
+            try await audioDurations.append(track.load(.timeRange).duration.seconds)
+        }
+        #expect(audioDurations.contains { $0 > 0.9 }, "The microphone track should hold about 1 s of audio")
     }
 
-    // MARK: - Start Tests
+    @Test("A frame stamped earlier than the last written frame is dropped")
+    func dropsOutOfOrderFrame() async throws {
+        let directory = try TestMedia.makeTempDirectory("VideoWriter")
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let writer = VideoWriter(targetSize: Self.size)
+        try writer.start(outputURL: directory.appendingPathComponent("order.mp4"), targetFrameRate: 30)
+        writer.startSession(at: .zero)
+        let pixels = try TestMedia.pixelBuffer(width: 320, height: 240, gray: 128)
+        let frameDuration = CMTime(value: 1, timescale: 30)
+        let later = CMTime(value: 3, timescale: 30)
+        let earlier = CMTime(value: 2, timescale: 30)
 
-    @Test("Start creates asset writer")
-    func startCreatesAssetWriter() async throws {
-        // Arrange
-        let writer = await VideoWriter()
-        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("test_\(UUID().uuidString).mp4")
+        let first = try await Self.appendWhenReady {
+            guard let sample = try? TestMedia.videoSampleBuffer(pixels, at: later, frameDuration: frameDuration) else { return false }
+            return writer.writeVideo(sampleBuffer: sample, presentationTime: later)
+        }
+        let earlierSample = try TestMedia.videoSampleBuffer(pixels, at: earlier, frameDuration: frameDuration)
+        let second = writer.writeVideo(sampleBuffer: earlierSample, presentationTime: earlier)
 
-        // Act
-        try await writer.start(outputURL: tempURL, targetFrameRate: 30.0)
-
-        // Assert
-        let isWriting = await writer.isWriting
-        #expect(isWriting == true)
-
-        // Cleanup
+        #expect(first)
+        #expect(!second)
         _ = await writer.finish()
-        try? FileManager.default.removeItem(at: tempURL)
     }
 
-    // MARK: - Session Management Tests
+    @Test("Finishing without a session cancels and deletes the file")
+    func finishWithoutSessionDeletesFile() async throws {
+        let directory = try TestMedia.makeTempDirectory("VideoWriter")
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let url = directory.appendingPathComponent("empty.mp4")
+        let writer = VideoWriter(targetSize: Self.size)
+        try writer.start(outputURL: url, targetFrameRate: 30)
 
-    @Test("StartSession ignored when not writing")
-    func startSessionIgnoredWhenNotWriting() async throws {
-        // Arrange
-        let writer = await VideoWriter()
-
-        // Act - startSession without calling start first
-        let time = CMTime(value: 0, timescale: 600)
-        await writer.startSession(at: time)
-
-        // Assert - no crash, isWriting still false
-        let isWriting = await writer.isWriting
-        #expect(isWriting == false)
-    }
-
-    // MARK: - Finish Tests
-
-    @Test("Finish returns nil when session never started")
-    func finishReturnsNilWhenSessionNeverStarted() async throws {
-        // Arrange
-        let writer = await VideoWriter()
-        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("test_\(UUID().uuidString).mp4")
-        try await writer.start(outputURL: tempURL, targetFrameRate: 30.0)
-        // Note: We don't call startSession
-
-        // Act
         let result = await writer.finish()
 
-        // Assert
         #expect(result == nil)
-
-        // Cleanup
-        try? FileManager.default.removeItem(at: tempURL)
+        #expect(!FileManager.default.fileExists(atPath: url.path))
+        #expect(!writer.isWriting)
     }
 
-    @Test("Finish cleans up resources")
-    func finishCleansUpResources() async throws {
-        // Arrange
-        let writer = await VideoWriter()
-        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("test_\(UUID().uuidString).mp4")
-        try await writer.start(outputURL: tempURL, targetFrameRate: 30.0)
-        let time = CMTime(value: 0, timescale: 600)
-        await writer.startSession(at: time)
+    @Test("Concurrent finish calls return the same finished file")
+    func concurrentFinishIsIdempotent() async throws {
+        let directory = try TestMedia.makeTempDirectory("VideoWriter")
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let url = directory.appendingPathComponent("twice.mp4")
+        let writer = VideoWriter(targetSize: Self.size)
+        try writer.start(outputURL: url, targetFrameRate: 30)
+        writer.startSession(at: .zero)
+        let pixels = try TestMedia.pixelBuffer(width: 320, height: 240, gray: 90)
+        let sample = try TestMedia.videoSampleBuffer(pixels, at: .zero, frameDuration: CMTime(value: 1, timescale: 30))
+        let wrote = try await Self.appendWhenReady { writer.writeVideo(sampleBuffer: sample, presentationTime: .zero) }
+        #expect(wrote)
 
-        // Act
-        _ = await writer.finish()
+        async let first = writer.finish()
+        async let second = writer.finish()
+        let (url1, url2) = await (first, second)
 
-        // Assert - isWriting should be false after finish
-        let isWriting = await writer.isWriting
-        #expect(isWriting == false)
-
-        // Cleanup
-        try? FileManager.default.removeItem(at: tempURL)
-    }
-
-    @Test("Double finish returns same result (idempotent)")
-    func doubleFinishIdempotent() async throws {
-        // Arrange
-        let writer = await VideoWriter()
-        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("test_\(UUID().uuidString).mp4")
-        try await writer.start(outputURL: tempURL, targetFrameRate: 30.0)
-        let time = CMTime(value: 0, timescale: 600)
-        await writer.startSession(at: time)
-
-        // Act - call finish twice concurrently
-        async let result1 = writer.finish()
-        async let result2 = writer.finish()
-        let (url1, url2) = await (result1, result2)
-
-        // Assert - both should return the same result (idempotent behavior)
-        if url1 == nil {
-            #expect(url2 == nil, "If first result is nil, second should also be nil")
-        } else {
-            #expect(url1 == url2, "Both calls should return the same URL")
-        }
-
-        // Cleanup
-        try? FileManager.default.removeItem(at: tempURL)
-        if let url = url1 { try? FileManager.default.removeItem(at: url) }
-    }
-
-    // MARK: - PiP Frame Update Tests
-
-    @Test("UpdatePiPFrame completes without error")
-    func updatePiPFrameStoresPosition() async throws {
-        // Arrange
-        let writer = await VideoWriter()
-        let pipFrame = CGRect(x: 100, y: 100, width: 200, height: 200)
-        let screenFrame = CGRect(x: 0, y: 0, width: 1920, height: 1080)
-        let initialIsWriting = await writer.isWriting
-
-        // Act
-        await writer.updatePiPFrame(pipFrame, screenFrame: screenFrame)
-
-        // Assert - Method completed without error, writer state remains valid
-        let finalIsWriting = await writer.isWriting
-        #expect(finalIsWriting == initialIsWriting, "Writer state should remain unchanged")
-        #expect(finalIsWriting == false, "Writer should not be writing before start()")
-    }
-
-    @Test("UpdatePiPFrame throttles rapid updates")
-    func updatePiPFrameThrottlesUpdates() async throws {
-        // Arrange
-        let writer = await VideoWriter()
-        let screenFrame = CGRect(x: 0, y: 0, width: 1920, height: 1080)
-        let initialIsWriting = await writer.isWriting
-
-        // Act - rapid updates (should be throttled to ~30fps)
-        for i in 0..<100 {
-            let frame = CGRect(x: CGFloat(i), y: CGFloat(i), width: 200, height: 200)
-            await writer.updatePiPFrame(frame, screenFrame: screenFrame)
-        }
-
-        // Assert - Method completed without error, writer state remains valid
-        let finalIsWriting = await writer.isWriting
-        #expect(finalIsWriting == initialIsWriting, "Writer state should remain unchanged after rapid updates")
-    }
-
-    @Test("UpdatePiPFrame handles nil gracefully")
-    func updatePiPFrameHandlesNil() async throws {
-        // Arrange
-        let writer = await VideoWriter()
-        let initialIsWriting = await writer.isWriting
-
-        // Act
-        await writer.updatePiPFrame(nil, screenFrame: nil)
-
-        // Assert - Method completed without error, writer state remains valid
-        let finalIsWriting = await writer.isWriting
-        #expect(finalIsWriting == initialIsWriting, "Writer state should remain unchanged")
-    }
-
-    // MARK: - Camera Frame Update Tests
-
-    @Test("UpdateCameraFrame completes without error")
-    func updateCameraFrameStores() async throws {
-        // Arrange
-        let writer = await VideoWriter()
-        let initialIsWriting = await writer.isWriting
-
-        // Act - pass nil (camera frame cleared)
-        await writer.updateCameraFrame(nil)
-
-        // Assert - Method completed without error, writer state remains valid
-        let finalIsWriting = await writer.isWriting
-        #expect(finalIsWriting == initialIsWriting, "Writer state should remain unchanged")
-    }
-
-    // MARK: - Write Guards Tests
-
-    @Test("Write methods guard against non-ready state")
-    func writeMethodsGuardNonReady() async throws {
-        // Arrange
-        let writer = await VideoWriter()
-        // Don't start writer
-
-        // Assert - isReadyForData is false, writes would be guarded
-        let isReady = await writer.isReadyForData
-        #expect(isReady == false)
-    }
-
-    // MARK: - Target Size Tests
-
-    @Test("Video outputs at 1080p resolution")
-    func videoOutputs1080p() async throws {
-        // Arrange
-        let writer = await VideoWriter()
-        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("test_\(UUID().uuidString).mp4")
-
-        // Act
-        try await writer.start(outputURL: tempURL, targetFrameRate: 30.0)
-
-        // Assert - writer is configured
-        let isWriting = await writer.isWriting
-        #expect(isWriting == true)
-
-        // Cleanup
-        _ = await writer.finish()
-        try? FileManager.default.removeItem(at: tempURL)
+        #expect(url1 == url)
+        #expect(url2 == url)
     }
 }

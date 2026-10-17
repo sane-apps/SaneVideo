@@ -5,14 +5,13 @@
 //  Comprehensive tests for ProjectStore backup and recovery functionality
 //
 
-import Testing
 import Foundation
 @testable import SaneVideo
+import Testing
 
 @Suite("ProjectStore Backup Recovery Tests")
 @MainActor
 struct ProjectStoreBackupRecoveryTests {
-
     // MARK: - Setup and Utilities
 
     private static func createTempDir() -> URL {
@@ -33,27 +32,22 @@ struct ProjectStoreBackupRecoveryTests {
 
     // MARK: - Backup Creation Tests
 
-    @Test("Save creates backup when file exists")
-    func saveCreatesBackupWhenFileExists() async throws {
+    @Test("Re-saving overwrites the project file and removes the temporary backup")
+    func resaveOverwritesAndCleansUpBackup() async throws {
         let tempDir = Self.createTempDir()
         defer { Self.cleanupTempDir(tempDir) }
 
         let store = ProjectStore(rootDirectory: tempDir)
-        let project = VideoProject(name: "Backup Test")
-
-        // Act - save twice (second save should create backup of first)
+        var project = VideoProject(name: "Backup Test")
         try await store.saveProject(project)
+
+        project.name = "Backup Test Renamed"
+        try await store.saveProject(project)
+
         let fileURL = store.fileURL(for: project)
-
-        // Small delay to ensure different timestamps
-        try await Task.sleep(nanoseconds: 100_000_000) // 0.1s
-
-        try await store.saveProject(project)
-
-        // Assert - backup should have been created and removed after success
-        // Note: The current implementation removes backup after successful save
-        // So we verify the save completed successfully
-        #expect(FileManager.default.fileExists(atPath: fileURL.path))
+        let saved = try JSONDecoder().decode(VideoProject.self, from: Data(contentsOf: fileURL))
+        #expect(saved.name == "Backup Test Renamed")
+        #expect(!FileManager.default.fileExists(atPath: fileURL.appendingPathExtension("backup").path))
     }
 
     @Test("Save atomic write prevents partial writes")
@@ -311,7 +305,7 @@ struct ProjectStoreBackupRecoveryTests {
 
         // Arrange - create 5 projects
         var projects: [VideoProject] = []
-        for i in 1...5 {
+        for i in 1 ... 5 {
             let project = VideoProject(name: "Project \(i)")
             try await store.saveProject(project)
             projects.append(project)
@@ -388,24 +382,24 @@ struct ProjectStoreBackupRecoveryTests {
         defer { Self.cleanupTempDir(tempDir) }
 
         let store = ProjectStore(rootDirectory: tempDir)
-        let project = VideoProject(name: "Concurrent Test")
+        let projects = (1 ... 5).map { VideoProject(name: "Update \($0)") }
 
-        // Act - multiple rapid saves
+        // Act - save five projects at once
         try await withThrowingTaskGroup(of: Void.self) { group in
-            for i in 1...5 {
+            for project in projects {
                 group.addTask {
-                    var modified = project
-                    modified = VideoProject(name: "Update \(i)")
-                    try await store.saveProject(modified)
+                    try await store.saveProject(project)
                 }
             }
             try await group.waitForAll()
         }
 
-        // Assert - at least one save should have succeeded
-        // Note: The concurrent saves may overwrite each other, but should not corrupt
-        let loadedProjects = try await store.loadProjects()
-        #expect(loadedProjects.count >= 1)
+        // Assert - every project loads back intact
+        let loaded = try await store.loadProjects()
+        let loadedNames = Dictionary(uniqueKeysWithValues: loaded.map { ($0.id, $0.name) })
+        for project in projects {
+            #expect(loadedNames[project.id] == project.name)
+        }
     }
 
     @Test("Load deduplication prevents redundant disk reads")

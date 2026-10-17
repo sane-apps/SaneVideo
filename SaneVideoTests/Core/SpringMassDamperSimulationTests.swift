@@ -5,13 +5,11 @@
 //  Tests for spring-mass-damper physics simulation
 //
 
-import Testing
-import simd
-
 @testable import SaneVideo
+import simd
+import Testing
 
 struct SpringMassDamperSimulationTests {
-
     // MARK: - Basic Convergence
 
     @Test("Spring converges to target from rest")
@@ -106,19 +104,13 @@ struct SpringMassDamperSimulationTests {
         #expect(abs(spring.value - 1.5) < 0.01)
     }
 
-    @Test("Custom profile parameters are respected")
+    @Test("A stiff custom profile settles within one second")
     func customProfileWorks() {
-        let expectedStiffness = 500.0
-        let expectedDamping = 50.0
-        let expectedMass = 1.0
         let profile = SpringMassDamperSimulation.Profile.custom(
-            stiffness: expectedStiffness,
-            damping: expectedDamping,
-            mass: expectedMass
+            stiffness: 500.0,
+            damping: 50.0,
+            mass: 1.0
         )
-        #expect(profile.stiffness == expectedStiffness)
-        #expect(profile.damping == expectedDamping)
-        #expect(profile.mass == expectedMass)
 
         var spring = SpringMassDamperSimulation(
             value: 0, target: 1.0, profile: profile

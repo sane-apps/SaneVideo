@@ -87,10 +87,9 @@ struct GlobalSheetModifier: ViewModifier {
                     if let clip = notification.object as? VideoClip {
                         repurposingClip = clip
                     } else if let project = appState.currentProject {
-                        // The selected clip, else the longest one: shorts come from the main recording.
-                        let clips = project.timeline.tracks.flatMap(\.clips)
-                        repurposingClip = clips.first { appState.selectedClipIds.contains($0.id) }
-                            ?? clips.max { $0.effectiveDuration.seconds < $1.effectiveDuration.seconds }
+                        // Shorts come from the main recording: the longest clip.
+                        repurposingClip = project.timeline.tracks.flatMap(\.clips)
+                            .max { $0.effectiveDuration.seconds < $1.effectiveDuration.seconds }
                     }
                 }
             }

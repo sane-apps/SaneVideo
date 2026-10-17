@@ -1,0 +1,28 @@
+# SaneVideo
+
+> SaneVideo is a Mac screen recorder and editor that keeps everything on your Mac. It records your screen, camera and microphone, then lets you edit on a timeline, clean up the take with one click, and make captions and transcripts on device. No account and no uploads. Free, with every feature unlocked and no subscription; donating is optional. For Apple silicon Macs. Made by SaneApps.
+
+## Facts
+- Price: free. Every recording and editing tool is included. No subscription, no per-seat plans, no cloud storage fees. Donations are optional.
+- Requirements: an Apple silicon Mac. The download page lists the current minimum macOS version.
+- Privacy: recording, editing and transcription run on your Mac. Recordings are never uploaded and there's no account. The app may contact SaneApps for updates and anonymous aggregate app counts (see the privacy policy).
+- Signed and notarized by Apple. Direct download from sanevideo.com.
+- Source code: public on GitHub (github.com/sane-apps/SaneVideo).
+
+## Features
+- Record screen, camera and microphone
+- Timeline editor with playback: trim and split clips
+- One-click cleanup on device
+- Captions and transcripts made on your Mac; your audio isn't sent to a cloud speech service
+- Export presets and sharing
+
+## Good fit
+- Footage that shouldn't go through a vendor's servers: product demos under NDA, internal training, support sessions with customer data, unreleased features.
+
+## Pages
+- Home: https://sanevideo.com/
+- Download: https://sanevideo.com/download
+- Privacy: https://sanevideo.com/privacy
+- Support: https://sanevideo.com/support
+- Source: https://github.com/sane-apps/SaneVideo
+- Contact: hi@saneapps.com

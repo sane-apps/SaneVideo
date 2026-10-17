@@ -36,18 +36,9 @@ enum TextLayerBuilder {
 
                 // 1. Captions
                 for caption in clip.captions.compactMap({ $0.removingWords(in: clip.removedRanges) }) {
-                    let capStart = caption.startTime
-                    let capEnd = caption.endTime
-
-                    // Check availability in valid ranges
-                    guard let effStart = clip.effectiveTime(forOriginalTime: capStart),
-                          let effEnd = clip.effectiveTime(forOriginalTime: capEnd)
-                    else {
-                        continue
-                    }
-
-                    let offset = effStart
-                    let duration = CMTimeSubtract(effEnd, effStart)
+                    guard let effective = clip.effectiveRange(for: caption) else { continue }
+                    let offset = effective.start
+                    let duration = effective.duration
 
                     // Speed adjustment
                     let scaledOffset = CMTimeMultiplyByFloat64(offset, multiplier: 1.0 / clip.speed)

@@ -24,7 +24,7 @@ class SaneVideoCustomerUIActionSweep
   SOURCE_GUARDS = {
     'app-shell-menus-and-shortcuts' => [
       ['SaneVideo/SaneVideoApp.swift', 'WelcomeGateView('],
-      ['SaneVideo/SaneVideoApp.swift', 'No trial and no paywall'],
+      ['SaneVideo/Core/DirectDistributionSupport.swift', 'No trial and no paywall'],
       ['SaneVideo/SaneVideoApp.swift', 'menu.file.new_recording'],
       ['SaneVideo/SaneVideoApp.swift', 'menu.help.shortcuts'],
       ['SaneVideo/Views/Sheets/KeyboardShortcutsSheet.swift', 'Recording (any app, while the recorder is open)'],

@@ -1,5 +1,4 @@
 // Unified toolbar with playback, editing, and timeline controls
-// Consolidates PlayerControlBar and TimelineControls into one bar
 
 import AVFoundation
 import SwiftUI
@@ -26,12 +25,10 @@ struct TimelineControls: View {
     @State private var volume: Float = 1.0
     @State private var isMuted: Bool = false
 
-    // State for delete confirmation
     @State private var showDeleteConfirmation = false
 
     var body: some View {
         HStack(spacing: 0) {
-            // LEFT: Undo/Redo + Timecode
             HStack(spacing: 12) {
                 undoRedoSection
                 timecodeSection
@@ -41,7 +38,6 @@ struct TimelineControls: View {
 
             Spacer()
 
-            // CENTER-LEFT: Playback Controls + Speed
             HStack(spacing: 8) {
                 playbackSection
                 speedControl
@@ -49,7 +45,6 @@ struct TimelineControls: View {
 
             Spacer()
 
-            // CENTER: Volume + Editing Tools
             HStack(spacing: 12) {
                 volumeControl
                 editingSection
@@ -57,10 +52,8 @@ struct TimelineControls: View {
 
             Spacer()
 
-            // CENTER-RIGHT: Timeline Controls (snap, magnetic, zoom)
             timelineSection
 
-            // RIGHT: Display Mode Toggle
             displayModeToggle
                 .padding(.trailing, 12)
         }
@@ -69,7 +62,6 @@ struct TimelineControls: View {
         .overlay(Divider(), alignment: .bottom)
         .zIndex(100)
         .onAppear {
-            // Sync volume with player
             if let player = playbackState.player {
                 volume = player.volume
                 isMuted = player.isMuted
@@ -130,7 +122,6 @@ struct TimelineControls: View {
 
     private var playbackSection: some View {
         HStack(spacing: 10) {
-            // Step backward
             Button(
                 action: { playbackState.stepBackward() },
                 label: {
@@ -146,7 +137,6 @@ struct TimelineControls: View {
             .accessibilityIdentifier("player.step_backward")
             .accessibilityLabel("Previous frame")
 
-            // Play/Pause
             Button(
                 action: { playbackState.togglePlayPause() },
                 label: {
@@ -166,7 +156,6 @@ struct TimelineControls: View {
             .accessibilityIdentifier("player.toggle_play_pause")
             .accessibilityLabel(playbackState.isPlaying ? "Pause" : "Play")
 
-            // Step forward
             Button(
                 action: { playbackState.stepForward() },
                 label: {
@@ -269,7 +258,6 @@ struct TimelineControls: View {
 
     private var editingSection: some View {
         HStack(spacing: 6) {
-            // Rotate (only when clip selected and not missing)
             if let clip = selectedClip, !clip.isMissing {
                 ToolButton(icon: "arrow.triangle.2.circlepath", isSelected: false, id: "player.rotate") {
                     projectState.rotateClip(clip)
@@ -279,7 +267,6 @@ struct TimelineControls: View {
                 .accessibilityLabel("Rotate clip 90 degrees")
             }
 
-            // Split
             ToolButton(icon: "scissors", isSelected: false, id: "SplitClipButton") {
                 onSplit()
             }
@@ -287,7 +274,6 @@ struct TimelineControls: View {
             .help("Split clip (⌘B)")
             .accessibilityLabel("Split clip at playhead")
 
-            // Delete
             ToolButton(icon: "trash", isSelected: false, id: "DeleteClipButton") {
                 if selectedClip != nil {
                     showDeleteConfirmation = true
@@ -307,15 +293,12 @@ struct TimelineControls: View {
                 Text("Remove '\(clip.url.lastPathComponent)' from project or move file to Trash?")
             }
         }
-        // 2025-12-31: Removed .subtleGlass for consistent toolbar styling
-        // All toolbar icons now have uniform appearance (no special containers)
     }
 
     // MARK: - Timeline Section
 
     private var timelineSection: some View {
         HStack(spacing: 14) {
-            // Snap Toggle
             Button(
                 action: { snapEnabled.toggle() },
                 label: {
@@ -332,7 +315,6 @@ struct TimelineControls: View {
             .accessibilityIdentifier("timeline.toggle_snap")
             .accessibilityLabel("Snap to edges, \(snapEnabled ? "on" : "off")")
 
-            // Magnetic Toggle
             Button(
                 action: { magneticTimeline.toggle() },
                 label: {
@@ -348,7 +330,6 @@ struct TimelineControls: View {
             .accessibilityIdentifier("timeline.toggle_magnetic")
             .accessibilityLabel("Magnetic timeline, \(magneticTimeline ? "on" : "off")")
 
-            // Zoom Slider
             HStack(spacing: 4) {
                 Image(systemName: "minus.magnifyingglass")
                     .font(.system(size: 9))

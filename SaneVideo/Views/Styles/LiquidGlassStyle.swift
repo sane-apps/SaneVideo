@@ -1,7 +1,6 @@
 import SwiftUI
 
 /// A view modifier that applies the macOS Tahoe "Liquid Glass" aesthetic.
-/// Enhanced with premium edge lighting and depth shadows.
 struct LiquidGlassModifier: ViewModifier {
     var radius: CGFloat = 12
     var opacity: Double = 0.5
@@ -17,11 +16,9 @@ struct LiquidGlassModifier: ViewModifier {
         content
             .background(
                 ZStack {
-                    // HUD Material for the "glass" base
                     VisualEffectView(material: .hudWindow, blendingMode: .withinWindow)
                         .opacity(intensity == .premium ? 0.95 : 0.8)
                     
-                    // Enhanced edge light gradient with multiple stops
                     RoundedRectangle(cornerRadius: radius)
                         .stroke(
                             LinearGradient(
@@ -32,7 +29,6 @@ struct LiquidGlassModifier: ViewModifier {
                             lineWidth: edgeWidth
                         )
                     
-                    // Additional subtle inner glow for premium
                     if intensity == .premium {
                         RoundedRectangle(cornerRadius: radius)
                             .stroke(
@@ -52,7 +48,7 @@ struct LiquidGlassModifier: ViewModifier {
             )
             .clipShape(RoundedRectangle(cornerRadius: radius))
             .shadow(color: .black.opacity(shadowOpacity), radius: shadowRadius, x: 0, y: shadowY)
-            .shadow(color: .white.opacity(0.05), radius: 5, x: 0, y: -2) // Subtle top highlight
+            .shadow(color: .white.opacity(0.05), radius: 5, x: 0, y: -2)
     }
     
     private var edgeColors: [Color] {
@@ -143,11 +139,9 @@ struct CapsuleLiquidGlassModifier: ViewModifier {
         content
             .background(
                 ZStack {
-                    // HUD Material for the "glass" base
                     VisualEffectView(material: .hudWindow, blendingMode: .withinWindow)
                         .opacity(intensity == .premium ? 0.95 : 0.8)
 
-                    // Enhanced edge light gradient
                     Capsule()
                         .stroke(
                             LinearGradient(
@@ -158,7 +152,6 @@ struct CapsuleLiquidGlassModifier: ViewModifier {
                             lineWidth: edgeWidth
                         )
 
-                    // Additional subtle inner glow for premium
                     if intensity == .premium {
                         Capsule()
                             .stroke(
@@ -230,7 +223,6 @@ struct CapsuleLiquidGlassModifier: ViewModifier {
 }
 
 /// Conditional capsule glass - only applies the effect when enabled.
-/// Use this when the glass background is optional based on configuration.
 struct ConditionalCapsuleGlass: ViewModifier {
     let isEnabled: Bool
 

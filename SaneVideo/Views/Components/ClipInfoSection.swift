@@ -1,15 +1,11 @@
-// Displays basic clip metadata (name, duration, resolution)
-
 import AVFoundation
 import SwiftUI
 
-/// Displays basic metadata about a video clip
 struct ClipInfoSection: View {
     @Environment(AppState.self) var appState
     let clip: VideoClip
     @State private var resolution: String = "Loading..."
 
-    /// Display-friendly name for the clip
     private var displayName: String {
         let filename = clip.url.deletingPathExtension().lastPathComponent
         if UUID(uuidString: filename) != nil {
@@ -25,17 +21,14 @@ struct ClipInfoSection: View {
             InfoRow(label: "Duration", value: String(format: "%.2fs", clip.duration.seconds))
             InfoRow(label: "Resolution", value: resolution)
             
-            // Show file path (truncated if long)
             if let filePath = filePathDisplay {
                 InfoRow(label: "Location", value: filePath)
             }
             
-            // Show file size
             if let fileSize = fileSizeDisplay {
                 InfoRow(label: "Size", value: fileSize)
             }
             
-            // Missing file recovery
             if clip.isMissing {
                 VStack(alignment: .leading, spacing: 8) {
                     HStack {
@@ -58,7 +51,7 @@ struct ClipInfoSection: View {
                     .accessibilityIdentifier("clip_info.locate_file")
                     .accessibilityLabel("Locate missing file")
                     .accessibilityHint("Opens a file picker to locate the missing video file")
-                    // REMOVED: .focusable() - was causing yellow focus ring
+                    // No .focusable(): it draws a yellow focus ring.
                 }
                 .padding(8)
                 .background(Color.orange.opacity(0.1))
@@ -75,7 +68,6 @@ struct ClipInfoSection: View {
         }
     }
     
-    // File path display (truncated)
     private var filePathDisplay: String? {
         let path = clip.url.path
         if path.count > 50 {
@@ -87,7 +79,6 @@ struct ClipInfoSection: View {
         return path
     }
     
-    // File size display
     @State private var fileSizeDisplay: String?
     
     private func loadFileInfo() async {
@@ -112,7 +103,6 @@ struct ClipInfoSection: View {
         }
     }
     
-    // Locate missing file
     private func locateMissingFile() {
         let panel = NSOpenPanel()
         panel.allowsMultipleSelection = false
@@ -124,7 +114,6 @@ struct ClipInfoSection: View {
         
         panel.begin { [clip] response in
             if response == .OK, let newURL = panel.url {
-                // Validate file exists and is readable
                 guard FileManager.default.fileExists(atPath: newURL.path) else {
                     Task { @MainActor in
                         ServiceContainer.shared.toastManager.show(
@@ -135,9 +124,7 @@ struct ClipInfoSection: View {
                     return
                 }
                 
-                // Update clip URL in ProjectState
                 Task { @MainActor in
-                    // Relink clip to new file location
                     appState.projectState.relinkClip(clip, to: newURL)
                     ServiceContainer.shared.toastManager.show(
                         "File relinked successfully",
@@ -151,10 +138,8 @@ struct ClipInfoSection: View {
     }
 
     private func loadResolution() async {
-        // Add timeout and error handling
         await withTaskGroup(of: Void.self) { group in
             group.addTask {
-                // Timeout after 5 seconds
                 try? await Task.sleep(nanoseconds: 5_000_000_000)
                 await MainActor.run {
                     if resolution == "Loading..." {
@@ -165,7 +150,6 @@ struct ClipInfoSection: View {
             
             group.addTask {
                 let asset = AVURLAsset(url: clip.url)
-                // Check if file exists first
                 guard FileManager.default.fileExists(atPath: clip.url.path) else {
                     await MainActor.run {
                         resolution = "File Missing"

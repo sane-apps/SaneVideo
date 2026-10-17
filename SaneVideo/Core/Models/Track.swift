@@ -1,6 +1,5 @@
 import Foundation
 
-/// Represents a single timeline track (layer)
 /// Tracks are stacked vertically, with higher zIndex appearing "on top" visually
 struct Track: Identifiable, Codable, Equatable, Sendable {
     let id: UUID
@@ -31,7 +30,7 @@ struct Track: Identifiable, Codable, Equatable, Sendable {
 }
 
 enum TrackType: String, Codable, Sendable {
-    case video // Main video track
-    case audio // Audio only
+    case video
+    case audio
     case overlay // Text, Graphics, PiP
 }

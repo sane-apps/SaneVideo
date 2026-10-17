@@ -1,5 +1,3 @@
-// Library clip row for displaying clips in the sidebar
-
 import CoreMedia
 import SwiftUI
 
@@ -9,12 +7,10 @@ struct LibraryClipRow: View {
     let isSelected: Bool
     @State private var thumbnail: NSImage?
 
-    /// Display-friendly name for the clip
     private var displayName: String {
         let filename = clip.url.deletingPathExtension().lastPathComponent
         // Check if filename is a UUID (recordings use UUID names)
         if UUID(uuidString: filename) != nil {
-            // It's a recording with UUID name - show shortened version
             let prefix = String(filename.prefix(8))
             return String(localized: "sidebar.clip.recording", defaultValue: "Recording") + " \(prefix)"
         }
@@ -23,7 +19,6 @@ struct LibraryClipRow: View {
 
     var body: some View {
         HStack(spacing: 8) {
-            // Thumbnail
             ZStack {
                 if let thumb = thumbnail {
                     Image(nsImage: thumb)
@@ -44,7 +39,6 @@ struct LibraryClipRow: View {
                 }
             }
 
-            // Info
             VStack(alignment: .leading, spacing: 2) {
                 Text(displayName)
                     .font(.caption)
@@ -54,7 +48,6 @@ struct LibraryClipRow: View {
                         .font(.caption2)
                         .foregroundColor(Color.stone)
 
-                    // Caption badge - simple indicator without count
                     if !clip.captions.isEmpty {
                         Image(systemName: "captions.bubble.fill")
                             .font(.system(size: 10))

@@ -1,5 +1,3 @@
-// Consolidated from ProjectState+Audio.swift and ProjectState+AudioServices.swift
-
 import AVFoundation
 import CoreMedia
 import Foundation
@@ -9,7 +7,6 @@ import SwiftUI
 
 extension ProjectState {
 
-    /// Update clip volume
     func updateClipVolume(clipId: UUID, volume: Float, transactionId: UUID? = nil) {
         guard !shouldBlockOperation(transactionId: transactionId) else { return }
         guard var project = currentProject else { return }
@@ -367,7 +364,6 @@ extension ProjectState {
         }
     }
 
-    /// Cleans audio for the entire project (Batch)
     func cleanProjectAudio() async {
         guard let project = currentProject else { return }
 

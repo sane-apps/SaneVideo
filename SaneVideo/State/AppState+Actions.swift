@@ -23,7 +23,7 @@ extension AppState {
             includeCameraOverlay: cameraEnabled || cameraState.isActive
         )
 
-        // Hide App if Screen Sharing (so we don't record the window)
+        // Hide the app while screen sharing so its window is not recorded.
         if windowManager.isScreenSharing {
             windowManager.minimizeMainWindow()
         }
@@ -32,8 +32,7 @@ extension AppState {
     func stopRecording() {
         NSLog("🛑 AppState.stopRecording called. appMode=\(appMode), isRecording=\(recordingState.isRecording)")
 
-        // Allow stop even if mode changed - user might be stuck
-        // Only check if actually recording
+        // Allow stop even if the mode changed, so the user is never stuck.
         guard recordingState.isRecording else {
             NSLog("🛑 AppState: stopRecording ignored (not recording)")
             AppLogger.recording.warning("🛑 AppState: stopRecording ignored (not recording)")
@@ -46,9 +45,8 @@ extension AppState {
         recordingState.stopRecording { [weak self] url in
             guard let self else { return }
 
-            // ALWAYS close PiP and return to app
             Task { @MainActor in
-                // Update state flags FIRST to prevent race conditions during UI updates
+                // Update state flags before UI work to avoid races.
                 let wasScreenSharing = self.windowManager.isScreenSharing
 
                 if wasScreenSharing {
@@ -61,13 +59,12 @@ extension AppState {
                     self.windowManager.hideTeleprompter()
                 }
 
-                // cameraEnabled setter automatically stops camera
+                // The cameraEnabled setter stops the camera.
                 self.cameraEnabled = false
 
-                // Now safe to restore proper window state
                 self.windowManager.restoreMainWindow()
 
-                // Force update PiP state (will hide because isScreenSharing is false)
+                // PiP hides here because isScreenSharing is now false.
                 self.windowManager.updatePiPState(isCameraActive: false, isRecording: false)
                 self.windowManager.hideFloatingControls()
             }
@@ -94,24 +91,19 @@ extension AppState {
     func handleRecordingFinished(url: URL) {
         AppLogger.recording.info("📹 handleRecordingFinished called with: \(url.lastPathComponent)")
 
-        // cameraEnabled setter automatically stops camera
+        // The cameraEnabled setter stops the camera.
         cameraEnabled = false
         windowManager.updatePiPState(isCameraActive: false, isRecording: false)
 
-        // Show Quick Access Overlay instead of auto-importing
         Task { @MainActor in
-            // Generate thumbnail for overlay
             let thumbnail = await generateQuickThumbnail(for: url)
 
-            // Show overlay
             self.quickAccessRecordingURL = url
             self.quickAccessThumbnail = thumbnail
             self.showQuickAccessOverlay = true
 
-            // Bring app to foreground
             self.windowManager.restoreMainWindow()
 
-            // UX Delight - Audible feedback on success (as requested)
             ServiceContainer.shared.soundManager.playSuccess()
         }
         // Every recording becomes a project right away, whatever the user picks next.
@@ -120,7 +112,6 @@ extension AppState {
         }
     }
 
-    /// Generate a thumbnail for the quick access overlay
     private func generateQuickThumbnail(for url: URL) async -> NSImage? {
         let asset = AVURLAsset(url: url)
 
@@ -128,7 +119,7 @@ extension AppState {
             return nil
         }
 
-        // Get frame at 10% of video (usually good content)
+        // A frame 10% in usually shows real content.
         let time = CMTimeMultiplyByFloat64(duration, multiplier: 0.1)
         let generator = AVAssetImageGenerator(asset: asset)
         generator.appliesPreferredTrackTransform = true
@@ -143,7 +134,6 @@ extension AppState {
         }
     }
 
-    /// Handle Quick Access Overlay actions
     func handleQuickAccessEdit() {
         showQuickAccessOverlay = false
         Task { @MainActor in
@@ -191,8 +181,7 @@ extension AppState {
     func toggleScreenShare() {
         NSLog("🖥️ toggleScreenShare() called. Current isScreenSharing=\(windowManager.isScreenSharing)")
 
-        // Prevent concurrent execution to avoid race conditions
-        // This is especially important when ending screen sharing to prevent double-cleanup
+        // Block concurrent toggles; ending screen sharing twice would run cleanup twice.
         guard !windowManager.isTogglingScreenShare else {
             NSLog("🖥️ toggleScreenShare: Already toggling, ignoring")
             AppLogger.window.warning("toggleScreenShare: Already toggling, ignoring duplicate call")
@@ -200,18 +189,14 @@ extension AppState {
         }
 
         windowManager.isTogglingScreenShare = true
-        // Do NOT use defer here - flag is reset inside Task completion to prevent race conditions
+        // No defer here: the flag resets when the Task finishes, which prevents races.
 
         let wasScreenSharing = windowManager.isScreenSharing
         NSLog("🖥️ toggleScreenShare: wasScreenSharing=\(wasScreenSharing)")
 
         if wasScreenSharing {
-            // Logic for STOPPING screen share
-
-            // If recording, switch to camera FIRST before stopping screen share
-            // This ensures recording continues seamlessly
+            // If recording, switch to camera before stopping screen share so the recording continues.
             if recordingState.isRecording {
-                // Switch source to camera - completes instantly via fast path
                 let newSource: RecordingSource = .camera
                 AppLogger.recording.info("🔄 AppState: Switching from screen to camera recording")
                 recordingState.switchSource(newSource)
@@ -231,61 +216,46 @@ extension AppState {
                     ServiceContainer.shared.toastManager.show("📷 Switched to Camera Recording")
                 }
             } else {
-                // Not recording - clean shutdown sequence
                 NSLog("🖥️ toggleScreenShare: Not recording, stopping screen share cleanly...")
 
                 Task { @MainActor in
-                    // Step 1: Stop the screen recorder stream FIRST
                     NSLog("🖥️ Step 1: Stopping screen recorder stream...")
                     if let screenRecorder = recordingState.engine?.screenRecorder {
                         await screenRecorder.stop()
                         NSLog("🖥️ Step 1: ✅ Screen recorder stream stopped")
                     }
 
-                    // Step 2: Update state IMMEDIATELY after stream stops
                     NSLog("🖥️ Step 2: Updating state...")
                     windowManager.isScreenSharing = false
 
-                    // Step 3: Hide PiP window
                     NSLog("🖥️ Step 3: Hiding PiP...")
                     windowManager.updatePiPState(
                         isCameraActive: cameraState.isActive,
                         isRecording: false
                     )
 
-                    // Step 4: Wait for window close to complete
                     NSLog("🖥️ Step 4: Waiting for window cleanup...")
                     try? await Task.sleep(nanoseconds: 150_000_000) // 150ms
 
-                    // Step 5: Preserve picker state for persistence (Tahoe style)
-                    // We do NOT deactivate SCContentSharingPicker here.
-                    // Keeping it active allows the OS to remember the previous selection
-                    // so the user doesn't have to re-select the window next time.
+                    // Leave SCContentSharingPicker active so macOS remembers the last selection.
                     NSLog("🖥️ Step 5: Picker remains active for selection persistence")
 
-                    // Step 6: Restore main window
                     NSLog("🖥️ Step 6: Restoring main window...")
                     windowManager.restoreMainWindow()
 
-                    // Always reset toggle flag
                     windowManager.isTogglingScreenShare = false
                     NSLog("🖥️ toggleScreenShare: ✅ Sequence complete")
                 }
             }
         } else {
-            // Logic for STARTING screen share
             NSLog("🖥️ toggleScreenShare: Starting screen share...")
 
-            // Keep screen capture genuinely screen-only unless the user explicitly enables camera.
-            // Auto-starting camera here turns screen demos into camera-dependent flows and breaks
-            // first-use privacy expectations.
+            // Leave the camera off unless the user turns it on; auto-starting it breaks screen-only demos and first-use privacy expectations.
             NSLog("🖥️ toggleScreenShare: Leaving camera state unchanged for screen-only capture")
 
-            // Update state for new mode
             windowManager.isScreenSharing = true
 
-            // Do NOT show PiP here - it will appear in the picker!
-            // PiP is shown via onContentSelected callback AFTER user selects content
+            // Do not show PiP yet or it appears in the picker; onContentSelected shows it after the user picks.
             NSLog("🖥️ toggleScreenShare: Deferring PiP display until after content selection")
 
             Task { @MainActor in

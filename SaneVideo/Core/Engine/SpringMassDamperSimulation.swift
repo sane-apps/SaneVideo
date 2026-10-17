@@ -1,4 +1,3 @@
-// Spring-mass-damper physics simulation for natural animation transitions.
 // Inspired by Cap's zoom interpolation (PR #1504).
 // Physics: acceleration = (stiffness * (target - position) - damping * velocity) / mass
 // Integration: Semi-implicit Euler (velocity first, then position)
@@ -6,15 +5,11 @@
 import Foundation
 import simd
 
-/// Spring-mass-damper physics simulation for 2D animation.
-///
-/// Produces natural-feeling motion by simulating a damped spring system.
 /// Used for cursor smoothing, zoom transitions, and viewport following.
 struct SpringMassDamperSimulation: Sendable {
 
     // MARK: - Profile
 
-    /// Predefined spring profiles for different animation contexts
     enum Profile: Sendable {
         /// General-purpose smooth motion (stiffness=170, damping=26, mass=1.0)
         case `default`
@@ -24,7 +19,6 @@ struct SpringMassDamperSimulation: Sendable {
         case drag
         /// Zoom scale transitions (stiffness=200, damping=40, mass=2.25)
         case zoom
-        /// Custom parameters
         case custom(stiffness: Double, damping: Double, mass: Double)
 
         var stiffness: Double {
@@ -60,16 +54,12 @@ struct SpringMassDamperSimulation: Sendable {
 
     // MARK: - State
 
-    /// Current position in 2D space
     private(set) var position: SIMD2<Double>
 
-    /// Current velocity in 2D space
     private(set) var velocity: SIMD2<Double>
 
-    /// Target position the spring is pulling toward
     var target: SIMD2<Double>
 
-    /// Active spring profile
     var profile: Profile
 
     // MARK: - Settlement thresholds
@@ -94,7 +84,6 @@ struct SpringMassDamperSimulation: Sendable {
         self.profile = profile
     }
 
-    /// Convenience initializer for 1D simulation
     init(
         value: Double = 0,
         velocity: Double = 0,
@@ -130,25 +119,19 @@ struct SpringMassDamperSimulation: Sendable {
         let dampingForce = damping * velocity
         let acceleration = (springForce - dampingForce) / mass
 
-        // Semi-implicit Euler: update velocity first, then position
         velocity = velocity + acceleration * clampedDt
         position = position + velocity * clampedDt
     }
 
-    /// Advance the simulation toward a specific target.
-    ///
-    /// Convenience method that sets the target then steps.
     mutating func step(toward newTarget: SIMD2<Double>, dt: Double) {
         target = newTarget
         step(dt: dt)
     }
 
-    /// Convenience for 1D step
     mutating func step(toward value: Double, dt: Double) {
         step(toward: SIMD2(value, 0), dt: dt)
     }
 
-    /// Whether the simulation has settled (close enough to target with low velocity)
     var isSettled: Bool {
         let displacement = simd_length(target - position)
         let speed = simd_length(velocity)
@@ -160,13 +143,11 @@ struct SpringMassDamperSimulation: Sendable {
         position.x
     }
 
-    /// Snap directly to target, zeroing velocity
     mutating func snapToTarget() {
         position = target
         velocity = .zero
     }
 
-    /// Reset to a specific position with zero velocity
     mutating func reset(to newPosition: SIMD2<Double>) {
         position = newPosition
         velocity = .zero

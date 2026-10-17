@@ -4,7 +4,6 @@ struct ToastOverlayModifier: ViewModifier {
     @State private var toastMessage: String?
     @State private var showToast: Bool = false
 
-    // Internal state for auto-hide handling
     @State private var workItem: DispatchWorkItem?
 
     func body(content: Content) -> some View {
@@ -18,14 +17,12 @@ struct ToastOverlayModifier: ViewModifier {
                 guard let message = ServiceContainer.shared.toastManager.toastMessage else { return }
                 self.toastMessage = message
 
-                // Cancel previous auto-hide if any
                 self.workItem?.cancel()
 
                 withAnimation {
                     self.showToast = true
                 }
 
-                // Auto-hide after 2 seconds
                 let task = DispatchWorkItem {
                     withAnimation {
                         self.showToast = false
@@ -39,7 +36,7 @@ struct ToastOverlayModifier: ViewModifier {
     private func toastView(message: String) -> some View {
         VStack {
             Spacer()
-                .frame(height: 40) // Top padding
+                .frame(height: 40)
             HStack {
                 Image(systemName: "info.circle.fill")
                 Text(message)
@@ -49,7 +46,7 @@ struct ToastOverlayModifier: ViewModifier {
             .padding(.horizontal, 16)
             .padding(.vertical, 10)
             .background(Color.black.opacity(0.8))
-            .cornerRadius(Theme.Dimensions.cornerRadius) // Assuming derived from Theme in MainContentView
+            .cornerRadius(Theme.Dimensions.cornerRadius)
             .shadow(radius: 4)
             .transition(.move(edge: .top).combined(with: .opacity))
             .padding(.top, 20)

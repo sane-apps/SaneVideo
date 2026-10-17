@@ -10,7 +10,6 @@ struct PlayerControlBar: View {
 
     var body: some View {
         HStack {
-            // Left: Timecode
             HStack(spacing: 4) {
                 Text(timecodeString(from: playbackState.currentTime))
                     .foregroundColor(.primary)
@@ -24,9 +23,7 @@ struct PlayerControlBar: View {
 
             Spacer()
 
-            // Center: Play/Pause with contextual hints
             HStack(spacing: 16) {
-                // Step backward button
                 Button(action: { playbackState.stepBackward() }, label: {
                     Image(systemName: "backward.frame.fill")
                         .font(.system(size: 14))
@@ -39,7 +36,6 @@ struct PlayerControlBar: View {
                 .accessibilityIdentifier("player.step_backward")
                 .accessibilityLabel("Previous frame")
 
-                // Play/Pause Button (main control)
                 Button(
                     action: { playbackState.togglePlayPause() },
                     label: {
@@ -60,7 +56,6 @@ struct PlayerControlBar: View {
                 .accessibilityIdentifier("player.toggle_play_pause")
                 .accessibilityLabel(playbackState.isPlaying ? "Pause" : "Play")
 
-                // Step forward button
                 Button(action: { playbackState.stepForward() }, label: {
                     Image(systemName: "forward.frame.fill")
                         .font(.system(size: 14))
@@ -76,10 +71,7 @@ struct PlayerControlBar: View {
 
             Spacer()
 
-            // Right: Quick actions + Video display mode picker
             HStack(spacing: 12) {
-                // Add common video editing controls (rotate, speed, volume)
-                // Rotate button (most common action)
                 if let clip = selectedClip, !clip.isMissing {
                     Button(action: {
                         projectState.rotateClip(clip)
@@ -100,13 +92,11 @@ struct PlayerControlBar: View {
                     .accessibilityLabel("Rotate clip 90 degrees")
                 }
 
-                // Divider between quick actions and display modes
                 if selectedClip != nil {
                     Divider()
                         .frame(height: 16)
                 }
 
-                // Video display mode picker
                 HStack(spacing: 2) {
                     ForEach(VideoDisplayMode.allCases, id: \.self) { mode in
                         Button(action: {
@@ -144,7 +134,7 @@ struct PlayerControlBar: View {
         .frame(maxWidth: .infinity)
     }
 
-    // Helper for Visual Effect (since SwiftUI Material is limited on older macOS or specific looks)
+    // NSVisualEffectView wrapper for looks SwiftUI materials can't produce.
     struct VisualEffectView: NSViewRepresentable {
         let material: NSVisualEffectView.Material
         let blendingMode: NSVisualEffectView.BlendingMode

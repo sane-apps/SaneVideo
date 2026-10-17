@@ -27,7 +27,6 @@ enum AutomationRailState: String, CaseIterable {
     }
 }
 
-/// Centralized utility for detecting execution environment and test states.
 enum TestEnvironment {
     private static let sourceFileProjectRoot: String = {
         var url = URL(fileURLWithPath: #filePath)
@@ -41,16 +40,13 @@ enum TestEnvironment {
         ProcessInfo.processInfo.environment
     }
 
-    /// True if running in a UI test (XCUITest)
     static var isUITesting: Bool {
         let args = ProcessInfo.processInfo.arguments
         return args.contains("-uitesting") || args.contains("-ui_testing")
             || UserDefaults.standard.bool(forKey: "ui_testing") || env["UI_TESTING"] != nil
     }
 
-    /// True if running in any test (unit or UI test)
     static var isTesting: Bool {
-        // Check for XCTest environment
         let args = ProcessInfo.processInfo.arguments
         return isUITesting
             || args.contains("-XCTest") || args.contains("-xctest")
@@ -200,7 +196,6 @@ enum TestEnvironment {
         )
     }
 
-    /// Standard path for the mock test video asset.
     /// Prioritizes persistent Tests/Assets over transient /tmp.
     static var mockAssetURL: URL {
         if let explicitURL = explicitAssetURL(
@@ -212,7 +207,7 @@ enum TestEnvironment {
 
         let filename = ProcessInfo.processInfo.environment["TEST_ASSET_NAME"] ?? "test_video.mp4"
 
-        // 1. Check for explicit environment variable (Best for automated tests)
+        // Automated tests set PROJECT_DIR.
         if let envPath = ProcessInfo.processInfo.environment["PROJECT_DIR"] {
             let path = envPath + "/Tests/Assets/" + filename
             if FileManager.default.fileExists(atPath: path) {
@@ -220,19 +215,19 @@ enum TestEnvironment {
             }
         }
 
-        // 2. Check the source-file-derived repo root (Works under xcodebuild and tests)
+        // The source-file-derived repo root works under xcodebuild and tests.
         let sourceRootAssetPath = sourceFileProjectRoot + "/Tests/Assets/" + filename
         if FileManager.default.fileExists(atPath: sourceRootAssetPath) {
             return URL(fileURLWithPath: sourceRootAssetPath)
         }
 
-        // 3. Check current directory (Works if run from terminal in project root)
+        // Works when run from the project root in Terminal.
         let localPath = FileManager.default.currentDirectoryPath + "/Tests/Assets/" + filename
         if FileManager.default.fileExists(atPath: localPath) {
             return URL(fileURLWithPath: localPath)
         }
 
-        // 4. Try to find project root by looking for project.yml
+        // Walk up from the app bundle looking for project.yml.
         let possibleRoots = [
             FileManager.default.currentDirectoryPath,
             sourceFileProjectRoot,
@@ -250,7 +245,7 @@ enum TestEnvironment {
             }
         }
 
-        // 5. Ultimate fallback - create temp directory
+        // Last resort: a temp folder.
         let tmpPath = "/tmp/SaneVideo/" + filename
         return URL(fileURLWithPath: tmpPath)
     }
@@ -291,14 +286,12 @@ enum TestEnvironment {
         return nil
     }
 
-    /// Get a specific test asset by name
     static func testAsset(named name: String) -> URL {
         let url = mockAssetURL
         let directory = url.deletingLastPathComponent()
         return directory.appendingPathComponent(name)
     }
 
-    /// Shared logger for environment detection
     static func logState() {
         if isUITesting {
             NSLog(

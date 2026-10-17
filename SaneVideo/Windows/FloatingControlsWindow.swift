@@ -46,21 +46,19 @@ class FloatingControlsWindow: NSPanel {
         minSize = Self.preferredPanelSize
         setContentSize(Self.preferredPanelSize)
 
-        // Prevent controls from appearing in screen share picker
         if #available(macOS 15.0, *) {
             self.sharingType = .none
         } else {
             self.sharingType = .none
         }
 
-        // Floating controls use .medium size for better visibility
-        // when user is screen sharing and app is minimized
+        // Medium buttons stay easy to see while the user screen shares with the app minimized.
         let controlsView = SharedRecordingControls(
             showDevicePickers: false,
             showGalleryTarget: false,
             showTimer: true,
             useGlassBackground: true,
-            buttonSize: .medium  // Uses unified size (52pt buttons, 73pt record)
+            buttonSize: .medium  // 52pt buttons, 73pt record button
         )
         contentView = NSHostingView(rootView: controlsView
             .environment(ServiceContainer.shared.appState)
@@ -103,35 +101,28 @@ class FloatingControlsWindow: NSPanel {
 
     private func resetHideTimer() {
         hideTimer?.invalidate()
-        // Create timer on main run loop explicitly
-        // This ensures timer fires reliably on main thread
         hideTimer = Timer.scheduledTimer(withTimeInterval: 3.0, repeats: false) { [weak self] _ in
             // Already on main thread from Timer on main RunLoop
             Task { @MainActor in
                 self?.hideControls()
             }
         }
-        // Ensure timer is added to common run loop modes (for scrolling, etc.)
+        // Common modes keep the timer firing during scrolling and menu tracking.
         if let timer = hideTimer {
             RunLoop.main.add(timer, forMode: .common)
         }
     }
     override func close() {
-        // Prevent _NSWindowTransformAnimation crash
-        // Same fix as PiPCameraWindow - synchronous close with disabled animations
+        // Close synchronously with animations off, as in PiPCameraWindow, to avoid the _NSWindowTransformAnimation crash.
 
-        // 1. Invalidate timer to stop any pending callbacks
         hideTimer?.invalidate()
         hideTimer = nil
 
-        // 2. Disable animations and cleanup synchronously
         CATransaction.begin()
         CATransaction.setDisableActions(true)
 
-        // Hide window immediately
         alphaValue = 0
 
-        // 3. Remove subviews
         contentView?.subviews.forEach { subview in
             subview.isHidden = true
             subview.removeFromSuperview()
@@ -139,16 +130,14 @@ class FloatingControlsWindow: NSPanel {
 
         CATransaction.commit()
 
-        // 4. Order out
         orderOut(nil)
 
-        // 5. Close synchronously - animations are disabled so this should be safe
-        // Do NOT use asyncAfter - it causes race conditions with isReleasedWhenClosed
+        // Do not use asyncAfter here; it races with isReleasedWhenClosed.
         super.close()
     }
 
     deinit {
-        // Safety net: rely on close() being called for cleanup
+        // Cleanup happens in close().
     }
 
 }

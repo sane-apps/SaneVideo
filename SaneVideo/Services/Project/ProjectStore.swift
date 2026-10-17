@@ -1,9 +1,6 @@
-// File-based project persistence implementation
-
 import Foundation
 import OSLog
 
-/// File-based implementation of ProjectStoreProtocol
 final class ProjectStore: ProjectStoreProtocol {
     private let projectsDirectory: URL
     private let loadState = OSAllocatedUnfairLock<Task<[VideoProject], Error>?>(initialState: nil)
@@ -14,7 +11,7 @@ final class ProjectStore: ProjectStoreProtocol {
             projectsDirectory = rootDirectory
             isInTestMode = true  // Custom root = test mode
         } else {
-            // Check for Test Mode / Editor Mode via UserDefaults (which we confirmed works)
+            // Test and editor modes are detected through UserDefaults.
             let isTesting = UserDefaults.standard.bool(forKey: "ui_testing") ||
                             ProcessInfo.processInfo.environment["UI_TESTING"] != nil ||
                             ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil ||
@@ -22,8 +19,7 @@ final class ProjectStore: ProjectStoreProtocol {
                             TestEnvironment.shouldOpenEditor
 
             if isTesting {
-                // Use a dedicated, isolated temporary directory for EACH instance during tests
-                // This prevents race conditions where one test wipes the directory while another writes
+                // Each instance gets its own temp directory so parallel tests cannot wipe each other's files.
                 AppLogger.project.info("🧪 ProjectStore: Using isolated temporary directory for test instance")
                 projectsDirectory = FileManager.default.temporaryDirectory
                     .appendingPathComponent("SaneVideo_Test_Projects")
@@ -35,7 +31,6 @@ final class ProjectStore: ProjectStoreProtocol {
             }
         }
 
-        // Ensure directory exists
         do {
             try FileManager.default.createDirectory(at: projectsDirectory, withIntermediateDirectories: true)
             AppLogger.project.info("ProjectStore initialized at: \(projectsDirectory.path)")
@@ -72,8 +67,6 @@ final class ProjectStore: ProjectStoreProtocol {
                 return existing
             }
 
-            // Capture necessary values to avoid capturing `self` strongly if possible,
-            // or rely on self being Sendable.
             let directory = projectsDirectory
 
             let newTask = Task<[VideoProject], Error> {
@@ -86,7 +79,6 @@ final class ProjectStore: ProjectStoreProtocol {
                     options: [.skipsHiddenFiles]
                 ).filter { $0.pathExtension == "svproj" }
 
-                // Sort by modification date (newest first)
                 projectFiles.sort { url1, url2 in
                     let date1 = (try? url1.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast
                     let date2 = (try? url2.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate) ?? .distantPast
@@ -98,25 +90,20 @@ final class ProjectStore: ProjectStoreProtocol {
                 var projects: [VideoProject] = []
 
                 for fileURL in projectFiles {
-                    // Check if file exists BEFORE trying to read it
-                    // This prevents false "corrupted" errors for files that were deleted
+                    // Check existence first so deleted files are not reported as corrupted.
                     let fileManager = FileManager.default
                     guard fileManager.fileExists(atPath: fileURL.path) else {
                         AppLogger.project.warning("⚠️ Project file not found (may have been deleted): \(fileURL.lastPathComponent)")
                         AppLogger.uiLog.warning("Project file missing: \(fileURL.lastPathComponent) - file was deleted or moved")
-                        // Skip this project - don't show error for missing files
                         continue
                     }
                     
                     do {
-                        // Load file data
                         let data = try Data(contentsOf: fileURL)
 
-                        // Check if file is empty or too small (likely corrupted)
                         guard data.count > 10 else {
                             AppLogger.project.warning("⚠️ Project file appears corrupted (too small: \(data.count) bytes): \(fileURL.lastPathComponent)")
                             AppLogger.uiLog.warning("Project file too small: \(fileURL.lastPathComponent) (\(data.count) bytes)")
-                            // Try to load backup if available
                             let backupURL = fileURL.appendingPathExtension("backup")
                             if FileManager.default.fileExists(atPath: backupURL.path) {
                                 AppLogger.project.info("Attempting to load from backup: \(backupURL.lastPathComponent)")
@@ -137,7 +124,6 @@ final class ProjectStore: ProjectStoreProtocol {
 
                                     AppLogger.project.info("✅ Successfully loaded from backup: \(fileURL.lastPathComponent)")
                                     AppLogger.uiLog.warning("⚠️ Project recovery: \(fileURL.lastPathComponent) was corrupted but restored from backup")
-                                    // Show toast once - file is now fixed so won't recur
                                     await MainActor.run {
                                         ServiceContainer.shared.toastManager.show("✅ Project recovered from backup: \(fileURL.lastPathComponent)", type: .success)
                                     }
@@ -158,34 +144,28 @@ final class ProjectStore: ProjectStoreProtocol {
                             try JSONDecoder().decode(VideoProject.self, from: data)
                         }
 
-                        // We no longer hydrate ALL projects at boot to keep logs clean
-                        // and startup fast. Hydration will happen when a project is opened.
+                        // Projects are hydrated when opened, not at launch, to keep startup fast.
                         projects.append(rawProject)
                     } catch {
-                        // Enhanced logging for corruption detection
                         let errorDetails = "\(error.localizedDescription) (type: \(type(of: error)))"
                         
-                        // Check if error is "file not found" (might have been deleted between listing and reading)
+                        // The file may have been deleted between listing and reading.
                         let nsError = error as NSError
                         if nsError.domain == NSCocoaErrorDomain && nsError.code == NSFileReadNoSuchFileError {
                             AppLogger.project.warning("⚠️ Project file not found (deleted after listing): \(fileURL.lastPathComponent)")
                             AppLogger.uiLog.warning("Project file missing: \(fileURL.lastPathComponent) - file was deleted or moved")
-                            // Skip this project - don't show error for missing files
                             continue
                         }
                         
-                        // Double-check file still exists (race condition)
                         if !fileManager.fileExists(atPath: fileURL.path) {
                             AppLogger.project.warning("⚠️ Project file not found (deleted during read): \(fileURL.lastPathComponent)")
                             AppLogger.uiLog.warning("Project file missing: \(fileURL.lastPathComponent) - file was deleted or moved")
                             continue
                         }
                         
-                        // File exists but failed to load - this is actual corruption
                         AppLogger.project.error("❌ Failed to load project at \(fileURL.path): \(errorDetails)")
                         AppLogger.uiLog.error("Project corruption detected: \(fileURL.lastPathComponent) - \(errorDetails)")
 
-                        // Try to load backup if main file fails
                         let backupURL = fileURL.appendingPathExtension("backup")
                         if fileManager.fileExists(atPath: backupURL.path) {
                             AppLogger.project.info("Attempting to load from backup: \(backupURL.lastPathComponent)")
@@ -196,7 +176,6 @@ final class ProjectStore: ProjectStoreProtocol {
                                 }
                                 projects.append(rawProject)
 
-                                // Replace corrupted file with working backup to prevent repeated warnings
                                 do {
                                     try backupData.write(to: fileURL, options: .atomic)
                                     AppLogger.project.info("✅ Replaced corrupted file with backup: \(fileURL.lastPathComponent)")
@@ -206,7 +185,6 @@ final class ProjectStore: ProjectStoreProtocol {
 
                                 AppLogger.project.info("✅ Successfully loaded corrupted project from backup: \(fileURL.lastPathComponent)")
                                 AppLogger.uiLog.warning("⚠️ Project recovery: \(fileURL.lastPathComponent) was corrupted but restored from backup")
-                                // Show success toast once - file is now fixed so won't recur
                                 await MainActor.run {
                                     ServiceContainer.shared.toastManager.show("✅ Project recovered from backup: \(fileURL.lastPathComponent)", type: .success)
                                 }
@@ -214,7 +192,6 @@ final class ProjectStore: ProjectStoreProtocol {
                                 let backupError = "\(error.localizedDescription) (type: \(type(of: error)))"
                                 AppLogger.project.error("Backup also failed to load: \(backupError)")
                                 AppLogger.uiLog.error("Project recovery failed: \(fileURL.lastPathComponent) - backup also corrupted: \(backupError)")
-                                // Show warning to user about corrupted project (skip in tests)
                                 if !self.isInTestMode {
                                     await MainActor.run {
                                         ServiceContainer.shared.toastManager.show("⚠️ Project file corrupted: \(fileURL.lastPathComponent)", type: .error)
@@ -224,7 +201,6 @@ final class ProjectStore: ProjectStoreProtocol {
                                 quarantineCorruptedFile(fileURL)
                             }
                         } else {
-                            // No backup available - show warning
                             AppLogger.project.warning("No backup available for corrupted project: \(fileURL.lastPathComponent)")
                             AppLogger.uiLog.error("Project corruption (no backup): \(fileURL.lastPathComponent) - \(errorDetails)")
                             if !self.isInTestMode {
@@ -261,7 +237,6 @@ final class ProjectStore: ProjectStoreProtocol {
     }
 
     func saveProject(_ project: VideoProject) async throws {
-        // Use retry for transient file I/O errors
         try await retryOperation(maxAttempts: 3, initialDelay: 0.5) {
             let directory = self.projectsDirectory
             // Encode on MainActor to satisfy Swift 6 Codable isolation
@@ -279,7 +254,6 @@ final class ProjectStore: ProjectStoreProtocol {
                 let activity = ProcessInfo.processInfo.beginActivity(options: [.userInitiated, .suddenTerminationDisabled], reason: "Save Project")
                 defer { ProcessInfo.processInfo.endActivity(activity) }
 
-                // Create backup if file exists
                 if fileManager.fileExists(atPath: fileURL.path) {
                     do {
                         try fileManager.copyItem(at: fileURL, to: backupURL)
@@ -290,12 +264,9 @@ final class ProjectStore: ProjectStoreProtocol {
                     }
                 }
 
-                // Atomic write with verification
                 try data.write(to: fileURL, options: Data.WritingOptions.atomic)
 
-                // Verify file was written correctly
                 guard fileManager.fileExists(atPath: fileURL.path) else {
-                    // Restore backup if write failed
                     if fileManager.fileExists(atPath: backupURL.path) {
                         try? fileManager.copyItem(at: backupURL, to: fileURL)
                         AppLogger.project.warning("Write verification failed, restored from backup")
@@ -303,21 +274,17 @@ final class ProjectStore: ProjectStoreProtocol {
                     throw AppError.projectSaveFailed(NSError(domain: "ProjectStore", code: -1, userInfo: [NSLocalizedDescriptionKey: "File write verification failed"]))
                 }
 
-                // Verify file is readable and valid JSON (not corrupted)
                 do {
                     let verifyData = try Data(contentsOf: fileURL)
-                    // Quick sanity check - file should not be empty
                     guard !verifyData.isEmpty else {
                         throw AppError.projectSaveFailed(NSError(domain: "ProjectStore", code: -2, userInfo: [NSLocalizedDescriptionKey: "Saved file is empty"]))
                     }
 
-                    // Verify file is valid JSON and can be decoded
                     // This catches corruption that makes file non-empty but invalid JSON
                     _ = try await MainActor.run {
                         try JSONDecoder().decode(VideoProject.self, from: verifyData)
                     }
                 } catch {
-                    // Restore backup if verification fails
                     if fileManager.fileExists(atPath: backupURL.path) {
                         try? fileManager.copyItem(at: backupURL, to: fileURL)
                         AppLogger.project.warning("File verification failed (invalid JSON), restored from backup")
@@ -326,8 +293,6 @@ final class ProjectStore: ProjectStoreProtocol {
                     throw AppError.projectSaveFailed(NSError(domain: "ProjectStore", code: -3, userInfo: [NSLocalizedDescriptionKey: "Saved file is not valid JSON: \(error.localizedDescription)"]))
                 }
 
-                // Clean up backup after successful save
-                // Keep last backup for recovery, but remove older ones
                 try? fileManager.removeItem(at: backupURL)
             }.value
         }
@@ -336,15 +301,12 @@ final class ProjectStore: ProjectStoreProtocol {
     }
 
     func deleteProject(_ project: VideoProject) async throws {
-        // Check if project is currently active before deleting
-        // This should be checked by caller, but add safety check here too
         let directory = projectsDirectory
         try await Task.detached(priority: .utility) {
             let fileManager = FileManager.default
             let filename = "\(project.id.uuidString).svproj"
             let fileURL = directory.appendingPathComponent(filename)
 
-            // Check if file exists before trying to delete
             guard fileManager.fileExists(atPath: fileURL.path) else {
                 AppLogger.project.warning("Project file does not exist: \(fileURL.path)")
                 // Not an error - file might have been deleted already
@@ -354,7 +316,6 @@ final class ProjectStore: ProjectStoreProtocol {
             do {
                 try fileManager.removeItem(at: fileURL)
 
-                // Also delete backup if it exists
                 let backupURL = fileURL.appendingPathExtension("backup")
                 if fileManager.fileExists(atPath: backupURL.path) {
                     try? fileManager.removeItem(at: backupURL)
@@ -372,7 +333,6 @@ final class ProjectStore: ProjectStoreProtocol {
     func recentProjects(limit: Int) async throws -> [VideoProject] {
         let allProjects = try await loadProjects()
 
-        // Sort by creation date (newest first)
         let sorted = allProjects.sorted { $0.createdAt > $1.createdAt }
 
         return Array(sorted.prefix(limit))
@@ -391,22 +351,18 @@ final class ProjectStore: ProjectStoreProtocol {
         let quarantineDir = projectsDirectory.appendingPathComponent(".quarantine", isDirectory: true)
 
         do {
-            // Create quarantine directory if it doesn't exist
             if !fileManager.fileExists(atPath: quarantineDir.path) {
                 try fileManager.createDirectory(at: quarantineDir, withIntermediateDirectories: true)
             }
 
-            // Generate unique quarantine filename with timestamp
             let timestamp = ISO8601DateFormatter().string(from: Date())
                 .replacingOccurrences(of: ":", with: "-")
             let quarantineName = "\(timestamp)_\(fileURL.lastPathComponent)"
             let quarantineURL = quarantineDir.appendingPathComponent(quarantineName)
 
-            // Move corrupted file to quarantine
             try fileManager.moveItem(at: fileURL, to: quarantineURL)
             AppLogger.project.info("✅ Quarantined corrupted project: \(fileURL.lastPathComponent) → .quarantine/\(quarantineName)")
 
-            // Also quarantine the backup if it exists
             let backupURL = fileURL.appendingPathExtension("backup")
             if fileManager.fileExists(atPath: backupURL.path) {
                 let quarantineBackupURL = quarantineDir.appendingPathComponent("\(quarantineName).backup")

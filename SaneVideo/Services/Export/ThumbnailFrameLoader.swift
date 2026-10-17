@@ -2,7 +2,6 @@
 @preconcurrency import AVFoundation
 import Vision
 
-/// Handles loading and scoring thumbnail frame candidates from video
 enum ThumbnailFrameLoader {
     
     /// Load candidate frames from video with face detection scoring
@@ -40,13 +39,11 @@ enum ThumbnailFrameLoader {
             } catch { }
         }
         
-        // Sort by score descending (best first)
         loadedCandidates.sort { $0.score > $1.score }
         
         return (loadedCandidates, durationSeconds)
     }
     
-    /// Get a frame at a specific time
     static func getFrame(from videoURL: URL, at time: Double) async throws -> UncheckedBox<NSImage> {
         let asset = AVURLAsset(url: videoURL)
         let generator = AVAssetImageGenerator(asset: asset)

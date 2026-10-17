@@ -1,7 +1,3 @@
-// Uses Apple's Vision framework for person segmentation
-// Enables background blur/replacement effects
-// Auto-improves with each macOS update
-
 import AppKit
 import CoreImage
 import Foundation
@@ -9,12 +5,10 @@ import Vision
 import CoreVideo
 import AVFoundation
 
-/// Person segmentation using Vision framework
 /// Separates person from background for blur/replacement effects
 /// Note: Does not conform to PersonSegmentationServiceProtocol due to Swift 6 actor isolation rules.
 actor PersonSegmentationService {
 
-    /// Metal-accelerated CIContext for rendering
     private let ciContext: CIContext
 
     init(ciContext: CIContext) {
@@ -26,9 +20,7 @@ actor PersonSegmentationService {
     /// Reusable request for video frame processing (improves performance)
     private var cachedRequest: VNGeneratePersonSegmentationRequest?
 
-    /// Generate a segmentation mask for persons in the image
     /// - Parameters:
-    ///   - image: Input CIImage
     ///   - quality: Quality level (.fast for video, .balanced default, .accurate for stills)
     ///   - reuseRequest: If true, reuses cached request (better for video frames)
     /// Returns a grayscale mask where white = person, black = background
@@ -52,8 +44,6 @@ actor PersonSegmentationService {
             request.outputPixelFormat = kCVPixelFormatType_OneComponent8
         }
 
-        // Only update quality if it differs, to avoid validation cost? 
-        // Vision requests usually handle property changes fine.
         if request.qualityLevel != quality {
             request.qualityLevel = quality
         }
@@ -67,7 +57,6 @@ actor PersonSegmentationService {
 
         let maskImage = CIImage(cvPixelBuffer: observation.pixelBuffer)
 
-        // Scale mask to match input image size
         let scaleX = image.extent.width / maskImage.extent.width
         let scaleY = image.extent.height / maskImage.extent.height
         let scaledMask = maskImage.transformed(by: CGAffineTransform(scaleX: scaleX, y: scaleY))
@@ -75,7 +64,7 @@ actor PersonSegmentationService {
         return scaledMask
     }
 
-    /// Clear cached request (call when done processing video)
+    /// Call when done processing video.
     func clearCache() {
         cachedRequest = nil
     }
@@ -84,7 +73,6 @@ actor PersonSegmentationService {
     func applyBackgroundBlur(to image: CIImage, blurRadius: Float = 20, reuseRequest: Bool = true) async throws -> CIImage {
         let mask = try await generateMask(for: image, reuseRequest: reuseRequest)
 
-        // Create blurred version
         guard let blurFilter = CIFilter(name: "CIGaussianBlur") else {
             throw SegmentationError.filterFailed
         }
@@ -95,7 +83,6 @@ actor PersonSegmentationService {
             throw SegmentationError.filterFailed
         }
 
-        // Blend: use mask to composite person over blurred background
         guard let blendFilter = CIFilter(name: "CIBlendWithMask") else {
             throw SegmentationError.filterFailed
         }
@@ -106,14 +93,11 @@ actor PersonSegmentationService {
         return blendFilter.outputImage ?? image
     }
 
-    /// Replace background with a solid color
     func replaceBackground(in image: CIImage, with color: NSColor, reuseRequest: Bool = true) async throws -> CIImage {
         let mask = try await generateMask(for: image, reuseRequest: reuseRequest)
 
-        // Create solid color background
         let colorImage = CIImage(color: CIColor(color: color)!).cropped(to: image.extent)
 
-        // Blend person over color background
         guard let blendFilter = CIFilter(name: "CIBlendWithMask") else {
             throw SegmentationError.filterFailed
         }
@@ -124,18 +108,15 @@ actor PersonSegmentationService {
         return blendFilter.outputImage ?? image
     }
 
-    /// Replace background with an image
     func replaceBackground(in image: CIImage, with backgroundImage: CIImage, reuseRequest: Bool = true) async throws -> CIImage {
         let mask = try await generateMask(for: image, reuseRequest: reuseRequest)
 
-        // Scale background to match input
         let scaleX = image.extent.width / backgroundImage.extent.width
         let scaleY = image.extent.height / backgroundImage.extent.height
         let scale = max(scaleX, scaleY)
         let scaledBackground = backgroundImage.transformed(by: CGAffineTransform(scaleX: scale, y: scale))
             .cropped(to: image.extent)
 
-        // Blend
         guard let blendFilter = CIFilter(name: "CIBlendWithMask") else {
             throw SegmentationError.filterFailed
         }

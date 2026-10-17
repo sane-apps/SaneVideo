@@ -2,7 +2,7 @@ import AVFoundation
 import SwiftUI
 
 struct CaptionOverlayView: View {
-    let caption: Caption? // Full Caption object
+    let caption: Caption?
     let currentTime: CMTime
     var style: CaptionStyle = .classic
     @Binding var offset: CGSize
@@ -13,23 +13,20 @@ struct CaptionOverlayView: View {
     var body: some View {
         if let caption = caption {
             ZStack {
-                // Background Styling (container-level)
                 if let bgColor = style.backgroundColor, style.highlightStyle != .background {
                     RoundedRectangle(cornerRadius: Theme.Dimensions.smallCornerRadius)
                         .fill(Color(hex: bgColor))
                         .opacity(style.backgroundColor != nil ? 1 : 0)
                 }
 
-                // Text Renderer (Karaoke or Classic)
                 KaraokeTextRenderer(
                     caption: caption,
                     currentTime: currentTime,
                     style: style
                 )
-                .padding(8) // Padding inside container
+                .padding(8)
             }
-            .padding(style.backgroundColor != nil ? 8 : 0) // Outer padding if background exists
-            // Positioning & Interaction (Unchanged)
+            .padding(style.backgroundColor != nil ? 8 : 0)
             .padding(.bottom, 40)
             .scaleEffect(scale)
             .offset(x: offset.width + dragOffset.width, y: offset.height + dragOffset.height)
@@ -49,12 +46,10 @@ struct CaptionOverlayView: View {
             .onHover { inside in
                 if inside { NSCursor.openHand.push() } else { NSCursor.pop() }
             }
-            // Use stable ID to prevent position jumping
-            // Only change ID when caption actually changes, not on every text update
+            // Stable ID so the caption doesn't jump; it changes only when the caption changes, not on text edits.
             .id("\(caption.id)-\(caption.startTime.seconds)")
             .transition(.scale.combined(with: .opacity))
-            // Remove animation on text change to prevent jumping
-            // Only animate on caption change (handled by transition)
+            // Animate only when the caption changes, not on text edits, to prevent jumping.
             .animation(.spring(response: 0.3, dampingFraction: 0.7), value: caption.id)
         }
     }
@@ -68,17 +63,7 @@ struct KaraokeTextRenderer: View {
     let style: CaptionStyle
 
     var body: some View {
-        // Use FlowLayout for word wrapping
-        // Simple horizontal stack for now, assuming short captions or single line is preferred for style.
-        // For multi-line, we'd need a proper FlowLayout. Let's stick to wrapping text if possible,
-        // but customizing individual Text views in SwiftUI requires a FlowLayout or putting them in a paragraph.
-        //
-        // Workaround: Use a ZStack with layout logic OR `Text` concatenation if we don't need distinct per-word geometry (but we do for scale/pop).
-        //
-        // Correct approach: `Layout` protocol (Grid/Flow)
-
         FlowLayout(alignment: .center, spacing: 6) {
-            // If we have word timestamps, render individually
             if let words = caption.words, !words.isEmpty {
                 ForEach(words) { word in
                     let isWordActive = isWordActive(word)
@@ -88,21 +73,15 @@ struct KaraokeTextRenderer: View {
                         .fontWeight(style.isBold ? .bold : .regular)
                         .italic(style.isItalic)
                         .foregroundColor(textColor(for: isWordActive))
-                        // Stroke / Shadow effects handled here per word?
-                        // Applying complex shadows per word can be expensive & messy.
-                        // Better to apply standard style, then override color/scale.
                         .shadow(color: Color(hex: style.shadowColor ?? "#000000").opacity(style.shadowRadius > 0 ? 0.8 : 0), radius: style.shadowRadius, x: 0, y: 2)
-                        // Active Animation (Pop)
                         .scaleEffect(isWordActive && style.highlightStyle == .pop ? 1.2 : 1.0)
                         .animation(.spring(response: 0.2, dampingFraction: 0.5), value: isWordActive)
-                        // Background Highlight
                         .background(
                             style.highlightStyle == .background && isWordActive ?
                             Color(hex: style.activeTextColor ?? style.textColor).opacity(0.3).cornerRadius(4) : nil
                         )
                 }
             } else {
-                // Fallback: Just render the full text if no word data
                 // Use displayText to strip Whisper tokens like <|startoftranscript|>
                 Text(caption.displayText)
                     .font(.custom(style.fontName, size: style.fontSize))
@@ -117,7 +96,6 @@ struct KaraokeTextRenderer: View {
     private func isWordActive(_ word: CaptionWord) -> Bool {
         let wordStart = CMTime(seconds: word.start, preferredTimescale: 600)
         let wordEnd = CMTime(seconds: word.end, preferredTimescale: 600)
-        // Add a tiny buffer for smoothness
         return currentTime >= wordStart && currentTime <= wordEnd
     }
 
@@ -130,7 +108,6 @@ struct KaraokeTextRenderer: View {
 }
 
 // MARK: - Simple Flow Layout
-// Using frame-based layout for word wrapping
 
 struct FlowLayout: Layout {
     var alignment: Alignment = .center
@@ -146,7 +123,6 @@ struct FlowLayout: Layout {
             let size = subview.sizeThatFits(ProposedViewSize(width: nil, height: nil))
 
             if x + size.width > width && x > 0 {
-                // New Line
                 x = 0
                 y += rowHeight + spacing
                 rowHeight = 0
@@ -164,9 +140,7 @@ struct FlowLayout: Layout {
         var y: CGFloat = bounds.minY
         var rowHeight: CGFloat = 0
 
-        // This simple impl doesn't strictly honor 'alignment' within lines (just left-aligned wrapping).
-        // For true center alignment, we'd need 2 passes.
-        // Let's implement row-buffering for center/trailing alignment.
+        // Rows are buffered so center and trailing alignment can be applied.
 
         var currentRow: [LayoutSubviews.Element] = []
         var currentRowWidth: CGFloat = 0
@@ -175,7 +149,6 @@ struct FlowLayout: Layout {
             let size = subview.sizeThatFits(ProposedViewSize(width: nil, height: nil))
 
             if currentRowWidth + size.width + (currentRow.isEmpty ? 0 : spacing) > width {
-                // Place Row
                 placeRow(currentRow, width: currentRowWidth, y: y, bounds: bounds)
                 y += rowHeight + spacing
                 currentRow = []
@@ -188,14 +161,12 @@ struct FlowLayout: Layout {
             rowHeight = max(rowHeight, size.height)
         }
 
-        // Final Row
         if !currentRow.isEmpty {
             placeRow(currentRow, width: currentRowWidth, y: y, bounds: bounds)
         }
     }
 
     private func placeRow(_ subviews: [LayoutSubviews.Element], width rowWidth: CGFloat, y: CGFloat, bounds: CGRect) {
-        // Calculate X start based on alignment
         var x: CGFloat = bounds.minX
 
         if alignment.horizontal == .center {
@@ -206,8 +177,7 @@ struct FlowLayout: Layout {
 
         for subview in subviews {
             let size = subview.sizeThatFits(ProposedViewSize(width: nil, height: nil))
-            // Center vertically in row
-            // We need max row height for this... simplified to assume consistent font size
+            // Assumes one font size, so subviews are not centered vertically in the row.
             subview.place(at: CGPoint(x: x, y: y), proposal: ProposedViewSize(size))
             x += size.width + spacing
         }

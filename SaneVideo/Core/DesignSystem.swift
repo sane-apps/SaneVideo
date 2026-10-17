@@ -13,15 +13,11 @@ private enum SaneVideoPalette {
 
 enum Theme {
 
-    // UNIFIED COLOR PALETTE - Professional Dark Mode optimized
-    // Brand palette: SaneUI Navy + SaneBar-leaning blue
-    // Action/Accent: blue-led, with only a small cool edge highlight
+    // Brand palette: SaneUI navy with a blue accent.
     enum Colors {
-        // Semantic Application Colors (Adaptive)
         static let background = Color(nsColor: .windowBackgroundColor)
         static let secondaryBackground = Color(nsColor: .controlBackgroundColor)
 
-        // BRAND COLORS (Local SaneVideo override)
         static let accent = SaneVideoPalette.accent
         static let accentSoft = SaneVideoPalette.accentSoft
         static let accentDeep = SaneVideoPalette.accentDeep
@@ -29,12 +25,10 @@ enum Theme {
 
         static let accentGradient = accent
 
-        // SECONDARY (System Integrated)
         static let action = accent
 
         static let secondaryGradient = accentSoft
 
-        // SEMANTIC COLORS (System Integrated)
         static let warning = Color.orange
         static let destructive = Color.red
 
@@ -43,7 +37,6 @@ enum Theme {
         static let textSecondary = Color.white
         static let textTertiary = Color.white.opacity(0.92)
 
-        // UI ELEMENT COLORS
         static let cardBackground = Color.white.opacity(0.08)
         static let border = Color.white.opacity(0.18)
         static let divider = Color.white.opacity(0.16)
@@ -66,7 +59,6 @@ enum Theme {
     }
 
     enum Dimensions {
-        // Corner Radius
         static let cornerRadius: CGFloat = 8
         static let smallCornerRadius: CGFloat = 4
         static let largeCornerRadius: CGFloat = 12
@@ -79,7 +71,6 @@ enum Theme {
         static let spacingXL: CGFloat = 20
         static let spacingXXL: CGFloat = 24
 
-        // Padding System
         static let paddingXS: CGFloat = 4
         static let paddingSM: CGFloat = 8
         static let paddingMD: CGFloat = 12
@@ -108,7 +99,6 @@ enum Theme {
         static let metaMonospaced = Font.system(size: fontSizeSM, weight: .medium, design: .monospaced)
         static let badge = Font.system(size: fontSizeXS, weight: .semibold)
 
-        // Icon Sizes
         static let iconSizeXS: CGFloat = 12
         static let iconSizeSM: CGFloat = 14
         static let iconSizeMD: CGFloat = 16
@@ -117,7 +107,6 @@ enum Theme {
     }
 
     enum Opacity {
-        // Consistent opacity values
         static let subtle: Double = 0.05
         static let light: Double = 0.1
         static let medium: Double = 0.2
@@ -128,7 +117,6 @@ enum Theme {
     }
 }
 
-// Helper for Hex Colors
 extension NSColor {
     convenience init?(hex: String) {
         let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
@@ -585,8 +573,6 @@ struct SaneVideoEditorPanelBackground: View {
         )
     }
 }
-
-// Reusable Button Styles (Active)
 
 // MARK: - Icon Button Style (Circular)
 

@@ -1,8 +1,5 @@
-// Shared error types for transcription services
-
 import Foundation
 
-/// Errors that can occur during transcription
 enum TranscriptionError: LocalizedError {
     case serviceUnavailable(String)
     case initializationFailed(String)

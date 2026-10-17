@@ -1,5 +1,3 @@
-// 2025-12-31: Simplified - Volume moved to toolbar. Kept: Smart Audio Tools
-
 import AppKit
 import CoreMedia
 import SwiftUI
@@ -17,10 +15,8 @@ struct AudioSection: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            // Smart Audio Tools
             SubsectionHeader(title: String(localized: "audio.smart_tools.header", defaultValue: "Smart Tools"))
 
-            // Find Highlights
             SmartToolButton(
                 title: String(localized: "audio.action.find_highlights.title", defaultValue: "Find Highlights"),
                 subtitle: String(localized: "audio.action.find_highlights.subtitle", defaultValue: "Detect applause & laughter"),
@@ -34,7 +30,6 @@ struct AudioSection: View {
             .disabled(clip.isMissing)
             .help(clip.isMissing ? "Clip file is missing" : "Find highlights in audio")
 
-            // Analyze Audio
             SmartToolButton(
                 title: String(localized: "audio.action.analyze_audio.title", defaultValue: "Analyze Audio"),
                 subtitle: String(localized: "audio.action.analyze_audio.subtitle", defaultValue: "Detect speech, music, silence"),
@@ -142,4 +137,3 @@ struct AudioSection: View {
         return String(format: "%d:%02d", seconds / 60, seconds % 60)
     }
 }
-

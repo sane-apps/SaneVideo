@@ -96,8 +96,7 @@ class CameraState {
         self.currentHasVideoSignal = self.cameraService.hasVideoSignal
         self.currentLastError = self.cameraService.lastError
         setupObserver()
-        // Camera discovery is deferred until refreshCameras() is called
-        // This prevents CMIO daemon activation on app launch
+        // Camera discovery waits for refreshCameras() so launch does not wake the CMIO daemon.
     }
 
     /// Refresh the list of available cameras (call when user interacts with camera picker)
@@ -108,7 +107,6 @@ class CameraState {
             return
         }
 
-        // Only query DiscoverySession when explicitly requested
         let discoverySession = AVCaptureDevice.DiscoverySession(
             deviceTypes: [.builtInWideAngleCamera, .external],
             mediaType: .video,
@@ -119,7 +117,6 @@ class CameraState {
         AppLogger.camera.debug("Refreshed camera list: \(self.availableCameras.count) devices found")
     }
 
-    /// Ensure cameras are discovered (lazy initialization)
     func ensureCamerasDiscovered() {
         if !hasDiscoveredCameras {
             refreshCameras()
@@ -127,7 +124,7 @@ class CameraState {
     }
 
     private func setupObserver() {
-        // Crash fix: Ensure all subscriptions receive on main queue for @MainActor isolation
+        // Receive on the main queue to respect @MainActor isolation; this fixed a crash.
         cameraService.isActivePublisher
             .receive(on: DispatchQueue.main)
             .sink { [weak self] active in
@@ -149,7 +146,7 @@ class CameraState {
             }
             .store(in: &cancellables)
 
-        // Crash fix: Ensure session updates are received on main queue for @MainActor isolation
+        // Receive on the main queue to respect @MainActor isolation; this fixed a crash.
         cameraService.sessionPublisher
             .receive(on: DispatchQueue.main)
             .sink { [weak self] session in
@@ -178,7 +175,7 @@ class CameraState {
             return
         }
 
-        // Ensure cameras are discovered when starting (in case user never opened picker)
+        // Discover cameras here in case the user never opened the picker.
         ensureCamerasDiscovered()
         
         if !cameraService.isActive {
@@ -255,7 +252,6 @@ class CameraState {
     // MARK: - Camera Switching
 
     func switchCamera(to device: AVCaptureDevice) {
-        // Access the concrete CameraManager to switch cameras
         if let cameraManager = cameraService as? CameraManager {
             cameraManager.switchCamera(to: device)
             currentCameraID = device.uniqueID

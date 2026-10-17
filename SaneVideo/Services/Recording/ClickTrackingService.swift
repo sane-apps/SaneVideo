@@ -1,11 +1,9 @@
-// Tracks mouse clicks and continuous cursor movement during recording.
 // Click data powers auto-zoom; cursor data enables spring-smoothed viewport following.
 
 import AppKit
 import CoreGraphics
 import Foundation
 
-/// Service to track and save mouse click and cursor movement events
 actor ClickTrackingService {
 
     private var isTracking = false
@@ -20,7 +18,6 @@ actor ClickTrackingService {
     // Screen size for normalization
     private var screenSize: CGSize = .zero
 
-    // Button state tracking for cursor samples
     private var isButtonDown = false
     private var activeButton: Int = 0
 
@@ -40,7 +37,6 @@ actor ClickTrackingService {
         isButtonDown = false
         activeButton = 0
 
-        // Get main screen size
         if let screen = NSScreen.main {
             screenSize = screen.frame.size
         } else {
@@ -48,7 +44,6 @@ actor ClickTrackingService {
         }
 
         Task { @MainActor in
-            // Click monitor (existing behavior)
             let cMonitor = NSEvent.addGlobalMonitorForEvents(
                 matching: [.leftMouseDown, .rightMouseDown, .leftMouseUp, .rightMouseUp]
             ) { [weak self] event in
@@ -60,7 +55,6 @@ actor ClickTrackingService {
             }
             self.clickMonitor = cMonitor
 
-            // Cursor movement monitor (new: tracks mouseMoved + drag)
             let mMonitor = NSEvent.addGlobalMonitorForEvents(
                 matching: [.mouseMoved, .leftMouseDragged, .rightMouseDragged]
             ) { [weak self] _ in
@@ -104,7 +98,7 @@ actor ClickTrackingService {
 
         isTracking = false
 
-        // Remove event monitors (must be done on MainActor)
+        // Event monitors must be removed on the main actor.
         nonisolated(unsafe) let cMon = self.clickMonitor
         nonisolated(unsafe) let mMon = self.moveMonitor
         nonisolated(unsafe) let kMon = self.keyMonitor
@@ -119,12 +113,10 @@ actor ClickTrackingService {
 
         let encoder = JSONEncoder()
 
-        // Save clicks to JSON file
         let clicksURL = url.deletingPathExtension().appendingPathExtension("clicks.json")
         let clicksData = try encoder.encode(clicks)
         try clicksData.write(to: clicksURL)
 
-        // Save cursor path to JSON file
         var cursorURL: URL?
         if !cursorSamples.isEmpty {
             let cURL = url.deletingPathExtension().appendingPathExtension("cursor.json")
@@ -159,7 +151,6 @@ actor ClickTrackingService {
         let normalizedY = 1.0 - (location.y / screenSize.height)
         let timestamp = Date().timeIntervalSince(startTime)
 
-        // Update button state for cursor samples
         isButtonDown = isDown
         activeButton = button
 
@@ -192,7 +183,6 @@ actor ClickTrackingService {
 
         let timestamp = Date().timeIntervalSince(startTime)
 
-        // Throttle to ~60fps
         guard timestamp - lastCursorSampleTime >= Self.cursorSampleInterval else { return }
 
         let location = await MainActor.run {
@@ -272,12 +262,10 @@ actor ClickTrackingService {
         return labels
     }
 
-    /// Get all recorded clicks
     func getClicks() -> [ClickSample] {
         return clicks
     }
 
-    /// Get all recorded cursor samples
     func getCursorSamples() -> [CursorSample] {
         return cursorSamples
     }

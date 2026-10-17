@@ -1,5 +1,3 @@
-// Consolidated from Timeline, TrackManagement, and BatchOperations
-
 import AVFoundation
 import Foundation
 import SwiftUI
@@ -9,7 +7,7 @@ import SwiftUI
 extension ProjectState {
 
     func recalculateStartTimes(in timeline: inout Timeline) {
-        // Use UserDefaults directly instead of @AppStorage (property wrapper not valid inside functions)
+        // Read UserDefaults directly; @AppStorage does not work inside a function.
         let magneticTimeline = UserDefaults.standard.object(forKey: "magneticTimeline") as? Bool ?? true
 
         for (trackIndex, track) in timeline.tracks.enumerated() {
@@ -22,7 +20,7 @@ extension ProjectState {
                 for clipIndex in 0..<mutableTrack.clips.count {
                     mutableTrack.clips[clipIndex].startTime = cumulativeTime
 
-                    // DEBUG: Catch negative timestamps at creation point
+                    // Catch negative timestamps where they are created.
                     #if DEBUG
                     if cumulativeTime.seconds < 0 {
                         AppLogger.project.error("🚨 DEBUG: Negative cumulativeTime \(cumulativeTime.seconds)s at clip \(clipIndex)")
@@ -34,8 +32,7 @@ extension ProjectState {
                         cumulativeTime, mutableTrack.clips[clipIndex].effectiveDuration)
                 }
             } else {
-                // Guard against empty or single-clip tracks
-                // Range 1..<0 causes "Fatal error: Range requires lowerBound <= upperBound"
+                // The range 1..<0 traps, so skip tracks with fewer than two clips.
                 if mutableTrack.clips.count > 1 {
                     for clipIndex in 1..<mutableTrack.clips.count {
                         let prevClip = mutableTrack.clips[clipIndex - 1]
@@ -207,8 +204,7 @@ extension ProjectState {
         let batchTransactionId = beginTransaction()
         defer { endTransaction(batchTransactionId) }
 
-        // BATCH FIX: Use a single undo group for the entire batch operation
-        // This allows user to undo/redo all changes from Magic Fix All with one action
+        // One undo group so the whole batch undoes in one step.
         beginUndoGroup("Magic Fix All")
         defer { endUndoGroup() }
 
@@ -225,8 +221,7 @@ extension ProjectState {
                     self.processingProgress = Double(index) / Double(allClips.count)
                 }
 
-                // BATCH FIX: Pass isBatchOperation=true to skip nested undo groups
-                // and avoid overwriting currentProcessingTask
+                // isBatchOperation skips nested undo groups and leaves currentProcessingTask alone.
                 await self.performMagicFix(for: clip, options: options, isBatchOperation: true)
             },
             progressHandler: { @Sendable completed, total in

@@ -1,5 +1,3 @@
-// Consolidated from Transactions, Cancellation, Relinking, and Editing
-
 import AVFoundation
 import CoreMedia
 import Foundation

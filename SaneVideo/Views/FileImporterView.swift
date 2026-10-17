@@ -21,7 +21,6 @@ struct FileImporterView: View {
                     .accessibilityIdentifier("import.destination")
             }
 
-            // Drop Zone
             Button {
                 isImporting = true
             } label: {
@@ -60,14 +59,13 @@ struct FileImporterView: View {
                     // Dismiss immediately for responsive UI (optimistic loading)
                     dismiss()
 
-                    // Process ALL selected files, not just the first
+                    // Import every selected file, not just the first.
                     for url in urls {
-                        // Security scope for fileImporter URLs
                         let accessGranted = url.startAccessingSecurityScopedResource()
 
                         // Load in background to avoid blocking main thread
                         Task.detached(priority: .userInitiated) {
-                            // Note: We keep security scope open for AVAsset access
+                            // The security scope stays open because AVAsset reads the file later.
                             if !accessGranted {
                                 await MainActor.run {
                                     AppLogger.project.warning("Security scope not granted for \(url.lastPathComponent)")
@@ -95,14 +93,11 @@ struct FileImporterView: View {
     private func handleDrop(providers: [NSItemProvider]) -> Bool {
         guard let provider = providers.first else { return false }
 
-        // Try to load as a URL
         if provider.hasItemConformingToTypeIdentifier(UTType.fileURL.identifier) {
-            // Dismiss immediately for responsive UI
             dismiss()
 
             _ = provider.loadObject(ofClass: URL.self) { url, _ in
                 if let url = url {
-                    // Load in background
                     Task.detached(priority: .userInitiated) {
                         await ServiceContainer.shared.appState.addVideoToTimeline(url: url)
                     }
@@ -111,5 +106,5 @@ struct FileImporterView: View {
             return true
         }
         return false
-    } // End handleDrop
+    }
 }

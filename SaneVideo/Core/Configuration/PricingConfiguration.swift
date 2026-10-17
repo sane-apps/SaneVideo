@@ -1,9 +1,5 @@
-// Pricing and feature configuration system
-// Supports launch pricing, regular pricing, and feature flags
-
 import Foundation
 
-/// Pricing configuration for the app
 enum PricingTier: String, Codable, Sendable {
     case launch      // Legacy public-testing offer path
     case regular     // Standard Pro price
@@ -26,13 +22,11 @@ enum PricingTier: String, Codable, Sendable {
     }
 }
 
-/// Feature flags for enabling/disabling features
 struct FeatureFlags: Codable, Sendable {
-    var allFeaturesIncluded: Bool = true  // All-inclusive model
+    var allFeaturesIncluded: Bool = true
     var cloudAIEnabled: Bool = true       // Optional cloud AI (user's API keys)
-    var onDeviceAIDefault: Bool = true    // Default to Apple Intelligence
+    var onDeviceAIDefault: Bool = true
 
-    // Future feature gates (if needed)
     var textBasedEditingEnabled: Bool = true
     var magicFixEnabled: Bool = true
     var export4KEnabled: Bool = true
@@ -41,35 +35,29 @@ struct FeatureFlags: Codable, Sendable {
     static let `default` = FeatureFlags()
 }
 
-/// Pricing configuration manager
 @MainActor
 @Observable
 class PricingConfiguration {
 
     // MARK: - Properties
 
-    /// Current pricing tier
     var currentTier: PricingTier {
         return .regular
     }
 
-    /// Feature flags
     var featureFlags = FeatureFlags.default
 
     /// Launch-period discount path is retired. SaneVideo is free.
     private let launchPeriodEndDate: Date
 
-    /// Whether we're in the launch pricing period
     var isLaunchPeriod: Bool {
         Date() < launchPeriodEndDate
     }
 
-    /// Current price string for display
     var currentPrice: String {
         currentTier.displayPrice
     }
 
-    /// Regular price (for comparison)
     var regularPrice: String {
         PricingTier.regular.displayPrice
     }
@@ -83,7 +71,6 @@ class PricingConfiguration {
 
     // MARK: - Feature Checks
 
-    /// Check if a feature is enabled
     func isFeatureEnabled(_ feature: Feature) -> Bool {
         switch feature {
         case .allFeatures:
@@ -103,18 +90,15 @@ class PricingConfiguration {
         }
     }
 
-    /// Get pricing message for UI
     func pricingMessage() -> String {
         "Free and open source. Donate only if you want to support it."
     }
 
-    /// Get value proposition message
     func valueProposition() -> String {
         "Every recording and edit tool stays unlocked."
     }
 }
 
-/// Feature enumeration for feature flag checks
 enum Feature: String, Sendable {
     case allFeatures = "all_features"
     case cloudAI = "cloud_ai"

@@ -1,9 +1,8 @@
 import Combine
 import SwiftUI
 
-/// Centralized error presenter for SwiftUI views
-/// CRITICAL FIX: Implements error queueing to prevent overwriting errors
-/// SWIFT 6 FIX: @MainActor required for UI-driving state (error queue accessed from SwiftUI)
+/// Queues errors so a new one does not replace one still on screen.
+/// MainActor because SwiftUI reads the queue.
 @MainActor
 @Observable
 class ErrorPresenter {
@@ -11,8 +10,7 @@ class ErrorPresenter {
     
     // MARK: - Public API
     
-    /// The currently displayed error
-    /// CRITICAL FIX: Computed from queue, but settable for SwiftUI binding
+    /// Computed from the queue but settable so SwiftUI can bind to it.
     var activeError: AppError? {
         get {
             errorQueue.first
@@ -22,22 +20,17 @@ class ErrorPresenter {
             if newValue == nil && !errorQueue.isEmpty {
                 errorQueue.removeFirst()
             } else if let error = newValue {
-                // If setting a new error directly, queue it
                 queueError(error)
             }
         }
     }
     
-    /// CRITICAL FIX: Error queue to prevent overwriting
     /// Errors are shown one at a time, with critical errors prioritized
     private var errorQueue: [AppError] = []
     
-    /// Maximum queue size to prevent memory issues
     private let maxQueueSize = 10
 
-    /// Present an error to the user
     /// - Parameter error: The error to present. If it's not an AppError, it will be wrapped in .unknown
-    /// CRITICAL FIX: Errors are queued instead of overwriting
     func present(_ error: Error) {
         let appError: AppError
         if let error = error as? AppError {
@@ -53,10 +46,8 @@ class ErrorPresenter {
             appError = .unknown(error)
         }
 
-        // Log the error automatically when presented
         AppLogger.logError(appError)
         
-        // Queue error instead of overwriting
         queueError(appError)
     }
 
@@ -64,16 +55,13 @@ class ErrorPresenter {
     func dismiss() {
         guard !errorQueue.isEmpty else { return }
         
-        // Remove the current error
         errorQueue.removeFirst()
         
-        // If there are more errors, the activeError will automatically update
-        // (it's computed from errorQueue.first)
+        // activeError reads errorQueue.first, so the next error shows on its own.
     }
     
     // MARK: - Private Helpers
     
-    /// CRITICAL FIX: Queue error with priority handling
     /// Critical errors are inserted at the front, others are appended
     private func queueError(_ error: AppError) {
         // Prevent duplicate errors in quick succession
@@ -83,24 +71,18 @@ class ErrorPresenter {
             return
         }
         
-        // Prioritize critical errors
         if isCriticalError(error) {
-            // Insert critical errors at the front
             errorQueue.insert(error, at: 0)
         } else {
-            // Append non-critical errors
             errorQueue.append(error)
         }
         
-        // Limit queue size to prevent memory issues
         // When queue is full, remove oldest non-critical error to make room
         if errorQueue.count > maxQueueSize {
-            // Find first non-critical error to remove (prefer removing older ones)
             if let indexToRemove = errorQueue.firstIndex(where: { !isCriticalError($0) }) {
                 let removed = errorQueue.remove(at: indexToRemove)
                 AppLogger.general.warning("⚠️ Error queue full, dropped: \(removed.localizedDescription)")
             } else {
-                // All errors are critical - remove the oldest one
                 let removed = errorQueue.removeFirst()
                 AppLogger.general.warning("⚠️ Error queue full (all critical), dropped oldest: \(removed.localizedDescription)")
             }
@@ -111,7 +93,6 @@ class ErrorPresenter {
     
     /// Check if error is critical (should be shown immediately)
     private func isCriticalError(_ error: AppError) -> Bool {
-        // Critical errors that should be shown immediately
         switch error {
         case .projectSaveFailed,
              .projectLoadFailed,
@@ -129,10 +110,8 @@ class ErrorPresenter {
         }
     }
     
-    /// Check if two errors are duplicates (same type and message)
+    /// Matches on error type only, not message.
     private func isDuplicate(_ error1: AppError, _ error2: AppError) -> Bool {
-        // Simple duplicate check - same error type
-        // Could be enhanced to check error messages too
         switch (error1, error2) {
         case (.projectSaveFailed, .projectSaveFailed),
              (.projectLoadFailed, .projectLoadFailed),
@@ -147,7 +126,6 @@ class ErrorPresenter {
         }
     }
     
-    /// Clear all queued errors
     func clearAll() {
         errorQueue.removeAll()
     }

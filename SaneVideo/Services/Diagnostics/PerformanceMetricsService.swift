@@ -1,8 +1,5 @@
-// Tracks performance metrics for better debugging and user insights
-
 import Foundation
 
-/// Tracks performance metrics for operations
 @MainActor
 @Observable
 class PerformanceMetricsService {
@@ -18,7 +15,6 @@ class PerformanceMetricsService {
     private(set) var recentOperations: [OperationMetrics] = []
     private let maxStoredOperations = 100
 
-    // Statistics
     private(set) var averageExportTime: TimeInterval = 0
     private(set) var averageMagicFixTime: TimeInterval = 0
     private(set) var fastestExportTime: TimeInterval = .greatestFiniteMagnitude
@@ -26,7 +22,6 @@ class PerformanceMetricsService {
 
     init() {}
 
-    /// Record an operation's performance
     func recordOperation(name: String, duration: TimeInterval, metadata: [String: String] = [:]) {
         let metrics = OperationMetrics(
             name: name,
@@ -40,10 +35,8 @@ class PerformanceMetricsService {
             recentOperations.removeFirst()
         }
 
-        // Update statistics
         updateStatistics()
 
-        // Log for debugging
         AppLogger.general.info("📊 Performance: \(name) took \(String(format: "%.2f", duration))s")
     }
 
@@ -62,7 +55,6 @@ class PerformanceMetricsService {
         }
     }
 
-    /// Get performance insights for user
     func getPerformanceInsights() -> [String] {
         var insights: [String] = []
 

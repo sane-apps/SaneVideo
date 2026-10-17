@@ -7,7 +7,7 @@ public struct Caption: Identifiable, Codable, Equatable, Sendable {
     public var text: String
     public var startTime: CMTime
     public var endTime: CMTime
-    public var words: [CaptionWord]? // Optional word-level details
+    public var words: [CaptionWord]?
 
     public nonisolated init(id: UUID = UUID(), text: String, startTime: CMTime, endTime: CMTime, words: [CaptionWord]? = nil) {
         self.id = id
@@ -25,11 +25,9 @@ public struct Caption: Identifiable, Codable, Equatable, Sendable {
         Self.cleanText(text)
     }
 
-    /// Static helper to clean caption text
     public static func cleanText(_ input: String) -> String {
         var cleanedText = input.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
 
-        // Remove Whisper special tokens first
         // These are control tokens like <|startoftranscript|>, <|en|>, <|endoftranscript|>, etc.
         let specialTokenPatterns = [
             #"<\|[^|>]+\|>"#,  // Matches <|anything|> - all special tokens
@@ -61,7 +59,6 @@ public struct Caption: Identifiable, Codable, Equatable, Sendable {
             )
         }
 
-        // Collapse multiple spaces and trim
         cleanedText = cleanedText.replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression)
         return cleanedText.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
     }
@@ -328,5 +325,3 @@ enum TranscriptImportParser {
 }
 
 // MARK: - Caption Style Presets
-
-// Moved to Core/Models/CaptionStyle.swift

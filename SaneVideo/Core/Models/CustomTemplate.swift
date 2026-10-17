@@ -1,9 +1,6 @@
-// User-created export templates for saving and reusing settings
-
 import AVFoundation
 import Foundation
 
-/// User-created template with custom export settings
 struct CustomTemplate: Identifiable, Codable, Sendable, Hashable {
     let id: UUID
     var name: String

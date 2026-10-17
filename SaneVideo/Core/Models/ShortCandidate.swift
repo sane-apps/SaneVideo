@@ -1,9 +1,6 @@
-// Model for short-form video candidates extracted from long-form content
-
 import CoreMedia
 import Foundation
 
-/// Type of highlight detected in a short candidate
 enum HighlightType: String, Codable, Sendable, CaseIterable {
     case applause = "Applause"
     case laughter = "Laughter"
@@ -46,7 +43,6 @@ struct SuggestedCrop: Codable, Sendable, Equatable {
 
     static let `default` = SuggestedCrop(centerX: 0.5, centerY: 0.5, scale: 1.0)
 
-    /// Create crop focused on a face at given position
     static func focusedOn(faceCenter: CGPoint, zoom: CGFloat = 1.2) -> SuggestedCrop {
         SuggestedCrop(
             centerX: faceCenter.x,
@@ -56,21 +52,19 @@ struct SuggestedCrop: Codable, Sendable, Equatable {
     }
 }
 
-/// A candidate short-form clip extracted from long-form content
 struct ShortCandidate: Identifiable, Codable, Sendable, Equatable {
     let id: UUID
     var sourceClipId: UUID?           // Original clip this was extracted from
     var timeRange: CMTimeRange        // Time range in source video
     var score: Double                 // Overall quality score 0.0 - 1.0
-    var suggestedCrop: SuggestedCrop  // Smart crop for vertical reframe
-    var titleSuggestion: String?      // AI-suggested title
-    var highlights: [HighlightType]   // Detected highlights in this segment
+    var suggestedCrop: SuggestedCrop
+    var titleSuggestion: String?
+    var highlights: [HighlightType]
 
-    // Analysis metadata
-    var hasFace: Bool                 // Contains prominent face
+    var hasFace: Bool
     var silencePercentage: Double     // % of segment that is silence
-    var averageLoudness: Double       // Average audio level
-    var hasCaption: Bool              // Has caption data
+    var averageLoudness: Double
+    var hasCaption: Bool
 
     init(
         id: UUID = UUID(),
@@ -112,7 +106,6 @@ struct ShortCandidate: Identifiable, Codable, Sendable, Equatable {
         timeRange.end.seconds
     }
 
-    /// Human-readable score label
     var scoreLabel: String {
         switch score {
         case 0.8...: return "Excellent"
@@ -122,7 +115,6 @@ struct ShortCandidate: Identifiable, Codable, Sendable, Equatable {
         }
     }
 
-    /// Formatted duration string
     var durationLabel: String {
         let seconds = Int(duration)
         if seconds >= 60 {

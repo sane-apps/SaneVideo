@@ -28,7 +28,6 @@ enum ClipWaveformCalculator {
             if removal.end <= cursor { continue }
             if removal.start >= clipEnd { break }
             
-            // Keep segment before removal
             let fragmentEnd = min(removal.start, clipEnd)
             if fragmentEnd > cursor {
                 let startSample = Int(cursor.seconds * samplesPerSecond)
@@ -42,7 +41,6 @@ enum ClipWaveformCalculator {
             cursor = max(cursor, removal.end)
         }
         
-        // Final segment
         if cursor < clipEnd {
             let startSample = Int(cursor.seconds * samplesPerSecond)
             let endSample = Int(clipEnd.seconds * samplesPerSecond)
@@ -73,13 +71,11 @@ enum ClipWaveformCalculator {
             if removal.end <= cursor { continue }
             if removal.start >= clipEnd { break }
             
-            // Add valid duration before this cut
             let fragmentEnd = min(removal.start, clipEnd)
             if fragmentEnd > cursor {
                 effectiveCursor += (fragmentEnd.seconds - cursor.seconds)
             }
             
-            // This is a cut point! Add marker
             let progress = effectiveCursor / clip.effectiveDuration.seconds
             if progress > 0 && progress < 1.0 {
                 markers.append(progress)

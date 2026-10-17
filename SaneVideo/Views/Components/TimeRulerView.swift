@@ -6,7 +6,6 @@ struct TimeRulerView: View {
     let pixelsPerSecond: CGFloat
     var onSeek: ((TimeInterval) -> Void)?
 
-    // Configuration
     private let majorTickHeight: CGFloat = 20
     private let minorTickHeight: CGFloat = 10
     private let labelFontSize: CGFloat = 10
@@ -16,43 +15,35 @@ struct TimeRulerView: View {
             let width = size.width
             let height = size.height
 
-            // Draw background - use clear to inherit from parent (system colors)
-            // Parent containers should set appropriate background
+            // Background stays clear; parent containers set it.
             let rect = CGRect(origin: .zero, size: size)
             context.fill(Path(rect), with: .color(Color.clear))
 
-            // Draw bottom border
             let borderPath = Path { path in
                 path.move(to: CGPoint(x: 0, y: height))
                 path.addLine(to: CGPoint(x: width, y: height))
             }
             context.stroke(borderPath, with: .color(Color.stone.opacity(0.5)), lineWidth: 1)
 
-            // Calculate ticks
             // Major tick every 1 second (50px)
             // Minor tick every 0.2 seconds (10px)
             // Label every 5 seconds (250px)
 
             let totalSeconds = Int(ceil(duration)) + 5 // Add buffer
 
-            // Draw ticks starting from x=0
-            // The TimeRulerView is already positioned after the 20px spacer in the parent HStack,
-            // so the Canvas coordinate space (x=0) already aligns with the content start
+            // x = 0 already lines up with the start of the track content, since the parent offsets the ruler.
             for second in 0 ... totalSeconds {
                 let x = CGFloat(second) * pixelsPerSecond
 
-                // Don't draw beyond width
                 if x > width { break }
 
-                // Draw Major Tick
                 let majorPath = Path { path in
                     path.move(to: CGPoint(x: x, y: height - majorTickHeight))
                     path.addLine(to: CGPoint(x: x, y: height))
                 }
                 context.stroke(majorPath, with: .color(Color.stone), lineWidth: 1)
 
-                // Draw Label - adaptive based on zoom level
-                // When zoomed in (high pixelsPerSecond), show more frequent labels
+                // Labels get more frequent as the user zooms in.
                 let labelInterval = labelInterval(for: pixelsPerSecond)
 
                 if second % labelInterval == 0 {
@@ -67,7 +58,6 @@ struct TimeRulerView: View {
                     context.draw(text, at: CGPoint(x: labelX, y: 12), anchor: .leading)
                 }
 
-                // Draw Minor Ticks (4 ticks between seconds)
                 for i in 1 ... 4 {
                     let minorX = x + (CGFloat(i) * pixelsPerSecond / 5.0)
                     if minorX > width { break }
@@ -80,15 +70,13 @@ struct TimeRulerView: View {
                 }
             }
         }
-        .frame(height: 40) // Increased from 30 to give labels room above ticks
+        .frame(height: 40) // Leaves room for labels above the ticks.
         .contentShape(Rectangle())
         .onTapGesture { location in
-            // Click-to-seek: Calculate time from tap position
             // Location is in Canvas coordinate space (x=0 is start of ruler, not start of scrollable area)
             let tappedTime = max(0, Double(location.x / pixelsPerSecond))
             onSeek?(min(tappedTime, duration))
         }
-        // Drag-to-scrub: Continuous seeking while dragging (2026-01-01)
         .gesture(
             DragGesture(minimumDistance: 0)
                 .onChanged { value in

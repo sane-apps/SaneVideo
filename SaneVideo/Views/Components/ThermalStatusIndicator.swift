@@ -1,8 +1,5 @@
-// Enhanced thermal status indicator with clear messaging
-
 import SwiftUI
 
-/// Enhanced thermal status indicator with user-friendly messaging
 struct ThermalStatusIndicator: View {
     @State private var thermalState: ProcessInfo.ThermalState = .nominal
     @State private var isThrottled: Bool = false

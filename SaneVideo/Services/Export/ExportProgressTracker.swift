@@ -12,14 +12,11 @@ class ExportProgressTracker {
         stopMonitoring()
 
         monitoringTask = Task { @MainActor in
-            // Use modern async states API (macOS 15+)
-            // If running on older OS, we might need fallback, but project seems to target new macOS.
-            // Assuming macOS 15+ availability based on deprecation warning.
+            // The async states API needs macOS 15+.
             if #available(macOS 15.0, *) {
                 for await state in session.states(updateInterval: 0.1) {
                     progressSubject.send(Double(session.progress))
 
-                    // Check if state is NOT exporting
                     if case .exporting = state {
                         continue
                     } else {
@@ -27,9 +24,7 @@ class ExportProgressTracker {
                     }
                 }
             } else {
-                // Fallback for older macOS if needed (using loop with sleep)
-                // Since we are fixing deprecations, we assume we want the new way.
-                // But to be safe, we can use a loop.
+                // Polling fallback for older macOS.
                 while session.status == .exporting {
                     progressSubject.send(Double(session.progress))
                     try? await Task.sleep(nanoseconds: 100_000_000) // 0.1s

@@ -2,7 +2,6 @@ import AVFoundation
 import Combine
 import Foundation
 
-/// Service for performing Magic Fix operations on clips
 enum MagicFixService {
 
     /// Audio enhancement should only run when the user enabled it and the source
@@ -27,7 +26,6 @@ enum MagicFixService {
         var rangesToRemove: [CMTimeRange] = clip.removedRanges.map { $0.timeRange }
         let duration = clip.duration.seconds
         
-        // 1. Silence Detection
         if options.removeSilence {
             let audioURL = clip.enhancedAudioURL ?? clip.url
             let hasAudio = await SilenceDetector.hasAudioTrack(url: audioURL)
@@ -35,7 +33,6 @@ enum MagicFixService {
                 AppLogger.project.warning("⚠️ Magic Fix: Skipping silence removal — no audio track")
             } else {
                 do {
-                    // ROBUSTNESS: Add timeout (5 minutes max for silence detection) with retry
                     let silenceRanges = try await retryOperation(maxAttempts: 2, initialDelay: 1.0) {
                         try await withTimeout(seconds: 300.0) {
                             try await detectSilence(
@@ -48,12 +45,11 @@ enum MagicFixService {
                     rangesToRemove.append(contentsOf: silenceRanges)
                 } catch {
                     AppLogger.project.error("⚠️ Magic Fix: Silence detection failed after retries: \(error.localizedDescription)")
-                    // Continue execution - do not fail the whole process (graceful degradation)
+                    // Keep going without silence removal rather than fail the whole fix.
                 }
             }
         }
         
-        // 2. Filler Detection & AI Analysis
         progressHandler(30, 100)
         
         if options.removeFillers {
@@ -62,21 +58,11 @@ enum MagicFixService {
                 .joined(separator: " ")
             AppLogger.project.info("✨ Magic Fix: Analyzing transcript (length: \(transcript.count))")
             
-            // Linguistic Filler Detection (Fast)
             if options.removeFillers {
                 let fillerRanges = await detectFillerWords(in: clip)
                 AppLogger.project.info("✨ Magic Fix: Detected \(fillerRanges.count) filler ranges")
                 rangesToRemove.append(contentsOf: fillerRanges)
             }
-            
-            // We use on-device NaturalLanguage framework for filler detection (SmartFillerDetector)
-            // Cloud AI analysis is optional and only used if explicitly enabled via API keys
-            // The primary Magic Fix uses 100% on-device Apple APIs:
-            // - SpeechAnalyzer for transcription
-            // - NaturalLanguage for filler detection
-            // - Vision framework for visual analysis
-            // - Accelerate/vDSP for audio processing
-            // Cloud AI is only for optional title/description generation
         }
         
         progressHandler(90, 100)
@@ -90,10 +76,9 @@ enum MagicFixService {
         return keepRanges
     }
     
-    /// Helper to consolidate removals and invert to get KEEP ranges
+    /// Merges removals and inverts them into keep ranges.
     /// Internal for testing
     static func calculateKeepRanges(removals: [CMTimeRange], duration: CMTime) -> [CMTimeRange] {
-        // Consolidate overlapping removal ranges
         let sortedRemovals = removals.sorted { $0.start < $1.start }
         var consolidatedRemovals: [CMTimeRange] = []
         
@@ -112,14 +97,11 @@ enum MagicFixService {
             consolidatedRemovals.append(current)
         }
         
-        // Invert to get KEEP ranges
         var keepRanges: [CMTimeRange] = []
         var cursor = CMTime.zero
         
         for remove in consolidatedRemovals {
-            // If the removal starts after cursor, we have a keep range
             if remove.start > cursor {
-                // Ensure we don't go beyond clip duration
                 let end = min(remove.start, duration)
                 if end > cursor {
                     keepRanges.append(CMTimeRange(start: cursor, end: end))
@@ -128,7 +110,6 @@ enum MagicFixService {
             cursor = max(cursor, remove.end)
         }
         
-        // Add final segment if any duration remains
         if cursor < duration {
             keepRanges.append(CMTimeRange(start: cursor, end: duration))
         }
@@ -136,20 +117,17 @@ enum MagicFixService {
         return keepRanges
     }
     
-    /// Helper to invert Keep Ranges to get Removed Ranges
     static func calculateRemovedRanges(from keepRanges: [CMTimeRange], duration: CMTime) -> [CMTimeRange] {
         var removed: [CMTimeRange] = []
         var cursor = CMTime.zero
         
         for keep in keepRanges {
-            // Gap between cursor and keep.start is removed
             if keep.start > cursor {
                removed.append(CMTimeRange(start: cursor, end: keep.start))
             }
             cursor = keep.end
         }
         
-        // Final gap
         if cursor < duration {
             removed.append(CMTimeRange(start: cursor, end: duration))
         }
@@ -157,7 +135,6 @@ enum MagicFixService {
         return removed
     }
     
-    /// Detect and return silent ranges for a clip
     @MainActor static func detectSilence(
         in clip: VideoClip,
         options: MagicFixOptions,
@@ -181,12 +158,10 @@ enum MagicFixService {
         )
     }
     
-    /// Detect filler words in captions and return their time ranges
     static func detectFillerWords(in clip: VideoClip) async -> [CMTimeRange] {
         let detector = await ServiceContainer.shared.smartFillerDetector
         let words = clip.allWords
         
-        // Use the smart detector for linguistic analysis
         let fillerIndices = await detector.detectFillers(in: words)
         
         var fillerRanges: [CMTimeRange] = []

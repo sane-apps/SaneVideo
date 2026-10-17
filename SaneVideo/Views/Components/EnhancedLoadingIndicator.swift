@@ -1,5 +1,3 @@
-// Enhanced loading indicator with speed and time remaining
-
 import SwiftUI
 
 struct EnhancedLoadingIndicator: View {
@@ -11,12 +9,10 @@ struct EnhancedLoadingIndicator: View {
     
     var body: some View {
         VStack(spacing: 12) {
-            // Progress bar
             ProgressView(value: progress)
                 .progressViewStyle(.linear)
                 .frame(width: 300)
             
-            // Message and details
             VStack(spacing: 4) {
                 Text(message)
                     .font(.headline)
@@ -27,7 +23,6 @@ struct EnhancedLoadingIndicator: View {
                         .foregroundStyle(Color.stone)
                 }
                 
-                // Speed and time remaining
                 HStack(spacing: 16) {
                     if let speed = speedMBps, speed > 0 {
                         Label("\(String(format: "%.1f", speed)) MB/s", systemImage: "speedometer")

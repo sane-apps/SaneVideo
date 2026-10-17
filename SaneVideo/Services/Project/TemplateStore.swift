@@ -1,9 +1,5 @@
-// Actor for persisting and managing user-created export templates
-// Storage: ~/Movies/SaneVideo/Templates/*.svtemplate
-
 import Foundation
 
-/// Actor for managing custom export templates
 actor TemplateStore {
     // MARK: - Properties
 
@@ -21,7 +17,6 @@ actor TemplateStore {
 
     // MARK: - Public API
 
-    /// Load all templates from disk
     func loadTemplates() async -> [CustomTemplate] {
         if isLoaded {
             return templates
@@ -65,7 +60,6 @@ actor TemplateStore {
         let fileURL = templateFileURL(for: mutableTemplate)
         try data.write(to: fileURL)
 
-        // Update in-memory cache
         if let index = templates.firstIndex(where: { $0.id == mutableTemplate.id }) {
             templates[index] = mutableTemplate
         } else {
@@ -75,7 +69,6 @@ actor TemplateStore {
         AppLogger.general.info("Saved template: \(mutableTemplate.name)")
     }
 
-    /// Delete a template
     func deleteTemplate(_ template: CustomTemplate) async throws {
         let fileURL = templateFileURL(for: template)
 
@@ -95,7 +88,6 @@ actor TemplateStore {
         return templates
     }
 
-    /// Create template from current project settings
     func createFromProject(
         name: String,
         description: String,
@@ -115,7 +107,6 @@ actor TemplateStore {
         return template
     }
 
-    /// Duplicate a template
     func duplicateTemplate(_ template: CustomTemplate) async throws -> CustomTemplate {
         var duplicate = template
         duplicate = CustomTemplate(

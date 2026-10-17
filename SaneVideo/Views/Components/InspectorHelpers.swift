@@ -1,6 +1,3 @@
-// Extracted from StylesInspectorView.swift
-// Contains generic, reusable inspector components
-
 import SwiftUI
 
 // MARK: - Collapsible Section Component
@@ -10,7 +7,7 @@ struct CollapsibleSection<Content: View>: View {
     let icon: String
     @Binding var isExpanded: Bool
     var badge: String? // Optional badge (e.g., caption count)
-    var isPrimary: Bool = false // P1 FIX: Mark primary sections
+    var isPrimary: Bool = false
     @ViewBuilder let content: () -> Content
 
     private var accentColor: Color {
@@ -154,13 +151,12 @@ struct SmartToolButton: View {
         .hoverScale(1.02)
         .pressScale()
         .disabled(isLoading)
-        .help(isLoading ? "Operation in progress..." : subtitle) // CRITICAL FIX: Help text for disabled state
-        // Enhanced accessibility
+        .help(isLoading ? "Operation in progress..." : subtitle)
         .accessibilityIdentifier(id)
         .accessibilityLabel(title)
         .accessibilityHint(subtitle)
         .accessibilityValue(isLoading ? "Loading" : "")
-        // REMOVED: .focusable() - was causing yellow focus ring
+        // No .focusable(): it draws a yellow focus ring.
         .smoothAppear()
     }
 }
@@ -213,7 +209,7 @@ struct AIToolButton: View {
         .accessibilityIdentifier(id)
         .accessibilityLabel(title)
         .accessibilityHint(subtitle)
-        // REMOVED: .focusable() - was causing yellow focus ring
+        // No .focusable(): it draws a yellow focus ring.
         .smoothAppear()
     }
 }

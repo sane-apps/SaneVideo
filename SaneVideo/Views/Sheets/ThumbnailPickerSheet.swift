@@ -353,7 +353,7 @@ struct ThumbnailPickerSheet: View {
 
             Button { useSelected() } label: {
                 Label(
-                    String(localized: "thumbnail.action.use", defaultValue: "Use Thumbnail"),
+                    String(localized: "thumbnail.action.save", defaultValue: "Save Thumbnail"),
                     systemImage: "checkmark.circle.fill"
                 )
             }

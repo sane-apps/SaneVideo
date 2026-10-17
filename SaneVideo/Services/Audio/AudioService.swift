@@ -43,6 +43,7 @@ class AudioService: NSObject, AudioServiceProtocol {
   // MARK: - Internal Properties
 
   private var session: AVCaptureSession?
+  var captureSession: AVCaptureSession? { session }
   private let permissionManager: PermissionManager
   private var cancellables = Set<AnyCancellable>()
   private var hasDiscoveredMicrophones = false

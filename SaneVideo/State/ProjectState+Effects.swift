@@ -14,75 +14,6 @@ import SwiftUI
 
 extension ProjectState {
 
-    func applySmartColorGrade(to clip: VideoClip, transactionId: UUID? = nil) async {
-        let localTransactionId = transactionId ?? beginTransaction()
-        defer { endTransaction(localTransactionId) }
-
-        guard !shouldBlockOperation(transactionId: localTransactionId) else { return }
-
-        if clip.captions.isEmpty {
-            await MainActor.run {
-                ServiceContainer.shared.toastManager.show("No captions found. Generating...")
-            }
-            do {
-                _ = try await generateCaptions(for: clip)
-            } catch {
-                AppLogger.project.error("Smart Grade aborted: Caption generation failed")
-                return
-            }
-        }
-
-        guard let project = currentProject,
-              let track = project.timeline.tracks.first(where: {
-                  $0.clips.contains(where: { $0.id == clip.id })
-              }),
-              let updatedClip = track.clips.first(where: { $0.id == clip.id })
-        else { return }
-
-        let result = await SmartColorGradeService.analyzeSentiment(for: updatedClip.captions)
-        let newEffects = SmartColorGradeService.newEffectsToApply(
-            suggested: result.effects, existing: updatedClip.effects)
-
-        await MainActor.run {
-            if !newEffects.isEmpty {
-                var allEffects = updatedClip.effects
-                allEffects.append(contentsOf: newEffects)
-                self.updateClipEffects(clipId: updatedClip.id, effects: allEffects)
-                ServiceContainer.shared.toastManager.show(
-                    "Mood: \(result.sentiment.rawValue) → Applied color grade")
-            } else {
-                ServiceContainer.shared.toastManager.show("Already graded or Neutral mood.")
-            }
-        }
-    }
-
-    func applyMagicRemove(to clip: VideoClip, transactionId: UUID? = nil) async {
-        do {
-            _ = ServiceContainer.shared.personSegmentationService
-            AppLogger.vision.info("🪄 ProjectState: Applying Magic Remove to clip \(clip.id)")
-            try await Task.sleep(nanoseconds: 1_500_000_000)
-
-            await MainActor.run {
-                ServiceContainer.shared.toastManager.show("✅ Magic Remove applied (AI People Extraction)")
-            }
-        } catch {
-            AppLogger.vision.error("Magic Remove failed: \(error)")
-        }
-    }
-
-    func applyCinematicStyle(to clip: VideoClip, transactionId: UUID? = nil) async {
-        do {
-            AppLogger.vision.info("🪄 ProjectState: Applying Cinematic Style (Generative)")
-            try await Task.sleep(nanoseconds: 1_000_000_000)
-
-            await MainActor.run {
-                ServiceContainer.shared.toastManager.show("✅ Cinematic Style applied")
-            }
-        } catch {
-            AppLogger.vision.error("Style transfer failed: \(error)")
-        }
-    }
-
     func regenerateSmartThumbnail(for clip: VideoClip, transactionId: UUID? = nil) async {
         guard currentProject != nil else { return }
 
@@ -155,79 +86,6 @@ extension ProjectState {
 
 extension ProjectState {
 
-    func applyAutoFraming(to clip: VideoClip, padding: CGFloat = 0.3, transactionId: UUID? = nil) async {
-        let localTransactionId = transactionId ?? beginTransaction()
-        defer { endTransaction(localTransactionId) }
-
-        guard !shouldBlockOperation(transactionId: localTransactionId) else { return }
-
-        await MainActor.run {
-            ServiceContainer.shared.toastManager.show("🎯 Tracking faces in video...")
-        }
-
-        do {
-            let faceService = ServiceContainer.shared.faceTrackingService
-
-            let analysis = try await faceService.analyzeVideo(
-                videoURL: clip.url,
-                sampleInterval: 0.5
-            ) { _ in }
-
-            if analysis.isEmpty {
-                await MainActor.run {
-                    ServiceContainer.shared.toastManager.show("No faces detected to track", type: .info)
-                }
-                return
-            }
-
-            let keyframes = buildAutoFrameKeyframes(from: analysis)
-
-            await MainActor.run {
-                self.applyKeyframesToClip(keyframes, clip: clip, undoName: "Apply Vision Effects")
-                ServiceContainer.shared.toastManager.show("✅ Dynamic Auto-Frame applied")
-            }
-
-        } catch {
-            AppLogger.project.error("Auto-framing failed: \(error)")
-            await MainActor.run {
-                ServiceContainer.shared.toastManager.show("Auto-framing failed", type: .error)
-            }
-        }
-    }
-
-    func applyAutoFramingFromAnalysis(
-        clip: VideoClip, analysis: [CMTime: CGRect], transactionId: UUID? = nil
-    ) async {
-        if transactionId == nil {
-            guard !isProcessing else { return }
-            isProcessing = true
-        }
-
-        await MainActor.run {
-            ServiceContainer.shared.toastManager.show("🎯 Applying Auto-Frame (Unified)...")
-        }
-
-        defer {
-            if transactionId == nil {
-                Task { @MainActor in self.isProcessing = false }
-            }
-        }
-
-        if analysis.isEmpty {
-            await MainActor.run {
-                ServiceContainer.shared.toastManager.show("No faces detected", type: .info)
-            }
-            return
-        }
-
-        let keyframes = buildAutoFrameKeyframes(from: analysis)
-
-        await MainActor.run {
-            self.applyKeyframesToClip(keyframes, clip: clip, undoName: "Apply Vision Effects")
-            ServiceContainer.shared.toastManager.show("✅ Dynamic Auto-Frame applied")
-        }
-    }
-
     private func buildAutoFrameKeyframes(from analysis: [CMTime: CGRect]) -> KeyframeAnimation {
         var keyframes = KeyframeAnimation()
         let sortedTimes = analysis.keys.sorted { $0 < $1 }
@@ -297,33 +155,6 @@ extension ProjectState {
             await MainActor.run {
                 ServiceContainer.shared.toastManager.show("Smart crop failed", type: .error)
             }
-        }
-    }
-
-    func applySmartCropFromAnalysis(
-        clip: VideoClip, analysis: [CMTime: SaliencyResult], transactionId: UUID? = nil
-    ) async {
-        let localTransactionId = transactionId ?? beginTransaction()
-        defer { endTransaction(localTransactionId) }
-
-        guard !shouldBlockOperation(transactionId: localTransactionId) else { return }
-
-        await MainActor.run {
-            ServiceContainer.shared.toastManager.show("🎨 Applying Smart 9:16 Crop (Unified)...")
-        }
-
-        if analysis.isEmpty {
-            await MainActor.run {
-                ServiceContainer.shared.toastManager.show("No saliency data found", type: .info)
-            }
-            return
-        }
-
-        let keyframes = buildSmartCropKeyframes(from: analysis)
-
-        await MainActor.run {
-            self.applyKeyframesToClip(keyframes, clip: clip, undoName: "Apply Vision Effects")
-            ServiceContainer.shared.toastManager.show("✅ Smart 9:16 Crop applied")
         }
     }
 

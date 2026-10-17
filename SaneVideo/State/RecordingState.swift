@@ -256,11 +256,20 @@ class RecordingState {
         }
 
         if requiresMicrophone, permissionManager.microphoneStatus == .notDetermined {
-            let microphoneGranted = await permissionManager.requestMicrophonePermission()
-            if !microphoneGranted { return false }
+            _ = await permissionManager.requestMicrophonePermission()
         }
 
         return true
+    }
+
+    /// A denied microphone never blocks a recording: record without sound and say so once.
+    private func dropMicrophoneIfDenied() {
+        guard isMicActive, permissionManager.microphoneStatus != .granted else { return }
+        isMicActive = false
+        ServiceContainer.shared.toastManager.show(
+            "Recording without sound. Turn on Microphone for SaneVideo in System Settings to record your voice.",
+            type: .info
+        )
     }
 
     private func presentMissingPermissionFeedback(
@@ -295,6 +304,7 @@ class RecordingState {
         let hasActiveScreenStream = recordingEngine?.screenRecorder.activeStream != nil
         let shouldSkipScreenPermissionCheck = isScreenSharing && hasActiveScreenStream
         let requiresCamera = !isScreenSharing || includeCameraOverlay
+        dropMicrophoneIfDenied()
         let requiresMicrophone = isMicActive
 
         if shouldSkipScreenPermissionCheck {

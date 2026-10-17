@@ -123,8 +123,8 @@ struct MainContentView: View {
                 .withGlobalSheets()
                 .withToastOverlay()
                 // Consolidated Sheets for UI Test Reliability
-                .sheet(isPresented: $appState.showDemoStudioSheet) {
-                    DemoStudioSheet()
+                .sheet(isPresented: $appState.showTeleprompterScriptSheet) {
+                    TeleprompterScriptSheet()
                 }
                 .sheet(isPresented: $appState.showExportSheet) {
                     ExportView()

@@ -70,20 +70,13 @@ struct CompactProjectBrowserView: View {
 
     @ViewBuilder
     private var newProjectMenu: some View {
-        Menu {
-            ForEach(ProjectTemplate.allTemplates) { template in
-                Button {
-                    appState.projectState.startNewProject(template: template)
-                } label: {
-                    Label(template.name, systemImage: template.icon)
-                }
-            }
+        Button {
+            appState.projectState.startNewProject()
         } label: {
             Image(systemName: "plus")
                 .font(.system(size: 12, weight: .medium))
         }
-        .menuStyle(.borderlessButton)
-        .menuIndicator(.hidden)
+        .buttonStyle(.borderless)
         .frame(width: 20, height: 20)
         .help("New Project")
     }

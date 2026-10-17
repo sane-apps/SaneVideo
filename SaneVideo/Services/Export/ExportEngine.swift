@@ -215,7 +215,8 @@ class ExportEngine: ExportServiceProtocol {
             AVVideoCodecKey: settings.codec,
             AVVideoWidthKey: settings.renderSize.width,
             AVVideoHeightKey: settings.renderSize.height,
-            AVVideoCompressionPropertiesKey: compressionProps
+            AVVideoCompressionPropertiesKey: compressionProps,
+            AVVideoColorPropertiesKey: VideoColor.rec709
         ]
 
         let writerVideoInput = AVAssetWriterInput(

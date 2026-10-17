@@ -118,33 +118,4 @@ class AIService {
         }
     }
 
-    /// Builds a transcript-grounded commentary draft that SaneVideo can render and edit.
-    func generateCommentaryPlan(
-        captions: [Caption],
-        brief: WorkflowBrief,
-        existingMarkers: [CommentaryMarker] = []
-    ) async -> [CommentaryPlanItem] {
-        isGenerating = true
-        defer { isGenerating = false }
-
-        if LocalSaneAIWorkflowRunner.shouldUseLocalModel {
-            do {
-                return try await withTimeout(seconds: 45) {
-                    try await LocalSaneAIWorkflowRunner.generatePlan(
-                        captions: captions,
-                        brief: brief,
-                        existingMarkers: existingMarkers
-                    )
-                }
-            } catch {
-                print("Local SaneAI workflow generation failed, falling back to heuristic draft: \(error)")
-            }
-        }
-
-        return CommentaryWorkflowPlanner.buildDraft(
-            from: captions,
-            brief: brief,
-            existingMarkers: existingMarkers
-        )
-    }
 }

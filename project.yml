@@ -2,7 +2,7 @@ name: SaneVideo
 options:
   bundleIdPrefix: com.sanevideo
   deploymentTarget:
-    macOS: 15.0
+    macOS: 26.0
   xcodeVersion: 16.0
 configs:
   Debug: debug
@@ -87,7 +87,7 @@ targets:
     platform: macOS
     bundleId: com.sanevideo.app
     deploymentTarget:
-      macOS: 15.0
+      macOS: 26.0
     sources:
       - path: SaneVideo
         excludes:
@@ -104,7 +104,7 @@ targets:
         ENABLE_PREVIEWS: YES
         SWIFT_VERSION: 6.2
         SWIFT_STRICT_CONCURRENCY: complete
-        MACOSX_DEPLOYMENT_TARGET: 15.0
+        MACOSX_DEPLOYMENT_TARGET: 26.0
         ARCHS: arm64
         VALID_ARCHS: arm64
         MTL_ENABLE_APPLE_SILICON_ONLY_OPTIMIZATIONS: YES
@@ -161,7 +161,7 @@ targets:
     productName: SaneVideo
     bundleId: com.sanevideo.app
     deploymentTarget:
-      macOS: 15.0
+      macOS: 26.0
     sources:
       - path: SaneVideo
         excludes:
@@ -178,7 +178,7 @@ targets:
         ENABLE_PREVIEWS: YES
         SWIFT_VERSION: 6.2
         SWIFT_STRICT_CONCURRENCY: complete
-        MACOSX_DEPLOYMENT_TARGET: 15.0
+        MACOSX_DEPLOYMENT_TARGET: 26.0
         ARCHS: arm64
         VALID_ARCHS: arm64
         MTL_ENABLE_APPLE_SILICON_ONLY_OPTIMIZATIONS: YES
@@ -226,7 +226,7 @@ targets:
     platform: macOS
     bundleId: com.sanevideo.SaneVideoTests
     deploymentTarget:
-      macOS: 15.0
+      macOS: 26.0
     sources:
       - path: SaneVideoTests
         excludes:

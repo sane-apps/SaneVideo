@@ -113,8 +113,9 @@ extension VideoProject {
             clip.captions
                 .compactMap { $0.removingWords(in: clip.removedRanges) }
                 .compactMap { caption -> Caption? in
-                    guard let start = clip.effectiveTime(forOriginalTime: caption.startTime),
-                          let end = clip.effectiveTime(forOriginalTime: caption.endTime) else { return nil }
+                    guard let range = clip.effectiveRange(for: caption) else { return nil }
+                    let start = range.start
+                    let end = range.end
                     let rate = 1.0 / max(clip.speed, 0.01)
                     return Caption(
                         id: caption.id,

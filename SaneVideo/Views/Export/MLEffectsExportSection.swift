@@ -1,9 +1,7 @@
-// ML Effects toggle section for export configuration
 // These effects use VideoToolbox VTFrameProcessor for high-quality processing
 
 import SwiftUI
 
-/// ML effect configurations for export
 struct MLExportEffects: Equatable {
     var superResolutionEnabled = false
     var superResolutionScale: CGFloat = 2.0
@@ -19,7 +17,6 @@ struct MLExportEffects: Equatable {
     }
 }
 
-/// Section view for ML effects in export configuration
 struct MLEffectsExportSection: View {
     @Binding var mlEffects: MLExportEffects
     @State private var modelStatus: String = "Checking..."
@@ -29,7 +26,6 @@ struct MLEffectsExportSection: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            // Header
             HStack {
                 Label(
                     String(localized: "export.ml.header", defaultValue: "AI Enhancement"),
@@ -46,7 +42,6 @@ struct MLEffectsExportSection: View {
                 }
             }
 
-            // Super Resolution
             VStack(alignment: .leading, spacing: 6) {
                 Toggle(isOn: $mlEffects.superResolutionEnabled) {
                     HStack {
@@ -80,7 +75,6 @@ struct MLEffectsExportSection: View {
 
             Divider()
 
-            // Denoise
             VStack(alignment: .leading, spacing: 6) {
                 Toggle(isOn: $mlEffects.denoiseEnabled) {
                     HStack {
@@ -114,7 +108,6 @@ struct MLEffectsExportSection: View {
 
             Divider()
 
-            // Frame Interpolation
             VStack(alignment: .leading, spacing: 6) {
                 Toggle(isOn: $mlEffects.frameInterpolationEnabled) {
                     HStack {

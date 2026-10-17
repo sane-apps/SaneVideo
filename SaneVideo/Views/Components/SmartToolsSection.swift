@@ -1,9 +1,6 @@
 import AVFoundation
 import SwiftUI
 
-// Import new modifiers
-// AnimationModifiers, AccessibilityModifiers
-
 struct SmartToolsSection: View {
   @Environment(AppState.self) var appState
   let clip: VideoClip
@@ -11,26 +8,17 @@ struct SmartToolsSection: View {
   @Binding var options: MagicFixOptions
   @Binding var isOperationInProgress: Bool
 
-  // We bind to the options from ProjectState parent, but simpler to just access via environment if we want
-  // But adhering to pattern: usually sections take bindings or the clip.
-  // Since options are in ProjectState, let's bind to them.
-
   var body: some View {
-    // Remove nested ScrollView - parent StylesInspectorView already has ScrollView
-    // Nested ScrollViews cause scrolling conflicts and performance issues
+    // No nested ScrollView: the parent StylesInspectorView already scrolls.
     VStack(alignment: .leading, spacing: Theme.Dimensions.spacingMD) {
       // MARK: - Header & Presets
       headerView
 
       // MARK: - Core Cleanup Card (simplified UI - 2025-12-31)
-      // Only 5 core features: Remove Silence, Remove Fillers, Generate Captions, Enhance Speech, Smooth Cuts
-      // Other features (Smart Crop, Auto-Framing, Find Highlights) are in their canonical locations
       coreCleanupCard
 
-      // Global Action Button
       magicButton
 
-      // Reset/Regenerate button when Magic Fix has been applied
       if appState.projectState.hasMagicFixResults(for: clip) {
         resetMagicFixButton
       }
@@ -39,8 +27,6 @@ struct SmartToolsSection: View {
   }
 
   private var headerView: some View {
-    // COMPACT: Single row with title and presets menu
-    // PrivacyBadge moved to InspectorHeader (always visible)
     HStack(alignment: .center) {
       Text("Magic Fix")
         .font(.system(size: Theme.Typography.fontSizeLG, weight: .bold))
@@ -68,7 +54,6 @@ struct SmartToolsSection: View {
         Divider()
 
         Button {
-          // Reset to defaults
           options = MagicFixOptions()
         } label: {
           Label("Reset to Defaults", systemImage: "arrow.counterclockwise")
@@ -92,17 +77,10 @@ struct SmartToolsSection: View {
   }
 
   // MARK: - Core Cleanup Card (5 features only - 2025-12-31 refactor)
-  // Features removed from Magic Fix UI (use canonical locations instead):
-  // - Smart Crop → VideoSection.swift
-  // - Auto-Framing → VideoSection.swift
-  // - Auto Color → VideoSection.swift (Effects)
-  // - Find Highlights → AudioSection.swift
-  // - Magic Remove / Cinematic Styles → Future generative features
 
   private var coreCleanupCard: some View {
     ToolCard(title: "Core Cleanup", icon: "waveform.badge.magnifyingglass", color: .blue) {
       VStack(spacing: Theme.Dimensions.spacingSM) {
-        // 1. Remove Silence
         InspectorToggle(
           title: "Remove Silence",
           subtitle: "Cut non-speech gaps",
@@ -122,7 +100,6 @@ struct SmartToolsSection: View {
         )
         .help("Automatically cuts segments where no speech is detected.")
 
-        // Silence threshold slider (shown when enabled)
         if options.removeSilence {
           VStack(alignment: .leading, spacing: Theme.Dimensions.spacingSM) {
             HStack {
@@ -147,7 +124,6 @@ struct SmartToolsSection: View {
           )
         }
 
-        // 2. Remove Fillers
         InspectorToggle(
           title: "Remove Fillers",
           subtitle: "Cut 'um', 'uh', stutters",
@@ -158,7 +134,6 @@ struct SmartToolsSection: View {
         )
         .help("Removes hesitation words like 'um' and 'uh' from the timeline.")
 
-        // 3. Generate Captions
         InspectorToggle(
           title: "Generate Captions",
           subtitle: "AI transcription",
@@ -169,7 +144,6 @@ struct SmartToolsSection: View {
         )
         .help("Transcribe speech to text captions. Edit in the Transcript sidebar tab.")
 
-        // 4. Enhance Speech
         VStack(alignment: .leading, spacing: Theme.Dimensions.spacingXS) {
           InspectorToggle(
             title: "Enhance Speech",
@@ -193,7 +167,6 @@ struct SmartToolsSection: View {
 
         }
 
-        // 5. Smooth Cuts
         InspectorToggle(
           title: "Smooth Cuts",
           subtitle: "Blend jump cuts",
@@ -211,14 +184,12 @@ struct SmartToolsSection: View {
   private var magicButton: some View {
     Group {
       if appState.projectState.isProcessing {
-        // Enhanced progress indicator with cancel button
         VStack(spacing: 12) {
           LoadingIndicator(
             message: appState.projectState.processingStatus,
             progress: appState.projectState.processingProgress
           )
 
-          // Cancel button
           Button {
             appState.projectState.cancelCurrentOperation()
           } label: {
@@ -231,9 +202,7 @@ struct SmartToolsSection: View {
         }
         .transition(.smoothScale)
       } else {
-        // Enhanced button with better visual hierarchy
         Button {
-          // Validate clip before operation
           guard !clip.isMissing else {
             ServiceContainer.shared.toastManager.show(
               "Cannot apply Magic Fix: Clip file is missing. Use 'Locate File' in Clip Info to relink the file.",
@@ -256,7 +225,6 @@ struct SmartToolsSection: View {
                 .font(.system(size: Theme.Typography.fontSizeLG, weight: .bold))
             }
 
-            // Show what will be applied with better typography
             if !options.isEmpty {
               Text(options.summary)
                 .font(.system(size: Theme.Typography.fontSizeXS, weight: .medium))
@@ -344,5 +312,3 @@ struct SmartToolsSection: View {
     }
   }
 }
-
-// Components moved to SmartToolsComponents.swift and MagicProgressOverlay.swift

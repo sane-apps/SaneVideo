@@ -2,10 +2,8 @@ import AVFoundation
 import CoreMedia
 import Foundation
 
-/// Helper for building text layers (captions and overlays) from timeline clips
 enum TextLayerBuilder {
     
-    /// Build text layers for captions and overlays
     static func build(
         from visualTimelineTracks: [Track],
         project: VideoProject
@@ -13,13 +11,12 @@ enum TextLayerBuilder {
         
         var textLayers: [TextLayerItem] = []
         
-        // Calculate Caption Geometry
         let defaultCaptionX = 0.1
         let defaultCaptionY = 0.8
         let defaultCaptionW = 0.8
         let defaultCaptionH = 0.15
 
-        // Apply Project Global Offset (Normalized)
+        // Project-wide caption offset, normalized.
         let captionX = defaultCaptionX + project.captionOffset.width
         let captionY = defaultCaptionY + project.captionOffset.height
 
@@ -27,20 +24,17 @@ enum TextLayerBuilder {
             for clip in timelineTrack.clips {
                 let clipStart = clip.startTime
 
-                // 1. Captions
                 for caption in clip.captions.compactMap({ $0.removingWords(in: clip.removedRanges) }) {
                     guard let effective = clip.effectiveRange(for: caption) else { continue }
                     let offset = effective.start
                     let duration = effective.duration
 
-                    // Speed adjustment
                     let scaledOffset = CMTimeMultiplyByFloat64(offset, multiplier: 1.0 / clip.speed)
                     let scaledDuration = CMTimeMultiplyByFloat64(duration, multiplier: 1.0 / clip.speed)
 
                     let compStart = CMTimeAdd(clipStart, scaledOffset)
                     let compRange = CMTimeRange(start: compStart, duration: scaledDuration)
 
-                    // Create Item with style and word-level timing
                     let item = TextLayerItem(
                         id: caption.id,
                         text: caption.text,
@@ -53,7 +47,6 @@ enum TextLayerBuilder {
                     textLayers.append(item)
                 }
 
-                // 2. Overlays
                 for overlay in clip.overlays {
                     let clipLocalDuration = CMTimeMultiplyByFloat64(
                         clip.effectiveDuration,
@@ -77,7 +70,6 @@ enum TextLayerBuilder {
                     let originalStart = clip.originalTime(forEffectiveTime: overlayStart)
                     let originalEnd = clip.originalTime(forEffectiveTime: clampedOverlayEnd)
 
-                    // Map to effective time
                     guard let effStart = clip.effectiveTime(forOriginalTime: originalStart),
                           let effEnd = clip.effectiveTime(forOriginalTime: originalEnd)
                     else {
@@ -87,7 +79,6 @@ enum TextLayerBuilder {
                     let offset = effStart
                     let duration = CMTimeSubtract(effEnd, effStart)
 
-                    // Speed adjustment
                     let scaledStart = CMTimeMultiplyByFloat64(offset, multiplier: 1.0 / clip.speed)
                     let scaledDuration = CMTimeMultiplyByFloat64(duration, multiplier: 1.0 / clip.speed)
 

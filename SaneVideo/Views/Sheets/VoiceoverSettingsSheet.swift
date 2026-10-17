@@ -1,6 +1,3 @@
-// Settings sheet for voiceover generation
-// Exposes voice selection, speed, and pitch controls
-
 import AppKit
 import CoreMedia
 import SwiftUI

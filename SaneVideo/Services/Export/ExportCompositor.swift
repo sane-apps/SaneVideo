@@ -1,5 +1,3 @@
-// Optimized for Apple Silicon M1+ with Metal-backed rendering
-
 import AVFoundation
 import CoreImage
 import CoreMedia
@@ -7,8 +5,7 @@ import Metal
 
 @MainActor
 class ExportCompositor {
-    /// Creates composition with transforms computed for the target export resolution
-    /// This ensures 4K exports have correctly scaled transforms, not 1080p-baked transforms
+    /// Builds the composition with transforms computed for the export resolution, so 4K exports are not scaled from 1080p transforms.
     func createComposition(from project: VideoProject, settings: SaneExportSettings) async throws -> CompositionBuilder.CompositionResult {
         return try await CompositionBuilder.build(from: project, renderSize: settings.renderSize)
     }
@@ -19,18 +16,15 @@ class ExportCompositor {
         settings: SaneExportSettings,
         smartCropKeyframes: [CMTime: SuggestedCrop]? = nil
     ) async throws -> AVVideoComposition? {
-        // We already have a video composition from CompositionBuilder,
-        // but we need to ensure it matches export settings (frame rate, resolution).
+        // Rebuild the base composition so it matches the export frame rate and resolution.
 
         guard let base = baseVideoComposition else { return nil }
 
-        // Get the custom compositor class, defaulting to SaneVideoCompositor
         let customClass = base.customVideoCompositorClass ?? SaneVideoCompositor.self
         if base.customVideoCompositorClass == nil {
             AppLogger.export.warning("⚠️ Base video composition had no customVideoCompositorClass. Forced SaneVideoCompositor.")
         }
 
-        // Inject smart crop keyframes into instructions if provided
         let instructions: [AVVideoCompositionInstructionProtocol]
         if let keyframes = smartCropKeyframes, !keyframes.isEmpty {
             instructions = injectSmartCropKeyframes(keyframes, into: base.instructions)
@@ -72,7 +66,6 @@ class ExportCompositor {
         }
     }
 
-    /// Injects smart crop keyframes into existing instructions
     private func injectSmartCropKeyframes(
         _ keyframes: [CMTime: SuggestedCrop],
         into instructions: [AVVideoCompositionInstructionProtocol]
@@ -82,7 +75,6 @@ class ExportCompositor {
                 return instruction
             }
 
-            // Create a new instruction with the keyframes added
             return SaneVideoCompositionInstruction(
                 timeRange: saneInstruction.timeRange,
                 layerInstructions: saneInstruction.layerInstructions,

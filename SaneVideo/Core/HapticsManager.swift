@@ -1,9 +1,5 @@
-// Centralized haptic feedback for macOS trackpad
-
 import AppKit
 
-/// Centralized manager for haptic feedback on macOS
-/// Uses NSHapticFeedbackManager for Force Touch trackpad feedback
 @MainActor
 final class HapticsManager {
     private let performer = NSHapticFeedbackManager.defaultPerformer
@@ -29,7 +25,6 @@ final class HapticsManager {
 
     /// Success feedback for completed actions
     func success() {
-        // Double tap pattern for success
         performer.perform(.alignment, performanceTime: .now)
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
             self?.performer.perform(.alignment, performanceTime: .now)

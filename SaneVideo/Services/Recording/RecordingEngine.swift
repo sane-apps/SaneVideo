@@ -20,35 +20,29 @@ class RecordingEngine: NSObject {
   // Callback to notify when user selects content in picker (PiP can now be shown)
   @MainActor var onContentSelected: (() -> Void)?
 
-  // Audio Level Publisher (Forwarded from AudioService)
   var audioLevelSubject: PassthroughSubject<Float, Never> {
     audioService.audioLevelSubject
   }
 
-  // Helpers
-  // Services
   let cameraService: CameraServiceProtocol
   @RecordingActor var videoWriter: VideoWriterProtocol?
   let screenRecorder: ScreenRecorder
   let audioService: AudioService
   let soundAnalysisService: SoundAnalysisService
 
-  // Thread Safety: Global RecordingActor handle all serialization
-  // This replaces the old manual processingQueue
+  // RecordingActor serializes all recording state.
 
-  // State (Isolated to RecordingActor)
   @RecordingActor var isRecording = false
   @RecordingActor var isPaused = false
   @RecordingActor var isStopping = false  // Flag to prevent rapid restart during concatenation
   @RecordingActor var currentSource: RecordingSource = .camera
   @RecordingActor var pendingSource: RecordingSource?  // Track transition for graceful handoff
   @RecordingActor var isSwitching = false  // Prevention of overlapping switches
-  @RecordingActor var isMicMuted = false  // Mic muting state
+  @RecordingActor var isMicMuted = false
   @RecordingActor var isMicrophoneAudioEnabled = true
   @RecordingActor var outputURL: URL?
   let diskSpaceMonitor = DiskSpaceMonitor()
 
-  // Components
   @RecordingActor let timeCoordinator = RecordingTimeCoordinator()
 
   // Normalize mic audio to match VideoWriter AAC configuration (48 kHz)
@@ -64,19 +58,13 @@ class RecordingEngine: NSObject {
   // nonisolated(unsafe) allows safe cancellation from deinit on any thread
   nonisolated(unsafe) var sourceSwitchTimeoutTask: Task<Void, Never>?
 
-  // Subscriptions
   var cancellables = Set<AnyCancellable>()
 
-  // Task Lifecycle Management (for cancellation on deinit)
-  // nonisolated(unsafe) allows safe cancellation from deinit on any thread
-  // (Task.cancel() is thread-safe)
+  // nonisolated(unsafe) so deinit can cancel it; Task.cancel() is thread-safe.
   nonisolated(unsafe) var activeRecordingTask: Task<Void, Never>?
   nonisolated(unsafe) var activeSwitchTask: Task<Void, Never>?
 
-  // Preview layer for Screen Recording
-  // Must NOT use inline initialization - AVSampleBufferDisplayLayer
-  // requires MainActor/main thread. Inline initializers run during allocation
-  // before Swift can enforce @MainActor isolation.
+  // Not initialized inline: AVSampleBufferDisplayLayer needs the main thread, and inline initializers run before @MainActor isolation applies.
   var screenPreviewLayer: AVSampleBufferDisplayLayer!
 
   override init() {
@@ -185,7 +173,6 @@ class RecordingEngine: NSObject {
       return
     }
 
-    // isTesting is now a class-level property
     if TestEnvironment.isTesting {
       AppLogger.recording.info("🛠️ [TEST] Bypassing real recording engine")
       let tempDir = FileManager.default.temporaryDirectory
@@ -239,8 +226,7 @@ class RecordingEngine: NSObject {
 
     timeCoordinator.reset()
 
-    // Create videoWriter but don't set isRecording until ALL services start successfully
-    // This prevents partial failure states where isRecording=true but no input source
+    // Set isRecording only after every service starts, so a partial failure never leaves it true.
     let renderingService = RenderingService.shared
     self.videoWriter = VideoWriter(renderingService: renderingService, targetSize: targetSize)
     var cameraWasStarted = false
@@ -251,7 +237,6 @@ class RecordingEngine: NSObject {
       self.timeCoordinator.driftTracker = self.videoWriter?.driftTracker
     } catch {
       AppLogger.recording.error("Failed to start video writer: \(error)")
-      // Cleanup on failure
       self.videoWriter = nil
       self.outputURL = nil
       self.timeCoordinator.driftTracker = nil
@@ -261,17 +246,13 @@ class RecordingEngine: NSObject {
       return
     }
 
-    // Start disk space monitor BEFORE setting isRecording
     await MainActor.run { self.diskSpaceMonitor.start() }
 
-    // Start all services BEFORE setting isRecording=true
-    // This ensures we only mark as recording when everything is actually ready
     if initialSource == .camera {
       do {
         try await cameraService.start()
         cameraWasStarted = true
       } catch {
-        // Cleanup on failure - videoWriter was created but camera failed
         AppLogger.recording.error("Camera start failed, cleaning up videoWriter")
         await rollbackFailedStart(cameraWasStarted: cameraWasStarted, screenWasStarted: screenWasStarted)
         await MainActor.run {
@@ -296,7 +277,6 @@ class RecordingEngine: NSObject {
         try await self.screenRecorder.start()
         screenWasStarted = true
       } catch {
-        // Cleanup on failure - videoWriter was created but screen recorder failed
         AppLogger.recording.error("Screen recorder (or camera) start failed, cleaning up videoWriter")
         await rollbackFailedStart(cameraWasStarted: cameraWasStarted, screenWasStarted: screenWasStarted)
         await MainActor.run {
@@ -325,7 +305,6 @@ class RecordingEngine: NSObject {
       await MainActor.run { self.audioService.stop() }
     }
 
-    // Only NOW set isRecording=true after ALL services started successfully
     isRecording = true
     isPaused = false
     isMicrophoneAudioEnabled = includeMicrophoneAudio
@@ -333,7 +312,6 @@ class RecordingEngine: NSObject {
 
 
     if initialSource == .screen {
-      // Start click tracking for auto-zoom feature
       let clickService = await ServiceContainer.shared.clickTrackingService
       await clickService.startTracking()
     }
@@ -440,7 +418,6 @@ class RecordingEngine: NSObject {
 
       isStopping = false
 
-      // Clean up state
       self.videoWriter = nil
       self.outputURL = nil
       self.isMicrophoneAudioEnabled = false
@@ -450,7 +427,6 @@ class RecordingEngine: NSObject {
       return mockURL
     }
 
-    // Cancel any active switch operations
     sourceSwitchTimeoutTask?.cancel()
     sourceSwitchTimeoutTask = nil
 
@@ -465,18 +441,15 @@ class RecordingEngine: NSObject {
     // Stop services first (but don't cleanup until file is saved)
     await screenRecorder.stop()
 
-    // Finish video writer with timeout protection
     let finalURL: URL?
     if let writer = videoWriter {
       do {
-        // Add timeout to finish() to prevent hanging (30 seconds should be plenty)
         finalURL = try await withTimeout(seconds: 30) {
           await writer.finish()
         }
       } catch {
         AppLogger.recording.error("⚠️ VideoWriter finish() timed out or failed: \(error.localizedDescription)")
-        // Even if finish() fails, try to get the file
-        // The file might still be valid even if finish() didn't complete
+        // If finish() fails, the file may still be usable.
         finalURL = outputURL
         AppLogger.recording.warning("Using outputURL as fallback: \(outputURL?.path ?? "nil")")
       }
@@ -484,7 +457,6 @@ class RecordingEngine: NSObject {
       finalURL = nil
     }
 
-    // Save click tracking only if we have a valid file (for auto-zoom feature)
     if let url = finalURL {
       let clickService = await ServiceContainer.shared.clickTrackingService
       _ = try? await clickService.stopTrackingAndSave(to: url)
@@ -534,7 +506,6 @@ class RecordingEngine: NSObject {
   // MARK: - Monitoring
 
   deinit {
-    // Cancel any active tasks
     activeRecordingTask?.cancel()
     activeSwitchTask?.cancel()
     sourceSwitchTimeoutTask?.cancel()
@@ -551,16 +522,13 @@ class RecordingEngine: NSObject {
     guard pipFrameSyncCounter >= pipFrameSyncInterval else { return }
     pipFrameSyncCounter = 0
 
-    // Dispatch to MainActor to get current frames
     Task { @MainActor in
       let pipFrame = ServiceContainer.shared.appState.windowManager.pipWindowFrame
       let screenFrame = self.screenRecorder.recordingFrame
 
-      // Update cached values on RecordingActor
       Task { @RecordingActor in
         self.cachedPiPFrame = pipFrame
         self.cachedScreenFrame = screenFrame
-        // Update VideoWriter with new frame positions
         self.videoWriter?.updatePiPFrame(pipFrame, screenFrame: screenFrame)
       }
     }
@@ -572,7 +540,6 @@ class RecordingEngine: NSObject {
         videoWriter?.updateCameraFrame(pixelBuffer)
       }
 
-      // Sync PiP frame periodically for accurate compositing during screen recording
       if source == .screen {
         syncPiPFrameIfNeeded()
       }

@@ -21,7 +21,6 @@ class AIService {
 
     // MARK: - Timeout Helper
 
-    /// Wraps an async operation with a timeout to prevent indefinite hangs
     private func withTimeout<T: Sendable>(
         seconds: TimeInterval = AIService.aiOperationTimeout,
         operation: @escaping @Sendable () async throws -> T
@@ -36,19 +35,16 @@ class AIService {
                 throw AIError.timeout
             }
 
-            // Return first completed result, cancel the other
             let result = try await group.next()!
             group.cancelAll()
             return result
         }
     }
 
-    /// Generates a title and description based on the video transcript
     func generateTitleAndDescription(transcript: String) async throws -> AIGeneratedContent {
         isGenerating = true
         defer { isGenerating = false }
 
-        // Wrap with timeout to prevent hangs on large transcripts
         return try await withTimeout { [engine] in
             try await engine.generateTitleAndDescription(transcript: transcript)
         }
@@ -78,7 +74,6 @@ class AIService {
         \(transcript)
         """
 
-        // Wrap with timeout to prevent hangs on large transcripts
         return try await withTimeout { [engine] in
             try await engine.analyzeTranscriptForEdits(prompt: prompt)
         }
@@ -105,7 +100,6 @@ class AIService {
         \(originalTexts)
         """
 
-        // Wrap with timeout to prevent hangs on large transcripts
         return try await withTimeout { [engine] in
             try await engine.refineCaptions(captions: captions, prompt: prompt)
         }

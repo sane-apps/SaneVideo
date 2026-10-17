@@ -1,7 +1,6 @@
 @preconcurrency import AVFoundation
 import Accelerate
 
-/// Service for detecting silence in video clips
 actor SilenceDetector {
     struct Configuration {
         /// Threshold in decibels (e.g. -50.0)
@@ -22,12 +21,6 @@ actor SilenceDetector {
     /// Progress callback: (processedSeconds, totalSeconds)
     typealias ProgressHandler = @Sendable (Double, Double) -> Void
 
-    /// Detects silent ranges in a video clip
-    /// - Parameters:
-    ///   - clip: The video clip to analyze
-    ///   - config: Detection configuration
-    ///   - progressHandler: Optional callback for progress updates
-    /// - Returns: Array of time ranges where silence was detected
     func detectSilence(
         in clip: VideoClip,
         config: Configuration = .default,
@@ -46,7 +39,6 @@ actor SilenceDetector {
         
         let asset = AVURLAsset(url: audioURL)
 
-        // Load audio track
         let tracks = try await asset.loadTracks(withMediaType: .audio)
         guard let track = tracks.first else {
             await MainActor.run {
@@ -59,7 +51,6 @@ actor SilenceDetector {
             AppLogger.project.debug("Silence detection: Found audio track, setting up reader...")
         }
 
-        // Setup Reader
         let settings: [String: Any] = [
             AVFormatIDKey: kAudioFormatLinearPCM,
             AVLinearPCMBitDepthKey: 16,
@@ -89,20 +80,17 @@ actor SilenceDetector {
         var regionBufferCount = 0
         var regionLoudCount = 0
 
-        // Helper to convert linear amplitude to dB
         func toDB(_ amplitude: Float) -> Float {
             return 20.0 * log10(max(amplitude, 0.0001))
         }
 
-        // Process samples
         var lastProgressUpdate = Date()
         var processedBuffers = 0
         let startTime = Date()
-        let maxProcessingTime: TimeInterval = 300.0 // 5 minutes max
+        let maxProcessingTime: TimeInterval = 300.0
         AppLogger.project.debug("🔇 SilenceDetector: Starting buffer loop...")
 
         while reader.status == .reading {
-            // ROBUSTNESS: Check for timeout
             if Date().timeIntervalSince(startTime) > maxProcessingTime {
                 await MainActor.run {
                     AppLogger.project.warning("⚠️ Silence detection: Timeout after 5 minutes, stopping analysis")
@@ -110,7 +98,6 @@ actor SilenceDetector {
                 break
             }
             
-            // ROBUSTNESS: Check for cancellation
             if Task.isCancelled {
                 await MainActor.run {
                     AppLogger.project.info("🔇 Silence detection: Cancelled by user")
@@ -118,7 +105,6 @@ actor SilenceDetector {
                 break
             }
             
-            // ROBUSTNESS: Yield periodically
             if processedBuffers % 1000 == 0 {
                 await Task.yield()
             }
@@ -140,24 +126,19 @@ actor SilenceDetector {
             var scale: Float = 1.0 / Float(Int16.max)
             vDSP_vsmul(floatSamples, 1, &scale, &normalized, 1, vDSP_Length(sampleCount))
             
-            // Calculate RMS using vDSP (much faster than manual loop)
             var rms: Float = 0
             vDSP_rmsqv(normalized, 1, &rms, vDSP_Length(sampleCount))
             
-            // Convert to dB
             let db = toDB(rms)
             
-            // Check if silent
             let isBufferSilent = db <= config.dbThreshold
 
-            // Time logic
             let bufferTime = CMSampleBufferGetPresentationTimeStamp(buffer)
             processedBuffers += 1
             if processedBuffers % 100 == 0 {
                  AppLogger.project.debug("🔇 SilenceDetector: Processed \(processedBuffers) buffers (at \(bufferTime.seconds)s)")
             }
 
-            // Report progress periodically (every 2 seconds)
             let now = Date()
             if now.timeIntervalSince(lastProgressUpdate) >= 2.0 {
                 lastProgressUpdate = now
@@ -192,7 +173,7 @@ actor SilenceDetector {
             }
         }
 
-        // Check finding silence at the end
+        // Close a silence region still open at the end.
         if let start = silenceStart {
             let end = clip.duration
             let duration = CMTimeSubtract(end, start)
@@ -201,12 +182,10 @@ actor SilenceDetector {
             }
         }
 
-        // Apply margin: shrink each range by margin on both sides
         if config.margin > 0 {
             silentRanges = Self.applyMargin(silentRanges, margin: config.margin)
         }
 
-        // Log result summary
         let readerStatus = reader.status
         let rangeCount = silentRanges.count
         let rangesEmpty = silentRanges.isEmpty
@@ -232,7 +211,6 @@ actor SilenceDetector {
         }
     }
 
-    /// Checks whether a media file has at least one audio track
     static func hasAudioTrack(url: URL) async -> Bool {
         let asset = AVURLAsset(url: url)
         let tracks = try? await asset.loadTracks(withMediaType: .audio)

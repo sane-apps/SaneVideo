@@ -12,7 +12,6 @@ enum ThumbnailStylingService {
         let contrast: Double
     }
     
-    /// Apply style filters to an image
     static func applyStyle(
         to image: NSImage,
         style: ThumbnailStyle,
@@ -23,10 +22,8 @@ enum ThumbnailStylingService {
         guard let tiffData = image.tiffRepresentation,
               let ciImage = CIImage(data: tiffData) else { return nil }
         
-        // Apply filters
         var filtered = ciImage
         
-        // Color controls
         if let colorFilter = CIFilter(name: "CIColorControls") {
             colorFilter.setValue(filtered, forKey: kCIInputImageKey)
             colorFilter.setValue(saturation, forKey: kCIInputSaturationKey)
@@ -37,14 +34,12 @@ enum ThumbnailStylingService {
             }
         }
         
-        // Temperature for warm/cool
         if style == .warm {
             filtered = applyWarmTint(to: filtered)
         } else if style == .cool {
             filtered = applyCoolTint(to: filtered)
         }
         
-        // Render
         guard let cgImage = context.createCGImage(filtered, from: filtered.extent) else { return nil }
         return NSImage(cgImage: cgImage, size: image.size)
     }
@@ -70,10 +65,8 @@ enum ThumbnailStylingService {
         let newImage = NSImage(size: image.size)
         newImage.lockFocus()
         
-        // Draw original
         image.draw(in: NSRect(origin: .zero, size: image.size))
         
-        // Draw gradient background for text
         let gradientHeight: CGFloat = image.size.height * 0.25
         let gradientRect = NSRect(x: 0, y: 0, width: image.size.width, height: gradientHeight)
         
@@ -82,7 +75,6 @@ enum ThumbnailStylingService {
             gradient.draw(in: gradientRect, angle: 90)
         }
         
-        // Draw text
         let fontSize = min(image.size.width / 15, 60)
         let attributes: [NSAttributedString.Key: Any] = [
             .font: NSFont.systemFont(ofSize: fontSize, weight: .bold),
@@ -101,7 +93,6 @@ enum ThumbnailStylingService {
         return newImage
     }
     
-    /// Get preset values for a style
     static func presetValues(for style: ThumbnailStyle) -> StylePreset {
         switch style {
         case .original:

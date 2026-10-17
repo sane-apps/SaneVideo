@@ -6,7 +6,6 @@ import UniformTypeIdentifiers
 // MARK: - Export Menu Functions
 
 extension MainContentView {
-  /// Export as animated GIF
   func exportAsGIF() {
     guard let project = appState.projectState.currentProject,
       let clip = project.timeline.tracks.first?.clips.first
@@ -41,7 +40,6 @@ extension MainContentView {
     }
   }
 
-  /// Export transcript as PDF
   func exportTranscriptPDF() {
     guard let project = appState.projectState.currentProject else {
       ServiceContainer.shared.toastManager.show(
@@ -86,7 +84,6 @@ extension MainContentView {
     }
   }
 
-  /// Generate AI thumbnail
   func generateThumbnail() {
     guard let project = appState.projectState.currentProject,
       let clip = project.timeline.tracks.first?.clips.first
@@ -106,7 +103,6 @@ extension MainContentView {
         let image = try await ServiceContainer.shared.thumbnailService.generateBestThumbnail(
           for: clip.url)
         await MainActor.run {
-          // Copy to clipboard
           NSPasteboard.general.clearContents()
           NSPasteboard.general.writeObjects([image.value])
           ServiceContainer.shared.toastManager.show(
@@ -125,7 +121,6 @@ extension MainContentView {
     }
   }
 
-  /// Generate voiceover from captions
   func generateVoiceover() {
     guard let project = appState.projectState.currentProject else {
       ServiceContainer.shared.toastManager.show("No project open", type: .error)
@@ -177,11 +172,9 @@ extension MainContentView {
   @ViewBuilder
   func MagicOverlayView() -> some View {
     VStack {
-      // Enhanced Magic Fix Progress Overlay
       EnhancedMagicOverlayView()
         .padding()
       
-      // Enhanced Thermal Status Indicator
       if ThermalManager.shared.isThermalPressureHigh {
         ThermalStatusIndicator()
           .padding()

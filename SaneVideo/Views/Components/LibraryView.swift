@@ -1,5 +1,3 @@
-// Library view for importing and managing clips in the sidebar
-
 import SwiftUI
 import UniformTypeIdentifiers
 
@@ -11,12 +9,10 @@ struct LibraryView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // Import section with labels and high contrast
             importHeader
             
             Divider()
 
-            // Clips header
             HStack {
                 Text(String(localized: "sidebar.clips.header", defaultValue: "Project Clips"))
                     .font(.caption)
@@ -31,14 +27,12 @@ struct LibraryView: View {
 
             Divider()
 
-            // Clips list
             clipsListView
         }
     }
 
     private var importHeader: some View {
-        // Processing progress is shown in the Inspector panel (Magic Fix section)
-        // where the user initiates operations - single source of truth for progress
+        // Processing progress lives in the Inspector (Magic Fix section), where the user starts operations.
         HStack(spacing: 8) {
             ImportButtonGroup()
             Spacer()

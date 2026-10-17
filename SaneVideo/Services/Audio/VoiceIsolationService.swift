@@ -2,7 +2,6 @@
 import Combine
 import OSLog
 
-/// Error types for voice isolation
 enum VoiceIsolationError: Error, LocalizedError {
     case instantiationFailed
     case timeout
@@ -26,13 +25,10 @@ final class VoiceIsolationService: @unchecked Sendable {
     
     private let logger = Logger(subsystem: "com.sanevideo.SaneVideo", category: "VoiceIsolation")
     
-    /// The Audio Unit for sound isolation
     private var isolationUnit: AVAudioUnit?
     
-    /// Whether voice isolation is currently active and initialized
     private(set) var isReady = false
     
-    /// Timeout for AUSoundIsolation instantiation (from centralized config)
     private var instantiationTimeoutSeconds: UInt64 {
         UInt64(AppConstants.MagicFeatures.voiceIsolationTimeout)
     }
@@ -47,7 +43,6 @@ final class VoiceIsolationService: @unchecked Sendable {
     
     // MARK: - Public Interface
     
-    /// Prepares the isolation unit asynchronously with timeout protection
     func prepareIsolationUnit() async {
         guard isolationUnit == nil else { return }
         
@@ -64,7 +59,6 @@ final class VoiceIsolationService: @unchecked Sendable {
         do {
             // Use timeout protection: AUSoundIsolation can hang on macOS 26
             isolationUnit = try await withThrowingTaskGroup(of: AVAudioUnit.self) { group in
-                // Task 1: Attempt instantiation
                 group.addTask {
                     try await withCheckedThrowingContinuation { continuation in
                         AVAudioUnit.instantiate(with: desc, options: []) { unit, error in
@@ -79,13 +73,11 @@ final class VoiceIsolationService: @unchecked Sendable {
                     }
                 }
                 
-                // Task 2: Timeout
                 group.addTask {
                     try await Task.sleep(nanoseconds: self.instantiationTimeoutSeconds * 1_000_000_000)
                     throw VoiceIsolationError.timeout
                 }
                 
-                // Return the first successful result, cancel the other
                 let result = try await group.next()!
                 group.cancelAll()
                 return result
@@ -102,17 +94,14 @@ final class VoiceIsolationService: @unchecked Sendable {
         }
     }
     
-    /// Returns the isolation unit to be added to an AVAudioEngine graph
     func getAudioUnit() -> AVAudioUnit? {
         return isolationUnit
     }
     
     /// Sets the isolation intensity (0.0 to 1.0)
-    /// Note: Not all Audio Units support this, but AUSoundIsolation often has a wet/dry or similar parameter
     func setIntensity(_ intensity: Float) {
         guard let unit = isolationUnit else { return }
         // AUSoundIsolation typically has a "Voice Isolation" parameter at index 0
-        // We set it to the requested intensity
         AudioUnitSetParameter(unit.audioUnit, 0, kAudioUnitScope_Global, 0, intensity, 0)
     }
 }

@@ -49,8 +49,6 @@ extension View {
                         .fixedSize()
                         .sanePanel(radius: 10, emphasized: true, accent: Theme.Colors.accentSoft)
                         .allowsHitTesting(false)
-                        // Position above the anchor
-                        // We center horizontally (rect.midX) and place above (rect.minY - 10)
                         .position(x: rect.midX, y: rect.minY - 20)
                         .zIndex(1000)
                 }

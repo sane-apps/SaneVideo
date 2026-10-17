@@ -2,14 +2,13 @@ import AVFoundation
 import SwiftUI
 
 struct CanvasOverlay: View {
-    let clip: VideoClip? // Optional: Can interact with captions even if no clip selected
+    let clip: VideoClip? // Optional: captions can be moved even when no clip is selected.
     var projectState: ProjectState
 
-    // Local state for "Ghost" manipulation during gesture
+    // Local state while a gesture is in progress.
     @State private var localTranslation: CGSize = .zero
     @State private var localScale: CGFloat = 1.0
 
-    // Interaction Mode
     enum InteractionTarget: Equatable {
         case none
         case clip
@@ -34,13 +33,11 @@ struct CanvasOverlay: View {
                                 DragGesture()
                                     .onChanged { value in
                                         if interactionTarget == .none {
-                                            // Determine target on first drag event
                                             let startPoint = value.startLocation
                                             let normalizedStart = CGPoint(x: startPoint.x / geo.size.width, y: startPoint.y / geo.size.height)
 
-                                            // 1. Check Overlays (Top z-index)
+                                            // Overlays sit on top, so hit-test them first.
                                             if let clip = clip {
-                                                // iterate in reverse to hit top-most first
                                                 for overlay in clip.overlays.reversed() {
                                                     let rect = overlay.normalizedHitFrame
 
@@ -51,7 +48,6 @@ struct CanvasOverlay: View {
                                                 }
                                             }
 
-                                            // 2. Check Caption Geometry
                                             let currentOffset = projectState.currentProject?.captionOffset ?? .zero
                                             let capRect = CGRect(
                                                 x: 0.1 + currentOffset.width,
@@ -92,7 +88,6 @@ struct CanvasOverlay: View {
                                             projectState.updateClipTransform(clip, transform: newTransform)
                                         }
 
-                                        // Reset
                                         localTranslation = .zero
                                         localRotation = .zero
                                         interactionTarget = .none
@@ -100,7 +95,6 @@ struct CanvasOverlay: View {
 
                                 MagnificationGesture()
                                     .onChanged { scale in
-                                        // If none selected, default to clip? Or require tap?
                                         if interactionTarget == .none, clip != nil {
                                             interactionTarget = .clip
                                         }
@@ -110,7 +104,6 @@ struct CanvasOverlay: View {
                                         if case let .overlay(id) = interactionTarget, let clip = clip, let overlay = clip.overlays.first(where: { $0.id == id }) {
                                             var newOverlay = overlay
                                             newOverlay.scale *= scale
-                                            // Clamp
                                             newOverlay.scale = max(0.1, min(5.0, newOverlay.scale))
                                             projectState.updateClipOverlay(clipId: clip.id, overlay: newOverlay)
 
@@ -135,16 +128,11 @@ struct CanvasOverlay: View {
                                         projectState.updateClipOverlay(clipId: clip.id, overlay: newOverlay)
                                     }
                                     localRotation = .zero
-                                    // Don't reset interactionTarget if we want continous editing?
-                                    // Gesture composition usually ends all.
                                     interactionTarget = .none
                                 }
                         )
                     )
 
-                // Visual Feedback
-
-                // 1. Caption Box - Only show when clip has captions or actively interacting
                 if let project = projectState.currentProject,
                    let selectedClip = clip,
                    !selectedClip.captions.isEmpty || interactionTarget == .caption {
@@ -169,7 +157,6 @@ struct CanvasOverlay: View {
                         .opacity(interactionTarget == .caption ? 1.0 : 0.3)
                 }
 
-                // 2. Overlays (Stickers)
                 if let clip = clip {
                     ForEach(clip.overlays) { overlay in
                         let isInteracting = (interactionTarget == .overlay(overlay.id))
@@ -180,7 +167,6 @@ struct CanvasOverlay: View {
                         let currentScale = overlay.scale * scaleFactor
                         let currentRotation = Angle(radians: overlay.rotation) + rotationDelta
 
-                        // Hit Box / Selection Box
                         Rectangle()
                             .strokeBorder(isInteracting ? Color.accentColor : Color.white.opacity(0.5), style: StrokeStyle(lineWidth: 2, dash: [5]))
                             .background(Color.black.opacity(0.01)) // catch hits
@@ -198,9 +184,7 @@ struct CanvasOverlay: View {
                     }
                 }
 
-                // 3. Clip Crosshair - ONLY show during ACTIVE drag/scale manipulation
-                // Only show crosshair when actively manipulating (translation or scale changed)
-                // This prevents crosshair from showing when clip is just selected but not being dragged
+                // Crosshair only while the clip is being dragged or scaled, not when merely selected.
                 if interactionTarget == .clip && (localTranslation != .zero || localScale != 1.0) {
                     ZStack {
                         Circle()

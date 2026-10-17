@@ -1,10 +1,6 @@
-// Unified error handling across the application
-
 import Foundation
 
-/// Unified error type for the entire application
 enum AppError: LocalizedError, Identifiable {
-    // Camera errors
     case cameraUnavailable
     case cameraPermissionDenied
     case cameraPermissionPromptShown
@@ -12,7 +8,6 @@ enum AppError: LocalizedError, Identifiable {
     case noCameraFound
     case cameraSetupFailed(Error)
 
-    // Recording errors
     case recordingEngineError(String)
     case recordingStartFailed(Error)
     case recordingStopFailed(Error)
@@ -22,12 +17,10 @@ enum AppError: LocalizedError, Identifiable {
     case microphonePermissionPromptShown
     case microphonePermissionRestricted
 
-    // Export errors
     case exportFailed(Error)
     case exportCancelled
     case compositionFailed(Error)
 
-    // File/Project errors
     case fileAccessDenied
     case projectLoadFailed(Error)
     case projectSaveFailed(Error)
@@ -35,13 +28,10 @@ enum AppError: LocalizedError, Identifiable {
     case diskSpaceLow
     case clipNotFound
 
-    // Screen capture errors
     case screenCaptureUnavailable // User cancelled picker or system error
 
-    // Vision errors
     case visionError(String)
 
-    // Unknown
     case captionGenerationFailed(String)
     case unknown(Error)
 
@@ -49,7 +39,6 @@ enum AppError: LocalizedError, Identifiable {
         switch self {
         case let .visionError(reason):
             "Vision analysis failed: \(reason)"
-        // Camera
         case .cameraUnavailable:
             "Camera is not available"
         case .cameraPermissionDenied:
@@ -62,7 +51,6 @@ enum AppError: LocalizedError, Identifiable {
             "Failed to setup camera: \(error.localizedDescription)"
         case .cameraPermissionPromptShown:
             "Camera permission requested"
-        // Recording
         case let .recordingEngineError(message):
             "Recording error: \(message)"
         case let .recordingStartFailed(error):
@@ -79,14 +67,12 @@ enum AppError: LocalizedError, Identifiable {
             "Microphone permission requested"
         case .microphonePermissionRestricted:
             "Microphone access restricted"
-        // Export
         case let .exportFailed(error):
             "Export failed: \(error.localizedDescription)"
         case .exportCancelled:
             "Export was cancelled"
         case let .compositionFailed(error):
             "Failed to compose video: \(error.localizedDescription)"
-        // File/Project
         case .fileAccessDenied:
             "File access denied"
         case let .projectLoadFailed(error):
@@ -99,7 +85,6 @@ enum AppError: LocalizedError, Identifiable {
             "Not enough disk space"
         case .clipNotFound:
             "Video clip not found"
-        // Screen capture
         case .screenCaptureUnavailable:
             "Screen & System Audio Recording permission is required."
         case let .captionGenerationFailed(reason):
@@ -164,7 +149,6 @@ enum AppError: LocalizedError, Identifiable {
         }
     }
 
-    /// Whether this error should be logged to diagnostics
     var shouldLog: Bool {
         switch self {
         case .exportCancelled:

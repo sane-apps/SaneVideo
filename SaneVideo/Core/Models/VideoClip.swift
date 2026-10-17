@@ -1,38 +1,27 @@
-// Domain model representing a video clip with editing state
-// Optimized for Apple Silicon M1+ with value semantics and lazy asset loading
-
 import AVFoundation
 import Foundation
 
-/// A video clip in the timeline with trim and filter settings
-/// Note: Value type (struct) for better performance, memory safety, and copy-on-write semantics
-/// Sendable for safe cross-actor usage (Swift 6 compliance)
 struct VideoClip: Identifiable, Equatable, Hashable, Codable, Sendable {
   let id: UUID
   var url: URL
   var duration: CMTime
 
-  // Playback
   var startTime: CMTime = .zero
   var trimStart: CMTime = .zero
   var trimEnd: CMTime  // Initialized to duration
   var volume: Float = 1.0
   var isMuted: Bool = false
   var speed: Double = 1.0
-  var thumbnailURL: URL?  // Smart Thumbnail
+  var thumbnailURL: URL?
 
-  // Visual
   var rotation: Rotation = .none
 
-  var opacity: Double = 1.0  // New property
+  var opacity: Double = 1.0
 
-  // Effects
   var effects: [VideoEffect] = []
 
-  // Privacy
   var privacyRegions: [PrivacyRegion] = []
 
-  // Advanced Features
   var transition: VideoTransition?
   var overlays: [VideoOverlay] = []
   var keyframeAnimation: KeyframeAnimation?
@@ -44,10 +33,8 @@ struct VideoClip: Identifiable, Equatable, Hashable, Codable, Sendable {
   var keystrokeDataURL: URL?  // Shortcut and navigation key sidecar
   var interactionOverlayStyle: InteractionOverlayStyle = .init()
 
-  // Background Effects (Person Segmentation)
   var backgroundEffect: BackgroundEffect?
 
-  // Audio Enhancement (Studio Sound)
   var enhancedAudioURL: URL?
 
   // Security Scoped Bookmark
@@ -57,12 +44,11 @@ struct VideoClip: Identifiable, Equatable, Hashable, Codable, Sendable {
   var removedRanges: [CodableTimeRange] = []
   var useSmoothCutForRemovals: Bool = false
 
-  // AI Audio Settings
   var isVoiceIsolationEnabled: Bool = false
   var isGatingEnabled: Bool = false
 
   // Runtime State (Not Persisted)
-  var isMissing: Bool = false  // Tracks if file is offline/missing
+  var isMissing: Bool = false
 
   /// Flattened list of all words from all captions (for filler detection)
   var allWords: [CaptionWord] {
@@ -97,7 +83,6 @@ struct VideoClip: Identifiable, Equatable, Hashable, Codable, Sendable {
 
   // MARK: - Initialization
 
-  /// Initialize with URL and duration
   /// Note: Bookmarks should be managed externally by ProjectFileManager
   init(
     url: URL, duration: CMTime, startTime: CMTime = .zero, trimStart: CMTime = .zero,
@@ -112,10 +97,8 @@ struct VideoClip: Identifiable, Equatable, Hashable, Codable, Sendable {
     self.bookmarkData = bookmarkData
   }
 
-  /// Create a copy of this clip with a new ID and optional trim adjustments
   /// Used when splitting clips to ensure all properties are preserved
   func copy(newId: UUID? = nil, trimStart: CMTime? = nil, trimEnd: CMTime? = nil) -> VideoClip {
-    // Use the full initializer that accepts id
     var copy = VideoClip(
       id: newId ?? UUID(),
       url: self.url,
@@ -133,7 +116,6 @@ struct VideoClip: Identifiable, Equatable, Hashable, Codable, Sendable {
       thumbnailURL: self.thumbnailURL
     )
 
-    // Override trimEnd if provided
     if let trimEnd = trimEnd {
       copy.trimEnd = trimEnd
     }
@@ -159,7 +141,6 @@ struct VideoClip: Identifiable, Equatable, Hashable, Codable, Sendable {
     return copy
   }
 
-  // Internal init for full property setting
   init(
     id: UUID, url: URL, duration: CMTime, trimStart: CMTime, trimEnd: CMTime, startTime: CMTime,
     volume: Float, speed: Double, isMuted: Bool, captions: [Caption] = [],
@@ -331,13 +312,11 @@ struct VideoClip: Identifiable, Equatable, Hashable, Codable, Sendable {
     case keystrokeDataURL
     case interactionOverlayStyle
     case backgroundEffect
-    // Add effects to coding keys
     case effects
     case privacyRegions
     case isVoiceIsolationEnabled
     case isGatingEnabled
     case thumbnailURL
-    // Add missing keys
     case opacity
     case enhancedAudioURL
     case keyframeAnimation
@@ -383,7 +362,6 @@ struct VideoClip: Identifiable, Equatable, Hashable, Codable, Sendable {
     backgroundEffect = try container.decodeIfPresent(
       BackgroundEffect.self, forKey: .backgroundEffect)
 
-    // Decode effects
     effects = try container.decodeIfPresent([VideoEffect].self, forKey: .effects) ?? []
 
     privacyRegions =
@@ -393,7 +371,6 @@ struct VideoClip: Identifiable, Equatable, Hashable, Codable, Sendable {
     isGatingEnabled = try container.decodeIfPresent(Bool.self, forKey: .isGatingEnabled) ?? false
     thumbnailURL = try container.decodeIfPresent(URL.self, forKey: .thumbnailURL)
 
-    // Decode missing properties
     opacity = try container.decodeIfPresent(Double.self, forKey: .opacity) ?? 1.0
     enhancedAudioURL = try container.decodeIfPresent(URL.self, forKey: .enhancedAudioURL)
     keyframeAnimation = try container.decodeIfPresent(
@@ -416,7 +393,6 @@ struct VideoClip: Identifiable, Equatable, Hashable, Codable, Sendable {
     try container.encode(transform, forKey: .transform)
     try container.encodeIfPresent(transition, forKey: .transition)
     try container.encode(overlays, forKey: .overlays)
-    // Persist effects
     try container.encode(effects, forKey: .effects)
     try container.encodeIfPresent(bookmarkData, forKey: .bookmarkData)
     try container.encode(removedRanges, forKey: .removedRanges)
@@ -431,7 +407,6 @@ struct VideoClip: Identifiable, Equatable, Hashable, Codable, Sendable {
     try container.encode(isGatingEnabled, forKey: .isGatingEnabled)
     try container.encodeIfPresent(thumbnailURL, forKey: .thumbnailURL)
 
-    // Encode missing properties
     try container.encode(opacity, forKey: .opacity)
     try container.encodeIfPresent(enhancedAudioURL, forKey: .enhancedAudioURL)
     try container.encodeIfPresent(keyframeAnimation, forKey: .keyframeAnimation)

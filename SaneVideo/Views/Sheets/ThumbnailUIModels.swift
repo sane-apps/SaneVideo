@@ -2,7 +2,6 @@
 @preconcurrency import AVFoundation
 import SwiftUI
 
-/// Thumbnail style presets
 enum ThumbnailStyle: String, CaseIterable, Identifiable {
     case original = "thumbnail.style.original"
     case vibrant = "thumbnail.style.vibrant"

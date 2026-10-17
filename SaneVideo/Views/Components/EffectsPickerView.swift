@@ -1,5 +1,3 @@
-// Redesigned: Direct effect tiles using Apple's CIFilter effects
-
 import CoreMedia
 import SwiftUI
 
@@ -24,11 +22,6 @@ struct EffectsPickerView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            // Removed duplicate Auto-Grade button
-            // This feature is already accessible in Smart Tools as "Auto Color"
-            // Having it in two places was confusing users
-
-            // Active effects (if any) - shown at top with sliders
             if !effects.isEmpty {
                 VStack(spacing: 4) {
                     ForEach(effects) { effect in
@@ -43,7 +36,6 @@ struct EffectsPickerView: View {
                 Divider()
             }
 
-            // Category tabs
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 6) {
                     ForEach(EffectCategory.allCases, id: \.self) { category in
@@ -72,8 +64,6 @@ struct EffectsPickerView: View {
                 }
             }
 
-            // Effect tiles with live previews showing what each filter does
-            // Increased spacing and added contentShape to fix click target issues
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 70), spacing: 12)], spacing: 12) {
                 ForEach(effectsForCategory) { effectType in
                     EffectTile(
@@ -81,14 +71,13 @@ struct EffectsPickerView: View {
                         isActive: effects.contains { $0.type == effectType },
                         id: "effects.tile.\(effectType.rawValue)",
                         onTap: { toggleEffect(effectType) },
-                        previewImage: previewThumbnail  // Show effect preview on actual clip frame
+                        previewImage: previewThumbnail
                     )
                     .contentShape(Rectangle()) // Ensure hit area matches visual bounds
                 }
             }
         }
         .task(id: clip.id) {
-            // Load a preview thumbnail for effect previews
             await loadPreviewThumbnail()
         }
         // Also reload thumbnail when clip URL changes (file relinked)
@@ -105,9 +94,7 @@ struct EffectsPickerView: View {
                 self.effects = newEffects
             }
         }
-        // Validate clip exists before operations
         .onChange(of: clip.id) { _, _ in
-            // Clip changed, sync effects
             self.effects = clip.effects
         }
     }
@@ -115,7 +102,6 @@ struct EffectsPickerView: View {
     // MARK: - Actions
 
     private func toggleEffect(_ type: VideoEffectType) {
-        // Validate clip before toggling effect
         guard !clip.isMissing else {
             ServiceContainer.shared.toastManager.show(
                 "Cannot apply effect: Clip file is missing. Use 'Locate File' in Clip Info to relink the file.",
@@ -125,10 +111,8 @@ struct EffectsPickerView: View {
         }
 
         if let index = effects.firstIndex(where: { $0.type == type }) {
-            // Remove if already active
             effects.remove(at: index)
         } else {
-            // Add with default intensity
             let effect = VideoEffect(type: type)
             effects.append(effect)
         }
@@ -143,14 +127,12 @@ struct EffectsPickerView: View {
     private func updateEffectIntensity(_ id: UUID, intensity: Float) {
         if let index = effects.firstIndex(where: { $0.id == id }) {
             effects[index].intensity = intensity
-            // INSTANT PREVIEW: Save immediately for real-time slider feedback
-            // No debouncing - user wants to see effect changes as they drag
+            // Save on every change, without debouncing, so effects update live while dragging.
             saveEffects()
         }
     }
 
     private func saveEffects() {
-        // Validate clip before saving effects
         guard !clip.isMissing else {
             ServiceContainer.shared.toastManager.show(
                 "Cannot save effects: Clip file is missing. Use 'Locate File' in Clip Info to relink the file.",
@@ -161,18 +143,15 @@ struct EffectsPickerView: View {
         appState.projectState.updateClipEffects(clipId: clip.id, effects: effects)
     }
 
-    /// Load a preview thumbnail from the clip for effect previews
     private func loadPreviewThumbnail() async {
         guard !clip.isMissing else {
-            // Clear thumbnail if clip is missing
             await MainActor.run {
                 self.previewThumbnail = nil
             }
             return
         }
 
-        // Use original time mapping to get correct frame from source file
-        // Use middle of effective duration, then map to original time
+        // Use the middle of the effective duration, mapped back to source time.
         let effectiveMidTime = CMTime(seconds: clip.effectiveDuration.seconds * 0.5, preferredTimescale: 600)
         let originalTime = clip.originalTime(forEffectiveTime: effectiveMidTime) ?? clip.trimStart
 
@@ -187,7 +166,6 @@ struct EffectsPickerView: View {
                 self.previewThumbnail = thumbnail.value
             }
         } else {
-            // Log failure for debugging
             AppLogger.general.warning("Failed to load preview thumbnail for effect tiles (clip: \(clip.id))")
         }
     }
@@ -200,9 +178,8 @@ struct EffectTile: View {
     let isActive: Bool
     let id: String
     let onTap: () -> Void
-    var previewImage: NSImage?  // Optional preview frame from clip
+    var previewImage: NSImage?
 
-    // State for hover preview
     @State private var isHovering = false
     @State private var filteredPreview: NSImage?
 
@@ -210,7 +187,6 @@ struct EffectTile: View {
         Button(action: onTap, label: {
             VStack(spacing: 4) {
                 ZStack {
-                    // Show actual effect preview if we have a sample frame
                     if let preview = filteredPreview ?? previewImage {
                         Image(nsImage: preview)
                             .resizable()
@@ -223,7 +199,6 @@ struct EffectTile: View {
                             )
                             .saturation(isActive ? 1.0 : 0.8)  // Slight desaturation when inactive
                     } else {
-                        // Fallback to icon-based tile
                         RoundedRectangle(cornerRadius: 8)
                             .fill(isActive ? Color.accentColor.opacity(0.2) : Color.stone.opacity(0.15))
                             .frame(width: 64, height: 64)
@@ -237,7 +212,6 @@ struct EffectTile: View {
                             .foregroundColor(isActive ? .accentColor : .primary)
                     }
 
-                    // Checkmark badge when active
                     if isActive {
                         VStack {
                             HStack {
@@ -262,8 +236,7 @@ struct EffectTile: View {
             }
         })
         .buttonStyle(.plain)
-        // Removed .hoverScale(1.1), .pressScale(), and .shadow()
-        // These were causing visual clutter (double yellow box) and click target issues
+        // No hover/press scale or shadow: they caused a double yellow box and click target problems.
         .animation(.smoothUI, value: isActive)
         .help(isActive ?
             String(localized: "effects.tile.remove", defaultValue: "Remove") + " \(effectType.displayName)" :
@@ -272,16 +245,14 @@ struct EffectTile: View {
         .accessibilityLabel(effectType.displayName)
         .accessibilityHint(isActive ? "Remove \(effectType.displayName) effect" : "Apply \(effectType.displayName) effect")
         .accessibilityValue(isActive ? "Active" : "Inactive")
-        // REMOVED: .focusable() - was adding macOS focus ring (double yellow box)
+        // No .focusable(): it adds a second yellow focus ring.
         .task(id: previewImage) {
-            // Generate filtered preview when we have a source image
             if let sourceImage = previewImage {
                 filteredPreview = applyEffectToPreview(sourceImage)
             }
         }
     }
 
-    /// Apply this effect type to a preview image
     private func applyEffectToPreview(_ source: NSImage) -> NSImage? {
         guard let cgImage = source.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
             return source
@@ -321,18 +292,15 @@ struct ActiveEffectRow: View {
 
     var body: some View {
         HStack(spacing: 6) {
-            // Icon
             Image(systemName: effect.type.icon)
                 .font(.system(size: 12))
                 .foregroundColor(.accentColor)
                 .frame(width: 18)
 
-            // Name
             Text(effect.type.displayName)
                 .font(.caption2)
                 .frame(width: 50, alignment: .leading)
 
-            // Slider (if adjustable)
             if !effect.type.isBinary {
                 Slider(value: $intensity, in: effect.type.intensityRange)
                     .controlSize(.small)
@@ -348,7 +316,6 @@ struct ActiveEffectRow: View {
                     .foregroundColor(Color.stone)
             }
 
-            // Remove button
             Button(action: onRemove, label: {
                 Image(systemName: "xmark")
                     .font(.system(size: 9, weight: .bold))
@@ -365,6 +332,6 @@ struct ActiveEffectRow: View {
             RoundedRectangle(cornerRadius: 6)
                 .stroke(Color.accentColor.opacity(0.2), lineWidth: 1)
         )
-        // REMOVED: .smoothAppear() - animation can cause layout shifts
+        // No .smoothAppear(): its animation shifts layout.
     }
 }

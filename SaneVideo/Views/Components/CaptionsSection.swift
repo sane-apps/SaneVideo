@@ -1,5 +1,3 @@
-// 2025-12-31: Simplified to quick access. Full caption editing in Transcript sidebar tab.
-
 import AVFoundation
 import SwiftUI
 
@@ -14,13 +12,11 @@ struct CaptionsSection: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            // Header
             HStack {
                 Label("Captions", systemImage: "text.bubble")
                     .font(.headline)
                 Spacer()
 
-                // Quick style indicator
                 if let project = appState.projectState.currentProject {
                     Text(project.captionStyle.name)
                         .font(.caption)
@@ -32,7 +28,6 @@ struct CaptionsSection: View {
                 }
             }
 
-            // Status & Quick Action
             if clip.captions.isEmpty {
                 emptyCaptionsView
             } else {
@@ -87,7 +82,6 @@ struct CaptionsSection: View {
 
     private var captionsReadyView: some View {
         VStack(alignment: .leading, spacing: 10) {
-            // Status
             HStack {
                 Label("\(clip.captions.count) captions", systemImage: "checkmark.circle.fill")
                     .font(.caption)
@@ -95,7 +89,6 @@ struct CaptionsSection: View {
                 Spacer()
             }
 
-            // Redirect to Transcript tab
             HStack(spacing: 8) {
                 Image(systemName: "arrow.right.circle")
                     .foregroundColor(.accentColor)

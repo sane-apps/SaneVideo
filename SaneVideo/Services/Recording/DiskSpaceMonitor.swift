@@ -22,7 +22,6 @@ final class DiskSpaceMonitor {
                 guard let self = self else { return }
                 self.check()
 
-                // Wait 10 seconds
                 try? await Task.sleep(nanoseconds: 10_000_000_000)
             }
         }
@@ -33,7 +32,6 @@ final class DiskSpaceMonitor {
         monitoringTask = nil
     }
 
-    // Public verification for pre-flight checks
     // Thread-safe - no state access, can be called from any context
     nonisolated func verifyDiskSpace() throws {
         guard let moviesDir = FileManager.default.urls(for: .moviesDirectory, in: .userDomainMask).first else { return }
@@ -47,15 +45,11 @@ final class DiskSpaceMonitor {
             throw error
         } catch {
             AppLogger.recording.error("Failed to check disk space: \(error.localizedDescription)")
-            // If we can't check, we essentially treat it as a pass but log it,
-            // OR strictly throw. Original code logged error.
-            // Let's rethrow wrapped to be safe.
             throw AppError.recordingEngineError("Failed to check disk space: \(error.localizedDescription)")
         }
     }
 
     private func check() {
-        // Dispatch to background for IO
         Task.detached(priority: .utility) { [weak self] in
             guard let self = self else { return }
             do {

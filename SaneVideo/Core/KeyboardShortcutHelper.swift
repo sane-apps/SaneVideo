@@ -1,10 +1,6 @@
-// Helper for displaying keyboard shortcuts in tooltips and help
-
 import SwiftUI
 
-/// Generates consistent help text with keyboard shortcuts
 enum KeyboardShortcutHelper {
-    /// Generate help text with shortcut notation
     static func helpWithShortcut(_ description: String, key: String, modifiers: EventModifiers = []) -> String {
         let shortcut = shortcutString(key: key, modifiers: modifiers)
         return "\(description) (\(shortcut))"
@@ -15,7 +11,6 @@ enum KeyboardShortcutHelper {
         return helpWithShortcut(description, key: keyString, modifiers: modifiers)
     }
 
-    /// Format shortcut for display
     private static func shortcutString(key: String, modifiers: EventModifiers) -> String {
         var parts: [String] = []
 
@@ -32,7 +27,6 @@ enum KeyboardShortcutHelper {
             parts.append("⌘")
         }
 
-        // Special key names
         let keyName: String
         switch key.lowercased() {
         case "delete", "⌫":

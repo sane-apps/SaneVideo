@@ -3,7 +3,6 @@ import Combine
 import CoreGraphics
 import ScreenCaptureKit
 
-// Permission status enum (previously in CameraTypes.swift)
 enum PermissionStatus {
     case unknown
     case notDetermined
@@ -20,26 +19,25 @@ class PermissionManager: PermissionManagerProtocol {
     var cameraStatus: PermissionStatus = .notDetermined {
         didSet {
             _cameraStatusSubject.send(cameraStatus)
-            notifyPermissionStatusChanged() // CRITICAL FIX: Notify on status change
+            notifyPermissionStatusChanged()
         }
     }
 
     var microphoneStatus: PermissionStatus = .notDetermined {
         didSet {
             _microphoneStatusSubject.send(microphoneStatus)
-            notifyPermissionStatusChanged() // CRITICAL FIX: Notify on status change
+            notifyPermissionStatusChanged()
         }
     }
 
     var screenRecordingStatus: PermissionStatus = .notDetermined {
         didSet {
             _screenRecordingStatusSubject.send(screenRecordingStatus)
-            notifyPermissionStatusChanged() // CRITICAL FIX: Notify on status change
+            notifyPermissionStatusChanged()
         }
     }
 
-    // Track if screen recording permission was ever requested
-    // This helps distinguish .notDetermined from .denied
+    // Distinguishes .notDetermined from .denied.
     @ObservationIgnored private var screenRecordingWasRequested = false
 
     // MARK: - Combine Bridge
@@ -151,18 +149,15 @@ class PermissionManager: PermissionManagerProtocol {
             return
         }
 
-        // CGPreflightScreenCaptureAccess() is unreliable - it can return false
-        // even when permission IS granted (until app restart after grant).
-        // Check multiple signals to determine actual permission status:
+        // CGPreflightScreenCaptureAccess() can return false after a grant until the app restarts, so check several signals.
 
-        // 1. If preflight returns true, we're definitely granted
         if CGPreflightScreenCaptureAccess() {
             screenRecordingStatus = .granted
             UserDefaults.standard.set(true, forKey: "screenRecordingEverGranted")
             return
         }
 
-        // 2. If we've requested before but preflight is false, permission is denied or stale.
+        // Requested before but preflight is false: denied or stale.
         let wasRequested = UserDefaults.standard.bool(forKey: "screenRecordingWasRequested")
         screenRecordingStatus = wasRequested ? .denied : .notDetermined
     }
@@ -177,23 +172,19 @@ class PermissionManager: PermissionManagerProtocol {
             return
         }
 
-        // Don't re-request if already granted
         if screenRecordingStatus == .granted {
             AppLogger.general.info("📺 Screen recording permission already granted, skipping request")
             return
         }
 
-        // Persist that we've requested permission (survives app restart)
         UserDefaults.standard.set(true, forKey: "screenRecordingWasRequested")
 
         AppLogger.general.info("📺 Requesting screen recording permission...")
         AppLogger.general.warning("⚠️ Note: If permission is granted, the app must be restarted for it to take effect.")
 
-        // This API requests permission. It returns immediately.
-        // The user must restart the app if they grant it.
+        // Returns immediately; a grant takes effect only after the app restarts.
         CGRequestScreenCaptureAccess()
 
-        // Show user-friendly message about restart requirement
         Task { @MainActor in
             ServiceContainer.shared.toastManager.show(
                 "Screen recording permission requested. If granted, please restart the app for it to take effect.",
@@ -201,14 +192,12 @@ class PermissionManager: PermissionManagerProtocol {
             )
         }
 
-        // We can't await the result, so we just re-check
+        // The request can't be awaited, so re-check now.
         checkScreenRecordingPermission()
     }
 
     // MARK: - Request All Permissions
 
-    /// Request all permissions needed for the app
-    /// Returns a dictionary of permission statuses
     func requestAllPermissions() async -> [String: Bool] {
         if TestEnvironment.isTesting {
             return ["camera": true, "microphone": true, "screenRecording": true]
@@ -225,7 +214,6 @@ class PermissionManager: PermissionManagerProtocol {
         let camera = await requestCameraPermission()
         let microphone = await requestMicrophonePermission()
 
-        // Screen recording is requested on-demand
         AppLogger.general.info("Requesting screen recording permission...")
         requestScreenRecordingPermission()
 
@@ -241,7 +229,6 @@ class PermissionManager: PermissionManagerProtocol {
     // MARK: - Helpers
 
     private func mapAVStatus(_ status: AVAuthorizationStatus) -> PermissionStatus {
-        // Exhaustive switch to handle all cases
         switch status {
         case .authorized: return .granted
         case .denied: return .denied
@@ -279,8 +266,7 @@ class PermissionManager: PermissionManagerProtocol {
     func setupLifecycleObserver() {
         if TestEnvironment.isTesting { return }
 
-        // Re-check permissions when app becomes active
-        // This handles cases where user revokes permissions in System Settings
+        // Re-check on activation to catch permissions revoked in System Settings.
         NotificationCenter.default.addObserver(
             forName: NSApplication.didBecomeActiveNotification, object: nil, queue: .main
         ) { [weak self] _ in
@@ -293,20 +279,16 @@ class PermissionManager: PermissionManagerProtocol {
 
     // MARK: - Permission Verification
 
-    /// CRITICAL FIX: Verify permissions before critical operations
-    /// Returns true if all required permissions are granted, false otherwise
-    /// Also updates permission status if they've been revoked
+    /// Re-checks permissions (they may have been revoked) and returns true if all required ones are granted.
     func verifyPermissionsForRecording(requiresCamera: Bool = true, requiresMicrophone: Bool = true, requiresScreenRecording: Bool = false) -> Bool {
         if TestEnvironment.isTesting { return true }
 
-        // Re-check permissions before use (they might have been revoked)
         checkCameraPermission()
         checkMicrophonePermission()
         if requiresScreenRecording {
             checkScreenRecordingPermission()
         }
 
-        // Check if all required permissions are granted
         if requiresCamera && !Self.allowsRecordingStart(for: cameraStatus, canPromptInline: true) {
             AppLogger.general.warning("⚠️ Camera permission not granted: \(cameraStatus)")
             return false
@@ -344,12 +326,8 @@ class PermissionManager: PermissionManagerProtocol {
 
     // MARK: - Permission Status Synchronization
 
-    /// CRITICAL FIX: Notify all services when permission status changes
-    /// This ensures all services stay in sync with permission state
     private func notifyPermissionStatusChanged() {
-        // Permission status changes are already published via Combine publishers
-        // Services that subscribe to these publishers will be notified automatically
-        // Post notification for services that might not be using Combine
+        // Combine subscribers already see the change; this notification is for services that do not use Combine.
         NotificationCenter.default.post(
             name: .permissionStatusChanged,
             object: nil,

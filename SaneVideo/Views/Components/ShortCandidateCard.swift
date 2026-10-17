@@ -1,5 +1,3 @@
-// Card view for displaying a short-form video candidate
-
 import AVFoundation
 import SwiftUI
 
@@ -13,7 +11,6 @@ struct ShortCandidateCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            // Thumbnail
             ZStack {
                 if let thumbnail {
                     Image(nsImage: thumbnail)
@@ -31,7 +28,6 @@ struct ShortCandidateCard: View {
                         }
                 }
 
-                // Duration badge
                 VStack {
                     Spacer()
                     HStack {
@@ -47,7 +43,6 @@ struct ShortCandidateCard: View {
                     }
                 }
 
-                // Selection overlay
                 if isSelected {
                     Rectangle()
                         .fill(Color.accentColor.opacity(0.3))
@@ -58,9 +53,7 @@ struct ShortCandidateCard: View {
             }
             .cornerRadius(8)
 
-            // Info
             HStack {
-                // Score badge
                 Text(candidate.scoreLabel)
                     .font(Theme.Typography.badge)
                     .padding(.horizontal, 6)
@@ -69,14 +62,12 @@ struct ShortCandidateCard: View {
                     .foregroundStyle(scoreColor)
                     .cornerRadius(4)
 
-                // Time
                 Text(formatTime(candidate.startTime))
                     .saneReadableMeta(monospaced: true)
 
                 Spacer()
             }
 
-            // Highlights
             if !candidate.highlights.isEmpty {
                 HStack(spacing: 4) {
                     ForEach(candidate.highlights, id: \.self) { highlight in

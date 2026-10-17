@@ -1,5 +1,3 @@
-// Media import operations extracted from ClipManagement
-
 import AVFoundation
 import CoreMedia
 import Foundation

@@ -1,5 +1,3 @@
-// Extracted from SmartFeatures: Gesture detection, Privacy blur, Audio analysis, Captions
-
 import AVFoundation
 import CoreMedia
 import Foundation
@@ -86,7 +84,7 @@ extension ProjectState {
 
         self.processingStatus = "Transcribing audio..."
         self.processingProgress = 0.0
-        // Only use processingStatus for progress - no toast for start (reduces notification spam)
+        // Show progress through processingStatus only; a start toast just adds noise.
 
         AppLogger.project.info(
             "ProjectState: Requesting caption generation for clip \(clip.id)")
@@ -102,11 +100,9 @@ extension ProjectState {
 
                         if chunk == total {
                             self.processingStatus = "Finishing transcription..."
-                            // No toast for progress - use processingStatus only
                         } else {
                             let etaText = eta > 60 ? "\(eta / 60)m \(eta % 60)s" : "\(eta)s"
                             self.processingStatus = "Transcribing... \(chunk)/\(total) (~\(etaText) remaining)"
-                            // No toast for progress - use processingStatus only
                         }
                     }
                 }

@@ -1,5 +1,4 @@
 // UI for long-to-short video repurposing
-// Allows users to configure settings and select candidates for export
 
 import AVFoundation
 import SwiftUI
@@ -8,7 +7,6 @@ struct RepurposingSheet: View {
     @Environment(\.dismiss) var dismiss
     @Environment(AppState.self) var appState
 
-    // Source clip to repurpose
     let sourceClip: VideoClip?
 
     // MARK: - State
@@ -42,26 +40,21 @@ struct RepurposingSheet: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // Header
             headerView
 
             Divider()
 
-            // Main Content
             HStack(spacing: 0) {
-                // Left: Settings Panel
                 settingsPanel
                     .frame(width: 260)
 
                 Divider()
 
-                // Right: Candidates Grid
                 candidatesPanel
             }
 
             Divider()
 
-            // Footer with actions
             footerView
         }
         .frame(width: 800, height: 600)
@@ -127,7 +120,6 @@ struct RepurposingSheet: View {
     private var settingsPanel: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
-                // Platform Preset
                 VStack(alignment: .leading, spacing: 8) {
                     Label("Platform", systemImage: "square.grid.2x2")
                         .saneReadableSectionTitle()
@@ -175,7 +167,6 @@ struct RepurposingSheet: View {
 
                 Divider().overlay(Theme.Colors.divider)
 
-                // Duration
                 VStack(alignment: .leading, spacing: 8) {
                     Label("Duration", systemImage: "clock")
                         .saneReadableSectionTitle()
@@ -192,7 +183,6 @@ struct RepurposingSheet: View {
                         .saneReadableSupportText()
                 }
 
-                // Aspect Ratio
                 VStack(alignment: .leading, spacing: 8) {
                     Label("Aspect Ratio", systemImage: "aspectratio")
                         .saneReadableSectionTitle()
@@ -209,7 +199,6 @@ struct RepurposingSheet: View {
                         .saneReadableSupportText()
                 }
 
-                // Max Shorts
                 VStack(alignment: .leading, spacing: 8) {
                     HStack {
                         Label("Max Shorts", systemImage: "number")
@@ -229,7 +218,6 @@ struct RepurposingSheet: View {
 
                 Divider().overlay(Theme.Colors.divider)
 
-                // Analysis Options
                 VStack(alignment: .leading, spacing: 10) {
                     Label("Analysis", systemImage: "waveform.badge.magnifyingglass")
                         .saneReadableSectionTitle()
@@ -250,7 +238,6 @@ struct RepurposingSheet: View {
 
                 Divider().overlay(Theme.Colors.divider)
 
-                // Export Options
                 VStack(alignment: .leading, spacing: 10) {
                     Label("Export", systemImage: "square.and.arrow.up")
                         .saneReadableSectionTitle()
@@ -276,7 +263,6 @@ struct RepurposingSheet: View {
 
     private var candidatesPanel: some View {
         VStack(spacing: 0) {
-            // Toolbar
             HStack {
                 Text("\(candidates.count) Candidates")
                     .saneReadableSectionTitle()
@@ -301,7 +287,6 @@ struct RepurposingSheet: View {
             Divider()
 
             if candidates.isEmpty {
-                // Empty state
                 VStack(spacing: 14) {
                     Image(systemName: "film.stack")
                         .font(.system(size: 44, weight: .medium))
@@ -322,7 +307,6 @@ struct RepurposingSheet: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .padding(24)
             } else {
-                // Candidates grid
                 ScrollView {
                     LazyVGrid(columns: [
                         GridItem(.adaptive(minimum: 200, maximum: 250), spacing: 12)
@@ -416,7 +400,6 @@ struct RepurposingSheet: View {
 
             await MainActor.run {
                 self.candidates = results
-                // Auto-select top candidates up to max
                 self.selectedCandidateIds = Set(results.prefix(settings.maxShorts).map { $0.id })
                 self.isAnalyzing = false
             }
@@ -463,7 +446,6 @@ struct RepurposingSheet: View {
                             type: .success
                         )
 
-                        // Open the output folder
                         if let firstURL = outputURLs.first {
                             NSWorkspace.shared.selectFile(
                                 firstURL.path,

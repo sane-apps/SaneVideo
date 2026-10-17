@@ -1,16 +1,9 @@
-// Shared GPU-accelerated chroma key kernel for green screen removal.
-// Consolidates duplicate implementations for consistent behavior.
-
 @preconcurrency import CoreImage
 
-/// Shared chroma key kernel for green/blue screen removal.
-/// Uses GPU-accelerated CIColorKernel for real-time performance.
 enum ChromaKeyKernel {
-    /// The GPU-accelerated chroma key kernel.
     /// Removes pixels matching the target color, preserving original alpha.
     ///
     /// - Parameters:
-    ///   - s: Source pixel sample
     ///   - targetColor: RGB color to key out (e.g., green = [0, 1, 0])
     ///   - threshold: Sensitivity (0.0-1.0, lower = more selective)
     ///
@@ -31,9 +24,7 @@ enum ChromaKeyKernel {
             """)
     }()
 
-    /// Apply chroma key effect to an image.
     /// - Parameters:
-    ///   - image: Source CIImage
     ///   - targetColor: RGB color to remove (each component 0.0-1.0)
     ///   - threshold: Sensitivity (0.0-1.0)
     /// - Returns: Keyed image with transparent background, or original if kernel unavailable

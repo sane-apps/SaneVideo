@@ -1,5 +1,3 @@
-// Enhanced Magic Fix progress overlay with cancellation and better feedback
-
 import SwiftUI
 
 /// Enhanced Magic Fix progress overlay with cancellation support
@@ -36,7 +34,6 @@ struct EnhancedMagicOverlayView: View {
     var body: some View {
         if appState.projectState.isProcessing {
             VStack(spacing: 16) {
-                // Header
                 HStack {
                     Image(systemName: overlayIcon)
                         .font(.title2)
@@ -55,7 +52,6 @@ struct EnhancedMagicOverlayView: View {
                     
                     Spacer()
                     
-                    // Cancel button
                     Button {
                         showCancelConfirmation = true
                     } label: {
@@ -66,7 +62,6 @@ struct EnhancedMagicOverlayView: View {
                     .help(overlayTitle == "Captions" ? "Cancel caption generation" : "Cancel Magic Fix")
                 }
                 
-                // Progress bar
                 if appState.projectState.processingProgress > 0 {
                     ProgressView(value: appState.projectState.processingProgress)
                         .progressViewStyle(.linear)
@@ -79,7 +74,6 @@ struct EnhancedMagicOverlayView: View {
                         .progressViewStyle(.circular)
                 }
                 
-                // Estimated time remaining (if we can calculate it)
                 if appState.projectState.processingProgress > 0.1 {
                     Text("This may take a few minutes...")
                         .font(.caption2)
@@ -105,8 +99,6 @@ struct EnhancedMagicOverlayView: View {
     }
     
     private func cancelMagicFix() {
-        // Cancel the processing task
-        // Note: This requires adding cancellation support to ProjectState
         Task {
             await appState.projectState.cancelProcessing()
         }

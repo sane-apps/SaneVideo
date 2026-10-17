@@ -15,13 +15,10 @@ class PlaybackState {
 
     // MARK: - In/Out Points (for selection range)
 
-    /// In point marker for timeline selection (nil = not set)
     var inPoint: CMTime?
 
-    /// Out point marker for timeline selection (nil = not set)
     var outPoint: CMTime?
 
-    /// Clears both in and out points
     func clearInOutPoints() {
         inPoint = nil
         outPoint = nil
@@ -47,18 +44,15 @@ class PlaybackState {
         setupAudioSession()
     }
 
-    // Helper for safe cleanup of player resources AND security scope
-    // Note: This is a plain class (not MainActor) because deinit must be nonisolated
+    // Releases player resources and security scope. A plain class, not MainActor, because its deinit must be nonisolated.
     private class TokenHolder {
         weak var player: AVPlayer?
         var observer: Any?
 
-        // Hold security-scoped resource access for duration of playback
-        // Without this, playback of files from Downloads/external drives may fail
+        // Without held security-scoped access, files from Downloads or external drives may fail to play.
         private var accessedURL: URL?
 
         func startAccessing(_ url: URL) {
-            // Stop any previous access
             stopAccessing()
 
             if url.startAccessingSecurityScopedResource() {
@@ -74,8 +68,7 @@ class PlaybackState {
         }
 
         deinit {
-            // Inline the security scope release to avoid actor isolation issues
-            // stopAccessingSecurityScopedResource is thread-safe
+            // stopAccessingSecurityScopedResource is thread-safe, so release inline to avoid actor isolation issues.
             if let url = accessedURL {
                 url.stopAccessingSecurityScopedResource()
             }
@@ -87,7 +80,6 @@ class PlaybackState {
 
     private var tokenHolder = TokenHolder()
 
-    // Cancel loading task on deallocation
     // Task.cancel() is thread-safe, so we can call it from any thread in deinit
     // TokenHolder handles observer cleanup via its own deinit
     deinit {
@@ -95,18 +87,16 @@ class PlaybackState {
     }
 
     private func setupAudioSession() {
-        // Ensure audio plays even if silent switch is on (iOS) or backgrounded
-        // Less critical for macOS but good practice
+        // macOS needs no audio session setup.
     }
 
     // MARK: - Player Management
 
     func loadClip(_ clip: VideoClip) {
-        // Cleanup old player (also releases previous security scope)
+        // Also releases the previous security scope.
         unload()
 
-        // Hold security scope for duration of playback
-        // TokenHolder will release it when we unload or load a new clip
+        // TokenHolder releases it on unload or the next load.
         tokenHolder.startAccessing(clip.url)
 
         let playerItem = AVPlayerItem(url: clip.url)
@@ -128,7 +118,6 @@ class PlaybackState {
     private var pendingProject: VideoProject?
     private var isCompositionReady: Bool = false
 
-    // Debounce delay for project switching (ms)
     private let projectSwitchDebounceDelay: UInt64 = 300_000_000 // 300ms
     private let editDebounceDelay: UInt64 = 120_000_000 // 120ms (keeps timeline edits feeling responsive)
 
@@ -146,7 +135,7 @@ class PlaybackState {
     }
 
     func loadProject(_ project: VideoProject, forceReload: Bool = false) {
-        // GUARD: Don't try to compose empty timelines - causes freeze
+        // Composing an empty timeline freezes, so skip it.
         let hasClips = project.timeline.tracks.contains { !$0.clips.isEmpty }
         guard hasClips else {
             AppLogger.playback.debug("loadProject called with empty timeline - skipping composition")
@@ -157,7 +146,6 @@ class PlaybackState {
             return
         }
 
-        // Compute hash of clip IDs to detect actual content changes
         var hasher = Hasher()
         hasher.combine(project.captionOffset.width)
         hasher.combine(project.captionOffset.height)
@@ -171,44 +159,35 @@ class PlaybackState {
         }
         let currentClipsHash = hasher.finalize()
 
-        // DEBOUNCE: Skip if we just loaded this exact same project with same clips
         if !forceReload, lastLoadedProjectID == project.id, lastLoadedClipsHash == currentClipsHash {
             AppLogger.playback.debug("loadProject skipped - already loaded this exact project state")
             return
         }
 
-        // Cancel any in-progress loading
         loadingTask?.cancel()
 
-        // Adaptive debounce
-        // - Timeline edits on the same project should feel responsive (short debounce)
-        // - Project switching benefits from a slightly longer debounce to avoid thrash while browsing
+        // Short debounce for edits on the same project; longer when switching projects, to avoid thrash while browsing.
         let isSameProject = (lastLoadedProjectID == project.id)
         let debounceDelay: UInt64 = {
             if forceReload { return 0 }
             return isSameProject ? editDebounceDelay : projectSwitchDebounceDelay
         }()
 
-        // Set duration immediately from timeline (no composition needed)
-        // This makes the UI responsive while composition happens in background
+        // Set duration from the timeline now so the UI responds while composition runs in the background.
         self.duration = project.timeline.duration
         self.pendingProject = project
         self.isCompositionReady = false
         self.isPreparingComposition = true
 
-        // Update tracking
         lastLoadedProjectID = project.id
         lastLoadedClipsHash = currentClipsHash
 
-        // Debounced composition - wait for user to stop clicking
-        // If user triggers another load within the debounce window, this task gets cancelled
+        // Debounce composition: another load inside the window cancels this task.
         loadingTask = Task {
-            // Wait for debounce period
             if debounceDelay > 0 {
                 try? await Task.sleep(nanoseconds: debounceDelay)
             }
 
-            // Check if cancelled during debounce
             guard !Task.isCancelled else { return }
 
             do {
@@ -240,7 +219,6 @@ class PlaybackState {
     private func ensureCompositionReady() async {
         guard let project = pendingProject, !isCompositionReady else { return }
 
-        // Cancel debounced task and compose immediately
         loadingTask?.cancel()
         isPreparingComposition = true
 
@@ -263,45 +241,19 @@ class PlaybackState {
 
     private func setupPlayer(with item: AVPlayerItem, duration: CMTime) {
         let newPlayer = AVPlayer(playerItem: item)
-        // Ensure player volume is set to 1.0
-        // When RealTimeAudioProcessor was active, it set volume = 0.0
-        // Now that it's disabled, we must ensure audio plays from composition
         newPlayer.volume = 1.0
         player = newPlayer
         self.duration = duration
 
-        // Update token holder
         tokenHolder.player = newPlayer
 
-        // DISABLED RealTimeAudioProcessor to fix audio/video desync
-        // ROOT CAUSE: Dual audio playback - AVPlayer composition has audio tracks AND
-        // RealTimeAudioProcessor plays same audio via AVAudioEngine = double audio + desync
-        // The Task{} setup was async (not awaited) causing race conditions where:
-        // 1. Both audio sources play simultaneously
-        // 2. videoPlayer.volume = 0.0 happens AFTER engine starts
-        // 3. No playback rate synchronization between video and audio engine
-        //
-        // Use composition audio only. Effects are applied during export via AudioMix.
-        // TODO: Re-enable when proper audio architecture is implemented (single source)
-        //
-        // Original code (disabled):
-        // Task {
-        //     if let project = ServiceContainer.shared.appState.projectState.currentProject {
-        //         let clips = project.timeline.tracks.flatMap { $0.clips }
-        //         if let clip = clips.first {
-        //             try await ServiceContainer.shared.realTimeAudioProcessor.setupForPlayerItem(...)
-        //         }
-        //     }
-        // }
+        // Playback uses composition audio only. RealTimeAudioProcessor also played it, which doubled the audio and caused desync.
 
-        // Add time observer
-        // Use 0.1s interval (10fps) instead of 0.05s (20fps) for UI updates
-        // This reduces update frequency by 50% while maintaining smooth playback feel
+        // 0.1 s (10 fps) UI updates feel smooth at half the cost of 0.05 s.
         let interval = CMTime(seconds: 0.1, preferredTimescale: 600)
         // Must use Task { @MainActor in } for Sendable closure
         let observer = newPlayer.addPeriodicTimeObserver(forInterval: interval, queue: DispatchQueue.main) { [weak self] time in
             guard let self = self else { return }
-            // Update via MainActor task to satisfy Sendable closure requirements
             Task { @MainActor in
                 self.currentTime = time
             }
@@ -310,7 +262,6 @@ class PlaybackState {
         timeObserver = observer
         tokenHolder.observer = observer
 
-        // Add end-of-playback notification observer
         // Without this, isPlaying stays true and playhead stays at end when video finishes
         playbackEndedObserver = NotificationCenter.default.addObserver(
             forName: AVPlayerItem.didPlayToEndTimeNotification,
@@ -331,11 +282,9 @@ class PlaybackState {
     }
 
     func unload() {
-        // Cancel loading task before unloading
         loadingTask?.cancel()
         loadingTask = nil
 
-        // Remove end-of-playback observer
         if let observer = playbackEndedObserver {
             NotificationCenter.default.removeObserver(observer)
             playbackEndedObserver = nil
@@ -347,13 +296,10 @@ class PlaybackState {
             tokenHolder.observer = nil
         }
         player?.pause()
-        // DISABLED: RealTimeAudioProcessor causes desync (see setupPlayer comment)
-        // ServiceContainer.shared.realTimeAudioProcessor.cleanup()
         player = nil
         tokenHolder.player = nil
         isPreparingComposition = false
 
-        // Release security-scoped resource access
         tokenHolder.stopAccessing()
 
         isPlaying = false
@@ -364,7 +310,6 @@ class PlaybackState {
     // MARK: - Controls
 
     func play() {
-        // Validate timeline is not empty before play
         guard let project = ServiceContainer.shared.appState.projectState.currentProject else {
             AppLogger.playback.warning("Cannot play: No project loaded")
             ServiceContainer.shared.toastManager.show("No project to play", type: .error)
@@ -378,7 +323,6 @@ class PlaybackState {
             return
         }
 
-        // If composition isn't ready yet, wait for it
         if !isCompositionReady && pendingProject != nil {
             Task {
                 await ensureCompositionReady()
@@ -398,15 +342,11 @@ class PlaybackState {
             player.seek(to: .zero)
         }
         player.play()
-        // DISABLED: RealTimeAudioProcessor causes desync (see setupPlayer comment)
-        // ServiceContainer.shared.realTimeAudioProcessor.play()
         isPlaying = true
     }
 
     func pause() {
         player?.pause()
-        // DISABLED: RealTimeAudioProcessor causes desync (see setupPlayer comment)
-        // ServiceContainer.shared.realTimeAudioProcessor.pause()
         isPlaying = false
     }
 
@@ -420,8 +360,6 @@ class PlaybackState {
 
     func seek(to time: CMTime) {
         player?.seek(to: time, toleranceBefore: .zero, toleranceAfter: .zero)
-        // DISABLED: RealTimeAudioProcessor causes desync (see setupPlayer comment)
-        // ServiceContainer.shared.realTimeAudioProcessor.seek(to: time)
         currentTime = time
     }
 
@@ -510,7 +448,6 @@ class PlaybackState {
         } else {
             // Seek requires pause first for reverse playback on some media
             if rate < 0, player.rate >= 0 {
-                // Going from forward/pause to reverse
                 player.rate = rate
             } else {
                 player.rate = rate

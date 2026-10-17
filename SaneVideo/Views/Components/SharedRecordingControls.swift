@@ -48,20 +48,16 @@ struct SharedRecordingControls: View {
     var showTimer: Bool = true
     var useGlassBackground: Bool = false
 
-    // Sizing - uses unified IconCircleButton.Size system
     var buttonSize: IconCircleButton.Size = .medium
 
-    // Button sizes - record button slightly larger for prominence
     private var uniformButtonSize: CGFloat {
         buttonSize.diameter
     }
 
-    // Record button is 1.2x larger for visual hierarchy
     private var recordButtonSize: CGFloat {
         buttonSize.diameter * 1.2
     }
 
-    /// Spacing from the unified size system
     private var toolbarSpacing: CGFloat {
         buttonSize.spacing
     }
@@ -146,7 +142,6 @@ struct SharedRecordingControls: View {
         ZStack(alignment: .bottomLeading) {
             VStack(alignment: .leading, spacing: permissionWarning == nil ? 0 : 8) {
                 HStack(spacing: toolbarSpacing) {
-                    // 1. Mic Toggle
                     Button(action: {
                         ServiceContainer.shared.hapticsManager.impact()
                         appState.toggleMic()
@@ -173,7 +168,6 @@ struct SharedRecordingControls: View {
                     .recordingGuide(micGuide)
                     .accessibilityIdentifier(AccessibilityIdentifiers.micToggle)
 
-                    // 2. Screen Share Toggle
                     IconCircleButton(
                         systemName: appState.isScreenSharing ? "rectangle.on.rectangle.slash.fill" : "rectangle.on.rectangle.fill",
                         isActive: appState.isScreenSharing,
@@ -188,13 +182,11 @@ struct SharedRecordingControls: View {
                     .recordingGuide(screenGuide)
                     .accessibilityIdentifier(AccessibilityIdentifiers.screenShareToggle)
 
-                    // 3. Record Button - slightly larger, same unified style
                     UnifiedRecordButton(size: recordButtonSize)
                         .keyboardShortcut("r", modifiers: [.command])
                         .animation(.spring(response: 0.35, dampingFraction: 0.7), value: appState.isRecording)
                         .recordingGuide(recordGuide)
 
-                    // 4. Pause Button (only when recording)
                     if appState.isRecording {
                         IconCircleButton(
                             systemName: appState.isPaused ? "play.fill" : "pause.fill",
@@ -238,7 +230,6 @@ struct SharedRecordingControls: View {
                     )
                     .recordingGuide(teleprompterGuide)
 
-                    // 5. Timer badge
                     if showTimer && appState.isRecording {
                         RecBadgeTimer(
                             isRecording: appState.isRecording,
@@ -247,7 +238,6 @@ struct SharedRecordingControls: View {
                         .transition(.move(edge: .trailing).combined(with: .opacity))
                     }
 
-                    // Gallery button (in main bar)
                     if showGalleryTarget {
                         GalleryButton(size: buttonSize)
                             .recordingGuide(
@@ -268,7 +258,6 @@ struct SharedRecordingControls: View {
                 }
             }
 
-            // Gear icon - subtle, bottom-left, outside main bar
             if showDevicePickers {
                 DeviceSelectionMenu(size: buttonSize)
                     .recordingGuide(deviceGuide)
@@ -449,7 +438,6 @@ struct PiPControlsWithCountdown: View {
 
     var body: some View {
         ZStack {
-            // Controls at bottom
             VStack {
                 Spacer()
                 SharedRecordingControls(
@@ -461,13 +449,10 @@ struct PiPControlsWithCountdown: View {
                 )
             }
 
-            // Countdown overlay (fills entire PiP window)
             if appState.recordingState.countdownValue > 0 {
                 ZStack {
-                    // Semi-transparent background
                     Color.black.opacity(0.5)
 
-                    // Large countdown number
                     Text("\(appState.recordingState.countdownValue)")
                         .font(.system(size: 80, weight: .bold, design: .rounded))
                         .foregroundColor(.white)

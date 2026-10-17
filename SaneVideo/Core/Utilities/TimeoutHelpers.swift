@@ -1,19 +1,14 @@
-// Timeout and cancellation utilities for robust async operations
-
 import Foundation
 
-/// Wraps an async operation with a timeout
 func withTimeout<T: Sendable>(
     seconds: TimeInterval,
     operation: @escaping @Sendable () async throws -> T
 ) async throws -> T {
     try await withThrowingTaskGroup(of: T.self) { group in
-        // Operation task
         group.addTask {
             try await operation()
         }
         
-        // Timeout task
         group.addTask {
             try await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
             throw TimeoutError.timeout(seconds: seconds)
@@ -28,31 +23,27 @@ func withTimeout<T: Sendable>(
     }
 }
 
-/// Wraps an async operation with timeout and cancellation support
 func withTimeoutAndCancellation<T: Sendable>(
     seconds: TimeInterval,
     cancellation: @escaping @Sendable () -> Bool,
     operation: @escaping @Sendable () async throws -> T
 ) async throws -> T {
     try await withThrowingTaskGroup(of: T.self) { group in
-        // Operation task
         group.addTask {
             try await operation()
         }
         
-        // Timeout task
         group.addTask {
             try await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
             throw TimeoutError.timeout(seconds: seconds)
         }
         
-        // Cancellation check task
         group.addTask {
             while !Task.isCancelled {
                 if cancellation() {
                     throw CancellationError()
                 }
-                try await Task.sleep(nanoseconds: 100_000_000) // Check every 100ms
+                try await Task.sleep(nanoseconds: 100_000_000)
             }
             throw CancellationError()
         }
@@ -95,7 +86,6 @@ actor ProgressHeartbeat {
     func checkForHang() throws {
         let elapsed = Date().timeIntervalSince(lastProgressTime)
         if elapsed > timeoutSeconds {
-            // Check if progress actually changed
             if lastProgressValue > 0 {
                 throw TimeoutError.timeout(seconds: timeoutSeconds)
             }

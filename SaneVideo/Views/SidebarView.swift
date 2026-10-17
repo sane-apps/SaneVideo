@@ -1,5 +1,3 @@
-// Main sidebar with rail navigation and contextual content
-
 import SwiftUI
 
 struct SidebarView: View {
@@ -9,7 +7,6 @@ struct SidebarView: View {
 
     var body: some View {
         HStack(spacing: 0) {
-            // RAIL: 3-tab navigation (Media, Transcript, Projects) + Quick Actions
             VStack(spacing: 12) {
                 SidebarRailItem(icon: "film", label: "Media", tag: 0, selection: $selectedTab)
                 SidebarRailItem(icon: "text.quote", label: "Transcript", tag: 1, selection: $selectedTab)
@@ -18,7 +15,6 @@ struct SidebarView: View {
                 Divider()
                     .padding(.vertical, 8)
 
-                // Quick Actions (2025-12-31: Magic Fix moved to Inspector Smart Tools)
                 Text("Create")
                     .font(.system(size: 10, weight: .semibold))
                     .foregroundStyle(Theme.Colors.textSecondary)
@@ -42,7 +38,6 @@ struct SidebarView: View {
 
                 Spacer()
 
-                // Help link at bottom (non-intrusive)
                 Button {
                     NotificationCenter.default.post(
                         name: NSNotification.Name("ShowKeyboardShortcuts"), object: nil
@@ -71,16 +66,13 @@ struct SidebarView: View {
 
             Divider()
 
-            // CONTENT: Contextual Sidebar Content
             VStack(spacing: 0) {
                 Group {
                     if selectedTab == 0 {
                         LibraryView(selectedClip: $selectedClip)
                     } else if selectedTab == 1 {
-                        // Transcript tab = text-based editing (Descript-style)
                         TranscriptionEditorView(selectedClip: $selectedClip)
                     } else {
-                        // Projects tab = compact project browser
                         CompactProjectBrowserView()
                     }
                 }

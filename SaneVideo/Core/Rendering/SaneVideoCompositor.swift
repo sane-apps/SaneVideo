@@ -1,14 +1,9 @@
-// Custom video compositor implementing AVVideoCompositing.
-// Enables application of Core Image filters (VideoEffect) and Transitions during playback
-// Refactored to use helper renderers.
-
 import AppKit
 @preconcurrency import AVFoundation
 @preconcurrency import CoreImage
 import CoreMedia
 import Vision
 
-/// The Custom Compositor that renders frames
 final class SaneVideoCompositor: NSObject, AVVideoCompositing {
     // MARK: - Configuration
 
@@ -28,14 +23,8 @@ final class SaneVideoCompositor: NSObject, AVVideoCompositing {
         SaneVideoCompositor.pixelBufferAttributes
     }
 
-    // Render Context (Shared Metal-backed CIContext)
-    // Note: RenderingService.shared.ciContext is now dynamic based on thermal state
+    // The context changes with thermal state, so it is read on every use.
     private var ciContext: CIContext { RenderingService.shared.ciContext }
-
-    // Frame ordering and caching
-    // TODO: Restore RenderQueue and FaceDetectionCache once implemented
-    // private let renderQueue = RenderQueue()
-    // private let faceCache = FaceDetectionCache()
 
     // MARK: - Render Loop
 
@@ -43,21 +32,16 @@ final class SaneVideoCompositor: NSObject, AVVideoCompositing {
 
     func startRequest(_ request: AVAsynchronousVideoCompositionRequest) {
         Task {
-            // TODO: Restore renderQueue once implemented
-            // await renderQueue.enqueue { [self] in
             await render(request)
-            // }
         }
     }
 
     private func render(_ request: AVAsynchronousVideoCompositionRequest) async {
-        // Ensure request is always finished, even on error
-        // Use defer to guarantee finish() is called on all paths
+        // Every request must be finished, even on error.
         var outputPixelBuffer: CVPixelBuffer?
         var renderError: Error?
 
         defer {
-            // Always finish the request, even if error occurred
             if let error = renderError {
                 request.finish(with: error)
             } else if let buffer = outputPixelBuffer {
@@ -102,7 +86,6 @@ final class SaneVideoCompositor: NSObject, AVVideoCompositing {
 
         outputPixelBuffer = buffer
 
-        // 2. Composite Layers (Video Tracks)
         var currentImage: CIImage?
         var processedTrackIDs = Set<CMPersistentTrackID>()
 
@@ -112,7 +95,6 @@ final class SaneVideoCompositor: NSObject, AVVideoCompositing {
 
             var layerOutput: CIImage?
 
-            // Transitions
             if let transitionMeta = instruction.activeTransitions.first(where: {
                 $0.fromTrackID == trackID || $0.toTrackID == trackID
             }) {
@@ -129,7 +111,6 @@ final class SaneVideoCompositor: NSObject, AVVideoCompositing {
                     let elapsed = request.compositionTime.seconds - transitionMeta.timeRange.start.seconds
                     let progress = max(0, min(1, elapsed / duration))
 
-                    // Direct VideoTransition usage or helper
                     let transitionModel = VideoTransition(type: transitionMeta.type)
                     layerOutput = transitionModel.apply(
                         from: fromImage, to: toImage, progress: CGFloat(progress)
@@ -160,7 +141,6 @@ final class SaneVideoCompositor: NSObject, AVVideoCompositing {
             }
         }
 
-        // 3. Render Text Overlays
         if let resultImage = currentImage {
             let activeTextLayers = instruction.textLayers.filter {
                 $0.timeRange.containsTime(request.compositionTime)
@@ -168,16 +148,13 @@ final class SaneVideoCompositor: NSObject, AVVideoCompositing {
             if !activeTextLayers.isEmpty {
                 let renderSize = request.renderContext.size
 
-                // Pro Feature: Face Detection for safe zone positioning
                 var faceRects: [CGRect] = []
 
-                // THERMAL OPTIMIZATION: Skip face detection if system is throttled
+                // Skip face detection when the system is throttled.
                 let shouldDetectFaces =
                     activeTextLayers.contains(where: \.isCaption) && !ThermalManager.isThrottled
 
                 if shouldDetectFaces {
-                    // TODO: Restore faceCache once implemented
-                    // faceRects = await faceCache.getFaceRects(for: resultImage, at: request.compositionTime)
                     faceRects = [] // Temporary: no face detection
                 }
 
@@ -189,7 +166,6 @@ final class SaneVideoCompositor: NSObject, AVVideoCompositing {
             }
         }
 
-        // 3b. Render interaction overlays (click rings, cursor spotlight, keystrokes)
         if let resultImage = currentImage,
            let interactionImage = InteractionOverlayRenderer.renderInteractionLayers(
              instruction.interactionLayers,
@@ -199,7 +175,6 @@ final class SaneVideoCompositor: NSObject, AVVideoCompositing {
           currentImage = interactionImage.composited(over: resultImage)
         }
 
-        // 4. Render Final
         guard let buffer = outputPixelBuffer else {
             renderError = NSError(
                 domain: "SaneVideoCompositor", code: -4,
@@ -209,13 +184,11 @@ final class SaneVideoCompositor: NSObject, AVVideoCompositing {
         }
 
         if let finalImage = currentImage {
-            // Render directly to the output pixel buffer
             ciContext.render(finalImage, to: buffer)
         }
         // defer block will finish the request with the buffer
     }
 
-    // Helper to render a single track layer
     private func getLayerImage(
         for trackID: CMPersistentTrackID, request: AVAsynchronousVideoCompositionRequest,
         instruction: SaneVideoCompositionInstruction
@@ -223,7 +196,7 @@ final class SaneVideoCompositor: NSObject, AVVideoCompositing {
         guard let sourceBuffer = request.sourceFrame(byTrackID: trackID) else { return nil }
         var layerImage = CIImage(cvPixelBuffer: sourceBuffer)
 
-        // 0. Apply Privacy Blur (time-filtered to prevent leak across clips)
+        // Privacy blur is time-filtered so it does not leak across clips.
         if let privacyRanges = instruction.trackPrivacyRegions[trackID] {
             for (range, regions) in privacyRanges where range.containsTime(request.compositionTime) {
                 for region in regions {
@@ -232,7 +205,6 @@ final class SaneVideoCompositor: NSObject, AVVideoCompositing {
             }
         }
 
-        // Find the layer instruction valid for current composition time
         // Multiple clips on same track create separate instructions; find the one with valid transform ramp
         var startTransform = CGAffineTransform.identity
         var foundValidInstruction = false
@@ -243,15 +215,14 @@ final class SaneVideoCompositor: NSObject, AVVideoCompositing {
             ) {
                 layerImage = layerImage.transformed(by: startTransform)
                 foundValidInstruction = true
-                break // Found the correct instruction for this time
+                break
             }
         }
 
-        // If no valid instruction found, return image without transform
         guard foundValidInstruction || instruction.layerInstructions.contains(where: { $0.trackID == trackID })
         else { return layerImage }
 
-        // A.1.5. Apply Smart Crop Transform (reframing for vertical/square export)
+        // Smart crop reframes for vertical or square export.
         if let keyframes = instruction.smartCropKeyframes, !keyframes.isEmpty {
             applySmartCrop(
                 keyframes: keyframes,
@@ -261,7 +232,6 @@ final class SaneVideoCompositor: NSObject, AVVideoCompositing {
             )
         }
 
-        // A.2. Apply Keyframe Animation Transforms
         if let keyframeRanges = instruction.trackKeyframes[trackID] {
             for (range, animations) in keyframeRanges where range.containsTime(request.compositionTime) {
                 let relativeTime = request.compositionTime - range.start
@@ -274,7 +244,6 @@ final class SaneVideoCompositor: NSObject, AVVideoCompositing {
             }
         }
 
-        // B. Apply Effects
         if let effectRanges = instruction.trackEffects[trackID] {
             for (range, effects) in effectRanges where range.containsTime(request.compositionTime) {
                 for effect in effects {
@@ -283,9 +252,8 @@ final class SaneVideoCompositor: NSObject, AVVideoCompositing {
             }
         }
 
-        // C. Apply Background Effects
         if let bgEffectRanges = instruction.trackBackgroundEffects[trackID] {
-            // THERMAL OPTIMIZATION: Skip background removal/blur if system is in emergency state
+            // Skip background effects in a thermal emergency.
             if !ThermalManager.isEmergency {
                 for (range, bgEffects) in bgEffectRanges where range.containsTime(request.compositionTime) {
                     for bgEffect in bgEffects {
@@ -391,7 +359,6 @@ final class SaneVideoCompositor: NSObject, AVVideoCompositing {
                 }
             }
         case let .chromaKey(r, g, b, sensitivity):
-            // GPU-accelerated Chroma Key using shared ChromaKeyKernel
             let targetColor = SIMD3(Float(r), Float(g), Float(b))
             image = ChromaKeyKernel.apply(
                 to: image,
@@ -403,35 +370,25 @@ final class SaneVideoCompositor: NSObject, AVVideoCompositing {
 
     // MARK: - Smart Crop
 
-    /// Applies smart crop transform based on keyframes
-    /// Uses nearest-neighbor interpolation between keyframes for smooth reframing
     private func applySmartCrop(
         keyframes: [CMTime: SuggestedCrop],
         compositionTime: CMTime,
         renderSize: CGSize,
         to image: inout CIImage
     ) {
-        // Find the crop suggestion for this time (interpolate between keyframes)
         let crop = interpolateCrop(at: compositionTime, from: keyframes)
 
         let imageExtent = image.extent
 
-        // Calculate the transform to:
-        // 1. Scale the image by the crop's scale factor (zoom in)
-        // 2. Translate to center the crop point in the output
-
-        // The crop center is normalized (0-1), convert to image coordinates
         let cropCenterX = crop.centerX * imageExtent.width
         let cropCenterY = (1.0 - crop.centerY) * imageExtent.height // Flip Y for CIImage coords
 
-        // Output center
         let outputCenterX = renderSize.width / 2.0
         let outputCenterY = renderSize.height / 2.0
 
         // Build transform: scale around image center, then translate to position crop center at output center
         let scale = crop.scale
 
-        // Translation needed after scaling to center the crop point
         let translateX = outputCenterX - (cropCenterX * scale)
         let translateY = outputCenterY - (cropCenterY * scale)
 
@@ -442,16 +399,13 @@ final class SaneVideoCompositor: NSObject, AVVideoCompositing {
         image = image.transformed(by: transform)
     }
 
-    /// Interpolates crop suggestion at given time between keyframes
     private func interpolateCrop(at time: CMTime, from keyframes: [CMTime: SuggestedCrop]) -> SuggestedCrop {
-        // Sort keyframes by time
         let sortedTimes = keyframes.keys.sorted { $0 < $1 }
 
         guard !sortedTimes.isEmpty else {
             return .default
         }
 
-        // Find surrounding keyframes
         var beforeTime: CMTime?
         var afterTime: CMTime?
 
@@ -464,7 +418,6 @@ final class SaneVideoCompositor: NSObject, AVVideoCompositing {
             }
         }
 
-        // If only one side available, use it directly
         guard let before = beforeTime, let beforeCrop = keyframes[before] else {
             if let after = afterTime, let afterCrop = keyframes[after] {
                 return afterCrop
@@ -476,7 +429,6 @@ final class SaneVideoCompositor: NSObject, AVVideoCompositing {
             return beforeCrop
         }
 
-        // Interpolate between before and after
         let beforeSec = before.seconds
         let afterSec = after.seconds
         let currentSec = time.seconds

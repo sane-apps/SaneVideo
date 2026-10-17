@@ -1,6 +1,3 @@
-// Extracted from EditorLayoutView.swift to reduce file size
-// Contains: VideoDisplayMode, GridPattern, CollapseButton, TimelineKeyboardModifier
-
 import SwiftUI
 
 // MARK: - Video Display Modes
@@ -120,7 +117,7 @@ struct TimelineKeyboardModifier: ViewModifier {
                 }
                 return .handled
             }
-            // Left Arrow: Shift = 10s back, plain = frame back (2026-01-01)
+            // Left Arrow: Shift = 10s back, plain = one frame back.
             .onKeyPress(.leftArrow, phases: .down) { press in
                 if press.modifiers.contains(.shift) {
                     appState.playbackState.seekBackward10Seconds()
@@ -129,7 +126,7 @@ struct TimelineKeyboardModifier: ViewModifier {
                 }
                 return .handled
             }
-            // Right Arrow: Shift = 10s forward, plain = frame forward (2026-01-01)
+            // Right Arrow: Shift = 10s forward, plain = one frame forward.
             .onKeyPress(.rightArrow, phases: .down) { press in
                 if press.modifiers.contains(.shift) {
                     appState.playbackState.seekForward10Seconds()
@@ -138,7 +135,6 @@ struct TimelineKeyboardModifier: ViewModifier {
                 }
                 return .handled
             }
-            // Cmd+A = select all
             .onKeyPress(KeyEquivalent("a"), phases: .down) { press in
                 if press.modifiers.contains(.command) {
                     onSelectAll()
@@ -146,17 +142,15 @@ struct TimelineKeyboardModifier: ViewModifier {
                 }
                 return .ignored
             }
-            // Escape = deselect all
             .onKeyPress(.escape) {
                 onDeselectAll()
                 return .handled
             }
-            // D = select clip at playhead
             .onKeyPress(KeyEquivalent("d")) {
                 onSelectAtPlayhead()
                 return .handled
             }
-            // J = Shuttle backward (stack: -1x → -2x → -4x) (2026-01-01)
+            // J = shuttle backward (-1x → -2x → -4x).
             .onKeyPress(KeyEquivalent("j")) {
                 if shuttleRate > 0 {
                     shuttleRate = -1.0
@@ -166,13 +160,12 @@ struct TimelineKeyboardModifier: ViewModifier {
                 appState.playbackState.setPlaybackRate(shuttleRate)
                 return .handled
             }
-            // K = Pause (2026-01-01)
             .onKeyPress(KeyEquivalent("k")) {
                 shuttleRate = 1.0 // Reset for next J/L press
                 appState.playbackState.pause()
                 return .handled
             }
-            // L = Shuttle forward (stack: 1x → 2x → 4x) (2026-01-01)
+            // L = shuttle forward (1x → 2x → 4x).
             .onKeyPress(KeyEquivalent("l")) {
                 if shuttleRate <= 0 {
                     shuttleRate = 1.0

@@ -54,7 +54,7 @@ class AudioService: NSObject, AudioServiceProtocol {
 
   @MainActor
   private func setupBindings() {
-    // Crash fix: Ensure main queue delivery for thread safety
+    // Deliver on the main queue; background delivery caused a crash.
     permissionManager.microphoneStatusPublisher
       .receive(on: DispatchQueue.main)
       .map { $0 == .granted }
@@ -92,7 +92,6 @@ class AudioService: NSObject, AudioServiceProtocol {
     }
   }
 
-  /// Ensure microphones are discovered (lazy initialization)
   func ensureMicrophonesDiscovered() {
     if !hasDiscoveredMicrophones {
       refreshMicrophones()
@@ -151,7 +150,6 @@ class AudioService: NSObject, AudioServiceProtocol {
 
       await self.internalStart()
 
-      // Ensure we have the list for the UI
       self.refreshMicrophones()
     }
   }
@@ -207,7 +205,6 @@ class AudioService: NSObject, AudioServiceProtocol {
     let lastMicID = UserDefaults.standard.string(forKey: "lastUsedMicID")
     var audioDevice = device
 
-    // 1. Try to restore last used mic if no specific device requested
     if audioDevice == nil, let lastID = lastMicID {
       let discovery = AVCaptureDevice.DiscoverySession(
         deviceTypes: [.microphone, .external],
@@ -220,7 +217,6 @@ class AudioService: NSObject, AudioServiceProtocol {
       }
     }
 
-    // 2. Fallback to default
     if audioDevice == nil {
       audioDevice = AVCaptureDevice.default(for: .audio)
     }
@@ -260,7 +256,6 @@ class AudioService: NSObject, AudioServiceProtocol {
 
       session.beginConfiguration()
 
-      // Remove current audio input
       for input in session.inputs {
         if let deviceInput = input as? AVCaptureDeviceInput,
           deviceInput.device.hasMediaType(.audio) {
@@ -268,7 +263,6 @@ class AudioService: NSObject, AudioServiceProtocol {
         }
       }
 
-      // Add new input
       do {
         let newInput = try AVCaptureDeviceInput(device: device)
         if session.canAddInput(newInput) {
@@ -324,7 +318,6 @@ class AudioService: NSObject, AudioServiceProtocol {
 
     let rms = sqrt(sum / Float(sampleCount))
 
-    // Safety check for NaN or Infinity
     guard !rms.isNaN && !rms.isInfinite else {
       audioLevelSubjectBox.send(0)
       return
@@ -350,8 +343,7 @@ extension AudioService: AVCaptureAudioDataOutputSampleBufferDelegate {
     // Throttle audio levels to ~15fps for UI
     let now = ContinuousClock().now
 
-    // We can't access lastAudioLevelUpdateTime directly as it's @MainActor
-    // But we can check it via a task or just pass it to calculateAudioLevel which is nonisolated
+    // lastAudioLevelUpdateTime is main-actor isolated, so the throttle check runs in a main-actor task.
 
     Task { @MainActor in
       if now - lastAudioLevelUpdateTime >= .milliseconds(66) {

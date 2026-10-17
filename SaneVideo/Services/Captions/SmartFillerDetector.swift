@@ -1,14 +1,9 @@
-// Uses Apple's NaturalLanguage framework for intelligent filler word detection
-// Auto-improves with each macOS update as Apple enhances NL models
-
 import Foundation
 import NaturalLanguage
 
 /// Intelligent filler word detection using Apple's NaturalLanguage framework
-/// Replaces simple regex matching with linguistic analysis
 actor SmartFillerDetector {
 
-    // Common filler words and phrases
     private let fillerWords: Set<String> = [
         "um", "uh", "uhh", "umm", "er", "err", "ah", "ahh",
         "hmm", "hm", "mhm", "uh-huh", "mm-hmm",
@@ -26,23 +21,17 @@ actor SmartFillerDetector {
 
     // MARK: - Public API
 
-    /// Analyze caption words and identify which ones are fillers
     /// Returns array of word indices that are filler words
     func detectFillers(in words: [CaptionWord]) -> [Int] {
         var fillerIndices: [Int] = []
 
-        // Build full text for context analysis
         let fullText = words.map { $0.text }.joined(separator: " ")
 
-        // Use NLTagger for part-of-speech analysis
         let tagger = NLTagger(tagSchemes: [.lexicalClass, .nameType])
         tagger.string = fullText
 
-        // Track word positions
-
         var wordStartPositions: [String.Index] = []
 
-        // Find start position of each word
         var searchStart = fullText.startIndex
         for word in words {
             if let range = fullText.range(of: word.text, range: searchStart ..< fullText.endIndex) {
@@ -53,20 +42,16 @@ actor SmartFillerDetector {
             }
         }
 
-        // Analyze each word
         for (index, word) in words.enumerated() {
             let cleanWord = word.text.lowercased().trimmingCharacters(in: .punctuationCharacters)
 
-            // Skip empty words
             guard !cleanWord.isEmpty else { continue }
 
-            // Check if it's a definite filler
             if isDefiniteFiller(cleanWord) {
                 fillerIndices.append(index)
                 continue
             }
 
-            // For contextual fillers, use NLTagger analysis
             if contextualFillers.contains(cleanWord) {
                 if isFillerInContext(word: cleanWord, at: index, in: words, tagger: tagger, positions: wordStartPositions) {
                     fillerIndices.append(index)
@@ -87,11 +72,9 @@ actor SmartFillerDetector {
         tagger.enumerateTags(in: text.startIndex ..< text.endIndex, unit: .word, scheme: .lexicalClass) { tag, tokenRange in
             let word = String(text[tokenRange]).lowercased()
 
-            // Check for filler interjections
             if tag == .interjection || isDefiniteFiller(word) {
                 fillers.append((range: tokenRange, word: word))
             }
-            // Check contextual fillers with part-of-speech
             else if contextualFillers.contains(word) {
                 // "like" as a verb or preposition is not a filler
                 // "like" as an interjection or discourse marker is a filler
@@ -110,17 +93,14 @@ actor SmartFillerDetector {
     func fillerConfidence(for word: String, in context: String) -> Float {
         let cleanWord = word.lowercased().trimmingCharacters(in: .punctuationCharacters)
 
-        // Definite fillers have high confidence
         if isDefiniteFiller(cleanWord) {
             return 0.95
         }
 
-        // Contextual fillers need analysis
         if contextualFillers.contains(cleanWord) {
             let tagger = NLTagger(tagSchemes: [.lexicalClass])
             tagger.string = context
 
-            // Find the word in context
             if let range = context.lowercased().range(of: cleanWord) {
                 let contextRange = Range(uncheckedBounds: (
                     lower: context.index(context.startIndex, offsetBy: context.distance(from: context.startIndex, to: range.lowerBound)),
@@ -156,7 +136,6 @@ actor SmartFillerDetector {
 
         let position = positions[index]
 
-        // Get the tag at this position
         let (tag, _) = tagger.tag(at: position, unit: .word, scheme: .lexicalClass)
 
         if let tag = tag {
@@ -165,7 +144,6 @@ actor SmartFillerDetector {
                 return true
             }
 
-            // Check surrounding context
             let prevWord = index > 0 ? words[index - 1].text.lowercased() : ""
             let nextWord = index < words.count - 1 ? words[index + 1].text.lowercased() : ""
 

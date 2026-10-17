@@ -13,7 +13,6 @@ class ExportEngine: ExportServiceProtocol {
     private var exportCancellables = Set<AnyCancellable>()
     private var permanentCancellables = Set<AnyCancellable>()
 
-    // Cancellation support
     private var currentExportTask: Task<URL, Error>?
 
     class ExportSessionState: @unchecked Sendable {
@@ -22,7 +21,6 @@ class ExportEngine: ExportServiceProtocol {
 
     private var currentExportState: ExportSessionState?
 
-    // Performance tracking
     private var currentExportStartTime: Date?
     private var currentExportSettings: SaneExportSettings?
 
@@ -31,7 +29,6 @@ class ExportEngine: ExportServiceProtocol {
     private(set) var isExporting = false
     private(set) var progress: Double = 0
 
-    // Helper for internal use to resolve build error
     private var isCancelled: Bool {
         currentExportState?.isCancelled ?? false
     }
@@ -52,7 +49,6 @@ class ExportEngine: ExportServiceProtocol {
             throw ExportError.alreadyExporting
         }
 
-        // Pre-flight disk space check
         try validateDiskSpace(for: project, settings: settings, outputURL: outputURL)
 
         isExporting = true
@@ -79,8 +75,6 @@ class ExportEngine: ExportServiceProtocol {
             progressHandler(1.0)
             return resultURL
         } catch {
-            // If strictly cancelled, clean up but maybe don't throw to UI if handled?
-            // Usually we throw so UI can show error or "Cancelled" state.
             try await handleExportCompletion(outputURL: outputURL, error: error)
             throw error
         }
@@ -98,7 +92,7 @@ class ExportEngine: ExportServiceProtocol {
             "🚀 Starting AVAssetWriter export: \(settings.resolution.displayName) @ \(settings.bitrate / 1_000_000) Mbps"
         )
 
-        // 0. Run Smart Crop analysis if enabled (before composition to get keyframes)
+        // Smart crop runs before building the composition, which needs its keyframes.
         var smartCropKeyframes: [CMTime: SuggestedCrop]?
         if settings.smartCrop.enabled, let firstClip = project.timeline.tracks.first?.clips.first {
             AppLogger.export.info("📐 Running smart crop analysis...")
@@ -114,7 +108,6 @@ class ExportEngine: ExportServiceProtocol {
             }
         }
 
-        // 1. Prepare Composition (with export resolution for correct transform scaling)
         let compositionResult = try await compositor.createComposition(from: project, settings: settings)
         let composition = compositionResult.composition
         let videoComposition = try await compositor.createVideoComposition(
@@ -125,7 +118,6 @@ class ExportEngine: ExportServiceProtocol {
         )
         let audioMix = compositionResult.audioMix
 
-        // 2. Setup Reader
         let reader = try AVAssetReader(asset: composition)
 
         // Guard against empty video tracks - crashes with "videoTracks count >= 1" assertion
@@ -134,7 +126,6 @@ class ExportEngine: ExportServiceProtocol {
             throw ExportError.invalidProject("Project has no video clips to export")
         }
 
-        // Video Output
         let videoSettings: [String: Any] = [
             kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA,
             kCVPixelBufferIOSurfacePropertiesKey as String: [:] // Essential for performance
@@ -151,10 +142,9 @@ class ExportEngine: ExportServiceProtocol {
         if reader.canAdd(readerVideoOutput) {
             reader.add(readerVideoOutput)
         } else {
-            throw ExportError.failedToCreateSession // Reuse logic error
+            throw ExportError.failedToCreateSession
         }
 
-        // Audio Output
         var readerAudioOutput: AVAssetReaderAudioMixOutput?
         if !composition.tracks(withMediaType: .audio).isEmpty {
             let audioSettings: [String: Any] = [
@@ -176,7 +166,6 @@ class ExportEngine: ExportServiceProtocol {
             }
         }
 
-        // 3. Setup Writer (atomic: write to temp file, rename on success)
         // Write in the temp folder, then move into place, so partial files and AVFoundation's own
         // scratch files never appear in the user's Exports folder.
         let tempURL = FileManager.default.temporaryDirectory
@@ -194,7 +183,6 @@ class ExportEngine: ExportServiceProtocol {
         // Without this, the entire file must download before playback begins
         writer.shouldOptimizeForNetworkUse = true
 
-        // Video Input
         var compressionProps: [String: Any] = [
             AVVideoAverageBitRateKey: settings.bitrate,
             AVVideoExpectedSourceFrameRateKey: settings.frameRate,
@@ -223,7 +211,6 @@ class ExportEngine: ExportServiceProtocol {
             writer.add(writerVideoInput)
         }
 
-        // Audio Input
         var writerAudioInput: AVAssetWriterInput?
         if readerAudioOutput != nil {
             let writerAudioSettings: [String: Any] = [
@@ -240,7 +227,6 @@ class ExportEngine: ExportServiceProtocol {
             }
         }
 
-        // 4. Start Processing
         guard reader.startReading() else {
             throw reader.error ?? ExportError.unknown
         }
@@ -250,11 +236,9 @@ class ExportEngine: ExportServiceProtocol {
 
         writer.startSession(atSourceTime: .zero)
 
-        // Process queues
         let processingQueue = DispatchQueue(label: "com.sanevideo.export", qos: .userInitiated)
         let group = DispatchGroup()
 
-        // Duration for progress
         let duration = composition.duration.seconds
         guard duration > 0 else { throw ExportError.unknown }
 
@@ -289,7 +273,6 @@ class ExportEngine: ExportServiceProtocol {
         }
         let progressState = ExportProgressState()
 
-        // Capture cancellation state
         let sessionState = currentExportState
         nonisolated(unsafe) let progressCallback = progressHandler
         nonisolated(unsafe) let publishProgress: @Sendable (Double) -> Void = { [weak self] currentProgress in
@@ -299,7 +282,6 @@ class ExportEngine: ExportServiceProtocol {
             }
         }
 
-        // Video Writer
         group.enter()
         writerVideoInput.requestMediaDataWhenReady(on: processingQueue) {
             let videoInput = uncheckedVideoInput.input
@@ -318,7 +300,6 @@ class ExportEngine: ExportServiceProtocol {
 
                     if let buffer = videoOutput.copyNextSampleBuffer() {
                         if videoInput.append(buffer) {
-                            // Update Progress
                             let pts = CMSampleBufferGetPresentationTimeStamp(buffer).seconds
                             let currentProgress = pts / duration
 
@@ -328,7 +309,6 @@ class ExportEngine: ExportServiceProtocol {
                                 publishProgress(currentProgress)
                             }
                         } else {
-                            // Write failed
                             progressState.exportError = uncheckedWriter.writer.error
                             videoInput.markAsFinished()
                             group.leave()
@@ -336,7 +316,6 @@ class ExportEngine: ExportServiceProtocol {
                             return
                         }
                     } else {
-                        // Done
                         videoInput.markAsFinished()
                         group.leave()
                         shouldContinue = false
@@ -346,7 +325,6 @@ class ExportEngine: ExportServiceProtocol {
             }
         }
 
-        // Audio Writer
         if let writerAudioInput, let readerAudioOutput {
             let uncheckedAudioIn = UncheckedAudioInput(input: writerAudioInput)
             let uncheckedAudioOut = UncheckedAudioOutput(output: readerAudioOutput)
@@ -385,11 +363,8 @@ class ExportEngine: ExportServiceProtocol {
             }
         }
 
-        // Timeout for finishWriting operation (60 seconds for complex exports)
         let finishWritingTimeout: TimeInterval = 60.0
 
-        // Wait for inputs to finish
-        // We use a safe continuation to bridge the dispatch group wrap
         return try await withCheckedThrowingContinuation { continuation in
             nonisolated(unsafe) let finalizeExport: @Sendable () -> Void = {
                 // Use uncheckedWriter/uncheckedReader directly to avoid
@@ -466,10 +441,8 @@ class ExportEngine: ExportServiceProtocol {
         }
     }
 
-    /// Pre-flight disk space validation
     /// Estimates required space and checks available capacity before export
     private func validateDiskSpace(for project: VideoProject, settings: SaneExportSettings, outputURL: URL) throws {
-        // Calculate project duration
         let duration = project.timeline.duration.seconds
         guard duration > 0 else { return } // Empty project will fail later anyway
 
@@ -482,7 +455,6 @@ class ExportEngine: ExportServiceProtocol {
         // Add 30% overhead for container, metadata, B-frames, etc.
         let requiredSpace = Int64(Double(estimatedBytes) * 1.3)
 
-        // Check available space on output volume
         let outputVolume = outputURL.deletingLastPathComponent()
         do {
             let values = try outputVolume.resourceValues(forKeys: [.volumeAvailableCapacityForImportantUsageKey])
@@ -494,7 +466,7 @@ class ExportEngine: ExportServiceProtocol {
                 AppLogger.export.info("Disk space check passed. Required: \(requiredSpace) bytes, Available: \(available) bytes")
             }
         } catch let error as ExportError {
-            throw error // Re-throw disk space error
+            throw error
         } catch {
             // Log but continue if we can't check (better than blocking)
             AppLogger.export.warning("Failed to check disk space: \(error.localizedDescription). Proceeding with export.")
@@ -505,7 +477,6 @@ class ExportEngine: ExportServiceProtocol {
         isExporting = false
         currentExportTask = nil
 
-        // Record performance metrics
         if let startTime = currentExportStartTime,
            let settings = currentExportSettings {
             let duration = Date().timeIntervalSince(startTime)
@@ -524,20 +495,16 @@ class ExportEngine: ExportServiceProtocol {
                 ]
             )
 
-            // Clear tracking
             currentExportStartTime = nil
             currentExportSettings = nil
         }
 
         if let error {
-            // Clean up partial file on error
             if FileManager.default.fileExists(atPath: outputURL.path) {
                 try? FileManager.default.removeItem(at: outputURL)
             }
-            // Add custom logging or toast here if needed
             AppLogger.export.error("❌ Export finished with error: \(error)")
         } else {
-            // Force 100% progress
             progress = 1.0
             AppLogger.export.info("✅ Export finished successfully")
         }

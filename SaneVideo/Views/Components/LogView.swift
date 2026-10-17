@@ -7,7 +7,6 @@ struct LogView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // Header
             HStack {
                 Text(String(localized: "logs.header.title", defaultValue: "Application Logs"))
                     .font(.headline)
@@ -62,7 +61,6 @@ struct LogView: View {
             .padding()
             .background(Color.black.opacity(0.2))
 
-            // Log List
             ScrollViewReader { proxy in
                 List {
                     ForEach(logManager.logs) { entry in
@@ -72,7 +70,6 @@ struct LogView: View {
                     }
                 }
                 .onAppear {
-                    // Scroll to bottom on appear
                     if let last = logManager.logs.last {
                         proxy.scrollTo(last.id, anchor: .bottom)
                     }

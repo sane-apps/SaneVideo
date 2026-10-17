@@ -24,7 +24,6 @@ struct CaptionRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .top, spacing: 8) {
-                // Timecode
                 Text(formatTime(caption.startTime))
                     .font(.caption2.monospaced())
                     .foregroundColor(Color.stone)
@@ -33,7 +32,6 @@ struct CaptionRow: View {
                         onSeek()
                     }
                 
-                // Editable Text
                 TextField(String(localized: "caption.placeholder", defaultValue: "Caption"), text: $caption.text, axis: .vertical)
                     .textFieldStyle(.plain)
                     .font(.system(size: 13))
@@ -41,8 +39,7 @@ struct CaptionRow: View {
                     .accessibilityIdentifier("caption.text_field")
                     .onChange(of: isFocused) { _, newValue in
                         showPreview = newValue
-                        // Clean Whisper tokens when user finishes editing
-                        // This ensures any stray tokens are stripped on blur
+                        // Strip stray Whisper tokens when editing ends.
                         if !newValue {
                             let cleaned = Caption.cleanText(caption.text)
                             if cleaned != caption.text {
@@ -62,7 +59,6 @@ struct CaptionRow: View {
                 }
             }
             
-            // Live preview when editing
             // Use displayText to strip Whisper tokens for preview
             if showPreview && !caption.displayText.isEmpty {
                 CaptionPreview(text: caption.displayText, style: style)
@@ -117,7 +113,7 @@ struct CaptionPreview: View {
                 .padding(8)
                 .background(
                     RoundedRectangle(cornerRadius: 8)
-                        .fill(Color.black.opacity(0.7)) // Dark background for visibility
+                        .fill(Color.black.opacity(0.7))
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 8)

@@ -30,7 +30,6 @@ class StressTestRunner {
             do {
                 try await testTimelineScalability()
                 try await testRapidRecordingToggle(appState: appState)
-                // Add more here
             } catch {
                 log("❌ Test Suite Failed: \(error.localizedDescription)")
             }
@@ -45,7 +44,6 @@ class StressTestRunner {
     func testTimelineScalability() async throws {
         log("--- Test: Timeline Scalability (500 clips) ---")
 
-        // Create 500 dummy clips
         let clipCount = 500
         var clips: [VideoClip] = []
         let dummyURL = FileManager.default.temporaryDirectory.appendingPathComponent("dummy.mp4") // Doesn't need to exist for model creation
@@ -82,30 +80,26 @@ class StressTestRunner {
 
     private func testRapidRecordingToggle(appState: AppState) async throws {
         log("--- Test: Rapid Recording Toggle ---")
-        // We need to be careful with actual hardware.
-        // We will simulate the Coordinator calls.
+        // Simulates Coordinator calls rather than driving real hardware.
 
         let recordingState = appState.recordingState
 
-        for i in 1 ... 20 { // 20 toggles
+        for i in 1 ... 20 {
             log("Toggle \(i)/20...")
             if recordingState.isRecording {
                 recordingState.stopRecording { _ in }
             } else {
                 recordingState.startRecording(isScreenSharing: false)
             }
-            // Random delay between 100ms and 500ms
             try await Task.sleep(nanoseconds: UInt64(Double.random(in: 0.1 ... 0.5) * 1_000_000_000))
         }
 
-        // Wait to settle
         try await Task.sleep(nanoseconds: 2 * 1_000_000_000)
 
         if recordingState.isRecording {
             log("Cleaning up recording state...")
             recordingState.stopRecording { _ in }
 
-            // Wait for it to stop (polling)
             for _ in 0 ..< 10 {
                 if !appState.recordingState.isRecording { break }
                 try await Task.sleep(nanoseconds: 500_000_000)
@@ -115,7 +109,6 @@ class StressTestRunner {
         log("✅ Rapid Toggle Finished")
     }
 
-    // Test Memory Pressure
     func testMemoryPressure() {
         log("--- Test: Memory Pressure ---")
         // ... (Implement safer memory pressure that respects MemoryManager)

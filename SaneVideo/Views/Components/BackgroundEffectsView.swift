@@ -36,7 +36,6 @@ struct BackgroundEffectsView: View {
   
   var body: some View {
     VStack(alignment: .leading, spacing: 10) {
-      // Show warning if clip is missing
       if clip.isMissing {
         HStack(spacing: 6) {
           Image(systemName: "exclamationmark.triangle.fill")
@@ -54,7 +53,6 @@ struct BackgroundEffectsView: View {
         )
       }
       
-      // Header with toggle
       HStack {
         Label(
           String(localized: "background.header", defaultValue: "Background"),
@@ -88,13 +86,12 @@ struct BackgroundEffectsView: View {
         )
         .toggleStyle(.switch)
         .controlSize(.small)
-        .disabled(clip.isMissing) // CRITICAL FIX: Disable if clip is missing
+        .disabled(clip.isMissing)
         .accessibilityIdentifier("background.toggle")
         .accessibilityHint(clip.isMissing ? "Clip file is missing. Use 'Locate File' in Clip Info to relink the file." : "Toggle background effects")
       }
 
       if selectedEffect != nil {
-        // 2x2 grid layout for effect type buttons
         VStack(spacing: 6) {
           HStack(spacing: 6) {
             EffectTypeButton(
@@ -158,7 +155,6 @@ struct BackgroundEffectsView: View {
           }
         }
 
-        // Effect-specific controls
         Group {
           if isBlur {
             blurControls
@@ -188,7 +184,6 @@ struct BackgroundEffectsView: View {
     .onChange(of: clip.backgroundEffect) { _, newEffect in
       if selectedEffect != newEffect {
         selectedEffect = newEffect
-        // Update related state
         if case .blur(let radius) = newEffect {
           blurRadius = radius
         }
@@ -278,7 +273,6 @@ struct BackgroundEffectsView: View {
           .frame(width: 25)
       }
 
-      // Presets
       HStack(spacing: 4) {
         ForEach(
           [
@@ -321,7 +315,6 @@ struct BackgroundEffectsView: View {
           saveEffect()
         }
 
-      // Color presets
       HStack(spacing: 6) {
         ForEach(colorPresets, id: \.name) { preset in
           Circle()
@@ -453,7 +446,6 @@ struct BackgroundEffectsView: View {
   }
 
   private func saveEffect() {
-    // Validate clip before saving effect
     guard !clip.isMissing else {
       ServiceContainer.shared.toastManager.show(
         "Cannot save background effect: Clip file is missing. Use 'Locate File' in Clip Info to relink the file.",

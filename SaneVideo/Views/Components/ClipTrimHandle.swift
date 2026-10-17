@@ -2,7 +2,6 @@ import SwiftUI
 import AppKit
 import CoreMedia
 
-/// Draggable trim handle for TimelineClipView
 struct ClipTrimHandle: View {
     let isLeft: Bool
     let clipHeight: CGFloat
@@ -26,13 +25,11 @@ struct ClipTrimHandle: View {
                 .fill(Color.accentColor.opacity(0.01))
                 .frame(width: 20, height: clipHeight)
 
-            // Visual component - Distinct "Handle"
             RoundedRectangle(cornerRadius: 4)
                 .fill(Color.white)
                 .frame(width: 12, height: clipHeight * 0.6)
                 .shadow(color: .black.opacity(0.4), radius: 2)
                 .overlay(
-                    // Grip Lines
                     HStack(spacing: 2) {
                         ForEach(0..<3) { _ in
                             Capsule()
@@ -46,14 +43,12 @@ struct ClipTrimHandle: View {
                         .stroke(Color.accentColor, lineWidth: 1)
                 )
         }
-        // Offset handle during drag to keep it under cursor
-        // This prevents the handle from moving away when the clip expands
+        // Offset the handle during a drag so it stays under the cursor as the clip resizes.
         .offset(x: isDragging ? trimOffset : 0)
         .contentShape(Rectangle())
         .cursor(NSCursor.resizeLeftRight)
         .onHover { hovering in
-            // Notify parent when hovering over handle
-            // This prevents clip from scaling when trying to grab handle
+            // Tell the parent when the handle is hovered so the clip doesn't scale while the user grabs it.
             AppLogger.uiLog.debug("🔧 Trim handle hover: isLeft=\(isLeft), hovering=\(hovering)")
             onHoverChange?(hovering)
         }
@@ -68,7 +63,6 @@ struct ClipTrimHandle: View {
                     AppLogger.uiLog.info("🔧 Trim handle drag ended: isLeft=\(isLeft), finalTranslation=\(value.translation.width)")
                     var deltaSeconds = value.translation.width / pixelsPerSecond
 
-                    // SNAP TO PLAYHEAD
                     deltaSeconds = applyPlayheadSnapping(
                         deltaSeconds: deltaSeconds,
                         isLeft: isLeft

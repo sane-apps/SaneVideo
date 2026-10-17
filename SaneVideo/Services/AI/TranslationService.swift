@@ -18,8 +18,7 @@ actor TranslationService {
         let sourceLanguage = sourceLanguage.map { Locale.Language(identifier: $0) }
 
 #if compiler(>=6.2)
-        // On macOS 26.2, we can use TranslationSession directly if we know the source language
-        // For simplicity and compatibility with the current interface, we'll use a fixed or inferred source
+        // Without a source language, assume en-US.
 
         let availability = LanguageAvailability()
         let source = sourceLanguage ?? Locale.Language(identifier: "en-US")
@@ -30,7 +29,7 @@ actor TranslationService {
             throw TranslationError.unsupportedLanguagePairing
         }
 
-        // Creating a session. Note: init(installedSource:target:) is available on macOS 26.0+
+        // init(installedSource:target:) needs macOS 26.0+.
         let session = TranslationSession(installedSource: source, target: targetLanguage)
         let response = try await session.translate(text)
 

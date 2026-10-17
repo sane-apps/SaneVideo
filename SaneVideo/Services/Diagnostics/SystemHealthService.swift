@@ -1,5 +1,3 @@
-// Monitors system health and provides proactive warnings
-
 import Foundation
 
 @MainActor
@@ -31,7 +29,6 @@ class SystemHealthService {
     }
     
     private func startMonitoring() {
-        // Monitor thermal state
         NotificationCenter.default.addObserver(
             forName: ProcessInfo.thermalStateDidChangeNotification,
             object: nil,
@@ -42,7 +39,6 @@ class SystemHealthService {
             }
         }
         
-        // Periodic health checks
         Timer.scheduledTimer(withTimeInterval: 30.0, repeats: true) { [weak self] _ in
             Task { @MainActor in
                 self?.updateHealth()
@@ -51,19 +47,16 @@ class SystemHealthService {
     }
     
     func updateHealth() {
-        // Check disk space
         if let attributes = try? FileManager.default.attributesOfFileSystem(forPath: NSHomeDirectory()),
            let freeSpace = attributes[.systemFreeSize] as? Int64 {
             diskSpaceGB = Double(freeSpace) / 1_000_000_000.0
         }
         
-        // Check thermal state
         thermalState = ProcessInfo.processInfo.thermalState
         
-        // Check memory pressure (simplified)
+        // Thermal state stands in for memory pressure.
         memoryPressure = ProcessInfo.processInfo.thermalState == .serious || ProcessInfo.processInfo.thermalState == .critical
         
-        // Determine overall health
         currentHealth = calculateHealth()
     }
     
@@ -72,7 +65,6 @@ class SystemHealthService {
         var suggestions: [String] = []
         var status: HealthStatus = .excellent
         
-        // Disk space check
         if diskSpaceGB < 1.0 {
             status = .critical
             issues.append("Critical: Less than 1GB free disk space")
@@ -83,7 +75,6 @@ class SystemHealthService {
             suggestions.append("Consider freeing up space for large exports")
         }
         
-        // Thermal state check
         switch thermalState {
         case .critical:
             status = .critical
@@ -101,7 +92,6 @@ class SystemHealthService {
             break
         }
         
-        // Memory pressure
         if memoryPressure {
             status = status == .excellent ? .good : status
             issues.append("System under memory pressure")
@@ -122,7 +112,6 @@ class SystemHealthService {
         )
     }
     
-    /// Get export quality recommendation based on system health
     func getRecommendedExportSettings() -> SaneExportSettings.ExportResolution {
         switch currentHealth?.status {
         case .excellent, .good:

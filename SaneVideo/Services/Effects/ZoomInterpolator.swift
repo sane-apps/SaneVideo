@@ -1,5 +1,5 @@
 // Spring-physics zoom transitions with cursor-following viewport.
-// Replaces linear easing with natural spring motion inspired by Cap's PR #1504.
+// Inspired by Cap's PR #1504.
 // Flow:
 // 1. Click → spring zoom from 1.0 to zoomScale
 // 2. During hold → viewport spring-follows cursor within safe zone
@@ -9,7 +9,6 @@
 import CoreMedia
 import Foundation
 
-/// Generates spring-physics zoom animations from click and cursor data
 struct ZoomInterpolator: Sendable {
 
     // MARK: - Configuration
@@ -48,12 +47,6 @@ struct ZoomInterpolator: Sendable {
     // MARK: - Animation Generation
 
     /// Generate a spring-physics zoom animation from click and cursor data.
-    ///
-    /// - Parameters:
-    ///   - clicks: Click events that trigger zoom
-    ///   - cursorPath: Continuous cursor samples for viewport following
-    ///   - clipDuration: Total clip duration
-    /// - Returns: KeyframeAnimation with pre-baked spring-physics keyframes
     func generateZoomAnimation(
         clicks: [ClickSample],
         cursorPath: [CursorSample],
@@ -67,10 +60,8 @@ struct ZoomInterpolator: Sendable {
         let frameDt = 1.0 / config.keyframeRate
         let timescale: CMTimeScale = 600
 
-        // Build zoom regions (when we're zoomed in)
         let zoomRegions = buildZoomRegions(from: sortedClicks, clipDuration: duration)
 
-        // Spring simulations for scale and viewport position
         var scaleSim = SpringMassDamperSimulation(value: 1.0, target: 1.0, profile: .zoom)
         var posXSim = SpringMassDamperSimulation(value: 0.0, target: 0.0, profile: .zoom)
         var posYSim = SpringMassDamperSimulation(value: 0.0, target: 0.0, profile: .zoom)
@@ -80,10 +71,8 @@ struct ZoomInterpolator: Sendable {
         while time <= duration {
             let cmTime = CMTime(seconds: time, preferredTimescale: timescale)
 
-            // Determine current zoom state
             let zoomState = currentZoomState(at: time, regions: zoomRegions)
 
-            // Set scale target
             let targetScale: Double
             switch zoomState {
             case .idle:
@@ -94,7 +83,6 @@ struct ZoomInterpolator: Sendable {
 
             scaleSim.step(toward: targetScale, dt: frameDt)
 
-            // Set position target based on zoom state
             let targetPosX: Double
             let targetPosY: Double
 
@@ -123,11 +111,9 @@ struct ZoomInterpolator: Sendable {
             posXSim.step(toward: targetPosX, dt: frameDt)
             posYSim.step(toward: targetPosY, dt: frameDt)
 
-            // Clamp viewport to content bounds
             let clampedX = clampToContentBounds(posXSim.value, scale: scaleSim.value)
             let clampedY = clampToContentBounds(posYSim.value, scale: scaleSim.value)
 
-            // Write keyframes
             animation.setKeyframe(
                 property: .scale, at: cmTime,
                 value: scaleSim.value, easing: .springPhysics
@@ -236,7 +222,6 @@ struct ZoomInterpolator: Sendable {
         clickCenter: (x: Double, y: Double),
         currentScale: Double
     ) -> (x: Double, y: Double) {
-        // Base position centered on click
         let baseX = offsetForClick(clickCenter.x, scale: currentScale)
         let baseY = offsetForClick(clickCenter.y, scale: currentScale)
 
@@ -250,7 +235,6 @@ struct ZoomInterpolator: Sendable {
         // Safe zone bounds (cursor can move this far from center before viewport pans)
         let safeHalf = viewportSize * (0.5 - config.safeZoneMargin)
 
-        // If cursor is outside safe zone, offset viewport to bring cursor back in
         var adjustX = 0.0
         var adjustY = 0.0
 
@@ -269,11 +253,9 @@ struct ZoomInterpolator: Sendable {
         return (baseX + adjustX, baseY + adjustY)
     }
 
-    /// Interpolate cursor position at a given time from the cursor path
     private func cursorPosition(at time: Double, path: [CursorSample]) -> (x: Double, y: Double) {
         guard !path.isEmpty else { return (0.5, 0.5) }
 
-        // Find surrounding samples
         if let last = path.last, time >= last.timestamp {
             return (last.x, last.y)
         }
@@ -281,7 +263,6 @@ struct ZoomInterpolator: Sendable {
             return (first.x, first.y)
         }
 
-        // Binary search for bracketing samples
         var lo = 0, hi = path.count - 1
         while lo < hi - 1 {
             let mid = (lo + hi) / 2
@@ -301,7 +282,6 @@ struct ZoomInterpolator: Sendable {
         return (a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t)
     }
 
-    /// Prevent viewport from showing outside content bounds
     private func clampToContentBounds(_ offset: Double, scale: Double) -> Double {
         guard config.edgeSnap && scale > 1.0 else { return offset }
 

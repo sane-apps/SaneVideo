@@ -1,5 +1,3 @@
-// Reusable header component for modal sheets
-
 import SwiftUI
 
 /// Standard header for export and settings sheets

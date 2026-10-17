@@ -33,9 +33,7 @@ class LogManager {
     static let diagnosticLogFileName = "SaneVideo_Log.txt"
 
     init() {
-        // Subscribe to AppLogger
         AppLogger.onLog = { [weak self] message, level, category in
-            // Convert AppLogger.LogLevel to LogManager.LogLevel
             let mappedLevel: LogLevel
             switch level {
             case .debug: mappedLevel = .debug

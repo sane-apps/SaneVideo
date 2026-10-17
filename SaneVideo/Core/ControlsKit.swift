@@ -1,28 +1,26 @@
 import SwiftUI
 
 // MARK: - Unified Control Button System
-// All recording controls use this single button style for visual consistency.
-// Sizes are designed to work across PiP (compact) and Main Window (full) contexts.
 
 public struct IconCircleButton: View {
     public enum Size: Equatable {
-        /// Tiny size for very small PiP (28pt) - minimalist
+        /// Very small PiP windows.
         case mini
-        /// Compact size for PiP overlay (40pt) - fits in small spaces
+        /// PiP overlay.
         case small
-        /// Standard size for main window controls (52pt)
+        /// Main window controls.
         case medium
-        /// Large size for primary actions (64pt)
+        /// Primary actions.
         case large
         /// Custom size with proportional icon scaling
         case custom(CGFloat)
 
         public var diameter: CGFloat {
             switch self {
-            case .mini: return 28    // Very compact for tiny PiP
-            case .small: return 40   // Compact for PiP
-            case .medium: return 52  // Standard controls
-            case .large: return 64   // Primary actions
+            case .mini: return 28
+            case .small: return 40
+            case .medium: return 52
+            case .large: return 64
             case .custom(let val): return val
             }
         }
@@ -37,18 +35,16 @@ public struct IconCircleButton: View {
             }
         }
 
-        /// Spacing between buttons at this size
         public var spacing: CGFloat {
             switch self {
-            case .mini: return Theme.Dimensions.spacingXS    // 4pt
-            case .small: return Theme.Dimensions.spacingSM   // 8pt
-            case .medium: return Theme.Dimensions.spacingMD  // 12pt
-            case .large: return Theme.Dimensions.spacingLG   // 16pt
+            case .mini: return Theme.Dimensions.spacingXS
+            case .small: return Theme.Dimensions.spacingSM
+            case .medium: return Theme.Dimensions.spacingMD
+            case .large: return Theme.Dimensions.spacingLG
             case .custom(let val): return val * 0.2
             }
         }
 
-        /// Returns appropriate size for a given PiP window width
         public static func forPiPWidth(_ width: CGFloat) -> Size {
             switch width {
             case ..<250: return .mini
@@ -101,7 +97,6 @@ public struct IconCircleButton: View {
     }
 }
 
-/// Unified button style for icon buttons with consistent haptics and glass styling
 public struct IconCircleButtonStyle: ButtonStyle {
     let size: IconCircleButton.Size
     let isActive: Bool
@@ -118,7 +113,7 @@ public struct IconCircleButtonStyle: ButtonStyle {
     private var dim: CGFloat { size.diameter }
 
     private var borderOpacity: Double {
-        isActive ? 0.7 : Theme.Opacity.strong  // 0.7 : 0.3
+        isActive ? 0.7 : Theme.Opacity.strong
     }
 
     public func makeBody(configuration: Configuration) -> some View {
@@ -167,11 +162,8 @@ public struct IconCircleButtonStyle: ButtonStyle {
                         )
                 }
             )
-            // Glow effect when active
             .shadow(color: isActive ? activeColor.opacity(0.56) : activeColor.opacity(0.10), radius: isActive ? 14 : 6, x: 0, y: 0)
-            // Subtle drop shadow for depth
             .shadow(color: .black.opacity(0.28), radius: 4, x: 0, y: 2)
-            // Hover and press animations
             .scaleEffect(isHovering ? (configuration.isPressed ? 1.0 : 1.08) : (configuration.isPressed ? 0.94 : 1.0))
             .animation(.easeOut(duration: 0.15), value: isHovering)
             .animation(.easeOut(duration: 0.1), value: configuration.isPressed)
@@ -196,7 +188,6 @@ public struct RecBadgeTimer: View {
     let isRecording: Bool
     let timeString: String
 
-    // Blinking animation state
     @State private var isBlinking: Bool = false
 
     public init(isRecording: Bool, timeString: String) {
@@ -208,7 +199,6 @@ public struct RecBadgeTimer: View {
         VStack(spacing: 6) {
             HStack(spacing: 6) {
                 if isRecording {
-                    // Blinking red dot with glow
                     Circle()
                         .fill(Color.red)
                         .frame(width: 10, height: 10)

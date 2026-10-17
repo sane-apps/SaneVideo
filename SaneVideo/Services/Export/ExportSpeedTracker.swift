@@ -1,5 +1,3 @@
-// Tracks export speed and estimates time remaining
-
 import Foundation
 
 @MainActor
@@ -40,16 +38,13 @@ class ExportSpeedTracker {
         let bytesDelta = bytesProcessed - lastBytesProcessed
         let currentSpeedMBps = Double(bytesDelta) / timeDelta / 1_000_000.0
         
-        // Add to history
         speedHistory.append(currentSpeedMBps)
         if speedHistory.count > maxHistorySize {
             speedHistory.removeFirst()
         }
         
-        // Calculate average
         let averageSpeedMBps = speedHistory.reduce(0, +) / Double(speedHistory.count)
         
-        // Estimate time remaining
         let remainingBytes = totalBytes - bytesProcessed
         let estimatedTimeRemaining = averageSpeedMBps > 0 
             ? Double(remainingBytes) / 1_000_000.0 / averageSpeedMBps

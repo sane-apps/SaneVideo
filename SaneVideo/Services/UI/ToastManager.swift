@@ -19,7 +19,6 @@ class ToastManager {
 
     func show(_ message: String, type: AlertType = .info) {
         Task { @MainActor in
-            // Log for debugging
             if type == .error {
                 AppLogger.uiLog.error("Toast Error: \(message)")
             } else {
@@ -31,7 +30,6 @@ class ToastManager {
                 if messageQueue.count < 3 {
                     messageQueue.append(message)
                 } else {
-                    // Replace last queued message with latest
                     messageQueue[messageQueue.count - 1] = message
                     AppLogger.uiLog.debug("Toast queue full, replaced last with: \(message)")
                 }
@@ -52,10 +50,8 @@ class ToastManager {
 
         toastMessage = message
 
-        // Allow message to display briefly before checking queue
         try? await Task.sleep(nanoseconds: 800_000_000) // 800ms minimum display
 
-        // Check if there's a queued message
         if let nextMessage = messageQueue.first {
             messageQueue.removeFirst()
             await showMessage(nextMessage)

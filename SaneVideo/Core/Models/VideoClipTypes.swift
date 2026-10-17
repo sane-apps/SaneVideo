@@ -39,16 +39,12 @@ struct PrivacyRegion: Identifiable, Codable, Equatable, Sendable {
 
 /// Background effect using Apple Vision person segmentation
 enum BackgroundEffect: Codable, Equatable, Hashable, Sendable {
-  /// Blur the background, keeping person sharp
   case blur(radius: Float)
 
-  /// Replace background with a solid color
   case solidColor(red: CGFloat, green: CGFloat, blue: CGFloat, alpha: CGFloat)
 
-  /// Replace background with an image
   case image(url: URL)
 
-  /// Chroma Key (Green Screen) removal
   /// Stores normalized RGBA components (0-1)
   case chromaKey(red: CGFloat, green: CGFloat, blue: CGFloat, sensitivity: Float)
 
@@ -86,7 +82,6 @@ enum BackgroundEffect: Codable, Equatable, Hashable, Sendable {
 
 // MARK: - Codable Time Range Helper
 
-/// A Codable wrapper for CMTimeRange
 struct CodableTimeRange: Codable, Equatable, Hashable, Sendable {
   let start: Double
   let duration: Double

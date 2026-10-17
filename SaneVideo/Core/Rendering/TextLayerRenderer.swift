@@ -3,14 +3,11 @@ import CoreImage
 import CoreMedia
 import Foundation
 
-/// Renders text layers (captions, overlays) into a CIImage
 enum TextLayerRenderer {
 
     // MARK: - Main Renderer
 
-    /// Renders text layers with optional karaoke word highlighting
     /// - Parameters:
-    ///   - layers: Text layers to render
     ///   - size: Output size in pixels
     ///   - faceRects: Face rectangles for collision avoidance (normalized 0-1)
     ///   - compositionTime: Current time for karaoke word highlighting
@@ -20,7 +17,6 @@ enum TextLayerRenderer {
         faceRects: [CGRect] = [],
         compositionTime: CMTime = .zero
     ) -> CIImage? {
-        // macOS Text Rendering using CoreGraphics/AppKit
         let colorSpace = CGColorSpace(name: CGColorSpace.sRGB)!
         let bitmapInfo = CGBitmapInfo(rawValue: CGImageAlphaInfo.premultipliedLast.rawValue)
 
@@ -46,9 +42,7 @@ enum TextLayerRenderer {
                 height: layer.frame.height * size.height
             )
 
-            // Face-Aware Positioning (Safe Zones)
             if layer.isCaption && !faceRects.isEmpty {
-                // Check if any face overlaps with the caption area
                 for faceRect in faceRects {
                     // Vision rects are 0-1, convert to pixel space
                     let pixelFaceRect = CGRect(
@@ -59,12 +53,9 @@ enum TextLayerRenderer {
                     )
                     
                     if rect.intersects(pixelFaceRect) {
-                        // Collision! Move caption up or down
                         if rect.midY < pixelFaceRect.midY {
-                            // Caption is below face, push further down
                             rect.origin.y = min(size.height - rect.height - 20, pixelFaceRect.maxY + 20)
                         } else {
-                            // Caption is above/on face, push up
                             rect.origin.y = max(20, pixelFaceRect.minY - rect.height - 20)
                         }
                     }
@@ -73,14 +64,12 @@ enum TextLayerRenderer {
 
             let text = layer.text
 
-            // Style - use provided CaptionStyle or fallback to defaults
             let paragraphStyle = NSMutableParagraphStyle()
             paragraphStyle.alignment = .center
             paragraphStyle.lineBreakMode = .byWordWrapping
 
             let style = layer.style
 
-            // Font
             let fontName = style?.fontName ?? "SF Pro Rounded"
             let isBold = style?.isBold ?? true
             let isItalic = style?.isItalic ?? false
@@ -98,12 +87,10 @@ enum TextLayerRenderer {
                 return NSFont.systemFont(ofSize: preferredFontSize, weight: isBold ? .bold : .regular)
             }()
 
-            // Colors
             let textColor = style.flatMap { NSColor(hex: $0.textColor) } ?? NSColor.white
             let strokeColor = style?.strokeColor.flatMap { NSColor(hex: $0) } ?? NSColor.black
             let strokeWidth = style?.strokeWidth ?? 3.0
 
-            // Shadow
             let shadow: NSShadow = {
                 let s = NSShadow()
                 if let style = style, style.shadowRadius > 0 {
@@ -135,7 +122,6 @@ enum TextLayerRenderer {
                 .shadow: shadow
             ]
 
-            // Create attributed string with karaoke highlighting if words are available
             let attributedString: NSAttributedString
             if let words = layer.words,
                !words.isEmpty,
@@ -154,24 +140,18 @@ enum TextLayerRenderer {
                 attributedString = NSAttributedString(string: text, attributes: baseAttributes)
             }
 
-            // Apply Transform using CGContext
             context.saveGState()
 
-            // 1. Calculate center of rect
             let midX = rect.midX
             let midY = rect.midY
 
-            // 2. Translate to center
             context.translateBy(x: midX, y: midY)
 
-            // 3. Rotate and Scale
             context.rotate(by: CGFloat(layer.rotation))
             context.scaleBy(x: layer.scale, y: layer.scale)
 
-            // 4. Translate back
             context.translateBy(x: -midX, y: -midY)
 
-            // 5. Draw
             attributedString.draw(in: rect)
 
             context.restoreGState()
@@ -243,39 +223,32 @@ enum TextLayerRenderer {
         let font: NSFont
     }
 
-    /// Creates an attributed string with the active word highlighted for karaoke effect
     private static func createKaraokeAttributedString(using input: KaraokeInput) -> NSAttributedString {
         let mutableString = NSMutableAttributedString(string: input.text, attributes: input.baseAttributes)
 
-        // Find the active word based on composition time
         let currentSeconds = input.compositionTime.seconds
         guard let activeWord = input.words.first(where: { currentSeconds >= $0.start && currentSeconds < $0.end }) else {
             return mutableString
         }
 
-        // Find the range of the active word in the text
         guard let wordRange = input.text.range(of: activeWord.text, options: .caseInsensitive) else {
             return mutableString
         }
 
         let nsRange = NSRange(wordRange, in: input.text)
 
-        // Get the active color
         let activeColor = input.style.activeTextColor.flatMap { NSColor(hex: $0) } ?? NSColor.yellow
 
-        // Apply highlight based on style
         switch input.style.highlightStyle {
         case .none:
             break
 
         case .pop:
-            // Larger font for active word
             let popFont = NSFont(descriptor: input.font.fontDescriptor, size: input.font.pointSize * 1.2) ?? input.font
             mutableString.addAttribute(.font, value: popFont, range: nsRange)
             mutableString.addAttribute(.foregroundColor, value: activeColor, range: nsRange)
 
         case .glow:
-            // Glow effect via shadow
             let glowShadow = NSShadow()
             glowShadow.shadowColor = activeColor.withAlphaComponent(0.8)
             glowShadow.shadowBlurRadius = 10
@@ -284,13 +257,11 @@ enum TextLayerRenderer {
             mutableString.addAttribute(.foregroundColor, value: activeColor, range: nsRange)
 
         case .underline:
-            // Underline the active word
             mutableString.addAttribute(.underlineStyle, value: NSUnderlineStyle.thick.rawValue, range: nsRange)
             mutableString.addAttribute(.underlineColor, value: activeColor, range: nsRange)
             mutableString.addAttribute(.foregroundColor, value: activeColor, range: nsRange)
 
         case .background:
-            // Background highlight (like a marker)
             mutableString.addAttribute(.backgroundColor, value: activeColor.withAlphaComponent(0.4), range: nsRange)
         }
 

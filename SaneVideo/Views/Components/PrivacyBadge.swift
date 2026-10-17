@@ -1,11 +1,8 @@
-// Visual indicator showing privacy status (on-device vs optional cloud AI)
-
 import SwiftUI
 
 /// Identifies the local editing workflow; optional cloud services are separate.
 struct PrivacyBadge: View {
     var body: some View {
-        // ACCESSIBILITY FIX: Improved contrast for light mode visibility
         HStack(spacing: 6) {
             Image(systemName: "lock.shield.fill")
                 .font(.caption2)

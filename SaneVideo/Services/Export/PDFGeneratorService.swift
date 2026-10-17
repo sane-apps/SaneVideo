@@ -49,10 +49,8 @@ actor PDFGeneratorService: PDFGeneratorServiceProtocol {
     }
 
     private func drawContent(in context: CGContext, project: VideoProject, pageBounds: CGRect) {
-        // Helper to start new page
         func startPage() {
             context.beginPDFPage(nil as CFDictionary?)
-            // Flip context for Core Text if needed, but let's try standard coordinates first.
             // In PDF (0,0) is bottom-left.
         }
 
@@ -69,40 +67,32 @@ actor PDFGeneratorService: PDFGeneratorServiceProtocol {
             let attributedString = NSAttributedString(string: text, attributes: attributes)
             let size = attributedString.size()
 
-            // Calculate bottom-left Y for the text line
             let textY = y - size.height
 
-            // Draw
-            // NSAttributedString.draw(at:) draws in the current context.
-            // We need to ensure the context is set up for NSGraphicsContext
+            // draw(at:) draws into NSGraphicsContext.current, so point it at this context.
             NSGraphicsContext.current = NSGraphicsContext(cgContext: context, flipped: false)
             attributedString.draw(at: CGPoint(x: x, y: textY))
 
             return size.height + 10 // Line spacing
         }
 
-        // Draw Title
         cursorY -= drawText(project.name, font: .boldSystemFont(ofSize: 24), x: margin, y: cursorY)
         cursorY -= 20
 
-        // Draw Date
         let dateFormatter = DateFormatter()
         dateFormatter.dateStyle = .medium
         let dateString = "Generated on: \(dateFormatter.string(from: Date()))"
         cursorY -= drawText(dateString, font: .systemFont(ofSize: 12), x: margin, y: cursorY)
         cursorY -= 30
 
-        // Draw Section Header
         cursorY -= drawText("Transcript", font: .boldSystemFont(ofSize: 18), x: margin, y: cursorY)
         cursorY -= 10
 
-        // Draw Captions
         // Collect all clips from all tracks, sorted by timeline position
         let allClips = project.timeline.tracks.flatMap { $0.clips }.sorted { $0.startTime < $1.startTime }
 
         for clip in allClips {
             for caption in clip.captions {
-                // Check for page break
                 if cursorY < margin {
                     context.endPDFPage()
                     startPage()

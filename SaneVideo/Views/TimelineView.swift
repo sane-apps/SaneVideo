@@ -1,8 +1,3 @@
-// Main timeline orchestrator. Sub-views extracted to:
-// - TimelineControls.swift (toolbar, MagicFix)
-// - TimelineTracksView.swift (tracks, playhead, drop delegate)
-// - TrackHeaderView.swift (headers, add track button)
-
 import AVFoundation
 import SwiftUI
 
@@ -45,10 +40,8 @@ public struct SaneTimelineView: View {
                 TimelineEmptyStateView()
                     .frame(minHeight: 150, maxHeight: .infinity)
             } else {
-                // Left column fixed, right section scrolls
-                // This ensures lock/mute icons stay aligned with tracks
+                // Fixed header column on the left and scrolling tracks on the right keep lock/mute icons aligned with their tracks.
                 HStack(alignment: .top, spacing: 0) {
-                    // Fixed left column (headers) - extracted from TimelineTracksView
                     TimelineHeadersView(
                         zoomLevel: zoomLevel,
                         pixelsPerSecond: pixelsPerSecond
@@ -57,7 +50,6 @@ public struct SaneTimelineView: View {
                     .background(SaneVideoEditorPanelBackground())
                     .fixedSize(horizontal: true, vertical: false)
 
-                    // Scrollable right section (ruler + tracks)
                     GeometryReader { geometry in
                         ScrollView(.horizontal, showsIndicators: true) {
                             TimelineTracksView(
@@ -71,8 +63,6 @@ public struct SaneTimelineView: View {
                                 selectedClipIds: $selectedClipIds,
                                 pixelsPerSecond: pixelsPerSecond
                             )
-                            // Removed .padding(.leading, 20) - padding is handled internally
-                            // by spacers in ruler and trackRow to ensure proper alignment
                         }
                         .onAppear {
                             updateVisibleTimelineWidth(geometry.size.width)
@@ -127,7 +117,6 @@ public struct SaneTimelineView: View {
         .onAppear {
             ensureSelectionForCurrentProject()
 
-            // Restore Zoom Level
             if let project = appState.projectState.currentProject, project.zoomLevel > 0 {
                 self.zoomLevel = project.zoomLevel
             } else {
@@ -149,7 +138,6 @@ public struct SaneTimelineView: View {
         }
         .overlay {
             Group {
-                // Zoom In: ⌘+
                 Button("") {
                     withAnimation {
                         zoomLevel = min(5.0, zoomLevel + 0.5)
@@ -160,7 +148,6 @@ public struct SaneTimelineView: View {
                 .allowsHitTesting(false)
                 .accessibilityIdentifier("timeline.shortcut.zoom_in")
 
-                // Zoom Out: ⌘-
                 Button("") {
                     withAnimation {
                         zoomLevel = TimelineZoomCalculator.clamp(zoomLevel - 0.5)
@@ -171,7 +158,6 @@ public struct SaneTimelineView: View {
                 .allowsHitTesting(false)
                 .accessibilityIdentifier("timeline.shortcut.zoom_out")
 
-                // Toggle Snapping: N
                 Button("") {
                     @AppStorage("snapEnabled") var snapEnabled = true
                     snapEnabled.toggle()
@@ -181,7 +167,6 @@ public struct SaneTimelineView: View {
                 .allowsHitTesting(false)
                 .accessibilityIdentifier("timeline.shortcut.snap")
 
-                // Toggle Magnetic: M
                 Button("") {
                     @AppStorage("magneticTimeline") var magneticTimeline = true
                     magneticTimeline.toggle()
@@ -191,7 +176,6 @@ public struct SaneTimelineView: View {
                 .allowsHitTesting(false)
                 .accessibilityIdentifier("timeline.shortcut.magnetic")
 
-                // Fit to View: ⌘0
                 Button("") {
                     withAnimation {
                         fitToView()
@@ -202,7 +186,6 @@ public struct SaneTimelineView: View {
                 .allowsHitTesting(false)
                 .accessibilityIdentifier("timeline.shortcut.fit")
 
-                // Split Clip: ⌘B
                 Button("") {
                     splitSelectedClip()
                 }
@@ -211,7 +194,6 @@ public struct SaneTimelineView: View {
                 .allowsHitTesting(false)
                 .accessibilityIdentifier("timeline.shortcut.split")
 
-                // Delete Clip: Delete / Backspace
                 Button("") {
                     if let clip = selectedClip {
                         clipToDelete = clip

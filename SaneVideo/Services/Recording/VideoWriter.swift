@@ -4,11 +4,10 @@ import CoreImage
 import CoreImage.CIFilterBuiltins
 import CoreMedia
 
-// Frame rate tracking helper
 private class FrameRateTracker {
     private let targetFPS: Double
     private var frameTimes: [CMTime] = []
-    private let windowSize: Int = 60  // Track last 60 frames
+    private let windowSize: Int = 60
 
     init(targetFPS: Double) {
         self.targetFPS = targetFPS
@@ -69,22 +68,18 @@ final class VideoWriter: VideoWriterProtocol {
 
     private let srgbColorSpace = CGColorSpaceCreateDeviceRGB()
 
-    // Monotonic timestamp tracking to prevent error -16364
-    // When presenter overlay toggles during screen recording, timestamps can go backwards
-    // causing AVAssetWriter to fail. We track the last written time and reject out-of-order frames.
+    // Drop out-of-order frames: toggling the presenter overlay can send timestamps backwards, and AVAssetWriter then fails with -16364.
     private var lastWrittenVideoTime: CMTime = .invalid
     private var lastWrittenMicTime: CMTime = .invalid
     private var lastWrittenSystemAudioTime: CMTime = .invalid
     private var droppedFrameCount: Int = 0
     private let maxDroppedFramesBeforeWarning = 30  // Log warning if we drop too many
 
-    // Frame rate tracking
     private var frameRateTracker: FrameRateTracker?
     private var notReadyForDataCount: Int = 0
     private var totalFramesReceived: Int = 0
     private var totalFramesWritten: Int = 0
 
-    // A/V drift tracking
     private(set) var driftTracker: DriftTracker?
 
     // PiP Camera Overlay: Latest camera frame for compositing into screen recordings
@@ -142,7 +137,6 @@ final class VideoWriter: VideoWriterProtocol {
             formatDescriptionOut: &pixelFormatDescription
         )
 
-        // Video Settings
         // Add frame rate to video settings to prevent AVAssetWriter from defaulting to low rate
         var videoSettings: [String: Any] = [
             AVVideoCodecKey: AVVideoCodecType.h264,
@@ -150,7 +144,6 @@ final class VideoWriter: VideoWriterProtocol {
             AVVideoHeightKey: targetSize.height
         ]
 
-        // Add compression properties with frame rate
         let averageBitrate: Int
         switch max(targetSize.width, targetSize.height) {
         case 0..<1920:
@@ -180,11 +173,9 @@ final class VideoWriter: VideoWriterProtocol {
         vInput.expectsMediaDataInRealTime = true
         videoInput = vInput
 
-        // Initialize frame rate tracker and drift tracker
         frameRateTracker = FrameRateTracker(targetFPS: targetFrameRate)
         driftTracker = DriftTracker()
 
-        // Pixel Buffer Adaptor
         let sourcePixelBufferAttributes: [String: Any] = [
             kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA,
             kCVPixelBufferWidthKey as String: Int(targetSize.width),
@@ -243,11 +234,9 @@ final class VideoWriter: VideoWriterProtocol {
         pipFrameLock.lock()
         defer { pipFrameLock.unlock() }
 
-        // Throttle updates to avoid overhead
         guard now - lastFrameUpdateTime >= frameUpdateInterval else { return }
         lastFrameUpdateTime = now
 
-        // Only update if frame actually changed
         if let newFrame = frame, let oldFrame = pipWindowFrame {
             if abs(newFrame.origin.x - oldFrame.origin.x) < 1.0 &&
                abs(newFrame.origin.y - oldFrame.origin.y) < 1.0 &&
@@ -272,7 +261,7 @@ final class VideoWriter: VideoWriterProtocol {
 
         guard input.isReadyForMoreMediaData else {
             notReadyForDataCount += 1
-            if notReadyForDataCount % 30 == 0 {  // Log every 30 skipped frames
+            if notReadyForDataCount % 30 == 0 {
                 AppLogger.recording.warning("⚠️ VideoWriter: input not ready for data (skipped \(notReadyForDataCount) frames so far)")
             }
             return false
@@ -283,11 +272,9 @@ final class VideoWriter: VideoWriterProtocol {
             return false
         }
 
-        // Monotonic timestamp enforcement to prevent error -16364
-        // Presenter overlay on macOS 14+ can cause timestamp discontinuities
+        // Drop frames whose timestamps go backwards (presenter overlay on macOS 14+); they would trigger error -16364.
         if lastWrittenVideoTime.isValid {
             if presentationTime <= lastWrittenVideoTime {
-                // Timestamp going backwards - drop frame to prevent -16364
                 droppedFrameCount += 1
                 if droppedFrameCount == maxDroppedFramesBeforeWarning {
                     AppLogger.recording.warning("⚠️ VideoWriter: Dropped \(droppedFrameCount) out-of-order frames (timestamp regression detected)")
@@ -296,8 +283,7 @@ final class VideoWriter: VideoWriterProtocol {
             }
         }
 
-        // Auto-start session if needed.
-        // This ensures the MOOV atom is written correctly even if explicit startSession call was missed.
+        // Start the session if the caller missed it, so the moov atom is written correctly.
         if !sessionStarted {
             startSession(at: presentationTime)
             AppLogger.recording.info("VideoWriter: Auto-started session at \(presentationTime.seconds)")
@@ -343,7 +329,6 @@ final class VideoWriter: VideoWriterProtocol {
             // PiP Overlay: Composite camera feed when recording screen
             var finalImage = scaledImage
             if source == .screen {
-                // ... (PiP compositing logic remains same as original)
                 cameraFrameLock.lock()
                 let cameraFrame = latestCameraFrame
                 cameraFrameLock.unlock()
@@ -410,13 +395,10 @@ final class VideoWriter: VideoWriterProtocol {
                 let success = adaptor.append(destBuffer, withPresentationTime: presentationTime)
                 if success {
                     totalFramesWritten += 1
-                    // Track last successful write time for monotonic enforcement
                     lastWrittenVideoTime = presentationTime
 
-                    // A/V drift tracking
                     driftTracker?.recordVideoTimestamp(presentationTime)
 
-                    // Track frame rate
                     frameRateTracker?.recordFrame(at: presentationTime)
                     if totalFramesWritten % 60 == 0 {  // Log every 60 frames (~2 seconds at 30fps)
                         if let actualFPS = frameRateTracker?.currentFPS {
@@ -496,8 +478,7 @@ final class VideoWriter: VideoWriterProtocol {
         return appended
     }
 
-    // Concurrency Safety: Ensure finish() is only executed once
-    // Helper to access finishingTask safely
+    // finishingTask makes finish() run only once.
     private func getFinishingTask() -> Task<URL?, Never>? {
         return finishingTask
     }
@@ -515,11 +496,6 @@ final class VideoWriter: VideoWriterProtocol {
             return await existingTask.value
         }
 
-        // Potential race here between check and set?
-        // Yes. We need to lock around the CREATE check too.
-        // We can do that with a closure based helper or just use the actor pattern which is cleaner.
-        // But sticking to the plan:
-
         let task = getOrStartFinishingTask()
         return await task.value
     }
@@ -536,7 +512,6 @@ final class VideoWriter: VideoWriterProtocol {
         return task
     }
 
-    /// Timeout for finishWriting operation (30 seconds should be sufficient for most recordings)
     private static let finishWritingTimeout: TimeInterval = 30.0
 
     private func performFinish() async -> URL? {
@@ -554,14 +529,12 @@ final class VideoWriter: VideoWriterProtocol {
             systemAudioInput?.markAsFinished()
 
             if let writer = assetWriter, writer.status == .writing {
-                // Use continuation-based timeout to prevent hanging
-                // AVAssetWriter.finishWriting is callback-based, we wrap it with timeout
+                // finishWriting is callback-based; wrap it with a timeout so it cannot hang.
                 let timeoutSeconds = Self.finishWritingTimeout
                 let uncheckedWriter = UncheckedAssetWriter(writer: writer)
                 let finishState = FinishWritingState()
 
                 let success = await withCheckedContinuation { (continuation: CheckedContinuation<Bool, Never>) in
-                    // Create timeout timer
                     let timer = DispatchSource.makeTimerSource(queue: .global())
                     timer.schedule(deadline: .now() + timeoutSeconds)
                     timer.setEventHandler {
@@ -573,7 +546,6 @@ final class VideoWriter: VideoWriterProtocol {
                     }
                     timer.resume()
 
-                    // Start finish writing
                     uncheckedWriter.writer.finishWriting {
                         timer.cancel()
                         finishState.resumeOnce {
@@ -607,12 +579,10 @@ final class VideoWriter: VideoWriterProtocol {
         pixelBufferAdaptor = nil
         sessionStarted = false
 
-        // Reset timestamp tracking
         lastWrittenVideoTime = .invalid
         lastWrittenMicTime = .invalid
         lastWrittenSystemAudioTime = .invalid
 
-        // Log final statistics before cleanup
         if droppedFrameCount > 0 {
             AppLogger.recording.info("VideoWriter: Total dropped frames due to timestamp regression: \(droppedFrameCount)")
         }
@@ -623,7 +593,6 @@ final class VideoWriter: VideoWriterProtocol {
             AppLogger.recording.info("VideoWriter: Final statistics - Written: \(totalFramesWritten)/\(totalFramesReceived), Final FPS: \(String(format: "%.2f", finalFPS)), Dropped: \(droppedFrameCount), NotReady: \(notReadyForDataCount)")
         }
 
-        // Reset diagnostic counters
         droppedFrameCount = 0
         notReadyForDataCount = 0
         totalFramesReceived = 0
@@ -637,11 +606,6 @@ final class VideoWriter: VideoWriterProtocol {
         latestCameraFrame = nil
         cameraFrameLock.unlock()
     }
-
-    // Cancel finishing task on deallocation
-    // Note: For @RecordingActor, we can't access isolated properties in deinit
-    // The task will be cancelled when the actor is deallocated
-    // We rely on proper cleanup in finishWriting() method
 }
 
 /// Encoder color tags. Untagged H.264/HEVC makes players guess the range and look washed out.

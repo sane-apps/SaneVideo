@@ -702,7 +702,7 @@ struct EditorLayoutView: View {
 
                         if let caption = trackClip.captions.first(where: { caption in
                             mediaTime >= caption.startTime && mediaTime < caption.endTime
-                        }) {
+                        })?.removingWords(in: trackClip.removedRanges) {
                             return (caption, mediaTime)
                         }
                     }
@@ -717,7 +717,7 @@ struct EditorLayoutView: View {
 
         if let caption = clip.captions.first(where: { caption in
             mediaTime >= caption.startTime && mediaTime < caption.endTime
-        }) {
+        })?.removingWords(in: clip.removedRanges) {
             return (caption, mediaTime)
         }
         return nil

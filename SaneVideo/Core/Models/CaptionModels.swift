@@ -110,6 +110,24 @@ public struct Caption: Identifiable, Codable, Equatable, Sendable {
     }
 }
 
+extension Caption {
+    /// The caption without the words Magic Fix cut (silences, "um", "uh"), or nil when nothing is left.
+    /// Captions without word timings are returned unchanged.
+    func removingWords(in removedRanges: [CodableTimeRange]) -> Caption? {
+        guard let words, !words.isEmpty, !removedRanges.isEmpty else { return self }
+        let kept = words.filter { word in
+            let middle = (word.start + word.end) / 2
+            return !removedRanges.contains { middle >= $0.start && middle < $0.start + $0.duration }
+        }
+        guard kept.count != words.count else { return self }
+        guard !kept.isEmpty else { return nil }
+        var caption = self
+        caption.words = kept
+        caption.text = kept.map(\.text).joined(separator: " ")
+        return caption
+    }
+}
+
 public struct CaptionWord: Identifiable, Codable, Equatable, Sendable {
     public var id = UUID()
     public let text: String

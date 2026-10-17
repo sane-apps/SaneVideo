@@ -105,14 +105,6 @@ struct AutomationRailStateTests {
         )
     }
 
-    @Test("Each rail state maps to the notification its left-rail control posts")
-    func mapsToRailControlNotifications() {
-        #expect(AutomationRailState.transcript.notificationName.rawValue == "ShowSidebarTranscript")
-        #expect(AutomationRailState.thumbnail.notificationName.rawValue == "GenerateThumbnail")
-        #expect(AutomationRailState.voiceover.notificationName.rawValue == "GenerateVoiceover")
-        #expect(AutomationRailState.shorts.notificationName.rawValue == "ShowRepurposingSheet")
-    }
-
     @Test(
         "Activating each rail state posts exactly its rail control notification",
         arguments: AutomationRailState.allCases

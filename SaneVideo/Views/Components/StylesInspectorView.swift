@@ -4,8 +4,8 @@ struct StylesInspectorView: View {
     @Environment(AppState.self) var appState
     @Binding var selectedClip: VideoClip?
 
-    // All sections start collapsed on each launch, so no @AppStorage.
-    @State private var showMagicFix = false
+    // Clean Up opens by default because it is the main job; the rest start closed.
+    @State private var showMagicFix = true
     @State private var showReframe = false
     @State private var showBackground = false
     @State private var showEffects = false
@@ -51,17 +51,18 @@ struct StylesInspectorView: View {
 
             if let clip = validatedClip {
                 ScrollView {
-                    LazyVStack(spacing: Theme.Dimensions.spacingMD) {
+                    LazyVStack(spacing: 0) {
                         CollapsibleSection(
-                            title: "Magic Fix",
+                            title: "Clean Up",
                             icon: "wand.and.stars",
-                            isExpanded: $showMagicFix
+                            isExpanded: $showMagicFix,
+                            isPrimary: true
                         ) {
                             SmartToolsSection(clip: clip, options: $projectState.magicFixOptions, isOperationInProgress: $isOperationInProgress)
                         }
 
                         CollapsibleSection(
-                            title: "Focus & Framing",
+                            title: "Framing",
                             icon: "crop",
                             isExpanded: $showReframe
                         ) {
@@ -69,7 +70,7 @@ struct StylesInspectorView: View {
                         }
 
                         CollapsibleSection(
-                            title: clip.backgroundEffect != nil ? "Background ✓" : "Background",
+                            title: "Background",
                             icon: "person.crop.rectangle",
                             isExpanded: $showBackground,
                             badge: clip.backgroundEffect != nil ? "On" : nil
@@ -87,7 +88,7 @@ struct StylesInspectorView: View {
                         }
 
                         CollapsibleSection(
-                            title: "Audio Analysis",
+                            title: "Audio",
                             icon: "waveform.badge.magnifyingglass",
                             isExpanded: $showAudioAnalysis
                         ) {
@@ -102,8 +103,6 @@ struct StylesInspectorView: View {
                             ClipInfoSection(clip: clip)
                         }
                     }
-                    .padding(.horizontal, Theme.Dimensions.paddingSM)
-                    .padding(.vertical, Theme.Dimensions.paddingSM)
                     .padding(.bottom, 20)
                 }
             } else {
@@ -111,25 +110,7 @@ struct StylesInspectorView: View {
             }
         }
         .frame(minWidth: 320, idealWidth: 360, maxWidth: 420)
-        .background {
-            ZStack {
-                LinearGradient(
-                    colors: [
-                        Theme.Colors.editorPanel,
-                        Theme.Colors.editorPanel
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-
-                RadialGradient(
-                    colors: [Theme.Colors.accentGlow.opacity(0.22), .clear],
-                    center: .topTrailing,
-                    startRadius: 12,
-                    endRadius: 240
-                )
-            }
-        }
+        .background(Theme.Colors.editorPanel)
         .onChange(of: appState.projectState.currentProject?.id) { _, _ in
             if selectedClip != nil, validatedClip == nil {
                 selectedClip = nil

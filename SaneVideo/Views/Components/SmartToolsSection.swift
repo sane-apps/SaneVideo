@@ -10,11 +10,7 @@ struct SmartToolsSection: View {
 
   var body: some View {
     // No nested ScrollView: the parent StylesInspectorView already scrolls.
-    VStack(alignment: .leading, spacing: Theme.Dimensions.spacingMD) {
-      // MARK: - Header & Presets
-      headerView
-
-      // MARK: - Core Cleanup Card (simplified UI - 2025-12-31)
+    VStack(alignment: .leading, spacing: 12) {
       coreCleanupCard
 
       magicButton
@@ -23,17 +19,9 @@ struct SmartToolsSection: View {
         resetMagicFixButton
       }
     }
-    .padding(Theme.Dimensions.paddingMD)
   }
 
-  private var headerView: some View {
-    HStack(alignment: .center) {
-      Text("Magic Fix")
-        .font(.system(size: Theme.Typography.fontSizeLG, weight: .bold))
-        .foregroundColor(.white)
-
-      Spacer()
-
+  private var presetsMenu: some View {
       Menu {
         Button {
           options = .minimal
@@ -59,31 +47,30 @@ struct SmartToolsSection: View {
           Label("Reset to Defaults", systemImage: "arrow.counterclockwise")
         }
       } label: {
-        Label("Presets", systemImage: "slider.horizontal.3")
-          .font(.system(size: Theme.Typography.fontSizeSM, weight: .semibold))
-          .foregroundColor(.white)
-          .padding(.horizontal, Theme.Dimensions.paddingMD)
-          .padding(.vertical, Theme.Dimensions.paddingSM)
-          .background(Color.black.opacity(0.34), in: RoundedRectangle(cornerRadius: 7, style: .continuous))
-          .overlay(
-            RoundedRectangle(cornerRadius: 7, style: .continuous)
-              .stroke(Color.white.opacity(0.24), lineWidth: 1)
-          )
+        Text("Presets")
+          .font(.system(size: 13, weight: .medium))
       }
-      .menuStyle(.button)
-      .buttonStyle(.plain)
+      .menuStyle(.borderlessButton)
+      .fixedSize()
       .accessibilityIdentifier(AccessibilityIdentifiers.presetsMenu)
-    }
   }
 
   // MARK: - Core Cleanup Card (5 features only - 2025-12-31 refactor)
 
   private var coreCleanupCard: some View {
-    ToolCard(title: "Core Cleanup", icon: "waveform.badge.magnifyingglass", color: .blue) {
-      VStack(spacing: Theme.Dimensions.spacingSM) {
+    VStack(alignment: .leading, spacing: 2) {
+      HStack {
+        Text("Choose what to fix, then press Clean Up.")
+          .font(.system(size: 13))
+          .foregroundStyle(Theme.Colors.textPrimary.opacity(0.85))
+        Spacer()
+        presetsMenu
+      }
+      .padding(.bottom, 4)
+      VStack(spacing: 0) {
         InspectorToggle(
           title: "Remove Silence",
-          subtitle: "Cut non-speech gaps",
+          subtitle: "Cut pauses where nobody talks",
           isOn: Binding(
             get: { options.removeSilence },
             set: { [clip] newValue in
@@ -101,9 +88,9 @@ struct SmartToolsSection: View {
         .help("Automatically cuts segments where no speech is detected.")
 
         if options.removeSilence {
-          VStack(alignment: .leading, spacing: Theme.Dimensions.spacingSM) {
+          VStack(alignment: .leading, spacing: 4) {
             HStack {
-              Text("Threshold")
+              Text("Quieter than")
                 .font(.system(size: Theme.Typography.fontSizeSM, weight: .medium))
                 .foregroundColor(.white)
               Spacer()
@@ -115,13 +102,8 @@ struct SmartToolsSection: View {
               .controlSize(.small)
               .tint(Theme.Colors.accent)
           }
-          .padding(.vertical, Theme.Dimensions.paddingSM)
-          .padding(.horizontal, Theme.Dimensions.paddingSM)
-          .background(Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
-          .overlay(
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-              .stroke(Color.white.opacity(0.12), lineWidth: 1)
-          )
+          .padding(.leading, 30)
+          .padding(.bottom, 6)
         }
 
         InspectorToggle(
@@ -136,7 +118,7 @@ struct SmartToolsSection: View {
 
         InspectorToggle(
           title: "Generate Captions",
-          subtitle: "AI transcription",
+          subtitle: "On-device transcription",
           isOn: $options.generateCaptions,
           icon: "captions.bubble",
           color: .blue,
@@ -169,7 +151,7 @@ struct SmartToolsSection: View {
 
         InspectorToggle(
           title: "Smooth Cuts",
-          subtitle: "Blend jump cuts",
+          subtitle: "Soften the jump at each cut",
           isOn: $options.smoothJumpCuts,
           icon: "scissors",
           color: .blue,
@@ -205,7 +187,7 @@ struct SmartToolsSection: View {
         Button {
           guard !clip.isMissing else {
             ServiceContainer.shared.toastManager.show(
-              "Cannot apply Magic Fix: Clip file is missing. Use 'Locate File' in Clip Info to relink the file.",
+              "Cannot clean up: the clip file is missing. Use 'Locate File' in Clip Info to relink the file.",
               type: .error
             )
             return
@@ -216,41 +198,13 @@ struct SmartToolsSection: View {
             await appState.projectState.performMagicFix(for: clip, options: options)
           }
         } label: {
-          VStack(spacing: Theme.Dimensions.spacingSM) {
-            HStack(spacing: Theme.Dimensions.spacingMD) {
-              Image(systemName: "wand.and.stars")
-                .font(.system(size: Theme.Typography.iconSizeLG, weight: .bold))
-
-              Text("Apply Magic Fix")
-                .font(.system(size: Theme.Typography.fontSizeLG, weight: .bold))
-            }
-
-            if !options.isEmpty {
-              Text(options.summary)
-                .font(.system(size: Theme.Typography.fontSizeXS, weight: .medium))
-                .opacity(Theme.Opacity.textTertiary)
-                .lineLimit(2)
-                .multilineTextAlignment(.center)
-            }
-          }
-          .frame(maxWidth: .infinity)
-          .padding(.vertical, Theme.Dimensions.paddingLG)
-          .background(
-            LinearGradient(
-              colors: [Theme.Colors.accentSoft, Theme.Colors.accent, Theme.Colors.accentDeep],
-              startPoint: .topLeading,
-              endPoint: .bottomTrailing
-            ),
-            in: RoundedRectangle(cornerRadius: Theme.Dimensions.largeCornerRadius, style: .continuous)
-          )
-          .foregroundColor(.white)
-          .overlay(
-            RoundedRectangle(cornerRadius: Theme.Dimensions.largeCornerRadius, style: .continuous)
-              .stroke(Color.white.opacity(0.28), lineWidth: 1)
-          )
-          .shadow(color: Theme.Colors.accent.opacity(0.42), radius: 12, x: 0, y: 6)
+          Label("Clean Up", systemImage: "wand.and.stars")
+            .font(.system(size: 15, weight: .semibold))
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 6)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.borderedProminent)
+        .controlSize(.large)
         .disabled(clip.isMissing || isOperationInProgress)
         .help(
           clip.isMissing
@@ -260,7 +214,7 @@ struct SmartToolsSection: View {
               : "Automatically removes silence, filler words, and enhances your video")
         )
         .accessibilityIdentifier(AccessibilityIdentifiers.magicFixButton)
-        .accessibilityLabel("Apply Magic Fix")
+        .accessibilityLabel("Clean Up")
         .accessibilityHint(
           clip.isMissing
             ? "Clip file is missing. Use 'Locate File' in Clip Info to relink the file."
@@ -277,9 +231,6 @@ struct SmartToolsSection: View {
 
   private var resetMagicFixButton: some View {
     VStack(spacing: 8) {
-      Divider()
-        .padding(.vertical, 4)
-
       Button {
         ServiceContainer.shared.hapticsManager.impact()
         Task {
@@ -287,27 +238,15 @@ struct SmartToolsSection: View {
           await appState.projectState.resetMagicFix(for: clip, regenerate: true)
         }
       } label: {
-        HStack(spacing: Theme.Dimensions.spacingSM) {
-          Image(systemName: "arrow.counterclockwise")
-            .font(.system(size: Theme.Typography.iconSizeMD, weight: .medium))
-
-          Text("Regenerate Magic Fix")
-            .font(.system(size: Theme.Typography.fontSizeMD, weight: .semibold))
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, Theme.Dimensions.paddingMD)
-        .background(Color.white.opacity(0.10), in: RoundedRectangle(cornerRadius: Theme.Dimensions.cornerRadius, style: .continuous))
-        .foregroundColor(.white)
-        .overlay(
-          RoundedRectangle(cornerRadius: Theme.Dimensions.cornerRadius, style: .continuous)
-            .stroke(Color.white.opacity(0.18), lineWidth: 1)
-        )
+        Label("Run Again With These Settings", systemImage: "arrow.counterclockwise")
+          .font(.system(size: 13, weight: .medium))
+          .frame(maxWidth: .infinity)
       }
-      .buttonStyle(.plain)
+      .buttonStyle(.borderless)
       .disabled(isOperationInProgress)
       .help("Clear all existing Magic Fix results and regenerate with your current toggle settings")
       .accessibilityIdentifier("magicFix.regenerateButton")
-      .accessibilityLabel("Regenerate Magic Fix")
+      .accessibilityLabel("Run Clean Up again")
       .accessibilityHint("Clears all existing Magic Fix results and automatically regenerates based on which toggles are currently enabled")
     }
   }

@@ -359,6 +359,8 @@ class AppState {
             if recordingState.isRecording {
                 NSLog("🖥️ Already recording - switching source to screen")
                 recordingState.switchSource(.screen)
+                // Same as starting a screen recording: hide the app so its own window is not recorded.
+                windowManager.minimizeMainWindow()
             }
         }
     }

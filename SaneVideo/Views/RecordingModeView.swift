@@ -39,35 +39,20 @@ struct RecordingModeView: View {
                 .ignoresSafeArea()
 
                 if appState.isScreenSharing {
-                    if appState.screenPreviewLayer != nil {
-                        // CRITICAL FIX: Prevent infinite visual feedback loop
-                        // Instead of showing the live screen (which recursively captures itself),
-                        // show a static "Recording in Progress" placeholder.
-                        ZStack {
-                            Color.black.opacity(0.8)
-                            VStack(spacing: 20) {
-                                Image(systemName: "display.2")
-                                    .font(.system(size: 80))
-                                    .foregroundStyle(Theme.Colors.accent)
-                                    .symbolEffect(.pulse.byLayer, options: .repeating)
-
-                                Text("Recording Screen")
-                                    .font(.system(size: 32, weight: .bold))
-                                    .foregroundColor(.white)
-
-                                Text("Window minimized to prevent visual feedback")
-                                    .font(Theme.Typography.body)
-                                    .foregroundColor(Theme.Colors.textSecondary)
-                            }
-                        }
-                        .edgesIgnoringSafeArea(.all)
-                    } else {
-                        VStack {
-                            ProgressView()
-                            Text("Initializing Screen Share...")
-                                .foregroundColor(.white)
-                                .padding(.top)
-                        }
+                    VStack(spacing: 16) {
+                        Image(systemName: "display")
+                            .font(.system(size: 64, weight: .light))
+                            .foregroundStyle(Theme.Colors.accent)
+                        Text(appState.recordingState.isRecording ? "Recording your screen" : "Ready to record your screen")
+                            .font(.system(size: 28, weight: .bold))
+                            .foregroundStyle(.white)
+                        Text(appState.recordingState.isRecording
+                            ? "This window stays out of the way. Stop with ⌥⌘R or the floating controls."
+                            : "Press record. This window hides while you record; your camera bubble stays on screen.")
+                            .font(Theme.Typography.body)
+                            .foregroundStyle(.white)
+                            .multilineTextAlignment(.center)
+                            .frame(maxWidth: 520)
                     }
                 } else {
                     // Camera Preview

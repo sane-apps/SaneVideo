@@ -33,6 +33,5 @@ protocol ScreenRecorderProtocol: AnyObject, Sendable {
     func start(outputURL: URL?) async throws
     func stop() async
     func teardown()
-    func updateContentFilter() async
     func handleContentSelected(filter: SCContentFilter) async
 }

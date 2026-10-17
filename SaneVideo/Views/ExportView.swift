@@ -170,6 +170,7 @@ struct ExportView: View {
         }
         .padding(20)
         .frame(width: 560)
+        .task { await matchSourceFootage() }
         .sanePanel(radius: 18, emphasized: true, accent: Theme.Colors.accentSoft)
         .accessibilityIdentifier(AccessibilityIdentifiers.exportSheet)
         .alert(String(localized: "export.error.title", defaultValue: "Export Error"), isPresented: $showingError, actions: {
@@ -182,6 +183,19 @@ struct ExportView: View {
                 Text(error.localizedDescription)
             }
         })
+    }
+
+    /// Start from the YouTube preset that fits the main clip instead of always 4K/60.
+    private func matchSourceFootage() async {
+        guard let clip = appState.currentProject?.timeline.tracks.flatMap(\.clips)
+            .max(by: { $0.effectiveDuration.seconds < $1.effectiveDuration.seconds }),
+              let track = try? await AVURLAsset(url: clip.url).loadTracks(withMediaType: .video).first,
+              let (size, fps) = try? await track.load(.naturalSize, .nominalFrameRate) else { return }
+        let (preset, settings) = SaneExportSettings.youTube(matchingWidth: abs(size.width), height: abs(size.height), fps: fps)
+        exportSettings = settings
+        // After the settings: changing resolution flips the picker to Custom.
+        await Task.yield()
+        selectedPreset = preset
     }
 
     // MARK: - Helper Methods

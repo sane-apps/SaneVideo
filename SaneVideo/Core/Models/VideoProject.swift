@@ -104,3 +104,26 @@ struct VideoProject: Identifiable, Codable, Equatable, Sendable {
         speakerNotes = try container.decodeIfPresent(SpeakerNotes.self, forKey: .speakerNotes) ?? SpeakerNotes()
     }
 }
+
+extension VideoProject {
+    /// Captions as they play in the edited video: words Magic Fix cut are gone and times are on the
+    /// timeline, so exported subtitles line up with the exported file.
+    var timelineCaptions: [Caption] {
+        timeline.tracks.flatMap(\.clips).flatMap { clip in
+            clip.captions
+                .compactMap { $0.removingWords(in: clip.removedRanges) }
+                .compactMap { caption -> Caption? in
+                    guard let start = clip.effectiveTime(forOriginalTime: caption.startTime),
+                          let end = clip.effectiveTime(forOriginalTime: caption.endTime) else { return nil }
+                    let rate = 1.0 / max(clip.speed, 0.01)
+                    return Caption(
+                        id: caption.id,
+                        text: caption.text,
+                        startTime: clip.startTime + CMTimeMultiplyByFloat64(start, multiplier: rate),
+                        endTime: clip.startTime + CMTimeMultiplyByFloat64(end, multiplier: rate)
+                    )
+                }
+        }
+        .sorted { $0.startTime < $1.startTime }
+    }
+}

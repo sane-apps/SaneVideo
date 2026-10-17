@@ -96,10 +96,7 @@ extension ExportView {
             return
         }
 
-        // Collect all captions from all clips
-        let captions = project.timeline.tracks
-            .flatMap { $0.clips }
-            .flatMap { $0.captions }
+        let captions = project.timelineCaptions
 
         guard !captions.isEmpty else {
             ServiceContainer.shared.toastManager.show("No captions found - generate captions first", type: .error)

@@ -69,7 +69,7 @@ struct CaptionsSection: View {
             }
             .accessibilityIdentifier("captions.generate_button")
 
-            Text("Or use Magic Fix for full cleanup")
+            Text("Or use Clean Up to cut silences and filler words")
                 .font(.caption2)
                 .foregroundColor(Color.stone)
         }

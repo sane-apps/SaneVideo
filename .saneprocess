@@ -18,11 +18,11 @@ release:
   site_host: sanevideo.com
   r2_bucket: sanebar-downloads
   use_sparkle: true
-  min_system_version: "15.0"
+  min_system_version: "26.0"
   upgrade_path_test:
     scheme: SaneVideo
-    test_selector: SaneVideoTests/ReleaseReadinessRegressionTests/testSaneUIDependencyPinnedToPaidUnlockRevision
-    from_version: "1.0.4"
+    test_selector: SaneVideoTests/ProjectRegressionTests/legacyProjectDecodes()
+    from_version: "1.0.5"
     timeout_seconds: 300
   dmg:
     volume_icon: Resources/DMGIcon.icns
@@ -149,23 +149,31 @@ appstore:
   metadata:
     macos:
       subtitle: "Private Video Workflow"
-      promotional_text: "Record, edit, and export locally on your Mac. Free and open source."
+      promotional_text: "Record your screen and camera, then cut silences and filler words with one click. Captions too. Everything stays on your Mac. Free."
       description: >-
-        SaneVideo is a native Mac video workflow app for creators who want recording, editing, and export without uploading project media by default.
-        Record your screen, camera, and microphone, import local clips, edit on a timeline, generate captions, prepare demo packs, and export files from your Mac.
-        Direct YouTube upload is not included in this build; export a local file and upload manually.
-      keywords: "video recorder,screen recording,camera,timeline,export,captions,creator,mac"
-      whats_new: "SaneVideo is free. Setup no longer asks you to buy. Donate only if you want to support it."
+        SaneVideo records your screen, camera, and microphone, then cleans up the take for you.
+
+        RECORD: Share a screen or window with your camera in a movable bubble, or record the camera alone. Switch between camera and screen mid-take. Pause and resume from anywhere with Option-Command-P; start and stop with Option-Command-R. A teleprompter keeps your script in view without showing up in the video.
+
+        CLEAN UP: One click cuts the silences and the "um"s and "uh"s, evens out your voice, and smooths each cut. Every cut can be undone.
+
+        CAPTIONS: Captions and a searchable transcript are made on your Mac. Export subtitles as SRT or VTT, or burn them into the video.
+
+        EXPORT: YouTube-ready files that match your recording, vertical Shorts, GIFs, thumbnails, and a transcript PDF.
+
+        PRIVATE: No account. No uploads. Recording, editing, and speech recognition all run on your Mac. The speech model downloads once (about 600 MB) the first time you use Clean Up or captions.
+      keywords: "screen recorder,camera,silence remover,filler words,captions,video editor,youtube,commentary"
+      whats_new: "A cleaner, faster SaneVideo. One-click Clean Up cuts silences and filler words. A new speech engine finds the um's and uh's and makes captions on your Mac. Switch between camera and screen mid-take. The camera returns in under a second. Timeline fixes: clicks select, split cuts at the playhead, arrow keys step one frame, and Delete is undoable."
       marketing_url: "https://sanevideo.com"
   review_notes: >-
-    The app is free. Donate is optional. SaneVideo is a Mac App Store app for local recording, import, editing, and export. No account, sign-in, API key, credentials, or payment is required to launch or review. Setup stays. Every feature stays unlocked. No paywall. No in-app purchase is required.
+    The app is free. Donate is optional. No account, sign-in, API key, credentials, or payment is required to launch or review. No in-app purchase.
 
-    The app requests Camera and Microphone only for recording. Screen & System Audio Recording is used for screen capture and cannot function without Apple's screen capture permission. Direct YouTube upload is disabled in this build; reviewers should use local export and manual upload outside the app if they want to inspect the export path. Any optional external provider account/API-key surfaces are for a user's existing account created outside the app, are not sold by SaneVideo, and do not unlock paid app features or digital content. No external paid content is accessed in the app; no account signup, no payment is required, and no enterprise services are involved for review or use. Review does not require any paid provider account, merchant account, sales data, analytics, orders, products, or refunds.
+    The app asks for Camera and Microphone only for recording. Screen & System Audio Recording is used for screen capture through Apple's screen capture picker. Clean Up and captions download a speech model once (about 600 MB, from Hugging Face) and run it on the Mac; no audio or video is sent anywhere.
   review_notes_by_platform:
     macos: >-
-      Fastest review path: launch SaneVideo; no account, sign-in, API key, credentials, or payment is required. Grant Camera/Microphone if prompted, inspect recording controls, import a local video if available, open Export, and verify local export settings. The app is free. Donate is optional. Setup stays. Every feature stays unlocked.
+      Fastest review path: launch SaneVideo, grant Camera and Microphone, press Record, speak for a few seconds with a pause, then stop. The recording opens in the editor. Press Clean Up (the first run downloads the speech model, about 600 MB), then Export. The app is free; Donate is optional.
 
-      Screen capture requires Screen & System Audio Recording permission because SaneVideo records the selected screen/window using Apple's screen capture APIs. Direct YouTube upload is unavailable in this build; export a local file and upload manually outside the app. Any optional external provider account/API-key surfaces are for a user's existing account created outside the app, are not sold by SaneVideo, and do not unlock paid app features or digital content. No external paid content is accessed in the app; no account signup, no payment is required, and no enterprise services are involved for review or use. Review does not require any paid provider account, merchant account, sales data, analytics, orders, products, or refunds.
+      Screen recording: choose Screen in the recorder bar and pick a screen or window in Apple's picker. Option-Command-R starts and stops recording from any app; Option-Command-P pauses while recording.
   accessibility_declarations:
     publish: true
     mac:

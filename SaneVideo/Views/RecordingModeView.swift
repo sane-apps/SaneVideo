@@ -37,7 +37,7 @@ struct RecordingModeView: View {
                             .font(.system(size: 28, weight: .bold))
                             .foregroundStyle(.white)
                         Text(appState.recordingState.isRecording
-                            ? "This window stays out of the way. Stop with ⌥⌘R or the floating controls."
+                            ? "This window stays out of the way. Stop with ⌥⌘R, pause with ⌥⌘P, or use the floating controls."
                             : "Press record. This window hides while you record; your camera bubble stays on screen.")
                             .font(Theme.Typography.body)
                             .foregroundStyle(.white)

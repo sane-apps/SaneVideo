@@ -102,7 +102,7 @@ private struct AboutSettingsView: View {
                     text: "Apache License 2.0"
                 ),
                 SaneAboutView.LicenseEntry(
-                    name: "Parakeet TDT 0.6B v3 (NVIDIA), optional speech model",
+                    name: "Parakeet TDT 0.6B v3 (NVIDIA), speech model downloaded on first use",
                     url: "https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3",
                     text: "CC BY 4.0"
                 )

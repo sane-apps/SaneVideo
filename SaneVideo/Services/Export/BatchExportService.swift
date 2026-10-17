@@ -23,15 +23,18 @@ actor BatchExportService {
     private struct ExportContext {
         let outputDirectory: URL
         let index: Int
+        let name: String
     }
 
     // MARK: - Public API
 
     /// - Parameters:
+    ///   - name: Project name; files are named like other exports ("Name Short 1 2026-10-17 at 09.30.12.mp4").
     ///   - progressHandler: Called with overall progress (0.0 - 1.0)
     func exportShorts(
         _ candidates: [ShortCandidate],
         from sourceURL: URL,
+        name: String = "Short",
         settings: RepurposingSettings,
         progressHandler: @escaping @Sendable (Double) -> Void
     ) async throws -> [URL] {
@@ -55,7 +58,7 @@ actor BatchExportService {
             let baseProgress = Double(index) / Double(totalCount)
 
             do {
-                let context = ExportContext(outputDirectory: outputDir, index: index + 1)
+                let context = ExportContext(outputDirectory: outputDir, index: index + 1, name: name)
                 let outputURL = try await exportSingleShort(
                     candidate: candidate,
                     from: sourceURL,
@@ -153,11 +156,9 @@ actor BatchExportService {
             crop: candidate.suggestedCrop
         )
 
-        let timestamp = DateFormatter.shortExportFormatter.string(from: Date())
-        let filename = "Short_\(context.index)_\(timestamp).mp4"
-        let outputURL = context.outputDirectory.appendingPathComponent(filename)
-
-        try? FileManager.default.removeItem(at: outputURL)
+        let outputURL = ExportDestination.url(
+            for: context.name, suffix: "Short \(context.index)", ext: "mp4", in: context.outputDirectory
+        )
 
         guard let exportSession = AVAssetExportSession(
             asset: composition,
@@ -330,12 +331,3 @@ enum BatchExportError: LocalizedError {
     }
 }
 
-// MARK: - Date Formatter Extension
-
-private extension DateFormatter {
-    static let shortExportFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyyMMdd_HHmmss"
-        return formatter
-    }()
-}

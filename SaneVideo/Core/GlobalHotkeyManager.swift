@@ -1,89 +1,74 @@
-#if !APP_STORE
-    import AppKit
-    import Carbon
+import AppKit
+import Carbon
 
-    class GlobalHotkeyManager {
-        private var eventHandlers: [UInt32: () -> Void] = [:]
-        private var eventHandler: EventHandlerRef?
-        private var retainedSelf: Unmanaged<GlobalHotkeyManager>?
+/// System-wide shortcuts that work while the app is hidden during a screen recording.
+/// Option-Command-R starts and stops; Option-Command-P pauses, and is held only while recording so it
+/// never takes the key from other apps the rest of the time. Carbon hot keys need no permission and
+/// work in the App Store sandbox.
+@MainActor
+final class GlobalHotkeyManager {
+    private enum Hotkey: UInt32 {
+        case record = 1
+        case pause = 2
+    }
 
-        init() {}
+    private var refs: [UInt32: EventHotKeyRef] = [:]
+    private var eventHandler: EventHandlerRef?
 
-        func start() {
-            setupHotkeys()
+    init() {}
+
+    func start() {
+        guard eventHandler == nil else { return }
+        var eventType = EventTypeSpec(eventClass: OSType(kEventClassKeyboard), eventKind: UInt32(kEventHotKeyPressed))
+        let status = InstallEventHandler(GetApplicationEventTarget(), { _, event, _ -> OSStatus in
+            var hotkeyID = EventHotKeyID()
+            let error = GetEventParameter(
+                event, EventParamName(kEventParamDirectObject), EventParamType(typeEventHotKeyID),
+                nil, MemoryLayout<EventHotKeyID>.size, nil, &hotkeyID
+            )
+            guard error == noErr else { return error }
+            let id = hotkeyID.id
+            Task { @MainActor in GlobalHotkeyManager.handle(id: id) }
+            return noErr
+        }, 1, &eventType, nil, &eventHandler)
+        if status != noErr {
+            AppLogger.recording.error("Hot keys: could not install handler (\(status))")
         }
+        register(.record, keyCode: UInt32(kVK_ANSI_R))
+    }
 
-        func handleEvent(id: UInt32) {
-            eventHandlers[id]?()
-        }
-
-        private func setupHotkeys() {
-            var eventType = EventTypeSpec(eventClass: OSType(kEventClassKeyboard), eventKind: UInt32(kEventHotKeyPressed))
-            retainedSelf = Unmanaged.passRetained(self)
-            let selfPointer = retainedSelf!.toOpaque()
-
-            let status = InstallEventHandler(GetApplicationEventTarget(), { _, event, userData -> OSStatus in
-                var hotkeyID = EventHotKeyID()
-                let error = GetEventParameter(
-                    event,
-                    EventParamName(kEventParamDirectObject),
-                    EventParamType(typeEventHotKeyID),
-                    nil,
-                    MemoryLayout<EventHotKeyID>.size,
-                    nil,
-                    &hotkeyID
-                )
-                if error == noErr {
-                    if let userData {
-                        let manager = Unmanaged<GlobalHotkeyManager>.fromOpaque(userData).takeUnretainedValue()
-                        manager.handleEvent(id: hotkeyID.id)
-                    }
-                } else {
-                    NSLog("GlobalHotkeyManager: Failed to get event parameter: \(error)")
-                }
-                return noErr
-            }, 1, &eventType, selfPointer, &eventHandler)
-
-            if status != noErr {
-                NSLog("GlobalHotkeyManager: Failed to install event handler: \(status)")
-            }
-
-            registerHotkey(id: 1, keyCode: 15, modifiers: UInt32(cmdKey | optionKey)) {
-                DispatchQueue.main.async { ServiceContainer.shared.appState.toggleRecording() }
-            }
-            registerHotkey(id: 2, keyCode: 35, modifiers: UInt32(cmdKey | shiftKey)) {
-                DispatchQueue.main.async { ServiceContainer.shared.appState.togglePause() }
-            }
-            registerHotkey(id: 3, keyCode: 1, modifiers: UInt32(cmdKey | shiftKey)) {
-                DispatchQueue.main.async { ServiceContainer.shared.appState.toggleScreenShare() }
-            }
-            registerHotkey(id: 4, keyCode: 4, modifiers: UInt32(cmdKey | shiftKey)) {
-                DispatchQueue.main.async { ServiceContainer.shared.appState.togglePiPVisibility() }
-            }
-        }
-
-        private func registerHotkey(id: UInt32, keyCode: UInt32, modifiers: UInt32, handler: @escaping () -> Void) {
-            let hotkeyID = EventHotKeyID(signature: OSType(0x5356), id: id)
-            var hotkeyRef: EventHotKeyRef?
-            let status = RegisterEventHotKey(keyCode, modifiers, hotkeyID, GetApplicationEventTarget(), 0, &hotkeyRef)
-            if status != noErr {
-                NSLog("GlobalHotkeyManager: Failed to register hotkey id \(id): \(status)")
-            }
-            eventHandlers[id] = handler
-        }
-
-        deinit {
-            retainedSelf?.release()
-            if let handler = eventHandler {
-                RemoveEventHandler(handler)
-            }
+    /// Option-Command-P is held only while a recording runs.
+    func setRecording(_ isRecording: Bool) {
+        if isRecording {
+            register(.pause, keyCode: UInt32(kVK_ANSI_P))
+        } else {
+            unregister(.pause)
         }
     }
-#else
-    /// No-op stub — Carbon hotkey APIs are not available in App Store sandbox.
-    class GlobalHotkeyManager {
-        init() {}
-        func start() {}
-        func handleEvent(id _: UInt32) {}
+
+    private static func handle(id: UInt32) {
+        let appState = ServiceContainer.shared.appState
+        switch Hotkey(rawValue: id) {
+        case .record: appState.toggleRecording()
+        case .pause: appState.togglePause()
+        case nil: break
+        }
     }
-#endif
+
+    private func register(_ hotkey: Hotkey, keyCode: UInt32) {
+        guard refs[hotkey.rawValue] == nil else { return }
+        var ref: EventHotKeyRef?
+        let id = EventHotKeyID(signature: OSType(0x5356), id: hotkey.rawValue)
+        let status = RegisterEventHotKey(keyCode, UInt32(cmdKey | optionKey), id, GetApplicationEventTarget(), 0, &ref)
+        if status == noErr, let ref {
+            refs[hotkey.rawValue] = ref
+        } else {
+            AppLogger.recording.error("Hot keys: \(String(describing: hotkey)) is taken by another app (\(status))")
+        }
+    }
+
+    private func unregister(_ hotkey: Hotkey) {
+        guard let ref = refs.removeValue(forKey: hotkey.rawValue) else { return }
+        UnregisterEventHotKey(ref)
+    }
+}

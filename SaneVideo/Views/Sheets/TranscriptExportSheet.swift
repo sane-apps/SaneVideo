@@ -226,7 +226,7 @@ struct TranscriptExportSheet: View {
             return preview.enumerated().map { index, caption in
                 """
                 \(index + 1)
-                \(formatSRTTime(caption.startTime)) --> \(formatSRTTime(caption.endTime))
+                \(Caption.srtTime(caption.startTime)) --> \(Caption.srtTime(caption.endTime))
                 \(caption.text)
                 """
             }.joined(separator: "\n\n")
@@ -248,15 +248,6 @@ struct TranscriptExportSheet: View {
         let mins = Int(seconds) / 60
         let secs = Int(seconds) % 60
         return String(format: "%02d:%02d", mins, secs)
-    }
-
-    private func formatSRTTime(_ time: CMTime) -> String {
-        let seconds = CMTimeGetSeconds(time)
-        let hrs = Int(seconds) / 3600
-        let mins = (Int(seconds) % 3600) / 60
-        let secs = Int(seconds) % 60
-        let ms = Int((seconds.truncatingRemainder(dividingBy: 1)) * 1000)
-        return String(format: "%02d:%02d:%02d,%03d", hrs, mins, secs, ms)
     }
 
     private func formatVTTTime(_ time: CMTime) -> String {
@@ -327,7 +318,7 @@ struct TranscriptExportSheet: View {
             return captions.enumerated().map { index, caption in
                 """
                 \(index + 1)
-                \(formatSRTTime(caption.startTime)) --> \(formatSRTTime(caption.endTime))
+                \(Caption.srtTime(caption.startTime)) --> \(Caption.srtTime(caption.endTime))
                 \(caption.text)
                 """
             }.joined(separator: "\n\n")

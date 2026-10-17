@@ -4,8 +4,8 @@
 
 SaneVideo is a native macOS video recording and editing app. No subscriptions. Local recording, editing, and export run on your Mac.
 
-**Last updated:** 2026-07-04
-**Current direct release:** 1.0.2
+**Last updated:** 2026-10-17
+**Current direct release:** 1.1.0
 
 ---
 
@@ -32,7 +32,7 @@ SaneVideo is free and open source. Setup stays. Every recording and edit tool st
 
 ## Download
 
-**[Download SaneVideo](https://sanevideo.com)** or clone the source. Current release: **1.0.5**. The app is signed, notarized, and built for local screen, camera, and microphone recording without uploading your footage to SaneApps servers.
+**[Download SaneVideo](https://sanevideo.com)** or clone the source. Current release: **1.1.0**. The app is signed, notarized, and built for local screen, camera, and microphone recording without uploading your footage to SaneApps servers.
 
 Support: [GitHub Sponsors](https://github.com/sponsors/MrSaneApps) · Contribute: https://github.com/sane-apps/SaneVideo
 
@@ -48,9 +48,9 @@ Support: [GitHub Sponsors](https://github.com/sponsors/MrSaneApps) · Contribute
 
 - **Full Screen Recording**: Capture your entire screen in high resolution
 - **Window Recording**: Select specific windows to record
-- **Camera Overlay**: Front camera support for picture-in-picture style recordings
+- **Camera Bubble**: Your camera in a movable bubble over the screen, or full frame on its own; switch between them mid-take
 - **Microphone Capture**: Record narration or meetings locally on your Mac
-- **Keyboard Controls**: Start a new recording with `⌘N`; direct builds may also expose `⌥⌘R` global recording where macOS permissions allow it
+- **Keyboard Controls**: `⌥⌘R` starts and stops recording from any app; `⌥⌘P` pauses while recording
 
 ### Editing
 
@@ -66,16 +66,17 @@ Support: [GitHub Sponsors](https://github.com/sponsors/MrSaneApps) · Contribute
   - **Cinematic**: Desaturated look with vignette and blue tones
   - **Vintage**: Warm sepia with film grain and strong vignette
 
-- **Magic Fix** (AI-Powered):
-  - **Silence Removal**: Automatically cuts silent pauses
-  - **Filler Word Detection**: Identifies "um", "uh", "like"
-  - **Smart Cleanup**: Non-destructive edits you can refine
+- **Clean Up** (one click, on your Mac):
+  - **Silence Removal**: Cuts the pauses where nobody talks
+  - **Filler Words**: Cuts "um", "uh" and stutters (Parakeet speech model, downloaded once)
+  - **Captions**: On-device transcript; exports write a matching `.srt` for YouTube
+  - Every cut can be undone
 
 ### Export
 
-- **HEVC 4K Export**: Smart bitrate encoding for optimal file size
-- **Progress Tracking**: Real-time export progress
-- **Desktop Save**: Quick access to exported videos
+- **YouTube-ready Export**: Matches your recording's size and frame rate
+- **Shorts, GIF, Thumbnail, Transcript PDF**: From the Export menu
+- **Saved to Movies/SaneVideo/Exports**: Revealed in Finder when done
 - **No Cloud Handoff**: Export locally when the edit is ready
 
 ### UI/UX Polish
@@ -96,12 +97,10 @@ Support: [GitHub Sponsors](https://github.com/sponsors/MrSaneApps) · Contribute
 ## 🎯 System Requirements
 
 **Minimum Requirements:**
-- **macOS 15.0 (Sequoia)** or later
+- **macOS 26** or later
 - **Apple Silicon** (arm64) only - Intel Macs not supported
 - **8GB RAM** minimum (16GB recommended for 4K editing)
-- **AI features** require macOS 26.0+ (FoundationModels/Translation); core recording/editing works on 15.0+
-
-> **Note**: SaneVideo is optimized for newer macOS features when available, but the core app runs on macOS 15.0+.
+- About 600 MB of disk for the speech model, downloaded the first time you use Clean Up or captions
 
 
 ---
@@ -118,7 +117,7 @@ Support: [GitHub Sponsors](https://github.com/sponsors/MrSaneApps) · Contribute
 
 ### Recording
 
-- **Keyboard**: Press `⌘N`
+- **Keyboard**: `⌘N` for a new recording, `⌥⌘R` to start and stop from any app
 - **Window**: Click the Record button in the toolbar
 
 ### Importing Videos

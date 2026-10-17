@@ -425,6 +425,7 @@ struct RepurposingSheet: View {
                 let outputURLs = try await batchService.exportShorts(
                     selectedCandidates,
                     from: clip.url,
+                    name: appState.currentProject?.name ?? "Short",
                     settings: settings
                 ) { progress in
                     Task { @MainActor in

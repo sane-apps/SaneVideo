@@ -1,6 +1,6 @@
 # Privacy Policy
 
-**Last updated: May 12, 2026**
+**Last updated: October 17, 2026**
 
 SaneVideo is designed with privacy as a core principle. This document explains how the app handles your data.
 
@@ -24,15 +24,14 @@ SaneVideo is designed with privacy as a core principle. This document explains h
 - **Updates** - Sparkle checks whether a newer app build exists
 - **Licensing** - License status may be checked when you activate or validate Pro
 - **Aggregate app counts** - SaneApps may receive privacy-safe aggregate counts that are not project content
-- **Optional integrations** - Third-party upload/API features only use the network when you configure and choose them
+- **Speech model download** - The first time you make captions or run Clean Up, SaneVideo downloads the Parakeet speech model (about 600 MB) from Hugging Face once. Your audio never leaves your Mac; the model runs locally. Apple's on-device engine (Settings > Privacy) needs no download.
 
 ## Permissions Used
 
 ### File System Access
 - **Application Support** - To store preferences
 - **User-selected files** - Only files you explicitly open
-- **Movies/Desktop** - To save projects, recordings, and default exports
-- **iCloud Drive** - Only if you enable optional iCloud sync
+- **Movies** - To save projects, recordings, and exports (Movies/SaneVideo)
 
 ### Camera/Microphone/Screen Recording
 - Only accessed when you explicitly record or enable camera/screen capture
@@ -42,7 +41,7 @@ SaneVideo is designed with privacy as a core principle. This document explains h
 
 ## Third-Party Services
 
-SaneVideo does not send your project media to third-party services by default. Optional upload/API integrations are separate from normal local recording and editing and require your explicit setup.
+SaneVideo never sends your recordings, audio, or projects to any service. Sharing a file happens only when you use the macOS share sheet yourself.
 
 ## Auto-Updates
 

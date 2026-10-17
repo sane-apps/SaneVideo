@@ -11,11 +11,6 @@ class RecordingState {
         didSet {
             guard isRecording != oldValue else { return }
             NSLog("🎬 RecordingState: isRecording changed from \(oldValue) to \(isRecording)")
-            NotificationCenter.default.post(
-                name: NSNotification.Name("RecordingStateChanged"),
-                object: nil,
-                userInfo: ["isRecording": isRecording]
-            )
             onRecordingStateChanged?(isRecording)
         }
     }

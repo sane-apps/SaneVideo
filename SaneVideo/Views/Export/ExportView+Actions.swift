@@ -197,6 +197,21 @@ extension ExportView {
                 self.speedTracker.reset()
                 AppLogger.export.info("Export success: \(outputURL.lastPathComponent)")
 
+                // Captions are not drawn into the video; a matching .srt goes beside it for YouTube.
+                let captions = project.timelineCaptions
+                if !captions.isEmpty {
+                    let srtURL = outputURL.deletingPathExtension().appendingPathExtension("srt")
+                    do {
+                        try Caption.srt(captions).write(to: srtURL, atomically: true, encoding: .utf8)
+                        ServiceContainer.shared.toastManager.show(
+                            "Captions saved beside the video as an .srt file. Upload it to YouTube with the video.",
+                            type: .success
+                        )
+                    } catch {
+                        AppLogger.export.error("Caption file failed: \(error.localizedDescription)")
+                    }
+                }
+
                 NSWorkspace.shared.activateFileViewerSelecting([outputURL])
                 self.dismiss()
             } catch {

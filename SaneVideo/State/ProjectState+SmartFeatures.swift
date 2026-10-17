@@ -13,7 +13,7 @@ extension ProjectState {
     @MainActor func resetMagicFix(for clip: VideoClip, regenerate: Bool = true) async {
         guard var project = currentProject else { return }
 
-        registerUndo("Reset Magic Fix")
+        registerUndo("Reset Clean Up")
 
         guard let trackIndex = project.timeline.tracks.firstIndex(where: {
             $0.clips.contains(where: { $0.id == clip.id })
@@ -46,10 +46,10 @@ extension ProjectState {
                 return
             }
 
-            ServiceContainer.shared.toastManager.show("🔄 Regenerating Magic Fix with current settings...", type: .info)
+            ServiceContainer.shared.toastManager.show("Running Clean Up again with these settings...", type: .info)
             await performMagicFix(for: resetClip, options: magicFixOptions)
         } else {
-            ServiceContainer.shared.toastManager.show("🔄 Magic Fix results reset", type: .info)
+            ServiceContainer.shared.toastManager.show("Clean Up undone", type: .info)
         }
     }
 
@@ -73,7 +73,7 @@ extension ProjectState {
 
         // Standalone runs get their own undo group; batches use one "Magic Fix All" group.
         if !isBatchOperation {
-            beginUndoGroup("Magic Fix")
+            beginUndoGroup("Clean Up")
         }
         defer {
             if !isBatchOperation {
@@ -85,7 +85,7 @@ extension ProjectState {
             guard let self = self else { return }
 
             self.updateTransactionProgress(transactionId, progress: 0.0)
-            self.processingStatus = "✨ Starting Magic Fix..."
+            self.processingStatus = "Cleaning up..."
 
             let startTime = Date()
             let performanceMetrics = ServiceContainer.shared.performanceMetrics
@@ -98,7 +98,7 @@ extension ProjectState {
                 let optionsDescription =
                     "\(options.removeSilence ? "silence " : "")\(options.removeFillers ? "fillers" : "")"
                 performanceMetrics.recordOperation(
-                    name: "Magic Fix",
+                    name: "Clean Up",
                     duration: duration,
                     metadata: [
                         "clipDuration": String(format: "%.1f", clip.duration.seconds),
@@ -167,8 +167,8 @@ extension ProjectState {
                 updateTransactionProgress(transactionId, progress: 0.6)
 
                 updateTransactionProgress(transactionId, progress: 1.0)
-                processingStatus = "✅ Magic Fix Completed"
-                ServiceContainer.shared.toastManager.show("✨ Magic Fix Completed", type: .info)
+                processingStatus = "Clean Up done"
+                ServiceContainer.shared.toastManager.show("Clean Up done", type: .info)
                 AppLogger.project.info("✨ Magic Fix: One-click flow finished successfully")
 
                 // Reload the composition: StateChangePipeline watches only track structure, not clip.removedRanges, so the cuts would not show.
@@ -185,7 +185,7 @@ extension ProjectState {
                 AppLogger.project.error("❌ Magic Fix CRITICAL FAILURE: \(error)")
                 processingStatus = "❌ Failed"
                 ServiceContainer.shared.toastManager.show(
-                    "Magic Fix failed: \(error.localizedDescription)", type: .error)
+                    "Clean Up failed: \(error.localizedDescription)", type: .error)
                 AppLogger.project.error("✨ Magic Fix: Error during orchestration: \(error)")
             }
         }
@@ -225,7 +225,7 @@ extension ProjectState {
         if codableRemovals != clip.removedRanges
             || options.smoothJumpCuts != clip.useSmoothCutForRemovals {
             await MainActor.run {
-                self.registerUndo("Magic Fix (Cuts & Smoothing)")
+                self.registerUndo("Clean Up")
                 guard var project = self.currentProject else { return }
 
                 if let index = project.timeline.tracks.firstIndex(where: {
@@ -245,7 +245,7 @@ extension ProjectState {
                 let cutCount = codableRemovals.count - clip.removedRanges.count
                 if cutCount > 0 {
                     ServiceContainer.shared.toastManager.show(
-                        "✅ Magically fixed: Added \(cutCount) cuts")
+                        "Clean Up made \(cutCount) cut\(cutCount == 1 ? "" : "s")")
                 }
             }
         }
@@ -274,7 +274,7 @@ extension ProjectState {
             if let cIdx = track.clips.firstIndex(where: { $0.id == clipId }) {
                 var clip = track.clips[cIdx]
                 clip.removedRanges = removedRanges
-                registerUndo("Magic Fix")
+                registerUndo("Clean Up")
                 project.timeline.tracks[tIdx].clips[cIdx] = clip
                 currentProject = project
                 saveProject(project)

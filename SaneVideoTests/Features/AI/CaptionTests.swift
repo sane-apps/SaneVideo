@@ -124,4 +124,13 @@ struct CaptionTests {
         )
         #expect(caption.displayText == "Hello world")
     }
+
+    @Test("SRT file numbers captions and writes hour, minute, second and millisecond times")
+    func srtFile() {
+        let captions = [
+            Caption(text: "Hello", startTime: CMTime(seconds: 1.5, preferredTimescale: 600), endTime: CMTime(seconds: 2.25, preferredTimescale: 600)),
+            Caption(text: "Again", startTime: CMTime(seconds: 3725.004, preferredTimescale: 1000), endTime: CMTime(seconds: 3726, preferredTimescale: 600))
+        ]
+        #expect(Caption.srt(captions) == "1\n00:00:01,500 --> 00:00:02,250\nHello\n\n2\n01:02:05,004 --> 01:02:06,000\nAgain\n")
+    }
 }

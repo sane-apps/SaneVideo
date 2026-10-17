@@ -195,9 +195,11 @@ struct TimelineClipView: View {
 
     private var thumbnailStrip: some View {
         // Handles 10-hour videos: LazyHStack creates only the visible thumbnail cells, and each loads itself.
+        // Fill the space between the trim handles; full clip width pushed the label under the left handle.
+        let stripWidth = max(1, clipWidth - handleWidth * 2)
         let targetThumbWidth: CGFloat = 80
-        let thumbCount = max(1, Int(clipWidth / targetThumbWidth))
-        let singleThumbWidth = clipWidth / CGFloat(thumbCount)
+        let thumbCount = max(1, Int(stripWidth / targetThumbWidth))
+        let singleThumbWidth = stripWidth / CGFloat(thumbCount)
 
         // LazyHStack with explicit frame to prevent layout thrashing
         return LazyHStack(spacing: 0) {

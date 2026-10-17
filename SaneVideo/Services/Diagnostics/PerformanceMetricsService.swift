@@ -42,7 +42,7 @@ class PerformanceMetricsService {
 
     private func updateStatistics() {
         let exports = recentOperations.filter { $0.name.contains("Export") }
-        let magicFixes = recentOperations.filter { $0.name.contains("Magic Fix") }
+        let magicFixes = recentOperations.filter { $0.name.contains("Clean Up") }
 
         if !exports.isEmpty {
             averageExportTime = exports.map { $0.duration }.reduce(0, +) / Double(exports.count)
@@ -63,7 +63,7 @@ class PerformanceMetricsService {
         }
 
         if averageMagicFixTime > 0 {
-            insights.append("Average Magic Fix time: \(formatDuration(averageMagicFixTime))")
+            insights.append("Average Clean Up time: \(formatDuration(averageMagicFixTime))")
         }
 
         if fastestExportTime < .greatestFiniteMagnitude {

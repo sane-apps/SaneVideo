@@ -41,7 +41,7 @@ struct BatchExportServiceTests {
         #expect(!FileManager.default.fileExists(atPath: outputDirectory.path))
     }
 
-    @Test("A 1 s candidate exports as a vertical 1080x1920 clip of 1 s, with progress reaching 1")
+    @Test("A 1 s candidate exports as a vertical 1080x1920 clip of 1 s named after the project, with progress reaching 1")
     func exportsVerticalShort() async throws {
         let outputDirectory = makeOutputDirectory()
         defer { try? FileManager.default.removeItem(at: outputDirectory) }
@@ -57,6 +57,7 @@ struct BatchExportServiceTests {
         let results = try await service.exportShorts(
             [candidate],
             from: TestEnvironment.mockAssetURL,
+            name: "My Talk",
             settings: RepurposingSettings(aspectRatio: .vertical9x16),
             progressHandler: { progress.append($0) }
         )
@@ -64,7 +65,7 @@ struct BatchExportServiceTests {
         let url = try #require(results.first)
         #expect(results.count == 1)
         #expect(url.deletingLastPathComponent().standardizedFileURL == outputDirectory.standardizedFileURL)
-        #expect(url.lastPathComponent.hasPrefix("Short_1_"))
+        #expect(url.lastPathComponent.hasPrefix("My Talk Short 1 "))
 
         let asset = AVURLAsset(url: url)
         let duration = try await asset.load(.duration).seconds

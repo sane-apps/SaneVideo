@@ -159,7 +159,7 @@ final class ExportEdgeCaseIntegrationTests: XCTestCase {
 
         let outputURL = try await exportEngine.export(
             project: project,
-            settings: SaneExportSettings(),
+            settings: SaneExportSettings(resolution: .hd1080),
             outputURL: tempOutputURL
         ) { _ in }
 
@@ -209,7 +209,7 @@ final class ExportEdgeCaseIntegrationTests: XCTestCase {
 
         let outputURL = try await exportEngine.export(
             project: project,
-            settings: SaneExportSettings(),
+            settings: SaneExportSettings(resolution: .hd1080),
             outputURL: tempOutputURL
         ) { _ in }
 
@@ -239,7 +239,7 @@ final class ExportEdgeCaseIntegrationTests: XCTestCase {
         let exportTask = Task { @MainActor in
             try await engine.export(
                 project: project,
-                settings: SaneExportSettings(),
+                settings: SaneExportSettings(resolution: .hd1080),
                 outputURL: outputURL
             ) { _ in }
         }
@@ -284,7 +284,7 @@ final class ExportEdgeCaseIntegrationTests: XCTestCase {
         do {
             _ = try await exportEngine.export(
                 project: project,
-                settings: SaneExportSettings(),
+                settings: SaneExportSettings(resolution: .hd1080),
                 outputURL: tempOutputURL
             ) { _ in }
             XCTFail("Should throw error for missing file")

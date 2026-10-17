@@ -21,7 +21,7 @@ struct ExportEngineTests {
         await #expect(throws: (any Error).self) {
             _ = try await engine.export(
                 project: VideoProject(name: "Empty Project"),
-                settings: SaneExportSettings(),
+                settings: SaneExportSettings(resolution: .hd1080),
                 outputURL: outputURL,
                 progressHandler: { _ in }
             )
@@ -49,7 +49,7 @@ struct ExportEngineTests {
 
         let firstExport = Task {
             try await engine.export(
-                project: project, settings: SaneExportSettings(), outputURL: firstURL, progressHandler: { _ in }
+                project: project, settings: SaneExportSettings(resolution: .hd1080), outputURL: firstURL, progressHandler: { _ in }
             )
         }
 
@@ -61,7 +61,7 @@ struct ExportEngineTests {
 
         let error = await #expect(throws: ExportError.self) {
             _ = try await engine.export(
-                project: project, settings: SaneExportSettings(), outputURL: secondURL, progressHandler: { _ in }
+                project: project, settings: SaneExportSettings(resolution: .hd1080), outputURL: secondURL, progressHandler: { _ in }
             )
         }
         if case .alreadyExporting? = error {

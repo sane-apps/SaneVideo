@@ -133,4 +133,26 @@ struct CaptionTests {
         ]
         #expect(Caption.srt(captions) == "1\n00:00:01,500 --> 00:00:02,250\nHello\n\n2\n01:02:05,004 --> 01:02:06,000\nAgain\n")
     }
+
+    @Test("An export with captions gets a matching .srt beside it; one without captions gets none")
+    func captionFileBesideExport() throws {
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("srt-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        var clip = VideoClip(url: URL(fileURLWithPath: "/tmp/take.mov"), duration: CMTime(seconds: 10, preferredTimescale: 600))
+        clip.captions = [Caption(text: "Hello", startTime: CMTime(seconds: 1, preferredTimescale: 600), endTime: CMTime(seconds: 2, preferredTimescale: 600))]
+        var project = VideoProject(name: "Talk")
+        project.timeline.tracks = [Track(name: "Video", type: .video, clips: [clip], zIndex: 0)]
+
+        let srtURL = try project.writeCaptionFile(beside: folder.appendingPathComponent("Talk.mp4"))
+
+        #expect(srtURL?.lastPathComponent == "Talk.srt")
+        let written = try String(contentsOf: try #require(srtURL), encoding: .utf8)
+        #expect(written == Caption.srt(project.timelineCaptions))
+        #expect(written.hasPrefix("1\n00:00:01,000 --> "))
+        #expect(written.hasSuffix("\nHello\n"))
+        let silent = VideoProject(name: "Quiet")
+        #expect(try silent.writeCaptionFile(beside: folder.appendingPathComponent("Quiet.mp4")) == nil)
+        #expect(!FileManager.default.fileExists(atPath: folder.appendingPathComponent("Quiet.srt").path))
+    }
 }

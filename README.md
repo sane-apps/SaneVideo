@@ -26,7 +26,7 @@ Most tools fall into two traps: **bloated professionals** that overwhelm everyda
 
 **Local-First Video Workflow**
 
-SaneVideo is free and open source. Setup stays. Every recording and edit tool stays unlocked. Donate only if you want to support it.
+SaneVideo is free, with 100% Transparent Code (PolyForm Shield). Setup stays. Every recording and edit tool stays unlocked. Donate only if you want to support it.
 
 ---
 
@@ -259,4 +259,4 @@ For issues or questions:
 
 ## Third-Party Notices
 
-Third-party open-source attributions are documented in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+Third-party attributions are documented in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

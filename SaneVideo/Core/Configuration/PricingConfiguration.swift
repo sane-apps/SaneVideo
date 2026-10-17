@@ -91,7 +91,7 @@ class PricingConfiguration {
     }
 
     func pricingMessage() -> String {
-        "Free and open source. Donate only if you want to support it."
+        "Free, with 100% Transparent Code. Donate only if you want to support it."
     }
 
     func valueProposition() -> String {

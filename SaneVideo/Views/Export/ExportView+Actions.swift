@@ -198,18 +198,15 @@ extension ExportView {
                 AppLogger.export.info("Export success: \(outputURL.lastPathComponent)")
 
                 // Captions are not drawn into the video; a matching .srt goes beside it for YouTube.
-                let captions = project.timelineCaptions
-                if !captions.isEmpty {
-                    let srtURL = outputURL.deletingPathExtension().appendingPathExtension("srt")
-                    do {
-                        try Caption.srt(captions).write(to: srtURL, atomically: true, encoding: .utf8)
+                do {
+                    if try project.writeCaptionFile(beside: outputURL) != nil {
                         ServiceContainer.shared.toastManager.show(
                             "Captions saved beside the video as an .srt file. Upload it to YouTube with the video.",
                             type: .success
                         )
-                    } catch {
-                        AppLogger.export.error("Caption file failed: \(error.localizedDescription)")
                     }
+                } catch {
+                    AppLogger.export.error("Caption file failed: \(error.localizedDescription)")
                 }
 
                 NSWorkspace.shared.activateFileViewerSelecting([outputURL])
@@ -257,7 +254,10 @@ extension ExportView {
                     var tempProject = VideoProject()
                     tempProject.name = "\(projectName)_\(clip.url.deletingPathExtension().lastPathComponent)"
 
-                    let track = Track(name: "Export Track", type: .video, clips: [clip], zIndex: 0)
+                    // The file holds only this clip, so it starts at zero, not at its timeline position.
+                    var soloClip = clip
+                    soloClip.startTime = .zero
+                    let track = Track(name: "Export Track", type: .video, clips: [soloClip], zIndex: 0)
                     tempProject.timeline.tracks.append(track)
 
                     _ = try await engine.export(
@@ -271,6 +271,11 @@ extension ExportView {
                             }
                         }
                     )
+                    do {
+                        try tempProject.writeCaptionFile(beside: outputURL)
+                    } catch {
+                        AppLogger.export.error("Caption file failed: \(error.localizedDescription)")
+                    }
                 },
                 progressHandler: { completed, total in
                     Task { @MainActor in

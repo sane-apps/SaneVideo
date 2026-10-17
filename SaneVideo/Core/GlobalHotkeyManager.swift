@@ -38,16 +38,21 @@ final class GlobalHotkeyManager {
     }
 
     func update(recorderOpen: Bool, isRecording: Bool) {
-        if recorderOpen || isRecording {
+        let keys = Self.keysToHold(recorderOpen: recorderOpen, isRecording: isRecording)
+        if keys.record {
             register(.record, keyCode: UInt32(kVK_ANSI_R))
         } else {
             unregister(.record)
         }
-        if isRecording {
+        if keys.pause {
             register(.pause, keyCode: UInt32(kVK_ANSI_P))
         } else {
             unregister(.pause)
         }
+    }
+
+    nonisolated static func keysToHold(recorderOpen: Bool, isRecording: Bool) -> (record: Bool, pause: Bool) {
+        (record: recorderOpen || isRecording, pause: isRecording)
     }
 
     private static func handle(id: UInt32) {

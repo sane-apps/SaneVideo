@@ -106,6 +106,17 @@ struct VideoProject: Identifiable, Codable, Equatable, Sendable {
 }
 
 extension VideoProject {
+    /// Writes the timeline captions as an .srt beside an exported video, for YouTube.
+    /// Returns nil when the project has no captions.
+    @discardableResult
+    func writeCaptionFile(beside videoURL: URL) throws -> URL? {
+        let captions = timelineCaptions
+        guard !captions.isEmpty else { return nil }
+        let srtURL = videoURL.deletingPathExtension().appendingPathExtension("srt")
+        try Caption.srt(captions).write(to: srtURL, atomically: true, encoding: .utf8)
+        return srtURL
+    }
+
     /// Captions as they play in the edited video: words Magic Fix cut are gone and times are on the
     /// timeline, so exported subtitles line up with the exported file.
     var timelineCaptions: [Caption] {

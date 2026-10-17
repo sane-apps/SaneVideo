@@ -223,10 +223,10 @@ struct SharedRecordingControls: View {
                         isActive: false,
                         size: buttonSize,
                         activeColor: Theme.Colors.accent,
-                        helpText: "Open Demo Studio",
+                        helpText: "Teleprompter Script",
                         action: {
                             ServiceContainer.shared.hapticsManager.selection()
-                            appState.openDemoStudio()
+                            appState.openTeleprompterScript()
                         }
                     )
                     .recordingGuide(demoGuide)

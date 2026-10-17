@@ -171,6 +171,8 @@ final class VideoWriter: VideoWriterProtocol {
         compressionProperties[AVVideoExpectedSourceFrameRateKey] = targetFrameRate
         compressionProperties[AVVideoAverageBitRateKey] = averageBitrate
         videoSettings[AVVideoCompressionPropertiesKey] = compressionProperties
+        // Tag the file as Rec. 709 so players don't guess the color range and show it washed out.
+        videoSettings[AVVideoColorPropertiesKey] = VideoColor.rec709
 
         AppLogger.recording.info(
             "📹 VideoWriter: Configuring for \(targetFrameRate) fps, \(Int(targetSize.width))x\(Int(targetSize.height)) @ \(averageBitrate / 1_000_000) Mbps"
@@ -631,4 +633,15 @@ final class VideoWriter: VideoWriterProtocol {
     // Note: For @RecordingActor, we can't access isolated properties in deinit
     // The task will be cancelled when the actor is deallocated
     // We rely on proper cleanup in finishWriting() method
+}
+
+/// Encoder color tags. Untagged H.264/HEVC makes players guess the range and look washed out.
+enum VideoColor {
+    static var rec709: [String: Any] {
+        [
+            AVVideoColorPrimariesKey: AVVideoColorPrimaries_ITU_R_709_2,
+            AVVideoTransferFunctionKey: AVVideoTransferFunction_ITU_R_709_2,
+            AVVideoYCbCrMatrixKey: AVVideoYCbCrMatrix_ITU_R_709_2
+        ]
+    }
 }

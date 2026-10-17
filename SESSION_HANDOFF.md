@@ -1,3 +1,18 @@
+## 2026-10-16 21:05 ET — Full audit + first-principles simplification (ACTIVE LEDGER)
+
+Owner asks: audit every feature live (EMEET C960 camera+mic on the Mini), keep/kill features on evidence, prune
+tautological tests, strip needless comments, modernize the design, make it fast. Ledger:
+outputs/audit-20261016/FEATURE_DECISIONS.md (findings + decisions), TEST_TRIAGE.md (544 keep / 694 cut-or-merge).
+- Baseline verify: 1,234 tests pass in 178 s (receipt d51d7db5).
+- Fixed in source (uncommitted): screen-mode quit+4-min hang; camera preview zero-copy; WhisperKit+Vision launch
+  preloads removed (camera CPU 100% -> 18%); denied mic records silently; Rec. 709 color tags on record+export;
+  audio-input entitlement. SaneProcess: dedupe skips --help/busy lock (714a964); sane_test entitlements fallback.
+- Owner decisions: Apple SpeechAnalyzer default, min macOS 26; keep an optional Whisper engine (opt-in, never
+  preloaded, small + large-v3-turbo). UI redesign after cuts, ASCII mockup first (owner: washed out, boxes in boxes).
+- Next: finish live checks (Magic Fix result, export, GIF, teleprompter, Shorts, thumbnail, voiceover, settings),
+  then cuts (Demo Studio, dead Vision, sentiment, LUFS, limiter, iCloud, API keys/YouTube, dead files), engine swap,
+  test prune, mockup, redesign, verify, live retest, release 1.1.0.
+
 ## 2026-09-07 10:42 ET — Bottom-right build label verified removed
 
 - Owner requested removal of the debug build label. Deleted its only caller and unused component, retained the shared pink Donate button, regenerated project. Focused regression passed1/1 (c7f7acb6472de4c8577f9f0d1314440d); prior full suite1233/1233 (860ef3771019d37b2305a1ac34f572d1).

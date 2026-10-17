@@ -98,7 +98,7 @@ class AppState {
     // MARK: - Export Sheet (for ⌘E shortcut)
 
     var showExportSheet = false
-    var showDemoStudioSheet = false
+    var showTeleprompterScriptSheet = false
 
     // MARK: - Quick Access Overlay (post-recording)
 
@@ -218,18 +218,6 @@ class AppState {
         }
 
         await applyAutomationTranscriptCorrectionsIfNeeded()
-
-        if TestEnvironment.shouldBuildCommentaryReelAutomatically {
-            do {
-                let reel = try projectState.buildCommentaryReel()
-                AppLogger.general.info("🧪 Built commentary reel automatically: \(reel.name)")
-                NSLog("🧪 Built commentary reel automatically: \(reel.name)")
-                await refineAutomationCaptionsIfNeeded()
-            } catch {
-                AppLogger.general.error("❌ AppState: Commentary reel automation failed: \(error.localizedDescription)")
-                NSLog("❌ AppState: Commentary reel automation failed: \(error.localizedDescription)")
-            }
-        }
 
         // Switch Mode
         await MainActor.run {

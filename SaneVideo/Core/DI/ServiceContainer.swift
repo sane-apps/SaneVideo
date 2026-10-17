@@ -40,11 +40,9 @@ final class ServiceContainer {
     
     // MARK: - Export Services
     
-    let youtubeService: YouTubeService
     let pdfService: PDFGeneratorService
     let ffmpegService: FFmpegService
     let shareLinkService: ShareLinkService
-    let demoPackExportService: DemoPackExportService
     let updaterService: UpdaterService
     
     // MARK: - Audio/Voice Services
@@ -60,12 +58,10 @@ final class ServiceContainer {
     let aiService: AIService
     let transcriptionCoordinator: TranscriptionCoordinator
     let smartFillerDetector: SmartFillerDetector
-    let sentimentAnalysisService: SentimentAnalysisService
     let mlEffectsService: MLEffectsService
     
     // MARK: - Vision Services
     
-    let visionOrchestrator: VisionOrchestrator
     
     @available(macOS 26.0, *)
     var translationService: TranslationService {
@@ -74,12 +70,9 @@ final class ServiceContainer {
     
     // MARK: - Vision Services
     
-    let bodyPoseService: BodyPoseService
     let faceTrackingService: FaceTrackingService
     let personSegmentationService: PersonSegmentationService
     let saliencyService: SaliencyService
-    let textRecognitionService: TextRecognitionService
-    let generativeVisionService: GenerativeVisionService
     // smartThumbnailService consolidated into thumbnailService
     
     // MARK: - Project/Timeline Services
@@ -89,15 +82,10 @@ final class ServiceContainer {
     let clickTrackingService: ClickTrackingService
     // timelineThumbnailService consolidated into thumbnailService
     let renderingService: RenderingService
-    let templateStore: TemplateStore
-    lazy var syncManager: SyncManager = SyncManager()
-    lazy var mediaAssetManager: MediaAssetManager = MediaAssetManager()
 
     // MARK: - Utility Services
     
     let logManager: LogManager
-    let apiKeyManager: APIKeyManager
-    let keychainService: KeychainService
     let featureDiscovery: FeatureDiscovery
     let memoryManager: MemoryManager
     let stressTestRunner: StressTestRunner
@@ -143,15 +131,9 @@ final class ServiceContainer {
         self.errorPresenter = ErrorPresenter()
         
         // Export Services
-        self.youtubeService = YouTubeService()
         self.pdfService = PDFGeneratorService()
         self.ffmpegService = FFmpegService()
         self.shareLinkService = ShareLinkService()
-        self.demoPackExportService = DemoPackExportService(
-            exportService: self.exportService,
-            thumbnailService: self.thumbnailService,
-            pdfService: self.pdfService
-        )
         self.updaterService = UpdaterService()
         
         // Audio/Voice Services
@@ -165,10 +147,8 @@ final class ServiceContainer {
         self.aiService = AIService()
         self.transcriptionCoordinator = TranscriptionCoordinator()
         self.smartFillerDetector = SmartFillerDetector()
-        self.sentimentAnalysisService = SentimentAnalysisService()
         self.mlEffectsService = MLEffectsService()
 
-        self.visionOrchestrator = VisionOrchestrator()
         
         // Project/Timeline Services
         self.projectFileManager = ProjectFileManager()
@@ -178,21 +158,15 @@ final class ServiceContainer {
 
         let renderingService = RenderingService.shared
         self.renderingService = renderingService
-        self.templateStore = TemplateStore()
 
         // Vision Services (Now using unified context)
-        self.bodyPoseService = BodyPoseService()
         self.faceTrackingService = FaceTrackingService()
         self.personSegmentationService = PersonSegmentationService(ciContext: renderingService.ciContext)
         self.saliencyService = SaliencyService()
-        self.textRecognitionService = TextRecognitionService()
-        self.generativeVisionService = GenerativeVisionService(ciContext: renderingService.ciContext)
         // smartThumbnailService now consolidated into thumbnailService
         
         // Utility Services  
         self.logManager = LogManager()
-        self.apiKeyManager = APIKeyManager()
-        self.keychainService = KeychainService()
         self.featureDiscovery = FeatureDiscovery()
         self.memoryManager = MemoryManager()
         self.stressTestRunner = StressTestRunner()
@@ -210,13 +184,6 @@ final class ServiceContainer {
         // Configuration
         self.pricingConfiguration = PricingConfiguration()
         
-        // Warm up critical heavy systems in background
-        Task { await self.visionOrchestrator.warmup() }
-
-        // Preload WhisperKit model in background (non-blocking)
-        // User won't wait 5-15 minutes on first caption generation
-        transcriptionCoordinator.preloadWhisperKit(toastManager: toastManager)
-
         // Log initialization time
         let elapsed = CFAbsoluteTimeGetCurrent() - startTime
         if elapsed > 0.1 {

@@ -3,7 +3,7 @@ import SaneUI
 import SwiftUI
 
 private enum VideoSettingsTab: String, SaneSettingsTab {
-    case general, recording, export, privacy, apikeys, icloud, license, about
+    case general, recording, export, privacy, license, about
     #if DEBUG
         case debug
     #endif
@@ -14,8 +14,6 @@ private enum VideoSettingsTab: String, SaneSettingsTab {
         case .recording: "Recording"
         case .export: String(localized: "settings.tab.export", defaultValue: "Export")
         case .privacy: String(localized: "settings.tab.privacy", defaultValue: "Privacy & AI")
-        case .apikeys: "API Keys"
-        case .icloud: "iCloud Sync"
         case .license: "License"
         case .about: "About"
         #if DEBUG
@@ -30,8 +28,6 @@ private enum VideoSettingsTab: String, SaneSettingsTab {
         case .recording: "record.circle"
         case .export: "square.and.arrow.up"
         case .privacy: "lock.shield"
-        case .apikeys: "key.fill"
-        case .icloud: "icloud"
         case .license: "checkmark.seal.fill"
         case .about: "info.circle"
         #if DEBUG
@@ -46,8 +42,6 @@ private enum VideoSettingsTab: String, SaneSettingsTab {
         case .recording: .red
         case .export: .cyan
         case .privacy: .green
-        case .apikeys: .yellow
-        case .icloud: .blue
         case .license: .mint
         case .about: .cyan
         #if DEBUG
@@ -74,9 +68,7 @@ struct SettingsView: View {
             case .general: GeneralSettingsView()
             case .recording: RecordingSettingsView()
             case .export: ExportSettingsView()
-            case .privacy: PrivacySettingsView(selectedTab: $selectedTab)
-            case .apikeys: APIKeysSettingsView()
-            case .icloud: iCloudSyncSettingsView(isSelected: selectedTab == "icloud")
+            case .privacy: PrivacySettingsView()
             case .license:
                 SaneSettingsPage {
                     LicenseSettingsView(

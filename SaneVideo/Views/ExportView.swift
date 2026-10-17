@@ -24,12 +24,6 @@ struct ExportView: View {
     @State var speedTracker = ExportSpeedTracker()
     @State var estimatedTotalBytes: Int64 = 0
 
-    // YouTube State
-    var youtubeService = ServiceContainer.shared.youtubeService
-    @State var showYouTubeUpload = false
-    @State var videoTitle = ""
-    @State var videoDescription = ""
-    @State var isGeneratingAI = false
 
     // Services
     let exportEngine = ServiceContainer.shared.exportService
@@ -60,13 +54,6 @@ struct ExportView: View {
         return project.timeline.tracks.allSatisfy { $0.clips.isEmpty }
     }
 
-    /*
-    private var templateSettings: SaneExportSettings? {
-        // Template logic removed as VideoProject doesn't support templateId yet
-        return nil
-    }
-    */
-
     // MARK: - Body
 
     var body: some View {
@@ -76,12 +63,6 @@ struct ExportView: View {
                     LoadingIndicator(
                         message: exportProgress >= 1.0 ? "Finishing up..." : "Exporting...",
                         progress: exportProgress
-                    )
-                    .transition(.smoothScale)
-                } else if youtubeService.isUploading {
-                    LoadingIndicator(
-                        message: "Uploading to YouTube...",
-                        progress: youtubeService.uploadProgress
                     )
                     .transition(.smoothScale)
                 } else {
@@ -107,7 +88,6 @@ struct ExportView: View {
                 }
             }
             .animation(.smoothUI, value: isExporting)
-            .animation(.smoothUI, value: youtubeService.isUploading)
 
             HStack(spacing: 16) {
                 Button {
@@ -115,15 +95,11 @@ struct ExportView: View {
                     if hasMultipleClipsSelected {
                         startBatchExport()
                     } else {
-                        if showYouTubeUpload {
-                            startExport(uploadToYouTube: true)
-                        } else {
-                            startExport(uploadToYouTube: false)
-                        }
+                        startExport()
                     }
                 } label: {
                     Label(
-                        hasMultipleClipsSelected ? String(localized: "export.action.batch_export", defaultValue: "Batch Export Only") : (showYouTubeUpload ? String(localized: "export.action.export_upload", defaultValue: "Export & Upload") : String(localized: "export.action.export_file", defaultValue: "Export File")),
+                        hasMultipleClipsSelected ? String(localized: "export.action.batch_export", defaultValue: "Export Each Clip") : String(localized: "export.action.export_file", defaultValue: "Export File"),
                         systemImage: hasMultipleClipsSelected ? "square.stack.3d.up.fill" : "square.and.arrow.up.fill"
                     )
                     .frame(maxWidth: .infinity)
@@ -131,24 +107,11 @@ struct ExportView: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
-                .disabled(isExporting || youtubeService.isUploading || isTimelineEmpty)
+                .disabled(isExporting || isTimelineEmpty)
                 .keyboardShortcut(.defaultAction)
                 .accessibilityIdentifier("export.action.primary")
-                .help(hasMultipleClipsSelected ? "Exports each selected clip as its own local file." : (showYouTubeUpload ? "Exports a local file and then uploads it to YouTube." : "Exports a standalone local video file."))
+                .help(hasMultipleClipsSelected ? "Exports each selected clip as its own file." : "Exports a video file.")
 
-                Button {
-                    withAnimation {
-                        showYouTubeUpload.toggle()
-                    }
-                } label: {
-                    Label(showYouTubeUpload ? String(localized: "action.hide", defaultValue: "Hide") : String(localized: "action.youtube", defaultValue: "YouTube"), systemImage: "video.badge.plus")
-                        .padding(.vertical, 8)
-                }
-                .buttonStyle(.bordered)
-                .controlSize(.large)
-                .disabled(isExporting || youtubeService.isUploading || !YouTubeService.uploadFeatureEnabled)
-                .accessibilityIdentifier("export.action.toggle_youtube")
-                .help(YouTubeService.uploadFeatureEnabled ? "Shows or hides the optional YouTube upload fields. Leave it off for a fully local workflow." : "YouTube upload is not available in this build. Export a local file and upload it manually.")
     
                 Button {
                     ServiceContainer.shared.hapticsManager.selection()
@@ -160,30 +123,20 @@ struct ExportView: View {
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.large)
-                .disabled(isExporting || youtubeService.isUploading || isTimelineEmpty)
+                .disabled(isExporting || isTimelineEmpty)
                 .accessibilityIdentifier("export.action.share_link")
                 .help(isTimelineEmpty ? "Add a clip before sharing an exported file." : "Exports a local file and opens the system share sheet for that file.")
             }
 
             ScrollView {
                 VStack(spacing: 12) {
-                    ExportYouTubeSection(
-                        youtubeService: youtubeService,
-                        showYouTubeUpload: $showYouTubeUpload,
-                        videoTitle: $videoTitle,
-                        videoDescription: $videoDescription,
-                        isGeneratingAI: $isGeneratingAI,
-                        hasCaptions: hasCaptions,
-                        onGenerateAI: generateAITitleDescription
-                    )
-
                     ExportConfigurationView(
                         exportSettings: $exportSettings,
                         selectedPreset: $selectedPreset,
                         mlEffects: $mlEffects,
                         estimateFileSize: estimateFileSize
                     )
-                    .disabled(isExporting || youtubeService.isUploading)
+                    .disabled(isExporting)
                 }
                 .padding(.vertical, 2)
             }
@@ -192,13 +145,7 @@ struct ExportView: View {
     
             HStack {
                 Menu {
-                    Button(String(localized: "export.option.demo_pack", defaultValue: "Export Demo Pack"), action: exportDemoPack)
-                    Button(String(localized: "export.option.demo_studio", defaultValue: "Demo Studio Settings")) {
-                        appState.openDemoStudio()
-                    }
-                    Divider()
                     Button(String(localized: "export.option.thumbnail", defaultValue: "Export Thumbnail"), action: generateThumbnail)
-                    Button(String(localized: "export.option.study_guide", defaultValue: "Export Study Guide (PDF)"), action: exportStudyGuide)
                     Button(String(localized: "export.option.gif", defaultValue: "Export as GIF"), action: exportAsGIF)
                     Button(String(localized: "export.option.voiceover", defaultValue: "Generate Voiceover"), action: generateVoiceover)
                 } label: {
@@ -207,7 +154,7 @@ struct ExportView: View {
                 }
                 .menuStyle(.borderlessButton)
                 .frame(width: 120)
-                .help("More local export tools like demo pack, thumbnail, study guide, GIF, and voiceover.")
+                .help("Thumbnail, GIF and voiceover.")
     
                 Spacer()
     
@@ -225,20 +172,6 @@ struct ExportView: View {
         .frame(width: 560)
         .sanePanel(radius: 18, emphasized: true, accent: Theme.Colors.accentSoft)
         .accessibilityIdentifier(AccessibilityIdentifiers.exportSheet)
-        .onAppear {
-            AppLogger.general.info("ExportView: appeared. isExporting: \(isExporting), isUploading: \(youtubeService.isUploading)")
-            if let project = appState.currentProject {
-                videoTitle = project.publishMetadata.title
-                videoDescription = project.publishMetadata.description
-            }
-            /*
-            // Apply template settings if project was created from template
-            if let template = templateSettings {
-                exportSettings = template
-                selectedPreset = .custom
-            }
-            */
-        }
         .alert(String(localized: "export.error.title", defaultValue: "Export Error"), isPresented: $showingError, actions: {
             Button(String(localized: "action.ok", defaultValue: "OK"), role: .cancel) {
                 exportError = nil

@@ -183,6 +183,20 @@ class RecordingState {
 
     // MARK: - Recording Control
 
+    @ObservationIgnored private var clockLastTick = Date()
+    @ObservationIgnored private var clockElapsed: TimeInterval = 0
+
+    private func tickRecordingClock() {
+        let now = Date()
+        defer { clockLastTick = now }
+        guard !isPaused else { return }
+        clockElapsed += now.timeIntervalSince(clockLastTick)
+        let whole = clockElapsed.rounded(.down)
+        if whole != recordingDuration {
+            recordingDuration = whole
+        }
+    }
+
     func startRecording(isScreenSharing: Bool, includeCameraOverlay: Bool = true) {
         NSLog("🎬 RecordingState.startRecording called. isRecording=\(isRecording), isPreparing=\(isPreparing), isScreenSharing=\(isScreenSharing)")
         guard !isRecording, !isPreparing else {
@@ -397,13 +411,12 @@ class RecordingState {
         isPaused = false
         recordingDuration = 0
 
-        // CRITICAL: Create timer but don't set isRecording until engine confirms start
-        recordingTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
-            guard let self else { return }
-            Task { @MainActor in
-                guard !self.isPaused else { return }
-                self.recordingDuration += 0.1
-            }
+        // Measure real elapsed time (minus pauses) and publish only whole seconds, so the
+        // controls redraw once a second and the clock does not drift with timer coalescing.
+        clockLastTick = Date()
+        clockElapsed = 0
+        recordingTimer = Timer.scheduledTimer(withTimeInterval: 0.25, repeats: true) { [weak self] _ in
+            Task { @MainActor in self?.tickRecordingClock() }
         }
 
         let initialSource: RecordingSource = isScreenSharing ? .screen : .camera

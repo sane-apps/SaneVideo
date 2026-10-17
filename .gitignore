@@ -200,3 +200,4 @@ MinimalTest/
 project.yml.bak
 scripts/*.swift
 !scripts/generate_appstore_screenshots.swift
+.claude/worktrees/

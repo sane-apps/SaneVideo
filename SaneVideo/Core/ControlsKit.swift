@@ -96,6 +96,7 @@ public struct IconCircleButton: View {
         }
         .buttonStyle(IconCircleButtonStyle(size: size, isActive: isActive, activeColor: activeColor))
         .help(helpText ?? "")
+        .accessibilityLabel(helpText ?? systemName)
         .accessibilityIdentifier("control.\(systemName)")
     }
 }

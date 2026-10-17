@@ -20,14 +20,6 @@ extension RecordingEngine {
   }
 
   @MainActor
-  func setupSoundAnalysisMonitoring() {
-    soundAnalysisService.onSoundDetected = { result in
-      AppLogger.recording.info(
-        "Sound Detected: \(result.label) at \(result.timeRange.start.seconds)")
-    }
-  }
-
-  @MainActor
   func setupDiskMonitor() {
     diskSpaceMonitor.onLowDiskSpace = { [weak self] error in
       guard let self = self else { return }

@@ -64,8 +64,6 @@ class UserPreferences {
   @ObservationIgnored @AppStorage("RecordingResolution") private var _recordingResolution: String =
     SaneExportSettings.ExportResolution.hd1080.rawValue
   @ObservationIgnored @AppStorage("RecordingFPS") private var _recordingFPS: Double = 60.0
-  @ObservationIgnored @AppStorage("ExcludeAppFromRecording") private var _excludeAppFromRecording:
-    Bool = true
   @ObservationIgnored @AppStorage(CameraPreviewMirroring.appStorageKey) private var _mirrorCameraPreview:
     Bool = CameraPreviewMirroring.defaultIsMirrored
 
@@ -95,18 +93,6 @@ class UserPreferences {
     set {
       withMutation(keyPath: \.recordingFPS) {
         _recordingFPS = newValue
-      }
-    }
-  }
-
-  var excludeAppFromRecording: Bool {
-    get {
-      access(keyPath: \.excludeAppFromRecording)
-      return _excludeAppFromRecording
-    }
-    set {
-      withMutation(keyPath: \.excludeAppFromRecording) {
-        _excludeAppFromRecording = newValue
       }
     }
   }

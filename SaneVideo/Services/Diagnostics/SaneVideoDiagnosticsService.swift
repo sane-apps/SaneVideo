@@ -32,7 +32,6 @@ private func collectSaneVideoSettings() -> String {
       defaultCodec: \(prefs.defaultCodec)
       recordingResolution: \(prefs.recordingResolution.rawValue)
       recordingFPS: \(prefs.recordingFPS)
-      excludeAppFromRecording: \(prefs.excludeAppFromRecording)
       transcriptionEngine: \(prefs.transcriptionEngine.rawValue)
     """
 }

@@ -32,8 +32,11 @@ struct MainContentView: View {
                     MagicOverlayView()
                 }
                 .overlay(alignment: .bottomTrailing) {
-                    SaneStickyDonateButton(url: OpenSourceRelease.donationURL)
-                        .padding(16)
+                    // The editor shows Donate in its sidebar footer; the recorder keeps the corner button.
+                    if appState.appMode == .recording {
+                        SaneStickyDonateButton(url: OpenSourceRelease.donationURL)
+                            .padding(16)
+                    }
                 }
                 .overlay {
                     if appState.showQuickAccessOverlay,
@@ -300,40 +303,21 @@ struct MainContentView: View {
             }
 
             ToolbarItem(placement: .principal) {
-                Button(
-                    action: {
-                        withAnimation(.smoothUI) {
-                            appState.appMode = (appState.appMode == .recording ? .editing : .recording)
-                        }
-                    },
-                    label: {
-                        Label(
-                            appState.appMode == .recording ? "Editor" : "Record",
-                            systemImage: appState.appMode == .recording ? "scissors" : "record.circle"
-                        )
-                        .font(.system(size: 14, weight: .bold))
-                        .imageScale(.large)
-                    }
-                )
-                .buttonStyle(.borderedProminent)
-                .controlSize(.regular)
-                .hoverScale(1.05)
-                .pressScale()
-                .simultaneousGesture(
-                    TapGesture().onEnded {
+                Picker("Mode", selection: Binding(
+                    get: { appState.appMode },
+                    set: { newMode in
                         ServiceContainer.shared.hapticsManager.impact()
+                        withAnimation(.smoothUI) { appState.appMode = newMode }
                     }
-                )
-                .animation(.smoothUI, value: appState.appMode)
-                .help("Toggle Record/Edit Mode (Cmd+M)")
-                .padding(.vertical, 4)
+                )) {
+                    Label("Record", systemImage: "record.circle").tag(AppState.AppMode.recording)
+                    Label("Edit", systemImage: "scissors").tag(AppState.AppMode.editing)
+                }
+                .pickerStyle(.segmented)
+                .labelStyle(.titleAndIcon)
+                .fixedSize()
+                .help("Switch between recording and editing (⌘M)")
                 .accessibilityIdentifier(AccessibilityIdentifiers.modeSwitcher)
-                .enhancedAccessibility(
-                    label: appState.appMode == .recording ? "Switch to Editor" : "Switch to Record",
-                    hint: "Toggle between recording and editing modes",
-                    traits: .isButton
-                )
-                .keyboardShortcutHint("⌘M")
             }
 
             ToolbarItem(placement: .automatic) {
@@ -362,27 +346,31 @@ struct MainContentView: View {
 
             ToolbarItem(placement: .primaryAction) {
                 if appState.appMode == .editing {
-                    // Export is the primary next step; sharing remains available after a file exists.
-                    Button(
-                        action: { appState.performProjectCommand { appState.showExportSheet = true } },
-                        label: {
-                            Label("Export", systemImage: "square.and.arrow.up")
-                        }
-                    )
-                    .buttonStyle(.borderedProminent)
-                    .hoverScale(1.05)
-                    .disabled(!appState.projectCommandsEnabled || (appState.currentProject?.timeline.tracks.allSatisfy(\.clips.isEmpty) ?? true))
-                    .help((appState.currentProject?.timeline.tracks.allSatisfy(\.clips.isEmpty) ?? true) ? "Add clips to timeline first" : "Export (Cmd+E)")
-                    .keyboardShortcut("e", modifiers: [.command])
+                    let isEmpty = appState.currentProject?.timeline.tracks.allSatisfy(\.clips.isEmpty) ?? true
+                    Menu {
+                        Button("Export Video…") { appState.performProjectCommand { appState.showExportSheet = true } }
+                            .keyboardShortcut("e", modifiers: [.command])
+                        Divider()
+                        Button("Shorts…") { post("ShowRepurposingSheet") }
+                        Button("Thumbnail…") { post("GenerateThumbnail") }
+                        Button("Voiceover…") { post("GenerateVoiceover") }
+                    } label: {
+                        Label("Export", systemImage: "square.and.arrow.up")
+                            .labelStyle(.titleAndIcon)
+                    } primaryAction: {
+                        appState.performProjectCommand { appState.showExportSheet = true }
+                    }
+                    .disabled(!appState.projectCommandsEnabled || isEmpty)
+                    .help(isEmpty ? "Add a clip first" : "Export the video (⌘E). Click the arrow for Shorts, Thumbnail and Voiceover.")
                     .accessibilityIdentifier(AccessibilityIdentifiers.exportButton)
-                    .enhancedAccessibility(
-                        label: "Export",
-                        hint: (appState.currentProject?.timeline.tracks.allSatisfy(\.clips.isEmpty) ?? true) ? "Add clips to timeline first" : "Export your video project",
-                        traits: .isButton
-                    )
-                    .keyboardShortcutHint("⌘E")
                 }
             }
+        }
+    }
+
+    private func post(_ name: String) {
+        appState.performProjectCommand {
+            NotificationCenter.default.post(name: NSNotification.Name(name), object: nil)
         }
     }
 }

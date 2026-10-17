@@ -94,6 +94,7 @@ extension AppState {
         // The cameraEnabled setter stops the camera.
         cameraEnabled = false
         windowManager.updatePiPState(isCameraActive: false, isRecording: false)
+        ServiceContainer.shared.transcriptionCoordinator.warmUp()
 
         Task { @MainActor in
             let thumbnail = await generateQuickThumbnail(for: url)
@@ -145,6 +146,8 @@ extension AppState {
     func handleQuickAccessSave() {
         showQuickAccessOverlay = false
         ServiceContainer.shared.toastManager.show("Saved to Projects")
+        // Ready for the next take.
+        if appMode == .recording { restoreCameraIfWanted() }
     }
 
     func handleQuickAccessShare() {
@@ -160,6 +163,7 @@ extension AppState {
         showQuickAccessOverlay = false
         quickAccessRecordingURL = nil
         quickAccessThumbnail = nil
+        if appMode == .recording { restoreCameraIfWanted() }
     }
 
     private func addRecordingAsProject(url: URL) async {
@@ -283,6 +287,7 @@ extension AppState {
 
     func toggleCamera() {
         cameraEnabled = !(cameraEnabled || cameraState.isActive)
+        UserDefaults.standard.set(cameraEnabled, forKey: AppState.cameraWantedKey)
     }
 
     func toggleMic() {

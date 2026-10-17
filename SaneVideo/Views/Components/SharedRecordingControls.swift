@@ -140,8 +140,15 @@ struct SharedRecordingControls: View {
         )
 
         ZStack(alignment: .bottomLeading) {
-            VStack(alignment: .leading, spacing: permissionWarning == nil ? 0 : 8) {
-                HStack(spacing: toolbarSpacing) {
+            VStack(alignment: .center, spacing: permissionWarning == nil ? 0 : 8) {
+                HStack(alignment: .center, spacing: toolbarSpacing) {
+                    if showDevicePickers {
+                        captureModePicker
+                            .frame(height: recordButtonSize)
+                            .padding(.trailing, 6)
+                            .padding(.bottom, 22)
+                    }
+
                     Button(action: {
                         ServiceContainer.shared.hapticsManager.impact()
                         appState.toggleMic()
@@ -167,7 +174,23 @@ struct SharedRecordingControls: View {
                     ))
                     .recordingGuide(micGuide)
                     .accessibilityIdentifier(AccessibilityIdentifiers.micToggle)
+                    .barLabel("Mic", isShown: showDevicePickers, height: recordButtonSize)
 
+                    if showDevicePickers {
+                        IconCircleButton(
+                            systemName: appState.cameraEnabled || appState.cameraState.isActive ? "video.fill" : "video.slash.fill",
+                            isActive: appState.cameraEnabled || appState.cameraState.isActive,
+                            size: buttonSize,
+                            activeColor: Theme.Colors.accent,
+                            helpText: appState.isScreenSharing ? "Show or hide your camera bubble" : "Turn the camera on or off",
+                            action: {
+                                ServiceContainer.shared.hapticsManager.impact()
+                                appState.toggleCamera()
+                            }
+                        )
+                        .barLabel("Camera", isShown: true, height: recordButtonSize)
+                        .accessibilityIdentifier("recording.cameraToggle")
+                    } else {
                     IconCircleButton(
                         systemName: appState.isScreenSharing ? "rectangle.on.rectangle.slash.fill" : "rectangle.on.rectangle.fill",
                         isActive: appState.isScreenSharing,
@@ -181,11 +204,13 @@ struct SharedRecordingControls: View {
                     )
                     .recordingGuide(screenGuide)
                     .accessibilityIdentifier(AccessibilityIdentifiers.screenShareToggle)
+                    }
 
                     UnifiedRecordButton(size: recordButtonSize)
                         .keyboardShortcut("r", modifiers: [.command])
                         .animation(.spring(response: 0.35, dampingFraction: 0.7), value: appState.isRecording)
                         .recordingGuide(recordGuide)
+                    .barLabel(appState.isRecording ? "Stop" : "Record", isShown: showDevicePickers, height: recordButtonSize)
 
                     if appState.isRecording {
                         IconCircleButton(
@@ -201,6 +226,7 @@ struct SharedRecordingControls: View {
                         )
                         .recordingGuide(pauseGuide)
                         .accessibilityIdentifier(AccessibilityIdentifiers.pauseRecordingButton)
+                    .barLabel(appState.isPaused ? "Resume" : "Pause", isShown: showDevicePickers, height: recordButtonSize)
                         .transition(.scale.combined(with: .opacity))
                     }
 
@@ -216,6 +242,7 @@ struct SharedRecordingControls: View {
                         }
                     )
                     .recordingGuide(demoGuide)
+                    .barLabel("Script", isShown: showDevicePickers, height: recordButtonSize)
 
                     IconCircleButton(
                         systemName: "text.alignleft",
@@ -229,6 +256,7 @@ struct SharedRecordingControls: View {
                         }
                     )
                     .recordingGuide(teleprompterGuide)
+                    .barLabel("Prompter", isShown: showDevicePickers, height: recordButtonSize)
 
                     if showTimer && appState.isRecording {
                         RecBadgeTimer(
@@ -236,6 +264,13 @@ struct SharedRecordingControls: View {
                             timeString: formatDuration(appState.recordingDuration)
                         )
                         .transition(.move(edge: .trailing).combined(with: .opacity))
+                    }
+
+                    if showDevicePickers {
+                        DeviceSelectionMenu(size: buttonSize)
+                            .frame(width: uniformButtonSize, height: uniformButtonSize)
+                            .recordingGuide(deviceGuide)
+                            .barLabel("Devices", isShown: true, height: recordButtonSize)
                     }
 
                     if showGalleryTarget {
@@ -248,22 +283,49 @@ struct SharedRecordingControls: View {
                             )
                     }
                 }
-                .padding(.vertical, Theme.Dimensions.paddingSM)
-                .padding(.horizontal, Theme.Dimensions.paddingLG)
+                .padding(.vertical, showDevicePickers ? 12 : Theme.Dimensions.paddingSM)
+                .padding(.horizontal, showDevicePickers ? 20 : Theme.Dimensions.paddingLG)
                 .modifier(ConditionalCapsuleGlass(isEnabled: useGlassBackground))
+                .background {
+                    if showDevicePickers {
+                        RoundedRectangle(cornerRadius: 28, style: .continuous)
+                            .fill(.ultraThinMaterial)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 28, style: .continuous)
+                                    .strokeBorder(Color.white.opacity(0.12), lineWidth: 1)
+                            )
+                    }
+                }
 
                 if let permissionWarning {
                     RecordingPermissionChip(hint: permissionWarning)
                     .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
             }
-
-            if showDevicePickers {
-                DeviceSelectionMenu(size: buttonSize)
-                    .recordingGuide(deviceGuide)
-                    .offset(x: -uniformButtonSize - toolbarSpacing, y: 0)
-            }
         }
+    }
+
+    /// Camera records just you; Screen records a window or display with your camera bubble on top.
+    private var captureModePicker: some View {
+        Picker("What to record", selection: Binding(
+            get: { appState.isScreenSharing },
+            set: { wantsScreen in
+                guard wantsScreen != appState.isScreenSharing else { return }
+                ServiceContainer.shared.hapticsManager.impact()
+                appState.toggleScreenShare()
+            }
+        )) {
+            Label("Camera", systemImage: "person.crop.square").tag(false)
+            Label("Screen", systemImage: "display").tag(true)
+        }
+        .pickerStyle(.segmented)
+        .labelsHidden()
+        .labelStyle(.titleAndIcon)
+        .controlSize(.large)
+        .fixedSize()
+        .disabled(appState.isRecording)
+        .help("Camera records just you. Screen records a window or display with your camera bubble on top.")
+        .accessibilityIdentifier(AccessibilityIdentifiers.screenShareToggle)
     }
 
     private func formatDuration(_ duration: TimeInterval) -> String {
@@ -391,8 +453,8 @@ private struct DeviceSelectionMenu: View {
                 }
             }
         } label: {
-            Image(systemName: "gearshape")
-                .font(.system(size: size.iconSize * 0.8, weight: .medium))
+            Image(systemName: "gearshape.fill")
+                .font(.system(size: size.iconSize, weight: .medium))
                 .foregroundColor(.white.opacity(0.9))
                 .frame(width: size.diameter * 0.7, height: size.diameter * 0.7)
                 .background(
@@ -401,7 +463,8 @@ private struct DeviceSelectionMenu: View {
                 )
         }
         .menuStyle(.borderlessButton)
-        .help("Camera & Microphone Selection")
+        .menuIndicator(.hidden)
+        .help("Choose a camera and microphone")
         .onAppear {
             appState.cameraState.ensureCamerasDiscovered()
             appState.audioService.ensureMicrophonesDiscovered()
@@ -463,5 +526,24 @@ struct PiPControlsWithCountdown: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}
+
+private extension View {
+    /// A caption under a recorder button, shown only in the main window where there is room.
+    @ViewBuilder
+    func barLabel(_ text: String, isShown: Bool, height: CGFloat) -> some View {
+        if isShown {
+            VStack(spacing: 6) {
+                self.frame(height: height)
+                Text(text)
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(.white)
+                    .lineLimit(1)
+                    .fixedSize()
+            }
+        } else {
+            self
+        }
     }
 }

@@ -6,6 +6,7 @@ import Foundation
 /// Downloads about 600 MB on first use; covers 25 European languages.
 actor ParakeetService: TranscriptionServiceProtocol {
     private var manager: AsrManager?
+    private var loadTask: Task<AsrManager, Error>?
 
     static var isDownloaded: Bool {
         AsrModels.modelsExist(at: AsrModels.defaultCacheDirectory(for: .v3))
@@ -35,26 +36,44 @@ actor ParakeetService: TranscriptionServiceProtocol {
         return CaptionBuilder.captions(from: words)
     }
 
+    func warmUp() async {
+        do {
+            _ = try await loadedManager()
+        } catch {
+            AppLogger.project.error("Parakeet warm-up failed: \(error.localizedDescription)")
+        }
+    }
+
     func cancel() async {
         await manager?.cleanup()
         manager = nil
     }
 
+    /// One shared load: a warm-up and a Clean Up that overlap wait on the same task.
     private func loadedManager() async throws -> AsrManager {
         if let manager {
             return manager
         }
-        AppLogger.project.info("Parakeet: loading model (downloads on first use)")
-        if !Self.isDownloaded {
-            await MainActor.run {
-                ServiceContainer.shared.toastManager.show(
-                    "Downloading the speech model (about 600 MB, one time only)...", type: .info
-                )
-            }
+        if let loadTask {
+            return try await loadTask.value
         }
-        let models = try await AsrModels.downloadAndLoad(version: .v3)
-        let manager = AsrManager(config: .default)
-        try await manager.loadModels(models)
+        let task = Task<AsrManager, Error> {
+            AppLogger.project.info("Parakeet: loading model (downloads on first use)")
+            if !Self.isDownloaded {
+                await MainActor.run {
+                    ServiceContainer.shared.toastManager.show(
+                        "Downloading the speech model (about 600 MB, one time only)...", type: .info
+                    )
+                }
+            }
+            let models = try await AsrModels.downloadAndLoad(version: .v3)
+            let manager = AsrManager(config: .default)
+            try await manager.loadModels(models)
+            return manager
+        }
+        loadTask = task
+        defer { loadTask = nil }
+        let manager = try await task.value
         self.manager = manager
         return manager
     }

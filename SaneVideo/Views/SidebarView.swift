@@ -1,159 +1,56 @@
+import SaneUI
 import SwiftUI
 
 struct SidebarView: View {
     @Environment(AppState.self) var appState
     @Binding var selectedClip: VideoClip?
-    @State private var selectedTab = 0
+    @State private var selectedTab = 2
 
     var body: some View {
-        HStack(spacing: 0) {
-            VStack(spacing: 12) {
-                SidebarRailItem(icon: "film", label: "Media", tag: 0, selection: $selectedTab)
-                SidebarRailItem(icon: "text.quote", label: "Transcript", tag: 1, selection: $selectedTab)
-                SidebarRailItem(icon: "folder", label: "Projects", tag: 2, selection: $selectedTab)
+        VStack(spacing: 0) {
+            Picker("Sidebar", selection: $selectedTab) {
+                Text("Projects").tag(2)
+                Text("Clips").tag(0)
+                Text("Transcript").tag(1)
+            }
+            .pickerStyle(.segmented)
+            .labelsHidden()
+            .frame(maxWidth: .infinity)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 10)
+            .accessibilityIdentifier("sidebar.tabs")
 
-                Divider()
-                    .padding(.vertical, 8)
+            Group {
+                if selectedTab == 0 {
+                    LibraryView(selectedClip: $selectedClip)
+                } else if selectedTab == 1 {
+                    TranscriptionEditorView(selectedClip: $selectedClip)
+                } else {
+                    CompactProjectBrowserView()
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-                Text("Create")
-                    .font(.system(size: 10, weight: .semibold))
-                    .foregroundStyle(Theme.Colors.textSecondary)
-                    .textCase(.uppercase)
-                    .padding(.top, 4)
-
-                QuickActionButton(icon: "photo", label: "Thumbnail", action: {
-                    NotificationCenter.default.post(name: NSNotification.Name("GenerateThumbnail"), object: nil)
-                })
-                .help("Generate AI Thumbnail (⌘T)")
-
-                QuickActionButton(icon: "waveform", label: "Voiceover", action: {
-                    NotificationCenter.default.post(name: NSNotification.Name("GenerateVoiceover"), object: nil)
-                })
-                .help("Generate Voiceover")
-
-                QuickActionButton(icon: "square.stack.3d.up", label: "Shorts", action: {
-                    NotificationCenter.default.post(name: NSNotification.Name("ShowRepurposingSheet"), object: nil)
-                })
-                .help("Create Shorts (⇧⌘R)")
-
-                Spacer()
-
+            HStack(spacing: 12) {
                 Button {
-                    NotificationCenter.default.post(
-                        name: NSNotification.Name("ShowKeyboardShortcuts"), object: nil
-                    )
+                    NotificationCenter.default.post(name: NSNotification.Name("ShowKeyboardShortcuts"), object: nil)
                 } label: {
                     Image(systemName: "questionmark.circle")
-                        .font(.system(size: 16))
-                        .foregroundStyle(Theme.Colors.accentSoft)
+                        .font(.system(size: 15))
                 }
-                .buttonStyle(.plain)
-                .help("Open local help and keyboard shortcuts")
+                .buttonStyle(.borderless)
+                .help("Help and keyboard shortcuts")
+                Spacer()
+                SaneStickyDonateButton(url: OpenSourceRelease.donationURL)
             }
-            .frame(width: 64)
-            .padding(.vertical, 16)
-            .background(
-                Theme.Colors.editorPanel
-            )
-
-            Divider()
-
-            VStack(spacing: 0) {
-                Group {
-                    if selectedTab == 0 {
-                        LibraryView(selectedClip: $selectedClip)
-                    } else if selectedTab == 1 {
-                        TranscriptionEditorView(selectedClip: $selectedClip)
-                    } else {
-                        CompactProjectBrowserView()
-                    }
-                }
-                .transition(.asymmetric(
-                    insertion: .opacity.combined(with: .move(edge: .trailing)),
-                    removal: .opacity
-                ))
-            }
-            .frame(maxWidth: .infinity)
+            .padding(12)
         }
-        .frame(minWidth: 240, idealWidth: 300, maxWidth: 450)
-        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: selectedTab)
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ShowSidebarProjects"))) { _ in
             selectedTab = 2
         }
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ShowSidebarTranscript"))) { _ in
             selectedTab = 1
-            AppLogger.uiLog.info("🎨 SidebarView: Transcript rail tab selected")
         }
     }
 }
 
-// MARK: - Sidebar Rail Item
-
-private struct SidebarRailItem: View {
-    let icon: String
-    let label: String
-    let tag: Int
-    @Binding var selection: Int
-
-    var isSelected: Bool {
-        selection == tag
-    }
-
-    var body: some View {
-        Button {
-            selection = tag
-        } label: {
-            VStack(spacing: 4) {
-                Image(systemName: isSelected ? "\(icon).fill" : icon)
-                    .font(.system(size: 18))
-                    .foregroundStyle(isSelected ? Theme.Colors.accent : Color.white.opacity(0.72))
-
-                Text(label)
-                    .font(.system(size: 10, weight: .medium))
-                    .foregroundColor(isSelected ? Theme.Colors.accent : Color.white.opacity(0.72))
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 8)
-            .background {
-                if isSelected {
-                    Capsule()
-                        .fill(Theme.Colors.accent.opacity(0.18))
-                        .padding(.horizontal, 4)
-                }
-            }
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .hoverScale(1.1)
-        .animation(.smoothUI, value: isSelected)
-        .help(label)
-    }
-}
-
-// MARK: - Quick Action Button
-
-private struct QuickActionButton: View {
-    let icon: String
-    let label: String
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            VStack(spacing: 4) {
-                Image(systemName: icon)
-                    .font(.system(size: 16))
-                    .foregroundStyle(Theme.Colors.accent)
-
-                Text(label)
-                    .font(.system(size: 10, weight: .medium))
-                    .foregroundColor(Color.white.opacity(0.72))
-                    .lineLimit(1)
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 6)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .hoverScale(1.1)
-    }
-}

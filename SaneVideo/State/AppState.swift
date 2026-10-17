@@ -45,6 +45,10 @@ class AppState {
     var appMode: AppMode = .recording {
         didSet {
             // Every way into the editor releases the camera and mic, unless a recording is running.
+            if appMode == .recording, oldValue == .editing {
+                restoreCameraIfWanted()
+                return
+            }
             guard appMode == .editing, oldValue != .editing, !recordingState.isRecording else { return }
             cameraEnabled = false
             cameraState.stopCamera()
@@ -172,7 +176,20 @@ class AppState {
 
         Task { @MainActor [weak self] in
             self?.prepareCameraPreviewIfNeeded()
+            self?.restoreCameraIfWanted()
         }
+    }
+
+    /// Whether the person last left the camera on in the recorder. Defaults to on.
+    static let cameraWantedKey = "RecorderCameraOn"
+
+    /// Opening the recorder turns the camera back on, unless the person turned it off last time.
+    /// Only runs when access is already granted, so it never raises a permission prompt.
+    func restoreCameraIfWanted() {
+        let wanted = UserDefaults.standard.object(forKey: Self.cameraWantedKey) as? Bool ?? true
+        guard !isTesting, wanted, !isScreenSharing, !cameraEnabled,
+              AVCaptureDevice.authorizationStatus(for: .video) == .authorized else { return }
+        cameraEnabled = true
     }
 
     // MARK: - Test Helpers

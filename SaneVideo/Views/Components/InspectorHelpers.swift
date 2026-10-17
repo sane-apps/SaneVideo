@@ -2,89 +2,60 @@ import SwiftUI
 
 // MARK: - Collapsible Section Component
 
+/// Flat inspector section: a header row and its content, separated from the next by a hairline.
 struct CollapsibleSection<Content: View>: View {
     let title: String
     let icon: String
     @Binding var isExpanded: Bool
-    var badge: String? // Optional badge (e.g., caption count)
+    var badge: String?
     var isPrimary: Bool = false
     @ViewBuilder let content: () -> Content
 
-    private var accentColor: Color {
-        isPrimary ? Theme.Colors.accent : Theme.Colors.accentSoft
-    }
-
     var body: some View {
-        VStack(spacing: 0) {
-            Button(action: {
-                withAnimation(.easeInOut(duration: 0.2)) {
-                    isExpanded.toggle()
-                }
-            }, label: {
-                HStack(spacing: Theme.Dimensions.spacingSM) {
+        VStack(alignment: .leading, spacing: 0) {
+            Button {
+                withAnimation(.easeInOut(duration: 0.2)) { isExpanded.toggle() }
+            } label: {
+                HStack(spacing: 10) {
                     Image(systemName: icon)
-                        .font(.system(size: isPrimary ? Theme.Typography.iconSizeSM : Theme.Typography.iconSizeXS, weight: isPrimary ? .bold : .semibold))
-                        .foregroundStyle(isExpanded ? accentColor : Theme.Colors.textSecondary)
-                        .frame(width: isPrimary ? 22 : 20)
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundStyle(isExpanded || isPrimary ? Theme.Colors.accent : Theme.Colors.textPrimary)
+                        .frame(width: 20)
                     Text(title)
-                        .font(.system(size: isPrimary ? Theme.Typography.fontSizeMD : Theme.Typography.fontSizeSM, weight: .semibold))
+                        .font(.system(size: 14, weight: .semibold))
                         .foregroundStyle(Theme.Colors.textPrimary)
-
-                    if let badge = badge {
+                    if let badge {
                         Text(badge)
-                            .font(.system(size: Theme.Typography.fontSizeXS, weight: .bold))
-                            .foregroundColor(.white)
-                            .padding(.horizontal, Theme.Dimensions.spacingSM)
-                            .padding(.vertical, Theme.Dimensions.spacingXS)
-                            .background(
-                                Capsule()
-                                    .fill(
-                                        LinearGradient(
-                                            colors: [accentColor, Theme.Colors.accentDeep],
-                                            startPoint: .topLeading,
-                                            endPoint: .bottomTrailing
-                                        )
-                                    )
-                            )
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundStyle(Theme.Colors.accent)
                     }
-
                     Spacer()
-                    Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
-                        .font(.system(size: Theme.Typography.fontSizeXS, weight: .semibold))
-                        .foregroundStyle(isExpanded ? accentColor : Theme.Colors.textSecondary)
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(Theme.Colors.textPrimary.opacity(0.7))
+                        .rotationEffect(.degrees(isExpanded ? 90 : 0))
                 }
-                .padding(.horizontal, Theme.Dimensions.paddingMD)
-                .padding(.vertical, isPrimary ? Theme.Dimensions.paddingMD : Theme.Dimensions.paddingSM)
-                .background(
-                    LinearGradient(
-                        colors: [
-                            accentColor.opacity(isExpanded ? 0.18 : 0.08),
-                            Color.white.opacity(isExpanded ? 0.04 : 0.015)
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
-            })
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+                .contentShape(Rectangle())
+            }
             .buttonStyle(.plain)
             .accessibilityIdentifier("\(title)SectionButton")
             .accessibilityLabel("\(title) section")
             .accessibilityHint(isExpanded ? "Collapse \(title) section" : "Expand \(title) section")
             .accessibilityValue(isExpanded ? "Expanded" : "Collapsed")
-            .keyboardShortcut(.defaultAction) // Space/Enter to toggle
 
             if isExpanded {
-                Divider()
-                    .overlay(accentColor.opacity(0.18))
-                    .padding(.horizontal, Theme.Dimensions.paddingMD)
-
                 content()
-                    .padding(.horizontal, Theme.Dimensions.paddingMD)
-                    .padding(.vertical, Theme.Dimensions.paddingMD)
-                    .transition(.smoothScale)
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 16)
+                    .transition(.opacity)
             }
+
+            Rectangle()
+                .fill(Theme.Colors.divider)
+                .frame(height: 1)
         }
-        .sanePanel(radius: 16, emphasized: isExpanded, accent: accentColor)
     }
 }
 
@@ -219,8 +190,8 @@ struct AIToolButton: View {
 struct InspectorHeader: View {
     var body: some View {
         HStack {
-            Text(String(localized: "inspector.header.title", defaultValue: "Inspector"))
-                .font(.system(.headline, design: .rounded))
+            Text(String(localized: "inspector.header.title", defaultValue: "Edit"))
+                .font(.system(size: 15, weight: .semibold))
                 .foregroundStyle(Theme.Colors.textPrimary)
 
             Spacer()
@@ -228,14 +199,8 @@ struct InspectorHeader: View {
             PrivacyBadge()
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding()
-        .background(
-            LinearGradient(
-                colors: [Theme.Colors.editorPanel, Theme.Colors.editorPanel],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-        )
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
         .accessibilityLabel("Inspector panel")
         .accessibilityHint("View and edit properties of the selected clip")
     }
@@ -245,47 +210,20 @@ struct InspectorHeader: View {
 
 struct EmptySelectionView: View {
     var body: some View {
-        VStack(spacing: 20) {
-            Spacer().frame(height: 60)
-            
-            Image(systemName: "selection.pin.in.out")
-                .font(.system(size: 40))
-                .foregroundStyle(Theme.Colors.accentSoft.opacity(0.55))
-            
-            VStack(spacing: 12) {
-                Text("Nothing Selected")
-                    .saneReadableBodyStrong()
-                
-                Text("Select a clip in the timeline\nto view and edit properties.")
-                    .saneReadableSupportText()
-                    .multilineTextAlignment(.center)
-                    .lineSpacing(4)
-                
-                VStack(spacing: 6) {
-                    HStack(spacing: 4) {
-                        Image(systemName: "hand.point.up.left.fill")
-                            .font(.caption2)
-                            .foregroundStyle(Theme.Colors.textSecondary)
-                        Text("Click a clip in the timeline")
-                            .saneReadableSupportText()
-                    }
-                    
-                    HStack(spacing: 4) {
-                        Image(systemName: "keyboard")
-                            .font(.caption2)
-                            .foregroundStyle(Theme.Colors.textSecondary)
-                        Text("Or use Cmd+Click to select")
-                            .saneReadableSupportText()
-                    }
-                }
-                .padding(.top, 8)
-            }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 16)
-            .sanePanel(radius: 18, accent: Theme.Colors.accentSoft)
-            
-            Spacer()
+        VStack(spacing: 10) {
+            Image(systemName: "rectangle.on.rectangle")
+                .font(.system(size: 28))
+                .foregroundStyle(Theme.Colors.textPrimary.opacity(0.6))
+            Text("Select a clip")
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(Theme.Colors.textPrimary)
+            Text("Click a clip in the timeline to clean it up, add captions or change its look.")
+                .font(.system(size: 13))
+                .foregroundStyle(Theme.Colors.textPrimary.opacity(0.85))
+                .multilineTextAlignment(.center)
         }
+        .padding(24)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 

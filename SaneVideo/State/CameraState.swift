@@ -136,6 +136,7 @@ class CameraState {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] hasSignal in
                 self?.currentHasVideoSignal = hasSignal
+                if hasSignal { self?.endPreviewWarmupSoon() }
             }
             .store(in: &cancellables)
 
@@ -299,12 +300,29 @@ class CameraState {
 
         previewWarmupTask?.cancel()
         isPreviewWarmingUp = true
+        if currentHasVideoSignal {
+            endPreviewWarmupSoon()
+            return
+        }
         let warmupNanoseconds = previewWarmupNanoseconds
 
         previewWarmupTask = Task { @MainActor [weak self, weak session] in
             try? await Task.sleep(nanoseconds: warmupNanoseconds)
             guard let self, let session, self.currentSession === session else { return }
             self.isPreviewWarmingUp = false
+        }
+    }
+
+    /// Frames are arriving: show them after a short beat that skips the dark frames a camera sends while it
+    /// adjusts exposure. The long timer stays only as a fallback.
+    private func endPreviewWarmupSoon() {
+        guard isPreviewWarmingUp, let session = currentSession else { return }
+        previewWarmupTask?.cancel()
+        previewWarmupTask = Task { @MainActor [weak self, weak session] in
+            try? await Task.sleep(nanoseconds: 300_000_000)
+            guard let self, let session, self.currentSession === session else { return }
+            self.isPreviewWarmingUp = false
+            AppLogger.camera.info("Camera preview visible")
         }
     }
 

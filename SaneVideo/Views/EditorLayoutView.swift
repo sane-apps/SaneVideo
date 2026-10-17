@@ -1,3 +1,4 @@
+import AppKit
 import AVFoundation
 import CoreMedia
 import SwiftUI
@@ -10,6 +11,7 @@ struct EditorLayoutView: View {
     @State private var isSidebarCollapsed = false
     @State private var isInspectorCollapsed = false
     @State private var lastLoadedProjectId: UUID? // For playhead restoration
+    @State private var arrowKeyMonitor: Any?
 
     @AppStorage("editor.videoDisplayMode") private var videoDisplayMode: VideoDisplayMode = .fit
 
@@ -55,6 +57,7 @@ struct EditorLayoutView: View {
             onSelectAtPlayhead: selectClipAtPlayhead
         ))
         .onAppear {
+            installArrowKeys()
             if let project = appState.projectState.currentProject, lastLoadedProjectId != project.id {
                 lastLoadedProjectId = project.id
                 if project.currentTime > 0 {
@@ -63,6 +66,7 @@ struct EditorLayoutView: View {
                 }
             }
         }
+        .onDisappear { removeArrowKeys() }
         .onChange(of: appState.projectState.currentProject) { _, new in
             if let newProfile = new, newProfile.id != lastLoadedProjectId {
                 lastLoadedProjectId = newProfile.id
@@ -155,37 +159,8 @@ struct EditorLayoutView: View {
                 .keyboardShortcut("l", modifiers: [])
                 .accessibilityIdentifier("shortcut.shuttle_forward")
 
-                Button("") {
-                    appState.playbackState.stepBackward()
-                }
-                .keyboardShortcut(.leftArrow, modifiers: [])
-                .accessibilityIdentifier("shortcut.step_backward")
 
-                Button("") {
-                    appState.playbackState.stepForward()
-                }
-                .keyboardShortcut(.rightArrow, modifiers: [])
-                .accessibilityIdentifier("shortcut.step_forward")
 
-                Button("") {
-                    appState.playbackState.seekBackward10Seconds()
-                }
-                .keyboardShortcut(.leftArrow, modifiers: [.shift])
-                .accessibilityIdentifier("shortcut.seek_backward_10s")
-
-                Button("") {
-                    appState.playbackState.seekForward10Seconds()
-                }
-                .keyboardShortcut(.rightArrow, modifiers: [.shift])
-                .accessibilityIdentifier("shortcut.seek_forward_10s")
-
-                Button("") {
-                    if let clip = selectedClip {
-                        appState.projectState.splitClip(clip, atTimelineTime: appState.playbackState.currentTime)
-                    }
-                }
-                .keyboardShortcut("b", modifiers: [.command])
-                .accessibilityIdentifier("shortcut.split_clip")
 
                 Button("") {
                     if let clip = selectedClip {
@@ -369,6 +344,37 @@ struct EditorLayoutView: View {
             }
         }
         .background(SaneVideoEditorPanelBackground(emphasized: true))
+    }
+
+    // MARK: - Arrow Keys
+
+    /// Left/Right move the playhead one frame (Shift: 10 s) wherever focus is, except while typing.
+    /// Hidden-button shortcuts fired the Shift action for a plain arrow, and onKeyPress needs focus.
+    private func installArrowKeys() {
+        guard arrowKeyMonitor == nil else { return }
+        let playback = appState.playbackState
+        arrowKeyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+            guard event.keyCode == 123 || event.keyCode == 124,
+                  event.modifierFlags.intersection([.command, .option, .control]).isEmpty,
+                  event.window?.attachedSheet == nil,
+                  !(event.window?.firstResponder is NSText) else { return event }
+            let forward = event.keyCode == 124
+            let tenSeconds = event.modifierFlags.contains(.shift)
+            MainActor.assumeIsolated {
+                switch (forward, tenSeconds) {
+                case (true, true): playback.seekForward10Seconds()
+                case (true, false): playback.stepForward()
+                case (false, true): playback.seekBackward10Seconds()
+                case (false, false): playback.stepBackward()
+                }
+            }
+            return nil
+        }
+    }
+
+    private func removeArrowKeys() {
+        if let arrowKeyMonitor { NSEvent.removeMonitor(arrowKeyMonitor) }
+        arrowKeyMonitor = nil
     }
 
     // MARK: - Selection Helpers

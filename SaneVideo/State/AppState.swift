@@ -189,6 +189,7 @@ class AppState {
         let wanted = UserDefaults.standard.object(forKey: Self.cameraWantedKey) as? Bool ?? true
         guard !isTesting, wanted, !isScreenSharing, !cameraEnabled,
               AVCaptureDevice.authorizationStatus(for: .video) == .authorized else { return }
+        AppLogger.camera.info("Recorder opened: turning the camera on")
         cameraEnabled = true
     }
 

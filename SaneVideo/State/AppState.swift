@@ -49,7 +49,15 @@ class AppState {
 
     // MARK: - App Mode
 
-    var appMode: AppMode = .recording
+    var appMode: AppMode = .recording {
+        didSet {
+            // Every way into the editor releases the camera and mic, unless a recording is running.
+            guard appMode == .editing, oldValue != .editing, !recordingState.isRecording else { return }
+            cameraEnabled = false
+            cameraState.stopCamera()
+            audioService.stop()
+        }
+    }
     var isTesting: Bool = false
     @ObservationIgnored private var isBootstrapped = false
 
@@ -482,15 +490,7 @@ class AppState {
     }
 
     func switchToEditing() {
-        // CRITICAL: Switch mode IMMEDIATELY for responsive UI
         appMode = .editing
-
-        // A recording can start the camera without cameraEnabled, so stop it directly.
-        if !recordingState.isRecording {
-            cameraEnabled = false
-            cameraState.stopCamera()
-            audioService.stop()
-        }
     }
 
     // MARK: - Persistence

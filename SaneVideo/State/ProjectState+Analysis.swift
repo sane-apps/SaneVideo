@@ -1,9 +1,4 @@
-//
-//  ProjectState+Analysis.swift
-//  SaneVideo
-//
-//  Extracted from SmartFeatures: Gesture detection, Privacy blur, Audio analysis, Captions
-//
+// Extracted from SmartFeatures: Gesture detection, Privacy blur, Audio analysis, Captions
 
 import AVFoundation
 import CoreMedia
@@ -91,7 +86,7 @@ extension ProjectState {
 
         self.processingStatus = "Transcribing audio..."
         self.processingProgress = 0.0
-        // NOTE: Only use processingStatus for progress - no toast for start (reduces notification spam)
+        // Only use processingStatus for progress - no toast for start (reduces notification spam)
 
         AppLogger.project.info(
             "ProjectState: Requesting caption generation for clip \(clip.id)")

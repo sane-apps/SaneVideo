@@ -1,10 +1,3 @@
-//
-//  MainContentView.swift
-//  SaneVideo
-//
-//  Created by SaneVideo Refactor
-//
-
 import AVKit
 import Combine
 import SaneUI
@@ -88,7 +81,7 @@ struct MainContentView: View {
                         selectedClip = clip
                     }
                 }
-                // CRITICAL: Sync selectedClip with selectedClipIds (auto-selection support)
+                // Sync selectedClip with selectedClipIds (auto-selection support)
                 .onChange(of: appState.selectedClipIds) { _, newIds in
                     if let firstId = newIds.first,
                        let project = appState.projectState.currentProject {

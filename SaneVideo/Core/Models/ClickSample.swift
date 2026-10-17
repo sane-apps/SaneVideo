@@ -1,10 +1,5 @@
-//
-//  ClickSample.swift
-//  SaneVideo
-//
-//  Model for storing mouse click events during recording
-//  Used for auto-zoom feature (Screen Studio style)
-//
+// Model for storing mouse click events during recording
+// Used for auto-zoom feature (Screen Studio style)
 
 import Foundation
 

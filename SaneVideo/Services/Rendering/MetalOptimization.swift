@@ -1,9 +1,4 @@
-//
-//  MetalOptimization.swift
-//  SaneVideo
-//
-//  Metal/GPU optimization utilities for M1+ Apple Silicon
-//
+// Metal/GPU optimization utilities for M1+ Apple Silicon
 
 import Metal
 import CoreImage

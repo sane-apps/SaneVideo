@@ -1,10 +1,5 @@
-//
-//  PiPRegressionTests.swift
-//  SaneVideoTests
-//
-//  The camera bubble window must float over other apps on every space, stay out of
-//  the screen-share picker and captures, and be movable and resizable.
-//
+// The camera bubble window must float over other apps on every space, stay out of
+// the screen-share picker and captures, and be movable and resizable.
 
 import AppKit
 @testable import SaneVideo

@@ -1,10 +1,3 @@
-//
-//  AudioTrackBuilder.swift
-//  SaneVideo
-//
-//  Created by SaneVideo Refactor
-//
-
 import AVFoundation
 import CoreMedia
 
@@ -86,7 +79,7 @@ enum AudioTrackBuilder {
             let sortedClips = timelineTrack.clips.sorted { $0.startTime < $1.startTime }
 
             for clip in sortedClips {
-                // NOTE: Must mirror VideoTrackBuilder's A/B track selection semantics.
+                // Must mirror VideoTrackBuilder's A/B track selection semantics.
                 // When smooth cuts are enabled, we also alternate tracks *within* a clip.
                 // If we only toggle per-clip, audio can end up on a different A/B track pattern than video,
                 // which causes perceived A/V sync issues and can create overlapping segments on the same track.
@@ -116,7 +109,7 @@ enum AudioTrackBuilder {
                     continue
                 }
 
-                // CRITICAL FIX (2025-12-31): Use clip.duration (original video duration) for segment timing,
+                // Use clip.duration (original video duration) for segment timing,
                 // NOT the enhanced audio file's duration. Enhanced audio may have slightly different duration
                 // due to sample rate conversion (44100Hz AAC output vs original) which causes audio/video desync.
                 // The clip's trimStart/trimEnd are defined relative to the original video, so we must use
@@ -180,7 +173,7 @@ enum AudioTrackBuilder {
                     // Volume Automation per segment
                     let finalVolume = clip.isMuted ? 0.0 : clip.volume
 
-                    // DIAGNOSTIC (2025-12-31): Log volume values to debug silent audio
+                    // Log volume values to debug silent audio
                     AppLogger.timeline.info("🔊 AudioTrackBuilder: clip \(clip.url.lastPathComponent) - isMuted=\(clip.isMuted), volume=\(clip.volume), finalVolume=\(finalVolume)")
 
                     // Find or create params
@@ -306,7 +299,7 @@ enum AudioTrackBuilder {
                     // SEMANTIC GATING: Apply volume drops for non-speech if enabled
                     // Uses pre-computed gating (outside segment loop) with proper time mapping
                     if let gatingData = gatingSegments {
-                        // CRITICAL FIX: Use ramps for gating transitions to prevent clicks
+                        // Use ramps for gating transitions to prevent clicks
                         let gateRampDuration = CMTime(seconds: 0.03, preferredTimescale: 600) // 30ms gate ramp
 
                         for gatingSegment in gatingData where !gatingSegment.shouldOpenGate {
@@ -442,10 +435,10 @@ enum AudioTrackBuilder {
                 // Volume with fade ramps to prevent clicks
                 let finalVolume = clip.isMuted ? 0.0 : clip.volume
 
-                // CRITICAL FIX: Add fade ramps at clip boundaries with validation
+                // Add fade ramps at clip boundaries with validation
                 let fadeDuration = CMTime(seconds: 0.05, preferredTimescale: 600) // 50ms fade
 
-                // CRITICAL FIX: Validate time range before calling setVolumeRamp to prevent crashes
+                // Validate time range before calling setVolumeRamp to prevent crashes
                 let safeFadeDuration = CMTimeMinimum(fadeDuration, playDuration)
                 guard CMTimeCompare(safeFadeDuration, .zero) > 0 else {
                     // Skip fade if clip is too short
@@ -461,7 +454,7 @@ enum AudioTrackBuilder {
                 trackParams.setVolume(finalVolume, at: afterFadeIn)
 
                 // Add fade-out at clip end
-                // FIX: Apply fade-out for any clip > 2x fadeDuration (was 3x, caused clicks on 0.05-0.15s clips)
+                // Apply fade-out for any clip > 2x fadeDuration (was 3x, caused clicks on 0.05-0.15s clips)
                 let clipEnd = CMTimeAdd(clip.startTime, playDuration)
                 if CMTimeCompare(playDuration, CMTimeMultiply(safeFadeDuration, multiplier: 2)) > 0 {
                     // Calculate proportional fade-out duration for short clips

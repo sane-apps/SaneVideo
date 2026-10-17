@@ -1,9 +1,4 @@
-//
-//  ShortCandidateCard.swift
-//  SaneVideo
-//
-//  Card view for displaying a short-form video candidate
-//
+// Card view for displaying a short-form video candidate
 
 import AVFoundation
 import SwiftUI

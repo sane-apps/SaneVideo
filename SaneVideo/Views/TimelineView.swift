@@ -1,12 +1,7 @@
-//
-//  TimelineView.swift
-//  SaneVideo
-//
-//  Main timeline orchestrator. Sub-views extracted to:
-//  - TimelineControls.swift (toolbar, MagicFix)
-//  - TimelineTracksView.swift (tracks, playhead, drop delegate)
-//  - TrackHeaderView.swift (headers, add track button)
-//
+// Main timeline orchestrator. Sub-views extracted to:
+// - TimelineControls.swift (toolbar, MagicFix)
+// - TimelineTracksView.swift (tracks, playhead, drop delegate)
+// - TrackHeaderView.swift (headers, add track button)
 
 import AVFoundation
 import SwiftUI
@@ -50,7 +45,7 @@ public struct SaneTimelineView: View {
                 TimelineEmptyStateView()
                     .frame(minHeight: 150, maxHeight: .infinity)
             } else {
-                // CRITICAL FIX: Left column fixed, right section scrolls
+                // Left column fixed, right section scrolls
                 // This ensures lock/mute icons stay aligned with tracks
                 HStack(alignment: .top, spacing: 0) {
                     // Fixed left column (headers) - extracted from TimelineTracksView
@@ -76,7 +71,7 @@ public struct SaneTimelineView: View {
                                 selectedClipIds: $selectedClipIds,
                                 pixelsPerSecond: pixelsPerSecond
                             )
-                            // CRITICAL FIX: Removed .padding(.leading, 20) - padding is handled internally
+                            // Removed .padding(.leading, 20) - padding is handled internally
                             // by spacers in ruler and trackRow to ensure proper alignment
                         }
                         .onAppear {
@@ -97,7 +92,7 @@ public struct SaneTimelineView: View {
         }
         .alert(String(localized: "timeline.alert.delete.title", defaultValue: "Delete Clip"), isPresented: $showDeleteConfirmation, presenting: clipToDelete) { clip in
             Button(String(localized: "timeline.alert.delete.remove", defaultValue: "Remove from Project only"), role: .none) {
-                // CRITICAL FIX: Clear selection BEFORE deletion to prevent stale reference
+                // Clear selection BEFORE deletion to prevent stale reference
                 if selectedClip?.id == clip.id {
                     selectedClip = nil
                 }
@@ -108,7 +103,7 @@ public struct SaneTimelineView: View {
             .accessibilityIdentifier("timeline.alert.delete.remove")
 
             Button(String(localized: "timeline.alert.delete.disk", defaultValue: "Delete from Disk"), role: .destructive) {
-                // CRITICAL FIX: Clear selection BEFORE deletion to prevent stale reference
+                // Clear selection BEFORE deletion to prevent stale reference
                 if selectedClip?.id == clip.id {
                     selectedClip = nil
                 }

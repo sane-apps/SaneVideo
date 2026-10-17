@@ -1,9 +1,4 @@
-//
-//  InspectorRegressionTests.swift
-//  SaneVideoTests
-//
-//  Relinking a missing clip from Clip Info ("Locate File").
-//
+// Relinking a missing clip from Clip Info ("Locate File").
 
 import CoreMedia
 import Foundation

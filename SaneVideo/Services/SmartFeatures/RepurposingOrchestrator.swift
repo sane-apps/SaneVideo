@@ -1,10 +1,5 @@
-//
-//  RepurposingOrchestrator.swift
-//  SaneVideo
-//
-//  Orchestrates the analysis of long-form video to extract short-form candidates
-//  Combines: Vision, MagicFix, Sound Analysis, Captions
-//
+// Orchestrates the analysis of long-form video to extract short-form candidates
+// Combines: Vision, MagicFix, Sound Analysis, Captions
 
 @preconcurrency import AVFoundation
 import CoreMedia
@@ -104,7 +99,7 @@ actor RepurposingOrchestrator {
             )
         }
 
-        // OPTIMIZATION: Run audio and vision analysis in parallel using TaskGroup
+        // Run audio and vision analysis in parallel using TaskGroup
         // Audio (silence + highlights) and Vision (saliency) are independent operations
         progressHandler?(.analyzingAudio, 0.1)
 

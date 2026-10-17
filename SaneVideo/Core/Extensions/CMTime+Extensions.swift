@@ -1,8 +1,4 @@
-//
-//  CMTime+Extensions.swift
-//  SaneVideo
-//
-//  CMTime convenience extensions
+// CMTime convenience extensions
 
 import AVFoundation
 import Foundation

@@ -1,10 +1,4 @@
-//
-//  SharedRecordingControls.swift
-//  SaneVideo
-//
-//  Created by Antigravity on 2025-12-25.
-//  Consolidated recording controls for consistent UX across Main Window, PiP, and Floating Controls.
-//
+// Consolidated recording controls for consistent UX across Main Window, PiP, and Floating Controls.
 
 import SwiftUI
 import AVFoundation

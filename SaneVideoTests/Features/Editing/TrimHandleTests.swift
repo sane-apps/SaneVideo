@@ -1,9 +1,4 @@
-//
-//  TrimHandleTests.swift
-//  SaneVideoTests
-//
-//  Tests for trim handle functionality and gesture handling
-//
+// Tests for trim handle functionality and gesture handling
 
 import XCTest
 import AVFoundation

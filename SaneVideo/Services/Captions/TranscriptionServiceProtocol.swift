@@ -1,9 +1,4 @@
-//
-//  TranscriptionServiceProtocol.swift
-//  SaneVideo
-//
-//  Protocol for transcription services (Apple Speech, WhisperKit, etc.)
-//
+// Protocol for transcription services (Apple Speech, WhisperKit, etc.)
 
 import AVFoundation
 import Foundation

@@ -1,9 +1,4 @@
-//
-//  ExportSpeedTracker.swift
-//  SaneVideo
-//
-//  Tracks export speed and estimates time remaining
-//
+// Tracks export speed and estimates time remaining
 
 import Foundation
 

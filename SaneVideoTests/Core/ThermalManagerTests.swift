@@ -1,8 +1,3 @@
-//
-//  ThermalManagerTests.swift
-//  SaneVideoTests
-//
-
 import XCTest
 @testable import SaneVideo
 

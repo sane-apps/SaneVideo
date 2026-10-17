@@ -1,9 +1,4 @@
-//
-//  ErrorHandlingTests.swift
-//  SaneVideoTests
-//
-//  Tests for error handling and edge cases
-//
+// Tests for error handling and edge cases
 
 import AVFoundation
 @testable import SaneVideo

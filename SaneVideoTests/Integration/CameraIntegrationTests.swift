@@ -1,10 +1,5 @@
-//
-//  CameraIntegrationTests.swift
-//  SaneVideoTests
-//
-//  Integration tests for camera functionality
-//  Tests actual AVCaptureSession behavior when camera hardware is available
-//
+// Integration tests for camera functionality
+// Tests actual AVCaptureSession behavior when camera hardware is available
 
 import AVFoundation
 import CoreMedia

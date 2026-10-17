@@ -1,10 +1,3 @@
-//
-//  CameraFramePublisher.swift
-//  SaneVideo
-//
-//  Created by SaneVideo Refactor
-//
-
 @preconcurrency import AVFoundation
 import Combine
 
@@ -12,7 +5,7 @@ final class CameraFramePublisher: NSObject, AVCaptureVideoDataOutputSampleBuffer
     // Publisher for video frames
     let sampleBufferSubject = PassthroughSubject<CMSampleBuffer, Never>()
 
-    // DIAGNOSTIC: Track frame delivery rate from camera
+    // Track frame delivery rate from camera
     private var frameCount = 0
     private var lastLogTime: CFAbsoluteTime = 0
     private var firstFrameTime: CFAbsoluteTime = 0
@@ -41,7 +34,7 @@ final class CameraFramePublisher: NSObject, AVCaptureVideoDataOutputSampleBuffer
                 onSignalReceived?()
             }
 
-            // DIAGNOSTIC: Track actual frame rate from camera hardware
+            // Track actual frame rate from camera hardware
             frameCount += 1
             let now = CFAbsoluteTimeGetCurrent()
             if now - lastLogTime >= 2.0 {  // Log every 2 seconds

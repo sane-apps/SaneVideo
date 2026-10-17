@@ -1,9 +1,4 @@
-//
-//  EnhancedLoadingIndicator.swift
-//  SaneVideo
-//
-//  Enhanced loading indicator with speed and time remaining
-//
+// Enhanced loading indicator with speed and time remaining
 
 import SwiftUI
 

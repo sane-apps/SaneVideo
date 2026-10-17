@@ -1,10 +1,5 @@
-//
-//  CursorInterpolatorTests.swift
-//  SaneVideoTests
-//
-//  Tests for the cursor interpolation pipeline:
-//  shake filtering, gap densification, spring smoothing
-//
+// Tests for the cursor interpolation pipeline:
+// shake filtering, gap densification, spring smoothing
 
 import Foundation
 import Testing

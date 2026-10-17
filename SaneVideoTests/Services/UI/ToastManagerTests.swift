@@ -1,10 +1,5 @@
-//
-//  ToastManagerTests.swift
-//  SaneVideoTests
-//
-//  Toasts appear for every alert type, clear immediately, and queue in order.
-//  Waits poll the real toast state instead of sleeping.
-//
+// Toasts appear for every alert type, clear immediately, and queue in order.
+// Waits poll the real toast state instead of sleeping.
 
 import Foundation
 @testable import SaneVideo

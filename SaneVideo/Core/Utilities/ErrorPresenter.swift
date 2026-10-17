@@ -1,10 +1,3 @@
-//
-//  ErrorPresenter.swift
-//  SaneVideo
-//
-//  Created by SaneVideo Refactor
-//
-
 import Combine
 import SwiftUI
 
@@ -63,7 +56,7 @@ class ErrorPresenter {
         // Log the error automatically when presented
         AppLogger.logError(appError)
         
-        // CRITICAL FIX: Queue error instead of overwriting
+        // Queue error instead of overwriting
         queueError(appError)
     }
 
@@ -90,7 +83,7 @@ class ErrorPresenter {
             return
         }
         
-        // CRITICAL FIX: Prioritize critical errors
+        // Prioritize critical errors
         if isCriticalError(error) {
             // Insert critical errors at the front
             errorQueue.insert(error, at: 0)
@@ -99,7 +92,7 @@ class ErrorPresenter {
             errorQueue.append(error)
         }
         
-        // CRITICAL FIX: Limit queue size to prevent memory issues
+        // Limit queue size to prevent memory issues
         // When queue is full, remove oldest non-critical error to make room
         if errorQueue.count > maxQueueSize {
             // Find first non-critical error to remove (prefer removing older ones)

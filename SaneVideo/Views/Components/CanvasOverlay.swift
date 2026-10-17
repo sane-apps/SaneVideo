@@ -199,7 +199,7 @@ struct CanvasOverlay: View {
                 }
 
                 // 3. Clip Crosshair - ONLY show during ACTIVE drag/scale manipulation
-                // CRITICAL FIX: Only show crosshair when actively manipulating (translation or scale changed)
+                // Only show crosshair when actively manipulating (translation or scale changed)
                 // This prevents crosshair from showing when clip is just selected but not being dragged
                 if interactionTarget == .clip && (localTranslation != .zero || localScale != 1.0) {
                     ZStack {

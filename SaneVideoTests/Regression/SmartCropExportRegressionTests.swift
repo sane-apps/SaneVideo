@@ -1,11 +1,6 @@
-//
-//  SmartCropExportRegressionTests.swift
-//  SaneVideoTests
-//
-//  Smart crop export: a disabled crop analysis returns the centered default without
-//  analyzing frames, and injecting crop keyframes keeps the instruction's
-//  click/keystroke overlay layers.
-//
+// Smart crop export: a disabled crop analysis returns the centered default without
+// analyzing frames, and injecting crop keyframes keeps the instruction's
+// click/keystroke overlay layers.
 
 import AVFoundation
 import CoreMedia

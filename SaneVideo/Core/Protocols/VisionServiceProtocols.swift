@@ -1,9 +1,4 @@
-//
-//  VisionServiceProtocols.swift
-//  SaneVideo
-//
-//  Protocols for Vision services to enable mocking in tests
-//
+// Protocols for Vision services to enable mocking in tests
 
 import AVFoundation
 import AppKit

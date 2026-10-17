@@ -1,9 +1,3 @@
-//
-//  MagicFixServiceTests.swift
-//  SaneVideoTests
-//
-//
-
 import Testing
 import Foundation
 import CoreMedia

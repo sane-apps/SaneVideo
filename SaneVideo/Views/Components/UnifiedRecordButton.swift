@@ -36,7 +36,7 @@ struct UnifiedRecordButton: View {
                 }
             }
             .frame(width: size, height: size)
-            // CRITICAL FIX: Ensure full button area is hit-testable
+            // Ensure full button area is hit-testable
             // The buttonStyle will apply its own contentShape, but this ensures the label itself is fully tappable
             .contentShape(Rectangle())
         })
@@ -81,7 +81,7 @@ struct RecordButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .frame(width: size, height: size)
-            // CRITICAL FIX: Use Rectangle instead of Circle for hit testing
+            // Use Rectangle instead of Circle for hit testing
             // Circle contentShape on larger buttons (56pt) can miss corner clicks
             // Rectangle ensures the entire button area is clickable
             .contentShape(Rectangle())

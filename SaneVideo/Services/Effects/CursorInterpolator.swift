@@ -1,14 +1,8 @@
-//
-//  CursorInterpolator.swift
-//  SaneVideo
-//
-//  Processes raw cursor samples through a 3-stage pipeline:
-//  1. Shake filter — removes jittery micro-movements
-//  2. Gap densify — fills temporal gaps with interpolated points
-//  3. Spring smooth — applies physics-based smoothing with context-aware profiles
-//
-//  Inspired by Cap's cursor interpolation (PR #1504).
-//
+// Processes raw cursor samples through a 3-stage pipeline:
+// 1. Shake filter — removes jittery micro-movements
+// 2. Gap densify — fills temporal gaps with interpolated points
+// 3. Spring smooth — applies physics-based smoothing with context-aware profiles
+// Inspired by Cap's cursor interpolation (PR #1504).
 
 import Foundation
 

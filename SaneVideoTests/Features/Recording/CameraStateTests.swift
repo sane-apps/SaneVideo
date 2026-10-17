@@ -1,9 +1,4 @@
-//
-//  CameraStateTests.swift
-//  SaneVideoTests
-//
-//  Tests for CameraState - camera activation, device management, signal detection
-//
+// Tests for CameraState - camera activation, device management, signal detection
 
 import AVFoundation
 @testable import SaneVideo

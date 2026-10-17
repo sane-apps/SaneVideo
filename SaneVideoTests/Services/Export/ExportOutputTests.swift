@@ -1,9 +1,4 @@
-//
-//  ExportOutputTests.swift
-//  SaneVideoTests
-//
-//  Export file naming (ExportDestination) and native GIF export (GIFExporter), in temp folders only.
-//
+// Export file naming (ExportDestination) and native GIF export (GIFExporter), in temp folders only.
 
 import AVFoundation
 import Foundation

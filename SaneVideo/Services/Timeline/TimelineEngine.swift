@@ -1,10 +1,3 @@
-//
-//  TimelineEngine.swift
-//  SaneVideo
-//
-//  Created by SaneVideo Refactor
-//
-
 @preconcurrency import AVFoundation
 import CoreImage
 import Foundation
@@ -44,7 +37,7 @@ class TimelineEngine {
         }
         playerItem.audioMix = result.audioMix
 
-        // DIAGNOSTIC: Verify audioMix has parameters
+        // Verify audioMix has parameters
         let audioMix = result.audioMix
         let paramCount = audioMix.inputParameters.count
         NSLog("🔍 TimelineEngine: audioMix has \(paramCount) input parameter(s)")
@@ -54,11 +47,11 @@ class TimelineEngine {
             AppLogger.playback.warning("⚠️ TimelineEngine: audioMix has NO input parameters - audio will be silent!")
         }
 
-        // DIAGNOSTIC: Verify audio tracks exist in composition
+        // Verify audio tracks exist in composition
         let audioTracks = result.composition.tracks(withMediaType: .audio)
         let videoTracks = result.composition.tracks(withMediaType: .video)
 
-        // CRITICAL: Use NSLog for visibility (AppLogger may be filtered)
+        // Use NSLog for visibility (AppLogger may be filtered)
         NSLog("🔍 TimelineEngine DIAGNOSTIC: Composition has \(videoTracks.count) video track(s), \(audioTracks.count) audio track(s)")
         AppLogger.playback.info("🔍 TimelineEngine DIAGNOSTIC: Composition has \(videoTracks.count) video track(s), \(audioTracks.count) audio track(s)")
 
@@ -66,7 +59,7 @@ class TimelineEngine {
             NSLog("⚠️ TimelineEngine: Composition has NO audio tracks - playback will be silent!")
             AppLogger.playback.warning("⚠️ TimelineEngine: Composition has NO audio tracks - playback will be silent!")
 
-            // DIAGNOSTIC: Check if source clips have audio
+            // Check if source clips have audio
             for track in project.timeline.tracks {
                 for clip in track.clips {
                     let asset = AVURLAsset(url: clip.url)

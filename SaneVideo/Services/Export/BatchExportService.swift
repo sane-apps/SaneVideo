@@ -1,9 +1,4 @@
-//
-//  BatchExportService.swift
-//  SaneVideo
-//
-//  Service for batch exporting short-form video clips
-//
+// Service for batch exporting short-form video clips
 
 @preconcurrency import AVFoundation
 import CoreMedia

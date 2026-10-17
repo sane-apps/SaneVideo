@@ -1,8 +1,4 @@
-//
-//  AppError.swift
-//  SaneVideo
-//
-//  Unified error handling across the application
+// Unified error handling across the application
 
 import Foundation
 

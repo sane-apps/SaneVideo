@@ -1,10 +1,3 @@
-//
-//  ToastOverlayModifier.swift
-//  SaneVideo
-//
-//  Created by SaneVideo Refactor
-//
-
 import SwiftUI
 
 struct ToastOverlayModifier: ViewModifier {

@@ -1,10 +1,3 @@
-//
-//  UserPreferences.swift
-//  SaneVideo
-//
-//  Created by SaneVideo Refactor
-//
-
 import AVFoundation
 import Combine
 import SwiftUI

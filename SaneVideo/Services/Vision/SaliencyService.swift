@@ -1,10 +1,5 @@
-//
-//  SaliencyService.swift
-//  SaneVideo
-//
-//  Apple Vision framework for attention/saliency detection
-//  Finds the "interesting" parts of each frame for smart cropping
-//
+// Apple Vision framework for attention/saliency detection
+// Finds the "interesting" parts of each frame for smart cropping
 
 import AVFoundation
 import CoreImage

@@ -1,10 +1,5 @@
-//
-//  TestProgressReporter.swift
-//  SaneVideoTests
-//
-//  Real-time progress reporting for tests
-//  Shows which test is running and prevents "stuck" feeling
-//
+// Real-time progress reporting for tests
+// Shows which test is running and prevents "stuck" feeling
 
 import Foundation
 import XCTest

@@ -1,9 +1,4 @@
-//
-//  FeatureDiscovery.swift
-//  SaneVideo
-//
-//  Feature discovery system for first-time users
-//
+// Feature discovery system for first-time users
 
 import Combine
 import Foundation

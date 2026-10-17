@@ -1,10 +1,5 @@
-//
-//  CrashReporter.swift
-//  SaneVideo
-//
-//  Native crash reporting using Apple's MetricKit framework.
-//  Collects crash logs, hang reports, and performance diagnostics.
-//
+// Native crash reporting using Apple's MetricKit framework.
+// Collects crash logs, hang reports, and performance diagnostics.
 
 import Foundation
 import MetricKit

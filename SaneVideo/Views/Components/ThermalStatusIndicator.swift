@@ -1,9 +1,4 @@
-//
-//  ThermalStatusIndicator.swift
-//  SaneVideo
-//
-//  Enhanced thermal status indicator with clear messaging
-//
+// Enhanced thermal status indicator with clear messaging
 
 import SwiftUI
 

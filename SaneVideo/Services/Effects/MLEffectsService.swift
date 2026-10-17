@@ -1,10 +1,5 @@
-//
-//  MLEffectsService.swift
-//  SaneVideo
-//
-//  VideoToolbox ML-powered video effects using VTFrameProcessor
-//  Provides: Super Resolution, Temporal Noise Filter, Frame Rate Conversion
-//
+// VideoToolbox ML-powered video effects using VTFrameProcessor
+// Provides: Super Resolution, Temporal Noise Filter, Frame Rate Conversion
 
 import CoreMedia
 import CoreVideo

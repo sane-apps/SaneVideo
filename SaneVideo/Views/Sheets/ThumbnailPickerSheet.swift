@@ -1,9 +1,4 @@
-//
-//  ThumbnailPickerSheet.swift
-//  SaneVideo
-//
-//  Full thumbnail creation studio using extracted helpers.
-//
+// Full thumbnail creation studio using extracted helpers.
 
 import AppKit
 import AVFoundation

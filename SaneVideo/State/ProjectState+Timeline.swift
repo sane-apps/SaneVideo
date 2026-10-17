@@ -1,9 +1,4 @@
-//
-//  ProjectState+Timeline.swift
-//  SaneVideo
-//
-//  Consolidated from Timeline, TrackManagement, and BatchOperations
-//
+// Consolidated from Timeline, TrackManagement, and BatchOperations
 
 import AVFoundation
 import Foundation
@@ -39,7 +34,7 @@ extension ProjectState {
                         cumulativeTime, mutableTrack.clips[clipIndex].effectiveDuration)
                 }
             } else {
-                // CRITICAL FIX: Guard against empty or single-clip tracks
+                // Guard against empty or single-clip tracks
                 // Range 1..<0 causes "Fatal error: Range requires lowerBound <= upperBound"
                 if mutableTrack.clips.count > 1 {
                     for clipIndex in 1..<mutableTrack.clips.count {

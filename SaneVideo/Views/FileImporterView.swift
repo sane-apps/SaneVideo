@@ -1,10 +1,3 @@
-//
-//  FileImporterView.swift
-//  SaneVideo
-//
-//  Created by SaneVideo Refactor
-//
-
 import SwiftUI
 import UniformTypeIdentifiers
 

@@ -1,10 +1,3 @@
-//
-//  VideoClip+TimeMapping.swift
-//  SaneVideo
-//
-//  Created by SaneVideo Refactor
-//
-
 import AVFoundation
 import Foundation
 
@@ -128,7 +121,7 @@ extension VideoClip {
             }
         }
 
-        // CRITICAL FIX: Apply speed scaling to get actual played duration
+        // Apply speed scaling to get actual played duration
         // speed > 1.0 = faster playback = shorter duration
         // speed < 1.0 = slower playback = longer duration
         guard speed > 0 else { return totalDuration }

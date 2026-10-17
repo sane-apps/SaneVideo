@@ -1,9 +1,4 @@
-//
-//  LabeledSliderControl.swift
-//  SaneVideo
-//
-//  Reusable slider control with label, value display, and range hints
-//
+// Reusable slider control with label, value display, and range hints
 
 import SwiftUI
 

@@ -1,9 +1,4 @@
-//
-//  AnimationModifiers.swift
-//  SaneVideo
-//
-//  Consistent animation patterns for smooth, polished UI
-//
+// Consistent animation patterns for smooth, polished UI
 
 import SwiftUI
 

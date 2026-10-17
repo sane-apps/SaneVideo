@@ -120,7 +120,7 @@ class ScreenRecorder: NSObject, ScreenRecorderProtocol, SCContentSharingPickerOb
   /// Start screen recording by presenting the system picker
   /// - Parameter outputURL: Optional URL to record directly to file using SCRecordingOutput
   func start(outputURL: URL? = nil) async throws {
-    // CRITICAL FIX: Bypass picker in ALL test environments (unit tests AND UI tests)
+    // Bypass picker in ALL test environments (unit tests AND UI tests)
     // SCContentSharingPicker crashes in unit test environment
     if TestEnvironment.isTesting {
       AppLogger.recording.info(
@@ -131,7 +131,7 @@ class ScreenRecorder: NSObject, ScreenRecorderProtocol, SCContentSharingPickerOb
       return
     }
 
-    // CRITICAL: Guard against stopping state
+    // Guard against stopping state
     guard !isStopping else {
       AppLogger.recording.warning("Screen recorder is stopping, cannot start")
       throw NSError(
@@ -143,13 +143,13 @@ class ScreenRecorder: NSObject, ScreenRecorderProtocol, SCContentSharingPickerOb
 
     self.currentOutputURL = outputURL
 
-    // CRITICAL: Stop existing stream if running (prevents multiple streams)
+    // Stop existing stream if running (prevents multiple streams)
     if activeStream != nil {
       AppLogger.recording.warning("Screen recorder already running, stopping first...")
       await stop()
       try await Task.sleep(nanoseconds: 100_000_000)  // 100ms cleanup delay
 
-      // CRITICAL: Re-check stopping state after cleanup
+      // Re-check stopping state after cleanup
       guard !isStopping else {
         throw NSError(
           domain: "SaneVideo",
@@ -159,7 +159,7 @@ class ScreenRecorder: NSObject, ScreenRecorderProtocol, SCContentSharingPickerOb
       }
     }
 
-    // CRITICAL: Check if picker is already active (prevents multiple presentations)
+    // Check if picker is already active (prevents multiple presentations)
     let picker = SCContentSharingPicker.shared
     if picker.isActive {
       AppLogger.recording.warning("Picker already active, reusing existing selection...")
@@ -181,7 +181,7 @@ class ScreenRecorder: NSObject, ScreenRecorderProtocol, SCContentSharingPickerOb
 
     loggedScreenAudioFormat = false
 
-    // CRITICAL: Only register if not already registered (prevents duplicate observers)
+    // Only register if not already registered (prevents duplicate observers)
     // (picker already declared above)
     // Check if we're already an observer by checking if picker.isActive and we have baseFilter
     if !picker.isActive || baseFilter == nil {
@@ -190,12 +190,12 @@ class ScreenRecorder: NSObject, ScreenRecorderProtocol, SCContentSharingPickerOb
 
     picker.isActive = true
 
-    // TAHOE FIX: Limit stream count to prevent redundant picker triggers
+    // Limit stream count to prevent redundant picker triggers
     picker.maximumStreamCount = 1
 
     // TAHOE PERSISTENCE FIX: Check if we already have a valid selection to reuse.
     // This prevents the picker from popping up every time the user switches between Camera and Screen.
-    // CRITICAL FIX: Check for staleness - if filter is older than 5 minutes, get fresh one
+    // Check for staleness - if filter is older than 5 minutes, get fresh one
     if let existingFilter = baseFilter,
        let timestamp = baseFilterTimestamp,
        Date().timeIntervalSince(timestamp) < 300 { // 5 minutes
@@ -211,7 +211,7 @@ class ScreenRecorder: NSObject, ScreenRecorderProtocol, SCContentSharingPickerOb
 
     AppLogger.recording.info("📺 No existing filter found. Presenting screen picker...")
 
-    // CRITICAL: Check if picker is already showing (prevents multiple presentations)
+    // Check if picker is already showing (prevents multiple presentations)
     // Note: There's no direct API to check this, so we rely on baseFilter check above
     // If picker was already presented but user hasn't selected yet, we'll get a callback
 
@@ -222,7 +222,7 @@ class ScreenRecorder: NSObject, ScreenRecorderProtocol, SCContentSharingPickerOb
       .singleWindow, .multipleWindows, .singleApplication, .multipleApplications, .singleDisplay
     ]
 
-    // CRITICAL FIX: Exclude PiP and Controls windows from picker
+    // Exclude PiP and Controls windows from picker
     // This prevents our own windows from appearing as options to share
     let excludedIDs = ServiceContainer.shared.appState.windowManager.excludedWindowIDs
     if !excludedIDs.isEmpty {
@@ -241,7 +241,7 @@ class ScreenRecorder: NSObject, ScreenRecorderProtocol, SCContentSharingPickerOb
 
   /// Stop screen recording
   func stop() async {
-    // CRITICAL FIX: In test environment, there's no stream to stop
+    // In test environment, there's no stream to stop
     if TestEnvironment.isTesting {
       AppLogger.recording.info("🧪 [TEST] ScreenRecorder: stop() called in test environment (no-op)")
       activeStream = nil
@@ -281,7 +281,7 @@ class ScreenRecorder: NSObject, ScreenRecorderProtocol, SCContentSharingPickerOb
     activeStream = nil
     recordingOutput = nil
 
-    // TAHOE FIX: Do NOT deactivate picker or remove observer here.
+    // Do NOT deactivate picker or remove observer here.
     // Keeping picker.isActive = true preserves the selection persistence in the system UI.
     // We only remove/deactivate in a "total teardown" if needed.
     AppLogger.recording.info("Screen stream stopped, but picker remains active for persistence.")
@@ -289,7 +289,7 @@ class ScreenRecorder: NSObject, ScreenRecorderProtocol, SCContentSharingPickerOb
 
   /// Complete teardown (e.g. app closing)
   func teardown() {
-    // CRITICAL FIX: In test environment, skip picker operations to avoid crashes
+    // In test environment, skip picker operations to avoid crashes
     if TestEnvironment.isTesting {
       AppLogger.recording.info(
         "🧪 [TEST] ScreenRecorder: teardown() called in test environment (no-op)")
@@ -311,7 +311,7 @@ class ScreenRecorder: NSObject, ScreenRecorderProtocol, SCContentSharingPickerOb
   /// Handle user's content selection and start the stream
   func handleContentSelected(filter: SCContentFilter) async {
 
-    // TAHOE OPTIMIZATION: If we already have an active stream, just update its filter.
+    // If we already have an active stream, just update its filter.
     // This is much faster and completely flicker-free.
     if let stream = activeStream {
       AppLogger.recording.info("🔄 Updating existing stream with new content selection...")
@@ -425,7 +425,7 @@ class ScreenRecorder: NSObject, ScreenRecorderProtocol, SCContentSharingPickerOb
       // Store active stream
       activeStream = newStream
 
-      // CRITICAL FIX: Mark that screen recording permission is definitely granted
+      // Mark that screen recording permission is definitely granted
       // This helps PermissionManager avoid re-requesting permission on next launch
       UserDefaults.standard.set(true, forKey: "screenRecordingEverGranted")
 

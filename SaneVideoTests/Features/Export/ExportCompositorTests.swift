@@ -1,9 +1,4 @@
-//
-//  ExportCompositorTests.swift
-//  SaneVideoTests
-//
-//  Tests for ExportCompositor - composition building, video composition configuration
-//
+// Tests for ExportCompositor - composition building, video composition configuration
 
 import Testing
 import AVFoundation

@@ -1,9 +1,4 @@
-//
-//  ProjectState+Utilities.swift
-//  SaneVideo
-//
-//  Consolidated from Transactions, Cancellation, Relinking, and Editing
-//
+// Consolidated from Transactions, Cancellation, Relinking, and Editing
 
 import AVFoundation
 import CoreMedia

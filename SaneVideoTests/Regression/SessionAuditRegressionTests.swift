@@ -1,13 +1,7 @@
-//
-//  SessionAuditRegressionTests.swift
-//  SaneVideoTests
-//
-//  Permission errors must give the user something to act on: the error panel shows
-//  their title, message and recovery steps.
-//
-//  Export failure/cancel cleanup from the same audit is covered with real exports in
-//  ExportEdgeCaseIntegrationTests.
-//
+// Permission errors must give the user something to act on: the error panel shows
+// their title, message and recovery steps.
+// Export failure/cancel cleanup from the same audit is covered with real exports in
+// ExportEdgeCaseIntegrationTests.
 
 import Foundation
 @testable import SaneVideo

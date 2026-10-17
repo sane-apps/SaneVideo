@@ -1,10 +1,3 @@
-//
-//  EditorLayoutView.swift
-//  SaneVideo
-//
-//  Created by SaneVideo Refactor
-//
-
 import AVFoundation
 import CoreMedia
 import SwiftUI
@@ -84,7 +77,7 @@ struct EditorLayoutView: View {
         .onChange(of: appState.projectState.currentProject) { _, new in
             if let newProfile = new, newProfile.id != lastLoadedProjectId {
                 lastLoadedProjectId = newProfile.id
-                // CRITICAL FIX: Clear selection immediately - old clip doesn't exist in new project
+                // Clear selection immediately - old clip doesn't exist in new project
                 // StateChangePipeline will auto-select first clip after debounce
                 selectedClip = nil
                 selectedClipIds.removeAll()
@@ -358,7 +351,7 @@ struct EditorLayoutView: View {
                 ZStack {
                     SaneVideoEditorChromeBackground()
 
-                    // PERFORMANCE: Show thumbnail until player is ready, then show AVPlayer
+                    // Show thumbnail until player is ready, then show AVPlayer
                     if let player = appState.playbackState.player {
                         // PLAYER READY: Show AVPlayer (playing or paused)
                         EditorVideoPlayerView(
@@ -398,7 +391,7 @@ struct EditorLayoutView: View {
                 }
             }
 
-            // NOTE: PlayerControlBar removed - controls moved to unified TimelineControls toolbar
+            // PlayerControlBar removed - controls moved to unified TimelineControls toolbar
 
             // TIMELINE - includes unified toolbar with playback controls
             SaneTimelineView(
@@ -418,7 +411,7 @@ struct EditorLayoutView: View {
 
             if !isInspectorCollapsed {
                 StylesInspectorView(selectedClip: $selectedClip)
-                    // CRITICAL FIX: Force re-render when selectedClip changes
+                    // Force re-render when selectedClip changes
                     .id(selectedClip?.id)
                     .transition(.opacity)
             }

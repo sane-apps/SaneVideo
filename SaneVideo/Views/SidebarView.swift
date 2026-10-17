@@ -1,9 +1,4 @@
-//
-//  SidebarView.swift
-//  SaneVideo
-//
-//  Main sidebar with rail navigation and contextual content
-//
+// Main sidebar with rail navigation and contextual content
 
 import SwiftUI
 

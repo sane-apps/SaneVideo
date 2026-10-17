@@ -1,14 +1,8 @@
-//
-//  RecordingEngineTests.swift
-//  SaneVideoTests
-//
-//  RecordingEngine runs in test mode here (no camera, screen or file). These tests cover its state
-//  guards and the A/V timestamp handling around source switches.
-//
-//  Fire-and-forget calls (switchSource, setMuted) enqueue a task on RecordingActor. A later await on
-//  the same actor runs after that task's first step, so guard rejections need no wait. Switches that
-//  complete after a main-actor hop are awaited with `eventually`.
-//
+// RecordingEngine runs in test mode here (no camera, screen or file). These tests cover its state
+// guards and the A/V timestamp handling around source switches.
+// Fire-and-forget calls (switchSource, setMuted) enqueue a task on RecordingActor. A later await on
+// the same actor runs after that task's first step, so guard rejections need no wait. Switches that
+// complete after a main-actor hop are awaited with `eventually`.
 
 import AVFoundation
 import AudioToolbox

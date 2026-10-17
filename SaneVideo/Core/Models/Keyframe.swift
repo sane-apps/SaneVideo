@@ -1,9 +1,4 @@
-//
-//  Keyframe.swift
-//  SaneVideo
-//
-//  Keyframe animation system for animating clip properties over time
-//
+// Keyframe animation system for animating clip properties over time
 
 import CoreMedia
 import Foundation

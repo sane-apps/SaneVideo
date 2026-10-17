@@ -1,10 +1,5 @@
-//
-//  TimelineRegressionTests.swift
-//  SaneVideoTests
-//
-//  Timeline fit zoom, split, removed-range time mapping, magnetic snapping and the
-//  segments the renderer builds around a removed range.
-//
+// Timeline fit zoom, split, removed-range time mapping, magnetic snapping and the
+// segments the renderer builds around a removed range.
 
 import CoreMedia
 import Foundation

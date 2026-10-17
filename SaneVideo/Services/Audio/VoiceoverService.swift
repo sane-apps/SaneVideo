@@ -1,11 +1,6 @@
-//
-//  VoiceoverService.swift
-//  SaneVideo
-//
-//  Uses Apple's AVSpeechSynthesizer for text-to-speech
-//  Generates voiceovers from script text or captions
-//  Auto-improves as Apple adds new voices with each OS update
-//
+// Uses Apple's AVSpeechSynthesizer for text-to-speech
+// Generates voiceovers from script text or captions
+// Auto-improves as Apple adds new voices with each OS update
 
 import AppKit
 import AVFoundation

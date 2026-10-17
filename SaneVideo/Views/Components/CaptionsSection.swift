@@ -1,9 +1,4 @@
-//
-//  CaptionsSection.swift
-//  SaneVideo
-//
-//  2025-12-31: Simplified to quick access. Full caption editing in Transcript sidebar tab.
-//
+// 2025-12-31: Simplified to quick access. Full caption editing in Transcript sidebar tab.
 
 import AVFoundation
 import SwiftUI

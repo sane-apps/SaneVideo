@@ -1,10 +1,3 @@
-//
-//  MainContentView+Export.swift
-//  SaneVideo
-//
-//  Created by SaneVideo Refactor
-//
-
 import AVKit
 import Combine
 import SwiftUI

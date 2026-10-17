@@ -1,11 +1,6 @@
-//
-//  TimelineUndoRedoTests.swift
-//  SaneVideoTests
-//
-//  Undo and redo of the timeline edits people make most: split, trim, delete and duplicate.
-//  ProjectState has no clip-move operation (the magnetic timeline places clips by order), so there
-//  is no move case here.
-//
+// Undo and redo of the timeline edits people make most: split, trim, delete and duplicate.
+// ProjectState has no clip-move operation (the magnetic timeline places clips by order), so there
+// is no move case here.
 
 import CoreMedia
 import Foundation

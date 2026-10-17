@@ -1,10 +1,3 @@
-//
-//  CaptionListEditor.swift
-//  SaneVideo
-//
-//  Created by SaneVideo Refactor
-//
-
 import AVFoundation
 import SwiftUI
 

@@ -1,9 +1,4 @@
-//
-//  InformationBox.swift
-//  SaneVideo
-//
-//  Reusable information/result display box with colored background
-//
+// Reusable information/result display box with colored background
 
 import SwiftUI
 

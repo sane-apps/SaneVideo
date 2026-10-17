@@ -1,8 +1,3 @@
-//
-//  FloatingControlsWindow.swift
-//  SaneVideo
-//
-
 import AppKit
 import SwiftUI
 
@@ -51,7 +46,7 @@ class FloatingControlsWindow: NSPanel {
         minSize = Self.preferredPanelSize
         setContentSize(Self.preferredPanelSize)
 
-        // CRITICAL FIX: Prevent controls from appearing in screen share picker
+        // Prevent controls from appearing in screen share picker
         if #available(macOS 15.0, *) {
             self.sharingType = .none
         } else {
@@ -108,7 +103,7 @@ class FloatingControlsWindow: NSPanel {
 
     private func resetHideTimer() {
         hideTimer?.invalidate()
-        // CRITICAL FIX: Create timer on main run loop explicitly
+        // Create timer on main run loop explicitly
         // This ensures timer fires reliably on main thread
         hideTimer = Timer.scheduledTimer(withTimeInterval: 3.0, repeats: false) { [weak self] _ in
             // Already on main thread from Timer on main RunLoop
@@ -122,7 +117,7 @@ class FloatingControlsWindow: NSPanel {
         }
     }
     override func close() {
-        // CRITICAL FIX: Prevent _NSWindowTransformAnimation crash
+        // Prevent _NSWindowTransformAnimation crash
         // Same fix as PiPCameraWindow - synchronous close with disabled animations
 
         // 1. Invalidate timer to stop any pending callbacks
@@ -148,7 +143,7 @@ class FloatingControlsWindow: NSPanel {
         orderOut(nil)
 
         // 5. Close synchronously - animations are disabled so this should be safe
-        // CRITICAL: Do NOT use asyncAfter - it causes race conditions with isReleasedWhenClosed
+        // Do NOT use asyncAfter - it causes race conditions with isReleasedWhenClosed
         super.close()
     }
 

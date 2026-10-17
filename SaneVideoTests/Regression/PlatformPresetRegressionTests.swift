@@ -1,10 +1,5 @@
-//
-//  PlatformPresetRegressionTests.swift
-//  SaneVideoTests
-//
-//  Export render size for vertical/square/portrait platform presets, and even
-//  encoder-safe dimensions for Shorts.
-//
+// Export render size for vertical/square/portrait platform presets, and even
+// encoder-safe dimensions for Shorts.
 
 import CoreGraphics
 import Foundation

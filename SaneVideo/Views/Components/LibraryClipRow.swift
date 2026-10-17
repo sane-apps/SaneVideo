@@ -1,9 +1,4 @@
-//
-//  LibraryClipRow.swift
-//  SaneVideo
-//
-//  Library clip row for displaying clips in the sidebar
-//
+// Library clip row for displaying clips in the sidebar
 
 import CoreMedia
 import SwiftUI

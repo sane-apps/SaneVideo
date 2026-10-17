@@ -1,10 +1,3 @@
-//
-//  SaneVideoApp.swift
-//  SaneVideo
-//
-//  Created by Mr. Sane on 11/23/25.
-//
-
 import AppKit
 import AVFoundation
 import os
@@ -194,7 +187,7 @@ struct SaneVideoApp: App {
                 .keyboardShortcut("i", modifiers: [.command, .option])
                 .accessibilityIdentifier("menu.view.toggle_inspector")
             }
-            // NOTE: Up/Down Arrow and D key shortcuts are handled via .onKeyPress() in EditorLayoutView
+            // Up/Down Arrow and D key shortcuts are handled via .onKeyPress() in EditorLayoutView
             // Menu commands with arrow keys don't work (arrows are used for menu navigation)
 
             // Edit Menu: Magic Fix Batch Operations

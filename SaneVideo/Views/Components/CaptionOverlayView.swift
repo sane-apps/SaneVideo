@@ -1,10 +1,3 @@
-//
-//  CaptionOverlayView.swift
-//  SaneVideo
-//
-//  Created by SaneVideo Refactor
-//
-
 import AVFoundation
 import SwiftUI
 
@@ -56,11 +49,11 @@ struct CaptionOverlayView: View {
             .onHover { inside in
                 if inside { NSCursor.openHand.push() } else { NSCursor.pop() }
             }
-            // CRITICAL FIX: Use stable ID to prevent position jumping
+            // Use stable ID to prevent position jumping
             // Only change ID when caption actually changes, not on every text update
             .id("\(caption.id)-\(caption.startTime.seconds)")
             .transition(.scale.combined(with: .opacity))
-            // CRITICAL FIX: Remove animation on text change to prevent jumping
+            // Remove animation on text change to prevent jumping
             // Only animate on caption change (handled by transition)
             .animation(.spring(response: 0.3, dampingFraction: 0.7), value: caption.id)
         }
@@ -110,7 +103,7 @@ struct KaraokeTextRenderer: View {
                 }
             } else {
                 // Fallback: Just render the full text if no word data
-                // CRITICAL FIX: Use displayText to strip Whisper tokens like <|startoftranscript|>
+                // Use displayText to strip Whisper tokens like <|startoftranscript|>
                 Text(caption.displayText)
                     .font(.custom(style.fontName, size: style.fontSize))
                     .fontWeight(style.isBold ? .bold : .regular)

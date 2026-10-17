@@ -1,10 +1,5 @@
-//
-//  ExportAudioIntegrationTests.swift
-//  SaneVideoTests
-//
-//  Audio-specific export integration tests.
-//  Split from ExportPipelineIntegrationTests for maintainability.
-//
+// Audio-specific export integration tests.
+// Split from ExportPipelineIntegrationTests for maintainability.
 
 import AVFoundation
 import CoreMedia

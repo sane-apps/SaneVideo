@@ -1,9 +1,4 @@
-//
-//  ExportEngineTests.swift
-//  SaneVideoTests
-//
-//  ExportEngine guards: no empty exports, no concurrent exports.
-//
+// ExportEngine guards: no empty exports, no concurrent exports.
 
 import AVFoundation
 import Foundation

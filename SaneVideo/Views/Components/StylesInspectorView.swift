@@ -1,12 +1,7 @@
-//
-//  StylesInspectorView.swift
-//  SaneVideo
-//
-//  2025-12-31: Simplified inspector layout
-//  - Captions moved to Transcript tab (left sidebar)
-//  - Sections: Magic Fix, Focus & Framing, Background, Effects, Audio Analysis, Clip Info
-//  - Fresh start each launch (all collapsed, no persistence)
-//
+// 2025-12-31: Simplified inspector layout
+// - Captions moved to Transcript tab (left sidebar)
+// - Sections: Magic Fix, Focus & Framing, Background, Effects, Audio Analysis, Clip Info
+// - Fresh start each launch (all collapsed, no persistence)
 
 import SwiftUI
 
@@ -22,10 +17,10 @@ struct StylesInspectorView: View {
     @State private var showAudioAnalysis = false
     @State private var showClipInfo = false
 
-    // CRITICAL FIX: Track if operation is in progress to prevent mode switching
+    // Track if operation is in progress to prevent mode switching
     @State private var isOperationInProgress = false
 
-    // CRITICAL FIX: Validate clip exists in current project
+    // Validate clip exists in current project
     private var validatedClip: VideoClip? {
         guard let project = appState.projectState.currentProject else {
             return nil
@@ -54,14 +49,14 @@ struct StylesInspectorView: View {
         @Bindable var projectState = appState.projectState
 
         VStack(spacing: 0) {
-            // UX FIX: Clean header without mode toggle - unified experience
+            // Clean header without mode toggle - unified experience
             HStack {
                 InspectorHeader()
                 Spacer()
             }
             .padding(.trailing, 16)
 
-            // CRITICAL FIX: Validate clip exists before rendering
+            // Validate clip exists before rendering
             if let clip = validatedClip {
                 ScrollView {
                     LazyVStack(spacing: Theme.Dimensions.spacingMD) {

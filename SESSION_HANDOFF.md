@@ -1,3 +1,18 @@
+## 2026-10-17 01:45 ET — Speed pass, editor and screen-recording fixes (main, not pushed)
+
+- Camera back in Recorder: 10 s fixed warm-up timer -> shows 0.3 s after first frame (~0.9 s measured, 3 runs).
+- Editor bugs found live and fixed: arrow keys (hidden shortcuts fired Shift actions; now a window-level
+  monitor that skips text fields), clicking a clip never selected it (5-10 pt drag only), Cmd+B split the
+  selected clip instead of the one under the playhead (bound twice), playhead reset to 0 after every edit,
+  Delete opened a dialog with "Delete from Disk" (now plain undoable remove), timeline always showed 60 s.
+- Screen recording: Camera|Screen switch works mid-take both ways; app window now hides when switching to
+  Screen mid-take (was recorded). Verified by frame grabs: durations match wall clock, no black frames.
+- CPU (Mini, EMEET): recorder idle camera on ~19%, editor idle 0.1%, playing ~25%. ~30-40% for ~30 s after
+  each take is the Parakeet warm-up. Added NSCameraReactionEffectGesturesEnabledDefault=false (no CPU change
+  here; Gestures already off) and a "Camera effects" log line.
+- Verify 478/478 (receipt 59c65f621cac2e72865ab1803cd5ba3f). Test media from this round trashed.
+- Next: docs (THIRD_PARTY_NOTICES, README/privacy), release 1.1.0. Mini disk 8.3 GB free; Trash ~5 GB.
+
 ## 2026-10-17 00:20 ET — Redesign shipped to main (not pushed); cleanup awaiting owner OK
 
 - Owner said "continue" after the mockup: taken as the go. Commits 1e2f9bc..a4c17de: neutral dark theme, one

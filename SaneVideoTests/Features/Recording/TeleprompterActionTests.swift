@@ -29,30 +29,17 @@ struct TeleprompterActionTests {
         #expect(appState.audioService.isRunning == false)
     }
 
-    @Test("Teleprompter without notes shows toast and does not open Demo Studio")
-    func teleprompterWithoutNotesShowsToastOnly() async {
+    @Test("Teleprompter with an empty script opens the script sheet instead of showing")
+    func teleprompterWithoutNotesOpensScriptSheet() {
         let appState = AppState()
-        let toastManager = ServiceContainer.shared.toastManager
-        toastManager.clear()
-        try? await Task.sleep(nanoseconds: 50_000_000)
-        toastManager.clear()
-
-        #expect(appState.currentProject == nil)
-        #expect(appState.showDemoStudioSheet == false)
+        appState.projectState = ProjectState(projectStore: MockProjectStore())
+        #expect(appState.showTeleprompterScriptSheet == false)
 
         appState.toggleTeleprompter()
 
-        let expectedToast = "Add teleprompter text in Demo Studio first."
-        for _ in 0 ..< 10 where toastManager.toastMessage != expectedToast {
-            try? await Task.sleep(nanoseconds: 50_000_000)
-        }
-
         #expect(appState.currentProject != nil)
-        #expect(appState.showDemoStudioSheet == false)
+        #expect(appState.showTeleprompterScriptSheet == true)
         #expect(appState.currentProject?.speakerNotes.isVisible == false)
-        #expect(toastManager.toastMessage == expectedToast)
-
-        toastManager.clear()
     }
 
     @Test("New Recording returns to recording mode and creates a fresh project")
@@ -123,7 +110,7 @@ struct TeleprompterActionTests {
     }
 
     @Test("Importing a video from AppState switches into editing mode")
-    func importingVideoTransitionsToEditor() async {
+    func importingVideoTransitionsToEditor() async throws {
         let appState = AppState()
         let testURL = TestEnvironment.mockAssetURL
 
@@ -132,17 +119,13 @@ struct TeleprompterActionTests {
         appState.switchToRecording()
         appState.addVideoToTimeline(url: testURL)
 
-        for _ in 0 ..< 40 where appState.appMode != .editing {
-            try? await Task.sleep(nanoseconds: 100_000_000)
-        }
-
-        #expect(appState.appMode == .editing)
+        #expect(try await eventually { appState.appMode == .editing })
         #expect(appState.currentProject != nil)
         #expect(appState.currentProject?.timeline.tracks.flatMap(\.clips).isEmpty == false)
     }
 
     @Test("Camera start failure unwinds presenter mode and shows an error toast")
-    func cameraStartFailureReturnsToIdle() async {
+    func cameraStartFailureReturnsToIdle() async throws {
         let toastManager = ServiceContainer.shared.toastManager
         toastManager.clear()
         let originalHardwareFlag = ProcessInfo.processInfo.environment["SANEVIDEO_ENABLE_HARDWARE_TESTS"]
@@ -170,17 +153,18 @@ struct TeleprompterActionTests {
 
         appState.cameraEnabled = true
 
-        try? await Task.sleep(nanoseconds: 350_000_000)
-
+        let expectedToast = AppError.cameraPermissionDenied.localizedDescription
+        #expect(try await eventually {
+            toastManager.toastMessage == expectedToast && !appState.cameraEnabled
+        })
         #expect(appState.cameraEnabled == false)
         #expect(appState.cameraState.isActive == false)
-        #expect(toastManager.toastMessage == AppError.cameraPermissionDenied.localizedDescription)
 
         toastManager.clear()
     }
 
     @Test("Camera toggle uses the shared camera intent path")
-    func cameraToggleUsesSharedIntent() async {
+    func cameraToggleUsesSharedIntent() async throws {
         let originalHardwareFlag = ProcessInfo.processInfo.environment["SANEVIDEO_ENABLE_HARDWARE_TESTS"]
 
         setenv("SANEVIDEO_ENABLE_HARDWARE_TESTS", "1", 1)
@@ -207,18 +191,14 @@ struct TeleprompterActionTests {
         )
 
         appState.toggleCamera()
-        try? await Task.sleep(nanoseconds: 200_000_000)
 
-        #expect(appState.cameraEnabled == true)
-        #expect(mockCamera.startCallCount == 1)
+        #expect(try await eventually { mockCamera.startCallCount == 1 && appState.cameraEnabled })
         #expect(mockCamera.toggleCallCount == 0)
 
         mockCamera.isActive = true
         appState.toggleCamera()
-        try? await Task.sleep(nanoseconds: 200_000_000)
 
-        #expect(appState.cameraEnabled == false)
-        #expect(mockCamera.stopCallCount == 1)
+        #expect(try await eventually { mockCamera.stopCallCount == 1 && !appState.cameraEnabled })
         #expect(mockCamera.toggleCallCount == 0)
     }
 }

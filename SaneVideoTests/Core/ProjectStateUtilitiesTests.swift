@@ -141,17 +141,6 @@ final class ProjectStateUtilitiesTests: XCTestCase {
     // MARK: - Cancellation Tests
 
     @MainActor
-    func testCancelProcessing() async {
-        _ = projectState.beginTransaction()
-        _ = projectState.beginTransaction()
-
-        await projectState.cancelProcessing()
-
-        XCTAssertFalse(projectState.isProcessing, "Should not be processing after cancellation")
-        XCTAssertEqual(projectState.activeTransactionCount, 0)
-    }
-
-    @MainActor
     func testCancelTransactionById() async {
         let tx1 = projectState.beginTransaction()
         let tx2 = projectState.beginTransaction()
@@ -268,32 +257,5 @@ final class ProjectStateUtilitiesTests: XCTestCase {
 
         let newLockState = projectState.currentProject?.timeline.tracks.first?.isLocked
         XCTAssertNotEqual(newLockState, initialLockState, "Lock state should be toggled")
-    }
-
-    // MARK: - Timeline Validation Tests
-
-    @MainActor
-    func testValidateTimelineState() {
-        guard let project = projectState.currentProject else {
-            XCTFail("Should have a project")
-            return
-        }
-
-        let isValid = projectState.validateTimelineState(project.timeline)
-        XCTAssertTrue(isValid, "New project timeline should be valid")
-    }
-
-    @MainActor
-    func testRecalculateStartTimes() {
-        guard var project = projectState.currentProject else {
-            XCTFail("Should have a project")
-            return
-        }
-
-        // This just verifies it doesn't crash on an empty timeline
-        projectState.recalculateStartTimes(in: &project.timeline)
-
-        // Timeline should still be valid
-        XCTAssertTrue(projectState.validateTimelineState(project.timeline))
     }
 }

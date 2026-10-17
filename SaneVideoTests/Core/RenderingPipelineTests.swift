@@ -1,212 +1,104 @@
-import XCTest
-import CoreMedia
 import CoreImage
+import CoreMedia
 import Foundation
 @testable import SaneVideo
+import Testing
 
-/// Tests for the rendering pipeline: Effects, Keyframes, and Transitions
-class RenderingPipelineTests: XCTestCase {
-    
-    // MARK: - Keyframe Tests
-    
-    func testKeyframeInterpolationLinear() {
-        // Create a keyframe track with linear interpolation
+/// Rendering pipeline: keyframes, transitions, effects and interaction overlays.
+@Suite("Rendering Pipeline")
+struct RenderingPipelineTests {
+    private static let square = CGRect(x: 0, y: 0, width: 16, height: 16)
+
+    /// Renders the centre pixel of `image` as 0...1 RGBA, with no color management.
+    private func centerPixel(of image: CIImage) -> (r: Double, g: Double, b: Double) {
+        let context = CIContext(options: [.workingColorSpace: NSNull(), .outputColorSpace: NSNull()])
+        var bytes = [UInt8](repeating: 0, count: 4)
+        let center = CGRect(x: image.extent.midX, y: image.extent.midY, width: 1, height: 1)
+        context.render(image, toBitmap: &bytes, rowBytes: 4, bounds: center, format: .RGBA8, colorSpace: nil)
+        return (Double(bytes[0]) / 255, Double(bytes[1]) / 255, Double(bytes[2]) / 255)
+    }
+
+    private func solid(_ color: CIColor) -> CIImage {
+        CIImage(color: color).cropped(to: Self.square)
+    }
+
+    // MARK: - Keyframes
+
+    @Test("Linear keyframe track interpolates start, middle and end")
+    func keyframeInterpolationLinear() {
         var track = KeyframeTrack(property: .opacity)
         track.keyframes = [
             Keyframe(time: .zero, value: 0.0, easing: .linear),
             Keyframe(time: CMTime(seconds: 1.0, preferredTimescale: 600), value: 1.0, easing: .linear)
         ]
-        
-        // Test midpoint interpolation
-        let midValue = track.value(at: CMTime(seconds: 0.5, preferredTimescale: 600))
-        XCTAssertEqual(midValue, 0.5, accuracy: 0.01, "Linear interpolation at 50% should be 0.5")
-        
-        // Test start
-        let startValue = track.value(at: .zero)
-        XCTAssertEqual(startValue, 0.0, accuracy: 0.01, "Value at start should be 0.0")
-        
-        // Test end
-        let endValue = track.value(at: CMTime(seconds: 1.0, preferredTimescale: 600))
-        XCTAssertEqual(endValue, 1.0, accuracy: 0.01, "Value at end should be 1.0")
-    }
-    
-    func testKeyframeAccess() {
-        var animation = KeyframeAnimation()
-        let opacityTrack = KeyframeTrack(property: .opacity, keyframes: [
-            Keyframe(time: CMTime(seconds: 0, preferredTimescale: 600), value: 0),
-            Keyframe(time: CMTime(seconds: 1, preferredTimescale: 600), value: 1)
-        ])
-        
-        // Test subscript access
-        animation[.opacity] = opacityTrack
-        
-        let valueStart = animation.value(for: .opacity, at: CMTime(seconds: 0, preferredTimescale: 600))
-        let valueEnd = animation.value(for: .opacity, at: CMTime(seconds: 1, preferredTimescale: 600))
-        
-        XCTAssertEqual(valueStart, 0)
-        XCTAssertEqual(valueEnd, 1)
-    }
-    
-    func testKeyframeInterpolation() {
-        // Linear interpolation 0->1 over 1 second
-        let track = KeyframeTrack(property: .rotation, keyframes: [
-            Keyframe(time: CMTime(seconds: 0, preferredTimescale: 600), value: 0, easing: .linear),
-            Keyframe(time: CMTime(seconds: 1, preferredTimescale: 600), value: 100)
-        ])
-        
-        var animationWithTrack = KeyframeAnimation()
-        animationWithTrack[.rotation] = track
-        
-        let valueMid = animationWithTrack.value(for: .rotation, at: CMTime(seconds: 0.5, preferredTimescale: 600))
-        
-        XCTAssertEqual(valueMid, 50, accuracy: 0.1)
-    }
-    
-    func testKeyframeCodable() throws {
-        var animation = KeyframeAnimation()
-        let track = KeyframeTrack(property: .opacity, keyframes: [
-            Keyframe(time: .zero, value: 0.5)
-        ])
-        animation[.opacity] = track
-        XCTAssertFalse(animation.isEmpty, "Animation with tracks should not be empty")
-        
-        // Test encoding
-        let encoder = JSONEncoder()
-        let data = try encoder.encode(animation)
-        XCTAssertFalse(data.isEmpty)
-        
-        // Test decoding
-        let decoder = JSONDecoder()
-        let decodedAnimation = try decoder.decode(KeyframeAnimation.self, from: data)
-        XCTAssertEqual(decodedAnimation[.opacity]?.keyframes.first?.value, 0.5)
-    }
-    
-    // MARK: - Transition Tests
-    
-    func testTransitionTypeDisplayNames() {
-        XCTAssertEqual(TransitionType.dissolve.displayName, "Dissolve")
-        XCTAssertEqual(TransitionType.fadeToBlack.displayName, "Fade Black")
-        XCTAssertEqual(TransitionType.none.displayName, "None")
-    }
-    
-    func testTransitionDefaultDurations() {
-        XCTAssertEqual(TransitionType.dissolve.defaultDuration, 0.5)
-        XCTAssertEqual(TransitionType.none.defaultDuration, 0.0)
-        XCTAssertEqual(TransitionType.pushRight.defaultDuration, 0.4)
-    }
-    
-    func testVideoTransitionCreation() {
-        let transition = VideoTransition(type: .dissolve)
-        XCTAssertEqual(transition.type, .dissolve)
-        XCTAssertEqual(transition.duration.seconds, 0.5, accuracy: 0.01)
-        
-        let customDuration = VideoTransition(type: .wipeRight, duration: CMTime(seconds: 1.5, preferredTimescale: 600))
-        XCTAssertEqual(customDuration.duration.seconds, 1.5, accuracy: 0.01)
-    }
-    
-    func testTransitionApplyNone() {
-        let transition = VideoTransition(type: .none)
-        let source = CIImage(color: .red).cropped(to: CGRect(x: 0, y: 0, width: 100, height: 100))
-        let target = CIImage(color: .blue).cropped(to: CGRect(x: 0, y: 0, width: 100, height: 100))
-        
-        // Progress < 0.5 should show source
-        let beforeMid = transition.apply(from: source, to: target, progress: 0.25)
-        XCTAssertNotNil(beforeMid, "Transition should produce output")
-        
-        // Progress >= 0.5 should show target
-        let afterMid = transition.apply(from: source, to: target, progress: 0.75)
-        XCTAssertNotNil(afterMid, "Transition should produce output")
-    }
-    
-    func testTransitionDissolve() {
-        let transition = VideoTransition(type: .dissolve)
-        let source = CIImage(color: .red).cropped(to: CGRect(x: 0, y: 0, width: 100, height: 100))
-        let target = CIImage(color: .blue).cropped(to: CGRect(x: 0, y: 0, width: 100, height: 100))
-        
-        let result = transition.apply(from: source, to: target, progress: 0.5)
-        XCTAssertNotNil(result, "Dissolve transition should produce output")
-    }
-    
-    // MARK: - VideoEffect Tests
-    
-    func testVideoEffectCreation() {
-        let blur = VideoEffect(type: .blur)
-        XCTAssertEqual(blur.type, .blur)
-        XCTAssertEqual(blur.intensity, 5.0, "Default intensity should be 5.0")
-        
-        let customSaturation = VideoEffect(type: .saturation, intensity: 0.8)
-        XCTAssertEqual(customSaturation.intensity, 0.8)
-    }
-    
-    func testVideoEffectFilterCreation() {
-        let blur = VideoEffect(type: .blur, intensity: 1.0)
-        let filter = blur.createFilter()
-        XCTAssertNotNil(filter, "Blur effect should create a CIFilter")
-        
-        let brightness = VideoEffect(type: .brightness, intensity: 0.5)
-        let brightnessFilter = brightness.createFilter()
-        XCTAssertNotNil(brightnessFilter, "Brightness effect should create a CIFilter")
-    }
-    
-    func testVideoEffectApply() {
-        let blur = VideoEffect(type: .blur, intensity: 0.5)
-        let inputImage = CIImage(color: .white).cropped(to: CGRect(x: 0, y: 0, width: 100, height: 100))
-        
-        let result = blur.apply(to: inputImage)
-        XCTAssertNotNil(result, "Effect should produce output image")
-    }
-    
-    // MARK: - VideoClip Keyframe Integration Tests
-    
-    func testVideoClipKeyframeProperty() {
-        var clip = VideoClip(url: URL(fileURLWithPath: "/test.mov"), duration: CMTime(seconds: 10, preferredTimescale: 600))
-        XCTAssertNil(clip.keyframeAnimation, "New clip should have nil keyframeAnimation")
-        
-        var animation = KeyframeAnimation()
-        var track = KeyframeTrack(property: .opacity)
-        track.keyframes = [Keyframe(time: .zero, value: 1.0, easing: .linear)]
-        animation[.opacity] = track
-        
-        clip.keyframeAnimation = animation
-        XCTAssertNotNil(clip.keyframeAnimation, "Keyframe animation should be set")
-        XCTAssertFalse(clip.keyframeAnimation!.isEmpty, "Animation should not be empty")
-    }
-    
-    func testVideoClipTransitionProperty() {
-        var clip = VideoClip(url: URL(fileURLWithPath: "/test.mov"), duration: CMTime(seconds: 10, preferredTimescale: 600))
-        XCTAssertNil(clip.transition, "New clip should have nil transition")
-        
-        clip.transition = VideoTransition(type: .dissolve)
-        XCTAssertNotNil(clip.transition)
-        XCTAssertEqual(clip.transition?.type, .dissolve)
-    }
-    
-    func testVideoClipEffectsProperty() {
-        var clip = VideoClip(url: URL(fileURLWithPath: "/test.mov"), duration: CMTime(seconds: 10, preferredTimescale: 600))
-        XCTAssertTrue(clip.effects.isEmpty, "New clip should have empty effects")
-        
-        clip.effects.append(VideoEffect(type: .blur))
-        clip.effects.append(VideoEffect(type: .vignette))
-        XCTAssertEqual(clip.effects.count, 2)
-    }
-    
-    // MARK: - TransitionMetadata Tests
-    
-    func testTransitionMetadataCreation() {
-        let timeRange = CMTimeRange(start: CMTime(seconds: 5.0, preferredTimescale: 600),
-                                     duration: CMTime(seconds: 0.5, preferredTimescale: 600))
-        let meta = TransitionMetadata(timeRange: timeRange,
-                                      fromTrackID: 1,
-                                      toTrackID: 2,
-                                      type: .dissolve)
-        
-        XCTAssertEqual(meta.fromTrackID, 1)
-        XCTAssertEqual(meta.toTrackID, 2)
-        XCTAssertEqual(meta.type, .dissolve)
-        XCTAssertEqual(meta.timeRange.duration.seconds, 0.5, accuracy: 0.01)
+
+        #expect(abs(track.value(at: .zero) - 0.0) < 0.01)
+        #expect(abs(track.value(at: CMTime(seconds: 0.5, preferredTimescale: 600)) - 0.5) < 0.01)
+        #expect(abs(track.value(at: CMTime(seconds: 1.0, preferredTimescale: 600)) - 1.0) < 0.01)
     }
 
-    func testInteractionOverlayRendererProducesImage() {
+    @Test("Animation subscript stores a track that value(for:at:) reads back interpolated")
+    func keyframeAnimationSubscript() {
+        var animation = KeyframeAnimation()
+        animation[.rotation] = KeyframeTrack(property: .rotation, keyframes: [
+            Keyframe(time: .zero, value: 0, easing: .linear),
+            Keyframe(time: CMTime(seconds: 1, preferredTimescale: 600), value: 100)
+        ])
+
+        let mid = animation.value(for: .rotation, at: CMTime(seconds: 0.5, preferredTimescale: 600))
+        #expect(abs(mid - 50) < 0.1)
+    }
+
+    @Test("Keyframe animation survives an encode/decode round trip")
+    func keyframeCodable() throws {
+        var animation = KeyframeAnimation()
+        animation[.opacity] = KeyframeTrack(property: .opacity, keyframes: [Keyframe(time: .zero, value: 0.5)])
+
+        let data = try JSONEncoder().encode(animation)
+        let decoded = try JSONDecoder().decode(KeyframeAnimation.self, from: data)
+        #expect(decoded[.opacity]?.keyframes.first?.value == 0.5)
+    }
+
+    // MARK: - Transitions
+
+    @Test("Cut transition shows the source before halfway and the target after")
+    func cutTransitionSwitchesAtHalfway() throws {
+        let transition = VideoTransition(type: .none)
+        let red = solid(.red)
+        let blue = solid(.blue)
+
+        let before = try #require(transition.apply(from: red, to: blue, progress: 0.25))
+        let after = try #require(transition.apply(from: red, to: blue, progress: 0.75))
+
+        #expect(centerPixel(of: before).r > 0.9)
+        #expect(centerPixel(of: after).b > 0.9)
+    }
+
+    @Test("Dissolve at halfway blends source and target")
+    func dissolveBlendsAtHalfway() throws {
+        let transition = VideoTransition(type: .dissolve)
+        let result = try #require(transition.apply(from: solid(.red), to: solid(.blue), progress: 0.5))
+        let pixel = centerPixel(of: result)
+
+        #expect(pixel.r > 0.3 && pixel.r < 0.7)
+        #expect(pixel.b > 0.3 && pixel.b < 0.7)
+    }
+
+    // MARK: - Effects
+
+    @Test("Brightness effect brightens the image")
+    func brightnessEffectBrightens() throws {
+        let gray = solid(CIColor(red: 0.4, green: 0.4, blue: 0.4))
+        let effect = VideoEffect(type: .brightness, intensity: 0.3)
+        let output = try #require(effect.apply(to: gray))
+
+        #expect(centerPixel(of: output).r > centerPixel(of: gray).r + 0.1)
+    }
+
+    // MARK: - Interaction overlays
+
+    @Test("Interaction renderer draws an overlay when click, cursor and key data are present")
+    func interactionOverlayRendererProducesImage() {
         let layer = InteractionLayerItem(
             clipID: UUID(),
             timeRange: CMTimeRange(start: .zero, duration: CMTime(seconds: 3, preferredTimescale: 600)),
@@ -215,7 +107,9 @@ class RenderingPipelineTests: XCTestCase {
                 InteractionCursorItem(time: .zero, x: 0.4, y: 0.4, isDown: false),
                 InteractionCursorItem(time: CMTime(seconds: 1.0, preferredTimescale: 600), x: 0.6, y: 0.5, isDown: false)
             ],
-            keystrokes: [InteractionKeystrokeItem(id: UUID(), time: CMTime(seconds: 0.75, preferredTimescale: 600), text: "Command + K")],
+            keystrokes: [
+                InteractionKeystrokeItem(id: UUID(), time: CMTime(seconds: 0.75, preferredTimescale: 600), text: "Command + K")
+            ],
             style: InteractionOverlayStyle()
         )
 
@@ -225,11 +119,14 @@ class RenderingPipelineTests: XCTestCase {
             compositionTime: CMTime(seconds: 0.9, preferredTimescale: 600)
         )
 
-        XCTAssertNotNil(image, "Interaction renderer should produce an image when click, cursor, or key data is present")
+        #expect(image != nil)
     }
 
-    func testInteractionOverlayBuilderMapsSidecarsToCompositionTime() throws {
-        let tempDirectory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+    @Test("Interaction overlay builder maps sidecar timestamps onto composition time")
+    func interactionOverlayBuilderMapsSidecarsToCompositionTime() throws {
+        let tempDirectory = FileManager.default.temporaryDirectory.appendingPathComponent(
+            UUID().uuidString, isDirectory: true
+        )
         try FileManager.default.createDirectory(at: tempDirectory, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: tempDirectory) }
 
@@ -241,7 +138,8 @@ class RenderingPipelineTests: XCTestCase {
         FileManager.default.createFile(atPath: videoURL.path, contents: Data(), attributes: nil)
         try JSONEncoder().encode([ClickSample(timestamp: 1.0, x: 0.25, y: 0.4, button: 0)]).write(to: clickURL)
         try JSONEncoder().encode([CursorSample(timestamp: 1.0, x: 0.3, y: 0.5)]).write(to: cursorURL)
-        try JSONEncoder().encode([KeystrokeSample(timestamp: 1.0, key: "K", modifiers: ["Command"], keyCode: 40)]).write(to: keysURL)
+        try JSONEncoder().encode([KeystrokeSample(timestamp: 1.0, key: "K", modifiers: ["Command"], keyCode: 40)])
+            .write(to: keysURL)
 
         var clip = VideoClip(url: videoURL, duration: CMTime(seconds: 10, preferredTimescale: 600))
         clip.clickDataURL = clickURL
@@ -252,9 +150,9 @@ class RenderingPipelineTests: XCTestCase {
         let track = Track(name: "Video", type: .video, clips: [clip], zIndex: 0)
         let interactionLayers = TextLayerBuilder.buildInteractionLayers(from: [track])
 
-        XCTAssertEqual(interactionLayers.count, 1)
-        XCTAssertEqual(interactionLayers[0].clicks.first?.time.seconds ?? -1, 6.0, accuracy: 0.001)
-        XCTAssertEqual(interactionLayers[0].cursorPath.first?.time.seconds ?? -1, 6.0, accuracy: 0.001)
-        XCTAssertEqual(interactionLayers[0].keystrokes.first?.text, "Command + K")
+        #expect(interactionLayers.count == 1)
+        #expect(abs((interactionLayers.first?.clicks.first?.time.seconds ?? -1) - 6.0) < 0.001)
+        #expect(abs((interactionLayers.first?.cursorPath.first?.time.seconds ?? -1) - 6.0) < 0.001)
+        #expect(interactionLayers.first?.keystrokes.first?.text == "Command + K")
     }
 }

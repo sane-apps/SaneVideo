@@ -42,7 +42,9 @@ struct SidebarView: View {
                 .buttonStyle(.borderless)
                 .help("Help and keyboard shortcuts")
                 Spacer()
-                SaneStickyDonateButton(url: OpenSourceRelease.donationURL)
+                if OpenSourceRelease.donationURL != nil {
+                    SaneStickyDonateButton()
+                }
             }
             .padding(12)
         }

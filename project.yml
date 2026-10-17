@@ -45,7 +45,7 @@ settings:
 packages:
   SaneUI:
     url: https://github.com/sane-apps/SaneUI.git
-    revision: cd766fdb5f7b75e03ba69a38fca330a4554f00b1
+    revision: 48c1ded1b77a58dc129d844ee1dd4753c2386285
   FluidAudio:
     url: https://github.com/FluidInference/FluidAudio
     from: 0.17.7
@@ -196,7 +196,6 @@ targets:
           CODE_SIGN_ENTITLEMENTS: SaneVideo/SaneVideo-AppStore.entitlements
           PROVISIONING_PROFILE_SPECIFIER: "SaneVideo Mac App Store"
           OTHER_SWIFT_FLAGS: "-D APP_STORE"
-          INFOPLIST_KEY_AppStoreProductID: com.sanevideo.app.pro.access.v2
     preCompileScripts:
       - script: |
           export PATH="$PATH:/opt/homebrew/bin"

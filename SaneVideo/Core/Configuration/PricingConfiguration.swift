@@ -90,10 +90,6 @@ class PricingConfiguration {
         }
     }
 
-    func pricingMessage() -> String {
-        "Free, with 100% Transparent Code. Donate only if you want to support it."
-    }
-
     func valueProposition() -> String {
         "Every recording and edit tool stays unlocked."
     }

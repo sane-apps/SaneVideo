@@ -216,7 +216,7 @@ struct ThumbnailPickerSheet: View {
                         )
                         .overlay(
                             RoundedRectangle(cornerRadius: 8)
-                                .stroke(selectedStyle == style ? Color.accentColor : Color.clear, lineWidth: 1)
+                                .stroke(selectedStyle == style ? Theme.Colors.accent : Color.clear, lineWidth: 1)
                         )
                     }
                     .buttonStyle(.plain)

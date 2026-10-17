@@ -231,13 +231,9 @@ struct InspectorHeader: View {
         .padding()
         .background(
             LinearGradient(
-                colors: [
-                    Theme.Colors.ambientDeep.opacity(0.68),
-                    Theme.Colors.accentDeep.opacity(0.24),
-                    .clear
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
+                colors: [Theme.Colors.editorPanel, Theme.Colors.editorPanel],
+                startPoint: .top,
+                endPoint: .bottom
             )
         )
         .accessibilityLabel("Inspector panel")

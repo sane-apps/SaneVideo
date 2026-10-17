@@ -37,22 +37,22 @@ enum Theme {
         static let textSecondary = Color.white
         static let textTertiary = Color.white.opacity(0.92)
 
-        static let cardBackground = Color.white.opacity(0.08)
-        static let border = Color.white.opacity(0.18)
-        static let divider = Color.white.opacity(0.16)
-        static let helperBackground = Color(red: 0.08, green: 0.13, blue: 0.28)
+        static let cardBackground = Color.white.opacity(0.05)
+        static let border = Color.white.opacity(0.10)
+        static let divider = Color.white.opacity(0.09)
+        static let helperBackground = Color(red: 0.12, green: 0.125, blue: 0.145)
         static let helperTint = SaneVideoPalette.ambientGlow.opacity(0.30)
         static let helperTintStrong = accentDeep.opacity(0.46)
         static let accentGlow = accent.opacity(0.28)
         static let accentGlowStrong = accentSoft.opacity(0.40)
         static let ambientDeep = SaneVideoPalette.ambientDeep
         static let ambientMid = SaneVideoPalette.ambientMid
-        static let editorBase = Color(red: 0.05, green: 0.07, blue: 0.14)
-        static let editorPanel = Color(red: 0.08, green: 0.11, blue: 0.22)
-        static let editorPanelElevated = Color(red: 0.10, green: 0.15, blue: 0.30)
-        static let editorStroke = Color.white.opacity(0.18)
-        static let rowIdle = Color.white.opacity(0.06)
-        static let rowSelected = accent.opacity(0.28)
+        static let editorBase = Color(red: 0.065, green: 0.07, blue: 0.08)
+        static let editorPanel = Color(red: 0.10, green: 0.105, blue: 0.12)
+        static let editorPanelElevated = Color(red: 0.14, green: 0.145, blue: 0.165)
+        static let editorStroke = Color.white.opacity(0.08)
+        static let rowIdle = Color.white.opacity(0.04)
+        static let rowSelected = accent.opacity(0.30)
         static let disabledFill = Color.white.opacity(0.20)
         static let disabledText = Color.white.opacity(0.88)
 
@@ -473,68 +473,16 @@ struct FeatureBadge: View {
     }
 }
 
+/// Neutral dark base with one faint accent glow; replaces the old stacked navy gradients.
 struct SaneVideoAmbientBackground: View {
-    @Environment(\.colorScheme) private var colorScheme
-
     var body: some View {
         ZStack {
-            SaneGradientBackground()
-
-            LinearGradient(
-                colors: [
-                    Color.deepNavy.opacity(colorScheme == .dark ? 0.82 : 0.08),
-                    Theme.Colors.ambientDeep.opacity(colorScheme == .dark ? 0.74 : 0.04),
-                    Theme.Colors.ambientMid.opacity(colorScheme == .dark ? 0.62 : 0.02)
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-
-            LinearGradient(
-                colors: colorScheme == .dark
-                    ? [
-                        Color.deepNavy.opacity(0.52),
-                        Theme.Colors.ambientDeep.opacity(0.60),
-                        Theme.Colors.ambientMid.opacity(0.46)
-                    ]
-                    : [
-                        Theme.Colors.accentSoft.opacity(0.10),
-                        Theme.Colors.accent.opacity(0.06),
-                        Color.white.opacity(0.0)
-                    ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-
+            Theme.Colors.editorBase
             RadialGradient(
-                colors: [
-                    Theme.Colors.accentGlowStrong.opacity(colorScheme == .dark ? 0.98 : 0.45),
-                    Theme.Colors.accent.opacity(colorScheme == .dark ? 0.16 : 0.08),
-                    .clear
-                ],
+                colors: [Theme.Colors.accent.opacity(0.10), .clear],
                 center: .topTrailing,
-                startRadius: 18,
-                endRadius: 520
-            )
-
-            RadialGradient(
-                colors: [
-                    Theme.Colors.ambientMid.opacity(colorScheme == .dark ? 0.42 : 0.12),
-                    .clear
-                ],
-                center: .center,
-                startRadius: 48,
-                endRadius: 640
-            )
-
-            RadialGradient(
-                colors: [
-                    Theme.Colors.accentEdge.opacity(colorScheme == .dark ? 0.12 : 0.06),
-                    .clear
-                ],
-                center: .bottomLeading,
-                startRadius: 24,
-                endRadius: 300
+                startRadius: 0,
+                endRadius: 720
             )
         }
         .ignoresSafeArea()

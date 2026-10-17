@@ -48,14 +48,14 @@ struct EffectsPickerView: View {
                         .fontWeight(selectedCategory == category ? .bold : .regular)
                         .padding(.horizontal, 10)
                         .padding(.vertical, 5)
-                        .background(selectedCategory == category ? Color.accentColor : Color.stone.opacity(0.2))
+                        .background(selectedCategory == category ? Theme.Colors.accent : Color.stone.opacity(0.2))
                         .foregroundColor(selectedCategory == category ? .white : .primary)
                         .cornerRadius(12)
                         .overlay(
                             RoundedRectangle(cornerRadius: 12)
-                                .stroke(selectedCategory == category ? Color.accentColor.opacity(0.5) : Color.clear, lineWidth: 1)
+                                .stroke(selectedCategory == category ? Theme.Colors.accent.opacity(0.5) : Color.clear, lineWidth: 1)
                         )
-                        .shadow(color: selectedCategory == category ? Color.accentColor.opacity(0.3) : .clear, radius: 4, x: 0, y: 2)
+                        .shadow(color: selectedCategory == category ? Theme.Colors.accent.opacity(0.3) : .clear, radius: 4, x: 0, y: 2)
                         .buttonStyle(.plain)
                         .hoverScale(1.05)
                         .animation(.smoothUI, value: selectedCategory)
@@ -195,21 +195,21 @@ struct EffectTile: View {
                             .clipShape(RoundedRectangle(cornerRadius: 8))
                             .overlay(
                                 RoundedRectangle(cornerRadius: 8)
-                                    .stroke(isActive ? Color.accentColor : Color.stone.opacity(0.3), lineWidth: isActive ? 2 : 1)
+                                    .stroke(isActive ? Theme.Colors.accent : Color.stone.opacity(0.3), lineWidth: isActive ? 2 : 1)
                             )
                             .saturation(isActive ? 1.0 : 0.8)  // Slight desaturation when inactive
                     } else {
                         RoundedRectangle(cornerRadius: 8)
-                            .fill(isActive ? Color.accentColor.opacity(0.2) : Color.stone.opacity(0.15))
+                            .fill(isActive ? Theme.Colors.accent.opacity(0.2) : Color.stone.opacity(0.15))
                             .frame(width: 64, height: 64)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 8)
-                                    .stroke(isActive ? Color.accentColor : Color.clear, lineWidth: 2)
+                                    .stroke(isActive ? Theme.Colors.accent : Color.clear, lineWidth: 2)
                             )
 
                         Image(systemName: effectType.icon)
                             .font(.system(size: 20))
-                            .foregroundColor(isActive ? .accentColor : .primary)
+                            .foregroundColor(isActive ? Theme.Colors.accent : .primary)
                     }
 
                     if isActive {
@@ -219,7 +219,7 @@ struct EffectTile: View {
                                 Image(systemName: "checkmark.circle.fill")
                                     .font(.system(size: 14))
                                     .foregroundColor(.white)
-                                    .background(Circle().fill(Color.accentColor))
+                                    .background(Circle().fill(Theme.Colors.accent))
                             }
                             Spacer()
                         }
@@ -231,7 +231,7 @@ struct EffectTile: View {
                 Text(effectType.displayName)
                     .font(.system(size: 10))
                     .fontWeight(isActive ? .bold : .regular)
-                    .foregroundColor(isActive ? .accentColor : Color.stone)
+                    .foregroundColor(isActive ? Theme.Colors.accent : Color.stone)
                     .lineLimit(1)
             }
         })
@@ -294,7 +294,7 @@ struct ActiveEffectRow: View {
         HStack(spacing: 6) {
             Image(systemName: effect.type.icon)
                 .font(.system(size: 12))
-                .foregroundColor(.accentColor)
+                .foregroundColor(Theme.Colors.accent)
                 .frame(width: 18)
 
             Text(effect.type.displayName)
@@ -326,11 +326,11 @@ struct ActiveEffectRow: View {
         }
         .padding(.vertical, 4)
         .padding(.horizontal, 6)
-        .background(Color.accentColor.opacity(0.1))
+        .background(Theme.Colors.accent.opacity(0.1))
         .cornerRadius(6)
         .overlay(
             RoundedRectangle(cornerRadius: 6)
-                .stroke(Color.accentColor.opacity(0.2), lineWidth: 1)
+                .stroke(Theme.Colors.accent.opacity(0.2), lineWidth: 1)
         )
         // No .smoothAppear(): its animation shifts layout.
     }

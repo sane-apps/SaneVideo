@@ -36,7 +36,7 @@ struct EditorEmptyStateView: View {
                     }
                 )
                 .buttonStyle(.borderedProminent)
-                .tint(.accentColor)
+                .tint(Theme.Colors.accent)
                 .controlSize(.large)
 
                 Button(

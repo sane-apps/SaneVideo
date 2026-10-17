@@ -88,7 +88,7 @@ struct ThumbnailCard: View {
                     if score > 0 {
                         Image(systemName: "face.smiling.fill")
                             .font(.system(size: Theme.Typography.fontSizeSM, weight: .semibold))
-                            .foregroundStyle(Color.accentColor)
+                            .foregroundStyle(Theme.Colors.accent)
                     }
                 }
             }
@@ -99,7 +99,7 @@ struct ThumbnailCard: View {
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 8)
-                    .stroke(isSelected ? Color.accentColor : Color.clear, lineWidth: 2)
+                    .stroke(isSelected ? Theme.Colors.accent : Color.clear, lineWidth: 2)
             )
         }
         .buttonStyle(.plain)

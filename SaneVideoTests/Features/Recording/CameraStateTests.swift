@@ -205,7 +205,7 @@ struct CameraStateTests {
         let started = await waitUntil(timeout: .milliseconds(400)) { cameraState.isPreviewWarmingUp }
         #expect(started)
 
-        mock.hasVideoSignalSubject.send(true)
+        mock.hasVideoSignal = true
         let ended = await waitUntil(timeout: .seconds(1)) { !cameraState.isPreviewWarmingUp }
         #expect(ended, "The first frame should end the warm-up in about 0.3 s")
     }

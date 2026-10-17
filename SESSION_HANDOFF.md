@@ -9,6 +9,14 @@ outputs/audit-20261016/FEATURE_DECISIONS.md (findings + decisions), TEST_TRIAGE.
   audio-input entitlement. SaneProcess: dedupe skips --help/busy lock (714a964); sane_test entitlements fallback.
 - Owner decisions: Apple SpeechAnalyzer default, min macOS 26; keep an optional Whisper engine (opt-in, never
   preloaded, small + large-v3-turbo). UI redesign after cuts, ASCII mockup first (owner: washed out, boxes in boxes).
+- 22:35 ET progress (commits 35215da..0b725c3 on main, not pushed): every feature live-tested on the Mini with
+  the EMEET; fixed export destination (Movies/SaneVideo/Exports), native GIF (ffmpeg was dev-only), Shorts sheet,
+  recordings always become projects, camera bubble position/rounding, 5 s record-start delay, preview during
+  recording, camera released in editor, undo data loss across projects, caption filler words + timeline-mapped
+  subtitles, live background effects, recording clock, accessibility labels. Captions: Parakeet default (finds
+  um/uh), Apple optional. Ledger: outputs/audit-20261016/FEATURE_DECISIONS.md items 1-30.
+- A worktree agent is rebuilding the test suite (branch under .claude/worktrees/agent-*); merge its branch when done.
+- Waiting on owner "go" for the redesign mockup (posted 2026-10-16 ~22:00); then comment cleanup, verify, release.
 - Next: finish live checks (Magic Fix result, export, GIF, teleprompter, Shorts, thumbnail, voiceover, settings),
   then cuts (Demo Studio, dead Vision, sentiment, LUFS, limiter, iCloud, API keys/YouTube, dead files), engine swap,
   test prune, mockup, redesign, verify, live retest, release 1.1.0.

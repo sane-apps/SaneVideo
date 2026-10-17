@@ -150,6 +150,12 @@ class ProjectState {
     }
 
     private func restoreProjectState(_ project: VideoProject) {
+        // A snapshot from another project must never replace the open one (it was saved over a
+        // project's clips on 2026-10-16 when undo history survived a project switch).
+        guard project.id == currentProject?.id else {
+            AppLogger.project.warning("Ignoring undo snapshot from a different project")
+            return
+        }
         // Capture current state for Redo
         if let current = currentProject {
             undoManager?.registerUndo(withTarget: self) { target in
@@ -327,6 +333,10 @@ class ProjectState {
     }
 
     func saveProject(_ project: VideoProject) {
+        // Keep the sidebar list in step with what is saved (clip counts went stale).
+        if let index = projects.firstIndex(where: { $0.id == project.id }) {
+            projects[index] = project
+        }
         // CRITICAL: Wait for previous save to complete before starting new one
         // This prevents race conditions where last save might complete after new one
         let previousTask = pendingSaveTask
@@ -593,6 +603,10 @@ class ProjectState {
     // MARK: - Internal Helpers
 
     func updateCurrentProject(_ project: VideoProject?) {
+        // Undo history belongs to one project.
+        if project?.id != currentProject?.id {
+            undoManager?.removeAllActions()
+        }
         // CRITICAL FIX: Stop existing security scope session before creating a new one
         // This prevents security scope leaks when switching projects
         if let existingSession = currentScopeSession {

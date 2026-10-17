@@ -105,6 +105,8 @@ class AppState {
     var showQuickAccessOverlay = false
     var quickAccessRecordingURL: URL?
     var quickAccessThumbnail: NSImage?
+    /// Turns the finished recording into a project; Edit and Share wait for it.
+    var recordingImportTask: Task<Void, Never>?
 
     // MARK: - Timeline Selection (for multi-select and batch operations)
 

@@ -259,9 +259,9 @@ class ProjectState {
         return "\(baseName) \(number)"
     }
 
-    func startNewProject() {
+    func startNewProject(named name: String? = nil) {
         var project = VideoProject()
-        project.name = generateUniqueProjectName()
+        project.name = name ?? generateUniqueProjectName()
         updateCurrentProject(project)
         projects.insert(project, at: 0)
         saveProject(project)

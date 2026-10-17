@@ -15,6 +15,19 @@ struct CompactProjectBrowserView: View {
         appState.projectState.projects
     }
 
+    private var dateGroups: [(title: String, projects: [VideoProject])] {
+        let calendar = Calendar.current
+        let buckets: [(String, (Date) -> Bool)] = [
+            ("Today", { calendar.isDateInToday($0) }),
+            ("Yesterday", { calendar.isDateInYesterday($0) }),
+            ("Earlier", { !calendar.isDateInToday($0) && !calendar.isDateInYesterday($0) })
+        ]
+        return buckets.compactMap { title, matches in
+            let items = projects.filter { matches($0.modifiedAt) }
+            return items.isEmpty ? nil : (title, items)
+        }
+    }
+
     private var selectedProjects: [VideoProject] {
         projects.filter { selectedIds.contains($0.id) }
     }
@@ -22,7 +35,6 @@ struct CompactProjectBrowserView: View {
     var body: some View {
         VStack(spacing: 0) {
             headerView
-            Divider()
             projectListView
         }
         .onAppear {
@@ -39,26 +51,24 @@ struct CompactProjectBrowserView: View {
     @ViewBuilder
     private var headerView: some View {
         HStack {
-            Text("Projects")
-                .font(.headline)
             selectionCountLabel
             Spacer()
             newProjectMenu
         }
         .padding(.horizontal, 12)
-        .padding(.vertical, 8)
+        .padding(.bottom, 6)
     }
 
     @ViewBuilder
     private var selectionCountLabel: some View {
         if selectedIds.count > 1 {
-            Text("(\(selectedIds.count) selected)")
-                .font(.caption)
+            Text("\(selectedIds.count) selected")
+                .font(.system(size: 13))
                 .foregroundColor(Theme.Colors.accent)
         } else {
-            Text("(\(projects.count))")
-                .font(.caption)
-                .foregroundColor(Color.stone)
+            Text("\(projects.count) project\(projects.count == 1 ? "" : "s")")
+                .font(.system(size: 13))
+                .foregroundStyle(Theme.Colors.textPrimary.opacity(0.7))
         }
     }
 
@@ -78,12 +88,21 @@ struct CompactProjectBrowserView: View {
     @ViewBuilder
     private var projectListView: some View {
         ScrollView {
-            LazyVStack(spacing: 8) {
-                ForEach(projects) { project in
-                    projectRow(for: project)
+            LazyVStack(alignment: .leading, spacing: 2) {
+                ForEach(dateGroups, id: \.title) { group in
+                    Text(group.title)
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(Theme.Colors.textPrimary.opacity(0.7))
+                        .padding(.horizontal, 12)
+                        .padding(.top, 10)
+                        .padding(.bottom, 2)
+                    ForEach(group.projects) { project in
+                        projectRow(for: project)
+                    }
                 }
             }
-            .padding(.vertical, 8)
+            .padding(.horizontal, 6)
+            .padding(.bottom, 8)
         }
         .focusable()
         .focusEffectDisabled()
@@ -259,6 +278,14 @@ struct CompactProjectRow: View {
 
     @State private var thumbnail: NSImage?
 
+    private static func when(_ date: Date) -> String {
+        let calendar = Calendar.current
+        if calendar.isDateInToday(date) || calendar.isDateInYesterday(date) {
+            return date.formatted(date: .omitted, time: .shortened)
+        }
+        return date.formatted(.dateTime.month(.abbreviated).day())
+    }
+
     private var firstClip: VideoClip? {
         project.timeline.tracks.first(where: { !$0.clips.isEmpty })?.clips.first
     }
@@ -287,34 +314,23 @@ struct CompactProjectRow: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(project.name)
-                    .font(.system(size: 13, weight: isCurrent ? .semibold : .regular))
-                    .foregroundColor(isCurrent ? Theme.Colors.accent : .primary)
+                    .font(.system(size: 14, weight: isCurrent ? .semibold : .regular))
+                    .foregroundStyle(Theme.Colors.textPrimary)
                     .lineLimit(1)
+                    .truncationMode(.middle)
 
-                Text("\(project.clipCount) clip\(project.clipCount == 1 ? "" : "s")")
-                    .font(.caption2)
-                    .foregroundColor(Color.stone)
+                Text("\(Self.when(project.modifiedAt)) · \(project.clipCount) clip\(project.clipCount == 1 ? "" : "s")")
+                    .font(.system(size: 13))
+                    .foregroundStyle(Theme.Colors.textPrimary.opacity(0.7))
             }
 
-            Spacer()
-
-            if isCurrent {
-                Image(systemName: "checkmark.circle.fill")
-                    .foregroundColor(Theme.Colors.accent)
-                    .font(.system(size: 14))
-            }
+            Spacer(minLength: 0)
         }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 8)
+        .padding(.horizontal, 6)
+        .padding(.vertical, 6)
         .background {
-            RoundedRectangle(cornerRadius: 8)
-                .fill(isSelected ? Theme.Colors.accent.opacity(0.2) : (isCurrent ? Theme.Colors.accent.opacity(0.1) : Color.clear))
-        }
-        .overlay {
-            if isSelected {
-                RoundedRectangle(cornerRadius: 8)
-                    .stroke(Theme.Colors.accent, lineWidth: 2)
-            }
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .fill(isSelected ? Theme.Colors.accent.opacity(0.35) : (isCurrent ? Color.white.opacity(0.06) : Color.clear))
         }
         .contentShape(Rectangle())
         .onTapGesture {

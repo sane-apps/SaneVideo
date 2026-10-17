@@ -1,6 +1,6 @@
 import Foundation
 
-/// Sends caption requests to the engine chosen in Settings. Models load only when captions are requested.
+/// Sends caption requests to the engine chosen in Settings. Parakeet loads on request, or early via warmUp().
 @MainActor
 @Observable
 final class TranscriptionCoordinator: TranscriptionCoordinatorProtocol {
@@ -21,5 +21,14 @@ final class TranscriptionCoordinator: TranscriptionCoordinatorProtocol {
         }
         AppLogger.project.info("Captions: using \(String(describing: type(of: service)))")
         return try await service.generateCaptions(for: videoURL, progressHandler: progressHandler)
+    }
+
+    /// Loads Parakeet in the background so the first Clean Up does not wait ~45 s for it.
+    /// Only when it is the chosen engine and already downloaded: never starts the 600 MB download.
+    func warmUp() {
+        guard ServiceContainer.shared.userPreferences.transcriptionEngine == .parakeet,
+              ParakeetService.isDownloaded else { return }
+        let parakeet = parakeet
+        Task(priority: .utility) { await parakeet.warmUp() }
     }
 }

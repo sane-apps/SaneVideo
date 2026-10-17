@@ -1,5 +1,6 @@
 import SwiftUI
 
+/// A titled group inside an inspector section; no border, so sections never nest boxes.
 struct ToolCard<Content: View>: View {
   let title: String
   let icon: String
@@ -14,38 +15,13 @@ struct ToolCard<Content: View>: View {
   }
 
   var body: some View {
-    VStack(alignment: .leading, spacing: Theme.Dimensions.spacingSM) {
-      HStack(spacing: Theme.Dimensions.spacingMD) {
-        Image(systemName: icon)
-          .foregroundColor(.white)
-          .font(.system(size: Theme.Typography.iconSizeSM, weight: .bold))
-          .frame(width: 26, height: 26)
-          .background(color.opacity(0.95), in: RoundedRectangle(cornerRadius: 6, style: .continuous))
-          .overlay(
-            RoundedRectangle(cornerRadius: 6, style: .continuous)
-              .stroke(Color.white.opacity(0.28), lineWidth: 1)
-          )
-        Text(title.uppercased())
-          .font(.system(size: Theme.Typography.fontSizeXS, weight: .bold))
-          .foregroundColor(.white)
-          .tracking(0)
-        Spacer()
-      }
-
+    VStack(alignment: .leading, spacing: 8) {
+      Text(title)
+        .font(.system(size: 13, weight: .semibold))
+        .foregroundStyle(Theme.Colors.textPrimary.opacity(0.85))
       content
     }
-    .padding(Theme.Dimensions.paddingMD)
-    .background(
-      RoundedRectangle(cornerRadius: Theme.Dimensions.cornerRadius, style: .continuous)
-        .fill(Color.white.opacity(0.075))
-    )
-    .cornerRadius(Theme.Dimensions.cornerRadius)
-    .overlay(
-      RoundedRectangle(cornerRadius: Theme.Dimensions.cornerRadius)
-        .stroke(Color.white.opacity(0.18), lineWidth: 1)
-    )
-    .smoothAppear()
-    .frame(minWidth: 160, maxWidth: .infinity)
+    .frame(minWidth: 160, maxWidth: .infinity, alignment: .leading)
   }
 }
 
@@ -58,34 +34,21 @@ struct InspectorToggle: View {
   var identifier: String?
 
   var body: some View {
-    HStack(alignment: .center, spacing: Theme.Dimensions.spacingSM) {
+    HStack(alignment: .center, spacing: 10) {
       Image(systemName: icon)
-        .font(.system(size: Theme.Typography.iconSizeSM, weight: .semibold))
-        .frame(width: 28, height: 28)
-        .background(
-          RoundedRectangle(cornerRadius: 8, style: .continuous)
-            .fill(isOn ? color.opacity(0.95) : Color.white.opacity(0.13))
-        )
-        .foregroundColor(.white)
-        .overlay(
-          RoundedRectangle(cornerRadius: 8, style: .continuous)
-            .stroke(isOn ? Color.white.opacity(0.32) : Color.white.opacity(0.18), lineWidth: 1)
-        )
-        .shadow(color: isOn ? color.opacity(0.25) : .clear, radius: 5, x: 0, y: 2)
+        .font(.system(size: 14, weight: .medium))
+        .foregroundStyle(isOn ? Theme.Colors.accent : Theme.Colors.textPrimary.opacity(0.7))
+        .frame(width: 20)
 
-      VStack(alignment: .leading, spacing: 2) {
+      VStack(alignment: .leading, spacing: 1) {
         Text(title)
-          .font(.system(size: Theme.Typography.fontSizeSM, weight: .semibold))
-          .foregroundColor(.white)
+          .font(.system(size: 14, weight: .medium))
+          .foregroundStyle(Theme.Colors.textPrimary)
           .lineLimit(1)
-          .minimumScaleFactor(0.82)
-          .allowsTightening(true)
-          .multilineTextAlignment(.leading)
         Text(subtitle)
-          .font(.system(size: Theme.Typography.fontSizeXS))
-          .foregroundStyle(.white.opacity(0.92))
+          .font(.system(size: 13))
+          .foregroundStyle(Theme.Colors.textPrimary.opacity(0.8))
           .lineLimit(2)
-          .multilineTextAlignment(.leading)
       }
       .layoutPriority(1)
       .frame(maxWidth: .infinity, alignment: .leading)
@@ -93,24 +56,13 @@ struct InspectorToggle: View {
       Toggle("", isOn: $isOn)
         .labelsHidden()
         .toggleStyle(.switch)
-        .tint(Theme.Colors.accent)
         .accessibilityLabel(title)
         .accessibilityIdentifier(identifier ?? "Toggle_\(title)")
         .controlSize(.small)
     }
     .frame(minWidth: 160, maxWidth: .infinity, alignment: .leading)
     .padding(.vertical, 6)
-    .padding(.horizontal, 6)
-    .background(
-      RoundedRectangle(cornerRadius: 8, style: .continuous)
-        .fill(isOn ? Color.white.opacity(0.055) : Color.white.opacity(0.035))
-    )
-    .overlay(
-      RoundedRectangle(cornerRadius: 8, style: .continuous)
-        .stroke(Color.white.opacity(isOn ? 0.14 : 0.08), lineWidth: 1)
-    )
     .accessibilityIdentifier(
-      identifier != nil
-        ? "Row_\(identifier!.replacingOccurrences(of: "Toggle_", with: ""))" : "Row_\(title)")
+      identifier.map { "Row_\($0.replacingOccurrences(of: "Toggle_", with: ""))" } ?? "Row_\(title)")
   }
 }

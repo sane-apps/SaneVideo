@@ -160,11 +160,8 @@ struct MainContentView: View {
                 }
                 .sheet(isPresented: $showTranscriptSheet) {
                     if let project = appState.projectState.currentProject {
-                        let captions = project.timeline.tracks
-                            .flatMap(\.clips)
-                            .flatMap(\.captions)
                         TranscriptExportSheet(
-                            captions: captions,
+                            captions: project.timelineCaptions,
                             projectName: project.name
                         )
                     }
@@ -178,11 +175,8 @@ struct MainContentView: View {
                 }
                 .sheet(isPresented: $showVoiceoverSheet) {
                     if let project = appState.projectState.currentProject {
-                        let captions = project.timeline.tracks
-                            .flatMap(\.clips)
-                            .flatMap(\.captions)
                         VoiceoverSettingsSheet(
-                            captions: captions,
+                            captions: project.timelineCaptions,
                             projectName: project.name,
                             onGenerate: { url in
                                 ServiceContainer.shared.toastManager.show(

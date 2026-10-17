@@ -577,6 +577,8 @@ extension ProjectState {
       currentProject = project
       saveProject(project)
 
+      // Like other effects, the preview composition must rebuild to show the new background.
+      NotificationCenter.default.post(name: NSNotification.Name("ProjectEffectsChanged"), object: project)
       let effectName = effect?.displayName ?? "None"
       AppLogger.project.info("Updated clip background effect: \(effectName)")
       ServiceContainer.shared.toastManager.show("Background: \(effectName)")

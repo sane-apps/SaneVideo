@@ -35,7 +35,7 @@ enum TextLayerBuilder {
                 let clipStart = clip.startTime
 
                 // 1. Captions
-                for caption in clip.captions {
+                for caption in clip.captions.compactMap({ $0.removingWords(in: clip.removedRanges) }) {
                     let capStart = caption.startTime
                     let capEnd = caption.endTime
 

@@ -232,59 +232,25 @@ extension View {
     func saneInsetSection(radius: CGFloat = 12) -> some View {
         background(
             RoundedRectangle(cornerRadius: radius, style: .continuous)
-                .fill(Theme.Colors.editorPanelElevated)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: radius, style: .continuous)
-                .strokeBorder(Color.white.opacity(0.14), lineWidth: 1)
+                .fill(Color.white.opacity(0.04))
         )
         .clipShape(RoundedRectangle(cornerRadius: radius, style: .continuous))
     }
 }
 
+/// A surface is a slightly lighter fill, never a border: nested panels then read as one flat page.
 private struct SanePanelModifier: ViewModifier {
     let radius: CGFloat
     let emphasized: Bool
     let accent: Color?
 
-    private var accentColor: Color {
-        accent ?? Theme.Colors.accent
-    }
-
     func body(content: Content) -> some View {
         content
-            .background {
+            .background(
                 RoundedRectangle(cornerRadius: radius, style: .continuous)
-                    .fill(
-                        LinearGradient(
-                            colors: emphasized
-                                ? [
-                                    Theme.Colors.editorPanelElevated,
-                                    Theme.Colors.editorPanel
-                                ]
-                                : [
-                                    Theme.Colors.editorPanel,
-                                    Theme.Colors.editorBase
-                                ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-            }
-            .clipShape(RoundedRectangle(cornerRadius: radius, style: .continuous))
-            .overlay {
-                RoundedRectangle(cornerRadius: radius, style: .continuous)
-                    .strokeBorder(
-                        Color.white.opacity(emphasized ? 0.22 : 0.14),
-                        lineWidth: 1
-                    )
-            }
-            .shadow(
-                color: Color.black.opacity(emphasized ? 0.35 : 0.22),
-                radius: emphasized ? 18 : 10,
-                x: 0,
-                y: emphasized ? 10 : 6
+                    .fill(emphasized ? Theme.Colors.editorPanel : Color.white.opacity(0.04))
             )
+            .clipShape(RoundedRectangle(cornerRadius: radius, style: .continuous))
     }
 }
 

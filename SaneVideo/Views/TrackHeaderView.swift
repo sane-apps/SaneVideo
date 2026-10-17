@@ -102,7 +102,7 @@ struct AddTrackButton: View {
         } label: {
             HStack {
                 Image(systemName: "plus.circle.fill")
-                    .foregroundColor(.accentColor)
+                    .foregroundColor(Theme.Colors.accent)
                 Text(String(localized: "timeline.add_track", defaultValue: "Add Track"))
                     .font(.caption)
             }

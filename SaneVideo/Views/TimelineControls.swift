@@ -78,7 +78,7 @@ struct TimelineControls: View {
                 label: {
                     Image(systemName: "arrow.uturn.backward")
                         .font(.system(size: 12))
-                        .foregroundColor(undoManager?.canUndo == true ? .accentColor : Color.stone.opacity(0.5))
+                        .foregroundColor(undoManager?.canUndo == true ? Theme.Colors.accent : Color.stone.opacity(0.5))
                 }
             )
             .buttonStyle(.plain)
@@ -92,7 +92,7 @@ struct TimelineControls: View {
                 label: {
                     Image(systemName: "arrow.uturn.forward")
                         .font(.system(size: 12))
-                        .foregroundColor(undoManager?.canRedo == true ? .accentColor : Color.stone.opacity(0.5))
+                        .foregroundColor(undoManager?.canRedo == true ? Theme.Colors.accent : Color.stone.opacity(0.5))
                 }
             )
             .buttonStyle(.plain)
@@ -127,7 +127,7 @@ struct TimelineControls: View {
                 label: {
                     Image(systemName: "backward.frame.fill")
                         .font(.system(size: 12))
-                        .foregroundColor(.accentColor)
+                        .foregroundColor(Theme.Colors.accent)
                 }
             )
             .buttonStyle(.plain)
@@ -142,9 +142,9 @@ struct TimelineControls: View {
                 label: {
                     Image(systemName: playbackState.isPlaying ? "pause.fill" : "play.fill")
                         .font(.system(size: 14))
-                        .foregroundColor(.accentColor)
+                        .foregroundColor(Theme.Colors.accent)
                         .frame(width: 28, height: 28)
-                        .background(Color.accentColor.opacity(0.15), in: Circle())
+                        .background(Theme.Colors.accent.opacity(0.15), in: Circle())
                 }
             )
             .buttonStyle(.plain)
@@ -161,7 +161,7 @@ struct TimelineControls: View {
                 label: {
                     Image(systemName: "forward.frame.fill")
                         .font(.system(size: 12))
-                        .foregroundColor(.accentColor)
+                        .foregroundColor(Theme.Colors.accent)
                 }
             )
             .buttonStyle(.plain)
@@ -219,7 +219,7 @@ struct TimelineControls: View {
                 label: {
                     Image(systemName: isMuted || volume == 0 ? "speaker.slash.fill" : volumeIcon)
                         .font(.system(size: 11))
-                        .foregroundColor(isMuted ? Color.stone : .accentColor)
+                        .foregroundColor(isMuted ? Color.stone : Theme.Colors.accent)
                         .frame(width: 20)
                 }
             )
@@ -236,7 +236,7 @@ struct TimelineControls: View {
                 }
             }
             .frame(width: 50)
-            .tint(.accentColor)
+            .tint(Theme.Colors.accent)
             .accessibilityIdentifier("player.volume")
             .accessibilityLabel("Volume")
         }
@@ -303,7 +303,7 @@ struct TimelineControls: View {
                 action: { snapEnabled.toggle() },
                 label: {
                     Image(systemName: "bolt.fill")
-                        .foregroundColor(snapEnabled ? .accentColor : Color.stone)
+                        .foregroundColor(snapEnabled ? Theme.Colors.accent : Color.stone)
                         .font(.system(size: 11))
                         .opacity(snapEnabled ? 1.0 : 0.6)
                 }
@@ -319,7 +319,7 @@ struct TimelineControls: View {
                 action: { magneticTimeline.toggle() },
                 label: {
                     Image(systemName: magneticTimeline ? "arrow.left.to.line.compact" : "arrow.left.to.line")
-                        .foregroundColor(magneticTimeline ? .accentColor : Color.stone)
+                        .foregroundColor(magneticTimeline ? Theme.Colors.accent : Color.stone)
                         .font(.system(size: 11))
                 }
             )
@@ -337,7 +337,7 @@ struct TimelineControls: View {
 
                 Slider(value: $zoomLevel, in: TimelineZoomCalculator.minimumZoom ... TimelineZoomCalculator.maximumZoom, step: 0.01)
                     .frame(width: 60)
-                    .tint(.accentColor)
+                    .tint(Theme.Colors.accent)
                     .accessibilityIdentifier("timeline.zoom_slider")
                     .accessibilityLabel("Timeline zoom")
 
@@ -365,9 +365,9 @@ struct TimelineControls: View {
             label: {
                 Image(systemName: displayMode.icon)
                     .font(.system(size: 11, weight: .medium))
-                    .foregroundColor(.accentColor)
+                    .foregroundColor(Theme.Colors.accent)
                     .frame(width: 26, height: 26)
-                    .background(Color.accentColor.opacity(0.1))
+                    .background(Theme.Colors.accent.opacity(0.1))
                     .cornerRadius(6)
             }
         )
@@ -410,8 +410,8 @@ struct ToolButton: View {
             Image(systemName: icon)
                 .font(.system(size: 11, weight: .medium))
                 .frame(width: 26, height: 26)
-                .background(isSelected ? Color.accentColor.opacity(0.15) : Color.clear)
-                .foregroundColor(isSelected ? .accentColor : .primary)
+                .background(isSelected ? Theme.Colors.accent.opacity(0.15) : Color.clear)
+                .foregroundColor(isSelected ? Theme.Colors.accent : .primary)
                 .cornerRadius(6)
         }
         .buttonStyle(.plain)

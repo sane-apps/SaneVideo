@@ -22,7 +22,7 @@ struct ClipTrimHandle: View {
         ZStack {
             // Touch target - Transparent but wide for easy grabbing
             Rectangle()
-                .fill(Color.accentColor.opacity(0.01))
+                .fill(Theme.Colors.accent.opacity(0.01))
                 .frame(width: 20, height: clipHeight)
 
             RoundedRectangle(cornerRadius: 4)
@@ -33,14 +33,14 @@ struct ClipTrimHandle: View {
                     HStack(spacing: 2) {
                         ForEach(0..<3) { _ in
                             Capsule()
-                                .fill(Color.accentColor)
+                                .fill(Theme.Colors.accent)
                                 .frame(width: 2, height: 12)
                         }
                     }
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 4)
-                        .stroke(Color.accentColor, lineWidth: 1)
+                        .stroke(Theme.Colors.accent, lineWidth: 1)
                 )
         }
         // Offset the handle during a drag so it stays under the cursor as the clip resizes.

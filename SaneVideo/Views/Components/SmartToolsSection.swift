@@ -113,7 +113,7 @@ struct SmartToolsSection: View {
             }
             Slider(value: $options.silenceThreshold, in: -60 ... -20, step: 1)
               .controlSize(.small)
-              .tint(.accentColor)
+              .tint(Theme.Colors.accent)
           }
           .padding(.vertical, Theme.Dimensions.paddingSM)
           .padding(.horizontal, Theme.Dimensions.paddingSM)

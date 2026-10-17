@@ -145,9 +145,9 @@ struct CanvasOverlay: View {
                     let finalY = 0.8 + currentOffset.height + normalizedDragY
 
                     Rectangle()
-                        .strokeBorder(Color.accentColor, style: StrokeStyle(lineWidth: 2, dash: [5]))
-                        .background(Color.accentColor.opacity(0.1))
-                        .overlay(Text("Captions Area").font(.caption).foregroundStyle(Color.accentColor))
+                        .strokeBorder(Theme.Colors.accent, style: StrokeStyle(lineWidth: 2, dash: [5]))
+                        .background(Theme.Colors.accent.opacity(0.1))
+                        .overlay(Text("Captions Area").font(.caption).foregroundStyle(Theme.Colors.accent))
                         .position(
                             x: (finalX + 0.4) * geo.size.width,
                             y: (finalY + 0.075) * geo.size.height
@@ -168,7 +168,7 @@ struct CanvasOverlay: View {
                         let currentRotation = Angle(radians: overlay.rotation) + rotationDelta
 
                         Rectangle()
-                            .strokeBorder(isInteracting ? Color.accentColor : Color.white.opacity(0.5), style: StrokeStyle(lineWidth: 2, dash: [5]))
+                            .strokeBorder(isInteracting ? Theme.Colors.accent : Color.white.opacity(0.5), style: StrokeStyle(lineWidth: 2, dash: [5]))
                             .background(Color.black.opacity(0.01)) // catch hits
                             .frame(
                                 width: VideoClip.VideoOverlay.defaultBoxSize.width * geo.size.width,
@@ -188,11 +188,11 @@ struct CanvasOverlay: View {
                 if interactionTarget == .clip && (localTranslation != .zero || localScale != 1.0) {
                     ZStack {
                         Circle()
-                            .strokeBorder(Color.accentColor, lineWidth: 2)
-                            .background(Circle().fill(Color.accentColor.opacity(0.2)))
+                            .strokeBorder(Theme.Colors.accent, lineWidth: 2)
+                            .background(Circle().fill(Theme.Colors.accent.opacity(0.2)))
                             .frame(width: 20, height: 20)
-                        Rectangle().fill(Color.accentColor).frame(width: 40, height: 1)
-                        Rectangle().fill(Color.accentColor).frame(width: 1, height: 40)
+                        Rectangle().fill(Theme.Colors.accent).frame(width: 40, height: 1)
+                        Rectangle().fill(Theme.Colors.accent).frame(width: 1, height: 40)
                     }
                     .position(x: geo.size.width / 2, y: geo.size.height / 2)
                     .offset(x: localTranslation.width, y: localTranslation.height)

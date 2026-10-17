@@ -86,10 +86,10 @@ struct TimelineClipView: View {
         // Only offset entire clip for left handle drag
         // Right handle stays in place via its own offset
         .offset(x: isDraggingLeftHandle ? leftTrimOffset : 0)
-        .background(isSelected ? Color.accentColor : Color.stone.opacity(0.3))
+        .background(isSelected ? Theme.Colors.accent : Color.stone.opacity(0.3))
         .cornerRadius(Theme.Dimensions.cornerRadius)
         .shadow(color: .black.opacity(0.3), radius: 2, x: 0, y: 1)
-        .overlay(RoundedRectangle(cornerRadius: 6).stroke(isSelected ? Color.accentColor : Color.clear, lineWidth: 2))
+        .overlay(RoundedRectangle(cornerRadius: 6).stroke(isSelected ? Theme.Colors.accent : Color.clear, lineWidth: 2))
         .onHover { hovering in
             // No scaling while hovering a trim handle, so the clip doesn't grow as the user grabs it.
             guard !isHoveringHandle else { return }
@@ -166,7 +166,7 @@ struct TimelineClipView: View {
                 }
             } else {
                 ZStack(alignment: .leading) {
-                    Rectangle().fill(Color.accentColor.opacity(0.3))
+                    Rectangle().fill(Theme.Colors.accent.opacity(0.3))
                     thumbnailStrip
                     clipLabel
                 }
@@ -244,7 +244,7 @@ struct TimelineClipView: View {
 
     private var stitchMarkerOverlay: some View {
         ForEach(stitchMarkers, id: \.self) { progress in
-            Rectangle().fill(Color.accentColor).frame(width: 1)
+            Rectangle().fill(Theme.Colors.accent).frame(width: 1)
                 .offset(x: CGFloat(progress) * max(0, clipWidth - handleWidth * 2))
         }
     }
@@ -264,7 +264,7 @@ struct TimelineClipView: View {
                     let clampedX = max(0, min(innerWidth - overlapWidth, unclampedX))
 
                     Rectangle()
-                        .fill(Color.accentColor.opacity(0.12))
+                        .fill(Theme.Colors.accent.opacity(0.12))
                         .frame(width: overlapWidth, height: clipHeight * 0.45)
                         .offset(x: clampedX)
                 }

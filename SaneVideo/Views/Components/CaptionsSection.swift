@@ -74,7 +74,7 @@ struct CaptionsSection: View {
                 .foregroundColor(Color.stone)
         }
         .padding(10)
-        .background(Color.accentColor.opacity(0.05))
+        .background(Theme.Colors.accent.opacity(0.05))
         .cornerRadius(8)
     }
 
@@ -91,7 +91,7 @@ struct CaptionsSection: View {
 
             HStack(spacing: 8) {
                 Image(systemName: "arrow.right.circle")
-                    .foregroundColor(.accentColor)
+                    .foregroundColor(Theme.Colors.accent)
                 Text("Edit in **Transcript** sidebar tab")
                     .font(.caption)
                     .foregroundColor(Color.stone)

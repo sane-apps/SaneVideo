@@ -205,10 +205,10 @@ extension ProjectState {
         defer { endTransaction(batchTransactionId) }
 
         // One undo group so the whole batch undoes in one step.
-        beginUndoGroup("Magic Fix All")
+        beginUndoGroup("Clean Up All")
         defer { endUndoGroup() }
 
-        processingStatus = "✨ Magic Fix All: Processing \(allClips.count) clips..."
+        processingStatus = "Cleaning up \(allClips.count) clips..."
         processingProgress = 0.0
 
         let results = await BatchCoordinator.execute(
@@ -217,7 +217,7 @@ extension ProjectState {
             operation: { clip, index in
                 await MainActor.run {
                     self.processingStatus =
-                        "✨ Magic Fix (\(index + 1)/\(allClips.count)): \(clip.url.lastPathComponent)"
+                        "Cleaning up \(index + 1) of \(allClips.count): \(clip.url.lastPathComponent)"
                     self.processingProgress = Double(index) / Double(allClips.count)
                 }
 
@@ -234,17 +234,17 @@ extension ProjectState {
         let successCount = results.filter { $0.success }.count
         let failureCount = results.filter { !$0.success }.count
 
-        processingStatus = "✅ Magic Fix All: \(successCount) succeeded, \(failureCount) failed"
+        processingStatus = "Clean Up: \(successCount) done, \(failureCount) failed"
         processingProgress = 1.0
 
         if failureCount > 0 {
             ServiceContainer.shared.toastManager.show(
-                "Magic Fix All: \(successCount) succeeded, \(failureCount) failed",
+                "Clean Up: \(successCount) done, \(failureCount) failed",
                 type: failureCount == allClips.count ? .error : .info
             )
         } else {
             ServiceContainer.shared.toastManager.show(
-                "✅ Magic Fix All: All \(successCount) clips processed",
+                "Cleaned up all \(successCount) clips",
                 type: .success
             )
         }

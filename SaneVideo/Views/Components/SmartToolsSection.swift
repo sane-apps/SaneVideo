@@ -244,10 +244,10 @@ struct SmartToolsSection: View {
       }
       .buttonStyle(.borderless)
       .disabled(isOperationInProgress)
-      .help("Clear all existing Magic Fix results and regenerate with your current toggle settings")
+      .help("Undo the last cleanup and run it again with these settings")
       .accessibilityIdentifier("magicFix.regenerateButton")
       .accessibilityLabel("Run Clean Up again")
-      .accessibilityHint("Clears all existing Magic Fix results and automatically regenerates based on which toggles are currently enabled")
+      .accessibilityHint("Undoes the last cleanup and runs it again with the current settings")
     }
   }
 }

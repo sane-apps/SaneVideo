@@ -4,6 +4,19 @@ All notable changes to SaneVideo are documented here.
 
 ---
 
+## [1.1.0] - 2026-10-17
+
+A cleaner, faster SaneVideo. Needs macOS 26.
+
+- One-click Clean Up cuts silences and filler words. The new Parakeet speech engine (downloaded once, runs on your Mac) finds the "um"s and "uh"s Apple's engine drops; Apple's engine is still an option in Settings.
+- New look: one accent color, flat panels, Projects / Clips / Transcript tabs, Record | Edit switch, Export menu.
+- Recording: switch Camera and Screen mid-take; the camera returns in under a second; Option-Command-R and Option-Command-P work from any app (and no longer take Shift-Command-S, -P and -H from other apps).
+- Timeline: clicking a clip selects it, Command-B splits at the playhead, arrow keys step one frame, Delete is undoable, the playhead stays put after edits, and the timeline fits short clips.
+- Exports match your recording, land in Movies/SaneVideo/Exports, and come with a matching .srt caption file. Shorts are named after the project. GIF export no longer needs ffmpeg.
+- Removed: Demo Studio, YouTube upload stub, API keys, iCloud sync.
+
+---
+
 ## [1.0.5] - 2026-09-09
 
 SaneVideo is free under PolyForm Shield. Setup stays. Every feature stays unlocked. Buy is Donate. Keep license unlocks after Sparkle updates. Make Create Shorts and other editor sheets opaque and easier to read.

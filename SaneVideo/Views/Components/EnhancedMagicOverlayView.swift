@@ -14,7 +14,7 @@ struct EnhancedMagicOverlayView: View {
         if lowercased.contains("transcrib") || lowercased.contains("caption") {
             return "Captions"
         }
-        return "Magic Fix"
+        return "Clean Up"
     }
 
     private var overlayIcon: String {
@@ -22,13 +22,13 @@ struct EnhancedMagicOverlayView: View {
     }
 
     private var cancelActionTitle: String {
-        overlayTitle == "Captions" ? "Cancel caption generation?" : "Cancel Magic Fix?"
+        overlayTitle == "Captions" ? "Cancel caption generation?" : "Cancel Clean Up?"
     }
 
     private var cancelActionMessage: String {
         overlayTitle == "Captions"
             ? "Canceling will stop the current caption generation run. Any progress will be lost."
-            : "Canceling will stop the current Magic Fix operation. Any progress will be lost."
+            : "Canceling stops the cleanup."
     }
     
     var body: some View {
@@ -59,7 +59,7 @@ struct EnhancedMagicOverlayView: View {
                             .foregroundColor(Color.stone)
                     }
                     .buttonStyle(.plain)
-                    .help(overlayTitle == "Captions" ? "Cancel caption generation" : "Cancel Magic Fix")
+                    .help(overlayTitle == "Captions" ? "Cancel caption generation" : "Cancel Clean Up")
                 }
                 
                 if appState.projectState.processingProgress > 0 {

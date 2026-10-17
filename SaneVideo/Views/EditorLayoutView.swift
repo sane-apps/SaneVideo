@@ -559,7 +559,7 @@ struct EditorLayoutView: View {
         }
 
         guard !clip.isMissing else {
-            ServiceContainer.shared.toastManager.show("Cannot apply Magic Fix: Clip file is missing", type: .error)
+            ServiceContainer.shared.toastManager.show("Can't clean up: the clip's file is missing", type: .error)
             return
         }
 

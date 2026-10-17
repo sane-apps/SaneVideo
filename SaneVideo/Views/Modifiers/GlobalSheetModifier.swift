@@ -5,7 +5,6 @@ struct GlobalSheetModifier: ViewModifier {
 
     @State private var showLogs = false
     @State private var showShortcuts = false
-    @State private var showTemplateBrowser = false
     @State private var repurposingClip: VideoClip?
 
     @State private var showingRenameAlert = false
@@ -19,9 +18,6 @@ struct GlobalSheetModifier: ViewModifier {
             }
             .sheet(isPresented: $showShortcuts) {
                 KeyboardShortcutsSheet()
-            }
-            .sheet(isPresented: $showTemplateBrowser) {
-                TemplateBrowserSheet()
             }
             .sheet(item: $repurposingClip) { clip in
                 RepurposingSheet(sourceClip: clip)
@@ -60,11 +56,6 @@ struct GlobalSheetModifier: ViewModifier {
             .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ShowKeyboardShortcuts"))) { _ in
                 appState.performProjectCommand {
                     showShortcuts = true
-                }
-            }
-            .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ShowTemplateBrowser"))) { _ in
-                appState.performProjectCommand {
-                    showTemplateBrowser = true
                 }
             }
             .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("ShowRepurposingSheet"))) { notification in

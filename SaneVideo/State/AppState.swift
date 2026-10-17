@@ -339,6 +339,7 @@ class AppState {
         recordingState.onRecordingStateChanged = { [weak self] _ in
             guard let self else { return }
             Task { @MainActor in
+                ServiceContainer.shared.globalHotkeyManager.setRecording(self.recordingState.isRecording)
                 self.windowManager.updatePiPState(
                     isCameraActive: self.cameraState.isActive,
                     isRecording: self.recordingState.isRecording

@@ -192,7 +192,7 @@ struct SaneVideoApp: App {
             CommandGroup(after: .undoRedo) {
                 Divider()
 
-                Button(String(localized: "menu.edit.magic_fix", defaultValue: "Magic Fix Selected Clip")) {
+                Button(String(localized: "menu.edit.magic_fix", defaultValue: "Clean Up Selected Clip")) {
                     appState.performProjectCommand {
                         NotificationCenter.default.post(name: NSNotification.Name("TriggerMagicFix"), object: nil)
                     }
@@ -201,7 +201,7 @@ struct SaneVideoApp: App {
                 .keyboardShortcut("m", modifiers: [.command, .shift])
                 .accessibilityIdentifier("menu.edit.magic_fix")
 
-                Button(String(localized: "menu.edit.magic_fix_all", defaultValue: "Magic Fix All Clips")) {
+                Button(String(localized: "menu.edit.magic_fix_all", defaultValue: "Clean Up All Clips")) {
                     appState.performProjectCommand {
                         NotificationCenter.default.post(
                             name: NSNotification.Name("TriggerMagicFixAll"), object: nil
@@ -315,7 +315,7 @@ struct SaneVideoApp: App {
                 Divider()
 
                 Button(
-                    String(localized: "menu.file.generate_thumbnail", defaultValue: "Generate AI Thumbnail")
+                    String(localized: "menu.file.generate_thumbnail", defaultValue: "Make Thumbnail...")
                 ) {
                     appState.performProjectCommand {
                         NotificationCenter.default.post(
@@ -771,9 +771,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         WelcomeSheetResidue.purge()
         LegacyDataCleanup.runOnce()
 
-        #if !APP_STORE
-            ServiceContainer.shared.globalHotkeyManager.start()
-        #endif
+        ServiceContainer.shared.globalHotkeyManager.start()
 
         // Touch LogManager early so it captures startup logs.
         _ = ServiceContainer.shared.logManager

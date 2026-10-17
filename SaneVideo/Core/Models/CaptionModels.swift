@@ -116,6 +116,17 @@ extension Caption {
         caption.text = kept.map(\.text).joined(separator: " ")
         return caption
     }
+    /// SubRip text, the caption file YouTube and most players accept.
+    static func srt(_ captions: [Caption]) -> String {
+        captions.enumerated().map { index, caption in
+            "\(index + 1)\n\(srtTime(caption.startTime)) --> \(srtTime(caption.endTime))\n\(caption.text)"
+        }.joined(separator: "\n\n") + "\n"
+    }
+
+    static func srtTime(_ time: CMTime) -> String {
+        let totalMs = Int((max(0, time.seconds) * 1000).rounded())
+        return String(format: "%02d:%02d:%02d,%03d", totalMs / 3_600_000, totalMs / 60000 % 60, totalMs / 1000 % 60, totalMs % 1000)
+    }
 }
 
 public struct CaptionWord: Identifiable, Codable, Equatable, Sendable {

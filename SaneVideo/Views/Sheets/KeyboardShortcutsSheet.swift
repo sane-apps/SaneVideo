@@ -27,85 +27,65 @@ struct KeyboardShortcutsSheet: View {
 
             ScrollView {
                 VStack(spacing: 24) {
-                    InformationBox(
-                        text: "Use this sheet as the quick reference for shortcuts. For feature-specific guidance, hover over controls to see what they do and when to use them.",
-                        icon: "questionmark.circle"
-                    )
+                    ShortcutSection(title: "Recording (works in any app)", shortcuts: [
+                        ("Start / Stop Recording", "⌥⌘R"),
+                        ("Pause / Resume", "⌥⌘P")
+                    ])
 
-                    ShortcutSection(title: "General", shortcuts: [
+                    ShortcutSection(title: "Project", shortcuts: [
                         ("New Recording", "⌘N"),
-                        ("Open Project", "⌘O"),
+                        ("Show Projects", "⌘O"),
                         ("Save Project", "⌘S"),
-                        ("Import Media", "⌘I"),
-                        ("Share Project", "⇧⌘S"),
-                        ("Undo", "⌘Z"),
-                        ("Redo", "⇧⌘Z")
+                        ("Import Video", "⌘I"),
+                        ("Share", "⇧⌘S"),
+                        ("Toggle Sidebar", "⌥⌘S"),
+                        ("Toggle Inspector", "⌥⌘I")
                     ])
 
                     ShortcutSection(title: "Playback", shortcuts: [
                         ("Play / Pause", "Space"),
                         ("Pause", "K"),
-                        ("Shuttle Backward", "J"),
-                        ("Shuttle Forward", "L"),
-                        ("Step Backward", "←"),
-                        ("Step Forward", "→"),
-                        ("Seek Back 10s", "⇧←"),
-                        ("Seek Forward 10s", "⇧→")
+                        ("Play Backward / Forward", "J / L"),
+                        ("Back / Forward One Frame", "← / →"),
+                        ("Back / Forward 10 Seconds", "⇧← / ⇧→"),
+                        ("Go to Start / End", "Home / End"),
+                        ("Previous / Next Cut", "↑ / ↓")
                     ])
 
-                    ShortcutSection(title: "Navigation", shortcuts: [
-                        ("Go to Start", "Home"),
-                        ("Go to End", "End"),
-                        ("Mark In Point", "I"),
-                        ("Mark Out Point", "O"),
-                        ("Clear In/Out", "⇧⌘X"),
-                        ("Fit Timeline", "⇧Z")
+                    ShortcutSection(title: "Editing", shortcuts: [
+                        ("Split at Playhead", "⌘B"),
+                        ("Delete Clip", "⌫"),
+                        ("Undo / Redo", "⌘Z / ⇧⌘Z"),
+                        ("Copy / Cut / Paste Clip", "⌘C / ⌘X / ⌘V"),
+                        ("Duplicate Clip", "⌘D"),
+                        ("Clean Up Selected Clip", "⇧⌘M"),
+                        ("Mark In / Out", "I / O"),
+                        ("Clear In / Out", "⇧⌘X")
                     ])
 
                     ShortcutSection(title: "Selection", shortcuts: [
                         ("Select All Clips", "⌘A"),
                         ("Deselect All", "Esc"),
-                        ("Select at Playhead", "D"),
-                        ("Toggle Selection", "⌘+Click"),
-                        ("Range Selection", "⇧+Click"),
-                        ("Next Clip", "↓"),
-                        ("Previous Clip", "↑"),
-                        ("Extend Selection", "⇧↑/↓")
-                    ])
-
-                    ShortcutSection(title: "Editing", shortcuts: [
-                        ("Copy Clip", "⌘C"),
-                        ("Cut Clip", "⌘X"),
-                        ("Paste Clip", "⌘V"),
-                        ("Duplicate Clip", "⌘D"),
-                        ("Split Clip", "⌘B"),
-                        ("Delete Clip", "⌫")
+                        ("Select Clip at Playhead", "D"),
+                        ("Add to Selection", "⌘-Click"),
+                        ("Select a Range", "⇧-Click"),
+                        ("Extend Selection", "⇧↑ / ⇧↓")
                     ])
 
                     ShortcutSection(title: "Timeline", shortcuts: [
-                        ("Zoom In", "⌘+"),
-                        ("Zoom Out", "⌘-"),
-                        ("Fit to View", "⌘0"),
+                        ("Zoom In / Out", "⌘= / ⌘-"),
+                        ("Fit Timeline", "⌘0"),
                         ("Toggle Snapping", "N"),
                         ("Toggle Magnetic", "M")
                     ])
 
-                    ShortcutSection(title: "AI Tools", shortcuts: [
-                        ("Super Magic Fix", "⇧⌘M"),
-                        ("Refine Captions", "⇧⌘T"),
-                        ("Smart Thumbnail", "⌘T")
-                    ])
-
-                    ShortcutSection(title: "View", shortcuts: [
-                        ("Toggle Sidebar", "⌥⌘S"),
-                        ("Toggle Inspector", "⌥⌘I"),
-                        ("Toggle Captions", "⌥⌘T"),
-                        ("Open Library", "⌘L")
-                    ])
-
                     ShortcutSection(title: "Export", shortcuts: [
                         ("Export Video", "⌘E"),
-                        ("Export GIF", "⇧⌘G")
+                        ("Create Shorts", "⇧⌘R"),
+                        ("Export GIF", "⇧⌘G"),
+                        ("Make Thumbnail", "⌘T"),
+                        ("Export Transcript (PDF)", "⌥⌘T"),
+                        ("Teleprompter Script", "⇧⌘D")
                     ])
                 }
                 .padding()

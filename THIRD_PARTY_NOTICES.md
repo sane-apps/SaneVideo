@@ -7,11 +7,22 @@ This file documents third-party software used by SaneVideo.
 
 SaneVideo uses Swift Package Manager. Package sources currently resolved include:
 
-- https://github.com/argmaxinc/argmax-oss-swift
-- https://github.com/apple/swift-argument-parser.git
-- https://github.com/sparkle-project/Sparkle
+- https://github.com/FluidInference/FluidAudio (Apache License 2.0)
+- https://github.com/sparkle-project/Sparkle (MIT)
 
-SaneVideo also uses the internal local package `../../infra/SaneUI`.
+SaneVideo also uses the SaneApps package https://github.com/sane-apps/SaneUI.
+
+### FluidAudio
+- Repository: https://github.com/FluidInference/FluidAudio
+- License: Apache License 2.0 (https://www.apache.org/licenses/LICENSE-2.0)
+- Use: runs the speech model for captions, silence and filler-word cleanup on your Mac.
+
+### Parakeet TDT 0.6B v3 speech model
+- Model: NVIDIA parakeet-tdt-0.6b-v3 (https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3),
+  Core ML conversion by FluidInference (https://huggingface.co/FluidInference/parakeet-tdt-0.6b-v3-coreml)
+- License: Creative Commons Attribution 4.0 (https://creativecommons.org/licenses/by/4.0/)
+- Not bundled with the app. SaneVideo downloads it once (about 600 MB) the first time you make captions or
+  run Clean Up, and runs it locally. Apple's on-device speech engine can be chosen instead in Settings.
 
 ### Sparkle (explicit MIT notice)
 - Repository: https://github.com/sparkle-project/Sparkle

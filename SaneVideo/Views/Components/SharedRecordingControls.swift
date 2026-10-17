@@ -323,8 +323,7 @@ struct SharedRecordingControls: View {
         .labelStyle(.titleAndIcon)
         .controlSize(.large)
         .fixedSize()
-        .disabled(appState.isRecording)
-        .help("Camera records just you. Screen records a window or display with your camera bubble on top.")
+        .help("Camera records just you. Screen records a window or display with your camera bubble on top. You can switch while recording.")
         .accessibilityIdentifier(AccessibilityIdentifiers.screenShareToggle)
     }
 

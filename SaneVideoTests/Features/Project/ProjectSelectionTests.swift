@@ -2,164 +2,96 @@
 //  ProjectSelectionTests.swift
 //  SaneVideoTests
 //
-//  Tests for project multi-selection and bulk operations
+//  Bulk project deletion from the project list.
 //
 
-import Testing
-@testable import SaneVideo
 import Foundation
+@testable import SaneVideo
+import Testing
 
-@Suite("Project Selection Tests")
+/// Deletion runs in an unstructured task; wait for its effect instead of a fixed delay.
 @MainActor
-struct ProjectSelectionTests {
-
-    // MARK: - Selection State Tests
-
-    @Test("Selected project IDs starts empty")
-    func selectedProjectIdsStartsEmpty() async {
-        let appState = AppState()
-        #expect(appState.selectedProjectIds.isEmpty)
+private func waitUntil(timeout: Duration = .seconds(5), _ condition: () -> Bool) async -> Bool {
+    let clock = ContinuousClock()
+    let deadline = clock.now.advanced(by: timeout)
+    while !condition() {
+        if clock.now >= deadline {
+            return false
+        }
+        try? await Task.sleep(for: .milliseconds(10))
     }
-
-    @Test("Can add project to selection")
-    func canAddProjectToSelection() async {
-        let appState = AppState()
-        let projectId = UUID()
-
-        appState.selectedProjectIds.insert(projectId)
-
-        #expect(appState.selectedProjectIds.contains(projectId))
-        #expect(appState.selectedProjectIds.count == 1)
-    }
-
-    @Test("Can remove project from selection")
-    func canRemoveProjectFromSelection() async {
-        let appState = AppState()
-        let projectId = UUID()
-
-        appState.selectedProjectIds.insert(projectId)
-        appState.selectedProjectIds.remove(projectId)
-
-        #expect(!appState.selectedProjectIds.contains(projectId))
-        #expect(appState.selectedProjectIds.isEmpty)
-    }
-
-    @Test("Can select multiple projects")
-    func canSelectMultipleProjects() async {
-        let appState = AppState()
-        let id1 = UUID()
-        let id2 = UUID()
-        let id3 = UUID()
-
-        appState.selectedProjectIds = [id1, id2, id3]
-
-        #expect(appState.selectedProjectIds.count == 3)
-        #expect(appState.selectedProjectIds.contains(id1))
-        #expect(appState.selectedProjectIds.contains(id2))
-        #expect(appState.selectedProjectIds.contains(id3))
-    }
-
-    @Test("Clear all removes all selections")
-    func clearAllRemovesAllSelections() async {
-        let appState = AppState()
-        let id1 = UUID()
-        let id2 = UUID()
-
-        appState.selectedProjectIds = [id1, id2]
-        appState.selectedProjectIds.removeAll()
-
-        #expect(appState.selectedProjectIds.isEmpty)
-    }
+    return true
 }
 
 @Suite("Bulk Project Operations Tests")
 @MainActor
 struct BulkProjectOperationsTests {
+    private func makeState(projectCount: Int) throws -> (ProjectState, URL) {
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent("ProjectSelectionTests-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        let state = ProjectState(projectStore: ProjectStore(rootDirectory: root))
+        for _ in 0 ..< projectCount {
+            state.startNewProject()
+        }
+        return (state, root)
+    }
 
-    @Test("Delete projects removes multiple projects")
+    @Test("Deleting a selection removes exactly those projects")
     func deleteProjectsRemovesMultiple() async throws {
-        let projectState = ProjectState()
+        let (projectState, root) = try makeState(projectCount: 3)
+        defer { try? FileManager.default.removeItem(at: root) }
 
-        // Create test projects
-        projectState.startNewProject()
-        projectState.startNewProject()
-        projectState.startNewProject()
+        let idsToDelete = Set(projectState.projects.prefix(2).map(\.id))
+        let survivor = try #require(projectState.projects.last?.id)
 
-        let initialCount = projectState.projects.count
-        #expect(initialCount >= 3)
-
-        // Get IDs of first two projects
-        let idsToDelete = Set(projectState.projects.prefix(2).map { $0.id })
-
-        // Delete them
         projectState.deleteProjects(idsToDelete)
 
-        // Wait for async deletion
-        try await Task.sleep(for: .milliseconds(500))
-
-        // Verify projects were removed
-        for id in idsToDelete {
-            #expect(!projectState.projects.contains(where: { $0.id == id }))
-        }
+        let removed = await waitUntil { projectState.projects.count == 1 }
+        #expect(removed)
+        #expect(projectState.projects.map(\.id) == [survivor])
     }
 
-    @Test("Delete projects switches current project if deleted")
+    @Test("Deleting the open project switches to another project")
     func deleteProjectsSwitchesCurrentIfDeleted() async throws {
-        let projectState = ProjectState()
+        let (projectState, root) = try makeState(projectCount: 2)
+        defer { try? FileManager.default.removeItem(at: root) }
 
-        // Create test projects
-        projectState.startNewProject()
-        projectState.startNewProject()
+        let currentId = try #require(projectState.currentProject?.id)
+        let otherId = try #require(projectState.projects.first { $0.id != currentId }?.id)
 
-        let currentId = projectState.currentProject?.id
-        #expect(currentId != nil)
+        projectState.deleteProjects([currentId])
 
-        // Delete current project
-        projectState.deleteProjects([currentId!])
-
-        // Wait for async deletion
-        try await Task.sleep(for: .milliseconds(500))
-
-        // Current project should have changed
-        #expect(projectState.currentProject?.id != currentId)
+        let switched = await waitUntil { projectState.currentProject?.id != currentId }
+        #expect(switched)
+        #expect(projectState.currentProject?.id == otherId)
     }
 
-    @Test("Clear all projects removes all and creates new")
+    @Test("Clear all removes every project and opens one fresh project")
     func clearAllProjectsRemovesAllAndCreatesNew() async throws {
-        let projectState = ProjectState()
+        let (projectState, root) = try makeState(projectCount: 3)
+        defer { try? FileManager.default.removeItem(at: root) }
 
-        // Create multiple projects
-        projectState.startNewProject()
-        projectState.startNewProject()
-        projectState.startNewProject()
+        let oldIds = Set(projectState.projects.map(\.id))
 
-        #expect(projectState.projects.count >= 3)
-
-        // Clear all
         projectState.clearAllProjects()
 
-        // Wait for async deletion
-        try await Task.sleep(for: .milliseconds(500))
-
-        // Should have exactly 1 new project
-        #expect(projectState.projects.count == 1)
-        #expect(projectState.currentProject != nil)
+        let cleared = await waitUntil {
+            projectState.projects.count == 1 && !oldIds.contains(projectState.projects[0].id)
+        }
+        #expect(cleared)
+        #expect(projectState.currentProject?.id == projectState.projects.first?.id)
     }
 
-    @Test("Delete empty selection does nothing")
-    func deleteEmptySelectionDoesNothing() async throws {
-        let projectState = ProjectState()
+    @Test("Deleting an empty selection leaves the list unchanged")
+    func deleteEmptySelectionDoesNothing() throws {
+        let (projectState, root) = try makeState(projectCount: 1)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let before = projectState.projects.map(\.id)
 
-        projectState.startNewProject()
-        let initialCount = projectState.projects.count
-
-        // Delete empty set
+        // deleteProjects returns before scheduling any work when nothing matches.
         projectState.deleteProjects([])
 
-        // Wait a bit
-        try await Task.sleep(for: .milliseconds(100))
-
-        // Count should be unchanged
-        #expect(projectState.projects.count == initialCount)
+        #expect(projectState.projects.map(\.id) == before)
     }
 }

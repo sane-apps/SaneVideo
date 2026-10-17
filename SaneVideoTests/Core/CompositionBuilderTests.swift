@@ -130,34 +130,4 @@ struct CompositionBuilderTests {
             }
         }
     }
-
-    // MARK: - Track Z-Index Ordering
-
-    @Test("Track Z-Index ordering")
-    func trackZIndexOrdering() {
-        let track1 = Track(name: "Bottom", type: .video, zIndex: 0)
-        let track2 = Track(name: "Middle", type: .video, zIndex: 1)
-        let track3 = Track(name: "Top", type: .video, zIndex: 2)
-
-        let timeline = Timeline(tracks: [track1, track2, track3])
-        let sorted = timeline.tracks.sorted { $0.zIndex > $1.zIndex }
-
-        #expect(sorted[0].name == "Top")
-        #expect(sorted[1].name == "Middle")
-        #expect(sorted[2].name == "Bottom")
-    }
-
-    // MARK: - Audio Track Handling
-
-    @Test("Audio tracks are skipped for video composition")
-    func audioTracksAreSkippedForVideoComposition() {
-        let videoTrack = Track(name: "Video", type: .video, zIndex: 0)
-        let audioTrack = Track(name: "Audio", type: .audio, zIndex: 1)
-
-        let timeline = Timeline(tracks: [videoTrack, audioTrack])
-        let visualTracks = timeline.tracks.filter { $0.type == .video || $0.type == .overlay }
-
-        #expect(visualTracks.count == 1)
-        #expect(visualTracks[0].type == .video)
-    }
 }

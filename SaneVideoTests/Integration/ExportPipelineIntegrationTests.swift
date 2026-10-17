@@ -57,21 +57,6 @@ final class ExportPipelineIntegrationTests: XCTestCase {
         return TestEnvironment.mockAssetURL
     }
 
-    /// Returns a variety of test assets for more comprehensive testing
-    private func getAllTestAssets() -> [URL] {
-        let assetNames = [
-            "IMG_6091.MOV",
-            "test_silence.mp4",
-            "IMG_0422.MOV",
-            "IMG_7668.MOV"
-        ]
-
-        return assetNames.compactMap { name in
-            let url = TestEnvironment.testAsset(named: name)
-            return FileManager.default.fileExists(atPath: url.path) ? url : nil
-        }
-    }
-
     @MainActor
     private func createProjectWithClip() async throws -> (VideoProject, VideoClip) {
         let asset = AVURLAsset(url: testAssetURL)
@@ -157,106 +142,77 @@ final class ExportPipelineIntegrationTests: XCTestCase {
 
     // MARK: - Resolution Tests
 
+    /// Exports to a fresh temp file and deletes it when the test ends.
     @MainActor
-    func testExportResolution1080p() async throws {
-        guard FileManager.default.fileExists(atPath: testAssetURL.path) else {
-            throw XCTSkip("Test asset not available")
-        }
-
-        let (project, _) = try await createProjectWithClip()
-        var settings = SaneExportSettings()
-        settings.resolution = .hd1080
-
+    private func export(_ project: VideoProject, settings: SaneExportSettings) async throws -> (AVAsset, URL) {
+        let url = FileManager.default.temporaryDirectory
+            .appendingPathComponent("pipeline_\(UUID().uuidString).mp4")
+        addTeardownBlock { try? FileManager.default.removeItem(at: url) }
         let outputURL = try await exportEngine.export(
             project: project,
             settings: settings,
-            outputURL: tempOutputURL
+            outputURL: url
         ) { _ in }
-
-        let exportedAsset = try await verifyExportedFile(at: outputURL)
-        let dimensions = try await getVideoDimensions(from: exportedAsset)
-
-        let expectedWidth: CGFloat = 1920
-        let expectedHeight: CGFloat = 1080
-
-        let matchesLandscape = abs(dimensions.width - expectedWidth) < 2 && abs(dimensions.height - expectedHeight) < 2
-        let matchesPortrait = abs(dimensions.width - expectedHeight) < 2 && abs(dimensions.height - expectedWidth) < 2
-
-        XCTAssertTrue(matchesLandscape || matchesPortrait,
-                      "Expected 1080p resolution, got \(dimensions.width)x\(dimensions.height)")
+        return (try await verifyExportedFile(at: outputURL), outputURL)
     }
 
     @MainActor
-    func testExportResolution720p() async throws {
+    func testExportMatchesRequestedResolution() async throws {
         guard FileManager.default.fileExists(atPath: testAssetURL.path) else {
             throw XCTSkip("Test asset not available")
         }
 
         let (project, _) = try await createProjectWithClip()
-        var settings = SaneExportSettings()
-        settings.resolution = .hd720
+        let cases: [SaneExportSettings.ExportResolution] = [.hd1080, .hd720]
 
-        let outputURL = try await exportEngine.export(
-            project: project,
-            settings: settings,
-            outputURL: tempOutputURL
-        ) { _ in }
+        for resolution in cases {
+            var settings = SaneExportSettings()
+            settings.resolution = resolution
+            let (exportedAsset, _) = try await export(project, settings: settings)
+            let dimensions = try await getVideoDimensions(from: exportedAsset)
 
-        let exportedAsset = try await verifyExportedFile(at: outputURL)
-        let dimensions = try await getVideoDimensions(from: exportedAsset)
+            let expected = resolution.size
+            let matchesLandscape = abs(dimensions.width - expected.width) < 2
+                && abs(dimensions.height - expected.height) < 2
+            let matchesPortrait = abs(dimensions.width - expected.height) < 2
+                && abs(dimensions.height - expected.width) < 2
 
-        let expectedWidth: CGFloat = 1280
-        let expectedHeight: CGFloat = 720
-
-        let matchesLandscape = abs(dimensions.width - expectedWidth) < 2 && abs(dimensions.height - expectedHeight) < 2
-        let matchesPortrait = abs(dimensions.width - expectedHeight) < 2 && abs(dimensions.height - expectedWidth) < 2
-
-        XCTAssertTrue(matchesLandscape || matchesPortrait,
-                      "Expected 720p resolution, got \(dimensions.width)x\(dimensions.height)")
+            XCTAssertTrue(
+                matchesLandscape || matchesPortrait,
+                "Expected \(resolution.rawValue), got \(dimensions.width)x\(dimensions.height)"
+            )
+        }
     }
 
     // MARK: - Codec Tests
 
     @MainActor
-    func testExportWithH264Codec() async throws {
+    func testExportUsesRequestedCodec() async throws {
         guard FileManager.default.fileExists(atPath: testAssetURL.path) else {
             throw XCTSkip("Test asset not available")
         }
 
         let (project, _) = try await createProjectWithClip()
-        var settings = SaneExportSettings()
-        settings.codec = .h264
+        let cases: [(AVVideoCodecType, CMVideoCodecType)] = [
+            (.h264, kCMVideoCodecType_H264),
+            (.hevc, kCMVideoCodecType_HEVC)
+        ]
 
-        let outputURL = try await exportEngine.export(
-            project: project,
-            settings: settings,
-            outputURL: tempOutputURL
-        ) { _ in }
+        for (codec, expectedSubtype) in cases {
+            var settings = SaneExportSettings()
+            settings.codec = codec
+            let (exportedAsset, _) = try await export(project, settings: settings)
 
-        let exportedAsset = try await verifyExportedFile(at: outputURL)
-        let isPlayable = try await exportedAsset.load(.isPlayable)
-        XCTAssertTrue(isPlayable, "H.264 export should produce playable file")
-    }
-
-    @MainActor
-    func testExportWithHEVCCodec() async throws {
-        guard FileManager.default.fileExists(atPath: testAssetURL.path) else {
-            throw XCTSkip("Test asset not available")
+            guard let track = try await exportedAsset.loadTracks(withMediaType: .video).first,
+                  let format = try await track.load(.formatDescriptions).first else {
+                throw TestError.noVideoTrack
+            }
+            XCTAssertEqual(
+                CMFormatDescriptionGetMediaSubType(format),
+                expectedSubtype,
+                "Export with \(codec.rawValue) wrote the wrong codec"
+            )
         }
-
-        let (project, _) = try await createProjectWithClip()
-        var settings = SaneExportSettings()
-        settings.codec = .hevc
-
-        let outputURL = try await exportEngine.export(
-            project: project,
-            settings: settings,
-            outputURL: tempOutputURL
-        ) { _ in }
-
-        let exportedAsset = try await verifyExportedFile(at: outputURL)
-        let isPlayable = try await exportedAsset.load(.isPlayable)
-        XCTAssertTrue(isPlayable, "HEVC export should produce playable file")
     }
 
     // MARK: - Helper Types

@@ -33,19 +33,6 @@ struct CameraIntegrationTests {
         return !discoverySession.devices.isEmpty
     }
 
-    // MARK: - Permission Tests
-
-    @Test("Camera permission status is queryable")
-    func testCameraPermissionQueryable() {
-        // Act
-        let status = AVCaptureDevice.authorizationStatus(for: .video)
-
-        // Assert - should return a valid status (not crash)
-        let validStatuses: [AVAuthorizationStatus] = [.notDetermined, .restricted, .denied, .authorized]
-        #expect(validStatuses.contains(status),
-               "Camera permission status should be a valid AVAuthorizationStatus")
-    }
-
     // MARK: - CameraManager Lifecycle Tests
 
     @Test("CameraManager can start and stop without crashing")

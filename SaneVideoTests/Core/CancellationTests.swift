@@ -2,88 +2,40 @@
 //  CancellationTests.swift
 //  SaneVideoTests
 //
-//  Tests for cancellation support in long-running operations
+//  Cancelling processing must stop the running task and clear progress state.
 //
 
-import XCTest
-import AVFoundation
+import Foundation
 @testable import SaneVideo
+import Testing
 
-final class CancellationTests: XCTestCase {
-    
-    @MainActor
-    func testProjectStateCancellation() async {
+@Suite("Processing cancellation")
+@MainActor
+struct CancellationTests {
+    @Test("cancelProcessing cancels the stored task and clears transactions and progress")
+    func cancelProcessingStopsTaskAndResetsState() async {
         let projectState = ProjectState()
-        
-        // Create a mock processing task
+        let transaction = projectState.beginTransaction()
+        projectState.updateTransactionProgress(transaction, progress: 0.4)
+        projectState.processingStatus = "Removing silence"
+
         let task = Task<Void, Error> {
-            try await Task.sleep(nanoseconds: 1_000_000_000) // 1 second
+            // Stays suspended until cancelled; cancellation ends the sleep at once.
+            try await Task.sleep(for: .seconds(60))
         }
-        
-        // Store the task
         projectState.setProcessingTask(task)
-        
-        // Cancel it
+        #expect(projectState.isProcessing)
+
         await projectState.cancelProcessing()
-        
-        // Verify state is reset
-        XCTAssertFalse(projectState.isProcessing, "Processing should be false after cancellation")
-        XCTAssertNil(projectState.processingStatus, "Status should be nil after cancellation")
-        XCTAssertEqual(projectState.processingProgress, 0.0, "Progress should be 0 after cancellation")
-        
-        // Verify task is cancelled
-        XCTAssertTrue(task.isCancelled, "Task should be cancelled")
-    }
-    
-    @MainActor
-    func testMagicFixTaskCancellation() async {
-        let projectState = ProjectState()
-        let testProject = VideoProject()
-        projectState.currentProject = testProject
-        
-        // Test cancellation mechanism
-        // Note: Full Magic Fix requires actual video file, so we test cancellation infrastructure
-        let task = Task<Void, Error> {
-            try await Task.sleep(nanoseconds: 500_000_000) // 0.5s
-        }
-        
-        projectState.setProcessingTask(task)
-        
-        // Wait a moment
-        try? await Task.sleep(nanoseconds: 50_000_000) // 50ms
-        
-        // Cancel
-        await projectState.cancelProcessing()
-        task.cancel()
-        
-        // Wait for cancellation to propagate
-        try? await Task.sleep(nanoseconds: 100_000_000) // 100ms
-        
-        // Verify cancellation
-        XCTAssertFalse(projectState.isProcessing, "Should not be processing after cancellation")
-        XCTAssertTrue(task.isCancelled, "Task should be cancelled")
-    }
-    
-    func testTaskCancellationPropagation() async {
-        // Test that cancellation propagates through async operations
-        let task = Task {
-            do {
-                try await Task.sleep(nanoseconds: 1_000_000_000)
-                XCTFail("Task should have been cancelled")
-            } catch is CancellationError {
-                // Expected
-            } catch {
-                XCTFail("Unexpected error: \(error)")
-            }
-        }
-        
-        // Cancel immediately
-        task.cancel()
-        
-        // Wait a bit
-        try? await Task.sleep(nanoseconds: 100_000_000)
-        
-        XCTAssertTrue(task.isCancelled, "Task should be cancelled")
+
+        #expect(task.isCancelled)
+        #expect(!projectState.isProcessing)
+        #expect(projectState.processingStatus == nil)
+        #expect(projectState.processingProgress == 0.0)
+        #expect(projectState.activeTransactionCount == 0)
+
+        // The task must actually end with CancellationError, not keep running.
+        let result = await task.result
+        #expect(throws: CancellationError.self) { try result.get() }
     }
 }
-

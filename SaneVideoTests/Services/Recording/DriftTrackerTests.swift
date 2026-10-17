@@ -40,8 +40,8 @@ struct DriftTrackerTests {
         tracker.recordAudioTimestamp(makePTS(1.0))
 
         let correction = tracker.calculateCorrection()
-        // Should apply some correction (up to 10ms per step)
-        #expect(correction != 0 || abs(tracker.currentDrift()) > DriftTracker.driftThreshold)
+        // 100 ms drift is 50 ms over the threshold, so one full 10 ms step applies.
+        #expect(abs(correction - DriftTracker.maxCorrectionPerStep) < 0.0005)
     }
 
     @Test("No correction when drift is below threshold")
@@ -58,7 +58,7 @@ struct DriftTrackerTests {
 
     // MARK: - Gradual Correction
 
-    @Test("Correction is gradual — max 10ms per step")
+    @Test("A large drift is corrected 10 ms per call, accumulating")
     func correctionIsGradual() {
         let tracker = DriftTracker()
 
@@ -67,26 +67,34 @@ struct DriftTrackerTests {
         tracker.recordAudioTimestamp(makePTS(1.0))
 
         let firstCorrection = tracker.calculateCorrection()
-        #expect(abs(firstCorrection) <= DriftTracker.maxCorrectionPerStep + 0.001)
+        let secondCorrection = tracker.calculateCorrection()
+        // 150 ms over threshold, yet each call adds only one 10 ms step.
+        #expect(abs(firstCorrection - DriftTracker.maxCorrectionPerStep) < 0.0005)
+        #expect(abs(secondCorrection - 2 * DriftTracker.maxCorrectionPerStep) < 0.0005)
     }
 
-    @Test("Repeated corrections converge toward zero drift")
+    @Test("Growing video lead is corrected only past the threshold, 10 ms per step at most")
     func repeatedCorrectionsConverge() {
         let tracker = DriftTracker()
 
-        // Simulate drift building up then corrections being applied
+        // Video drifts 3 ms per frame ahead of audio at ~30 fps.
         var totalCorrection: TimeInterval = 0
+        var stepsAboveThreshold = 0
         for i in 0 ..< 20 {
-            let t = Double(i) * 0.033  // ~30fps
-            // Video drifts 3ms per frame ahead of audio
+            let t = Double(i) * 0.033
             tracker.recordVideoTimestamp(makePTS(t + 0.003 * Double(i)))
             tracker.recordAudioTimestamp(makePTS(t))
+            if tracker.currentDrift() > DriftTracker.driftThreshold {
+                stepsAboveThreshold += 1
+            }
             totalCorrection = tracker.calculateCorrection()
         }
 
-        // After enough steps, correction should be non-zero (working to fix drift)
-        // The sign depends on implementation — just check it's actively correcting
-        #expect(totalCorrection != 0 || tracker.currentDrift() < DriftTracker.driftThreshold)
+        // Correction only starts once drift passes 50 ms, counters the video lead,
+        // and never exceeds 10 ms per correcting step.
+        #expect(stepsAboveThreshold > 0)
+        #expect(totalCorrection > 0)
+        #expect(totalCorrection <= Double(stepsAboveThreshold) * DriftTracker.maxCorrectionPerStep + 1e-9)
     }
 
     // MARK: - History

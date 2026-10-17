@@ -7,12 +7,10 @@
 
 import AVFoundation
 import CoreMedia
+@testable import SaneVideo
 import XCTest
 
-@testable import SaneVideo
-
 final class ProjectStateAudioTests: XCTestCase {
-
     var projectState: ProjectState!
 
     @MainActor
@@ -44,7 +42,8 @@ final class ProjectStateAudioTests: XCTestCase {
 
         // Add to timeline
         guard var project = projectState.currentProject,
-              !project.timeline.tracks.isEmpty else {
+              !project.timeline.tracks.isEmpty
+        else {
             return nil
         }
 
@@ -65,40 +64,12 @@ final class ProjectStateAudioTests: XCTestCase {
             return
         }
 
-        // Default volume is 1.0
-        XCTAssertEqual(clip.volume, 1.0, accuracy: 0.01)
-
-        projectState.updateClipVolume(clipId: clip.id, volume: 0.5)
-
-        // Verify volume was updated
-        let updatedClip = projectState.getClip(by: clip.id)
-        XCTAssertEqual(updatedClip?.volume ?? 0, 0.5, accuracy: 0.01)
-    }
-
-    @MainActor
-    func testUpdateClipVolumeToZero() {
-        guard let clip = addTestClip() else {
-            XCTFail("Failed to add test clip")
-            return
+        // Mute, cut and boost are all stored as given.
+        for volume: Float in [0.0, 0.5, 2.0] {
+            projectState.updateClipVolume(clipId: clip.id, volume: volume)
+            let updatedClip = projectState.getClip(by: clip.id)
+            XCTAssertEqual(updatedClip?.volume ?? -1, volume, accuracy: 0.01, "volume \(volume)")
         }
-
-        projectState.updateClipVolume(clipId: clip.id, volume: 0.0)
-
-        let updatedClip = projectState.getClip(by: clip.id)
-        XCTAssertEqual(updatedClip?.volume ?? 1, 0.0, accuracy: 0.01, "Volume should be muted")
-    }
-
-    @MainActor
-    func testUpdateClipVolumeToMax() {
-        guard let clip = addTestClip() else {
-            XCTFail("Failed to add test clip")
-            return
-        }
-
-        projectState.updateClipVolume(clipId: clip.id, volume: 2.0)
-
-        let updatedClip = projectState.getClip(by: clip.id)
-        XCTAssertEqual(updatedClip?.volume ?? 0, 2.0, accuracy: 0.01, "Volume should support boost")
     }
 
     @MainActor
@@ -262,7 +233,8 @@ final class ProjectStateAudioTests: XCTestCase {
     @MainActor
     func testUpdateVolumeCorrectClip() {
         guard let clip1 = addTestClip(),
-              let clip2 = addTestClip() else {
+              let clip2 = addTestClip()
+        else {
             XCTFail("Failed to add test clips")
             return
         }

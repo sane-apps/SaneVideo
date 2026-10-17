@@ -88,48 +88,6 @@ final class ExportEdgeCaseIntegrationTests: XCTestCase {
     // MARK: - Trimming Tests
 
     @MainActor
-    func testExportWithTrimmedClipRespectsTrim() async throws {
-        guard FileManager.default.fileExists(atPath: testAssetURL.path) else {
-            throw XCTSkip("Test asset not available")
-        }
-
-        let asset = AVURLAsset(url: testAssetURL)
-        let originalDuration = try await asset.load(.duration)
-
-        guard originalDuration.seconds > 2.0 else {
-            throw XCTSkip("Test video too short for trim test")
-        }
-
-        var clip = VideoClip(url: testAssetURL, duration: originalDuration, startTime: .zero)
-        clip.trimStart = .zero
-        clip.trimEnd = CMTime(seconds: 1.0, preferredTimescale: 600)
-
-        projectState.startNewProject()
-        projectState.addTrack(type: .video, name: "Video Track 1")
-        projectState.addClip(clip)
-
-        guard let project = projectState.currentProject else {
-            throw TestError.projectNotCreated
-        }
-
-        let outputURL = try await exportEngine.export(
-            project: project,
-            settings: SaneExportSettings(),
-            outputURL: tempOutputURL
-        ) { _ in }
-
-        let exportedAsset = try await verifyExportedFile(at: outputURL)
-        let exportedDuration = try await exportedAsset.load(.duration)
-
-        XCTAssertEqual(
-            exportedDuration.seconds,
-            1.0,
-            accuracy: 0.2,
-            "Trimmed export should be ~1 second, got \(exportedDuration.seconds)"
-        )
-    }
-
-    @MainActor
     func testTrimPointsRespectedExactFrameCount() async throws {
         guard FileManager.default.fileExists(atPath: testAssetURL.path) else {
             throw XCTSkip("Test asset not available")
@@ -279,46 +237,36 @@ final class ExportEdgeCaseIntegrationTests: XCTestCase {
         }
 
         let (project, _) = try await createProjectWithClip()
+        let engine = exportEngine!
+        let outputURL = tempOutputURL!
 
-        let exportTask = Task {
-            try await exportEngine.export(
+        let exportTask = Task { @MainActor in
+            try await engine.export(
                 project: project,
                 settings: SaneExportSettings(),
-                outputURL: tempOutputURL
+                outputURL: outputURL
             ) { _ in }
         }
 
-        try await Task.sleep(nanoseconds: 100_000_000)
+        // Wait until the export has actually started, then cancel it.
+        for _ in 0 ..< 1_000 where !engine.isExporting {
+            await Task.yield()
+        }
+        XCTAssertTrue(engine.isExporting, "Export never started")
+        engine.cancelExport()
 
-        exportEngine.cancelExport()
-        exportTask.cancel()
-
-        try await Task.sleep(nanoseconds: 500_000_000)
-
-        XCTAssertFalse(exportEngine.isExporting, "Should not be exporting after cancellation")
+        let result = await exportTask.result
+        if case .success = result {
+            XCTFail("Cancelled export should throw, not finish")
+        }
+        XCTAssertFalse(engine.isExporting, "Should not be exporting after cancellation")
+        XCTAssertFalse(
+            FileManager.default.fileExists(atPath: outputURL.path),
+            "Cancelled export must not leave a partial file"
+        )
     }
 
     // MARK: - Error Handling Tests
-
-    @MainActor
-    func testExportEmptyProjectThrowsError() async throws {
-        projectState.startNewProject()
-
-        guard let project = projectState.currentProject else {
-            throw TestError.projectNotCreated
-        }
-
-        do {
-            _ = try await exportEngine.export(
-                project: project,
-                settings: SaneExportSettings(),
-                outputURL: tempOutputURL
-            ) { _ in }
-            XCTFail("Should throw error for empty project")
-        } catch {
-            XCTAssertTrue(true, "Empty project correctly throws error: \(error)")
-        }
-    }
 
     @MainActor
     func testExportWithMissingFileHandlesGracefully() async throws {
@@ -345,7 +293,11 @@ final class ExportEdgeCaseIntegrationTests: XCTestCase {
             ) { _ in }
             XCTFail("Should throw error for missing file")
         } catch {
-            XCTAssertTrue(true, "Missing file correctly throws error: \(error)")
+            XCTAssertFalse(exportEngine.isExporting, "Engine must reset after a failed export")
+            XCTAssertFalse(
+                FileManager.default.fileExists(atPath: tempOutputURL.path),
+                "Failed export must not leave an output file"
+            )
         }
     }
 

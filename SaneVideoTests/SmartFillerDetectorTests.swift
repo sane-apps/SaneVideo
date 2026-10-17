@@ -6,115 +6,31 @@
 //  Follow AAA pattern: Arrange-Act-Assert
 //
 
-import Testing
 import Foundation
 @testable import SaneVideo
+import Testing
 
 @Suite("SmartFillerDetector Tests")
 struct SmartFillerDetectorTests {
-
     // MARK: - Definite Filler Detection Tests
 
     @Suite("Definite Fillers")
     struct DefiniteFillerTests {
-
-        @Test("Detects 'um' as filler")
-        func detectsUm() async {
-            // Arrange
+        @Test(
+            "Flags a definite filler word, and only that word, mid-sentence",
+            arguments: ["um", "uh", "uhh", "umm", "er", "hmm", "mhm"]
+        )
+        func detectsDefiniteFiller(_ filler: String) async {
             let detector = SmartFillerDetector()
             let words = [
-                CaptionWord(text: "So", start: 0, end: 0.5, probability: 0.9),
-                CaptionWord(text: "um", start: 0.5, end: 0.7, probability: 0.9),
+                CaptionWord(text: "We", start: 0, end: 0.5, probability: 0.9),
+                CaptionWord(text: filler, start: 0.5, end: 0.7, probability: 0.9),
                 CaptionWord(text: "hello", start: 0.7, end: 1.0, probability: 0.9)
             ]
 
-            // Act
             let fillers = await detector.detectFillers(in: words)
 
-            // Assert
-            #expect(fillers.contains(1))  // "um" is at index 1
-        }
-
-        @Test("Detects 'uh' as filler")
-        func detectsUh() async {
-            // Arrange
-            let detector = SmartFillerDetector()
-            let words = [
-                CaptionWord(text: "uh", start: 0, end: 0.3, probability: 0.9),
-                CaptionWord(text: "yes", start: 0.3, end: 0.6, probability: 0.9)
-            ]
-
-            // Act
-            let fillers = await detector.detectFillers(in: words)
-
-            // Assert
-            #expect(fillers.contains(0))  // "uh" is at index 0
-        }
-
-        @Test("Detects 'uhh' as filler")
-        func detectsUhh() async {
-            // Arrange
-            let detector = SmartFillerDetector()
-            let words = [CaptionWord(text: "uhh", start: 0, end: 0.5, probability: 0.9)]
-
-            // Act
-            let fillers = await detector.detectFillers(in: words)
-
-            // Assert
-            #expect(fillers.count == 1)
-            #expect(fillers.contains(0))
-        }
-
-        @Test("Detects 'umm' as filler")
-        func detectsUmm() async {
-            // Arrange
-            let detector = SmartFillerDetector()
-            let words = [CaptionWord(text: "umm", start: 0, end: 0.5, probability: 0.9)]
-
-            // Act
-            let fillers = await detector.detectFillers(in: words)
-
-            // Assert
-            #expect(fillers.contains(0))
-        }
-
-        @Test("Detects 'er' as filler")
-        func detectsEr() async {
-            // Arrange
-            let detector = SmartFillerDetector()
-            let words = [CaptionWord(text: "er", start: 0, end: 0.3, probability: 0.9)]
-
-            // Act
-            let fillers = await detector.detectFillers(in: words)
-
-            // Assert
-            #expect(fillers.contains(0))
-        }
-
-        @Test("Detects 'hmm' as filler")
-        func detectsHmm() async {
-            // Arrange
-            let detector = SmartFillerDetector()
-            let words = [CaptionWord(text: "hmm", start: 0, end: 0.5, probability: 0.9)]
-
-            // Act
-            let fillers = await detector.detectFillers(in: words)
-
-            // Assert
-            #expect(fillers.contains(0))
-        }
-
-        @Test("Detects 'mhm' as filler")
-        func detectsMhm() async {
-            // Arrange
-            let detector = SmartFillerDetector()
-            let words = [CaptionWord(text: "mhm", start: 0, end: 0.3, probability: 0.9)]
-
-            // Act
-            let fillers = await detector.detectFillers(in: words)
-
-            // Assert
-            #expect(fillers.contains(0))
+            #expect(fillers == [1])
         }
 
         @Test("Detects multiple definite fillers")
@@ -132,8 +48,8 @@ struct SmartFillerDetectorTests {
             let fillers = await detector.detectFillers(in: words)
 
             // Assert
-            #expect(fillers.contains(0))  // "um"
-            #expect(fillers.contains(2))  // "uh"
+            #expect(fillers.contains(0)) // "um"
+            #expect(fillers.contains(2)) // "uh"
         }
 
         @Test("Case insensitive detection")
@@ -158,7 +74,6 @@ struct SmartFillerDetectorTests {
 
     @Suite("Non-Fillers")
     struct NonFillerTests {
-
         @Test("Does not detect regular words as fillers")
         func noFalsePositives() async {
             // Arrange
@@ -209,7 +124,6 @@ struct SmartFillerDetectorTests {
 
     @Suite("Text Detection")
     struct TextDetectionTests {
-
         @Test("Detects fillers in raw text")
         func detectsInText() async {
             // Arrange
@@ -220,8 +134,8 @@ struct SmartFillerDetectorTests {
             let fillers = await detector.detectFillers(in: text)
 
             // Assert
-            #expect(fillers.count >= 2)  // At least "um" and "uh"
-            let fillerWords = fillers.map { $0.word }
+            #expect(fillers.count >= 2) // At least "um" and "uh"
+            let fillerWords = fillers.map(\.word)
             #expect(fillerWords.contains("um"))
             #expect(fillerWords.contains("uh"))
         }
@@ -260,7 +174,6 @@ struct SmartFillerDetectorTests {
 
     @Suite("Filler Confidence")
     struct ConfidenceTests {
-
         @Test("Definite filler has high confidence")
         func definiteFillerHighConfidence() async {
             // Arrange
@@ -317,7 +230,6 @@ struct SmartFillerDetectorTests {
 
     @Suite("Edge Cases")
     struct EdgeCaseTests {
-
         @Test("Handles punctuation around fillers")
         func handlesPunctuation() async {
             // Arrange
@@ -404,7 +316,6 @@ struct SmartFillerDetectorTests {
 
     @Suite("Contextual Fillers")
     struct ContextualFillerTests {
-
         @Test("'like' at sentence start is filler")
         func likeAtStartIsFiller() async {
             // Arrange

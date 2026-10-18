@@ -6,9 +6,9 @@ import SwiftUI
 struct GIFExportSheet: View {
     @Environment(\.dismiss) private var dismiss
 
-    let videoURL: URL
-    let projectName: String
+    let project: VideoProject
     let clipDuration: Double
+    private var projectName: String { project.name }
 
     @State private var fps: Int = 10
     @State private var width: Int = 480
@@ -263,8 +263,10 @@ struct GIFExportSheet: View {
                 let start = useFullVideo ? 0 : startTime
                 let duration = useFullVideo ? clipDuration : (endTime - startTime)
 
+                // The edited timeline, so Clean Up cuts and trims are in the GIF.
+                let built = try await CompositionBuilder.build(from: project)
                 try await GIFExporter.export(
-                    inputURL: videoURL,
+                    source: .init(asset: built.composition, videoComposition: built.videoComposition),
                     outputURL: url,
                     fps: Double(fps),
                     width: CGFloat(width),

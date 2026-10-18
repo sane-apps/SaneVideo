@@ -5,7 +5,27 @@
     <link>https://sanevideo.com/appcast.xml</link>
     <description>Most recent SaneVideo updates.</description>
     <language>en</language>
-                        <item>
+                                <item>
+            <title>1.1.0</title>
+            <link>https://sanevideo.com/download</link>
+            <pubDate>Sat, 17 Oct 2026 20:25:30 -0400</pubDate>
+            <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+            <description>
+                <![CDATA[
+                <h2>What's New</h2>
+                <ul>
+                <li>A cleaner, faster SaneVideo (needs macOS 26). Clean Up cuts silences and true filler words in one click. New look, Camera and Screen switch mid-take, timeline fixes, and every export comes with a matching .srt caption file.</li>
+                </ul>
+                ]]>
+            </description>
+            <enclosure url="https://dist.sanevideo.com/updates/SaneVideo-1.1.0.zip"
+                       sparkle:version="8"
+                       sparkle:shortVersionString="1.1.0"
+                       length="16168822"
+                       type="application/octet-stream"
+                       sparkle:edSignature="2dmRPedSxFxnkSolrfg63JosXn5dEfNS+Fz6P1d53iB38tvBtRlCgYTeCRx8Ew6x8pNqCnqYSiKdtBRFQ5b2DQ=="/>
+        </item>
+<item>
             <title>1.0.5</title>
             <link>https://sanevideo.com/download</link>
             <pubDate>Wed, 09 Sep 2026 10:34:16 -0400</pubDate>

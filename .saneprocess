@@ -134,6 +134,7 @@ appstore:
   app_id: "6770294375"
   scheme: SaneVideoAppStore
   iap_policy: none
+  retired_product_ids: ["com.sanevideo.app.pro.access.v2"]
   iap:
     submission: omit
   configuration: Release-AppStore

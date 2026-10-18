@@ -1,6 +1,7 @@
 // Export file naming (ExportDestination) and native GIF export (GIFExporter), in temp folders only.
 
 import AVFoundation
+import CoreMedia
 import Foundation
 import ImageIO
 @testable import SaneVideo
@@ -110,5 +111,32 @@ struct GIFExporterTests {
         let frames = try readGIF(gif).frameCount
         #expect(frames == Int(clipSeconds * 5))
         #expect(frames < 50, "10 s at 5 fps would be 50 frames; the 2 s clip allows about 10")
+    }
+
+    @Test("A GIF of the edited timeline leaves out what Clean Up cut")
+    @MainActor
+    func skipsCutRanges() async throws {
+        let folder = try TestMedia.makeTempDirectory("GIFExporter")
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let video = folder.appendingPathComponent("source.mp4")
+        try await TestMedia.writeVideo(to: video, width: 320, height: 240, fps: 30, frameCount: 60)
+        let clipDuration = try await AVURLAsset(url: video).load(.duration)
+        var clip = VideoClip(url: video, duration: clipDuration)
+        clip.removedRanges = [CodableTimeRange(CMTimeRange(
+            start: CMTime(seconds: 0.5, preferredTimescale: 600),
+            duration: CMTime(seconds: 1.0, preferredTimescale: 600)
+        ))]
+        var project = VideoProject(name: "GIF Cut")
+        project.updateTimeline(Timeline(tracks: [Track(name: "Video 1", type: .video, clips: [clip], zIndex: 0)]))
+        let built = try await CompositionBuilder.build(from: project)
+        let gif = folder.appendingPathComponent("cut.gif")
+
+        try await GIFExporter.export(
+            source: .init(asset: built.composition, videoComposition: built.videoComposition),
+            outputURL: gif, fps: 10, width: 160, startTime: 0, duration: 10
+        )
+
+        let frames = try readGIF(gif).frameCount
+        #expect(frames == Int((clipDuration.seconds - 1.0) * 10), "the 1 s cut must not be in the GIF")
     }
 }

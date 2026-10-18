@@ -130,11 +130,10 @@ struct MainContentView: View {
                 }
                 .sheet(isPresented: $showGIFSheet) {
                     if let project = appState.projectState.currentProject,
-                       let firstClip = project.timeline.tracks.first?.clips.first {
+                       project.timeline.tracks.contains(where: { !$0.clips.isEmpty }) {
                         GIFExportSheet(
-                            videoURL: firstClip.url,
-                            projectName: project.name,
-                            clipDuration: CMTimeGetSeconds(firstClip.effectiveDuration)
+                            project: project,
+                            clipDuration: CMTimeGetSeconds(project.timeline.duration)
                         )
                     }
                 }

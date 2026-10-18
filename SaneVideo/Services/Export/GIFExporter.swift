@@ -26,13 +26,36 @@ enum GIFExporter {
         duration: Double = 10,
         progress: (@Sendable (Double) -> Void)? = nil
     ) async throws {
-        let asset = AVURLAsset(url: inputURL)
+        try await export(
+            source: Source(asset: AVURLAsset(url: inputURL), videoComposition: nil), outputURL: outputURL,
+            fps: fps, width: width, startTime: startTime, duration: duration, progress: progress
+        )
+    }
+
+    /// What to read frames from. AVFoundation compositions are not Sendable; this one is built once and only read.
+    struct Source: @unchecked Sendable {
+        let asset: AVAsset
+        let videoComposition: AVVideoComposition?
+    }
+
+    /// Exports from an edited timeline: pass the project's composition so cuts and layout apply.
+    static func export(
+        source: Source,
+        outputURL: URL,
+        fps: Double = 10,
+        width: CGFloat = 480,
+        startTime: Double = 0,
+        duration: Double = 10,
+        progress: (@Sendable (Double) -> Void)? = nil
+    ) async throws {
+        let asset = source.asset
         let assetDuration = try await asset.load(.duration).seconds
         let length = max(0.1, min(duration, assetDuration - startTime))
         let frameCount = max(1, Int(length * fps))
 
         let generator = AVAssetImageGenerator(asset: asset)
         generator.appliesPreferredTrackTransform = true
+        generator.videoComposition = source.videoComposition
         generator.maximumSize = CGSize(width: width, height: 0)
         let tolerance = CMTime(seconds: 0.5 / fps, preferredTimescale: 600)
         generator.requestedTimeToleranceBefore = tolerance

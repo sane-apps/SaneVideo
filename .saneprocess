@@ -173,7 +173,7 @@ appstore:
     The app asks for Camera and Microphone only for recording. Screen & System Audio Recording is used for screen capture through Apple's screen capture picker. Clean Up and captions download a speech model once (about 600 MB, from Hugging Face) and run it on the Mac; no audio or video is sent anywhere.
   review_notes_by_platform:
     macos: >-
-      Fastest review path: launch SaneVideo, grant Camera and Microphone, press Record, speak for a few seconds with a pause, then stop, and choose Edit Now. Press Clean Up (the first run downloads the speech model, about 600 MB), then Export. The app is free; Donate is optional.
+      Fastest review path: launch SaneVideo, grant Camera and Microphone, press Record, speak for a few seconds with a pause, then stop, and choose Edit Now. Press Clean Up (the first run downloads the speech model, about 600 MB), then Export. The app is free: every feature is included, with no paywall and no in-app purchase.
 
       Screen recording: choose Screen in the recorder bar and pick a screen or window in Apple's picker. While the recorder is open, Option-Command-R starts and stops recording from any app; Option-Command-P pauses while recording.
   accessibility_declarations:

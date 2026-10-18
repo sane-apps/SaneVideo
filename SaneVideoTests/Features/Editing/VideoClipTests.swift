@@ -267,3 +267,42 @@ private final class TestWindow: NSWindow {
     forcedVisible
   }
 }
+
+@Suite("Caption cuts keep edits")
+struct CaptionCutEditTests {
+  private func caption(text: String) -> Caption {
+    Caption(
+      text: text,
+      startTime: .zero,
+      endTime: CMTime(seconds: 1.5, preferredTimescale: 600),
+      words: [
+        CaptionWord(text: "so", start: 0, end: 0.5, probability: 0.9),
+        CaptionWord(text: "um", start: 0.5, end: 1.0, probability: 0.9),
+        CaptionWord(text: "hello", start: 1.0, end: 1.5, probability: 0.9),
+      ])
+  }
+
+  private let cutUm = [CodableTimeRange(CMTimeRange(
+    start: CMTime(seconds: 0.5, preferredTimescale: 600),
+    duration: CMTime(seconds: 0.5, preferredTimescale: 600)))]
+
+  @Test("An unedited caption is rebuilt from the words left after the cut")
+  func uneditedRebuildsFromWords() throws {
+    let result = try #require(caption(text: "so um hello").removingWords(in: cutUm))
+    #expect(result.text == "so hello")
+    #expect(result.textMatchesWords)
+  }
+
+  @Test("An edited caption keeps the user's text and loses only the cut word")
+  func editedKeepsUserText() throws {
+    let result = try #require(caption(text: "So, um, hello world!").removingWords(in: cutUm))
+    #expect(result.text == "So, hello world!")
+    #expect(result.words?.map(\.text) == ["so", "hello"])
+  }
+
+  @Test("Edited text no longer matches the timed words, so the preview shows the text")
+  func editedTextDoesNotMatchWords() {
+    #expect(caption(text: "so um hello").textMatchesWords)
+    #expect(!caption(text: "So, hello there").textMatchesWords)
+  }
+}

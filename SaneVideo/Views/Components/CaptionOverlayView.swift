@@ -5,52 +5,36 @@ struct CaptionOverlayView: View {
     let caption: Caption?
     let currentTime: CMTime
     var style: CaptionStyle = .classic
-    @Binding var offset: CGSize
+    /// Normalized offset from the default caption band, same units the export uses.
+    var offset: CGSize = .zero
 
-    @State private var dragOffset: CGSize = .zero
-    @State private var scale: CGFloat = 1.0
+    // Same band as TextLayerBuilder: x 0.1, y 0.8, 80% wide, 15% tall.
+    private static let band = CGRect(x: 0.1, y: 0.8, width: 0.8, height: 0.15)
 
     var body: some View {
         if let caption = caption {
-            ZStack {
-                if let bgColor = style.backgroundColor, style.highlightStyle != .background {
-                    RoundedRectangle(cornerRadius: Theme.Dimensions.smallCornerRadius)
-                        .fill(Color(hex: bgColor))
-                        .opacity(style.backgroundColor != nil ? 1 : 0)
-                }
-
+            GeometryReader { geo in
+                let band = Self.band.offsetBy(dx: offset.width, dy: offset.height)
                 KaraokeTextRenderer(
                     caption: caption,
                     currentTime: currentTime,
                     style: style
                 )
                 .padding(8)
-            }
-            .padding(style.backgroundColor != nil ? 8 : 0)
-            .padding(.bottom, 40)
-            .scaleEffect(scale)
-            .offset(x: offset.width + dragOffset.width, y: offset.height + dragOffset.height)
-            .simultaneousGesture(
-                DragGesture()
-                    .onChanged { value in dragOffset = value.translation }
-                    .onEnded { value in
-                        offset.width += value.translation.width
-                        offset.height += value.translation.height
-                        dragOffset = .zero
+                .background {
+                    if let bgColor = style.backgroundColor, style.highlightStyle != .background {
+                        RoundedRectangle(cornerRadius: Theme.Dimensions.smallCornerRadius)
+                            .fill(Color(hex: bgColor))
                     }
-            )
-            .simultaneousGesture(
-                MagnificationGesture()
-                    .onChanged { value in scale = max(0.5, min(3.0, value)) }
-            )
-            .onHover { inside in
-                if inside { NSCursor.openHand.push() } else { NSCursor.pop() }
+                }
+                .frame(width: band.width * geo.size.width)
+                .position(x: band.midX * geo.size.width, y: band.midY * geo.size.height)
             }
+            // Dragging is handled by CanvasOverlay underneath.
+            .allowsHitTesting(false)
             // Stable ID so the caption doesn't jump; it changes only when the caption changes, not on text edits.
             .id("\(caption.id)-\(caption.startTime.seconds)")
-            .transition(.scale.combined(with: .opacity))
-            // Animate only when the caption changes, not on text edits, to prevent jumping.
-            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: caption.id)
+            .transition(.opacity)
         }
     }
 }
@@ -64,7 +48,8 @@ struct KaraokeTextRenderer: View {
 
     var body: some View {
         FlowLayout(alignment: .center, spacing: 6) {
-            if let words = caption.words, !words.isEmpty {
+            // After a text edit the timed words are stale, so show the edited text instead.
+            if let words = caption.words, caption.textMatchesWords {
                 ForEach(words) { word in
                     let isWordActive = isWordActive(word)
 
@@ -114,10 +99,12 @@ struct FlowLayout: Layout {
     var spacing: CGFloat = 4
 
     func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
-        let width = proposal.width ?? 0
+        // With no width proposed, lay out on one line instead of collapsing to zero width.
+        let width = proposal.width ?? .infinity
         var x: CGFloat = 0
         var y: CGFloat = 0
         var rowHeight: CGFloat = 0
+        var widest: CGFloat = 0
 
         for subview in subviews {
             let size = subview.sizeThatFits(ProposedViewSize(width: nil, height: nil))
@@ -130,9 +117,10 @@ struct FlowLayout: Layout {
 
             rowHeight = max(rowHeight, size.height)
             x += size.width + spacing
+            widest = max(widest, x - spacing)
         }
 
-        return CGSize(width: width, height: y + rowHeight)
+        return CGSize(width: proposal.width ?? widest, height: y + rowHeight)
     }
 
     func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {

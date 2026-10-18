@@ -10,6 +10,8 @@ struct CaptionOverlayView: View {
 
     // Same band as TextLayerBuilder: x 0.1, y 0.8, 80% wide, 15% tall.
     private static let band = CGRect(x: 0.1, y: 0.8, width: 0.8, height: 0.15)
+    /// Height of the 1920x1080 frame the editor's playback composition renders.
+    private static let referenceHeight: CGFloat = 1080
 
     var body: some View {
         if let caption = caption {
@@ -18,7 +20,9 @@ struct CaptionOverlayView: View {
                 KaraokeTextRenderer(
                     caption: caption,
                     currentTime: currentTime,
-                    style: style
+                    style: style,
+                    // Export sizes text in pixels of the video frame; scale to this preview so it matches.
+                    scale: geo.size.height / Self.referenceHeight
                 )
                 .padding(8)
                 .background {
@@ -45,20 +49,23 @@ struct KaraokeTextRenderer: View {
     let caption: Caption
     let currentTime: CMTime
     let style: CaptionStyle
+    var scale: CGFloat = 1
+
+    private var fontSize: CGFloat { style.fontSize * scale }
 
     var body: some View {
-        FlowLayout(alignment: .center, spacing: 6) {
-            // After a text edit the timed words are stale, so show the edited text instead.
-            if let words = caption.words, caption.textMatchesWords {
+        // After a text edit the timed words are stale, so show the edited text instead.
+        if let words = caption.words, caption.textMatchesWords {
+            FlowLayout(alignment: .center, spacing: 6 * scale) {
                 ForEach(words) { word in
                     let isWordActive = isWordActive(word)
 
                     Text(word.text)
-                        .font(.custom(style.fontName, size: style.fontSize))
+                        .font(.custom(style.fontName, size: fontSize))
                         .fontWeight(style.isBold ? .bold : .regular)
                         .italic(style.isItalic)
                         .foregroundColor(textColor(for: isWordActive))
-                        .shadow(color: Color(hex: style.shadowColor ?? "#000000").opacity(style.shadowRadius > 0 ? 0.8 : 0), radius: style.shadowRadius, x: 0, y: 2)
+                        .shadow(color: Color(hex: style.shadowColor ?? "#000000").opacity(style.shadowRadius > 0 ? 0.8 : 0), radius: style.shadowRadius * scale, x: 0, y: 2 * scale)
                         .scaleEffect(isWordActive && style.highlightStyle == .pop ? 1.2 : 1.0)
                         .animation(.spring(response: 0.2, dampingFraction: 0.5), value: isWordActive)
                         .background(
@@ -66,15 +73,16 @@ struct KaraokeTextRenderer: View {
                             Color(hex: style.activeTextColor ?? style.textColor).opacity(0.3).cornerRadius(4) : nil
                         )
                 }
-            } else {
-                // Use displayText to strip Whisper tokens like <|startoftranscript|>
-                Text(caption.displayText)
-                    .font(.custom(style.fontName, size: style.fontSize))
-                    .fontWeight(style.isBold ? .bold : .regular)
-                    .italic(style.isItalic)
-                    .foregroundColor(Color(hex: style.textColor))
-                    .shadow(color: Color(hex: style.shadowColor ?? "#000000").opacity(0.8), radius: style.shadowRadius, x: 0, y: 2)
             }
+        } else {
+            // Plain text wraps inside the band, like the export. displayText strips Whisper tokens.
+            Text(caption.displayText)
+                .font(.custom(style.fontName, size: fontSize))
+                .fontWeight(style.isBold ? .bold : .regular)
+                .italic(style.isItalic)
+                .foregroundColor(Color(hex: style.textColor))
+                .multilineTextAlignment(.center)
+                .shadow(color: Color(hex: style.shadowColor ?? "#000000").opacity(0.8), radius: style.shadowRadius * scale, x: 0, y: 2 * scale)
         }
     }
 

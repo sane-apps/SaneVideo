@@ -4,6 +4,17 @@ All notable changes to SaneVideo are documented here.
 
 ---
 
+## [1.1.1] - 2026-10-18
+
+Fixes for Clean Up, Shorts, GIFs and captions.
+
+- Shorts now leave out what Clean Up cut and what you trimmed off the clip.
+- GIF export uses your edited video, so Clean Up cuts stay out of the GIF.
+- Fixing a caption's text no longer loses your change when Clean Up cuts a word from that line.
+- The editor preview shows captions where the export puts them, near the bottom and at the right size, instead of over the play button. Long lines wrap instead of running off the edges.
+
+---
+
 ## [1.1.0] - 2026-10-17
 
 A cleaner, faster SaneVideo. Needs macOS 26.

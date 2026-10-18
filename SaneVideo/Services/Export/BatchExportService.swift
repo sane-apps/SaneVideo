@@ -35,6 +35,7 @@ actor BatchExportService {
         _ candidates: [ShortCandidate],
         from sourceURL: URL,
         name: String = "Short",
+        removedRanges: [CMTimeRange] = [],
         settings: RepurposingSettings,
         progressHandler: @escaping @Sendable (Double) -> Void
     ) async throws -> [URL] {
@@ -62,6 +63,7 @@ actor BatchExportService {
                 let outputURL = try await exportSingleShort(
                     candidate: candidate,
                     from: sourceURL,
+                    removedRanges: removedRanges,
                     settings: settings,
                     context: context
                 ) { individualProgress in
@@ -108,6 +110,7 @@ actor BatchExportService {
     private func exportSingleShort(
         candidate: ShortCandidate,
         from sourceURL: URL,
+        removedRanges: [CMTimeRange],
         settings: RepurposingSettings,
         context: ExportContext,
         progressHandler: @escaping @Sendable (Double) -> Void
@@ -130,22 +133,25 @@ actor BatchExportService {
             throw BatchExportError.compositionFailed
         }
 
-        try compositionVideoTrack.insertTimeRange(
-            candidate.timeRange,
-            of: sourceVideoTrack,
-            at: .zero
-        )
+        // Leave out what Clean Up cut, so the short matches the edited video.
+        let pieces = Self.keptRanges(of: candidate.timeRange, removing: removedRanges)
+        guard !pieces.isEmpty else { throw BatchExportError.compositionFailed }
+        var cursor = CMTime.zero
+        for piece in pieces {
+            try compositionVideoTrack.insertTimeRange(piece, of: sourceVideoTrack, at: cursor)
+            cursor = cursor + piece.duration
+        }
 
         if let sourceAudioTrack = audioTracks.first {
             if let compositionAudioTrack = composition.addMutableTrack(
                 withMediaType: .audio,
                 preferredTrackID: kCMPersistentTrackID_Invalid
             ) {
-                try compositionAudioTrack.insertTimeRange(
-                    candidate.timeRange,
-                    of: sourceAudioTrack,
-                    at: .zero
-                )
+                var audioCursor = CMTime.zero
+                for piece in pieces {
+                    try compositionAudioTrack.insertTimeRange(piece, of: sourceAudioTrack, at: audioCursor)
+                    audioCursor = audioCursor + piece.duration
+                }
             }
         }
 
@@ -192,6 +198,26 @@ actor BatchExportService {
         }
 
         return outputURL
+    }
+
+    /// The parts of `range` not covered by `removed`, in order.
+    static func keptRanges(of range: CMTimeRange, removing removed: [CMTimeRange]) -> [CMTimeRange] {
+        var kept = [range]
+        for cut in removed.sorted(by: { $0.start < $1.start }) {
+            kept = kept.flatMap { piece -> [CMTimeRange] in
+                let overlap = piece.intersection(cut)
+                guard !overlap.isEmpty else { return [piece] }
+                var parts: [CMTimeRange] = []
+                if overlap.start > piece.start {
+                    parts.append(CMTimeRange(start: piece.start, end: overlap.start))
+                }
+                if overlap.end < piece.end {
+                    parts.append(CMTimeRange(start: overlap.end, end: piece.end))
+                }
+                return parts
+            }
+        }
+        return kept.filter { $0.duration.seconds > 0.01 }
     }
 
     private func createVideoComposition(

@@ -390,6 +390,7 @@ struct RepurposingSheet: View {
                     selectedCandidates,
                     from: clip.url,
                     name: appState.currentProject?.name ?? "Short",
+                    removedRanges: clip.removedForShorts,
                     settings: settings
                 ) { progress in
                     Task { @MainActor in

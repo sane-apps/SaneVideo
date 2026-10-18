@@ -156,3 +156,103 @@ struct CaptionTests {
         #expect(!FileManager.default.fileExists(atPath: folder.appendingPathComponent("Quiet.srt").path))
     }
 }
+
+@Suite("Caption preview placement")
+@MainActor
+struct CaptionPreviewPlacementTests {
+    /// Rows (as a fraction of height) that hold visible caption pixels.
+    private func inkRows(_ view: some View, size: CGSize) throws -> [Double] {
+        let renderer = ImageRenderer(content: view.frame(width: size.width, height: size.height))
+        renderer.scale = 1
+        let image = try #require(renderer.cgImage)
+        let width = image.width, height = image.height
+        var pixels = [UInt8](repeating: 0, count: width * height * 4)
+        let context = try #require(CGContext(
+            data: &pixels, width: width, height: height, bitsPerComponent: 8, bytesPerRow: width * 4,
+            space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+        ))
+        context.draw(image, in: CGRect(x: 0, y: 0, width: width, height: height))
+        var rows: [Double] = []
+        for row in 0 ..< height {
+            let inked = (0 ..< width).contains { pixels[(row * width + $0) * 4 + 3] > 128 }
+            if inked { rows.append(Double(row) / Double(height)) }
+        }
+        return rows
+    }
+
+    @Test("A caption is drawn in the export's bottom band, not the middle of the frame")
+    func captionSitsInBottomBand() throws {
+        let caption = Caption(
+            text: "Here is the take.", startTime: .zero, endTime: CMTime(seconds: 2, preferredTimescale: 600)
+        )
+        let rows = try inkRows(
+            CaptionOverlayView(caption: caption, currentTime: .zero, style: .classic),
+            size: CGSize(width: 960, height: 540)
+        )
+        #expect(!rows.isEmpty, "the caption must be visible")
+        #expect((rows.min() ?? 0) > 0.6, "caption must sit low in the frame, top row at \(rows.min() ?? 0)")
+    }
+
+    @Test("A long caption wraps inside the frame instead of running off both edges")
+    func longCaptionStaysInsideFrame() throws {
+        let caption = Caption(
+            text: "SaneVideo finds the quiet parts and filler words, then cleans them up for you.",
+            startTime: .zero, endTime: CMTime(seconds: 2, preferredTimescale: 600)
+        )
+        let size = CGSize(width: 774, height: 434)
+        let renderer = ImageRenderer(content: CaptionOverlayView(caption: caption, currentTime: .zero, style: .classic)
+            .frame(width: size.width, height: size.height))
+        renderer.scale = 1
+        let image = try #require(renderer.cgImage)
+        var pixels = [UInt8](repeating: 0, count: image.width * image.height * 4)
+        let context = try #require(CGContext(
+            data: &pixels, width: image.width, height: image.height, bitsPerComponent: 8,
+            bytesPerRow: image.width * 4, space: CGColorSpaceCreateDeviceRGB(),
+            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+        ))
+        context.draw(image, in: CGRect(x: 0, y: 0, width: image.width, height: image.height))
+        let edgeInk = (0 ..< image.height).contains { row in
+            pixels[(row * image.width) * 4 + 3] > 128 || pixels[(row * image.width + image.width - 1) * 4 + 3] > 128
+        }
+        #expect(!edgeInk, "caption text must not touch the left or right edge")
+    }
+
+    @Test("The editor's still preview shows the caption low in the frame")
+    func thumbnailPreviewShowsCaption() throws {
+        let caption = Caption(
+            text: "Here is the take.", startTime: .zero, endTime: CMTime(seconds: 2, preferredTimescale: 600)
+        )
+        let preview = EditorThumbnailPreviewView(
+            project: VideoProject(name: "Empty"), availableSize: CGSize(width: 960, height: 540),
+            selectedClip: nil, currentTime: .zero, onPlay: {}, isPlayerReady: false,
+            isPreparingPreview: false, captionData: (caption, .zero)
+        )
+        let plain = EditorThumbnailPreviewView(
+            project: VideoProject(name: "Empty"), availableSize: CGSize(width: 960, height: 540),
+            selectedClip: nil, currentTime: .zero, onPlay: {}, isPlayerReady: false,
+            isPreparingPreview: false, captionData: nil
+        )
+        let size = CGSize(width: 960, height: 540)
+        let withCaption = try renderedBytes(preview, size: size)
+        let without = try renderedBytes(plain, size: size)
+        let changedRows = Set(zip(withCaption.indices, zip(withCaption, without))
+            .filter { $0.1.0 != $0.1.1 }
+            .map { Double($0.0 / (Int(size.width) * 4)) / size.height })
+        #expect(!changedRows.isEmpty, "the caption must change the preview")
+        #expect((changedRows.min() ?? 0) > 0.6, "caption must sit low, top changed row at \(changedRows.min() ?? 0)")
+    }
+
+    private func renderedBytes(_ view: some View, size: CGSize) throws -> [UInt8] {
+        let renderer = ImageRenderer(content: view.frame(width: size.width, height: size.height))
+        renderer.scale = 1
+        let image = try #require(renderer.cgImage)
+        var pixels = [UInt8](repeating: 0, count: image.width * image.height * 4)
+        let context = try #require(CGContext(
+            data: &pixels, width: image.width, height: image.height, bitsPerComponent: 8,
+            bytesPerRow: image.width * 4, space: CGColorSpaceCreateDeviceRGB(),
+            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+        ))
+        context.draw(image, in: CGRect(x: 0, y: 0, width: image.width, height: image.height))
+        return pixels
+    }
+}

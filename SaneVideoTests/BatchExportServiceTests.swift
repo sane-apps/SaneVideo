@@ -75,4 +75,46 @@ struct BatchExportServiceTests {
         #expect(size == CGSize(width: 1080, height: 1920))
         #expect(progress.snapshot.last == 1.0)
     }
+
+    @Test("A short leaves out what Clean Up cut inside its range")
+    func shortSkipsCleanUpCuts() async throws {
+        let outputDirectory = makeOutputDirectory()
+        defer { try? FileManager.default.removeItem(at: outputDirectory) }
+        let service = BatchExportService(outputDirectory: outputDirectory)
+        let candidate = ShortCandidate(
+            timeRange: CMTimeRange(
+                start: CMTime(seconds: 1, preferredTimescale: 600),
+                duration: CMTime(seconds: 2, preferredTimescale: 600)
+            )
+        )
+        let cut = CMTimeRange(
+            start: CMTime(seconds: 1.5, preferredTimescale: 600),
+            duration: CMTime(seconds: 0.5, preferredTimescale: 600)
+        )
+
+        let results = try await service.exportShorts(
+            [candidate],
+            from: TestEnvironment.mockAssetURL,
+            removedRanges: [cut],
+            settings: RepurposingSettings(aspectRatio: .vertical9x16),
+            progressHandler: { _ in }
+        )
+
+        let url = try #require(results.first)
+        let duration = try await AVURLAsset(url: url).load(.duration).seconds
+        #expect(abs(duration - 1.5) < 0.1, "2 s range minus the 0.5 s cut")
+    }
+
+    @Test("Kept ranges split around cuts and drop fully cut ranges")
+    func keptRangesSplitAroundCuts() {
+        func range(_ start: Double, _ end: Double) -> CMTimeRange {
+            CMTimeRange(
+                start: CMTime(seconds: start, preferredTimescale: 600),
+                end: CMTime(seconds: end, preferredTimescale: 600)
+            )
+        }
+        let kept = BatchExportService.keptRanges(of: range(0, 10), removing: [range(6, 7), range(2, 3), range(9, 12)])
+        #expect(kept.map { [$0.start.seconds, $0.end.seconds] } == [[0, 2], [3, 6], [7, 9]])
+        #expect(BatchExportService.keptRanges(of: range(2, 3), removing: [range(0, 5)]).isEmpty)
+    }
 }

@@ -2,6 +2,18 @@ import AVFoundation
 import Foundation
 
 extension VideoClip {
+    /// Source-time ranges a short must leave out: Clean Up cuts plus anything trimmed off either end.
+    var removedForShorts: [CMTimeRange] {
+        var ranges = removedRanges.map(\.timeRange)
+        if trimStart > .zero {
+            ranges.append(CMTimeRange(start: .zero, end: trimStart))
+        }
+        if trimEnd < duration {
+            ranges.append(CMTimeRange(start: trimEnd, end: duration))
+        }
+        return ranges
+    }
+
     
     // MARK: - Time Mapping
 

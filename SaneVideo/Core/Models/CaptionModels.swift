@@ -112,9 +112,32 @@ extension Caption {
         guard kept.count != words.count else { return self }
         guard !kept.isEmpty else { return nil }
         var caption = self
+        if textMatchesWords {
+            caption.text = kept.map(\.text).joined(separator: " ")
+        } else {
+            // The user edited this line: keep their text and drop only the cut words from it.
+            let cut = words.filter { word in !kept.contains { $0.id == word.id } }
+            var tokens = text.split(whereSeparator: \.isWhitespace).map(String.init)
+            for word in cut {
+                if let index = tokens.firstIndex(where: { Self.sameWord($0, word.text) }) {
+                    tokens.remove(at: index)
+                }
+            }
+            caption.text = tokens.joined(separator: " ")
+        }
         caption.words = kept
-        caption.text = kept.map(\.text).joined(separator: " ")
         return caption
+    }
+
+    /// True while the text is still exactly what the timed words say, so word highlighting is safe to show.
+    var textMatchesWords: Bool {
+        guard let words, !words.isEmpty else { return false }
+        return words.map(\.text).joined(separator: " ") == text.split(whereSeparator: \.isWhitespace).joined(separator: " ")
+    }
+
+    private static func sameWord(_ lhs: String, _ rhs: String) -> Bool {
+        let trim = { (value: String) in value.lowercased().trimmingCharacters(in: .punctuationCharacters) }
+        return trim(lhs) == trim(rhs)
     }
     /// SubRip text, the caption file YouTube and most players accept.
     static func srt(_ captions: [Caption]) -> String {

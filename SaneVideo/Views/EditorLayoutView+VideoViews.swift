@@ -141,7 +141,7 @@ struct EditorThumbnailPreviewView: View {
                     caption: captionData.0,
                     currentTime: captionData.1,
                     style: project.captionStyle,
-                    offset: .constant(project.captionOffset)
+                    offset: project.captionOffset
                 )
             }
         }
@@ -203,7 +203,7 @@ struct EditorVideoPlayerView: View {
                         caption: captionData.0,
                         currentTime: captionData.1,
                         style: project.captionStyle,
-                        offset: .constant(project.captionOffset)
+                        offset: project.captionOffset
                     )
                 }
             }

@@ -5,7 +5,27 @@
     <link>https://sanevideo.com/appcast.xml</link>
     <description>Most recent SaneVideo updates.</description>
     <language>en</language>
-                                <item>
+                                        <item>
+            <title>1.1.1</title>
+            <link>https://sanevideo.com/download</link>
+            <pubDate>Sun, 18 Oct 2026 21:03:35 -0400</pubDate>
+            <sparkle:minimumSystemVersion>26.0</sparkle:minimumSystemVersion>
+            <description>
+                <![CDATA[
+                <h2>What's New</h2>
+                <ul>
+                <li>Shorts now leave out what Clean Up cut and what you trimmed. GIF export uses your edited video. Caption edits survive Clean Up. The editor preview shows captions where the export puts them, at the right size.</li>
+                </ul>
+                ]]>
+            </description>
+            <enclosure url="https://dist.sanevideo.com/updates/SaneVideo-1.1.1.zip"
+                       sparkle:version="12"
+                       sparkle:shortVersionString="1.1.1"
+                       length="16168828"
+                       type="application/octet-stream"
+                       sparkle:edSignature="kAATN3L3pDWtigq6q7PqX0zu2AqBuNZnSgsK0wIjM+J9zNeDhw2LQFDECe5QJSU5SXIVH0vQu7NCFApCAln8CA=="/>
+        </item>
+<item>
             <title>1.1.0</title>
             <link>https://sanevideo.com/download</link>
             <pubDate>Sat, 17 Oct 2026 20:25:30 -0400</pubDate>

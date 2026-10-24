@@ -1,26 +1,49 @@
 updated: 2026-10-24
 source_rule: Use only actual SaneVideo app captures for public website and App Store screenshots.
-website_captures_2026_10_24:
-  build: Release 1.1.1 (12) from main 1509254, launched with SANEVIDEO_STORE_SCREENSHOTS=1 SANEVIDEO_OPEN_EDITOR=1
-  source_media: outputs/stock-source/mixkit-man-working-on-laptop-308.mp4 (looped to 21.5 s, 1920x1080) with a macOS text-to-speech narration (voice Samantha) that has real pauses and "um"/"uh", so Clean Up and captions had speech to work on
-  capture_tool: Mini capture agent (~/.sane/capture-queue), crops in outputs/site-redesign-20261024/crops
+website_captures_2026_10_24b:
+  replaces: the 2026-10-24 laptop-clip captures and macOS text-to-speech voice (owner found them boring; voice removed)
+  build: Release 1.1.1 (12) from main, launched with SANEVIDEO_STORE_SCREENSHOTS=1 SANEVIDEO_OPEN_EDITOR=1, live log attached
+  demo_clip: ~/Movies/SaneVideo/ScreenshotKit/Tests/Assets/site-demo-art.mp4 (63.4 s, 1920x1080)
+  demo_clip_note: >-
+    Composite made to match SaneVideo's bubble spec (VideoWriter.swift bubble(), OverlayModels.swift
+    PresenterOverlayLayout radius 16, bottom-right, 40 px margin; drawn 480x320, the standard 320x214 enlarged 1.5x),
+    not recorded by SaneVideo. Real Clean Up, captions, export and Create Shorts then ran on it in the app.
+  sources:
+    camera: >-
+      https://www.pexels.com/video/man-sitting-while-talking-4994039/ (Tima Miroshnichenko; Pexels license, free
+      commercial use, no attribution required; file 4994039-hd_1920_1080_25fps.mp4, 9.6 MB, downloaded 2026-10-24).
+      The speaker never says anything about SaneVideo or video editing.
+    screen_paintings_license: Wikimedia Commons, Public Domain Mark 1.0; public domain in the US (published before 1931); downloaded 2026-10-24
+    screen_paintings:
+      - Hokusai, The Great Wave off Kanagawa, c. 1830-32 (Met) https://commons.wikimedia.org/wiki/File:Tsunami_by_hokusai_19th_century.jpg
+      - Van Gogh, The Starry Night, 1889 (MoMA) https://commons.wikimedia.org/wiki/File:Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg
+      - Monet, Water Lilies, 1906 (Art Institute of Chicago) https://commons.wikimedia.org/wiki/File:Claude_Monet_-_Water_Lilies_-_1906,_Ryerson.jpg
+      - Vermeer, Girl with a Pearl Earring, c. 1665 (Mauritshuis) https://commons.wikimedia.org/wiki/File:1665_Girl_with_a_Pearl_Earring.jpg
+      - Seurat, A Sunday on La Grande Jatte, 1884-86 (Art Institute of Chicago) https://commons.wikimedia.org/wiki/File:A_Sunday_on_La_Grande_Jatte,_Georges_Seurat,_1884.jpg
+      - Klimt, The Kiss, 1907-08, oil and gold leaf (Belvedere) https://commons.wikimedia.org/wiki/File:The_Kiss_-_Gustav_Klimt_-_Google_Cultural_Institute.jpg
+    voice: >-
+      Local Kokoro-82M, voice am_michael (male speaker), speed 1.08, lines joined with 1.6-1.9 s pauses, -16.4 LUFS.
+      Script: ~/Movies/SaneVideo/ScreenshotKit/voice/lines.txt (art commentary with two "um"s and one "uh").
   assets:
-    - public_asset: docs/images/sanevideo-editor-{800,1398}.webp
-      source_capture: outputs/site-redesign-20261024/raw/01-before.png
-      visible_state: Editor before Clean Up, Clean Up panel with all options on, full 21 s clip on the timeline.
-    - public_asset: docs/images/sanevideo-timeline-before.webp
-      source_capture: outputs/site-redesign-20261024/raw/01-before.png
-      visible_state: Timeline before Clean Up, 00:00:21:16.
-    - public_asset: docs/images/sanevideo-timeline-after.webp
-      source_capture: outputs/site-redesign-20261024/raw/05-paused.png
-      visible_state: Same timeline after one Clean Up, 00:00:13:10, no caption on screen at 3.0 s.
-    - public_asset: docs/images/sanevideo-shorts-{480,800}.webp
-      source_capture: outputs/site-redesign-20261024/raw/09-shorts.png
-      visible_state: Create Shorts sheet before Analyze (TikTok selected, no candidates yet).
+    - public_asset: docs/images/sanevideo-editor-art-{800,1398}.webp
+      source_capture: outputs/site-visuals-20261024/raw/21-before.png
+      visible_state: Editor before Clean Up, 1:03 clip, Great Wave with the camera bubble, Clean Up panel.
+    - public_asset: docs/images/sanevideo-timeline-art-before.webp and sanevideo-timeline-art-after.webp
+      source_capture: outputs/site-visuals-20261024/raw/21-before.png and raw/22-after.png
+      visible_state: Timeline 00:01:03:11 before, 00:00:38:02 after one Clean Up (app log "Clean Up made 18 cuts", "Generated 26 captions!").
+    - public_asset: docs/images/sanevideo-shorts-art-{480,798}.webp
+      source_capture: outputs/site-visuals-20261024/raw/23-shorts.png
+      visible_state: Create Shorts after Analyze, TikTok, 2 candidates (0:15 and 0:30), Export 2 Shorts.
+    - public_asset: docs/images/sanevideo-short-art-{360,540}.webp
+      source_capture: outputs/site-visuals-20261024/raw/short1.mp4 at 14.5 s (1080x1920 Short exported by Create Shorts to ~/Movies/SaneVideo/Shorts)
+    - public_asset: docs/videos/sanevideo-demo-loop.mp4 and sanevideo-demo-loop-poster.webp
+      made_from: the demo clip (1 Record), the before/after timeline captures (2 Clean Up), short1.mp4 (3 Short); 9.4 s, silent, labels added as overlays
     - public_asset: docs/images/og-image.png
-      source_capture: outputs/site-redesign-20261024/crops/sanevideo-editor.png
+      source_capture: outputs/site-visuals-20261024/crops/sanevideo-editor.png
       generator: scripts/generate_og_image.swift
-  not_used: outputs/site-redesign-20261024/raw/06-paused2.png shows each caption twice in the editor preview (one copy at the top, one at the bottom); kept as private bug evidence, not for public use.
+  not_used:
+    - raw/22-after.png shows each caption twice in the preview (the export draws captions at the top, the preview overlay at the bottom). Private bug evidence.
+    - The TikTok export preset letterboxes the 16:9 video with captions in the top bar; Create Shorts crops to 9:16 without captions.
 retained_captures:
   - public_asset: docs/images/sanevideo-meeting-workflow.jpg
     appstore_asset: Screenshots/appstore-01-editing-dark-mac.png

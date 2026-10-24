@@ -13,8 +13,8 @@
   <meta property="og:url" content="https://sanevideo.com/">
   <meta property="og:title" content="SaneVideo: Screen and Camera Recorder for YouTube on Mac">
   <meta property="og:description" content="Record your screen with your camera in a bubble. One click cuts the silences and ums. Captions, YouTube exports and vertical Shorts, all made on your Mac. Free.">
-  <meta property="og:image" content="https://sanevideo.com/images/og-image.png?v=20261024b">
-  <meta property="og:image:secure_url" content="https://sanevideo.com/images/og-image.png?v=20261024b">
+  <meta property="og:image" content="https://sanevideo.com/images/og-image.png?v=20261024c">
+  <meta property="og:image:secure_url" content="https://sanevideo.com/images/og-image.png?v=20261024c">
   <meta property="og:image:type" content="image/png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
@@ -25,13 +25,13 @@
   <meta name="twitter:url" content="https://sanevideo.com/">
   <meta name="twitter:title" content="SaneVideo: Screen and Camera Recorder for YouTube on Mac">
   <meta name="twitter:description" content="Record your screen with your camera in a bubble. One click cuts the silences and ums. Captions, YouTube exports and vertical Shorts, all made on your Mac. Free.">
-  <meta name="twitter:image" content="https://sanevideo.com/images/og-image.png?v=20261024b">
+  <meta name="twitter:image" content="https://sanevideo.com/images/og-image.png?v=20261024c">
   <meta name="twitter:image:alt" content="SaneVideo: Record. Clean Up. Post. Screen and camera videos for YouTube and Shorts, with the SaneVideo editor beside the text.">
   <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32.png">
   <link rel="apple-touch-icon" href="/images/apple-touch-icon.png">
   <meta name="theme-color" content="#070b12">
   <link rel="stylesheet" href="/site.css?v=20261024">
-  <link rel="preload" as="image" href="/images/sanevideo-editor-1398.webp" imagesrcset="/images/sanevideo-editor-800.webp 800w, /images/sanevideo-editor-1398.webp 1398w" imagesizes="(max-width: 900px) calc(100vw - 32px), 640px">
+  <link rel="preload" as="image" href="/images/sanevideo-editor-art-1398.webp" imagesrcset="/images/sanevideo-editor-art-800.webp 800w, /images/sanevideo-editor-art-1398.webp 1398w" imagesizes="(max-width: 900px) calc(100vw - 32px), 640px">
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -43,11 +43,11 @@
         "url": "https://sanevideo.com/",
         "downloadUrl": "https://sanevideo.com/download",
         "installUrl": "https://apps.apple.com/us/app/sanevideo/id6770294375",
-        "image": "https://sanevideo.com/images/og-image.png?v=20261024b",
+        "image": "https://sanevideo.com/images/og-image.png?v=20261024c",
         "screenshot": [
-          "https://sanevideo.com/images/sanevideo-editor-1398.webp",
-          "https://sanevideo.com/images/sanevideo-timeline-after.webp",
-          "https://sanevideo.com/images/sanevideo-shorts-800.webp"
+          "https://sanevideo.com/images/sanevideo-editor-art-1398.webp",
+          "https://sanevideo.com/images/sanevideo-timeline-art-after.webp",
+          "https://sanevideo.com/images/sanevideo-shorts-art-798.webp"
         ],
         "operatingSystem": "macOS 26 or later (Apple silicon)",
         "applicationCategory": "MultimediaApplication",
@@ -143,13 +143,23 @@
           </div>
           <p class="facts"><span>Free</span><span>macOS 26 or later</span><span>Apple silicon</span><span><a href="https://github.com/sane-apps/SaneVideo">100% Transparent Code</a></span></p>
         </div>
-        <figure class="shot" style="margin:0">
-          <img src="/images/sanevideo-editor-1398.webp"
-               srcset="/images/sanevideo-editor-800.webp 800w, /images/sanevideo-editor-1398.webp 1398w"
-               sizes="(max-width: 900px) calc(100vw - 32px), 640px"
-               width="1398" height="898" fetchpriority="high"
-               alt="The SaneVideo editor: the video preview in the middle, the timeline below, and the Clean Up panel on the right with Remove Silence, Remove Fillers and Generate Captions turned on.">
-        </figure>
+        <div class="hero-visual">
+          <figure class="shot hero-editor">
+            <img src="/images/sanevideo-editor-art-1398.webp"
+                 srcset="/images/sanevideo-editor-art-800.webp 800w, /images/sanevideo-editor-art-1398.webp 1398w"
+                 sizes="(max-width: 900px) calc(100vw - 32px), 640px"
+                 width="1398" height="898" fetchpriority="high"
+                 alt="The SaneVideo editor: a screen recording of Hokusai's Great Wave with the speaker's camera bubble in the corner, the timeline below, and the Clean Up panel on the right.">
+          </figure>
+          <figure class="hero-short">
+            <img src="/images/sanevideo-short-art-540.webp"
+                 srcset="/images/sanevideo-short-art-360.webp 360w, /images/sanevideo-short-art-540.webp 540w"
+                 sizes="(max-width: 900px) 30vw, 180px"
+                 width="540" height="960" decoding="async"
+                 alt="A vertical 9:16 Short that SaneVideo exported from the same video, showing Vermeer's Girl with a Pearl Earring.">
+            <figcaption>9:16 Short</figcaption>
+          </figure>
+        </div>
       </div>
     </section>
 
@@ -159,6 +169,13 @@
           <h2 id="how-title">Three steps from take to upload.</h2>
           <p>No tracks to manage and no settings to learn first.</p>
         </div>
+        <figure class="demo-loop shot">
+          <video autoplay muted loop playsinline preload="metadata" width="1280" height="720"
+                 poster="/videos/sanevideo-demo-loop-poster.webp"
+                 aria-label="A 9-second loop: a screen and camera take, the SaneVideo timeline before and after one Clean Up (1:03 down to 0:38), then a vertical Short exported from it.">
+            <source src="/videos/sanevideo-demo-loop.mp4" type="video/mp4">
+          </video>
+        </figure>
         <ol class="steps">
           <li>
             <h3>Record</h3>
@@ -191,14 +208,14 @@
           </div>
           <div class="compare">
             <figure>
-              <figcaption>Before: 21 seconds</figcaption>
-              <img class="shot" src="/images/sanevideo-timeline-before.webp" width="790" height="170" loading="lazy" decoding="async"
-                   alt="The SaneVideo timeline before Clean Up: one 21-second clip with gaps in the sound wave where nobody talks.">
+              <figcaption>Before: 1 minute 3 seconds</figcaption>
+              <img class="shot" src="/images/sanevideo-timeline-art-before.webp" width="790" height="170" loading="lazy" decoding="async"
+                   alt="The SaneVideo timeline before Clean Up: one clip of 1 minute 3 seconds, with gaps in the sound wave where nobody talks.">
             </figure>
             <figure>
-              <figcaption>After Clean Up: 13 seconds</figcaption>
-              <img class="shot" src="/images/sanevideo-timeline-after.webp" width="790" height="170" loading="lazy" decoding="async"
-                   alt="The same timeline after Clean Up: the pauses and filler words are cut and the clip is 13 seconds long.">
+              <figcaption>After one Clean Up: 38 seconds, 18 cuts</figcaption>
+              <img class="shot" src="/images/sanevideo-timeline-art-after.webp" width="790" height="170" loading="lazy" decoding="async"
+                   alt="The same timeline after Clean Up: 18 cuts marked on the sound wave, and the clip is 38 seconds long.">
             </figure>
           </div>
         </div>
@@ -206,14 +223,14 @@
         <div class="feature flip">
           <div class="feature-text">
             <h2>Shorts from the same take.</h2>
-            <p>Pick TikTok, Instagram Reels or YouTube Shorts and press Analyze. SaneVideo finds the best moments in your video and exports them as vertical 9:16 clips.</p>
+            <p>Pick TikTok, Instagram Reels or YouTube Shorts and press Analyze. SaneVideo finds the best moments in a video of a minute or longer and exports them as vertical 9:16 clips.</p>
           </div>
           <figure class="shot" style="margin:0">
-            <img src="/images/sanevideo-shorts-800.webp"
-                 srcset="/images/sanevideo-shorts-480.webp 480w, /images/sanevideo-shorts-800.webp 800w"
+            <img src="/images/sanevideo-shorts-art-798.webp"
+                 srcset="/images/sanevideo-shorts-art-480.webp 480w, /images/sanevideo-shorts-art-798.webp 798w"
                  sizes="(max-width: 900px) calc(100vw - 32px), 560px"
-                 width="800" height="601" loading="lazy" decoding="async"
-                 alt="The SaneVideo Create Shorts window, with TikTok, Instagram Reels, YouTube Shorts and Custom to choose from.">
+                 width="798" height="598" loading="lazy" decoding="async"
+                 alt="The SaneVideo Create Shorts window with two candidates found in the video, a Great Wave moment and a water lilies moment, ready to export as two Shorts.">
           </figure>
         </div>
 
@@ -327,5 +344,10 @@
       <p>SaneVideo is made by SaneApps. 100% Transparent Code under the PolyForm Shield license.</p>
     </div>
   </footer>
+  <script>
+    if (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      document.querySelectorAll("video[autoplay]").forEach(function (v) { v.removeAttribute("autoplay"); v.pause(); });
+    }
+  </script>
 </body>
 </html>

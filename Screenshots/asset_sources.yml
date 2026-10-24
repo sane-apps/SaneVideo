@@ -1,5 +1,26 @@
-updated: 2026-06-14
+updated: 2026-10-24
 source_rule: Use only actual SaneVideo app captures for public website and App Store screenshots.
+website_captures_2026_10_24:
+  build: Release 1.1.1 (12) from main 1509254, launched with SANEVIDEO_STORE_SCREENSHOTS=1 SANEVIDEO_OPEN_EDITOR=1
+  source_media: outputs/stock-source/mixkit-man-working-on-laptop-308.mp4 (looped to 21.5 s, 1920x1080) with a macOS text-to-speech narration (voice Samantha) that has real pauses and "um"/"uh", so Clean Up and captions had speech to work on
+  capture_tool: Mini capture agent (~/.sane/capture-queue), crops in outputs/site-redesign-20261024/crops
+  assets:
+    - public_asset: docs/images/sanevideo-editor-{800,1398}.webp
+      source_capture: outputs/site-redesign-20261024/raw/01-before.png
+      visible_state: Editor before Clean Up, Clean Up panel with all options on, full 21 s clip on the timeline.
+    - public_asset: docs/images/sanevideo-timeline-before.webp
+      source_capture: outputs/site-redesign-20261024/raw/01-before.png
+      visible_state: Timeline before Clean Up, 00:00:21:16.
+    - public_asset: docs/images/sanevideo-timeline-after.webp
+      source_capture: outputs/site-redesign-20261024/raw/05-paused.png
+      visible_state: Same timeline after one Clean Up, 00:00:13:10, no caption on screen at 3.0 s.
+    - public_asset: docs/images/sanevideo-shorts-{480,800}.webp
+      source_capture: outputs/site-redesign-20261024/raw/09-shorts.png
+      visible_state: Create Shorts sheet before Analyze (TikTok selected, no candidates yet).
+    - public_asset: docs/images/og-image.png
+      source_capture: outputs/site-redesign-20261024/crops/sanevideo-editor.png
+      generator: scripts/generate_og_image.swift
+  not_used: outputs/site-redesign-20261024/raw/06-paused2.png shows each caption twice in the editor preview (one copy at the top, one at the bottom); kept as private bug evidence, not for public use.
 retained_captures:
   - public_asset: docs/images/sanevideo-meeting-workflow.jpg
     appstore_asset: Screenshots/appstore-01-editing-dark-mac.png

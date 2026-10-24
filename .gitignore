@@ -200,6 +200,7 @@ MinimalTest/
 project.yml.bak
 scripts/*.swift
 !scripts/generate_appstore_screenshots.swift
+!scripts/generate_og_image.swift
 .claude/worktrees/
 
 # Internal notes and machine receipts (not for the public repo)

@@ -82,6 +82,7 @@ p { margin: 0; }
 .hero { padding: 72px 0 64px; border-bottom: 1px solid var(--line); background: radial-gradient(1000px 520px at 78% 20%, rgba(92, 219, 242, 0.09), transparent 70%); }
 .hero .wrap { display: grid; grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr); gap: 48px; align-items: center; }
 .hero h1 { font-size: clamp(40px, 5.2vw, 64px); }
+.hero h1 em { font-style: normal; color: var(--accent, #5CDBF2); }
 .hero .lead { margin-top: 20px; font-size: clamp(19px, 1.7vw, 23px); line-height: 1.5; max-width: 30ch; }
 .hero .actions { margin-top: 30px; }
 .facts { margin-top: 22px; font-size: 15px; font-weight: 600; }

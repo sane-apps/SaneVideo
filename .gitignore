@@ -123,6 +123,8 @@ node_modules/
 
 # Large media/test artifacts
 *.mp4
+# The website demo loop is a small published asset (about 0.4 MB).
+!docs/videos/*.mp4
 *.mov
 *.m4v
 *.m4a

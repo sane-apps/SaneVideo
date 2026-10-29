@@ -809,10 +809,19 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
         let container = ServiceContainer.shared
         Task { @MainActor in
-            if container.appState.recordingState.isRecording {
+            let recordingState = container.appState.recordingState
+            if recordingState.isStopping {
+                // Stop was pressed just before quitting: let that stop finish the file (its moov atom)
+                // before exiting. Bounded, so a stuck stop cannot block quitting.
+                let clock = ContinuousClock()
+                let deadline = clock.now.advanced(by: .seconds(40))
+                while recordingState.isStopping, clock.now < deadline {
+                    try? await Task.sleep(for: .milliseconds(50))
+                }
+            } else if recordingState.isRecording {
                 // Finish the file so its moov atom is written.
                 await withCheckedContinuation { done in
-                    container.appState.recordingState.stopRecording { _ in done.resume() }
+                    recordingState.stopRecording { _ in done.resume() }
                 }
             } else if container.exportService.isExporting {
                 AppLogger.general.warning("App terminating during active export - cancelling export")

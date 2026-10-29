@@ -155,4 +155,26 @@ struct RenderingPipelineTests {
         #expect(abs((interactionLayers.first?.cursorPath.first?.time.seconds ?? -1) - 6.0) < 0.001)
         #expect(interactionLayers.first?.keystrokes.first?.text == "Command + K")
     }
+
+    @Test("Karaoke word times are mapped onto composition time like their caption")
+    func captionWordsUseCompositionTime() throws {
+        func time(_ seconds: Double) -> CMTime { CMTime(seconds: seconds, preferredTimescale: 600) }
+        // Clip at 5 s on the timeline with 1-3 s cut: source 4 s plays at 5 + 2 = 7 s.
+        var clip = VideoClip(url: URL(fileURLWithPath: "/tmp/karaoke.mp4"), duration: time(10))
+        clip.startTime = time(5)
+        clip.addRemovedRange(CMTimeRange(start: time(1), duration: time(2)))
+        clip.captions = [Caption(text: "hello world", startTime: .zero, endTime: time(5), words: [
+            CaptionWord(text: "hello", start: 0.2, end: 0.8, probability: 1),
+            CaptionWord(text: "world", start: 4.0, end: 4.5, probability: 1),
+        ])]
+        let track = Track(name: "Video", type: .video, clips: [clip], zIndex: 0)
+
+        let layers = TextLayerBuilder.build(from: [track], project: VideoProject(name: "Karaoke"))
+
+        let words = try #require(layers.first(where: \.isCaption)?.words)
+        try #require(words.count == 2)
+        #expect(abs(words[0].start - 5.2) < 0.001)
+        #expect(abs(words[1].start - 7.0) < 0.001)
+        #expect(abs(words[1].end - 7.5) < 0.001)
+    }
 }

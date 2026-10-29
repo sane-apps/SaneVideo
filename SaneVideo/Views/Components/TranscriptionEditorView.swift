@@ -73,7 +73,9 @@ struct TranscriptionEditorView: View {
                                 caption: caption,
                                 isCurrent: isPlayheadAt(caption, in: clip),
                                 onSelect: {
-                                    appState.playbackState.seek(to: CMTimeAdd(clip.startTime, caption.startTime))
+                                    if let time = clip.timelineStart(of: caption) {
+                                        appState.playbackState.seek(to: time)
+                                    }
                                 },
                                 onTextChange: { newText in
                                     updateCaptionText(caption, newText)
@@ -180,7 +182,7 @@ struct TranscriptionEditorView: View {
     
     private func isPlayheadAt(_ caption: Caption, in clip: VideoClip) -> Bool {
         let currentTime = appState.playbackState.currentTime
-        let mediaTime = clip.originalTime(forEffectiveTime: CMTimeSubtract(currentTime, clip.startTime))
+        let mediaTime = clip.sourceTime(atTimelineTime: currentTime)
         return mediaTime >= caption.startTime && mediaTime < caption.endTime
     }
     

@@ -187,7 +187,8 @@ struct TranscriptTimelineView: View {
     // MARK: - Actions
     
     private func seekToWord(_ segment: WordSegment) {
-        let timelineTime = CMTimeAdd(clip.startTime, segment.startTime)
+        // segment.startTime is source time; nil when the word was trimmed off or cut.
+        guard let timelineTime = clip.timelineTime(forSourceTime: segment.startTime) else { return }
         appState.playbackState.seek(to: timelineTime)
     }
     
@@ -196,8 +197,9 @@ struct TranscriptTimelineView: View {
         
         if let timeRange = appState.projectState.textRangeToTimeRange(range, in: clip) {
             appState.selectedClipIds = [clip.id]
-            let timelineTime = CMTimeAdd(clip.startTime, timeRange.start)
-            appState.playbackState.seek(to: timelineTime)
+            if let timelineTime = clip.timelineTime(forSourceTime: timeRange.start) {
+                appState.playbackState.seek(to: timelineTime)
+            }
             
             AppLogger.project.info("📝 Text selection mapped to time range: \(timeRange.start.seconds)-\(timeRange.end.seconds)")
         }

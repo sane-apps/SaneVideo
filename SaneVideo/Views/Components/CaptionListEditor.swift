@@ -19,11 +19,10 @@ struct CaptionListEditor: View {
                                     isActive: isCaptionActive(caption, in: clip),
                                     style: project.captionStyle,
                                     onSeek: {
-                                        // caption.startTime is asset time: timeline time = clip.startTime + (caption.startTime - clip.trimStart).
-                                        
-                                        let effectiveDuration = CMTimeSubtract(caption.startTime, clip.trimStart)
-                                        let seekTime = CMTimeAdd(clip.startTime, effectiveDuration)
-                                        appState.playbackState.seek(to: seekTime)
+                                        // caption.startTime is source time; map it past trims, cuts and speed.
+                                        if let seekTime = clip.timelineStart(of: caption) {
+                                            appState.playbackState.seek(to: seekTime)
+                                        }
                                     },
                                     onDelete: {
                                         appState.projectState.deleteCaptionAndRange(caption, from: clip)
@@ -54,9 +53,7 @@ struct CaptionListEditor: View {
         
         guard playhead >= clipStart && playhead < clipEnd else { return false }
         
-        let effectiveSeconds = playhead - clipStart
-        let effectiveTime = CMTime(seconds: effectiveSeconds, preferredTimescale: 600)
-        let originalTime = clip.originalTime(forEffectiveTime: effectiveTime).seconds
+        let originalTime = clip.sourceTime(atTimelineTime: appState.playbackState.currentTime).seconds
         
         return originalTime >= caption.startTime.seconds && originalTime < caption.endTime.seconds
     }
@@ -70,9 +67,7 @@ struct CaptionListEditor: View {
                 let clipEnd = clipStart + clip.effectiveDuration.seconds
                 
                 if currentSeconds >= clipStart && currentSeconds < clipEnd {
-                    let effectiveSeconds = currentSeconds - clipStart
-                    let effectiveTime = CMTime(seconds: effectiveSeconds, preferredTimescale: 600)
-                    let originalTime = clip.originalTime(forEffectiveTime: effectiveTime).seconds
+                    let originalTime = clip.sourceTime(atTimelineTime: time).seconds
                     
                     for caption in clip.captions {
                         if originalTime >= caption.startTime.seconds && originalTime < caption.endTime.seconds {

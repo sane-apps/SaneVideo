@@ -92,6 +92,24 @@ extension VideoClip {
         return nil
     }
 
+    /// The source-file time playing at a timeline time inside this clip: undoes speed, then skips trims and cuts.
+    func sourceTime(atTimelineTime timelineTime: CMTime) -> CMTime {
+        let played = CMTimeSubtract(timelineTime, startTime)
+        return originalTime(forEffectiveTime: CMTimeMultiplyByFloat64(played, multiplier: speed))
+    }
+
+    /// The timeline time where a source-file time plays; nil if it was trimmed off or cut.
+    func timelineTime(forSourceTime sourceTime: CMTime) -> CMTime? {
+        guard let effective = effectiveTime(forOriginalTime: sourceTime) else { return nil }
+        return CMTimeAdd(startTime, CMTimeMultiplyByFloat64(effective, multiplier: 1.0 / max(speed, 0.000_1)))
+    }
+
+    /// The timeline time where a caption starts playing; nil if none of it plays.
+    func timelineStart(of caption: Caption) -> CMTime? {
+        guard let range = effectiveRange(for: caption) else { return nil }
+        return CMTimeAdd(startTime, CMTimeMultiplyByFloat64(range.start, multiplier: 1.0 / max(speed, 0.000_1)))
+    }
+
     // MARK: - Computed Properties
 
     /// Effective duration after trimming, removing internal ranges, and applying speed

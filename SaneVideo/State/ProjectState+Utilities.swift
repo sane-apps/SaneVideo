@@ -247,12 +247,8 @@ extension ProjectState {
                         }
                         return nil
                     }
-                    if caption.startTime >= range.end {
-                        var shifted = caption
-                        shifted.startTime = CMTimeSubtract(caption.startTime, range.duration)
-                        shifted.endTime = CMTimeSubtract(caption.endTime, range.duration)
-                        return shifted
-                    }
+                    // Later captions keep their source times: the cut is skipped when they are mapped to
+                    // the timeline, so shifting them here would count it twice.
                     return caption
                 }
 

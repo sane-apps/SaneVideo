@@ -39,6 +39,27 @@ struct RecordingEngineTests {
         #expect(await engine.isRecording == false)
     }
 
+    @Test("A writer that fails mid-take reports one error instead of dropping frames silently")
+    func failedWriterReportsOnce() async throws {
+        let engine = sut
+        let errors = AttemptCounter()
+        engine.onError = { _ in errors.value += 1 }
+        await engine.startRecording(initialSource: .camera)
+        // A writer that has left .writing (failed) while the take is still running.
+        let writer = VideoWriterProtocolMock()
+        await configureWriterState(engine, writer: writer, current: .camera)
+
+        for second in 1 ... 3 {
+            let sample = try makeVideoSampleBuffer(presentationTime: CMTime(value: Int64(600 * second), timescale: 600))
+            await engine.processSample(sample, source: .camera)
+        }
+
+        #expect(try await eventually { errors.value == 1 })
+        try await Task.sleep(for: .milliseconds(50))
+        #expect(errors.value == 1)
+        _ = await engine.stopRecording()
+    }
+
     @Test("Pause sets isPaused and resume clears it")
     func pauseAndResume() async throws {
         let engine = sut

@@ -20,7 +20,6 @@ class RecordingState {
     private(set) var isStopping = false // Prevents double-stop calls
     @MainActor private var isPendingStop = false // Handles a stop that arrives during start
     private var pendingStopCompletion: ((URL?) -> Void)? // Completion for a pending stop
-    private var completionsAwaitingStop: [(URL?) -> Void] = [] // Callers that asked while a stop was running
     var isMicActive = true
     var isPresenterOverlayActive = false
     var recordingDuration: TimeInterval = 0
@@ -458,10 +457,8 @@ class RecordingState {
         }
 
         guard !isStopping else {
-            // Wait for the stop in flight: quitting right after Stop must not exit while the file is still
-            // being finished. The URL goes to the first caller only, so the take is imported once.
-            AppLogger.recording.debug("🛑 stopRecording waiting for the stop in progress")
-            completionsAwaitingStop.append(completion)
+            AppLogger.recording.debug("🛑 stopRecording ignored (already stopping)")
+            completion(nil) // Call completion even if ignored, to unblock caller
             return
         }
 
@@ -501,9 +498,6 @@ class RecordingState {
                 self.isRecording = false
                 self.isStopping = false
                 completion(url)
-                let waiting = self.completionsAwaitingStop
-                self.completionsAwaitingStop = []
-                waiting.forEach { $0(nil) }
             }
         }
     }

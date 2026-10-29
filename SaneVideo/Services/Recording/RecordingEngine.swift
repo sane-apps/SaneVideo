@@ -41,6 +41,7 @@ class RecordingEngine: NSObject {
   @RecordingActor var isMicMuted = false
   @RecordingActor var isMicrophoneAudioEnabled = true
   @RecordingActor var outputURL: URL?
+  @RecordingActor var didReportWriterFailure = false  // Report a failed writer once per take, not per frame
   let diskSpaceMonitor = DiskSpaceMonitor()
 
   @RecordingActor let timeCoordinator = RecordingTimeCoordinator()
@@ -184,6 +185,7 @@ class RecordingEngine: NSObject {
       isMicrophoneAudioEnabled = includeMicrophoneAudio
       currentSource = initialSource
       timeCoordinator.reset()
+      didReportWriterFailure = false
       return
     }
 
@@ -225,6 +227,7 @@ class RecordingEngine: NSObject {
     }
 
     timeCoordinator.reset()
+    didReportWriterFailure = false
 
     // Set isRecording only after every service starts, so a partial failure never leaves it true.
     let renderingService = RenderingService.shared
@@ -590,12 +593,18 @@ class RecordingEngine: NSObject {
         sourceSwitchTimeoutTask = nil
       }
 
-      guard let writer = videoWriter, writer.isWriting else { return }
+      guard let writer = videoWriter else { return }
 
-      if !writer.isWriting, isRecording, !isPaused, !isSwitching {
-        let errorDescription = writer.error?.localizedDescription ?? "Unknown writer error"
-        Task { @MainActor in
-          self.onError?(AppError.recordingEngineError("Recording failed: \(errorDescription)"))
+      // The writer leaves .writing mid-take only when it failed (a stop clears isRecording first).
+      // Checked before returning, so the take stops with an error instead of dropping every frame.
+      if !writer.isWriting {
+        if isRecording, !isPaused, !isSwitching, !didReportWriterFailure {
+          didReportWriterFailure = true
+          let errorDescription = writer.error?.localizedDescription ?? "Unknown writer error"
+          AppLogger.recording.error("Video writer stopped writing mid-take: \(errorDescription)")
+          Task { @MainActor in
+            self.onError?(AppError.recordingEngineError("Recording failed: \(errorDescription)"))
+          }
         }
         return
       }

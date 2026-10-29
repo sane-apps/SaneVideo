@@ -180,6 +180,32 @@ struct TimelineRegressionTests {
         #expect(FileManager.default.fileExists(atPath: fileURL.path))
     }
 
+    @Test("Delete from Disk on a locked track keeps the clip and its file")
+    @MainActor
+    func deleteFileOnLockedTrackKeepsFile() async throws {
+        let fileURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent("locked-\(UUID().uuidString).mov")
+        try Data("take".utf8).write(to: fileURL)
+        defer { try? FileManager.default.removeItem(at: fileURL) }
+        let clip = VideoClip(url: fileURL, duration: time(5), startTime: .zero)
+        let state = ProjectState()
+        state.startNewProject()
+        var project = try #require(state.currentProject)
+        var track = Track(name: "Video", type: .video, clips: [clip], zIndex: 0)
+        track.isLocked = true
+        project.timeline.tracks = [track]
+        state.currentProject = project
+
+        state.deleteClipFile(clip)
+        // The trash used to run in a background Task; give it time to show up.
+        try await Task.sleep(for: .milliseconds(300))
+
+        let clips = try #require(state.currentProject?.timeline.tracks.first?.clips)
+        #expect(clips.map(\.id) == [clip.id])
+        #expect(clips.first?.isMissing == false)
+        #expect(FileManager.default.fileExists(atPath: fileURL.path))
+    }
+
     @Test("A removed 5-6 s range yields two render segments around it")
     func removedRangeSplitsRenderSegments() {
         var clip = VideoClip(url: videoURL, duration: time(10))

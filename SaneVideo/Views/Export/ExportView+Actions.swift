@@ -38,11 +38,10 @@ extension ExportView {
         }
     }
 
-    /// Export the first 10 seconds of the first clip as a GIF
+    /// Export the first 10 seconds of the edited timeline as a GIF
     func exportAsGIF() {
         guard let project = appState.currentProject,
-              let firstTrack = project.timeline.tracks.first,
-              let firstClip = firstTrack.clips.first
+              project.timeline.tracks.contains(where: { !$0.clips.isEmpty })
         else {
             ServiceContainer.shared.toastManager.show("No clip to export", type: .error)
             return
@@ -57,13 +56,15 @@ extension ExportView {
 
         Task {
             do {
+                // The edited timeline, so Clean Up cuts, trims and speed are in the GIF.
+                let built = try await CompositionBuilder.build(from: project)
                 try await GIFExporter.export(
-                    inputURL: firstClip.url,
+                    source: .init(asset: built.composition, videoComposition: built.videoComposition),
                     outputURL: outputURL,
                     fps: 10,
                     width: 480,
-                    startTime: firstClip.trimStart.seconds,
-                    duration: min(firstClip.effectiveDuration.seconds, 10.0)
+                    startTime: 0,
+                    duration: min(project.timeline.duration.seconds, 10.0)
                 ) { @Sendable progress in
                     Task { @MainActor in
                         self.exportProgress = progress

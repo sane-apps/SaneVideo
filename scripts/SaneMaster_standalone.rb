@@ -32,11 +32,10 @@ def build(config = 'Debug')
 end
 
 def test
-  run(
-    "xcodebuild -project #{XCODEPROJ} -scheme #{SCHEME} " \
-    '-configuration Debug -arch arm64 test',
-    'Test'
-  )
+  # Stream test output: captured output only shows once xcodebuild exits, so a hung test left no trace.
+  warn '=> Test'
+  cmd = "xcodebuild -project #{XCODEPROJ} -scheme #{SCHEME} -configuration Debug -arch arm64 test"
+  abort 'FAILED: Test' unless system(cmd, chdir: PROJECT_ROOT, out: $stderr, err: $stderr)
 end
 
 def verify

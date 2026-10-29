@@ -35,6 +35,19 @@ enum TextLayerBuilder {
                     let compStart = CMTimeAdd(clipStart, scaledOffset)
                     let compRange = CMTimeRange(start: compStart, duration: scaledDuration)
 
+                    // Word times are source times; karaoke highlighting compares them with composition time.
+                    let timelineWords = caption.words?.compactMap { word -> CaptionWord? in
+                        let source = CMTime(seconds: word.start, preferredTimescale: 600)
+                        guard let start = clip.timelineTime(forSourceTime: source)?.seconds else { return nil }
+                        return CaptionWord(
+                            id: word.id,
+                            text: word.text,
+                            start: start,
+                            end: start + (word.end - word.start) / max(clip.speed, 0.000_1),
+                            probability: word.probability
+                        )
+                    }
+
                     let item = TextLayerItem(
                         id: caption.id,
                         text: caption.text,
@@ -42,7 +55,7 @@ enum TextLayerBuilder {
                         timeRange: compRange,
                         isCaption: true,
                         style: project.captionStyle,
-                        words: caption.words
+                        words: timelineWords
                     )
                     textLayers.append(item)
                 }

@@ -39,6 +39,11 @@ extension AppState {
             AppLogger.recording.warning("🛑 AppState: stopRecording ignored (not recording)")
             return
         }
+        // A second press (double hot key) while the take is being finished would report it as empty.
+        guard !recordingState.isStopping else {
+            AppLogger.recording.info("🛑 AppState: stopRecording ignored (already stopping)")
+            return
+        }
 
         AppLogger.recording.info("📹 AppState: Stopping recording...")
         NSLog("📹 AppState: Stopping recording...")

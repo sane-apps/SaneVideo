@@ -17,9 +17,10 @@ class RecordingState {
 
     var isPaused = false
     var isPreparing = false // True during countdown (camera on, not yet recording)
-    private var isStopping = false // Prevents double-stop calls
+    private(set) var isStopping = false // Prevents double-stop calls
     @MainActor private var isPendingStop = false // Handles a stop that arrives during start
     private var pendingStopCompletion: ((URL?) -> Void)? // Completion for a pending stop
+    private var completionsAwaitingStop: [(URL?) -> Void] = [] // Callers that asked while a stop was running
     var isMicActive = true
     var isPresenterOverlayActive = false
     var recordingDuration: TimeInterval = 0
@@ -317,6 +318,8 @@ class RecordingState {
 
         if !hasPermissions {
             NSLog("🎬 ❌ Permission check FAILED! Cannot start recording.")
+            // After the inline permission prompt isPreparing is already true; left set, every later Record press bails.
+            cancelCountdown()
             presentMissingPermissionFeedback(
                 isScreenSharing: isScreenSharing,
                 includeCameraOverlay: includeCameraOverlay
@@ -329,6 +332,7 @@ class RecordingState {
         if let engine = recordingEngine {
             do { try engine.diskSpaceMonitor.verifyDiskSpace() } catch {
                 NSLog("🎬 ❌ Disk space check FAILED")
+                cancelCountdown()
                 ServiceContainer.shared.errorPresenter.present(error)
                 return
             }
@@ -454,8 +458,10 @@ class RecordingState {
         }
 
         guard !isStopping else {
-            AppLogger.recording.debug("🛑 stopRecording ignored (already stopping)")
-            completion(nil) // Call completion even if ignored, to unblock caller
+            // Wait for the stop in flight: quitting right after Stop must not exit while the file is still
+            // being finished. The URL goes to the first caller only, so the take is imported once.
+            AppLogger.recording.debug("🛑 stopRecording waiting for the stop in progress")
+            completionsAwaitingStop.append(completion)
             return
         }
 
@@ -495,6 +501,9 @@ class RecordingState {
                 self.isRecording = false
                 self.isStopping = false
                 completion(url)
+                let waiting = self.completionsAwaitingStop
+                self.completionsAwaitingStop = []
+                waiting.forEach { $0(nil) }
             }
         }
     }

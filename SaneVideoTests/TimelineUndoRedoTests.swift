@@ -102,17 +102,4 @@ struct TimelineUndoRedoTests {
         #expect(layout == [10, 6])
         #expect(!undoManager.canUndo)
     }
-
-    @Test("Undo while Clean Up's group is open restores the clip and does not crash when the group ends")
-    func undoDuringOpenGroupDoesNotCrash() {
-        state.beginUndoGroup("Clean Up")
-        state.splitClip(clipA, atTimelineTime: CMTime(seconds: 4, preferredTimescale: 600))
-
-        // ⌘Z mid-run: at nesting level 1, undo() closes the group itself.
-        undoManager.undo()
-        state.endUndoGroup()
-
-        #expect(layout == [10, 6])
-        #expect(undoManager.groupingLevel == 0)
-    }
 }

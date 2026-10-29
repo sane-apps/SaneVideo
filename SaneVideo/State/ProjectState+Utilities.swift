@@ -196,7 +196,8 @@ extension ProjectState {
 
         for (trackIndex, track) in project.timeline.tracks.enumerated() {
             if let clipIndex = track.clips.firstIndex(where: { $0.id == clip.id }) {
-                var updatedClip = clip
+                // Start from the stored clip: the caller's copy can be stale after an await (Refine).
+                var updatedClip = track.clips[clipIndex]
                 updatedClip.captions = newCaptions
 
                 var tracks = project.timeline.tracks
@@ -225,7 +226,7 @@ extension ProjectState {
 
         for (trackIndex, track) in project.timeline.tracks.enumerated() {
             if let clipIndex = track.clips.firstIndex(where: { $0.id == clip.id }) {
-                var updatedClip = clip
+                var updatedClip = track.clips[clipIndex]
 
                 updatedClip.addRemovedRange(range)
 

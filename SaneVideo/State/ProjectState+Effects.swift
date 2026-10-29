@@ -63,7 +63,7 @@ extension ProjectState {
         guard let tIdx = trackIndex, let cIdx = clipIndex else { return }
 
         registerUndo("Delete Caption & Video")
-        var modifiedClip = clip
+        var modifiedClip = project.timeline.tracks[tIdx].clips[cIdx]
         modifiedClip.captions.removeAll { $0.id == caption.id }
         let rangeToRemove = CMTimeRange(start: caption.startTime, end: caption.endTime)
         modifiedClip.addRemovedRange(rangeToRemove)

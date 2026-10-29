@@ -213,6 +213,27 @@ struct RecordingStateTests {
         #expect(permissionManager.openMicrophoneSettingsCallCount == 0)
     }
 
+    @Test("A failed check after the inline permission prompt does not leave Record stuck preparing")
+    func failedCheckAfterPromptClearsPreparing() async {
+        let permissionManager = PermissionManagerProtocolMock(
+            cameraStatus: .granted,
+            microphoneStatus: .notDetermined,
+            screenRecordingStatus: .granted
+        )
+        permissionManager.requestMicrophonePermissionHandler = { true }
+        permissionManager.verifyPermissionsForRecordingHandler = { _, _, _ in false }
+
+        let recordingState = RecordingState(
+            cameraService: nil,
+            permissionManager: permissionManager
+        )
+        recordingState.shouldSkipCountdown = false
+        recordingState.startRecording(isScreenSharing: false)
+
+        let cleared = await waitUntil { !recordingState.isPreparing }
+        #expect(cleared, "Left preparing, every later Record press is ignored until relaunch")
+    }
+
     @Test("Cancellation during countdown")
     func stopDuringCountdownCancels() async {
         let recordingState = RecordingState(cameraService: nil)

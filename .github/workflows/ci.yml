@@ -13,6 +13,9 @@ concurrency:
   group: manual-${{ github.workflow }}-${{ inputs.ref || github.ref_name || github.run_id }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   verify:
     name: Verify
@@ -21,12 +24,12 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: ${{ inputs.ref }}
 
       - name: Checkout SaneUI
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: sane-apps/SaneUI
           path: SaneUI

@@ -117,10 +117,7 @@ class ProjectState {
     }
 
     func endUndoGroup() {
-        // Undo during a long operation (Clean Up) closes the open group itself; ending it again would
-        // raise NSInternalInconsistencyException and crash.
-        guard let undoManager, undoManager.groupingLevel > 0 else { return }
-        undoManager.endUndoGrouping()
+        undoManager?.endUndoGrouping()
     }
 
     private func restoreProjectState(_ project: VideoProject) {

@@ -46,7 +46,7 @@ struct RecordingEngineTests {
         engine.onError = { _ in errors.value += 1 }
         await engine.startRecording(initialSource: .camera)
         // A writer that has left .writing (failed) while the take is still running.
-        let writer = VideoWriterProtocolMock()
+        let writer = await VideoWriterProtocolMock()
         await configureWriterState(engine, writer: writer, current: .camera)
 
         for second in 1 ... 3 {

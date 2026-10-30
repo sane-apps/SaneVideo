@@ -36,14 +36,16 @@ enum TextLayerBuilder {
                     let compRange = CMTimeRange(start: compStart, duration: scaledDuration)
 
                     // Word times are source times; karaoke highlighting compares them with composition time.
+                    // A word Clean Up kept can start inside the cut silence before it: start it where it plays.
                     let timelineWords = caption.words?.compactMap { word -> CaptionWord? in
-                        let source = CMTime(seconds: word.start, preferredTimescale: 600)
+                        let source = clip.firstPlayedSourceTime(
+                            atOrAfter: CMTime(seconds: word.start, preferredTimescale: 600))
                         guard let start = clip.timelineTime(forSourceTime: source)?.seconds else { return nil }
                         return CaptionWord(
                             id: word.id,
                             text: word.text,
                             start: start,
-                            end: start + (word.end - word.start) / max(clip.speed, 0.000_1),
+                            end: start + max(0, word.end - source.seconds) / max(clip.speed, 0.000_1),
                             probability: word.probability
                         )
                     }

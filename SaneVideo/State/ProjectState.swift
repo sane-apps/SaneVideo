@@ -354,6 +354,11 @@ class ProjectState {
         }
     }
 
+    /// Waits until every queued save has reached disk (each save waits for the one before it).
+    func flushPendingSaves() async {
+        await pendingSaveTask?.value
+    }
+
     /// Update playback state (time, scroll, zoom) and save
     func updatePlaybackState(currentTime: Double, scrollOffset: CGFloat, zoomLevel: CGFloat) {
         guard var project = currentProject else { return }

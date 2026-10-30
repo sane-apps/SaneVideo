@@ -829,6 +829,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             }
             container.appState.windowManager.cleanupAllWindows()
             container.appState.saveCurrentState()
+            // Saves are queued (with a short debounce); let them reach disk before the app exits.
+            let projectState = container.appState.projectState
+            _ = try? await withTimeout(seconds: 5) {
+                await projectState.flushPendingSaves()
+            }
             await Self.stopCaptureSessions(
                 [container.cameraService.session, container.audioService.captureSession].compactMap { $0 }
             )

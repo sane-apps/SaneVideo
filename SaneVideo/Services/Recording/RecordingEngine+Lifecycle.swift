@@ -19,6 +19,7 @@ extension RecordingEngine {
 
       Task {
         AppLogger.recording.error("Low disk space - stopping recording: \(error)")
+        await MainActor.run { self.onStoppingAfterError?() }
         let url = await self.stopRecording()
         let appError = error as? AppError ?? AppError.recordingEngineError(error.localizedDescription)
 

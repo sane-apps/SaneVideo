@@ -276,6 +276,20 @@ struct RecordingStateTests {
         #expect(!recordingState.isRecording)
     }
 
+    @Test("An engine error in a take's first second still stops the engine, so the next take records")
+    func earlyEngineErrorStopsEngine() async throws {
+        let recordingState = makeReadyToRecordState()
+        recordingState.startRecording(isScreenSharing: false)
+        let engine = try #require(recordingState.recordingEngine)
+        #expect(await waitForEngine(engine, recording: true, paused: false))
+
+        // The clock shows whole seconds, so this take is still at 0 s.
+        engine.onError?(AppError.recordingEngineError("Recording failed: writer stopped"))
+
+        #expect(await waitForEngine(engine, recording: false, paused: false), "The engine must not keep recording")
+        #expect(await waitUntil { !recordingState.isRecording })
+    }
+
     @Test("When the engine pauses itself (sleep), the controls show paused and Resume resumes it")
     func systemPauseSyncsControls() async throws {
         let recordingState = makeReadyToRecordState()

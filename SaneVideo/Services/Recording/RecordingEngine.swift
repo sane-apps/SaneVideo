@@ -20,6 +20,9 @@ class RecordingEngine: NSObject {
   // Callback to notify when user selects content in picker (PiP can now be shown)
   @MainActor var onContentSelected: (() -> Void)?
 
+  // The engine is ending a take itself (capture error, low disk); onStoppedAfterError follows with the file.
+  @MainActor var onStoppingAfterError: (() -> Void)?
+
   // The engine ended a take itself (capture error, low disk): the finished file, if any, and why.
   @MainActor var onStoppedAfterError: ((URL?, AppError) -> Void)?
 
@@ -153,6 +156,7 @@ class RecordingEngine: NSObject {
     Task { @RecordingActor in
       guard isRecording else { return }
       AppLogger.recording.error("❌ Recording Runtime Error: \(error.localizedDescription)")
+      Task { @MainActor in self.onStoppingAfterError?() }
       let url = await stopRecording()
       let appError = AppError.recordingEngineError("Camera Error: \(error.localizedDescription)")
       await MainActor.run {

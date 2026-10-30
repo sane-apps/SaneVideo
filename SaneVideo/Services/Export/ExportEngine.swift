@@ -82,6 +82,23 @@ class ExportEngine: ExportServiceProtocol {
 
     // MARK: - AVAssetWriter Implementation
 
+    /// Maps each clip's smart-crop keyframes (times in its file) onto the timeline: past trims, Clean Up
+    /// cuts and speed, at the clip's place. Keyframes in cut or trimmed-off parts are dropped.
+    nonisolated static func timelineCropKeyframes(
+        clips: [VideoClip],
+        keyframesByFile: [URL: [CMTime: SuggestedCrop]]
+    ) -> [CMTime: SuggestedCrop] {
+        var mapped: [CMTime: SuggestedCrop] = [:]
+        for clip in clips {
+            for (sourceTime, crop) in keyframesByFile[clip.url] ?? [:] {
+                if let timelineTime = clip.timelineTime(forSourceTime: sourceTime) {
+                    mapped[timelineTime] = crop
+                }
+            }
+        }
+        return mapped
+    }
+
     private func performAssetWriterExport(
         project: VideoProject,
         settings: SaneExportSettings,
@@ -94,15 +111,23 @@ class ExportEngine: ExportServiceProtocol {
 
         // Smart crop runs before building the composition, which needs its keyframes.
         var smartCropKeyframes: [CMTime: SuggestedCrop]?
-        if settings.smartCrop.enabled, let firstClip = project.timeline.tracks.first?.clips.first {
+        if settings.smartCrop.enabled,
+           let mainTrack = project.timeline.tracks.first(where: { $0.type == .video && !$0.clips.isEmpty }) {
             AppLogger.export.info("📐 Running smart crop analysis...")
             do {
-                let cropResult = try await smartCropService.analyzeVideo(
-                    sourceURL: firstClip.url,
-                    settings: settings.smartCrop
-                )
-                smartCropKeyframes = cropResult.keyframes
-                AppLogger.export.info("📐 Smart crop: \(cropResult.keyframes.count) keyframes generated")
+                // Every clip on the main track, each file once; the first clip's raw file alone left later
+                // clips uncropped and put crops at the wrong time after trims, cuts or speed changes.
+                var keyframesByFile: [URL: [CMTime: SuggestedCrop]] = [:]
+                for clip in mainTrack.clips where keyframesByFile[clip.url] == nil {
+                    let cropResult = try await smartCropService.analyzeVideo(
+                        sourceURL: clip.url,
+                        settings: settings.smartCrop
+                    )
+                    keyframesByFile[clip.url] = cropResult.keyframes
+                }
+                let mapped = Self.timelineCropKeyframes(clips: mainTrack.clips, keyframesByFile: keyframesByFile)
+                smartCropKeyframes = mapped
+                AppLogger.export.info("📐 Smart crop: \(mapped.count) keyframes generated")
             } catch {
                 AppLogger.export.warning("⚠️ Smart crop analysis failed: \(error). Continuing without smart crop.")
             }

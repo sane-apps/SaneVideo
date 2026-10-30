@@ -25,6 +25,27 @@ struct SmartCropExportRegressionTests {
         #expect(abs(result.duration.seconds - assetDuration.seconds) < 0.01)
     }
 
+    @Test("Smart crop keyframes from each clip's file land where that clip plays on the timeline")
+    func smartCropKeyframesMapToTimeline() {
+        func time(_ seconds: Double) -> CMTime { CMTime(seconds: seconds, preferredTimescale: 600) }
+        let fileA = URL(fileURLWithPath: "/tmp/crop-a.mov")
+        let fileB = URL(fileURLWithPath: "/tmp/crop-b.mov")
+        // A is trimmed to start 2 s in and plays at 0-8 s; B follows at 8 s.
+        let first = VideoClip(url: fileA, duration: time(10), startTime: .zero, trimStart: time(2))
+        let second = VideoClip(url: fileB, duration: time(5), startTime: time(8))
+        let left = SuggestedCrop(centerX: 0.2, centerY: 0.5, scale: 1.0)
+        let right = SuggestedCrop(centerX: 0.8, centerY: 0.5, scale: 1.0)
+
+        let mapped = ExportEngine.timelineCropKeyframes(
+            clips: [first, second],
+            keyframesByFile: [fileA: [time(1): left, time(4): left], fileB: [time(1): right]]
+        )
+
+        let bySeconds = mapped.map { (seconds: $0.key.seconds, crop: $0.value) }.sorted { $0.seconds < $1.seconds }
+        #expect(bySeconds.map(\.seconds) == [2.0, 9.0], "A's 1 s was trimmed off; A's 4 s plays at 2 s; B's 1 s at 9 s")
+        #expect(bySeconds.map(\.crop) == [left, right])
+    }
+
     @Test("Injecting smart crop keyframes keeps interaction overlay layers")
     @MainActor
     func injectSmartCropPreservesInteractionLayers() async throws {

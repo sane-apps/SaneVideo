@@ -196,8 +196,10 @@ struct RenderingPipelineTests {
         var clip = VideoClip(url: URL(fileURLWithPath: "/tmp/karaoke.mp4"), duration: time(10))
         clip.startTime = time(5)
         clip.addRemovedRange(CMTimeRange(start: time(1), duration: time(2)))
-        clip.captions = [Caption(text: "hello world", startTime: .zero, endTime: time(5), words: [
+        // "again" starts in the cut silence (2.8 s) but most of it plays, so Clean Up keeps it.
+        clip.captions = [Caption(text: "hello again world", startTime: .zero, endTime: time(5), words: [
             CaptionWord(text: "hello", start: 0.2, end: 0.8, probability: 1),
+            CaptionWord(text: "again", start: 2.8, end: 3.4, probability: 1),
             CaptionWord(text: "world", start: 4.0, end: 4.5, probability: 1),
         ])]
         let track = Track(name: "Video", type: .video, clips: [clip], zIndex: 0)
@@ -205,9 +207,11 @@ struct RenderingPipelineTests {
         let layers = TextLayerBuilder.build(from: [track], project: VideoProject(name: "Karaoke"))
 
         let words = try #require(layers.first(where: \.isCaption)?.words)
-        try #require(words.count == 2)
+        try #require(words.count == 3)
         #expect(abs(words[0].start - 5.2) < 0.001)
-        #expect(abs(words[1].start - 7.0) < 0.001)
-        #expect(abs(words[1].end - 7.5) < 0.001)
+        #expect(abs(words[1].start - 6.0) < 0.001, "Starts where the cut ends (source 3 s)")
+        #expect(abs(words[1].end - 6.4) < 0.001)
+        #expect(abs(words[2].start - 7.0) < 0.001)
+        #expect(abs(words[2].end - 7.5) < 0.001)
     }
 }

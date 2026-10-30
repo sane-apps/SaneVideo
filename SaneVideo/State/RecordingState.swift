@@ -33,7 +33,7 @@ class RecordingState {
     @ObservationIgnored private nonisolated(unsafe) var countdownTask: Task<Void, Never>?
     // Track the starting task to prevent race conditions during rapid start/stop
     @ObservationIgnored private nonisolated(unsafe) var startingTask: Task<Void, Never>?
-    private var recordingEngine: RecordingEngine?
+    private(set) var recordingEngine: RecordingEngine?
     private var cameraService: CameraServiceProtocol
     private let permissionManager: PermissionManagerProtocol
     private var injectedAudioService: AudioService?
@@ -62,6 +62,8 @@ class RecordingState {
     var onPresenterOverlayChanged: ((Bool) -> Void)?
     var onRecordingStateChanged: ((Bool) -> Void)?
     var onContentSelected: (() -> Void)?
+    /// A take ended without the Stop button (capture error, low disk, failed switch): its file, if any.
+    var onRecordingEndedUnexpectedly: ((URL?) -> Void)?
 
     // Task.cancel() is thread-safe, so we can call it from any thread in deinit
     deinit {
@@ -82,9 +84,30 @@ class RecordingState {
             }
         }
 
+        recordingEngine?.onStoppedAfterError = { [weak self] url, error in
+            Task { @MainActor in
+                self?.handleEngineStoppedTake(url: url, error: error)
+            }
+        }
+
+        recordingEngine?.onPausedBySystem = { [weak self] in
+            Task { @MainActor in
+                // Keep the controls and the clock in step with the engine; Resume then resumes it.
+                if self?.isRecording == true {
+                    self?.isPaused = true
+                }
+            }
+        }
+
         recordingEngine?.onError = { [weak self] (error: AppError) in
             Task { @MainActor in
                 AppLogger.recording.error("Engine reported error: \(error.localizedDescription)")
+
+                // A take that has been running is stopped like the Stop button, so its file is imported
+                // and the windows come back; failed starts keep the quiet cleanup below.
+                let handsOverTake = self.map {
+                    $0.isRecording && !$0.isPreparing && !$0.isStopping && $0.recordingDuration >= 0.5
+                } ?? false
 
                 // Cleanup timer if recording failed to start
                 if let self = self, self.isPreparing || (self.isRecording && self.recordingDuration < 0.5) {
@@ -100,7 +123,13 @@ class RecordingState {
                     errorMessage.contains("switch timed out")
 
                 if !isSourceSwitchTimeout {
-                    self?.stopRecording { _ in }
+                    if handsOverTake {
+                        self?.stopRecording { [weak self] url in
+                            Task { @MainActor [weak self] in self?.onRecordingEndedUnexpectedly?(url) }
+                        }
+                    } else {
+                        self?.stopRecording { _ in }
+                    }
                 } else {
                     AppLogger.recording.warning("Source switch timeout - continuing recording on previous source")
                 }
@@ -158,6 +187,25 @@ class RecordingState {
                 self?.onContentSelected?()
             }
         }
+    }
+
+    /// The engine ended the take itself and already finished the file: leave recording and hand it over.
+    private func handleEngineStoppedTake(url: URL?, error: AppError) {
+        AppLogger.recording.error("Engine stopped the take: \(error.localizedDescription)")
+        // A Stop already in flight owns the take; only report the error.
+        if !isStopping, isRecording {
+            recordingTimer?.invalidate()
+            recordingTimer = nil
+            countdownTask?.cancel()
+            countdownTask = nil
+            isPreparing = false
+            isPaused = false
+            isRecording = false
+            onRecordingEndedUnexpectedly?(url)
+        }
+        ServiceContainer.shared.hapticsManager.warning()
+        ServiceContainer.shared.soundManager.playError()
+        ServiceContainer.shared.errorPresenter.present(error)
     }
 
     // MARK: - Recording Control

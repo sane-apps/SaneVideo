@@ -343,6 +343,11 @@ class AppState {
             }
         }
 
+        // A take the engine had to end (capture error, low disk, failed switch) is finished like a Stop.
+        recordingState.onRecordingEndedUnexpectedly = { [weak self] url in
+            self?.finishStoppedRecording(url: url)
+        }
+
         recordingState.onRecordingStateChanged = { [weak self] _ in
             guard let self else { return }
             Task { @MainActor in

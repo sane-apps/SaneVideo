@@ -418,4 +418,36 @@ struct ProjectStoreBackupRecoveryTests {
         #expect(results[1].count == results[2].count)
         #expect(results[0].first?.id == project.id)
     }
+
+    @Test("flushPendingSaves returns only after every queued save reached the store (quit waits on it)")
+    func flushWaitsForQueuedSaves() async {
+        let store = SlowRecordingProjectStore()
+        let projectState = ProjectState(projectStore: store)
+        var project = VideoProject(name: "Before quit")
+        projectState.saveProject(project)
+        project.name = "Renamed just before quit"
+        projectState.saveProject(project)
+
+        await projectState.flushPendingSaves()
+
+        #expect(store.savedNames == ["Before quit", "Renamed just before quit"])
+    }
+}
+
+/// A store whose saves take a moment, like a real write, and records what reached it.
+private final class SlowRecordingProjectStore: ProjectStoreProtocol, @unchecked Sendable {
+    private let lock = NSLock()
+    private var names: [String] = []
+    var savedNames: [String] { lock.withLock { names } }
+
+    func loadProjects() async throws -> [VideoProject] { [] }
+    func saveProject(_ project: VideoProject) async throws {
+        try await Task.sleep(for: .milliseconds(50))
+        lock.withLock { names.append(project.name) }
+    }
+    func deleteProject(_ project: VideoProject) async throws {}
+    func recentProjects(limit: Int) async throws -> [VideoProject] { [] }
+    func fileURL(for project: VideoProject) -> URL {
+        URL(fileURLWithPath: "/tmp/\(project.id.uuidString).svproj")
+    }
 }

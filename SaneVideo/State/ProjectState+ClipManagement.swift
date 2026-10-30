@@ -423,7 +423,8 @@ extension ProjectState {
     let otherClips = project.timeline.tracks.flatMap(\.clips).filter { $0.id != clip.id }
       + projects.filter { $0.id != project.id }.flatMap { $0.timeline.tracks.flatMap(\.clips) }
     if otherClips.contains(where: { $0.url.standardizedFileURL == fileURL }) {
-      deleteClip(clip)
+      // A refused delete (locked track, Clean Up running) already said why; the clip stays.
+      guard deleteClip(clip) else { return }
       ServiceContainer.shared.toastManager.show("Removed the clip. The file was kept: other clips still use it.", type: .info)
       return
     }

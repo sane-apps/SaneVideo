@@ -42,6 +42,29 @@ struct CompositionBuilderTests {
         }
     }
 
+    @Test("An audio-track clip leaves Clean Up's cut out, so it ends where the timeline shows it")
+    func audioTrackClipHonoursCuts() async throws {
+        let url = TestEnvironment.mockAssetURL
+        let duration = try await AVURLAsset(url: url).load(.duration)
+        try #require(duration.seconds > 3, "test_video.mp4 is about 5 s")
+        let second = CMTime(seconds: 1, preferredTimescale: 600)
+        var voiceover = VideoClip(url: url, duration: duration, startTime: .zero)
+        voiceover.addRemovedRange(CMTimeRange(start: second, duration: second))
+        var project = VideoProject(name: "Voiceover")
+        project.timeline.tracks = [
+            Track(name: "Video", type: .video, clips: [VideoClip(url: url, duration: duration)], zIndex: 1),
+            Track(name: "Audio", type: .audio, clips: [voiceover], zIndex: 0),
+        ]
+
+        let built = try await CompositionBuilder.build(from: project)
+
+        // Audio-only tracks are added after the video clips' audio, so the voiceover has the highest track ID.
+        let audioTracks = try await built.composition.loadTracks(withMediaType: .audio)
+        let voiceoverTrack = try #require(audioTracks.max { $0.trackID < $1.trackID })
+        let range = try await voiceoverTrack.load(.timeRange)
+        #expect(abs(range.end.seconds - voiceover.effectiveDuration.seconds) < 0.05)
+    }
+
     // MARK: - Valid Segments Tests
 
     @Test("Compute valid segments for video clip")

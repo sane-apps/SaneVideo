@@ -809,23 +809,37 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
         let container = ServiceContainer.shared
         Task { @MainActor in
-            let recordingState = container.appState.recordingState
+            let appState = container.appState
+            let recordingState = appState.recordingState
             if recordingState.isStopping {
-                // Stop was pressed just before quitting: let that stop finish the file (its moov atom)
-                // before exiting. Bounded, so a stuck stop cannot block quitting.
+                // Stop was pressed just before quitting (or the engine is ending the take): let that stop
+                // finish the file (its moov atom) before exiting. Bounded, so a stuck stop cannot block quitting.
                 let clock = ContinuousClock()
                 let deadline = clock.now.advanced(by: .seconds(40))
                 while recordingState.isStopping, clock.now < deadline {
                     try? await Task.sleep(for: .milliseconds(50))
                 }
+                // The stop's completion hops to the main actor to start importing the take; let it run.
+                await Task.yield()
             } else if recordingState.isRecording {
-                // Finish the file so its moov atom is written.
+                // Finish the file so its moov atom is written, and import it like Stop does.
                 await withCheckedContinuation { done in
-                    recordingState.stopRecording { _ in done.resume() }
+                    recordingState.stopRecording { url in
+                        Task { @MainActor in
+                            appState.finishStoppedRecording(url: url)
+                            done.resume()
+                        }
+                    }
                 }
             } else if container.exportService.isExporting {
                 AppLogger.general.warning("App terminating during active export - cancelling export")
                 container.exportService.cancelExport()
+            }
+            // A finished take becomes a project; quitting before that left an empty "Recording" project.
+            if let importTask = appState.recordingImportTask {
+                _ = try? await withTimeout(seconds: 10) {
+                    await importTask.value
+                }
             }
             container.appState.windowManager.cleanupAllWindows()
             container.appState.saveCurrentState()

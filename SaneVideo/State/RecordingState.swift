@@ -84,6 +84,12 @@ class RecordingState {
             }
         }
 
+        recordingEngine?.onStoppingAfterError = { [weak self] in
+            Task { @MainActor in
+                self?.engineIsEndingTake()
+            }
+        }
+
         recordingEngine?.onStoppedAfterError = { [weak self] url, error in
             Task { @MainActor in
                 self?.handleEngineStoppedTake(url: url, error: error)
@@ -103,19 +109,12 @@ class RecordingState {
             Task { @MainActor in
                 AppLogger.recording.error("Engine reported error: \(error.localizedDescription)")
 
-                // A take that has been running is stopped like the Stop button, so its file is imported
-                // and the windows come back; failed starts keep the quiet cleanup below.
+                // A take that has started is stopped like the Stop button, so its file is imported and the
+                // windows come back. A start still in progress gets the quiet stop. Either way isRecording stays
+                // set until stopRecording has stopped the engine: clearing it first left the engine recording.
                 let handsOverTake = self.map {
-                    $0.isRecording && !$0.isPreparing && !$0.isStopping && $0.recordingDuration >= 0.5
+                    $0.isRecording && !$0.isPreparing && !$0.isStopping && $0.startingTask == nil
                 } ?? false
-
-                // Cleanup timer if recording failed to start
-                if let self = self, self.isPreparing || (self.isRecording && self.recordingDuration < 0.5) {
-                    self.recordingTimer?.invalidate()
-                    self.recordingTimer = nil
-                    self.isPreparing = false
-                    self.isRecording = false
-                }
 
                 // Source switch timeouts roll back to the previous source, so keep recording.
                 let errorMessage = error.localizedDescription
@@ -189,11 +188,20 @@ class RecordingState {
         }
     }
 
+    /// The engine started ending the take itself: Stop and quit wait for it instead of asking again.
+    private func engineIsEndingTake() {
+        guard isRecording, !isStopping else { return }
+        isStopping = true
+        recordingTimer?.invalidate()
+        recordingTimer = nil
+    }
+
     /// The engine ended the take itself and already finished the file: leave recording and hand it over.
     private func handleEngineStoppedTake(url: URL?, error: AppError) {
         AppLogger.recording.error("Engine stopped the take: \(error.localizedDescription)")
-        // A Stop already in flight owns the take; only report the error.
-        if !isStopping, isRecording {
+        // Only the engine's own stop gets the file, so hand it over even if a Stop that raced it already
+        // reset the controls (that Stop got nothing from the engine).
+        if isRecording || url != nil {
             recordingTimer?.invalidate()
             recordingTimer = nil
             countdownTask?.cancel()
@@ -201,6 +209,7 @@ class RecordingState {
             isPreparing = false
             isPaused = false
             isRecording = false
+            isStopping = false
             onRecordingEndedUnexpectedly?(url)
         }
         ServiceContainer.shared.hapticsManager.warning()

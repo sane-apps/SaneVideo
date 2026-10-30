@@ -234,6 +234,67 @@ struct RecordingStateTests {
         #expect(cleared, "Left preparing, every later Record press is ignored until relaunch")
     }
 
+    /// A state that starts a test-mode take at once: permissions granted, no countdown.
+    private func makeReadyToRecordState() -> RecordingState {
+        let permissionManager = PermissionManagerProtocolMock(
+            cameraStatus: .granted,
+            microphoneStatus: .granted,
+            screenRecordingStatus: .granted
+        )
+        permissionManager.verifyPermissionsForRecordingHandler = { _, _, _ in true }
+        let recordingState = RecordingState(cameraService: nil, permissionManager: permissionManager)
+        recordingState.shouldSkipCountdown = true
+        return recordingState
+    }
+
+    private func waitForEngine(_ engine: RecordingEngine, recording: Bool, paused: Bool) async -> Bool {
+        for _ in 0 ..< 300 {
+            if await engine.isRecording == recording, await engine.isPaused == paused { return true }
+            try? await Task.sleep(for: .milliseconds(10))
+        }
+        return false
+    }
+
+    @Test("A take the engine ends itself (capture error) is handed over with its file and leaves recording")
+    func engineEndedTakeIsHandedOver() async throws {
+        let recordingState = makeReadyToRecordState()
+        var handedOver: [URL?] = []
+        recordingState.onRecordingEndedUnexpectedly = { url in handedOver.append(url) }
+        recordingState.startRecording(isScreenSharing: false)
+        let engine = try #require(recordingState.recordingEngine)
+        #expect(await waitForEngine(engine, recording: true, paused: false))
+
+        engine.handleSessionRuntimeError(notification: Notification(
+            name: AVCaptureSession.runtimeErrorNotification,
+            object: nil,
+            userInfo: [AVCaptureSessionErrorKey: NSError(domain: AVFoundationErrorDomain, code: -11819)]
+        ))
+
+        #expect(await waitUntil { !handedOver.isEmpty })
+        let url = try #require(handedOver.first ?? nil, "The finished file goes to the app to import")
+        #expect(url.pathExtension == "mp4")
+        #expect(!recordingState.isRecording)
+    }
+
+    @Test("When the engine pauses itself (sleep), the controls show paused and Resume resumes it")
+    func systemPauseSyncsControls() async throws {
+        let recordingState = makeReadyToRecordState()
+        recordingState.startRecording(isScreenSharing: false)
+        let engine = try #require(recordingState.recordingEngine)
+        #expect(await waitForEngine(engine, recording: true, paused: false))
+
+        engine.handleSleep()
+
+        #expect(await waitUntil { recordingState.isPaused })
+        recordingState.togglePause(isScreenSharing: false)
+        #expect(!recordingState.isPaused)
+        #expect(await waitForEngine(engine, recording: true, paused: false), "Resume must resume the engine, not pause it again")
+
+        await withCheckedContinuation { continuation in
+            recordingState.stopRecording { _ in continuation.resume() }
+        }
+    }
+
     @Test("Cancellation during countdown")
     func stopDuringCountdownCancels() async {
         let recordingState = RecordingState(cameraService: nil)

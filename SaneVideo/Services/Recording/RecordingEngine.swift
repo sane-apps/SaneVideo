@@ -20,6 +20,12 @@ class RecordingEngine: NSObject {
   // Callback to notify when user selects content in picker (PiP can now be shown)
   @MainActor var onContentSelected: (() -> Void)?
 
+  // The engine ended a take itself (capture error, low disk): the finished file, if any, and why.
+  @MainActor var onStoppedAfterError: ((URL?, AppError) -> Void)?
+
+  // The engine paused a take itself (sleep, capture interruption, audio device change).
+  @MainActor var onPausedBySystem: (() -> Void)?
+
   var audioLevelSubject: PassthroughSubject<Float, Never> {
     audioService.audioLevelSubject
   }
@@ -114,6 +120,11 @@ class RecordingEngine: NSObject {
     Task { @RecordingActor in
       if isRecording, !isPaused {
         pauseRecording()
+        await MainActor.run {
+          self.onPausedBySystem?()
+          ServiceContainer.shared.toastManager.show(
+            "Recording Paused: the Mac went to sleep. Press Resume to continue.", type: .info)
+        }
       }
     }
   }
@@ -126,6 +137,7 @@ class RecordingEngine: NSObject {
       AppLogger.recording.warning("⚠️ Recording Interrupted. Pausing...")
       pauseRecording()
       await MainActor.run {
+        self.onPausedBySystem?()
         ServiceContainer.shared.toastManager.show(
           "Recording Paused: Camera Interrupted", type: .error)
       }
@@ -141,10 +153,15 @@ class RecordingEngine: NSObject {
     Task { @RecordingActor in
       guard isRecording else { return }
       AppLogger.recording.error("❌ Recording Runtime Error: \(error.localizedDescription)")
-      _ = await stopRecording()
+      let url = await stopRecording()
+      let appError = AppError.recordingEngineError("Camera Error: \(error.localizedDescription)")
       await MainActor.run {
-        ServiceContainer.shared.errorPresenter.present(
-          AppError.recordingEngineError("Camera Error: \(error.localizedDescription)"))
+        // Hand the finished file to the app so the take is imported and the UI leaves recording.
+        if let onStoppedAfterError = self.onStoppedAfterError {
+          onStoppedAfterError(url, appError)
+        } else {
+          ServiceContainer.shared.errorPresenter.present(appError)
+        }
       }
     }
   }
@@ -155,6 +172,7 @@ class RecordingEngine: NSObject {
       AppLogger.recording.warning("⚠️ Audio Configuration Changed. Pausing...")
       pauseRecording()
       await MainActor.run {
+        self.onPausedBySystem?()
         ServiceContainer.shared.toastManager.show(
           "Recording Paused: Check Audio Device", type: .error)
       }

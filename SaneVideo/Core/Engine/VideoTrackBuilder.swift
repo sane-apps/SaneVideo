@@ -133,6 +133,20 @@ enum VideoTrackBuilder {
             targetTrack.scaleTimeRange(scaleRange, toDuration: playDuration)
           }
 
+          // Auto-Zoom and auto-frame keyframes are in source time (clicks, frame analysis), and the
+          // compositor reads them relative to the range start. Each segment plays its source linearly,
+          // so retime them per segment; one range for the whole clip skipped trims, cuts and speed.
+          if let keyframes = clip.keyframeAnimation {
+            let sourceStart = finalSegment.start
+            let rate = 1.0 / max(clip.speed, 0.000_001)
+            let segmentKeyframes = keyframes.retimed {
+              CMTimeMultiplyByFloat64(CMTimeSubtract($0, sourceStart), multiplier: rate)
+            }
+            var kfs = trackKeyframes[targetTrack.trackID] ?? []
+            kfs.append((CMTimeRange(start: finalInsertStart, duration: playDuration), [segmentKeyframes]))
+            trackKeyframes[targetTrack.trackID] = kfs
+          }
+
           if clip.useSmoothCutForRemovals && segIndex > 0 && actualOverlapPlayed > .zero {
             let fromTrackID = (targetTrack === trackA) ? trackB.trackID : trackA.trackID
             let toTrackID = targetTrack.trackID
@@ -221,14 +235,6 @@ enum VideoTrackBuilder {
             var effects = trackEffects[instructionTrack.trackID] ?? []
             effects.append((CMTimeRange(start: insertStart, duration: playDuration), clip.effects))
             trackEffects[instructionTrack.trackID] = effects
-          }
-        }
-
-        if let keyframes = clip.keyframeAnimation {
-          for instructionTrack in instructionTracks {
-            var kfs = trackKeyframes[instructionTrack.trackID] ?? []
-            kfs.append((CMTimeRange(start: insertStart, duration: playDuration), [keyframes]))
-            trackKeyframes[instructionTrack.trackID] = kfs
           }
         }
 

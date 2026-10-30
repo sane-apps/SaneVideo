@@ -356,23 +356,25 @@ extension ProjectState {
 
   // MARK: - Removal
 
-  func deleteClip(_ clip: VideoClip, transactionId: UUID? = nil) {
+  /// Returns whether the clip was removed; a locked track or a running operation keeps it.
+  @discardableResult
+  func deleteClip(_ clip: VideoClip, transactionId: UUID? = nil) -> Bool {
     if shouldBlockOperation(transactionId: transactionId) {
       AppLogger.project.warning("⚠️ Delete clip blocked: operation in progress (transaction: \(transactionId?.uuidString ?? "none"))")
       ServiceContainer.shared.toastManager.show("Cannot delete: Operation in progress", type: .info)
-      return
+      return false
     }
     
     guard var project = currentProject else {
       AppLogger.project.warning("⚠️ Delete clip blocked: No current project")
       ServiceContainer.shared.toastManager.show("Cannot delete: No project open", type: .error)
-      return
+      return false
     }
 
     if isTrackLocked(for: clip) {
       AppLogger.project.warning("⚠️ Delete clip blocked: Track is locked")
       ServiceContainer.shared.toastManager.show("Track is locked", type: .error)
-      return
+      return false
     }
 
     registerUndo("Delete Clip")
@@ -396,7 +398,7 @@ extension ProjectState {
       if !validateTimelineState(timeline) {
         AppLogger.project.error("Timeline state invalid after deletion, rolling back")
         ServiceContainer.shared.toastManager.show("Delete failed: Timeline state invalid", type: .error)
-        return
+        return false
       }
 
       project.timeline = timeline
@@ -405,21 +407,28 @@ extension ProjectState {
 
       AppLogger.project.info("✅ Removed clip from timeline: \(clip.url.lastPathComponent)")
       ServiceContainer.shared.toastManager.show("Deleted Clip")
+      return true
     } else {
       AppLogger.project.warning("⚠️ Delete clip: Clip not found in timeline: \(clip.id)")
       ServiceContainer.shared.toastManager.show("Clip not found in project", type: .info)
+      return false
     }
   }
 
   func deleteClipFile(_ clip: VideoClip) {
     guard var project = currentProject else { return }
-    // Split pieces share one recording file; trashing it would break every other piece.
-    let othersUseFile = project.timeline.tracks.flatMap(\.clips).contains { $0.id != clip.id && $0.url == clip.url }
-    if othersUseFile {
-      deleteClip(clip)
+    // Split pieces and duplicated projects share one recording file; trashing it would break them.
+    // A duplicated project's clips keep the same ids, so other projects are matched by file only.
+    let fileURL = clip.url.standardizedFileURL
+    let otherClips = project.timeline.tracks.flatMap(\.clips).filter { $0.id != clip.id }
+      + projects.filter { $0.id != project.id }.flatMap { $0.timeline.tracks.flatMap(\.clips) }
+    if otherClips.contains(where: { $0.url.standardizedFileURL == fileURL }) {
+      // A refused delete (locked track, Clean Up running) already said why; the clip stays.
+      guard deleteClip(clip) else { return }
       ServiceContainer.shared.toastManager.show("Removed the clip. The file was kept: other clips still use it.", type: .info)
       return
     }
+    let unchanged = project
     var timeline = project.timeline
 
     for (trackIndex, track) in timeline.tracks.enumerated() {
@@ -435,7 +444,11 @@ extension ProjectState {
       }
     }
 
-    deleteClip(clip)
+    // A blocked delete (locked track, Clean Up running) keeps the clip on the timeline, so keep its file too.
+    guard deleteClip(clip) else {
+      currentProject = unchanged
+      return
+    }
 
     Task {
       do {

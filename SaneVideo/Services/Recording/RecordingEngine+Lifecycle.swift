@@ -19,11 +19,17 @@ extension RecordingEngine {
 
       Task {
         AppLogger.recording.error("Low disk space - stopping recording: \(error)")
-        _ = await self.stopRecording()
+        await MainActor.run { self.onStoppingAfterError?() }
+        let url = await self.stopRecording()
+        let appError = error as? AppError ?? AppError.recordingEngineError(error.localizedDescription)
 
         await MainActor.run {
-          self.onError?(
-            error as? AppError ?? AppError.recordingEngineError(error.localizedDescription))
+          // Hand the finished file to the app so the take is imported and the UI leaves recording.
+          if let onStoppedAfterError = self.onStoppedAfterError {
+            onStoppedAfterError(url, appError)
+          } else {
+            self.onError?(appError)
+          }
         }
       }
     }

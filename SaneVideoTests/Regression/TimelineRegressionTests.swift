@@ -180,6 +180,32 @@ struct TimelineRegressionTests {
         #expect(FileManager.default.fileExists(atPath: fileURL.path))
     }
 
+    @Test("Delete from Disk on a locked track keeps the clip and its file")
+    @MainActor
+    func deleteFileOnLockedTrackKeepsFile() async throws {
+        let fileURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent("locked-\(UUID().uuidString).mov")
+        try Data("take".utf8).write(to: fileURL)
+        defer { try? FileManager.default.removeItem(at: fileURL) }
+        let clip = VideoClip(url: fileURL, duration: time(5), startTime: .zero)
+        let state = ProjectState()
+        state.startNewProject()
+        var project = try #require(state.currentProject)
+        var track = Track(name: "Video", type: .video, clips: [clip], zIndex: 0)
+        track.isLocked = true
+        project.timeline.tracks = [track]
+        state.currentProject = project
+
+        state.deleteClipFile(clip)
+        // The trash used to run in a background Task; give it time to show up.
+        try await Task.sleep(for: .milliseconds(300))
+
+        let clips = try #require(state.currentProject?.timeline.tracks.first?.clips)
+        #expect(clips.map(\.id) == [clip.id])
+        #expect(clips.first?.isMissing == false)
+        #expect(FileManager.default.fileExists(atPath: fileURL.path))
+    }
+
     @Test("A removed 5-6 s range yields two render segments around it")
     func removedRangeSplitsRenderSegments() {
         var clip = VideoClip(url: videoURL, duration: time(10))
@@ -192,5 +218,48 @@ struct TimelineRegressionTests {
         #expect(segments.first?.duration.seconds == 5.0)
         #expect(segments.last?.start.seconds == 6.0)
         #expect(segments.last?.duration.seconds == 4.0)
+    }
+
+    @Test("At 2x the playhead maps twice as far into the file, and back")
+    func speedMapsTimelineToSourceAndBack() throws {
+        var clip = VideoClip(url: videoURL, duration: time(20), startTime: time(3))
+        clip.speed = 2.0
+
+        #expect(clip.sourceTime(atTimelineTime: time(8)).seconds == 10.0)
+        let back = try #require(clip.timelineTime(forSourceTime: time(10)))
+        #expect(back.seconds == 8.0)
+    }
+
+    @Test("A transcript line after a trim and a Clean Up cut seeks to where it plays")
+    func captionSeekSkipsTrimAndCut() throws {
+        // Trimmed to start at 1 s, 2-4 s cut: 1 s plays before the cut, so source 6 s plays at 3 s.
+        var clip = VideoClip(url: videoURL, duration: time(10), startTime: .zero, trimStart: time(1))
+        clip.addRemovedRange(CMTimeRange(start: time(2), duration: time(2)))
+        let caption = Caption(text: "later", startTime: time(6), endTime: time(7))
+
+        let start = try #require(clip.timelineStart(of: caption))
+        #expect(start.seconds == 3.0)
+    }
+
+    @Test("Deleting a transcript line leaves later captions on their source times")
+    @MainActor
+    func removeRangeKeepsLaterCaptionTimes() throws {
+        var clip = VideoClip(url: videoURL, duration: time(12), startTime: .zero)
+        clip.captions = [
+            Caption(text: "one", startTime: time(0), endTime: time(3)),
+            Caption(text: "two", startTime: time(3), endTime: time(6)),
+            Caption(text: "three", startTime: time(6), endTime: time(9)),
+        ]
+        let state = ProjectState()
+        state.startNewProject()
+        var project = try #require(state.currentProject)
+        project.timeline.tracks = [Track(name: "Video", type: .video, clips: [clip], zIndex: 0)]
+        state.currentProject = project
+
+        state.removeRange(CMTimeRange(start: time(3), end: time(6)), from: clip)
+
+        let edited = try #require(state.currentProject?.timeline.tracks.first?.clips.first)
+        #expect(edited.captions.map(\.text) == ["one", "three"])
+        #expect(edited.captions.last?.startTime.seconds == 6.0, "The cut is skipped at playback, not by moving captions")
     }
 }

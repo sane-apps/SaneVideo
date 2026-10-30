@@ -85,7 +85,13 @@ class ProjectState {
     // MARK: - Undo Helper
 
     func registerUndo(_ actionName: String) {
+        // Inside an undo group the snapshot taken when it began already covers this step.
+        guard undoGroupDepth == 0 else { return }
         guard let project = currentProject else { return }
+        registerUndoStep(restoring: project, named: actionName)
+    }
+
+    private func registerUndoStep(restoring project: VideoProject, named actionName: String) {
         guard let undoManager = undoManager else { return }
 
         // With groupsByEvent off, each registration needs its own explicit group.
@@ -102,22 +108,48 @@ class ProjectState {
         undoManager.endUndoGrouping()
     }
 
-    /// Groups every registerUndo call until endUndoGroup() is called.
+    // Long operations such as Clean Up span awaits. Holding an NSUndoManager group open that long made
+    // Undo raise ("undo was called with too many nested undo groups"), so a group is a snapshot taken
+    // when it begins and one undo step registered when it ends.
+    @ObservationIgnored private var undoGroupDepth = 0
+    @ObservationIgnored private var undoGroupSnapshot: VideoProject?
+    @ObservationIgnored private var undoGroupName = ""
+    // Snapshots replaced by an undo during the group, so the matching redo can put them back.
+    @ObservationIgnored private var undoGroupSnapshotsBeforeUndo: [VideoProject] = []
+
+    /// Makes every change until endUndoGroup() one undo step.
     func beginUndoGroup(_ groupName: String) {
-        undoManager?.beginUndoGrouping()
-        // Register initial state before group starts
-        if let project = currentProject {
-            undoManager?.registerUndo(withTarget: self) { target in
-                MainActor.assumeIsolated {
-                    target.restoreProjectState(project)
-                }
-            }
-            undoManager?.setActionName(groupName)
+        if undoGroupDepth == 0 {
+            undoGroupSnapshot = currentProject
+            undoGroupName = groupName
+            undoGroupSnapshotsBeforeUndo = []
         }
+        undoGroupDepth += 1
     }
 
     func endUndoGroup() {
-        undoManager?.endUndoGrouping()
+        guard undoGroupDepth > 0 else { return }
+        undoGroupDepth -= 1
+        guard undoGroupDepth == 0, let snapshot = undoGroupSnapshot else { return }
+        undoGroupSnapshot = nil
+        undoGroupSnapshotsBeforeUndo = []
+        guard currentProject?.id == snapshot.id else { return }
+        registerUndoStep(restoring: snapshot, named: undoGroupName)
+    }
+
+    /// Undo or redo during a group: undoing the group afterwards should return to the user's state, not to
+    /// before their undo, and not keep group changes a redo brought back.
+    private func moveUndoGroupSnapshot(to restored: VideoProject) {
+        guard undoGroupDepth > 0, let snapshot = undoGroupSnapshot, snapshot.id == restored.id else { return }
+        if undoManager?.isRedoing == true, let previous = undoGroupSnapshotsBeforeUndo.popLast() {
+            // Redoing an undo made during the group: that redo state can hold the group's own changes.
+            undoGroupSnapshot = previous
+        } else {
+            if undoManager?.isUndoing == true {
+                undoGroupSnapshotsBeforeUndo.append(snapshot)
+            }
+            undoGroupSnapshot = restored
+        }
     }
 
     private func restoreProjectState(_ project: VideoProject) {
@@ -153,6 +185,8 @@ class ProjectState {
 
         var updatedProject = project
         updatedProject.timeline = timeline
+
+        moveUndoGroupSnapshot(to: updatedProject)
 
         updateCurrentProject(updatedProject)
         saveProject(updatedProject)
@@ -334,6 +368,11 @@ class ProjectState {
                 }
             }
         }
+    }
+
+    /// Waits until every queued save has reached disk (each save waits for the one before it).
+    func flushPendingSaves() async {
+        await pendingSaveTask?.value
     }
 
     /// Update playback state (time, scroll, zoom) and save

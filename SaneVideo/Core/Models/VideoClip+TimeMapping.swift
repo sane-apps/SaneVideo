@@ -92,6 +92,35 @@ extension VideoClip {
         return nil
     }
 
+    /// The source-file time playing at a timeline time inside this clip: undoes speed, then skips trims and cuts.
+    func sourceTime(atTimelineTime timelineTime: CMTime) -> CMTime {
+        let played = CMTimeSubtract(timelineTime, startTime)
+        return originalTime(forEffectiveTime: CMTimeMultiplyByFloat64(played, multiplier: speed))
+    }
+
+    /// The timeline time where a source-file time plays; nil if it was trimmed off or cut.
+    func timelineTime(forSourceTime sourceTime: CMTime) -> CMTime? {
+        guard let effective = effectiveTime(forOriginalTime: sourceTime) else { return nil }
+        return CMTimeAdd(startTime, CMTimeMultiplyByFloat64(effective, multiplier: 1.0 / max(speed, 0.000_1)))
+    }
+
+    /// The first source time at or after `sourceTime` that plays: a time inside a Clean Up cut or before the
+    /// trim start moves to where play resumes. Word timestamps often start in the silence Clean Up cut.
+    func firstPlayedSourceTime(atOrAfter sourceTime: CMTime) -> CMTime {
+        var time = max(sourceTime, trimStart)
+        for removal in removedRanges.map(\.timeRange).sorted(by: { $0.start < $1.start })
+        where time >= removal.start && time < removal.end {
+            time = removal.end
+        }
+        return time
+    }
+
+    /// The timeline time where a caption starts playing; nil if none of it plays.
+    func timelineStart(of caption: Caption) -> CMTime? {
+        guard let range = effectiveRange(for: caption) else { return nil }
+        return CMTimeAdd(startTime, CMTimeMultiplyByFloat64(range.start, multiplier: 1.0 / max(speed, 0.000_1)))
+    }
+
     // MARK: - Computed Properties
 
     /// Effective duration after trimming, removing internal ranges, and applying speed

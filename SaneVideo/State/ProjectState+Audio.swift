@@ -106,15 +106,7 @@ extension ProjectState {
     private func triggerAudioEnhancement(for clipId: UUID) async {
         guard let project = currentProject else { return }
 
-        let timeline = project.timeline
-        var clipToUpdate: VideoClip?
-        var trackIdx: Int = -1
-        for (tIdx, track) in timeline.tracks.enumerated()
-        where track.clips.contains(where: { $0.id == clipId }) {
-            clipToUpdate = track.clips.first { $0.id == clipId }
-            trackIdx = tIdx
-            break
-        }
+        let clipToUpdate = project.timeline.tracks.flatMap(\.clips).first { $0.id == clipId }
 
         guard let clip = clipToUpdate, clip.enhancedAudioURL == nil else { return }
 
@@ -124,16 +116,18 @@ extension ProjectState {
             let enhancedURL = try await ServiceContainer.shared.audioEnhancementService.enhanceAudio(
                 from: clip.url)
 
-            if var latestProject = currentProject {
-                if let latestCIdx = latestProject.timeline.tracks[trackIdx].clips.firstIndex(where: {
+            // Tracks may have changed, or another project opened, while this ran: find the clip again.
+            guard var latestProject = currentProject, latestProject.id == project.id else { return }
+            for tIdx in latestProject.timeline.tracks.indices {
+                guard let latestCIdx = latestProject.timeline.tracks[tIdx].clips.firstIndex(where: {
                     $0.id == clipId
-                }) {
-                    latestProject.timeline.tracks[trackIdx].clips[latestCIdx].enhancedAudioURL = enhancedURL
-                    currentProject = latestProject
-                    saveProject(latestProject)
-                    AppLogger.audio.info("Audio enhancement complete for clip \(clipId)")
-                    ServiceContainer.shared.toastManager.show("Voice Isolation Ready", type: .success)
-                }
+                }) else { continue }
+                latestProject.timeline.tracks[tIdx].clips[latestCIdx].enhancedAudioURL = enhancedURL
+                currentProject = latestProject
+                saveProject(latestProject)
+                AppLogger.audio.info("Audio enhancement complete for clip \(clipId)")
+                ServiceContainer.shared.toastManager.show("Voice Isolation Ready", type: .success)
+                return
             }
         } catch {
             AppLogger.audio.error("Audio enhancement failed: \(error.localizedDescription)")
@@ -303,15 +297,16 @@ extension ProjectState {
             }
         }
         guard let tIdx = trackIndex, let cIdx = clipIndex else { return }
+        // Start from the stored clip: the caller's copy can be stale after silence detection.
+        var modifiedClip = project.timeline.tracks[tIdx].clips[cIdx]
 
-        let intersectingSilence = MagicFixService.filterRangesToTrimWindow(ranges: silentRanges, clip: clip)
+        let intersectingSilence = MagicFixService.filterRangesToTrimWindow(ranges: silentRanges, clip: modifiedClip)
         if intersectingSilence.isEmpty { return }
 
         ServiceContainer.shared.toastManager.show("Removing \(intersectingSilence.count) Silent Segments...")
 
-        var modifiedClip = clip
         for silence in intersectingSilence {
-            let activeRange = CMTimeRange(start: clip.trimStart, end: clip.trimEnd)
+            let activeRange = CMTimeRange(start: modifiedClip.trimStart, end: modifiedClip.trimEnd)
             let effectiveSilence = silence.intersection(activeRange)
             if effectiveSilence.duration.seconds > 0.1 {
                 modifiedClip.addRemovedRange(effectiveSilence)
@@ -330,13 +325,10 @@ extension ProjectState {
 extension ProjectState {
 
     func enhanceAudio(for clip: VideoClip) async {
-        guard var project = currentProject,
-              let index = project.timeline.tracks.firstIndex(where: {
+        guard let projectId = currentProject?.id,
+              currentProject?.timeline.tracks.contains(where: {
                   $0.clips.contains(where: { $0.id == clip.id })
-              }),
-              let clipIndex = project.timeline.tracks[index].clips.firstIndex(where: {
-                  $0.id == clip.id
-              })
+              }) == true
         else { return }
 
         do {
@@ -348,13 +340,22 @@ extension ProjectState {
                     }
                 }
 
-            await MainActor.run {
-                registerUndo("Enhance Audio")
-                project.timeline.tracks[index].clips[clipIndex].enhancedAudioURL = enhancedURL
-                currentProject = project
-                saveProject(project)
-                ServiceContainer.shared.toastManager.show("🎙️ Audio Enhanced!")
-            }
+            // Enhancing can take minutes: re-read the project so edits made meanwhile are kept,
+            // and find the clip again because tracks may have changed.
+            guard var project = currentProject, project.id == projectId,
+                  let index = project.timeline.tracks.firstIndex(where: {
+                      $0.clips.contains(where: { $0.id == clip.id })
+                  }),
+                  let clipIndex = project.timeline.tracks[index].clips.firstIndex(where: {
+                      $0.id == clip.id
+                  })
+            else { return }
+
+            registerUndo("Enhance Audio")
+            project.timeline.tracks[index].clips[clipIndex].enhancedAudioURL = enhancedURL
+            currentProject = project
+            saveProject(project)
+            ServiceContainer.shared.toastManager.show("🎙️ Audio Enhanced!")
         } catch {
             AppLogger.recording.error("❌ enhanceAudio failed: \(error)")
             await MainActor.run {

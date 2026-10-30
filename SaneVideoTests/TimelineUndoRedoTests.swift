@@ -102,4 +102,39 @@ struct TimelineUndoRedoTests {
         #expect(layout == [10, 6])
         #expect(!undoManager.canUndo)
     }
+
+    @Test("Undo while Clean Up's group is open works, and Clean Up still undoes in one step", .timeLimit(.minutes(1)))
+    func undoDuringOpenGroup() {
+        state.splitClip(clipA, atTimelineTime: CMTime(seconds: 4, preferredTimescale: 600))
+        #expect(layout == [4, 6, 6])
+
+        state.beginUndoGroup("Clean Up")
+        // ⌘Z mid-run used to raise "undo was called with too many nested undo groups".
+        undoManager.undo()
+        #expect(layout == [10, 6])
+        state.deleteClip(clipB)
+        state.endUndoGroup()
+        #expect(layout == [10])
+
+        // Undoing Clean Up returns to the state after that ⌘Z, not to before it.
+        undoManager.undo()
+        #expect(layout == [10, 6])
+    }
+
+    @Test("Undo then Redo during Clean Up: undoing Clean Up still removes all of Clean Up's changes", .timeLimit(.minutes(1)))
+    func undoRedoDuringOpenGroup() {
+        state.splitClip(clipA, atTimelineTime: CMTime(seconds: 4, preferredTimescale: 600))
+        state.beginUndoGroup("Clean Up")
+        state.deleteClip(clipB)
+        #expect(layout == [4, 6])
+
+        undoManager.undo()
+        undoManager.redo()
+        #expect(layout == [4, 6])
+        state.endUndoGroup()
+
+        // The redo brought back Clean Up's delete; undoing Clean Up must still undo it.
+        undoManager.undo()
+        #expect(layout == [4, 6, 6])
+    }
 }

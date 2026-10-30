@@ -1,3 +1,4 @@
+import AVFoundation
 import CoreImage
 import CoreMedia
 import Foundation
@@ -154,5 +155,63 @@ struct RenderingPipelineTests {
         #expect(abs((interactionLayers.first?.clicks.first?.time.seconds ?? -1) - 6.0) < 0.001)
         #expect(abs((interactionLayers.first?.cursorPath.first?.time.seconds ?? -1) - 6.0) < 0.001)
         #expect(interactionLayers.first?.keystrokes.first?.text == "Command + K")
+    }
+
+    @Test("Auto-Zoom keyframes follow Clean Up's cut, so a zoom after the cut lands when its click plays")
+    func zoomKeyframesFollowCuts() async throws {
+        func time(_ seconds: Double) -> CMTime { CMTime(seconds: seconds, preferredTimescale: 600) }
+        let url = TestEnvironment.mockAssetURL
+        let duration = try await AVURLAsset(url: url).load(.duration)
+        try #require(duration.seconds > 4, "test_video.mp4 is about 5 s")
+        // 1-2 s cut, so source 2.5-3 s plays at 1.5-2 s. Zoom from 1x at source 2.5 s to 2x at source 3 s.
+        var clip = VideoClip(url: url, duration: duration, startTime: .zero)
+        clip.addRemovedRange(CMTimeRange(start: time(1), duration: time(1)))
+        var zoom = KeyframeAnimation()
+        zoom.setKeyframe(property: .scale, at: time(2.5), value: 1.0)
+        zoom.setKeyframe(property: .scale, at: time(3), value: 2.0)
+        clip.keyframeAnimation = zoom
+        var project = VideoProject(name: "Zoom")
+        project.timeline.tracks = [Track(name: "Video", type: .video, clips: [clip], zIndex: 0)]
+
+        let built = try await CompositionBuilder.build(from: project)
+
+        let instruction = try #require(
+            built.videoComposition?.instructions.compactMap { $0 as? SaneVideoCompositionInstruction }.first
+        )
+        let ranges = instruction.trackKeyframes.values.flatMap { $0 }
+        func scale(atComposition seconds: Double) throws -> Double {
+            let range = try #require(ranges.first { $0.0.containsTime(time(seconds)) })
+            return range.1[0].value(for: .scale, at: CMTimeSubtract(time(seconds), range.0.start))
+        }
+        let atTwo = try scale(atComposition: 2.0)
+        let atOneThreeQuarters = try scale(atComposition: 1.75)
+        #expect(abs(atTwo - 2.0) < 0.01, "Source 3 s plays at 2 s")
+        #expect(abs(atOneThreeQuarters - 1.5) < 0.01, "Halfway through the zoom at source 2.75 s")
+    }
+
+    @Test("Karaoke word times are mapped onto composition time like their caption")
+    func captionWordsUseCompositionTime() throws {
+        func time(_ seconds: Double) -> CMTime { CMTime(seconds: seconds, preferredTimescale: 600) }
+        // Clip at 5 s on the timeline with 1-3 s cut: source 4 s plays at 5 + 2 = 7 s.
+        var clip = VideoClip(url: URL(fileURLWithPath: "/tmp/karaoke.mp4"), duration: time(10))
+        clip.startTime = time(5)
+        clip.addRemovedRange(CMTimeRange(start: time(1), duration: time(2)))
+        // "again" starts in the cut silence (2.8 s) but most of it plays, so Clean Up keeps it.
+        clip.captions = [Caption(text: "hello again world", startTime: .zero, endTime: time(5), words: [
+            CaptionWord(text: "hello", start: 0.2, end: 0.8, probability: 1),
+            CaptionWord(text: "again", start: 2.8, end: 3.4, probability: 1),
+            CaptionWord(text: "world", start: 4.0, end: 4.5, probability: 1),
+        ])]
+        let track = Track(name: "Video", type: .video, clips: [clip], zIndex: 0)
+
+        let layers = TextLayerBuilder.build(from: [track], project: VideoProject(name: "Karaoke"))
+
+        let words = try #require(layers.first(where: \.isCaption)?.words)
+        try #require(words.count == 3)
+        #expect(abs(words[0].start - 5.2) < 0.001)
+        #expect(abs(words[1].start - 6.0) < 0.001, "Starts where the cut ends (source 3 s)")
+        #expect(abs(words[1].end - 6.4) < 0.001)
+        #expect(abs(words[2].start - 7.0) < 0.001)
+        #expect(abs(words[2].end - 7.5) < 0.001)
     }
 }

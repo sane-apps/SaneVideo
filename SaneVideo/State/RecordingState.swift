@@ -17,7 +17,7 @@ class RecordingState {
 
     var isPaused = false
     var isPreparing = false // True during countdown (camera on, not yet recording)
-    private var isStopping = false // Prevents double-stop calls
+    private(set) var isStopping = false // Prevents double-stop calls
     @MainActor private var isPendingStop = false // Handles a stop that arrives during start
     private var pendingStopCompletion: ((URL?) -> Void)? // Completion for a pending stop
     var isMicActive = true
@@ -33,7 +33,7 @@ class RecordingState {
     @ObservationIgnored private nonisolated(unsafe) var countdownTask: Task<Void, Never>?
     // Track the starting task to prevent race conditions during rapid start/stop
     @ObservationIgnored private nonisolated(unsafe) var startingTask: Task<Void, Never>?
-    private var recordingEngine: RecordingEngine?
+    private(set) var recordingEngine: RecordingEngine?
     private var cameraService: CameraServiceProtocol
     private let permissionManager: PermissionManagerProtocol
     private var injectedAudioService: AudioService?
@@ -62,6 +62,8 @@ class RecordingState {
     var onPresenterOverlayChanged: ((Bool) -> Void)?
     var onRecordingStateChanged: ((Bool) -> Void)?
     var onContentSelected: (() -> Void)?
+    /// A take ended without the Stop button (capture error, low disk, failed switch): its file, if any.
+    var onRecordingEndedUnexpectedly: ((URL?) -> Void)?
 
     // Task.cancel() is thread-safe, so we can call it from any thread in deinit
     deinit {
@@ -82,17 +84,37 @@ class RecordingState {
             }
         }
 
+        recordingEngine?.onStoppingAfterError = { [weak self] in
+            Task { @MainActor in
+                self?.engineIsEndingTake()
+            }
+        }
+
+        recordingEngine?.onStoppedAfterError = { [weak self] url, error in
+            Task { @MainActor in
+                self?.handleEngineStoppedTake(url: url, error: error)
+            }
+        }
+
+        recordingEngine?.onPausedBySystem = { [weak self] in
+            Task { @MainActor in
+                // Keep the controls and the clock in step with the engine; Resume then resumes it.
+                if self?.isRecording == true {
+                    self?.isPaused = true
+                }
+            }
+        }
+
         recordingEngine?.onError = { [weak self] (error: AppError) in
             Task { @MainActor in
                 AppLogger.recording.error("Engine reported error: \(error.localizedDescription)")
 
-                // Cleanup timer if recording failed to start
-                if let self = self, self.isPreparing || (self.isRecording && self.recordingDuration < 0.5) {
-                    self.recordingTimer?.invalidate()
-                    self.recordingTimer = nil
-                    self.isPreparing = false
-                    self.isRecording = false
-                }
+                // A take that has started is stopped like the Stop button, so its file is imported and the
+                // windows come back. A start still in progress gets the quiet stop. Either way isRecording stays
+                // set until stopRecording has stopped the engine: clearing it first left the engine recording.
+                let handsOverTake = self.map {
+                    $0.isRecording && !$0.isPreparing && !$0.isStopping && $0.startingTask == nil
+                } ?? false
 
                 // Source switch timeouts roll back to the previous source, so keep recording.
                 let errorMessage = error.localizedDescription
@@ -100,7 +122,13 @@ class RecordingState {
                     errorMessage.contains("switch timed out")
 
                 if !isSourceSwitchTimeout {
-                    self?.stopRecording { _ in }
+                    if handsOverTake {
+                        self?.stopRecording { [weak self] url in
+                            Task { @MainActor [weak self] in self?.onRecordingEndedUnexpectedly?(url) }
+                        }
+                    } else {
+                        self?.stopRecording { _ in }
+                    }
                 } else {
                     AppLogger.recording.warning("Source switch timeout - continuing recording on previous source")
                 }
@@ -158,6 +186,35 @@ class RecordingState {
                 self?.onContentSelected?()
             }
         }
+    }
+
+    /// The engine started ending the take itself: Stop and quit wait for it instead of asking again.
+    private func engineIsEndingTake() {
+        guard isRecording, !isStopping else { return }
+        isStopping = true
+        recordingTimer?.invalidate()
+        recordingTimer = nil
+    }
+
+    /// The engine ended the take itself and already finished the file: leave recording and hand it over.
+    private func handleEngineStoppedTake(url: URL?, error: AppError) {
+        AppLogger.recording.error("Engine stopped the take: \(error.localizedDescription)")
+        // Only the engine's own stop gets the file, so hand it over even if a Stop that raced it already
+        // reset the controls (that Stop got nothing from the engine).
+        if isRecording || url != nil {
+            recordingTimer?.invalidate()
+            recordingTimer = nil
+            countdownTask?.cancel()
+            countdownTask = nil
+            isPreparing = false
+            isPaused = false
+            isRecording = false
+            isStopping = false
+            onRecordingEndedUnexpectedly?(url)
+        }
+        ServiceContainer.shared.hapticsManager.warning()
+        ServiceContainer.shared.soundManager.playError()
+        ServiceContainer.shared.errorPresenter.present(error)
     }
 
     // MARK: - Recording Control
@@ -317,6 +374,8 @@ class RecordingState {
 
         if !hasPermissions {
             NSLog("🎬 ❌ Permission check FAILED! Cannot start recording.")
+            // After the inline permission prompt isPreparing is already true; left set, every later Record press bails.
+            cancelCountdown()
             presentMissingPermissionFeedback(
                 isScreenSharing: isScreenSharing,
                 includeCameraOverlay: includeCameraOverlay
@@ -329,6 +388,7 @@ class RecordingState {
         if let engine = recordingEngine {
             do { try engine.diskSpaceMonitor.verifyDiskSpace() } catch {
                 NSLog("🎬 ❌ Disk space check FAILED")
+                cancelCountdown()
                 ServiceContainer.shared.errorPresenter.present(error)
                 return
             }

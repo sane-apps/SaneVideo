@@ -39,52 +39,55 @@ extension AppState {
             AppLogger.recording.warning("🛑 AppState: stopRecording ignored (not recording)")
             return
         }
+        // A second press (double hot key) while the take is being finished would report it as empty.
+        guard !recordingState.isStopping else {
+            AppLogger.recording.info("🛑 AppState: stopRecording ignored (already stopping)")
+            return
+        }
 
         AppLogger.recording.info("📹 AppState: Stopping recording...")
         NSLog("📹 AppState: Stopping recording...")
 
         recordingState.stopRecording { [weak self] url in
-            guard let self else { return }
-
             Task { @MainActor in
-                // Update state flags before UI work to avoid races.
-                let wasScreenSharing = self.windowManager.isScreenSharing
-
-                if wasScreenSharing {
-                    self.windowManager.isScreenSharing = false
-                }
-
-                if let project = self.projectState.currentProject, project.speakerNotes.isVisible {
-                    self.setTeleprompterVisible(false)
-                } else {
-                    self.windowManager.hideTeleprompter()
-                }
-
-                // The cameraEnabled setter stops the camera.
-                self.cameraEnabled = false
-
-                self.windowManager.restoreMainWindow()
-
-                // PiP hides here because isScreenSharing is now false.
-                self.windowManager.updatePiPState(isCameraActive: false, isRecording: false)
-                self.windowManager.hideFloatingControls()
+                self?.finishStoppedRecording(url: url)
             }
+        }
+    }
 
-            if let url = url {
-                Task { @MainActor in
-                    AppLogger.general.info("📹 Recording saved: \(url.lastPathComponent)")
-                    self.handleRecordingFinished(url: url)
-                }
-            } else {
-                AppLogger.general.warning("⚠️ No recording URL returned")
-                let isTesting = TestEnvironment.isUITesting
-                if !isTesting {
-                    Task { @MainActor in
-                        ServiceContainer.shared.toastManager.show(
-                            "⚠️ Recording cancelled or empty", type: .error
-                        )
-                    }
-                }
+    /// After a take ends, by Stop or because the engine had to end it: restore the windows and import the file.
+    func finishStoppedRecording(url: URL?) {
+        // Update state flags before UI work to avoid races.
+        let wasScreenSharing = windowManager.isScreenSharing
+
+        if wasScreenSharing {
+            windowManager.isScreenSharing = false
+        }
+
+        if let project = projectState.currentProject, project.speakerNotes.isVisible {
+            setTeleprompterVisible(false)
+        } else {
+            windowManager.hideTeleprompter()
+        }
+
+        // The cameraEnabled setter stops the camera.
+        cameraEnabled = false
+
+        windowManager.restoreMainWindow()
+
+        // PiP hides here because isScreenSharing is now false.
+        windowManager.updatePiPState(isCameraActive: false, isRecording: false)
+        windowManager.hideFloatingControls()
+
+        if let url = url {
+            AppLogger.general.info("📹 Recording saved: \(url.lastPathComponent)")
+            handleRecordingFinished(url: url)
+        } else {
+            AppLogger.general.warning("⚠️ No recording URL returned")
+            if !TestEnvironment.isUITesting {
+                ServiceContainer.shared.toastManager.show(
+                    "⚠️ Recording cancelled or empty", type: .error
+                )
             }
         }
     }

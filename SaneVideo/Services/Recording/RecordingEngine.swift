@@ -20,6 +20,15 @@ class RecordingEngine: NSObject {
   // Callback to notify when user selects content in picker (PiP can now be shown)
   @MainActor var onContentSelected: (() -> Void)?
 
+  // The engine is ending a take itself (capture error, low disk); onStoppedAfterError follows with the file.
+  @MainActor var onStoppingAfterError: (() -> Void)?
+
+  // The engine ended a take itself (capture error, low disk): the finished file, if any, and why.
+  @MainActor var onStoppedAfterError: ((URL?, AppError) -> Void)?
+
+  // The engine paused a take itself (sleep, capture interruption, audio device change).
+  @MainActor var onPausedBySystem: (() -> Void)?
+
   var audioLevelSubject: PassthroughSubject<Float, Never> {
     audioService.audioLevelSubject
   }
@@ -41,6 +50,7 @@ class RecordingEngine: NSObject {
   @RecordingActor var isMicMuted = false
   @RecordingActor var isMicrophoneAudioEnabled = true
   @RecordingActor var outputURL: URL?
+  @RecordingActor var didReportWriterFailure = false  // Report a failed writer once per take, not per frame
   let diskSpaceMonitor = DiskSpaceMonitor()
 
   @RecordingActor let timeCoordinator = RecordingTimeCoordinator()
@@ -113,6 +123,11 @@ class RecordingEngine: NSObject {
     Task { @RecordingActor in
       if isRecording, !isPaused {
         pauseRecording()
+        await MainActor.run {
+          self.onPausedBySystem?()
+          ServiceContainer.shared.toastManager.show(
+            "Recording Paused: the Mac went to sleep. Press Resume to continue.", type: .info)
+        }
       }
     }
   }
@@ -125,6 +140,7 @@ class RecordingEngine: NSObject {
       AppLogger.recording.warning("⚠️ Recording Interrupted. Pausing...")
       pauseRecording()
       await MainActor.run {
+        self.onPausedBySystem?()
         ServiceContainer.shared.toastManager.show(
           "Recording Paused: Camera Interrupted", type: .error)
       }
@@ -140,10 +156,16 @@ class RecordingEngine: NSObject {
     Task { @RecordingActor in
       guard isRecording else { return }
       AppLogger.recording.error("❌ Recording Runtime Error: \(error.localizedDescription)")
-      _ = await stopRecording()
+      Task { @MainActor in self.onStoppingAfterError?() }
+      let url = await stopRecording()
+      let appError = AppError.recordingEngineError("Camera Error: \(error.localizedDescription)")
       await MainActor.run {
-        ServiceContainer.shared.errorPresenter.present(
-          AppError.recordingEngineError("Camera Error: \(error.localizedDescription)"))
+        // Hand the finished file to the app so the take is imported and the UI leaves recording.
+        if let onStoppedAfterError = self.onStoppedAfterError {
+          onStoppedAfterError(url, appError)
+        } else {
+          ServiceContainer.shared.errorPresenter.present(appError)
+        }
       }
     }
   }
@@ -154,6 +176,7 @@ class RecordingEngine: NSObject {
       AppLogger.recording.warning("⚠️ Audio Configuration Changed. Pausing...")
       pauseRecording()
       await MainActor.run {
+        self.onPausedBySystem?()
         ServiceContainer.shared.toastManager.show(
           "Recording Paused: Check Audio Device", type: .error)
       }
@@ -184,6 +207,7 @@ class RecordingEngine: NSObject {
       isMicrophoneAudioEnabled = includeMicrophoneAudio
       currentSource = initialSource
       timeCoordinator.reset()
+      didReportWriterFailure = false
       return
     }
 
@@ -225,6 +249,7 @@ class RecordingEngine: NSObject {
     }
 
     timeCoordinator.reset()
+    didReportWriterFailure = false
 
     // Set isRecording only after every service starts, so a partial failure never leaves it true.
     let renderingService = RenderingService.shared
@@ -590,12 +615,18 @@ class RecordingEngine: NSObject {
         sourceSwitchTimeoutTask = nil
       }
 
-      guard let writer = videoWriter, writer.isWriting else { return }
+      guard let writer = videoWriter else { return }
 
-      if !writer.isWriting, isRecording, !isPaused, !isSwitching {
-        let errorDescription = writer.error?.localizedDescription ?? "Unknown writer error"
-        Task { @MainActor in
-          self.onError?(AppError.recordingEngineError("Recording failed: \(errorDescription)"))
+      // The writer leaves .writing mid-take only when it failed (a stop clears isRecording first).
+      // Checked before returning, so the take stops with an error instead of dropping every frame.
+      if !writer.isWriting {
+        if isRecording, !isPaused, !isSwitching, !didReportWriterFailure {
+          didReportWriterFailure = true
+          let errorDescription = writer.error?.localizedDescription ?? "Unknown writer error"
+          AppLogger.recording.error("Video writer stopped writing mid-take: \(errorDescription)")
+          Task { @MainActor in
+            self.onError?(AppError.recordingEngineError("Recording failed: \(errorDescription)"))
+          }
         }
         return
       }

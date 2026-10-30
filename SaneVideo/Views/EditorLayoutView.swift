@@ -627,9 +627,8 @@ struct EditorLayoutView: View {
                 for trackClip in track.clips {
                     let clipEnd = CMTimeAdd(trackClip.startTime, trackClip.effectiveDuration)
                     if time >= trackClip.startTime, time < clipEnd {
-                        // Use the mapping helper to account for trimStart and removedRanges
-                        let timelineOffset = CMTimeSubtract(time, trackClip.startTime)
-                        let mediaTime = trackClip.originalTime(forEffectiveTime: timelineOffset)
+                        // Accounts for speed, trimStart and removedRanges
+                        let mediaTime = trackClip.sourceTime(atTimelineTime: time)
 
                         if let caption = trackClip.captions.first(where: { caption in
                             mediaTime >= caption.startTime && mediaTime < caption.endTime
@@ -642,8 +641,7 @@ struct EditorLayoutView: View {
             return nil
         }
 
-        let timelineOffset = CMTimeSubtract(time, clip.startTime)
-        let mediaTime = clip.originalTime(forEffectiveTime: timelineOffset)
+        let mediaTime = clip.sourceTime(atTimelineTime: time)
 
         if let caption = clip.captions.first(where: { caption in
             mediaTime >= caption.startTime && mediaTime < caption.endTime

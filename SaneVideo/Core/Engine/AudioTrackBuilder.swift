@@ -402,11 +402,21 @@ enum AudioTrackBuilder {
                 let sourceDuration = CMTimeSubtract(min(clip.trimEnd, duration), clip.trimStart)
                 let range = CMTimeRange(start: clip.trimStart, duration: sourceDuration)
 
-                try? targetTrack.insertTimeRange(range, of: assetTrack, at: clip.startTime)
+                // Leave out Clean Up's cuts, as video clips do, so the audio matches the clip's length on the
+                // timeline and the next clip does not overlap it.
+                let keptSegments = VideoTrackBuilder.computeValidSegments(clip: clip, sourceDuration: sourceDuration)
+                    .map { $0.intersection(range) }
+                    .filter { $0.duration > .zero }
+                var insertAt = clip.startTime
+                for segment in keptSegments {
+                    try? targetTrack.insertTimeRange(segment, of: assetTrack, at: insertAt)
+                    insertAt = CMTimeAdd(insertAt, segment.duration)
+                }
+                let keptDuration = CMTimeSubtract(insertAt, clip.startTime)
 
-                let playDuration = CMTimeMultiplyByFloat64(sourceDuration, multiplier: 1.0 / clip.speed)
+                let playDuration = CMTimeMultiplyByFloat64(keptDuration, multiplier: 1.0 / clip.speed)
                 if clip.speed != 1.0 {
-                    let scaleRange = CMTimeRange(start: clip.startTime, duration: sourceDuration)
+                    let scaleRange = CMTimeRange(start: clip.startTime, duration: keptDuration)
                     targetTrack.scaleTimeRange(scaleRange, toDuration: playDuration)
                 }
 
@@ -448,28 +458,15 @@ enum AudioTrackBuilder {
                         let gateRampDuration = CMTime(seconds: 0.03, preferredTimescale: 600)
                         let clipEnd = CMTimeAdd(clip.startTime, playDuration)
 
-                        for gatingSegment in segments where !gatingSegment.shouldOpenGate {
-                            // Gating times are in FILE TIME - must map through trimStart and speed
-                            let gatingStart = gatingSegment.timeRange.start
-                            let gatingEnd = gatingSegment.timeRange.end
-
-                            guard CMTimeCompare(gatingEnd, clip.trimStart) > 0,
-                                  CMTimeCompare(gatingStart, clip.trimEnd) < 0 else {
-                                continue
-                            }
-
-                            let clampedGatingStart = CMTimeMaximum(gatingStart, clip.trimStart)
-                            let clampedGatingEnd = CMTimeMinimum(gatingEnd, clip.trimEnd)
-
-                            // Map to composition time: (gatingTime - trimStart) / speed + clipStart
-                            let offsetFromTrimStart = CMTimeSubtract(clampedGatingStart, clip.trimStart)
-                            let offsetFromTrimEnd = CMTimeSubtract(clampedGatingEnd, clip.trimStart)
-                            let scaledOffsetStart = CMTimeMultiplyByFloat64(offsetFromTrimStart, multiplier: 1.0 / clip.speed)
-                            let scaledOffsetEnd = CMTimeMultiplyByFloat64(offsetFromTrimEnd, multiplier: 1.0 / clip.speed)
-
-                            let compositionStart = CMTimeAdd(clip.startTime, scaledOffsetStart)
-                            let compositionEnd = CMTimeAdd(clip.startTime, scaledOffsetEnd)
-                            let gatingDuration = CMTimeSubtract(compositionEnd, compositionStart)
+                        // Gating times are in FILE TIME: map each part that plays (inside a kept segment)
+                        // through trims, Clean Up cuts and speed.
+                        let gatedPieces = segments.filter { !$0.shouldOpenGate }.flatMap { gatingSegment in
+                            keptSegments.map { gatingSegment.timeRange.intersection($0) }.filter { $0.duration > .zero }
+                        }
+                        for piece in gatedPieces {
+                            guard let compositionStart = clip.timelineTime(forSourceTime: piece.start) else { continue }
+                            let gatingDuration = CMTimeMultiplyByFloat64(piece.duration, multiplier: 1.0 / clip.speed)
+                            let compositionEnd = CMTimeAdd(compositionStart, gatingDuration)
 
                             guard CMTimeCompare(compositionStart, clipEnd) < 0,
                                   CMTimeCompare(gatingDuration, .zero) > 0 else {

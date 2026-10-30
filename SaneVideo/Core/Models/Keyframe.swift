@@ -214,6 +214,18 @@ struct KeyframeAnimation: Codable, Equatable, Sendable {
         tracks.allSatisfy { $0.keyframes.isEmpty }
     }
 
+    /// The same animation with every keyframe time passed through `transform`; easing and values stay.
+    func retimed(_ transform: (CMTime) -> CMTime) -> KeyframeAnimation {
+        var copy = self
+        for trackIndex in copy.tracks.indices {
+            for keyframeIndex in copy.tracks[trackIndex].keyframes.indices {
+                let time = copy.tracks[trackIndex].keyframes[keyframeIndex].time
+                copy.tracks[trackIndex].keyframes[keyframeIndex].time = transform(time)
+            }
+        }
+        return copy
+    }
+
     subscript(_ property: AnimatableProperty) -> KeyframeTrack? {
         get {
             tracks.first(where: { $0.property == property })

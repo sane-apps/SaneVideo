@@ -196,7 +196,8 @@ extension ProjectState {
 
         for (trackIndex, track) in project.timeline.tracks.enumerated() {
             if let clipIndex = track.clips.firstIndex(where: { $0.id == clip.id }) {
-                var updatedClip = clip
+                // Start from the stored clip: the caller's copy can be stale after an await (Refine).
+                var updatedClip = track.clips[clipIndex]
                 updatedClip.captions = newCaptions
 
                 var tracks = project.timeline.tracks
@@ -225,7 +226,7 @@ extension ProjectState {
 
         for (trackIndex, track) in project.timeline.tracks.enumerated() {
             if let clipIndex = track.clips.firstIndex(where: { $0.id == clip.id }) {
-                var updatedClip = clip
+                var updatedClip = track.clips[clipIndex]
 
                 updatedClip.addRemovedRange(range)
 
@@ -247,12 +248,8 @@ extension ProjectState {
                         }
                         return nil
                     }
-                    if caption.startTime >= range.end {
-                        var shifted = caption
-                        shifted.startTime = CMTimeSubtract(caption.startTime, range.duration)
-                        shifted.endTime = CMTimeSubtract(caption.endTime, range.duration)
-                        return shifted
-                    }
+                    // Later captions keep their source times: the cut is skipped when they are mapped to
+                    // the timeline, so shifting them here would count it twice.
                     return caption
                 }
 

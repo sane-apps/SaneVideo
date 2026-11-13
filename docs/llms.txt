@@ -11,8 +11,8 @@
 - Code: public on GitHub under the PolyForm Shield license (https://github.com/sane-apps/SaneVideo).
 
 ## Features
-- Record your screen with a movable camera bubble, or the camera on its own; switch between them mid-take. Option-Command-R starts and stops while the recorder is open.
-- Clean Up: one click cuts silences and filler words ("um", "uh", stutters). Every cut can be undone.
+- Record your screen with a movable camera bubble, or the camera on its own; switch between them mid-take. Option-Command-R starts and stops from any app while the recorder is open.
+- Clean Up: one click cuts silences and filler sounds such as "um" and "uh"; real words stay. Every cut can be undone.
 - Captions made on your Mac; fix any line before export. YouTube exports come with a matching .srt file.
 - Export at your recording's size for YouTube, plus vertical 9:16 Shorts, a GIF, a thumbnail and a transcript PDF.
 - Timeline editing: trim, split (Command-B), delete; crop and zoom; blur or replace the background; color effects.

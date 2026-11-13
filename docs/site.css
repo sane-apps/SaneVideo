@@ -159,6 +159,25 @@ h2 { font-size: clamp(30px, 3.6vw, 44px); }
 .page ol, .page ul { margin: 0; padding-left: 24px; display: grid; gap: 8px; font-size: 17px; }
 .page .note { margin-top: 18px; font-size: 16px; }
 
+/* Guides */
+.crumbs { display: flex; flex-wrap: wrap; gap: 4px 0; margin-bottom: 18px; font-size: 15px; font-weight: 600; }
+.crumbs span[aria-hidden] { margin: 0 8px; color: var(--accent); }
+.page .meta { margin-top: 12px; font-size: 15px; }
+.page h3 { font-size: 19px; margin-top: 20px; }
+.page h3 + p { margin-top: 6px; }
+.page h2 + h3 { margin-top: 0; }
+.guide figure { margin: 24px 0 0; }
+.guide figure > img { width: 100%; }
+.guide figure > figcaption { margin-top: 10px; font-size: 15px; }
+.guide .compare { margin-top: 24px; }
+.guide .compare figure { margin: 0; }
+.guide-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; margin-top: 32px; }
+.guide-card { color: var(--text); text-decoration: none; }
+.guide-card:hover { color: var(--text); border-color: var(--line-strong); }
+.guide-card h2 { margin: 0; font-size: 22px; }
+.guide-icon { display: grid; place-items: center; width: 44px; height: 44px; border: 1px solid var(--line-strong); border-radius: 10px; color: var(--accent); }
+.read-more { margin-top: auto; color: var(--accent); font-weight: 700; font-size: 16px; }
+
 /* Footer */
 .site-footer { border-top: 1px solid var(--line); background: #05080d; padding: 44px 0 52px; font-size: 16px; }
 .site-footer .wrap { display: grid; gap: 22px; }
@@ -183,5 +202,6 @@ h2 { font-size: clamp(30px, 3.6vw, 44px); }
   .hero .actions .button { flex: 1 1 100%; }
   .page { padding: 40px 0 64px; }
   .page section, .page .panel { padding: 22px; }
+  .guide-cards { grid-template-columns: 1fr; }
 }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }

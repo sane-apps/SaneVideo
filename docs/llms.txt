@@ -7,7 +7,7 @@
 - Where to get it: direct download at https://sanevideo.com/download, or the Mac App Store (https://apps.apple.com/us/app/sanevideo/id6770294375). Both are free and the same app.
 - Requirements: a Mac with Apple silicon and macOS 26 or later.
 - Privacy: recording, Clean Up, captions and export run on your Mac. Recordings are never uploaded. The app checks for updates, sends anonymous app counts, and downloads its speech model once the first time you use Clean Up or captions (see the privacy policy).
-- Files: Movies/SaneVideo (Recordings, Projects, Exports; vertical Shorts in Exports/Shorts).
+- Files: Movies/SaneVideo (Recordings, Projects, Exports, and Shorts for vertical clips).
 - Code: public on GitHub under the PolyForm Shield license (https://github.com/sane-apps/SaneVideo).
 
 ## Features
@@ -16,6 +16,11 @@
 - Captions made on your Mac; fix any line before export. YouTube exports come with a matching .srt file.
 - Export at your recording's size for YouTube, plus vertical 9:16 Shorts, a GIF, a thumbnail and a transcript PDF.
 - Timeline editing: trim, split (Command-B), delete; crop and zoom; blur or replace the background; color effects.
+
+## Guides
+- All guides: https://sanevideo.com/guides
+- How to Cut Um and Uh From a Screen Recording on Mac: https://sanevideo.com/how-to-remove-um-uh-screen-recording-mac
+- How to Make YouTube Shorts From a Screen Recording on Mac: https://sanevideo.com/how-to-make-youtube-shorts-screen-recording-mac
 
 ## Pages
 - Home: https://sanevideo.com/

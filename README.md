@@ -65,7 +65,7 @@ Support: [GitHub Sponsors](https://github.com/sponsors/MrSaneApps) · Contribute
 
 - **Clean Up** (one click, on your Mac):
   - **Silence Removal**: Cuts the pauses where nobody talks
-  - **Filler Words**: Cuts "um", "uh" and stutters (Parakeet speech model, downloaded once)
+  - **Filler Words**: Cuts "um" and "uh" (Parakeet speech model, downloaded once)
   - **Captions**: On-device transcript; exports write a matching `.srt` for YouTube
   - Every cut can be undone
 

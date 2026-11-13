@@ -108,7 +108,7 @@ struct SmartToolsSection: View {
 
         InspectorToggle(
           title: "Remove Fillers",
-          subtitle: "Cut 'um', 'uh', stutters",
+          subtitle: "Cut 'um' and 'uh'",
           isOn: $options.removeFillers,
           icon: "bubble.left",
           color: .blue,
